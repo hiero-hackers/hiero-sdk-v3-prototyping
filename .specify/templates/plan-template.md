@@ -40,7 +40,17 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] Source-of-truth impact is identified across `spec/`, `guidelines/`,
+      `docs/adr/`, `missing-features.md`, `TCK.md`, and any other touched
+      documentation.
+- [ ] Shared-layer changes remain broader than Hedera or are explicitly
+      justified as ecosystem-specific.
+- [ ] Cross-language semantic impact is documented, including affected
+      `guidelines/api-best-practices-*.md` files.
+- [ ] `## Testing` / `solo` / TCK impact is captured for each touched spec, or
+      an explicit exemption is documented for pure data or editorial changes.
+- [ ] Open questions, ADR needs, and follow-up artifacts are listed before
+      implementation begins.
 
 ## Project Structure
 
@@ -56,52 +66,46 @@ specs/[###-feature]/
 └── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
 ```
 
-### Source Code (repository root)
+### Repository Structure (repository root)
 <!--
   ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
+  touched by this feature. Keep only the directories that matter for the work.
+  New top-level directories require explicit justification against the
+  constitution.
 -->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+guidelines/
+├── api-guideline.md
+├── testing-guideline.md
+├── api-best-practices-java.md
+├── api-best-practices-js.md
+├── api-best-practices-rust.md
+├── java-files/
+└── js-files/
 
-tests/
-├── contract/
-├── integration/
-└── unit/
+spec/
+├── base/
+├── consensus-node-client/
+├── consensus-node-admin-client/
+├── mirror-node-client/
+├── enterprise/
+└── dependencies.md
 
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
+docs/
+└── adr/
 
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
+.specify/
+├── memory/
+└── templates/
 
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+missing-features.md
+TCK.md
+tck-ideas.md
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: [Identify which real directories the feature changes,
+why they are in scope, and whether any new structure is justified]
 
 ## Complexity Tracking
 

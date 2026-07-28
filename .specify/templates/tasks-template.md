@@ -9,7 +9,10 @@ description: "Task list template for feature implementation"
 
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
+**Tests**: Include test tasks whenever the feature changes observable behavior,
+validation rules, serialization, code-generation output, or conformance
+expectations. Pure editorial-only work may omit tests, but the reason MUST be
+stated in the feature specification.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -21,10 +24,16 @@ description: "Task list template for feature implementation"
 
 ## Path Conventions
 
-- **Single project**: `src/`, `tests/` at repository root
-- **Web app**: `backend/src/`, `frontend/src/`
-- **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- Paths shown below assume single project - adjust based on plan.md structure
+- **Primary specs**: `spec/base/`, `spec/consensus-node-client/`,
+  `spec/consensus-node-admin-client/`, `spec/mirror-node-client/`,
+  `spec/enterprise/`, `spec/dependencies.md`
+- **Guidelines**: `guidelines/api-guideline.md`,
+  `guidelines/testing-guideline.md`, `guidelines/api-best-practices-*.md`,
+  `guidelines/java-files/`, `guidelines/js-files/`
+- **Traceability & verification**: `docs/adr/`, `missing-features.md`,
+  `TCK.md`, `tck-ideas.md`
+- **Planning artifacts**: `.specify/`, `specs/[###-feature-name]/`
+- Add other directories only when they are explicitly part of the feature plan
 
 <!--
   ============================================================================
@@ -49,9 +58,11 @@ description: "Task list template for feature implementation"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project structure per implementation plan
-- [ ] T002 Initialize [language] project with [framework] dependencies
-- [ ] T003 [P] Configure linting and formatting tools
+- [ ] T001 Create or confirm the feature workspace in `specs/[###-feature-name]/`
+- [ ] T002 Inventory touched spec, guideline, ADR, and verification files in
+          the implementation plan
+- [ ] T003 [P] Document any parser, generator, or validation tooling that this
+          feature depends on
 
 ---
 
@@ -63,12 +74,16 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T004 Establish shared meta-language or namespace changes in
+          `guidelines/api-guideline.md` or shared `spec/base/` files
+- [ ] T005 [P] Update affected language mapping guidance in
+          `guidelines/api-best-practices-*.md`
+- [ ] T006 [P] Record ADR, backlog, or dependency updates in `docs/adr/`,
+          `missing-features.md`, or `spec/dependencies.md`
+- [ ] T007 Add or revise `## Testing` strategy in each touched spec
+- [ ] T008 Capture TCK or conformance impact in `TCK.md` or `tck-ideas.md`
+- [ ] T009 Confirm unresolved questions remain visible in `## Questions &
+          Comments`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -80,21 +95,27 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 1 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 1 (include when constitution or spec requires) ⚠️
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T010 [P] [US1] Add or revise `## Testing` scenarios in `spec/[area]/[file].md`
+- [ ] T011 [P] [US1] Document conformance, `solo`, or TCK verification in
+          `TCK.md`, `tck-ideas.md`, or feature quickstart artifacts
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T016 [US1] Add validation and error handling
-- [ ] T017 [US1] Add logging for user story 1 operations
+- [ ] T012 [P] [US1] Update the primary namespace spec in `spec/[area]/[file].md`
+- [ ] T013 [P] [US1] Update dependent shared types or imports in
+          `spec/base/[file].md` or `spec/dependencies.md`
+- [ ] T014 [US1] Update impacted language guidance in
+          `guidelines/api-best-practices-[language].md`
+- [ ] T015 [US1] Update illustrative reference snippets in
+          `guidelines/java-files/` or `guidelines/js-files/` if needed
+- [ ] T016 [US1] Record ADR or open-question follow-up in `docs/adr/` or the
+          target spec's `## Questions & Comments`
+- [ ] T017 [US1] Update verification/backlog docs in `missing-features.md`,
+          `TCK.md`, or `tck-ideas.md`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -106,17 +127,21 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 2 (include when constitution or spec requires) ⚠️
 
-- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T018 [P] [US2] Add or revise `## Testing` scenarios in `spec/[area]/[file].md`
+- [ ] T019 [P] [US2] Document conformance, `solo`, or TCK verification in
+          `TCK.md`, `tck-ideas.md`, or feature quickstart artifacts
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py
-- [ ] T021 [US2] Implement [Service] in src/services/[service].py
-- [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T023 [US2] Integrate with User Story 1 components (if needed)
+- [ ] T020 [P] [US2] Update the primary namespace spec in `spec/[area]/[file].md`
+- [ ] T021 [US2] Update impacted language guidance in
+          `guidelines/api-best-practices-[language].md`
+- [ ] T022 [US2] Update illustrative reference snippets or generator-facing
+          artifacts in `guidelines/` or another planned location
+- [ ] T023 [US2] Integrate the change with User Story 1 artifacts and traceability
+          documents
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -128,16 +153,17 @@ Examples of foundational tasks (adjust based on your project):
 
 **Independent Test**: [How to verify this story works on its own]
 
-### Tests for User Story 3 (OPTIONAL - only if tests requested) ⚠️
+### Tests for User Story 3 (include when constitution or spec requires) ⚠️
 
-- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T024 [P] [US3] Add or revise `## Testing` scenarios in `spec/[area]/[file].md`
+- [ ] T025 [P] [US3] Document conformance, `solo`, or TCK verification in
+          `TCK.md`, `tck-ideas.md`, or feature quickstart artifacts
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
-- [ ] T027 [US3] Implement [Service] in src/services/[service].py
-- [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T026 [P] [US3] Update the primary namespace spec in `spec/[area]/[file].md`
+- [ ] T027 [US3] Update impacted language guidance, ADRs, or backlog documents
+- [ ] T028 [US3] Update verification artifacts and cross-story dependencies
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -151,11 +177,13 @@ Examples of foundational tasks (adjust based on your project):
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] TXXX [P] Documentation updates in docs/
+- [ ] TXXX [P] Documentation updates in `README.md`, `CLAUDE.md`, or `docs/`
 - [ ] TXXX Code cleanup and refactoring
-- [ ] TXXX Performance optimization across all stories
-- [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
-- [ ] TXXX Security hardening
+- [ ] TXXX Performance, code-generation, or authoring-workflow optimization
+          across all stories
+- [ ] TXXX [P] Additional verification updates in `spec/`, `TCK.md`, or
+          generated-output fixtures
+- [ ] TXXX Cross-language consistency review across touched guides and specs
 - [ ] TXXX Run quickstart.md validation
 
 ---
@@ -180,9 +208,9 @@ Examples of foundational tasks (adjust based on your project):
 ### Within Each User Story
 
 - Tests (if included) MUST be written and FAIL before implementation
-- Models before services
-- Services before endpoints
-- Core implementation before integration
+- Shared spec changes before language guidance updates
+- Language guidance before illustrative snippet updates
+- Core specification updates before verification and backlog integration
 - Story complete before moving to next priority
 
 ### Parallel Opportunities
@@ -200,12 +228,12 @@ Examples of foundational tasks (adjust based on your project):
 
 ```bash
 # Launch all tests for User Story 1 together (if tests requested):
-Task: "Contract test for [endpoint] in tests/contract/test_[name].py"
-Task: "Integration test for [user journey] in tests/integration/test_[name].py"
+Task: "Add or revise `## Testing` scenarios in spec/[area]/[file].md"
+Task: "Document conformance, `solo`, or TCK verification in TCK.md or tck-ideas.md"
 
-# Launch all models for User Story 1 together:
-Task: "Create [Entity1] model in src/models/[entity1].py"
-Task: "Create [Entity2] model in src/models/[entity2].py"
+# Launch independent spec updates for User Story 1 together:
+Task: "Update the primary namespace spec in spec/[area]/[file].md"
+Task: "Update dependent shared types or imports in spec/base/[file].md"
 ```
 
 ---

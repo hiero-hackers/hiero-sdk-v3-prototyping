@@ -8,12 +8,22 @@
 
 **Input**: User description: "$ARGUMENTS"
 
+## Affected Specifications *(mandatory)*
+
+- **Primary spec files**: [List concrete paths under `spec/`]
+- **Guidelines**: [List affected files under `guidelines/` or state `None`]
+- **Traceability docs**: [List affected ADRs, `missing-features.md`, `TCK.md`,
+  `tck-ideas.md`, or state `None`]
+
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
-  IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by importance.
-  Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you implement just ONE of them,
-  you should still have a viable MVP (Minimum Viable Product) that delivers value.
+  IMPORTANT: User stories should be PRIORITIZED as user journeys ordered by
+  importance. In this repository the "user" may be an SDK consumer, a language
+  binding implementer, a spec maintainer, or a downstream code generator.
+  Each user story/journey must be INDEPENDENTLY TESTABLE - meaning if you
+  implement just ONE of them, you should still have a viable MVP (Minimum
+  Viable Product) that delivers value.
 
   Assign priorities (P1, P2, P3, etc.) to each story, where P1 is the most critical.
   Think of each story as a standalone slice of functionality that can be:
@@ -78,6 +88,25 @@
 - What happens when [boundary condition]?
 - How does system handle [error scenario]?
 
+## Specification Impact *(mandatory)*
+
+### Touched Namespaces / Files
+
+- **[Path or namespace]**: [What changes and why]
+
+### Cross-Language Impact
+
+- **Affected language guides**: [List `guidelines/api-best-practices-*.md`
+  files or state `None`]
+- **Behavioral parity risk**: [Describe the semantic risk across languages and
+  how it is controlled]
+
+### Testing & Verification Impact
+
+- **Spec testing updates**: [List `## Testing` sections to add or revise]
+- **Network/TCK impact**: [Describe `solo`, TCK, or other conformance impact,
+  or explain why none applies]
+
 ## Requirements *(mandatory)*
 
 <!--
@@ -129,3 +158,9 @@
 - [Assumption about scope boundaries, e.g., "Mobile support is out of scope for v1"]
 - [Assumption about data/environment, e.g., "Existing authentication system will be reused"]
 - [Dependency on existing system/service, e.g., "Requires access to the existing user profile API"]
+
+## Open Questions & ADRs
+
+- **Open questions to preserve**: [List questions that must remain in
+  `## Questions & Comments`, or state `None`]
+- **ADR required?**: [Yes/No, and which file if known]
