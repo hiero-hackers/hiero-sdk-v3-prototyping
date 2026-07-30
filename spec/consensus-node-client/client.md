@@ -11,7 +11,7 @@ A client defines a concrete network connection to a specific network with a spec
 
 ```
 namespace consensusnode.client
-requires {AccountId, Ledger} from ledger
+requires {AccountId, Network} from ledger
 requires {NetworkSetting} from ledger.config
 requires {PrivateKey} from keys
 requires {NativeTokenUnit} from nativeToken
@@ -57,7 +57,7 @@ abstraction Submittable<$$Result> {
 // The client API that will be used by the SDK to interact with the network
 HieroClient<$$Unit extends NativeTokenUnit> {
     @@immutable operatorAccount: Account // the operator account
-    @@immutable ledger: Ledger<$$Unit> // the network to connect to
+    @@immutable network: Network<$$Unit> // the network to connect to
     @@immutable transactionSigner: TransactionSigner // by default the operator account is used, but this allows to use an external signer for transactions
     // TO_BE_DEFINED_IN_FUTURE_VERSIONS
 }

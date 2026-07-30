@@ -10,12 +10,12 @@ The config API provides functions to define and retrieve the configuration of a 
 
 ```
 namespace ledger.config
-requires {Ledger, ConsensusNode, MirrorNode} from ledger
+requires {Network, ConsensusNode, MirrorNode} from ledger
 
 // The full configuration to connect to a specific network
 NetworkSetting {
  
-    @@immutable ledger: Ledger<ANY>
+    @@immutable network: Network<ANY>
    
     @@immutable  getConsensusNodes: set<ConsensusNode>
 
