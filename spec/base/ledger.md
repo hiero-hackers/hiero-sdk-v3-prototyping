@@ -21,7 +21,7 @@ classDiagram
         +realm: uint64
         +checksum: string
         +num: uint64?
-        +validateChecksum(ledger) bool
+        +validateChecksum(network) bool
         +toString() string
         +toStringWithChecksum() string
     }
@@ -103,9 +103,9 @@ EVM address appears (mirror-node responses, contract-call results, ...).
 namespace ledger
 requires {NativeTokenUnit} from nativeToken
 
-// Represents a specific ledger instance
-Ledger<$$Unit extends NativeTokenUnit> {
-    @@immutable id: bytes // identifier of the ledger
+// Represents a specific network instance
+Network<$$Unit extends NativeTokenUnit> {
+    @@immutable id: bytes // identifier of the network
     @@immutable @@nullable name: string // human readable name of the network
     @@immutable nativeTokenUnit: $$Unit
 }
@@ -121,8 +121,8 @@ abstraction BaseAddress {
     @@immutable checksum: string                              // protocol-side checksum over the (shard, realm, selector) form; empty string when no checksum applies (e.g. an EVM-address-only ContractId / AccountId before materialisation)
     @@immutable @@nullable num: uint64                        // Hiero entity number. NULLABLE here because EVM-form ContractId / AccountId can be addressed without a num. Tightened to non-nullable on `Address` via @@override (see api-guideline.md → Narrowing inherited nullability).
 
-    // Validates the checksum against the given ledger's checksum scheme.
-    bool validateChecksum(ledger: Ledger<ANY>)
+    // Validates the checksum against the given network's checksum scheme.
+    bool validateChecksum(network: Network<ANY>)
 
     // Canonical string form. Subtype-specific: "shard.realm.num" for Address / numeric-form
     // ContractId / numeric-form AccountId; "shard.realm.0x<hex>" for EVM-form ContractId /
