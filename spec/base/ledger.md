@@ -300,3 +300,5 @@ constant ZERO_CONTRACT_ID: ContractId = ContractId{shard: 0, realm: 0, num: 0, c
 ## Questions & Comments
 
 - [@hendrikebbers](https://github.com/hendrikebbers): Should we rename `Ledger` to `Network`?
+  > [@oGranny](https://github.com/oGranny): In `ledger.config` we have `NetworkSetting` which does not match with `Ledger`, I think either we should rename `Ledger` to `Network` or `NetworkSetting` to `LedgerSetting`
+- [@oGranny](https://github.com/oGranny): what are the rules for assigning and creating `Ledger.id` bytes?

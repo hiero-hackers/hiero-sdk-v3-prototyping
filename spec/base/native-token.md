@@ -43,3 +43,4 @@ abstraction ExchangeRate {
 
 - [@hendrikebbers](https://github.com/hendrikebbers): Should `ExchangeRate.exchangeRateInUsdCents` really be `double`
   instead of `decimal`?
+  > [@oGranny](https://github.com/oGranny): I believe, for high precision money related variables `decimal` should be used instead of `double`.
