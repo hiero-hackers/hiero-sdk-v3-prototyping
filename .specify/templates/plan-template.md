@@ -40,7 +40,21 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- **Specification authority**: Identify every authoritative `spec/` source and map each feature
+  requirement to it. Document and obtain approval for any proposed contract change.
+- **Semantic parity**: Explain how Java remains idiomatic without changing cross-language behavior.
+- **Security**: Classify security sensitivity. For signing, serialization, key handling, payments,
+  deserialization, or network trust, include threat analysis, negative tests, and human review.
+- **Determinism**: Identify canonical transformations and the golden vectors or differential tests
+  that verify them.
+- **Executable conformance**: Map every normative requirement to unit, integration, TCK, or
+  golden-vector coverage. Test omissions require explicit justification and approval.
+- **Explicit semantics**: Define applicable nullability, mutability, ownership, errors, side
+  effects, concurrency, cancellation, timeout, retry, and idempotency behavior.
+- **Reproducible generation**: If code is generated, record the specification revision, generator
+  version, configuration, generated-file boundary, and clean-regeneration check.
+- **Human authority**: Identify human approval gates for security-, wire-, and
+  compatibility-sensitive decisions. AI output cannot approve itself.
 
 ## Project Structure
 
@@ -111,3 +125,5 @@ directories captured above]
 |-----------|------------|-------------------------------------|
 | [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
 | [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+
+All violations MUST also identify an accountable approver and a time-bounded removal condition.

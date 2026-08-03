@@ -8,6 +8,24 @@
 
 **Input**: User description: "$ARGUMENTS"
 
+## Contract & Classification *(mandatory)*
+
+**Authoritative Sources**: [List exact `spec/` files and sections, or state that this feature creates
+a new contract requiring separate approval]
+
+**Compatibility Classification**: [Additive, behavioral, source-breaking, binary-breaking,
+wire-breaking, or not applicable, with rationale]
+
+**Security Classification**: [Standard or security-sensitive, with rationale]
+
+### Requirement Traceability
+
+| Requirement | Authoritative Source | Required Behavior | Verification |
+|-------------|----------------------|-------------------|--------------|
+| FR-001 | [source file and section] | [observable contract] | [test category or review] |
+
+<!-- Every normative requirement must appear in this table before planning. -->
+
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
@@ -93,6 +111,11 @@
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
+Each requirement MUST define observable behavior without silently introducing semantics absent from
+its authoritative source. Requirements affecting public APIs MUST state applicable nullability,
+mutability, ownership, errors, side effects, thread safety, cancellation, timeout, retry, and
+idempotency behavior.
+
 *Example of marking unclear requirements:*
 
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
@@ -129,3 +152,11 @@
 - [Assumption about scope boundaries, e.g., "Mobile support is out of scope for v1"]
 - [Assumption about data/environment, e.g., "Existing authentication system will be reused"]
 - [Dependency on existing system/service, e.g., "Requires access to the existing user profile API"]
+
+## Conformance Strategy *(mandatory)*
+
+- **Unit verification**: [Requirement IDs and boundaries covered]
+- **Integration verification**: [Requirement IDs and component interactions covered]
+- **TCK verification**: [Requirement IDs and language-neutral scenarios covered]
+- **Golden vectors**: [Canonical serialization, hashing, signing, checksums, identifiers, or N/A]
+- **Human reviews**: [Security, wire compatibility, public API compatibility, or N/A with rationale]
