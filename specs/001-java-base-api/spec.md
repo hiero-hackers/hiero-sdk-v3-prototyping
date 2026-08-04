@@ -253,7 +253,7 @@ then verify that no network request, scheduler, transport, or protocol codec is 
   threshold, length, nullability-narrowing, and private-key-exclusion constraints that can be
   verified at compile time or through structural inspection.
 - **SC-005**: Requirement traceability maps 100% of FR-001 through FR-017 to at least one automated
-  verification or required human review.
+  verification, with additional accountable human review wherever required.
 - **SC-006**: Two consecutive generations from the same inputs produce byte-for-byte identical
   source output and no unexplained repository difference.
 - **SC-007**: An operational-scope audit finds zero network, storage, retry, scheduler, transport,

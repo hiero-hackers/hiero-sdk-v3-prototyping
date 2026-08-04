@@ -203,7 +203,7 @@ network implementation.
 - [ ] T062 Run `./mvnw -Pvalidate-java-base-api verify`, `./mvnw -Pgenerate-java-base-api generate-sources`, and `./mvnw verify` as documented in `specs/001-java-base-api/quickstart.md` (FR-001 through FR-017, SC-001 through SC-007)
 - [ ] T063 Verify clean regeneration leaves no unexplained diff in `java/hiero-sdk-base-api/src/main/java/` and `java/hiero-sdk-base-api/generated-api-manifest.json` (FR-015, SC-006)
 - [ ] T064 Regenerate the complete public-signature snapshot after all user-story outputs in `tests/java-base-api-contract/src/test/resources/api-signatures/base-api.txt` and verify its deterministic diff from the initial T028 snapshot contains only approved mappings (FR-003, FR-012, FR-015, SC-003)
-- [ ] T065 Record accountable Java API maintainer approval that the generated surface and signature baseline conform to the mapping decisions approved in T012 in `specs/001-java-base-api/api-review.md` (FR-003, FR-012, FR-017, SC-008)
+- [ ] T065 Record accountable Java API maintainer approval that the generated surface and signature baseline conform to the mapping decisions approved in T012, explicitly approve or reject every final `deferred-enforcement` manifest entry, and confirm that no unapproved deferred item exists in `specs/001-java-base-api/api-review.md` (FR-003, FR-012, FR-017, SC-008)
 - [ ] T066 Record accountable security reviewer approval of key handling, Authority structure, secret safety, and operational exclusions in `specs/001-java-base-api/security-review.md` (FR-010, FR-011, FR-014, FR-017, SC-008)
 - [ ] T067 Re-run the complete reactor after review changes and record final FR/SC results in `specs/001-java-base-api/conformance-report.md` (FR-001 through FR-017, SC-001 through SC-008)
 

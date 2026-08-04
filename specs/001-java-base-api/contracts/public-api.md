@@ -163,5 +163,7 @@ metadata is not a Java mapping variance.
 7. Direct public construction of Authority record variants, despite factories being the blessed
    path, because public variants are required for exhaustive matching.
 
-Approval of this plan approves these as prototype mappings only. They become the permanent V3 Java
-compatibility baseline only after generated-source API and security review.
+Planning approval does not approve these mapping variances. Only explicit accountable approval
+recorded for T012 in `../api-review.md` authorizes them for prototype implementation. They become
+the permanent V3 Java compatibility baseline only after the final generated-source, manifest,
+signature-baseline, and security reviews required by T065-T066.
