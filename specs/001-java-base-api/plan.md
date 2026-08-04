@@ -36,8 +36,9 @@ module-path checks, Javadoc checks, dependency analysis, and clean-regeneration 
 
 **Project Type**: Maven multi-module Java library prototype plus build-time code generator
 
-**Performance Goals**: Generate and verify the eleven base specifications in under 10 seconds on a
-developer workstation; API classes must perform no operational work at class initialization
+**Performance Goals**: No generator timing target is an acceptance criterion because this prototype
+has no reproducible hardware baseline. API classes must perform no operational work at class
+initialization.
 
 **Constraints**: API-only output; no operational SDK implementation; deterministic offline
 generation after dependencies are cached; no secret material in source, tests, diagnostics, or
@@ -87,8 +88,10 @@ contract-test module
 - **Specification authority - PASS**: The type inventory accounts for every declared base type,
   constant, operation category, constraint, and empty namespace without modifying `spec/base`.
 - **Semantic parity - PASS WITH REVIEW GATE**: Package and Java-form mappings are explicit and
-  reversible. The only planned variances are operation companion interfaces, lowercase package
-  normalization, a single aggregate JPMS module, and approved structural HBAR metadata.
+  reversible. The planned variances listed in [public-api.md](contracts/public-api.md) cover operation
+  companions, lowercase package normalization, the aggregate JPMS module, sealed/final ledger forms,
+  the abstract registry contract, and direct Authority variant construction. Source-defined HBAR
+  metadata maps directly and is not a Java variance.
 - **Security - PASS WITH REVIEW GATE**: No provider, codec, parser, registry, crypto, transport, or
   network implementation is in the API module. Byte arrays are copied at every structural value
   boundary, and sensitive `toString()` output is prohibited.
@@ -187,13 +190,14 @@ decisions, not waivers; they remain unapproved until human review and are listed
 
 1. Review and approve all planned dependencies, then bootstrap the pinned Maven wrapper, reactor,
    Java 21 toolchain checks, and empty named modules.
-2. Implement the fenced-schema lexer/parser, typed intermediate model, source diagnostics, and
-   semantic validator for only the constructs exercised by `spec/base`.
-3. Implement deterministic Java mapping and rendering, including Javadocs, JSpecify annotations,
-   generated headers, module metadata, and the generation manifest.
-4. Generate the complete base API, then audit every companion contract and deferred enforcement
-   item before treating the output as a compatibility baseline.
-5. Add positive/negative consumer compilation, API-shape, ownership/invariant, JPMS, dependency,
-   documentation, security, operational-scope, and clean-regeneration checks.
-6. Obtain human API and security approval; only then freeze the prototype as the initial V3 Java
-   base compatibility baseline.
+2. Write the foundational parser, validation, rendering, provenance, and determinism tests.
+3. Obtain approval for Java mapping variances, then implement the parser, typed model, validator,
+   mapper, renderer, manifest, and Maven integration until the foundational tests pass.
+4. For each user story, complete any required threat analysis, write positive and negative contract
+   tests, implement its isolated mapping rules, regenerate its output, and run its independent checks.
+5. Serialize changes to aggregate mapping files and the generated manifest while allowing isolated
+   mapper and test work from different stories to proceed concurrently.
+6. Run cross-cutting traceability, documentation, module-boundary, clean-regeneration, and final
+   signature-baseline checks.
+7. Obtain final human API and security approval; only then freeze the prototype as the initial V3
+   Java base compatibility baseline.

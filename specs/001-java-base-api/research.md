@@ -156,22 +156,21 @@ artifact implementation-free in the operational sense defined by the feature.
 
 ## Decision 9: HBAR Unit Metadata
 
-**Decision**: Generate `HbarUnit` with the symbols shown in `hedera.md` and these proposed decimal
-base-unit factors: `TINYBAR=1`, `MICROBAR=100`, `MILLIBAR=100_000`, `HBAR=100_000_000`,
+**Decision**: Generate `HbarUnit` with the normative symbols and base-unit factors defined in
+`spec/base/hedera.md`: `TINYBAR=1`, `MICROBAR=100`, `MILLIBAR=100_000`, `HBAR=100_000_000`,
 `KILOBAR=100_000_000_000`, `MEGABAR=100_000_000_000_000`, and
-`GIGABAR=100_000_000_000_000_000`. Record them as an approved Java mapping entry rather than
-pretending every value is explicitly encoded in the schema.
+`GIGABAR=100_000_000_000_000_000`. Treat any generated mismatch as a source-conformance failure.
 
 **Rationale**: The enum must implement `NativeTokenUnit` to satisfy the source generic bound. The
-names and symbols establish standard decimal prefixes around HBAR's documented 100,000,000 base
-units, but the full factor table requires explicit human approval before generation.
+authoritative schema now provides the complete metadata required for that implementation directly,
+so no Java-specific inference or approval is needed for these values.
 
 **Alternatives considered**:
 
 - Plain enum plus external metadata provider: breaks `HbarUnit extends NativeTokenUnit` and the
   `Hbar extends NativeToken<Hbar, HbarUnit>` generic relationship.
-- Invent abstract enum accessors: Java requires each constant to implement them, which merely hides
-  the same missing values in method bodies.
+- Invent abstract enum accessors: Java requires each constant to implement them, duplicating the
+  source-defined metadata in per-constant method bodies and adding unnecessary implementation code.
 
 ## Decision 10: Nullability, Collections, and Bytes
 

@@ -119,7 +119,7 @@ No registry instance, global state, lookup strategy, or service loader is provid
 The three ledger sentinels are immutable structural values. Their types contain no checksum,
 formatting, or parsing implementations; those contracts live on the ledger companions.
 
-## HBAR Unit Metadata Proposed for Approval
+## HBAR Unit Metadata
 
 | Unit | Symbol | Base-unit factor |
 |---|---|---:|
@@ -131,8 +131,9 @@ formatting, or parsing implementations; those contracts live on the ledger compa
 | `MEGABAR` | `Mℏ` | 100,000,000,000,000 |
 | `GIGABAR` | `Gℏ` | 100,000,000,000,000,000 |
 
-The schema shows all symbols and examples for HBAR/TINYBAR factors but does not encode the complete
-factor table. These proposed structural values require human approval before implementation.
+The authoritative `spec/base/hedera.md` schema defines every symbol and base-unit factor in this
+table. Generation must reproduce those values exactly and fail validation if they diverge; the
+metadata is not a Java mapping variance.
 
 ## Required API Semantics
 
@@ -155,9 +156,11 @@ factor table. These proposed structural values require human approval before imp
 2. One aggregate JPMS base module instead of one module per namespace.
 3. Companion interfaces for namespace/static and structural-value operations.
 4. `KeyFormatOperations` for operational methods declared on enums.
-5. The complete HBAR unit factor table derived from the documented HBAR/TINYBAR relationship and
-   decimal unit prefixes.
-6. Direct public construction of Authority record variants, despite factories being the blessed
+5. Sealed/final ledger value mappings, concrete immutable sentinel constants, and companion factory
+   contracts used to preserve source finality without operational implementations.
+6. `NetworkSettingRegistry` as an abstract companion contract with no registry instance, state, or
+   provider-loading behavior.
+7. Direct public construction of Authority record variants, despite factories being the blessed
    path, because public variants are required for exhaustive matching.
 
 Approval of this plan approves these as prototype mappings only. They become the permanent V3 Java

@@ -52,7 +52,7 @@ by every user story.
 
 ### Pre-Implementation Approval Gate
 
-- [ ] T012 Record accountable Java API maintainer approval of every pre-implementation mapping variance listed in `specs/001-java-base-api/contracts/public-api.md`, including package/module structure, companion operations, HBAR symbols and factors, ledger finality/factories, registry abstraction, Authority construction, and deferred enforcement, in `specs/001-java-base-api/api-review.md` (FR-003, FR-007, FR-008, FR-009, FR-011, FR-012, FR-017, SC-008)
+- [ ] T012 Record accountable Java API maintainer approval of every pre-implementation mapping variance listed in `specs/001-java-base-api/contracts/public-api.md` and every deferred-enforcement decision, covering package/module structure, companion operations, ledger finality/factories, registry abstraction, and Authority construction, in `specs/001-java-base-api/api-review.md` (FR-003, FR-007, FR-008, FR-009, FR-011, FR-012, FR-017, SC-008)
 
 **Gate**: T012 must be complete before T013 or any later implementation task begins.
 
@@ -217,8 +217,8 @@ network implementation.
 - **Phase 2 Foundation**: depends on Phase 1; T012 blocks T013 and all later implementation tasks,
   and the completed phase blocks every story
 - **US1**: depends on Phase 2 and establishes the complete generated skeleton and artifact boundary
-- **US2, US3, US4**: depend on US1's generated skeleton; their mapping/test work can proceed in
-  parallel after T029
+- **US2, US3, US4**: depend on US1's generated skeleton; isolated mapping and test work can proceed
+  in parallel after T029, but shared aggregate and regeneration tasks are serialized
 - **Phase 7**: depends on all four selected user stories
 
 ### User Story Dependencies
@@ -239,6 +239,8 @@ network implementation.
   implementation task.
 - Complete the T040 threat analysis before starting T041-T049.
 - Complete mapping rules before regenerating checked-in output.
+- Serialize aggregate `BaseApiMapper.java` changes in T037 then T047, and serialize shared manifest
+  regeneration in T038, T048, then T055.
 - Never hand-edit generated Java files.
 - Run the story's independent verification before its checkpoint.
 - Human approval tasks are blocking gates, not agent-completable checkboxes.
@@ -248,8 +250,8 @@ network implementation.
 - T003-T005 can run concurrently after T002 defines parent coordinates.
 - T007-T011 can run concurrently because each creates an isolated test class.
 - US1 test tasks T021-T023 can run concurrently.
-- After US1, US2, US3, and US4 can be assigned concurrently, except US3 consumes the stable ledger
-  contract established by US1.
+- After US1, isolated US2, US3, and US4 test and mapper tasks can be assigned concurrently; aggregate
+  mapper and shared-manifest regeneration tasks follow the serialized order above.
 - Within US2, T031-T033 and T034-T036 are parallel groups.
 - Within US3, T041-T044 and T045-T046 are parallel groups after T040 is complete.
 - Within US4, T050-T052 and T053-T054 are parallel groups.
