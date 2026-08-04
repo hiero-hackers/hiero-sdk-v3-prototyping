@@ -2,7 +2,7 @@
 
 **Assessment date**: 2026-08-04
 
-**Status**: Evidence populated; pending transitive lock verification and accountable human approval
+**Status**: Evidence complete; pending accountable human approval
 
 **Gate**: No public, build, test, plugin, wrapper, or transitive dependency may be adopted until this
 review is complete. AI agents may collect evidence and make recommendations but cannot approve a
@@ -24,7 +24,7 @@ modules.
 | `org.junit.jupiter:junit-jupiter` | `6.1.2`; `test` in the contract-test and generator modules only | Supplies Jupiter API, parameterized tests, and the engine required by the verification plan. JDK assertions or a custom harness would lose discovery, parameterization, and standard reports. | Current stable JUnit release as of the assessment date; active release notes and supported project security policy. | EPL-2.0 direct modules; exact transitives are listed below and are EPL-2.0 or Apache-2.0. | None; test classpath only. Vintage, suite, reporting, launcher, and console artifacts are excluded unless separately reviewed. | Provisional accept; human dependency and security approval required. |
 | Apache Maven | `3.9.16`; build tool downloaded by wrapper | Provides the reactor, lifecycle, plugin model, JPMS compilation, tests, source/Javadoc artifacts, and reproducible entry point selected in the plan. Maven 4 is still a release candidate and is not accepted. | Apache identifies 3.9.16 as the current recommended Maven 3 release. The binary is signed and accompanied by an Apache SHA-512 checksum. | Apache-2.0. Maven and its internal libraries execute only as build tooling and are not application dependencies. | None in the API artifact. The Enforcer rule must reject Maven versions other than the approved compatible range. | Provisional accept; human build and security approval required. |
 | Apache Maven Wrapper plugin | `org.apache.maven.plugins:maven-wrapper-plugin:3.3.4`; setup-time only | Creates cross-platform pinned wrapper scripts. Requiring a manually installed Maven version is less reproducible. | Current stable wrapper plugin in the Apache plugin index; Apache source and Maven Central provenance. | Apache-2.0. Use `only-script`, so no wrapper JAR or downloader source is committed. | None. Wrapper scripts are repository tooling and may only download the pinned Maven distribution. | Provisional accept; human build and security approval required. |
-| Maven lifecycle and verification plugins | Exact versions listed below; build/test only | Pins every lifecycle goal that this feature invokes and supports compilation, unit tests, packaging, documentation, dependency checks, and deterministic generator execution. | Current stable non-preview releases from Apache Maven or MojoHaus as of the assessment date. | Apache-2.0 for Apache and MojoHaus plugins. Their build-time transitive graph must be locked and scanned before approval. | None. Plugins and their dependencies must not enter the API dependency tree or JAR. | Pending complete transitive lock and human approval. |
+| Maven lifecycle and verification plugins | Exact versions and plugin-realm overrides listed below; build/test only | Pins every lifecycle goal that this feature invokes and supports compilation, unit tests, packaging, documentation, dependency checks, and deterministic generator execution. | Current stable non-preview releases from Apache Maven or MojoHaus as of the assessment date. | Apache-2.0 for Apache and MojoHaus plugins. The remediated graph is locked in `dependency-inventory.json`; all 192 records have identified licenses. | None. Plugins and their dependencies must not enter the API dependency tree or JAR. | Provisional accept; human dependency and security approval required. |
 
 ## JUnit Transitive Inventory
 
@@ -67,20 +67,45 @@ versions; a plugin is activated in `<plugins>` only where its listed purpose is 
 | `org.apache.maven.plugins:maven-wrapper-plugin` | `3.3.4` | Wrapper setup only | Generates the reviewed `only-script` wrapper files; it is not bound to the reactor lifecycle. |
 | `org.codehaus.mojo:exec-maven-plugin` | `3.6.3` | Generator profiles | Runs the repository-owned Java generator without making it an API dependency. |
 
+### Required Plugin-Realm Overrides
+
+The direct plugin releases above are not acceptable with their published transitive graphs. The
+following exact plugin dependencies must be declared inside the corresponding `<plugin>` elements.
+They replace known vulnerable transitives only within isolated Maven plugin realms and do not alter
+the project or consumer dependency graph.
+
+| Plugins | Required override | Security basis |
+|---|---|---|
+| Clean, Compiler, Source, Javadoc, Wrapper, Exec | `org.codehaus.plexus:plexus-utils:4.0.3` | Replaces vulnerable `4.0.2`; GHSA-6fmv-xxpf-w3cw is fixed in `4.0.3`. |
+| Resources | `org.codehaus.plexus:plexus-utils:3.6.1` | Replaces vulnerable `3.6.0`; GHSA-6fmv-xxpf-w3cw is fixed in `3.6.1`. |
+| Compiler | `commons-io:commons-io:2.21.0` | Replaces vulnerable `2.11.0`; GHSA-78wr-2p64-hpwj is fixed in `2.14.0` and later. |
+| Source, Javadoc, Wrapper | `io.airlift:aircompressor:2.0.3` | Replaces vulnerable `0.27`; GHSA-vx9q-rhv9-3jvg is fixed in `2.0.3`. |
+| Javadoc, Dependency | `commons-beanutils:commons-beanutils:1.11.0` | Replaces vulnerable `1.9.4`; GHSA-wxr5-93ph-8wr9 is fixed in `1.11.0`. |
+
 The following are intentionally excluded: Failsafe, Surefire reporting, Site, Shade, Assembly,
 Checkstyle, PMD, GPG, Deploy, and third-party code-generation plugins. Adding any of them requires a
 new review entry and approval.
 
-### Plugin Transitive Review Blocker
+### Machine-Resolved Review Result
 
-Maven plugins execute code during the build and therefore have supply-chain impact even though
-their dependencies do not enter the consumer graph. Before approval, an accountable reviewer must
-attach a machine-resolved inventory for the exact table above that records every plugin transitive
-coordinate, version, checksum, license, repository origin, and known advisory result. The inventory
-must also inventory the libraries shipped inside the Maven 3.9.16 distribution. It must be generated
-against Maven Central only, with no snapshot or milestone repositories, and its resolved versions
-must match the effective POM. Until that artifact exists, the Maven plugin and build-tool rows are
-not approvable and T001 remains incomplete.
+[dependency-inventory.json](dependency-inventory.json) records 192 artifact records covering 178
+unique coordinates: project/test dependencies, all reviewed plugin realms, two wrapper artifacts,
+and 52 JARs shipped in Maven 3.9.16. Every artifact has an exact version, SHA-256, license, and
+origin; no artifact or license entry is missing.
+
+The initial unmodified plugin graph produced five high-severity OSV findings across Commons
+BeanUtils 1.9.4, Commons IO 2.11.0, Aircompressor 0.27, and Plexus Utils 3.6.0/4.0.2. That graph is
+rejected. After applying the exact overrides above, all 177 executable Maven package/version
+queries returned zero OSV findings on 2026-08-04; the non-executable JUnit BOM POM is recorded but
+excluded from that query count. The inventory preserves the initial findings, final query and
+response hashes, exact override-to-plugin mapping, excluded implicit Super POM plugins, and
+artifact-level evidence.
+
+An offline Maven 3.9.16 compatibility run loaded or executed Clean, Resources, Compiler, Surefire,
+Source, Javadoc, Dependency, Wrapper, and Exec goals successfully with the overrides. This proves
+plugin-realm resolution and basic linkage only. T002-T004 must exercise the same overrides against
+the real reactor, and any linkage failure or changed resolved graph invalidates the provisional
+recommendation.
 
 ## Maven Wrapper Integrity Record
 
@@ -131,11 +156,13 @@ on 2026-08-04, produced the same SHA-256, and was byte-identical to the Apache-h
   [Surefire documentation](https://maven.apache.org/surefire/maven-surefire-plugin/)
 - [Apache Maven Wrapper documentation](https://maven.apache.org/tools/wrapper/) and
   [Exec Maven Plugin 3.6.3 documentation](https://www.mojohaus.org/exec-maven-plugin/plugin-info.html)
+- [OSV findings for BeanUtils](https://osv.dev/vulnerability/GHSA-wxr5-93ph-8wr9),
+  [Commons IO](https://osv.dev/vulnerability/GHSA-78wr-2p64-hpwj),
+  [Aircompressor](https://osv.dev/vulnerability/GHSA-vx9q-rhv9-3jvg), and
+  [Plexus Utils](https://osv.dev/vulnerability/GHSA-6fmv-xxpf-w3cw)
 
 ## Remaining Approval Blockers
 
-- Produce and review the complete machine-resolved Maven plugin transitive inventory described
-  above, including checksums, licenses, and advisory results.
 - Record accountable decisions from the dependency reviewer, Java API maintainer, and security
   reviewer. An AI-generated recommendation is not approval.
 
