@@ -23,7 +23,8 @@ with `--release 21`
 
 **Primary Dependencies**: Java platform APIs; JSpecify 1.0.0 as a compile-time nullness annotation
 dependency; Maven build plugins and JUnit Jupiter are test/build-only dependencies. The generated
-public API has no runtime library dependency.
+public API has no runtime library dependency. All non-platform dependencies remain provisional until
+the accountable review in [dependency-review.md](dependency-review.md) is completed.
 
 **Storage**: N/A. The generator reads repository files and writes deterministic Java sources and a
 manifest; the API contains no persistence or registry state.
@@ -61,6 +62,10 @@ contract-test module
 - **Security - PASS WITH REVIEW GATE**: The feature is security-sensitive. Threats include mutable
   byte ownership, secret disclosure, private-key authority leaves, accidental crypto bodies, and
   provider leakage. Negative tests and a human security review are mandatory.
+- **Dependency governance - PASS WITH REVIEW GATE**: JSpecify, JUnit, Maven plugins, wrapper
+  artifacts, and their transitive dependencies require documented necessity, maintenance, license,
+  provenance, and security review before adoption. The required record is
+  [dependency-review.md](dependency-review.md).
 - **Determinism - PASS**: Canonical ordering, UTF-8/LF output, source hashes, generator version, and
   configuration are specified in [generation-contract.md](contracts/generation-contract.md).
   Runtime cryptographic/wire transformations are excluded, so golden vectors are deferred to the
@@ -87,6 +92,9 @@ contract-test module
 - **Security - PASS WITH REVIEW GATE**: No provider, codec, parser, registry, crypto, transport, or
   network implementation is in the API module. Byte arrays are copied at every structural value
   boundary, and sensitive `toString()` output is prohibited.
+- **Dependency governance - PASS WITH REVIEW GATE**: Public, build, test, and wrapper dependencies
+  remain blocked until the accountable dependency review is approved; leakage checks then enforce
+  the approved scope.
 - **Determinism - PASS**: The generation contract has no clock-, locale-, filesystem-order-, or
   machine-dependent output. Source timestamps are excluded from generated files.
 - **Executable conformance - PASS**: Positive and negative consumer fixtures, API inventory,
@@ -109,6 +117,7 @@ specs/001-java-base-api/
 ├── research.md
 ├── data-model.md
 ├── quickstart.md
+├── dependency-review.md
 ├── contracts/
 │   ├── public-api.md
 │   ├── generation-contract.md
@@ -176,7 +185,8 @@ decisions, not waivers; they remain unapproved until human review and are listed
 
 ## Implementation Sequence
 
-1. Bootstrap the pinned Maven wrapper, reactor, Java 21 toolchain checks, and empty named modules.
+1. Review and approve all planned dependencies, then bootstrap the pinned Maven wrapper, reactor,
+   Java 21 toolchain checks, and empty named modules.
 2. Implement the fenced-schema lexer/parser, typed intermediate model, source diagnostics, and
    semantic validator for only the constructs exercised by `spec/base`.
 3. Implement deterministic Java mapping and rendering, including Javadocs, JSpecify annotations,
