@@ -52,7 +52,7 @@ by every user story.
 
 ### Pre-Implementation Approval Gate
 
-- [ ] T012 Record accountable Java API maintainer approval of every pre-implementation mapping variance listed in `specs/001-java-base-api/contracts/public-api.md` and every deferred-enforcement decision, covering package/module structure, companion operations, ledger finality/factories, registry abstraction, and Authority construction, in `specs/001-java-base-api/api-review.md` (FR-003, FR-007, FR-008, FR-009, FR-011, FR-012, FR-017, SC-008)
+- [X] T012 Record accountable Java API maintainer approval of every pre-implementation mapping variance listed in `specs/001-java-base-api/contracts/public-api.md` and every deferred-enforcement decision, covering package/module structure, companion operations, ledger finality/factories, registry abstraction, and Authority construction, in `specs/001-java-base-api/api-review.md` (FR-003, FR-007, FR-008, FR-009, FR-011, FR-012, FR-017, SC-008)
 
 **Gate**: T012 must be complete before T013 or any later implementation task begins.
 
