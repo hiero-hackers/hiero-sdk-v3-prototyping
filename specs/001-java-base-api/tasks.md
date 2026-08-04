@@ -138,21 +138,26 @@ contracts while structurally excluding private keys from authorization.
 reject private-key leaves and invalid threshold lists, and prove no crypto provider or secret-bearing
 diagnostic exists.
 
+### Threat Analysis for User Story 3
+
+- [ ] T040 [US3] Document the key/Authority threat model, trust boundaries, abuse cases, mitigations, residual risks, and required review evidence in `specs/001-java-base-api/security-review.md` before implementing key or Authority mappings (FR-010, FR-011, FR-014, FR-017, SC-008)
+
+**Gate**: T040 must be complete before T041 or any later User Story 3 task begins.
+
 ### Tests for User Story 3
 
-- [ ] T040 [P] [US3] Create positive key hierarchy, key-format, factory, and operation consumer fixtures in `tests/java-base-api-contract/src/test/resources/fixtures/positive/KeyContractsConsumer.java` (FR-010, FR-012, SC-002)
-- [ ] T041 [P] [US3] Create positive exhaustive Authority construction and pattern-matching fixtures in `tests/java-base-api-contract/src/test/resources/fixtures/positive/AuthorityConsumer.java` (FR-011, FR-012, SC-002)
-- [ ] T042 [P] [US3] Create negative private-key Authority, external Authority variant, empty-list, and invalid-threshold fixtures in `tests/java-base-api-contract/src/test/resources/fixtures/negative/authority/` (FR-004, FR-011, FR-014, SC-004)
-- [ ] T043 [P] [US3] Write key byte ownership, secret-safe diagnostics, forbidden crypto dependency, and no-operational-bytecode tests in `tests/java-base-api-contract/src/test/java/org/hiero/sdk/v3/contract/KeySecurityContractTest.java` (FR-004, FR-010, FR-013, FR-014, SC-003, SC-007)
+- [ ] T041 [P] [US3] Create positive key hierarchy, key-format, factory, and operation consumer fixtures in `tests/java-base-api-contract/src/test/resources/fixtures/positive/KeyContractsConsumer.java` (FR-010, FR-012, SC-002)
+- [ ] T042 [P] [US3] Create positive exhaustive Authority construction and pattern-matching fixtures in `tests/java-base-api-contract/src/test/resources/fixtures/positive/AuthorityConsumer.java` (FR-011, FR-012, SC-002)
+- [ ] T043 [P] [US3] Create negative private-key Authority, external Authority variant, empty-list, and invalid-threshold fixtures in `tests/java-base-api-contract/src/test/resources/fixtures/negative/authority/` (FR-004, FR-011, FR-014, SC-004)
+- [ ] T044 [P] [US3] Write key signature, deferred byte-ownership manifest, secret-safe diagnostic, forbidden crypto dependency, and no-operational-bytecode tests in `tests/java-base-api-contract/src/test/java/org/hiero/sdk/v3/contract/KeySecurityContractTest.java` (FR-004, FR-010, FR-013, FR-014, SC-003, SC-007)
 
 ### Implementation for User Story 3
 
-- [ ] T044 [P] [US3] Implement key interfaces, key pair, enum metadata, and defensive byte mapping rules in `tools/spec-codegen-java/src/main/java/org/hiero/sdk/v3/codegen/mapping/KeyMapping.java` (FR-003, FR-004, FR-010, FR-012, FR-014)
-- [ ] T045 [P] [US3] Implement the sealed Authority sum, immutable record variants, recursive equality, and threshold validation mapping in `tools/spec-codegen-java/src/main/java/org/hiero/sdk/v3/codegen/mapping/AuthorityMapping.java` (FR-003, FR-004, FR-011, FR-012, FR-014)
-- [ ] T046 [US3] Generate body-free `KeyFactory`, `KeyFormatOperations`, and `AuthorityFactory` contracts from `tools/spec-codegen-java/src/main/java/org/hiero/sdk/v3/codegen/mapping/BaseApiMapper.java` (FR-003, FR-010, FR-011, FR-012, FR-013)
-- [ ] T047 [US3] Regenerate the key and Authority packages and provenance entries in `java/hiero-sdk-base-api/src/main/java/org/hiero/sdk/v3/keys/`, `java/hiero-sdk-base-api/src/main/java/org/hiero/sdk/v3/authority/`, and `java/hiero-sdk-base-api/generated-api-manifest.json` (FR-010, FR-011, FR-015, FR-016)
-- [ ] T048 [US3] Document the key/Authority threat analysis and review evidence in `specs/001-java-base-api/security-review.md` (FR-010, FR-011, FR-014, FR-017, SC-008)
-- [ ] T049 [US3] Run all US3 compilation, invariant, exhaustive-switch, ownership, dependency, secret-scan, and operational-scope checks through `tests/java-base-api-contract/pom.xml` (FR-004, FR-010, FR-011, FR-013, FR-014, FR-017, SC-004, SC-005, SC-007)
+- [ ] T045 [P] [US3] Implement key interfaces, key pair, enum metadata, and interface-backed byte-ownership deferral rules in `tools/spec-codegen-java/src/main/java/org/hiero/sdk/v3/codegen/mapping/KeyMapping.java` (FR-003, FR-004, FR-010, FR-012, FR-014)
+- [ ] T046 [P] [US3] Implement the sealed Authority sum, immutable record variants, recursive equality, and threshold validation mapping in `tools/spec-codegen-java/src/main/java/org/hiero/sdk/v3/codegen/mapping/AuthorityMapping.java` (FR-003, FR-004, FR-011, FR-012, FR-014)
+- [ ] T047 [US3] Generate body-free `KeyFactory`, `KeyFormatOperations`, and `AuthorityFactory` contracts from `tools/spec-codegen-java/src/main/java/org/hiero/sdk/v3/codegen/mapping/BaseApiMapper.java` (FR-003, FR-010, FR-011, FR-012, FR-013)
+- [ ] T048 [US3] Regenerate the key and Authority packages and provenance entries in `java/hiero-sdk-base-api/src/main/java/org/hiero/sdk/v3/keys/`, `java/hiero-sdk-base-api/src/main/java/org/hiero/sdk/v3/authority/`, and `java/hiero-sdk-base-api/generated-api-manifest.json` (FR-010, FR-011, FR-015, FR-016)
+- [ ] T049 [US3] Run all US3 compilation, invariant, exhaustive-switch, ownership-deferral, dependency, secret-scan, and operational-scope checks through `tests/java-base-api-contract/pom.xml` (FR-004, FR-010, FR-011, FR-013, FR-014, FR-017, SC-004, SC-005, SC-007)
 
 **Checkpoint**: User Story 3 exposes no private-key Authority path, crypto body, provider choice,
 secret output, or unapproved dependency.
@@ -197,9 +202,10 @@ network implementation.
 - [ ] T061 Update Java prototype generation and generated-source ownership documentation in `README.md` and `CLAUDE.md` (FR-016)
 - [ ] T062 Run `./mvnw -Pvalidate-java-base-api verify`, `./mvnw -Pgenerate-java-base-api generate-sources`, and `./mvnw verify` as documented in `specs/001-java-base-api/quickstart.md` (FR-001 through FR-017, SC-001 through SC-007)
 - [ ] T063 Verify clean regeneration leaves no unexplained diff in `java/hiero-sdk-base-api/src/main/java/` and `java/hiero-sdk-base-api/generated-api-manifest.json` (FR-015, SC-006)
-- [ ] T064 Record accountable Java API maintainer approval that the generated surface and signature baseline conform to the mapping decisions approved in T012 in `specs/001-java-base-api/api-review.md` (FR-003, FR-012, FR-017, SC-008)
-- [ ] T065 Record accountable security reviewer approval of key handling, Authority structure, secret safety, and operational exclusions in `specs/001-java-base-api/security-review.md` (FR-010, FR-011, FR-014, FR-017, SC-008)
-- [ ] T066 Re-run the complete reactor after review changes and record final FR/SC results in `specs/001-java-base-api/conformance-report.md` (FR-001 through FR-017, SC-001 through SC-008)
+- [ ] T064 Regenerate the complete public-signature snapshot after all user-story outputs in `tests/java-base-api-contract/src/test/resources/api-signatures/base-api.txt` and verify its deterministic diff from the initial T028 snapshot contains only approved mappings (FR-003, FR-012, FR-015, SC-003)
+- [ ] T065 Record accountable Java API maintainer approval that the generated surface and signature baseline conform to the mapping decisions approved in T012 in `specs/001-java-base-api/api-review.md` (FR-003, FR-012, FR-017, SC-008)
+- [ ] T066 Record accountable security reviewer approval of key handling, Authority structure, secret safety, and operational exclusions in `specs/001-java-base-api/security-review.md` (FR-010, FR-011, FR-014, FR-017, SC-008)
+- [ ] T067 Re-run the complete reactor after review changes and record final FR/SC results in `specs/001-java-base-api/conformance-report.md` (FR-001 through FR-017, SC-001 through SC-008)
 
 ---
 
@@ -231,6 +237,7 @@ network implementation.
   plugins, or wrapper artifacts in T002-T004.
 - Complete T012 through accountable human review before starting T013-T020 or any user-story
   implementation task.
+- Complete the T040 threat analysis before starting T041-T049.
 - Complete mapping rules before regenerating checked-in output.
 - Never hand-edit generated Java files.
 - Run the story's independent verification before its checkpoint.
@@ -244,21 +251,24 @@ network implementation.
 - After US1, US2, US3, and US4 can be assigned concurrently, except US3 consumes the stable ledger
   contract established by US1.
 - Within US2, T031-T033 and T034-T036 are parallel groups.
-- Within US3, T040-T043 and T044-T045 are parallel groups.
+- Within US3, T041-T044 and T045-T046 are parallel groups after T040 is complete.
 - Within US4, T050-T052 and T053-T054 are parallel groups.
 - T057-T060 can run concurrently after all story outputs stabilize.
 
 ## Parallel Example: User Story 3
 
 ```text
-Task T040: Create key consumer fixture in fixtures/positive/KeyContractsConsumer.java
-Task T041: Create Authority consumer fixture in fixtures/positive/AuthorityConsumer.java
-Task T042: Create negative Authority fixtures in fixtures/negative/authority/
-Task T043: Create key security contract tests in KeySecurityContractTest.java
+Task T040: Complete the key/Authority threat analysis in security-review.md
+
+After the threat analysis is complete:
+Task T041: Create key consumer fixture in fixtures/positive/KeyContractsConsumer.java
+Task T042: Create Authority consumer fixture in fixtures/positive/AuthorityConsumer.java
+Task T043: Create negative Authority fixtures in fixtures/negative/authority/
+Task T044: Create key security contract tests in KeySecurityContractTest.java
 
 After those tests fail as expected:
-Task T044: Implement KeyMapping.java
-Task T045: Implement AuthorityMapping.java
+Task T045: Implement KeyMapping.java
+Task T046: Implement AuthorityMapping.java
 ```
 
 ## Implementation Strategy

@@ -136,9 +136,12 @@ matching and prototype fixtures.
 
 ## Ownership and Lifecycle
 
-- Public values are immutable after construction.
-- Incoming arrays and collections are copied before storage; outgoing arrays are copied on every
-  access; collections are immutable snapshots and never null.
+- Generated concrete public values are immutable after construction.
+- Generated concrete values copy incoming arrays and collections before storage, copy outgoing
+  arrays on every access, and expose collections as non-null immutable snapshots.
+- Interface-backed values such as `Key`, `PublicKey`, and `PrivateKey` document byte-ownership
+  requirements and record their behavioral enforcement as deferred in the manifest. Provider TCKs
+  must verify copy-in/copy-out behavior when implementations are introduced.
 - Interfaces define no lifecycle, resource, scheduler, executor, retry, timeout, or cancellation
   behavior.
 - API values are safely shareable by construction. Implementations of operation interfaces define

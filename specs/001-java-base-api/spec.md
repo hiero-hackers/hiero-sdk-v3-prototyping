@@ -76,8 +76,9 @@ namespace and implements or consumes the exposed contracts without loading a run
 
 1. **Given** the approved base specifications, **When** the public API artifact is produced, **Then**
    every declared namespace and public element is mapped or explicitly deferred with approval.
-2. **Given** only the public API artifact, **When** an SDK component compiles against it, **Then** no
-   implementation artifact or internal package is required at compile time.
+2. **Given** the public API artifact, the Java platform, and any approved compile-time annotation
+   dependency, **When** an SDK component compiles against it, **Then** no implementation artifact or
+   internal package is required at compile time.
 3. **Given** a public signature, **When** its referenced types are inspected, **Then** it exposes no
    internal implementation type or unapproved third-party type.
 
@@ -244,7 +245,8 @@ then verify that no network request, scheduler, transport, or protocol codec is 
 - **SC-001**: An inventory audit accounts for 100% of public declarations and constraints in all
   eleven `spec/base` files, with zero silent omissions.
 - **SC-002**: At least one consumer fixture for each base namespace compiles using only the public
-  API artifact and the Java platform.
+  API artifact, the Java platform, and compile-time annotation dependencies approved through the
+  dependency-review gate, with no implementation artifact or internal package.
 - **SC-003**: Public-signature analysis reports zero references to internal implementation packages
   and zero unapproved third-party types.
 - **SC-004**: Negative contract fixtures cover 100% of one-of, sealed-variant, non-empty,
