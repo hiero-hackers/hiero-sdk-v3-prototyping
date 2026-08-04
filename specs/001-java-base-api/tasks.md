@@ -23,7 +23,7 @@ are explicitly excluded.
 
 **Purpose**: Establish a reproducible Java 21 Maven reactor without introducing SDK behavior.
 
-- [ ] T001 Complete the dependency assessment and record accountable human approval for every planned public, build, test, and wrapper dependency in `specs/001-java-base-api/dependency-review.md` before adding dependency coordinates or plugin artifacts to Maven build files (FR-014, FR-017, SC-003, SC-008)
+- [X] T001 Complete the dependency assessment and record accountable human approval for every planned public, build, test, and wrapper dependency in `specs/001-java-base-api/dependency-review.md` before adding dependency coordinates or plugin artifacts to Maven build files (FR-014, FR-017, SC-003, SC-008)
 - [ ] T002 Create the Java 21 parent reactor and pinned Maven wrapper in `pom.xml`, `mvnw`, `mvnw.cmd`, and `.mvn/wrapper/maven-wrapper.properties` (FR-012, FR-015)
 - [ ] T003 [P] Create the generator module and pin its build plugins in `tools/spec-codegen-java/pom.xml` (FR-015, FR-017)
 - [ ] T004 [P] Create the generated API and contract-test modules with JSpecify 1.0.0 and pinned JUnit/build dependencies in `java/hiero-sdk-base-api/pom.xml` and `tests/java-base-api-contract/pom.xml` (FR-012, FR-014, FR-017)

@@ -2,7 +2,7 @@
 
 **Assessment date**: 2026-08-04
 
-**Status**: Evidence complete; pending accountable human approval
+**Status**: Approved by accountable human reviewer
 
 **Gate**: No public, build, test, plugin, wrapper, or transitive dependency may be adopted until this
 review is complete. AI agents may collect evidence and make recommendations but cannot approve a
@@ -161,10 +161,10 @@ on 2026-08-04, produced the same SHA-256, and was byte-identical to the Apache-h
   [Aircompressor](https://osv.dev/vulnerability/GHSA-vx9q-rhv9-3jvg), and
   [Plexus Utils](https://osv.dev/vulnerability/GHSA-6fmv-xxpf-w3cw)
 
-## Remaining Approval Blockers
+## Approval Resolution
 
-- Record accountable decisions from the dependency reviewer, Java API maintainer, and security
-  reviewer. An AI-generated recommendation is not approval.
+- No dependency-review blockers remain. The accountable decisions below were explicitly provided by
+  the human repository owner; the AI agent only recorded those decisions.
 
 ## Approval Conditions
 
@@ -182,6 +182,6 @@ on 2026-08-04, produced the same SHA-256, and was byte-identical to the Apache-h
 
 | Role | Name | Decision | Date | Evidence or conditions |
 |---|---|---|---|---|
-| Dependency reviewer | Pending | Pending | Pending | Must review direct and complete transitive inventory |
-| Java API maintainer | Pending | Pending | Pending | Must approve JSpecify in public signatures and `requires static` JPMS metadata |
-| Security reviewer | Pending | Pending | Pending | Must approve build execution, wrapper provenance, advisory results, and leakage controls |
+| Dependency reviewer | `housniabdellatif` | Approved | 2026-08-04 | Explicit human approval of the direct and complete transitive inventory and the approval conditions above |
+| Java API maintainer | `housniabdellatif` | Approved | 2026-08-04 | Explicit human approval of JSpecify in public signatures and `requires static` JPMS metadata |
+| Security reviewer | `housniabdellatif` | Approved | 2026-08-04 | Explicit human approval of build execution, wrapper provenance, advisory results, and leakage controls |
