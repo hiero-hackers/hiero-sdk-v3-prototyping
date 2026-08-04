@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-04
 
-**Status**: Draft
+**Status**: Approved for planning on 2026-08-04
 
 **Input**: Generate a compile-only Java public API prototype for every language-neutral contract
 under `spec/base`, without providing operational SDK implementations.
