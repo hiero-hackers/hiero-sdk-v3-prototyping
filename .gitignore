@@ -1,1 +1,7 @@
 .claude/settings.local.json
+
+# Maven build output
+target/
+
+# Atomic generator staging output
+.codegen-staging/

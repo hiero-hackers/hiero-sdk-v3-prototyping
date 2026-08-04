@@ -1,0 +1,40 @@
+schemaVersion: 1
+
+generator:
+  groupId: org.hiero.sdk.v3
+  artifactId: spec-codegen-java
+  version: 0.1.0-SNAPSHOT
+
+java:
+  release: 21
+  moduleName: org.hiero.sdk.v3.base
+  packageRoot: org.hiero.sdk.v3
+
+inputs:
+  specifications:
+    - spec/base/authority.md
+    - spec/base/common.md
+    - spec/base/grpc.md
+    - spec/base/hedera.md
+    - spec/base/keys.md
+    - spec/base/ledger-config.md
+    - spec/base/ledger.md
+    - spec/base/native-token.md
+    - spec/base/proto.md
+    - spec/base/solo.md
+    - spec/base/token.md
+  guidance:
+    - guidelines/api-guideline.md
+    - guidelines/api-best-practices-java.md
+  decisions:
+    - docs/adr/0004-authority-authorization-sum-type.md
+
+output:
+  sourceDirectory: java/hiero-sdk-base-api/src/main/java
+  manifest: java/hiero-sdk-base-api/generated-api-manifest.json
+  stagingDirectory: .codegen-staging/java-base-api
+  encoding: UTF-8
+  lineEnding: LF
+  terminalNewline: true
+  ordering: canonical
+  generatedHeader: "// Generated from {sourcePath} ({declaration}); DO NOT EDIT."
