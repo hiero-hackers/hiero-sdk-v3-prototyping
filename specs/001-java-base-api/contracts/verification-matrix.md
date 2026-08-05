@@ -2,7 +2,7 @@
 
 | Requirement | Automated verification | Human gate |
 |---|---|---|
-| FR-001 | Parse/inventory all eleven files; assert 37 declared types and every source element mapped once | Review retained empty `proto` namespace |
+| FR-001 | Parse/inventory all eleven files; assert 38 declared types and every source element mapped once | Review retained empty `proto` namespace |
 | FR-002 | Package dependency graph test against `requires` edges | Approve aggregate JPMS module variance |
 | FR-003 | Manifest completeness plus reflection and signature snapshot tests | Approve deferred enforcement entries |
 | FR-004 | Nullness, immutable collection, defensive byte ownership, one-of, bound, and inheritance fixtures | Review constraints not enforceable on interfaces |

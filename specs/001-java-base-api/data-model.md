@@ -66,7 +66,7 @@ data.
 | `authority` | `org.hiero.sdk.v3.authority` | 4 | sealed sum and immutable variants |
 | `solo` | `org.hiero.sdk.v3.solo` | 1 | setting interface and identifier constant |
 
-The count is 37 source-declared types. Companion interfaces and exception/constants holders are
+The count is 38 source-declared types. Companion interfaces and exception/constants holders are
 Java mapping artifacts and are separately identified in the manifest.
 
 ### Common and Protocol

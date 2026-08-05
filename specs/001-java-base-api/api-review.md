@@ -86,4 +86,11 @@ must not fill this row on its own.
 
 | Reviewer | Decision | Date | Generated revision | Signature baseline | Deferred manifest entries | Conditions |
 |---|---|---|---|---|---|---|
-| Pending | Pending | Pending | Pending | Pending | Pending | Review occurs only after T064 |
+| `housniabdellatif` | Approved | 2026-08-05 | `935e02a3fabc58d06045f0f84913e853849bc57f` | SHA-256 `a7f92e18f61df40d874016e6cb81a160efddd246c1d2ac11371f904572f432b3` | Approved all five realized entries: `common#Page.data`/DE-002, `common#Page.next():Page<$$T>`/DE-004, `keys#Key`/DE-003, `keys#Key.bytes`/DE-003, and `keys#namespace.generatePrivateKey(KeyAlgorithm):PrivateKey`/DE-005 | Explicit human approval; no unapproved deferred-enforcement entry exists |
+
+## HBAR Source Verification (T030)
+
+- Source revision: `935e02a3fabc58d06045f0f84913e853849bc57f`
+- `spec/base/hedera.md` SHA-256: `ed604c85d01820903649649ef9761e8fff89ca45d810dcf3dfbb1d9c8c31681a`
+- Verified generated units: `TINYBAR`, `MICROBAR`, `MILLIBAR`, `HBAR`, `KILOBAR`, `MEGABAR`, and `GIGABAR`
+- Verified symbols and factors exactly match `contracts/public-api.md`.

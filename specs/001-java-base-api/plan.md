@@ -44,7 +44,7 @@ initialization.
 generation after dependencies are cached; no secret material in source, tests, diagnostics, or
 manifests; no implementation or unapproved third-party types in public signatures
 
-**Scale/Scope**: Eleven namespaces, 37 declared domain types, 6 namespace constants, all declared
+**Scale/Scope**: Eleven namespaces, 38 declared domain types, 6 namespace constants, all declared
 fields/methods/factories/constraints/errors, one generated API module, one generator module, and one
 contract-test module
 

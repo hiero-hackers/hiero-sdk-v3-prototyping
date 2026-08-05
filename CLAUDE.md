@@ -11,10 +11,10 @@ networks build on Hiero, V3 targets all of them — it is explicitly broader tha
 The current SDKs are all at version 2; **V3 is the codename for the new generation** that replaces them. V3 is
 designed from scratch with **no backward-compatibility constraints** with V2.
 
-**This repo contains specifications, not a shippable SDK.** There is no build system (no Maven/Gradle/npm/Cargo) and
-nothing compiles. The API is defined once in a **language-agnostic meta-language** and is meant to be translated into
-idiomatic implementations per language (Java, JavaScript/TypeScript, Go, Rust, Python, C++, Swift). The `.java`/`.js`
-files under `guidelines/` are **illustrative reference snippets**, not a buildable module.
+**This repo contains specifications and API prototypes, not a shippable SDK implementation.** The API is defined once
+in a **language-agnostic meta-language** and translated into idiomatic language prototypes. A Maven reactor generates
+and verifies the Java 21 base public API; it intentionally contains no operational SDK behavior. The `.java`/`.js`
+files under `guidelines/` remain illustrative reference snippets rather than production modules.
 
 ## Repository structure
 
@@ -51,6 +51,12 @@ spec/                           # The actual V3 public-API specifications, writt
     service.md (enterprise.service)
     service-account.md (enterprise.service.account)
     service-contract.md (enterprise.service.contract)
+
+tools/spec-codegen-java/        # Java schema parser, validator, mappings, renderer, CLI, and manifest writer
+java/hiero-sdk-base-api/        # Entire src/main/java tree is generated; never hand-edit it
+tests/java-base-api-contract/   # Consumer, invariant, security, JPMS, and regeneration checks
+codegen/java-base.yml           # Deterministic Java generation configuration
+specs/001-java-base-api/        # Spec Kit requirements, reviews, contracts, plan, and tasks
 ```
 
 ### How the layers relate
@@ -111,6 +117,24 @@ points to keep specs valid and consistent:
 - Note: `api-guideline.md` references a `proposals/` folder, but in this repo the specs live under `spec/`.
 - Some language guides referenced by `api-guideline.md` (cpp, ts, python, go, swift) do not exist yet — that's
   expected; only Java, Rust, and JS guides are present so far.
+
+## Java generation workflow
+
+```bash
+./mvnw -Pvalidate-java-base-api verify
+./mvnw -Pgenerate-java-base-api generate-sources
+./mvnw verify
+```
+
+- Do not edit `java/hiero-sdk-base-api/src/main/java/` or its manifest by hand. Change an authoritative source,
+  reviewed mapping, or generation configuration and regenerate.
+- Keep the API artifact implementation-free. Operational cryptography, parsing, formatting, conversion, provider
+  loading, registry state, networking, storage, scheduling, retry, and serialization do not belong in this module.
+- Preserve deterministic UTF-8/LF output, repository-relative diagnostics, mapping completeness, input/output hashes,
+  retained questions, and secret-safe provenance.
+- Never claim human approval. Mapping/API/security approvals are explicit accountable gates in
+  `specs/001-java-base-api/api-review.md` and `security-review.md`.
+- `.PVS-Studio/` is local tooling state and is unrelated to the Java generation workflow.
 
 ## Relevant skills
 
