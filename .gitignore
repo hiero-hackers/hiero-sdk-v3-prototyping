@@ -1,1 +1,4 @@
 .claude/settings.local.json
+**/GEMINI.md
+**/.agents
+**/node_modules

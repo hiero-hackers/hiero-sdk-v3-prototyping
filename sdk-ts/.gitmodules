@@ -1,0 +1,3 @@
+[submodule "src/base/internal/submodules/hiero-consensus-node"]
+	path = src/base/internal/submodules/hiero-consensus-node
+	url = https://github.com/hiero-ledger/hiero-consensus-node.git
