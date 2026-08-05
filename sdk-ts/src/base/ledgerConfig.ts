@@ -12,7 +12,6 @@ export class NotFoundError extends Error {
 
 /**
  * The full configuration to connect to a specific network.
- * @see {@link file://../../spec/base/ledger-config.md}
  */
 export interface NetworkSetting {
     readonly ledger: Network<any>;

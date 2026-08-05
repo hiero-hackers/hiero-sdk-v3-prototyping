@@ -5,7 +5,6 @@ import { PrivateKeyImpl, PublicKeyImpl, determineAlgorithm } from './internal/ke
 
 /**
  * All key types.
- * @see {@link file://../../spec/base/keys.md}
  */
 export enum KeyType {
     /** A public key */
@@ -16,7 +15,6 @@ export enum KeyType {
 
 /**
  * All supported algorithms.
- * @see {@link file://../../spec/base/keys.md}
  */
 export enum KeyAlgorithm {
     /** Edwards-curve Digital Signature Algorithm */
@@ -144,7 +142,6 @@ export class IllegalFormatError extends Error {
  * 
  * A cryptographic key is defined by a byte sequence and a cryptographic algorithm.
  * It is independent of whether the key is a public or private key.
- * @see {@link file://../../spec/base/keys.md}
  */
 export interface Key {
     /** The raw bytes of the key */
@@ -181,7 +178,6 @@ export interface Key {
  * Public key definition.
  * 
  * A public key can be used to verify signatures.
- * @see {@link file://../../spec/base/keys.md}
  */
 export interface PublicKey extends Key {
     /**
@@ -197,7 +193,6 @@ export interface PublicKey extends Key {
  * Private key definition.
  * 
  * A private key can be used to sign messages. A private key is normally generated as a random key for a specific algorithm.
- * @see {@link file://../../spec/base/keys.md}
  */
 export interface PrivateKey extends Key {
     /**
@@ -216,7 +211,6 @@ export interface PrivateKey extends Key {
 
 /**
  * A key pair containing both the public and private keys.
- * @see {@link file://../../spec/base/keys.md}
  */
 export interface KeyPair {
     /** The public key of the key pair */

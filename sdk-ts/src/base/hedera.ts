@@ -6,14 +6,12 @@ export const HEDERA_TESTNET_IDENTIFIER = "hedera-testnet";
 
 /**
  * Represents Hedera specific network settings.
- * @see {@link file://../../spec/base/hedera.md}
  */
 export interface HederaNetworkSetting extends NetworkSetting {}
 
 /**
  * Definition of the different units of HBAR, the native token of the Hedera network.
  * Inherits symbol and baseUnitFactor from NativeTokenUnit.
- * @see {@link file://../../spec/base/hedera.md}
  */
 export class HbarUnit extends BaseNativeTokenUnit {
     static readonly TINYBAR = new HbarUnit('tℏ', 1n);
@@ -31,7 +29,6 @@ export class HbarUnit extends BaseNativeTokenUnit {
 
 /**
  * HBAR, the native token of the Hedera network.
- * @see {@link file://../../spec/base/hedera.md}
  */
 export class Hbar extends BaseNativeToken<Hbar, HbarUnit> {
     constructor(amount: bigint, unit: HbarUnit = HbarUnit.HBAR) {

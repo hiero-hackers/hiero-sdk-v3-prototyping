@@ -2,7 +2,6 @@ import type { ZonedDateTime } from './ledger.js';
 
 /**
  * A unit of a native token, either the smallest indivisible unit or a named multiple of it.
- * @see {@link file://../../spec/base/native-token.md}
  */
 export interface NativeTokenUnit {
     /** Display symbol of the unit (e.g. "ℏ") */
@@ -13,7 +12,6 @@ export interface NativeTokenUnit {
 
 /**
  * An amount of a network's native token, expressed in a given unit.
- * @see {@link file://../../spec/base/native-token.md}
  */
 export interface NativeToken<Self extends NativeToken<Self, Unit>, Unit extends NativeTokenUnit> {
     /** Amount expressed in `unit` */
@@ -37,7 +35,6 @@ export interface NativeToken<Self extends NativeToken<Self, Unit>, Unit extends 
 
 /**
  * Represents the exchange rate of a native token in USD cents.
- * @see {@link file://../../spec/base/native-token.md}
  */
 export interface ExchangeRate {
     /** Expiration time of the exchange rate */

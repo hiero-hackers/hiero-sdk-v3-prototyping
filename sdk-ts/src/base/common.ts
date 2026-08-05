@@ -10,7 +10,6 @@ export class MirrorNodeError extends Error {
 
 /**
  * A paginated collection of items.
- * @see {@link file://../../spec/base/common.md}
  */
 export interface Page<T> {
     /** The list of items in the current page */

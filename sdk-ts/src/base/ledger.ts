@@ -13,7 +13,6 @@ export type ZonedDateTime = Date;
 
 /**
  * Represents a specific network instance.
- * @see {@link file://../../spec/base/ledger.md}
  */
 export interface Network<Unit extends NativeTokenUnit> {
     readonly id: Uint8Array;
@@ -23,7 +22,6 @@ export interface Network<Unit extends NativeTokenUnit> {
 
 /**
  * Abstract base for every entity identifier that lives in the (shard, realm)-space of a Hiero ledger.
- * @see {@link file://../../spec/base/ledger.md}
  */
 export interface BaseAddress {
     readonly shard: bigint;
@@ -38,7 +36,6 @@ export interface BaseAddress {
 
 /**
  * Concrete address with a single numeric selector.
- * @see {@link file://../../spec/base/ledger.md}
  */
 export interface Address extends BaseAddress {
     readonly num: bigint;
@@ -58,7 +55,6 @@ export const Address = {
 
 /**
  * 20-byte EVM address.
- * @see {@link file://../../spec/base/ledger.md}
  */
 export interface EvmAddress {
     readonly bytes: Uint8Array;
@@ -89,7 +85,6 @@ export const EvmAddress = {
 
 /**
  * Abstract subtype of BaseAddress for entities that can be addressed either by their numeric Hiero id or by a 20-byte EVM address.
- * @see {@link file://../../spec/base/ledger.md}
  */
 export interface EvmCapableAddress extends BaseAddress {
     readonly evmAddress: EvmAddress | null;
@@ -97,7 +92,6 @@ export interface EvmCapableAddress extends BaseAddress {
 
 /**
  * Identifier of a smart contract.
- * @see {@link file://../../spec/base/ledger.md}
  */
 export interface ContractId extends EvmCapableAddress {}
 
@@ -126,7 +120,6 @@ export const ContractId = {
 
 /**
  * Identifier of an account.
- * @see {@link file://../../spec/base/ledger.md}
  */
 export interface AccountId extends EvmCapableAddress {
     readonly alias: Uint8Array | null;
@@ -157,7 +150,6 @@ export const AccountId = {
 
 /**
  * Id of a transaction.
- * @see {@link file://../../spec/base/ledger.md}
  */
 export interface TransactionId {
     readonly accountId: AccountId;
@@ -195,7 +187,6 @@ export const TransactionId = {
 
 /**
  * Single IP address representation (IPv4).
- * @see {@link file://../../spec/base/ledger.md}
  */
 export interface IpAddress {
     readonly bytes: Uint8Array;
@@ -226,7 +217,6 @@ export const IpAddress = {
 
 /**
  * Represents a consensus node on a network.
- * @see {@link file://../../spec/base/ledger.md}
  */
 export interface ConsensusNode {
     readonly ip: IpAddress;
@@ -236,7 +226,6 @@ export interface ConsensusNode {
 
 /**
  * Represents a mirror node on a network.
- * @see {@link file://../../spec/base/ledger.md}
  */
 export interface MirrorNode {
     readonly restBaseUrl: string;

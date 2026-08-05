@@ -23,7 +23,6 @@ export const Writer = $protobuf.Writer;
 
 /**
  * Core protobuf namespaces exposing strict definitions compiled from the `.proto` files.
- * @see {@link file://../../spec/base/proto.md}
  */
 export const proto = $proto.proto;
 export const com = $proto.com;
