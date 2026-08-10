@@ -417,6 +417,44 @@ The narrowing rule is currently scoped to nullability only — Java code should 
 narrowings of `@@max`, `@@maxLength`, or other inherited constraints, since those are not
 part of the meta-language today.
 
+## Deprecation (`@@deprecated`)
+
+The meta-language `@@deprecated` annotation maps to Java's standard `java.lang.Deprecated` annotation. Apply
+`@Deprecated` directly to deprecated types, methods, enum constants, and constant fields. For a deprecated
+meta-language attribute, apply it to every public API element that exposes the attribute, including its getter and, when
+mutable, its setter. Record-based mappings must expose the deprecation on the generated record component/accessor.
+
+```text
+// Meta-language
+Client {
+    @@deprecated endpoint: string
+
+    @@deprecated
+    void connectLegacy()
+}
+```
+
+```java
+public final class Client {
+
+    /** @deprecated Use {@link #uri()} instead. */
+    @Deprecated
+    public String endpoint() {
+        // ...
+    }
+
+    /** @deprecated Use {@link #connect()} instead. */
+    @Deprecated
+    public void connectLegacy() {
+        // ...
+    }
+}
+```
+
+Generated Javadoc must include an `@deprecated` tag containing the explanation and replacement from the specification's
+prose. Emit plain `@Deprecated` because `@@deprecated` does not carry a shared version or removal schedule; do not invent
+values for Java's `since` or `forRemoval` elements.
+
 ## Enumerations
 
 Enumerations defined in the meta-language map directly to Java `enum` types. Enum values use `UPPER_SNAKE_CASE` as

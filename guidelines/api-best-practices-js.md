@@ -634,3 +634,22 @@ class NumericIdentifier extends Identifier {
 The narrowing rule is currently scoped to nullability only — JavaScript code should not
 invent narrowings of other meta-language constraints, since those are not part of the
 meta-language today.
+
+## Deprecation (`@@deprecated`)
+
+Map `@@deprecated` to the standard JSDoc `@deprecated` tag on the generated class, method, property, enum value, or
+constant. For a meta-language attribute exposed through accessors, tag both the getter and setter. The tag text must
+preserve the explanation and preferred replacement from the specification's prose.
+
+```javascript
+class Client {
+    /**
+     * @deprecated Use connect() instead.
+     */
+    connectLegacy() {
+        // ...
+    }
+}
+```
+
+Deprecation is documentation and tooling metadata; it must not add runtime warnings or change the element's behavior.

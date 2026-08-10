@@ -84,7 +84,8 @@ points to keep specs valid and consistent:
   `lowerCamelCase` (dots for sub-namespaces, no hyphens); constants `UPPER_SNAKE_CASE`; `@@throws` error ids
   `lowercase-kebab-case` (e.g. `not-found-error`).
 - **Generic type parameters are prefixed with `$$`** (e.g. `Page<$$T>`, `Transaction<$$Receipt extends Receipt>`).
-- **Annotations use a `@@` prefix.** Common ones: `@@immutable`, `@@nullable`, `@@default(v)`, `@@static`, `@@async`,
+- **Annotations use a `@@` prefix.** Common ones: `@@immutable`, `@@nullable`, `@@deprecated`, `@@default(v)`,
+  `@@static`, `@@async`,
   `@@streaming`, `@@throws(...)`, `@@threadSafe[(group)]`, validation (`@@min/@@max/@@minLength/...`), and type-level
   `@@oneOf(...)`, `@@oneOrNoneOf(...)`, `@@finalType`.
 - Abstract types use `abstraction`; inheritance uses `extends`; enums use `enum`.
