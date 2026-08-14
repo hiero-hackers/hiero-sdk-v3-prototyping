@@ -32,13 +32,16 @@ schema parser or code generator.
 
 ## Decisions
 
-### 1. Use a two-module Maven reactor with one publishable API artifact
+### 1. Use a self-contained two-module Maven reactor under `java/`
 
-The reactor contains:
+The Maven reactor, wrapper, build configuration, modules, tests, and Java-specific documentation all live under
+`java/`. The repository root remains specification-oriented. The Java workspace contains:
 
 - `java/hiero-sdk-base-api`: directly maintained Java public sources and the only publishable runtime artifact;
-- `tests/java-base-api-contract`: black-box compilation, signature, module, security, documentation, and source
+- `java/tests/java-base-api-contract`: black-box compilation, signature, module, security, documentation, and source
   traceability verification.
+- `java/docs/base-api`: mapping, dependency, structural-boundary, consumption, and conformance documentation.
+- `java/pom.xml`, `java/mvnw`, `java/mvnw.cmd`, and `java/.mvn`: the complete Java build entry point.
 
 There is no parser or generator module. Later implementation modules depend on the API in the normal direction.
 
@@ -139,7 +142,8 @@ Tests do not claim deferred operations work.
 2. Keep the Java 21 API and contract-test modules.
 3. Complete and approve the declaration-level mapping matrix before finalizing public signatures.
 4. Implement the directly maintained API contracts and structural value mechanics.
-5. Run consumer compilation, boundary, security, documentation, structural-body, and signature checks.
+5. Run consumer compilation, boundary, security, documentation, structural-body, and signature checks from the
+   self-contained `java/` reactor.
 6. Add operational implementation/provider modules in later OpenSpec changes.
 
 There is no production data migration. Reverting the API and test modules returns the repository to its

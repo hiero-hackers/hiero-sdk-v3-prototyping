@@ -1,7 +1,7 @@
 ## 1. Establish the Java API Build and Review Gates
 
-- [x] 1.1 Create a Java 21 Maven reactor with `java/hiero-sdk-base-api` and `tests/java-base-api-contract`, ensuring only the API module is publishable.
-- [x] 1.2 Pin the Maven wrapper and plugin versions, review JSpecify and test/build dependencies, and verify that the API has no operational runtime dependency.
+- [x] 1.1 Create a self-contained Java 21 Maven reactor at `java/` with `hiero-sdk-base-api`, `tests/java-base-api-contract`, and `docs/base-api`, ensuring only the API module is publishable.
+- [x] 1.2 Pin the Maven wrapper and plugin versions under `java/`, review JSpecify and test/build dependencies, and verify that the API has no operational runtime dependency.
 - [x] 1.3 Create and approve a source-linked mapping matrix covering every `spec/base` namespace, declaration, member, constraint, error, constant, dependency, retained question, mapping variance, and deferred behavior.
 - [x] 1.4 Classify every source operation as structural or operational and approve the structural implementation allowlist before adding method bodies.
 - [x] 1.5 Add build-output ignore rules and repository attributes appropriate for directly maintained Java sources.
@@ -39,7 +39,7 @@
 
 - [ ] 5.1 Add requirement-to-test metadata and verify every normative OpenSpec requirement maps to automated verification or accountable review.
 - [ ] 5.2 Review every mapping variance, structural implementation, deferred operation, and retained `Questions & Comments` entry.
-- [ ] 5.3 Run Javadoc checks and the full Maven reactor from a clean checkout.
+- [ ] 5.3 Run Javadoc checks and `./mvnw clean verify` from the self-contained `java/` workspace in a clean checkout.
 - [ ] 5.4 Record a final conformance report and Java API/security approval confirming operational implementation remains deferred.
 - [ ] 5.5 Document how to compile and consume the API without an implementation/provider artifact.
 - [ ] 5.6 Document direct-source ownership: changes to `spec/base` and affected Java contracts, mappings, tests, and signatures must be reviewed together.

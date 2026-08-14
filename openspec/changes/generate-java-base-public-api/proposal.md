@@ -6,7 +6,8 @@ independently, while leaving operational implementation to later contributors an
 
 ## What Changes
 
-- Add a Java 21 public API artifact covering every namespace and declaration under `spec/base`.
+- Add a self-contained Java 21 workspace under `java/`, with a public API artifact covering every namespace and
+  declaration under `spec/base`.
 - Translate the meta-language into idiomatic Java contracts, immutable structural value types, enums, exceptions,
   constants, and module/package documentation.
 - Permit implementation only where required to preserve a value's validity, immutability, equality, and deterministic
@@ -31,8 +32,9 @@ None.
 
 ## Impact
 
-- Adds a directly maintained Java API module and a contract-test module; no specification parser or code generator is
-  introduced.
+- Adds the directly maintained API module, contract-test module, build wrapper, and Java-specific documentation under
+  `java/`; no specification parser or code generator is introduced and no Java deliverable is placed at repository
+  root.
 - Establishes `spec/base/*.md`, `guidelines/api-guideline.md`, and `guidelines/api-best-practices-java.md` as the
   authoritative inputs for reviewing and maintaining the Java base API.
 - Creates the contract that later Java implementation/provider modules will implement without exposing their internal
