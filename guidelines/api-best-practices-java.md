@@ -20,8 +20,8 @@ Examples of good defensive practices:
   explicit locks. The overhead is minimal for collections that are read far more often than written.
 - **Immutable return values** — Return unmodifiable views or copies of internal collections to prevent callers from
   accidentally modifying SDK state.
-- **Validation of constraints** — Enforce `@@min`, `@@max`, `@@minLength`, `@@maxLength`, and `@@pattern` annotations
-  in constructors and setters to catch invalid data early.
+- **Validation of constraints** — Enforce `@@min`, `@@max`, `@@minLength`, `@@maxLength`, `@@pattern`, and
+  `@@urlPattern` annotations in constructors and setters to catch invalid data early.
 
 Defensive implementation does **not** mean:
 
@@ -1148,9 +1148,9 @@ public class Example {
 }
 ```
 
-The `@@min(value)`, `@@max(value)`, `@@minLength(value)`, `@@maxLength(value)`, and `@@pattern(regex)` annotations are
-all handled in the same way: Checks based on the value must be added to the constructor and setter methods.
-Attributes annotated with any of those annotations must never be set directly in the field declaration.
+The `@@min(value)`, `@@max(value)`, `@@minLength(value)`, `@@maxLength(value)`, `@@pattern(regex)`, and `@@urlPattern`
+annotations are all handled in the same way: Checks based on the value must be added to the constructor and setter
+methods. Attributes annotated with any of those annotations must never be set directly in the field declaration.
 The following example shows how to implement this annotation:
 
 ```java
@@ -1187,6 +1187,29 @@ public class Example {
     }
 }
 ```
+
+`@@urlPattern` is the one exception to "check the value against the constraint": it must **not** be implemented as a
+regex. Delegate to `java.net.URI` and assert that the result is absolute, so the SDK inherits the JDK's RFC 3986
+parsing instead of a hand-written expression:
+
+```java
+public void setRestBaseUrl(@NonNull final String restBaseUrl) {
+    Objects.requireNonNull(restBaseUrl, "restBaseUrl must not be null");
+    final URI uri;
+    try {
+        uri = new URI(restBaseUrl);
+    } catch (final URISyntaxException e) {
+        throw new IllegalArgumentException("restBaseUrl must be a valid URL: " + restBaseUrl, e);
+    }
+    if (!uri.isAbsolute() || uri.getHost() == null) {
+        throw new IllegalArgumentException("restBaseUrl must be an absolute URL with a host: " + restBaseUrl);
+    }
+    this.restBaseUrl = restBaseUrl;
+}
+```
+
+Note `java.net.URL` is **not** a substitute: its `equals` performs DNS resolution and it accepts only schemes with an
+installed handler, so `java.net.URI` is the correct parser for validation.
 
 ## Thread Safety (`@@threadSafe`)
 

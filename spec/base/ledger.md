@@ -261,7 +261,11 @@ ConsensusNode {
 
 // Represents a mirror node on a network.
 MirrorNode {
-    @@immutable restBaseUrl: string // base url of the mirror node REST API (scheme://host[:port]/api/v1)
+    // @@urlPattern makes "well-formed absolute URL" an invariant of the field, enforced wherever a
+    // MirrorNode is built rather than on the first request that uses it. mirrornode.http resolves
+    // request paths by concatenating onto this value, so both halves of every mirror-node URL are
+    // constrained and the resolved string is well-formed by construction.
+    @@immutable @@urlPattern restBaseUrl: string // base url of the mirror node REST API (scheme://host[:port]/api/v1)
 }
 
 // The zero address (0.0.0). HAPI uses this value as a clear-sentinel on update

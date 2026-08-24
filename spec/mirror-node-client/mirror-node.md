@@ -40,7 +40,7 @@ MirrorNodeClient createMirrorNodeClient(mirrorNode: MirrorNode)
 
 ```
 mirrorNode = MirrorNode(restBaseUrl: "https://mainnet.mirrornode.hedera.com/api/v1")
-client = await createMirrorNodeClient(mirrorNode)
+client = createMirrorNodeClient(mirrorNode)
 
 // Look up an contract
 contract = await client.contracts.findById(fromString("0.0.1234"))
