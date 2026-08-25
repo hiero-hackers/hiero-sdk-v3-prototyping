@@ -135,10 +135,9 @@ transaction from its own spec — do not assume state left behind by another sce
 ```
 ### `example.namespace/thing-round-trips`
 
-- **Given** a `HieroClient` connected to a solo network with a funded operator account.
-- **When** a `ThingCreateTransaction` with a valid name is submitted and the returned `ThingId` is read back with
-  a `ThingInfoQuery`.
-- **Then** both calls complete without error and the returned `ThingInfo.name` equals the submitted name.
+ - **Given** a client connected to a Solo network with a funded operator account.
+ - **When** a thing with a valid name is created and its details are subsequently retrieved.
+ - **Then** both operations complete without error and the retrieved name equals the submitted name.
 ```
 
 ## Running the tests
