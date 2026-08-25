@@ -117,6 +117,7 @@ The following annotations should be used:
   time.
 - `@@oneOrNoneOf(field1, field2[, ...])`: Exactly one of the referenced fields can be non-null/non-undefined at any
   given time or all fields are null/undefined.
+- `@@sealed(type1, type2[, ...])`: Indicates that the abstraction is sealed and its permitted subtypes are strictly restricted to the listed types, forming a closed sum type for exhaustive pattern matching.
 - `@@finalType`: Indicates that the type is final and cannot be extended.
 - `@@deprecated`: Indicates that the type is retained for compatibility but should no longer be used. See
   [Deprecation](#deprecation) for the full semantics.
@@ -164,6 +165,18 @@ Syntax example:
 abstraction Copyable {
     copy(): Copyable
 }
+```
+
+Definition of a sealed abstract type (sum type):
+
+- Use `@@sealed(Child1, Child2, ...)` before `abstraction` to restrict which types can extend it.
+- This creates a closed sum type, allowing consumers to exhaustively pattern-match the variants without a fallback case.
+- **Language mappings:** Java uses `sealed` classes/interfaces with `permits`, Rust maps this to an `enum`, and TypeScript maps this to a discriminated union type.
+
+Syntax example:
+
+```
+@@sealed(Circle, Square) abstraction Shape {}
 ```
 
 Definition of a child type:
