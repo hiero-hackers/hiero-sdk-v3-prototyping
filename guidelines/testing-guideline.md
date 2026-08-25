@@ -6,6 +6,11 @@ counterpart to [`api-guideline.md`](api-guideline.md): where the API guideline d
 
 Read this before adding a `## Testing` section to any `spec/*.md` file.
 
+Integration-test scenarios are maintained in
+[`integration-tests-scenarios/`](integration-tests-scenarios/README.md). This catalog
+defines the technology-agnostic scenario IDs and Given/When/Then behaviors that
+each SDK implements using its own test infrastructure.
+
 ## Philosophy
 
 - **Every spec owns its tests.** A specification is only complete when it says how an implementation of it can be
