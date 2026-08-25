@@ -118,6 +118,8 @@ The following annotations should be used:
 - `@@oneOrNoneOf(field1, field2[, ...])`: Exactly one of the referenced fields can be non-null/non-undefined at any
   given time or all fields are null/undefined.
 - `@@finalType`: Indicates that the type is final and cannot be extended.
+- `@@deprecated`: Indicates that the type is retained for compatibility but should no longer be used. See
+  [Deprecation](#deprecation) for the full semantics.
 
 Rules and recommendations for `@@oneOf`:
 
@@ -394,6 +396,8 @@ The following annotations should be used:
 
 - `@@immutable`: Indicates that the field is immutable and cannot be changed after creation.
 - `@@nullable`: Indicates that the field can be null or undefined (language-specific).
+- `@@deprecated`: Indicates that the attribute is retained for compatibility but should no longer be used. See
+  [Deprecation](#deprecation) for the full semantics.
 - `@@override`: Indicates that the field re-declares a field inherited from a parent type to
   tighten the parent's contract. Currently the only supported tightening is narrowing
   `@@nullable` to non-`@@nullable` — see
@@ -485,6 +489,8 @@ The following annotations should be used:
 - `@@static`: Indicates that the method belongs to the type itself and can be called without an instance.
   Typical use cases are factory methods and deserialization methods.
   For example, `@@static Transaction fromBytes(payload: bytes)`.
+- `@@deprecated`: Indicates that the method is retained for compatibility but should no longer be used. See
+  [Deprecation](#deprecation) for the full semantics.
 - `@@throws(error-type-a[, ...])`: Indicates that the method can throw an exception/error.
   The error-types should be stable identifiers, not transport-specific.
   Use lowercase-kebab for error identifiers (e.g., `not-found-error`, `parse-error`).
@@ -531,6 +537,37 @@ The following attribute annotations can be used on method parameters: `@@nullabl
 #### Method Return Types annotations
 
 The following attribute annotations can be used on method return types: `@@nullable`
+
+### Deprecation
+
+The `@@deprecated` annotation marks a public API element that remains available for compatibility but should no longer
+be used in new code. It is a marker annotation and takes no arguments:
+
+```
+@@deprecated
+LegacyClient {
+    @@deprecated endpoint: string
+
+    @@deprecated
+    void connectLegacy()
+}
+```
+
+`@@deprecated` may annotate a complex type, enumeration, enum value, attribute, method, or constant. It must not annotate
+a method parameter, return type, namespace, `requires` declaration, or generic type parameter.
+
+Deprecation does not change an element's type, behavior, visibility, validation rules, or compatibility guarantees. A
+deprecated element remains part of the public API and must continue to satisfy its documented contract. Removing it is a
+separate, explicitly approved breaking change.
+
+The annotation applies to the declaration on which it appears; it is not implicitly copied to a child type or an
+overriding declaration. An inherited member still refers to its original deprecated declaration, while a newly declared
+override must carry `@@deprecated` explicitly when that override is also deprecated.
+
+The prose immediately preceding or following a deprecated declaration should explain why it is deprecated and identify
+the preferred replacement when one exists. Versioning and removal schedules remain prose because this meta-language does
+not currently define a shared SDK version model. Concrete language bindings must emit their idiomatic deprecation marker
+and preserve the explanation in generated API documentation.
 
 ### Namespace
 
