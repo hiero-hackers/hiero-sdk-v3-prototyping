@@ -101,3 +101,21 @@ NftService createService(session: Session)
   [ADR-0004](../../docs/adr/0004-authority-authorization-sum-type.md) and [`authority.md`](../base/authority.md).
 - Open option: simple single-key convenience overloads taking a `PublicKey` directly could be added later if the
   enterprise layer wants extra ergonomics for the common single-signer case.
+
+We should have immutable data objects as input params for the "create" methods.
+That would allow full flexibility and we only need 1 method with such data object + a hand full of convenience methods.
+The following code shows how it could look like in Java:
+
+
+```
+NonFungibleTokenDef def = NonFungibleTokenDef.builder()
+    .name("Nft Tkens")
+    .symbol("NT")
+    .metadata(bytes)
+    .supplyKey(minterKey)
+    .freezeKey(freezeKey)
+    .pauseKey(pasueKey)
+    .build();
+
+NftMetadata meta = nftClient.createNftType(def);
+```
