@@ -71,3 +71,10 @@ FungibleTokenService createService(session: Session)
   [ADR-0004](../../docs/adr/0004-authority-authorization-sum-type.md) and [`authority.md`](../base/authority.md).
 - Open option: simple single-key convenience overloads taking a `PublicKey` directly could be added later if the
   enterprise layer wants extra ergonomics for the common single-signer case.
+
+We need better "annotation" support to define ranges of params. For example:
+
+```
+@@throws(service-error) @@positiveValue int64 mintToken(tokenId: Address, @@positiveValue amount: int64)
+```
+Here `@@positiveValue` is added at 2 positions to define a better restriction.
