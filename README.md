@@ -60,6 +60,31 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | `spec/consensus-node-client/` | Low-level client: build, sign, and execute transactions (incl. an SPI for custom services) |
 | `spec/mirror-node-client/` | Querying the Hiero Mirror Node REST API |
 | `spec/enterprise/` | High-level service layer for easy use and framework integration |
+| `tools/spec-codegen-java/` | Java 21 specification parser, validator, mapper, renderer, and provenance generator |
+| `java/hiero-sdk-base-api/` | Generated, implementation-free Java base public API prototype |
+| `tests/java-base-api-contract/` | Java consumer, security, determinism, JPMS, and conformance tests |
+
+## Java base API prototype
+
+The Java prototype is generated from all eleven `spec/base` namespaces. It contains public
+interfaces, immutable structural values, enums, exceptions, constants, and body-free operation
+contracts. It contains no provider, cryptography, parser, formatter, registry, transport, network,
+storage, or scheduling implementation.
+
+```bash
+./mvnw -Pvalidate-java-base-api verify
+./mvnw -Pgenerate-java-base-api generate-sources
+./mvnw verify
+```
+
+Everything under `java/hiero-sdk-base-api/src/main/java/` is generated and begins with a
+`DO NOT EDIT` header. Change `spec/base`, the reviewed mapping code under
+`tools/spec-codegen-java`, or `codegen/java-base.yml`, then regenerate. The adjacent
+`generated-api-manifest.json` records Git/input/output hashes, source-to-Java mappings, retained
+questions, and approved deferred-enforcement obligations without timestamps or host metadata.
+
+Key, Authority, dependency, mapping-variance, and deferred-enforcement changes require the human
+review gates documented under `specs/001-java-base-api/`.
 
 ## Writing specifications
 
@@ -83,5 +108,5 @@ V3 covers all Hiero SDKs: **Java, JavaScript / TypeScript, Go, Rust, Python, C++
 
 ## Status
 
-Early prototype. The API surface, namespaces, and open questions (tracked in each spec's
-`## Questions & Comments` section) are still evolving and subject to change.
+Early prototype. The API surface, namespaces, and open questions remain subject to change. The Java
+base API is executable conformance evidence, not a shippable SDK implementation.
