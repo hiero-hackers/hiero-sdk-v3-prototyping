@@ -427,6 +427,13 @@ The following annotations should be used:
   at the SDK level.
 - `@@pattern(regex)`: Indicates a regex pattern that the string field must match. Should be included if the value must
   be enforced at the SDK level.
+- `@@urlPattern`: Indicates that the string field must hold a syntactically valid, absolute URL (scheme + authority).
+  Deliberately **not** expressed as `@@pattern(regex)`: RFC 3986 URL syntax has no regex form that is both correct and
+  readable, and the few that circulate behave differently across regex flavours. Every target language already ships a
+  URL parser — `java.net.URI` (Java), the WHATWG `URL` (JS/TS), `url::Url` (Rust), `net/url` (Go), `URL` (Swift),
+  `urllib.parse` (Python) — that is far better tested than any expression we could write, so a binding enforces this
+  annotation by delegating to its native parser rather than by matching a pattern. Should be included if the value must
+  be enforced at the SDK level.
 - `@@threadSafe[(groupName)]`: Indicates that the attribute's accessor (getter and, if mutable, setter) can be called
   concurrently by the SDK and must be implemented in a thread-safe manner. The optional `groupName` parameter groups
   attributes (and methods) whose accessors can be called concurrently with each other. See the
@@ -545,7 +552,7 @@ mutable objects if they choose to share them across threads.
 #### Method Parameter annotations
 
 The following attribute annotations can be used on method parameters: `@@nullable`, `@@min(value)`, `@@max(value)`,
-`@@minLength(value)`, `@@maxLength(value)`, `@@pattern(regex)`
+`@@minLength(value)`, `@@maxLength(value)`, `@@pattern(regex)`, `@@urlPattern`
 
 #### Method Return Types annotations
 

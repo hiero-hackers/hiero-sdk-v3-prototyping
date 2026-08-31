@@ -11,6 +11,7 @@ It covers accounts, tokens, NFTs, transactions, topics, contracts, and network-l
 namespace mirrornode
 
 requires {MirrorNode} from ledger
+requires {MirrorNodeHttpClient} from mirrornode.http
 requires {AccountRepository} from mirrornode.account
 requires {ContractRepository} from mirrornode.contract
 requires {NetworkRepository} from mirrornode.network
@@ -26,7 +27,8 @@ MirrorNodeClient {
     @@immutable nft: NftRepository
     @@immutable token: TokenRepository
     @@immutable topic: TopicRepository
-    @@immutable transaction: TransactionRepository    
+    @@immutable transaction: TransactionRepository
+    @@immutable mirrorNodeHttpClient: MirrorNodeHttpClient
 }
 
 @@static
@@ -38,7 +40,7 @@ MirrorNodeClient createMirrorNodeClient(mirrorNode: MirrorNode)
 
 ```
 mirrorNode = MirrorNode(restBaseUrl: "https://mainnet.mirrornode.hedera.com/api/v1")
-client = await createMirrorNodeClient(mirrorNode)
+client = createMirrorNodeClient(mirrorNode)
 
 // Look up an contract
 contract = await client.contracts.findById(fromString("0.0.1234"))
