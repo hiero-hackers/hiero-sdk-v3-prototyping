@@ -1,0 +1,29 @@
+{
+  "name": "hiero-sdk-v3",
+  "version": "1.0.0",
+  "description": "A prototyping ground for the **next generation of client SDKs (\"V3\")** for the [Hiero](https://hiero.org) project under Linux Foundation Decentralized Trust (LFDT). Since Hedera and other networks build on Hiero, V3 is designed for the whole ecosystem — not just Hedera.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:proto": "npx pbjs -t static-module -w es6 -p src/base/internal/proto-src --force-long --no-beautify --no-convert --no-delimited --no-verify -o src/base/internal/generated-proto.js src/base/internal/proto-src/*.proto && npx pbts -o src/base/internal/generated-proto.d.ts src/base/internal/generated-proto.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "protobufjs-cli": "^2.6.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  },
+  "type": "module",
+  "dependencies": {
+    "@noble/curves": "^2.2.0",
+    "long": "^5.3.2",
+    "protobufjs": "^8.7.1"
+  }
+}
