@@ -5,7 +5,8 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "generate-protos": "pbjs -t static-module -w es6 -o src/base/internal/proto/proto.js src/base/internal/proto-src/*.proto && pbts -o src/base/internal/proto/proto.d.ts src/base/internal/proto/proto.js"
   },
   "keywords": [],
   "author": "",
@@ -13,8 +14,10 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.4.1",
+    "@vitest/coverage-v8": "^4.1.11",
     "eslint": "^10.9.1",
     "prettier": "^3.9.6",
+    "protobufjs-cli": "^2.7.0",
     "typescript": "^7.0.2",
     "typescript-eslint": "^8.69.0",
     "vitest": "^4.1.11"
@@ -27,6 +30,8 @@
     "./enterprise": "./dist/enterprise/index.js"
   },
   "dependencies": {
-    "@noble/curves": "^2.4.0"
+    "@grpc/grpc-js": "^1.14.4",
+    "@noble/curves": "^2.4.0",
+    "protobufjs": "^8.8.0"
   }
 }

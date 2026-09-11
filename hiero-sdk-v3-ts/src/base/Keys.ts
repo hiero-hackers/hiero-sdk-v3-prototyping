@@ -18,8 +18,9 @@ export interface KeyEncoding {
   decode(keyType: KeyType, value: string): Uint8Array;
 }
 
-export interface KeyContainer {
-  supportsType(type: KeyType): boolean;
+export enum KeyContainer {
+  PKCS8 = 'PKCS8',
+  SPKI = 'SPKI'
 }
 
 export interface ByteImportEncoding {
@@ -42,7 +43,6 @@ export interface Key {
   toBytes(container: KeyFormat): Uint8Array;
   toString(container: KeyFormat): string;
 }
-import { randomBytes } from "./crypto/random.js";
 
 export interface PublicKey extends Key {
   readonly type: KeyType.PUBLIC;
@@ -60,10 +60,56 @@ export interface KeyPair {
   readonly privateKey: PrivateKey;
 }
 
-import { ed25519 } from '@noble/curves/ed25519.js';
-import { secp256k1 } from '@noble/curves/secp256k1.js';
-import { Ed25519PrivateKey, Ed25519PublicKey } from './crypto/Ed25519.js';
-import { EcdsaPrivateKey, EcdsaPublicKey } from './crypto/Ecdsa.js';
+import { randomBytes } from "./internal/crypto/random.js";
+import { Ed25519PrivateKey, Ed25519PublicKey } from './internal/crypto/Ed25519.js';
+import { EcdsaPrivateKey, EcdsaPublicKey } from './internal/crypto/Ecdsa.js';
+import { decodePem } from './internal/crypto/PemEncoding.js';
+import { unwrapDer } from './internal/crypto/DerEncoding.js';
+
+export const DER_ENCODING: KeyEncoding = {
+  rawFormat: RawFormat.BYTES,
+  decode: (type, value) => {
+    // DER is bytes, so decode from string doesn't make sense per se, but let's assume hex if requested
+    const arr = new Uint8Array(value.length / 2);
+    for (let i = 0; i < arr.length; i++) {
+      arr[i] = parseInt(value.substring(i * 2, i * 2 + 2), 16);
+    }
+    return arr;
+  }
+};
+
+export const PEM_ENCODING: KeyEncoding = {
+  rawFormat: RawFormat.STRING,
+  decode: (type, value) => decodePem(value, type)
+};
+
+export const PKCS8_WITH_DER: KeyFormat = {
+  container: KeyContainer.PKCS8,
+  encoding: DER_ENCODING,
+  supportsType: (type) => type === KeyType.PRIVATE,
+  decode: (type, value) => DER_ENCODING.decode(type, value)
+};
+
+export const SPKI_WITH_DER: KeyFormat = {
+  container: KeyContainer.SPKI,
+  encoding: DER_ENCODING,
+  supportsType: (type) => type === KeyType.PUBLIC,
+  decode: (type, value) => DER_ENCODING.decode(type, value)
+};
+
+export const PKCS8_WITH_PEM: KeyFormat = {
+  container: KeyContainer.PKCS8,
+  encoding: PEM_ENCODING,
+  supportsType: (type) => type === KeyType.PRIVATE,
+  decode: (type, value) => PEM_ENCODING.decode(type, value)
+};
+
+export const SPKI_WITH_PEM: KeyFormat = {
+  container: KeyContainer.SPKI,
+  encoding: PEM_ENCODING,
+  supportsType: (type) => type === KeyType.PUBLIC,
+  decode: (type, value) => PEM_ENCODING.decode(type, value)
+};
 
 export function generatePrivateKey(algorithm: KeyAlgorithm): PrivateKey {
   if (algorithm === KeyAlgorithm.ED25519) {
@@ -93,12 +139,42 @@ export function createPublicKeyFromRawBytes(algorithm: KeyAlgorithm, rawBytes: U
   }
 }
 
+function tryUnwrapDer(data: Uint8Array, type: KeyType, container: KeyContainer): { raw: Uint8Array, alg: KeyAlgorithm } {
+  try {
+    return { raw: unwrapDer(data, KeyAlgorithm.ED25519, type, container), alg: KeyAlgorithm.ED25519 };
+  } catch (e) {}
+  try {
+    return { raw: unwrapDer(data, KeyAlgorithm.ECDSA, type, container), alg: KeyAlgorithm.ECDSA };
+  } catch (e) {}
+  throw new Error('illegal-format');
+}
+
 export function createPrivateKey(value: string | Uint8Array, container?: KeyFormat): PrivateKey {
-  // stub implementation for abstract factory
-  throw new Error('Not implemented completely');
+  if (typeof value === 'string') {
+    const format = container ?? PKCS8_WITH_PEM;
+    if (format.encoding.rawFormat !== RawFormat.STRING) throw new Error('illegal-format');
+    const derBytes = format.decode(KeyType.PRIVATE, value);
+    const { raw, alg } = tryUnwrapDer(derBytes, KeyType.PRIVATE, format.container);
+    return createPrivateKeyFromRawBytes(alg, raw);
+  } else {
+    const format = container ?? PKCS8_WITH_DER;
+    if (format.encoding.rawFormat !== RawFormat.BYTES) throw new Error('illegal-format');
+    const { raw, alg } = tryUnwrapDer(value, KeyType.PRIVATE, format.container);
+    return createPrivateKeyFromRawBytes(alg, raw);
+  }
 }
 
 export function createPublicKey(value: string | Uint8Array, container?: KeyFormat): PublicKey {
-  // stub implementation for abstract factory
-  throw new Error('Not implemented completely');
+  if (typeof value === 'string') {
+    const format = container ?? SPKI_WITH_PEM;
+    if (format.encoding.rawFormat !== RawFormat.STRING) throw new Error('illegal-format');
+    const derBytes = format.decode(KeyType.PUBLIC, value);
+    const { raw, alg } = tryUnwrapDer(derBytes, KeyType.PUBLIC, format.container);
+    return createPublicKeyFromRawBytes(alg, raw);
+  } else {
+    const format = container ?? SPKI_WITH_DER;
+    if (format.encoding.rawFormat !== RawFormat.BYTES) throw new Error('illegal-format');
+    const { raw, alg } = tryUnwrapDer(value, KeyType.PUBLIC, format.container);
+    return createPublicKeyFromRawBytes(alg, raw);
+  }
 }
