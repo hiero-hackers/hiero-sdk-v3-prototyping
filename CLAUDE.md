@@ -27,6 +27,15 @@ guidelines/
   java-files/                   # Illustrative Java reference implementations (streaming, thread-safety, etc.)
   js-files/                     # Illustrative JS reference snippets
 
+openspec-common-delta-changes/  # Plain language-neutral feature proposals and specifications (not an OpenSpec root)
+  changes/
+    add-common-pagination-public-api/
+      proposal.md              # Shared motivation and scope used by every SDK
+      spec.md                  # Authoritative Page<$$T> behavior copied into SDK-specific OpenSpec changes
+
+sdk-java/openspec/             # Java-only OpenSpec root
+sdk-ts/openspec/               # TypeScript-only OpenSpec root
+
 spec/                           # The actual V3 public-API specifications, written in the meta-language
   base/                         # Foundational namespaces shared by everything
     common.md (common)          #   Page<$$T> and other shared types
