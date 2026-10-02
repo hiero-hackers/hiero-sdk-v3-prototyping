@@ -94,9 +94,9 @@ validator):
 
 ## Current findings on `spec/`
 
-`validate --summary --min-severity=warning spec` reports 7 errors (no syntax errors), all `collection.nullable` on
-update transactions and one mirror-node type, where `null` currently means "leave unchanged" — this conflicts with
-the guideline rule "never define nullable collections" and needs a design decision.
+`validate --summary --min-severity=warning spec` reports 6 errors (no syntax errors), all `collection.nullable` on
+update transactions and `@@oneOf` payloads, where `null` currently means "not set" — this conflicts with
+the guideline rule "never define nullable collections" and needs a design decision (tracked in `TODO.md` → Meta-language).
 
 ## Tests
 

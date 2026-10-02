@@ -33,6 +33,40 @@ Open follow-up tasks for the V3 SDK prototyping effort. See [`CLAUDE.md`](CLAUDE
   - Go: a maintained slice of the constant values
   - C++: a manually maintained array / generated table
 
+## Meta-language
+
+- [ ] **Decide how optional collections ("not set") are modelled — `@@nullable` collections vs. guideline rule.**
+  The guideline rule "Never define nullable collections" is too broad: it is meant for data a caller *receives*
+  (query results, receipts, return values), where `null` and `[]` would both mean "nothing". In optional *input*
+  fields, `null` means "not set" and is distinct from any value — exactly like every other `@@nullable` field in the
+  same type. Two guideline rules even contradict each other: `@@oneOf` requires all listed fields to be `@@nullable`,
+  but collections must never be `@@nullable`. The validator reports these cases as `collection.nullable` (6 errors
+  on `spec/`, expected until this is decided):
+  - Update semantics ("`null` = leave unchanged"):
+    `spec/consensus-node-admin-client/transactions-nodes.md` — `NodeUpdateTransaction.gossipEndpoints`,
+    `NodeUpdateTransaction.serviceEndpoints`
+  - `@@oneOf` alternatives: `spec/consensus-node-client/transactions-tokens-management.md` — `TokenWipeTransaction.serials`;
+    `spec/consensus-node-client/transactions-tokens.md` — `TokenMintTransaction.metadata`,
+    `TokenBurnTransaction.serials`; `spec/consensus-node-client/transactions-accounts.md` — `NftAllowance.serials`
+
+  Options discussed so far:
+  - **Rejected:** "an empty collection means not set". It hides a second meaning in `[]` that is only visible in the
+    documentation.
+  - **A — scope the rule and make the exceptions explicit:** collections may be `@@nullable` (a) as members of a
+    `@@oneOf` / `@@oneOrNoneOf` group (`null` = alternative not chosen) and (b) in types annotated with a new
+    type-level annotation `@@partialUpdate` (`null` on any `@@nullable` field = leave unchanged; today this is only a
+    comment on `NodeUpdateTransaction`). All other collections stay strictly non-nullable. Requires: guideline text,
+    `@@partialUpdate` in grammar / `KnownAnnotation` / validator, and annotating all update transactions in `spec/`
+    (`AccountUpdate`, `TokenUpdate`, `TopicUpdate`, `FileUpdate`, `NodeUpdate`, ... — list to be confirmed).
+  - **B — explicit types instead of `null`:** sealed payload types for the `@@oneOf` cases (e.g.
+    `@@sealed(FungibleBurn, NftBurn) abstraction BurnPayload`) and an update wrapper type for update fields. Fully
+    type-safe, but adds types per transaction and moves further away from HAPI; essentially replaces `@@oneOf`.
+
+  Facts to keep in mind: HAPI `repeated` fields (proto3) carry no presence information, and for
+  `NodeUpdateTransactionBody` the endpoint lists "MUST NOT be empty" and "If set, the new list SHALL replace the
+  existing list" (`services/node_update.proto`). Whatever is chosen, a future field that must distinguish "clear"
+  from "leave unchanged" needs an explicit type (e.g. `Unchanged` / `Replace` / `Clear`), not `null`.
+
 ## Spec follow-ups
 
 These surfaced during the migration to the explicit `requires {Type} from namespace` import syntax. Because the new

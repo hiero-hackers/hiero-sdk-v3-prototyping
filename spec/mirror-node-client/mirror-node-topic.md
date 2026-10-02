@@ -23,7 +23,7 @@ Topic {
     @@immutable deleted: bool
     @@immutable memo: string
     @@immutable fixedFees: list<FixedFee>
-    @@immutable @@nullable feeExemptAuthorities: list<Authority>
+    @@immutable feeExemptAuthorities: list<Authority>   // empty if no authority is exempt from the custom fees
     @@immutable fromTimestamp: zonedDateTime
     @@immutable toTimestamp: zonedDateTime
 }
