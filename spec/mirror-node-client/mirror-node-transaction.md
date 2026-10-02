@@ -2,6 +2,12 @@
 
 ## Description
 
+Transaction types are modelled like `consensusnode.transactions.TransactionStatus`: `TransactionType` is an
+abstraction that carries the Mirror Node REST wire value (`protocolName`), and `BasicTransactionType` enumerates the
+types known to the SDK. A type that the SDK does not know yet (e.g. from a service added to the network later) is
+returned as a `TransactionType` that carries the received `protocolName`, so no information is lost and the value
+can be used as a filter again. There is no `UNKNOWN` value.
+
 ## API Schema
 
 ```
@@ -10,10 +16,15 @@ requires {AccountId, MirrorNode, TransactionId} from ledger
 requires {NftTransfer, StakingRewardTransfer, TokenTransfer, Transfer} from mirrornode.common
 requires {Page} from common
 
-// All known transaction types. Each carries a protocolName matching the REST API wire value.
-//TODO: That must be changed in future to make new services pluggable.
-// protocolName values are the `TransactionTypes` enum of the Mirror Node REST OpenAPI spec.
-enum TransactionType(protocolName: string) {
+// The type of a transaction as reported by the Mirror Node. Open for types unknown to the SDK, so that new
+// services stay usable without an SDK update.
+abstraction TransactionType {
+    @@immutable protocolName: string   // the REST API wire value, e.g. "CRYPTOTRANSFER"
+}
+
+// The transaction types known to the SDK. protocolName values are the `TransactionTypes` enum of the Mirror Node
+// REST OpenAPI spec.
+enum BasicTransactionType(protocolName: string) extends TransactionType {
     ACCOUNT_CREATE("CRYPTOCREATEACCOUNT")
     ACCOUNT_DELETE("CRYPTODELETE")
     ACCOUNT_UPDATE("CRYPTOUPDATEACCOUNT")
@@ -23,12 +34,10 @@ enum TransactionType(protocolName: string) {
     TOKEN_CREATE("TOKENCREATION")
     TOKEN_MINT("TOKENMINT")
     TOKEN_BURN("TOKENBURN")
-    TOKEN_TRANSFER      // open: the Mirror Node API has no own type for token transfers (part of CRYPTOTRANSFER)
     CONTRACT_CREATE("CONTRACTCREATEINSTANCE")
     CONTRACT_CALL("CONTRACTCALL")
     ETHEREUM("ETHEREUMTRANSACTION")
     // not complete yet: the full list is to be derived from the Mirror Node OpenAPI spec
-    UNKNOWN             // open: no wire value; fallback for types unknown to the SDK
 }
 
 enum TransactionResult {
@@ -86,8 +95,3 @@ abstraction TransactionRepository {
 ```
 
 ## Questions & Comments
-
-- **`TransactionType.TOKEN_TRANSFER` and `TransactionType.UNKNOWN` have no `protocolName`.** The `TransactionTypes`
-  enum of the Mirror Node REST OpenAPI spec has no own value for token transfers (they are part of `CRYPTOTRANSFER`)
-  and no `UNKNOWN` value. Should `TOKEN_TRANSFER` be removed, and should `UNKNOWN` become a `@@nullable` protocolName
-  (or be modelled differently, e.g. as an SDK-side fallback outside the enum)?

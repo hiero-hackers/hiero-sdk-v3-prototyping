@@ -94,12 +94,9 @@ validator):
 
 ## Current findings on `spec/`
 
-`validate --summary --min-severity=warning spec` reports 9 errors (no syntax errors):
-
-- 7× `collection.nullable` on update transactions and one mirror-node type, where `null` currently means "leave
-  unchanged" — conflicts with the guideline rule "never define nullable collections"; needs a design decision.
-- 2× `enum.argument-count` in `mirror-node-client/mirror-node-transaction.md`: `TransactionType.TOKEN_TRANSFER` and
-  `UNKNOWN` have no wire value in the Mirror Node OpenAPI spec (open question in that spec).
+`validate --summary --min-severity=warning spec` reports 7 errors (no syntax errors), all `collection.nullable` on
+update transactions and one mirror-node type, where `null` currently means "leave unchanged" — this conflicts with
+the guideline rule "never define nullable collections" and needs a design decision.
 
 ## Tests
 
