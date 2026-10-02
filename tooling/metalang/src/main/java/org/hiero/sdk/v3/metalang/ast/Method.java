@@ -10,13 +10,15 @@ import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
  * @param name          the method name
  * @param annotations   the annotations (incl. return-type annotations such as {@code @@nullable})
  * @param returnType    the return type ({@link TypeRef.Void} if none)
+ * @param typeParameters the generic type parameters declared by the method (empty if none)
  * @param parameters    the parameters
  * @param syntax        the syntactic form
  * @param documentation the attached comment text (may be empty)
  * @param location      the source location
  */
-public record Method(String name, List<Annotation> annotations, TypeRef returnType, List<Parameter> parameters,
-                     MethodSyntax syntax, String documentation, SourceLocation location) implements Member {
+public record Method(String name, List<Annotation> annotations, TypeRef returnType,
+                     List<TypeParameter> typeParameters, List<Parameter> parameters, MethodSyntax syntax,
+                     String documentation, SourceLocation location) implements Member {
 
     /**
      * Creates a method.
@@ -24,6 +26,7 @@ public record Method(String name, List<Annotation> annotations, TypeRef returnTy
      * @param name          the name
      * @param annotations   the annotations
      * @param returnType    the return type
+     * @param typeParameters the generic type parameters
      * @param parameters    the parameters
      * @param syntax        the syntactic form
      * @param documentation the documentation
@@ -33,6 +36,7 @@ public record Method(String name, List<Annotation> annotations, TypeRef returnTy
         Objects.requireNonNull(name, "name must not be null");
         annotations = List.copyOf(Objects.requireNonNull(annotations, "annotations must not be null"));
         Objects.requireNonNull(returnType, "returnType must not be null");
+        typeParameters = List.copyOf(Objects.requireNonNull(typeParameters, "typeParameters must not be null"));
         parameters = List.copyOf(Objects.requireNonNull(parameters, "parameters must not be null"));
         Objects.requireNonNull(syntax, "syntax must not be null");
         Objects.requireNonNull(documentation, "documentation must not be null");
@@ -47,6 +51,15 @@ public record Method(String name, List<Annotation> annotations, TypeRef returnTy
      */
     public String signature() {
         return name + "(" + String.join(",", parameters.stream().map(p -> erasure(p.type())).toList()) + ")";
+    }
+
+    /**
+     * Returns whether the method declares its own generic type parameters.
+     *
+     * @return {@code true} for a generic method
+     */
+    public boolean isGeneric() {
+        return !typeParameters.isEmpty();
     }
 
     private static String erasure(final TypeRef type) {

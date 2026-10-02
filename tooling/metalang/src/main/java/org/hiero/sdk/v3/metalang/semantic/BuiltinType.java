@@ -111,6 +111,17 @@ public record BuiltinType(String name, Category category, int arity, int bits) {
     }
 
     /**
+     * Returns whether the given number of type arguments is valid for this type. {@code type} accepts
+     * zero arguments (any type) or one argument ({@code type<T>}: T or one of its subtypes).
+     *
+     * @param count the number of type arguments
+     * @return {@code true} if valid
+     */
+    public boolean acceptsArity(final int count) {
+        return count == arity || (category == Category.TYPE && count == 1);
+    }
+
+    /**
      * Returns whether the type is a numeric type.
      *
      * @return {@code true} for integers, double and decimal

@@ -49,7 +49,7 @@ spec/                           # The actual V3 public-API specifications, writt
     proto.md (proto)
   consensus-node-client/        # Talking to the consensus node
     client.md (consensusnode.client)              # HieroClient, Account, TransactionSigner
-    transactions.md (consensusnode.transactions)  # Transaction<$$Receipt>, Response, Receipt, Record
+    transactions.md (consensusnode.transactions)  # Transaction<$$Receipt, $$Self>, Response, Receipt, Record
     transactions-accounts.md (consensusnode.transactions.accounts)
     transactions-spi.md (consensusnode.transactions.spi)   # SPI for custom services/transaction types
     proto.md / proto-accounts.md (consensusnode.proto[.account])

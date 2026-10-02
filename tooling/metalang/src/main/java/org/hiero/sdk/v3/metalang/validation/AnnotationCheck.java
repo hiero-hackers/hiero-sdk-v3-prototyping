@@ -114,6 +114,12 @@ final class AnnotationCheck implements Check {
                         annotation.location());
             }
             checkArguments(known.get(), annotation, out);
+            if (annotation.parenthesized() && annotation.arguments().isEmpty()
+                    && (known.get().arguments() == KnownAnnotation.Arguments.NONE
+                    || known.get().arguments() == KnownAnnotation.Arguments.OPTIONAL_NAME)) {
+                out.report(Rule.ANNOTATION_EMPTY_PARENTHESES, "Write '@@" + annotation.name() + "' instead of '@@"
+                        + annotation.name() + "()'", annotation.location());
+            }
         }
     }
 

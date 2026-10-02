@@ -89,3 +89,26 @@ fn main() {
    wraps live in the same `impl` block — no need for further indirection.
 
 The narrowing rule is currently scoped to nullability only.
+
+## Generic Methods and `@@finalMethod`
+
+A `@@static` [generic method](api-guideline.md#generic-methods) maps to a generic associated function
+(`fn get_response<R: Receipt>(...)`). A generic **instance** method is always `@@finalMethod` in the meta-language and
+maps to a method of an *extension trait* with a blanket implementation, so that it stays callable on `dyn Trait` and
+cannot be overridden by implementations:
+
+```rust
+pub trait Obj {
+    // object-safe methods of the abstraction
+}
+
+pub trait ObjExt: Obj {
+    fn convert<T>(&self, x: X) -> T {
+        // implemented in terms of the methods of Obj
+    }
+}
+
+impl<O: Obj + ?Sized> ObjExt for O {}
+```
+
+A non-generic `@@finalMethod` on an abstraction uses the same extension-trait pattern.

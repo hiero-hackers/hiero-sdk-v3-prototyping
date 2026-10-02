@@ -3,7 +3,6 @@ package org.hiero.sdk.v3.metalang.ast;
 import java.util.List;
 import java.util.Objects;
 import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
-import org.jspecify.annotations.Nullable;
 
 /**
  * A top-level declaration of a namespace.
@@ -182,18 +181,15 @@ public sealed interface Declaration extends Annotated {
     }
 
     /**
-     * A namespace-level function. Not described by the guideline yet; specs use it mainly for
-     * {@code @@static} factories. With an {@code owner} ({@code Owner.name(...)}) it is attached to a
-     * type declared elsewhere in the namespace.
+     * A namespace-level function (must be {@code @@static}, see guideline section "Namespace-level
+     * functions").
      *
-     * @param owner    the owner type name or {@code null}
-     * @param method   the function signature
+     * @param method the function signature
      */
-    record Function(@Nullable String owner, Method method) implements Declaration {
+    record Function(Method method) implements Declaration {
         /**
          * Creates a function.
          *
-         * @param owner  the owner type or {@code null}
          * @param method the signature
          */
         public Function {
@@ -202,7 +198,7 @@ public sealed interface Declaration extends Annotated {
 
         @Override
         public String name() {
-            return owner == null ? method.name() : owner + "." + method.name();
+            return method.name();
         }
 
         @Override

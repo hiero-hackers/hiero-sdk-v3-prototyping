@@ -115,6 +115,8 @@ class SchemaParserTest {
             assertThat(oneOf.arguments()).extracting(Literal::text).containsExactly("email", "phone");
             assertThat(type.fields()).extracting(Field::name).containsExactly("email", "phone");
             assertThat(type.fields().getFirst().hasAnnotation("nullable")).isTrue();
+            assertThat(oneOf.parenthesized()).isTrue();
+            assertThat(type.fields().getFirst().annotation("nullable").orElseThrow().parenthesized()).isFalse();
             final Literal pattern = type.fields().get(1).annotation("pattern").orElseThrow().arguments().getFirst();
             assertThat(pattern).isInstanceOf(Literal.StringLiteral.class);
             assertThat(((Literal.StringLiteral) pattern).value()).isEqualTo("^/[^\\s]*$");
@@ -141,6 +143,32 @@ class SchemaParserTest {
             assertThat(type.methods().getFirst().annotation("throws").orElseThrow().arguments())
                     .extracting(Literal::text).containsExactly("not-found-error", "parse-error");
             assertThat(type.methods().getFirst().signature()).isEqualTo("fetch(string)");
+        }
+
+        @Test
+        void shouldParseMethodTypeParametersInAllMethodForms() {
+            // WHEN
+            final Declaration.ComplexType type = single("""
+                    T {
+                        @@finalMethod $$U a<$$U extends Base, $$V>(x: $$U, y: list<$$V>)
+                        b<$$X>(): $$X
+                        c<$$Y>(y: $$Y)
+                        int8 d()
+                    }
+                    """, Declaration.ComplexType.class);
+
+            // THEN
+            assertThat(type.methods()).extracting(m -> m.typeParameters().size()).containsExactly(2, 1, 1, 0);
+            assertThat(type.methods().getFirst().typeParameters().getFirst().bound().text()).isEqualTo("Base");
+            assertThat(type.methods()).extracting(Method::isGeneric).containsExactly(true, true, true, false);
+        }
+
+        @Test
+        void shouldParseGenericFunctions() {
+            final SchemaFile file = parse("namespace a\n@@static Response<$$R> load<$$R extends R>(t: type<T<$$R>>)");
+            final Method method = ((Declaration.Function) file.declarations().getFirst()).method();
+            assertThat(method.typeParameters()).hasSize(1);
+            assertThat(method.parameters().getFirst().type().text()).isEqualTo("type<T<$$R>>");
         }
 
         @Test
@@ -259,23 +287,18 @@ class SchemaParserTest {
         }
 
         @Test
-        void shouldParseNamespaceFunctionsWithAndWithoutOwner() {
+        void shouldParseNamespaceFunctions() {
             // WHEN
             final SchemaFile file = parse("""
                     namespace a
-                    @@static Authority of(children: Authority...)
-                    @@throws(illegal-format) @@static EvmAddress EvmAddress.fromString(value: string)
+                    @@throws(illegal-format) @@static Authority of(children: Authority...)
                     """);
 
             // THEN
-            final Declaration.Function plain = (Declaration.Function) file.declarations().getFirst();
-            final Declaration.Function owned = (Declaration.Function) file.declarations().get(1);
-            assertThat(plain.owner()).isNull();
-            assertThat(plain.name()).isEqualTo("of");
-            assertThat(owned.owner()).isEqualTo("EvmAddress");
-            assertThat(owned.name()).isEqualTo("EvmAddress.fromString");
-            assertThat(owned.hasAnnotation("throws")).isTrue();
-            assertThat(owned.location()).isEqualTo(owned.method().location());
+            final Declaration.Function function = (Declaration.Function) file.declarations().getFirst();
+            assertThat(function.name()).isEqualTo("of");
+            assertThat(function.hasAnnotation("throws")).isTrue();
+            assertThat(function.location()).isEqualTo(function.method().location());
         }
     }
 
@@ -329,7 +352,8 @@ class SchemaParserTest {
                 "Foo {}",                       // missing namespace
                 "namespace a\nFoo { x: int32",  // missing brace
                 "namespace a\nFoo { # }",       // illegal character
-                "namespace a\nenum E { bool m( }"
+                "namespace a\nenum E { bool m( }",
+                "namespace a\nE {}\n@@static E E.fromString(value: string)"   // attached from outside
         })
         void shouldRejectInvalidInput(final String text) {
             assertThat(parser.parse("x.md", text).ast()).isEmpty();

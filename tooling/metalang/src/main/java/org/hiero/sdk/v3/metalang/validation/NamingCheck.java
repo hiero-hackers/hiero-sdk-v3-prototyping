@@ -68,6 +68,7 @@ final class NamingCheck implements Check {
 
     private void checkMethod(final Method method, final DiagnosticCollector out) {
         check(LOWER_CAMEL, Rule.NAMING_MEMBER, "Method", method.name(), method.location(), out);
+        method.typeParameters().forEach(p -> checkGeneric(p, out));
         method.parameters().forEach(p -> checkParameter(p, out));
         checkType(method.returnType(), out);
         method.annotation("throws").ifPresent(a -> checkThrows(a, out));

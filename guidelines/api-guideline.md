@@ -45,6 +45,7 @@ The following basic data types should be used in the API documentation.
 | `set<TYPE>`                | A set of elements of type TYPE                                        |
 | `map<KEY, VALUE>`          | A map that maps KEY values to VALUE values                            |
 | `type`                     | A type identity that can be used to specify a complex type at runtime |
+| `type<TYPE>`               | A type identity restricted to TYPE or one of its subtypes             |
 | `uuid`                     | A universally unique identifier                                       |
 | `date`                     | A date value (ISO 8601 calendar date)                                 |
 | `time`                     | A time value without date or timezone (nanosecond precision)          |
@@ -107,6 +108,12 @@ DataTypeName {
     ReturnType methodName(param1: DataType1, param2: DataType2)
 }
 ```
+
+#### Annotation syntax
+
+An annotation is written as `@@name` or, if it takes arguments, as `@@name(arg1, arg2, ...)`. Annotations without
+arguments (marker annotations such as `@@immutable` or `@@nullable`) are written **without** parentheses: `@@immutable`,
+not `@@immutable()`. The form with empty parentheses is tolerated but should be avoided.
 
 #### Complex Type annotations
 
@@ -347,6 +354,61 @@ Rules:
 language's top type — see [Basic data types](#basic-data-types). Standalone use is strongly discouraged; see
 [Avoid `ANY` as a standalone type](#avoid-any-as-a-standalone-type) for the rationale and alternatives.
 
+#### Generic methods
+
+A method (or [namespace-level function](#namespace-level-functions)) may declare its own generic type parameters.
+They are written in angle brackets directly after the method name — the same position as for a type — and are in
+scope for the return type and the parameters of that method:
+
+```
+ReturnType methodName<$$T, $$U extends Bound>(param: $$T, other: list<$$U>)
+```
+
+Example:
+
+```
+namespace consensusnode.transactions
+
+// The caller chooses $$Receipt by passing a transaction type; the returned Response is typed accordingly.
+@@static Response<$$Receipt> getResponse<$$Receipt extends Receipt>(transactionId: TransactionId,
+        transactionType: type<Transaction<$$Receipt, ANY>>, client: HieroClient)
+```
+
+Rules:
+
+- A bound (`extends ...`) is declared only where the type parameter is declared — on the type or on the method. A
+  bound must never be written where a type parameter is *used* (`Response<$$R extends Receipt> m()` is invalid; write
+  `Response<$$R> m<$$R extends Receipt>()`).
+- The names of a method's type parameters must be unique and must not shadow a type parameter of the enclosing type.
+- `@@static` methods and namespace-level functions may declare type parameters without further restrictions.
+- An instance method that declares type parameters **must** be annotated with
+  [`@@finalMethod`](#method-annotations): it is implemented once by the declaring type and cannot be overridden by
+  subtypes.
+
+**Why instance methods must be `@@finalMethod`.** Generic methods that subtypes override are not portable: Go
+interface methods cannot declare type parameters and cannot be implemented by generic methods (generic methods on
+concrete types exist since Go 1.27), C++ member templates cannot be `virtual`, and a Rust trait method with type
+parameters cannot be called on `dyn Trait`. A *non-overridable* generic method, however, maps cleanly onto every
+language, because no dynamic dispatch on the generic method itself is needed:
+
+| Language | Mapping of a `@@finalMethod` generic method `$$T convert<$$T>(x: X)` on type `Obj` |
+|---|---|
+| Java | `final` generic method; an abstraction declaring it maps to an abstract class |
+| TypeScript, Kotlin, C#, Python | generic method |
+| Swift | generic method in a protocol extension |
+| C++ | non-virtual member function template |
+| Rust | method of an extension trait with a blanket implementation (`impl<O: Obj + ?Sized> ObjExt for O`) |
+| Go | on a concrete type: generic method (Go 1.27+); on an abstraction (interface): package-level generic function named `<TypeName><MethodName>`, receiving the instance as first parameter: `func ObjConvert[T any](o Obj, x X) T` |
+
+**Choosing between a type parameter on the type and a generic method:**
+
+| The type argument depends on ... | Implementation differs per subtype? | Use |
+|---|---|---|
+| the object (fixed for its lifetime) | yes or no | a type parameter on the type: `abstraction Codec<$$T> { $$T decode(data: bytes) }` |
+| the individual call | no | a `@@finalMethod` generic method |
+| the individual call | yes | not expressible — redesign with a type parameter on the type, or a `type<...>` token and a base type |
+| no instance is needed | – | a `@@static` generic method or a generic namespace-level function |
+
 ### Enumerations
 
 Enumerations can be defined using the following syntax:
@@ -519,7 +581,18 @@ The following annotations should be used:
   Note: `@@streaming` and `@@async` are mutually exclusive — streaming already implies asynchronous item production.
 - `@@static`: Indicates that the method belongs to the type itself and can be called without an instance.
   Typical use cases are factory methods and deserialization methods.
-  For example, `@@static Transaction fromBytes(payload: bytes)`.
+  For example, `@@static Transaction fromBytes(payload: bytes)`. `@@static` is also required for every
+  [namespace-level function](#namespace-level-functions).
+- `@@finalMethod`: Indicates that the method is implemented by the declaring type and must not be overridden by
+  subtypes. The behavior of the method must therefore be fully specified by the declaring type — typically in terms of
+  its other members. A subtype must not re-declare a `@@finalMethod` method. Mandatory for
+  [generic instance methods](#generic-methods); allowed on every other instance method. It is redundant on `@@static`
+  methods and on methods of a `@@finalType`. Because the declaring type must carry the implementation, an abstraction
+  that declares a `@@finalMethod` maps to an abstract class (not an interface) in languages that distinguish the two
+  (e.g. Java, Kotlin, C#). Consequently, a type must not inherit `@@finalMethod` methods from two different
+  abstractions via different direct supertypes (single class inheritance); inheriting them along one chain
+  (`C extends B`, `B extends A`) is fine. TypeScript has no `final` modifier; there `@@finalMethod` is a documented
+  contract that the API conformance tooling checks.
 - `@@deprecated`: Indicates that the method is retained for compatibility but should no longer be used. See
   [Deprecation](#deprecation) for the full semantics.
 - `@@throws(error-type-a[, ...])`: Indicates that the method can throw an exception/error.
@@ -694,6 +767,46 @@ and is used only to disambiguate.
 This rule also applies to sub-namespaces, which are imported like any other namespace: a child imports from its parent
 (e.g. `consensusnode.transactions.accounts` uses `requires {Transaction} from consensusnode.transactions`), and a
 parent imports from a child (e.g. `mirrornode` uses `requires {AccountRepository} from mirrornode.account`).
+
+### Namespace-level functions
+
+Next to types and constants, a namespace may declare functions that do not belong to any type. A namespace-level
+function must be annotated with `@@static` — it is never called on an instance. Typical use cases are factories that
+are not tied to a single type (or whose natural home would create a dependency cycle) and parsing helpers.
+
+```
+namespace enterprise.service
+requires {Account} from consensusnode.client
+requires {NetworkSetting} from ledger.config
+
+@@static
+Session createSession(networkSettings: NetworkSetting, operatorAccount: Account)
+```
+
+A namespace-level function never belongs to a type. A `@@static` method of a type is always declared **inside** that
+type; attaching a method to a type from outside its declaration (`@@static EvmAddress EvmAddress.fromString(value:
+string)`) is not part of the language:
+
+```
+// wrong: attached from outside
+EvmAddress {
+    @@immutable bytes: bytes
+}
+@@static EvmAddress EvmAddress.fromString(value: string)
+
+// right: declared inside the type
+EvmAddress {
+    @@immutable bytes: bytes
+
+    @@static EvmAddress fromString(value: string)
+}
+```
+
+All [method annotations](#method-annotations) and [method parameter annotations](#method-parameter-annotations) can
+be used on namespace-level functions, except `@@threadSafe` and `@@streaming` (both describe instances). Like methods of
+a type, two functions of the same namespace must not have the same name and parameter types. Each language binding
+maps namespace-level functions to its idiomatic mechanism (e.g. module-level functions in Rust, Go, Python and
+TypeScript, or static methods of a dedicated class in Java); the language best-practice guides define the mapping.
 
 ### Constants
 

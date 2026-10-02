@@ -33,7 +33,7 @@ rather than as a query failure.
 
 ### The inner transaction
 
-The captured inner transaction is exposed as a `Transaction<ANY>` — the same builder type
+The captured inner transaction is exposed as a `Transaction<ANY, ANY>` — the same builder type
 `ScheduleCreate` accepts (see [`transactions-schedule.md`](transactions-schedule.md)). It is a
 read-only reconstruction of the stored body; it is never packed or signed. To read the *outcome* of
 an executed schedule, use `scheduledTransactionId` with the `Transaction.getResponse(...)` factory
@@ -63,7 +63,7 @@ type ScheduleInfo {
     @@immutable scheduleId: Address                        // the id of the schedule
     @@immutable creatorAccountId: AccountId                // account that submitted the ScheduleCreate
     @@immutable payerAccountId: AccountId                  // pays the inner transaction's fee when it executes
-    @@immutable scheduledTransaction: Transaction<ANY>     // read-only reconstruction of the captured inner transaction
+    @@immutable scheduledTransaction: Transaction<ANY, ANY>     // read-only reconstruction of the captured inner transaction
     @@immutable scheduledTransactionId: TransactionId      // the id the inner transaction carries when it executes (scheduled flag set)
     @@immutable @@default([]) signers: list<PublicKey>     // public keys whose signatures have been credited so far
     @@immutable @@nullable adminKey: Authority             // may delete the schedule; unset → schedule is immutable
@@ -127,7 +127,7 @@ if (info.executionTime != null) {
   *is* a requirement (matching `ScheduleCreateTransaction.adminKey` in
   [`transactions-schedule.md`](transactions-schedule.md)).
 
-- **The inner transaction is `Transaction<ANY>`.** Same modelling choice as
+- **The inner transaction is `Transaction<ANY, ANY>`.** Same modelling choice as
   `ScheduleCreateTransaction.scheduledTransaction`: the captured body has no compile-time receipt
   type. Reading its execution outcome therefore re-supplies the inner transaction's type token to
   `Transaction.getResponse(...)` (see [`transactions.md`](transactions.md) and the schedule

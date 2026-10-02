@@ -75,9 +75,7 @@ final class AstBuilder {
     }
 
     private Declaration.ComplexType complexType(final MetaLangParser.ComplexTypeDeclContext ctx) {
-        final List<TypeParameter> typeParameters = ctx.typeParameters() == null
-                ? List.of()
-                : ctx.typeParameters().typeParameter().stream().map(this::typeParameter).toList();
+        final List<TypeParameter> typeParameters = typeParameters(ctx.typeParameters());
         final List<Field> fields = new ArrayList<>();
         final List<Method> methods = new ArrayList<>();
         for (final MetaLangParser.MemberContext member : ctx.typeBody().member()) {
@@ -115,9 +113,10 @@ final class AstBuilder {
     }
 
     private Declaration.Function function(final MetaLangParser.FunctionDeclContext ctx) {
-        final Method method = new Method(identifier(ctx.name), annotations(ctx.annotation()), typeRef(ctx.typeRef()),
-                parameters(ctx.parameterList()), MethodSyntax.CLASSIC, documentation(ctx), location(ctx.name.start));
-        return new Declaration.Function(ctx.owner == null ? null : identifier(ctx.owner), method);
+        final Method method = new Method(identifier(ctx.identifier()), annotations(ctx.annotation()),
+                typeRef(ctx.typeRef()), typeParameters(ctx.typeParameters()), parameters(ctx.parameterList()),
+                MethodSyntax.CLASSIC, documentation(ctx), location(ctx.identifier().start));
+        return new Declaration.Function(method);
     }
 
     // --- members ---------------------------------------------------------------------------------
@@ -132,7 +131,7 @@ final class AstBuilder {
             case MetaLangParser.WithReturnMethodContext m -> method(m.returningMethodDecl());
             case MetaLangParser.NoReturnMethodContext m -> new Method(identifier(m.identifier()),
                     annotations(m.annotation()), new TypeRef.Void(location(m.identifier().start)),
-                    parameters(m.parameterList()), MethodSyntax.MISSING_RETURN, documentation(m),
+                    typeParameters(m.typeParameters()), parameters(m.parameterList()), MethodSyntax.MISSING_RETURN, documentation(m),
                     location(m.identifier().start));
             default -> throw new IllegalStateException("Unexpected method form: " + ctx.getClass());
         };
@@ -141,10 +140,12 @@ final class AstBuilder {
     private Method method(final MetaLangParser.ReturningMethodDeclContext ctx) {
         return switch (ctx) {
             case MetaLangParser.ClassicMethodContext m -> new Method(identifier(m.identifier()),
-                    annotations(m.annotation()), typeRef(m.typeRef()), parameters(m.parameterList()),
+                    annotations(m.annotation()), typeRef(m.typeRef()), typeParameters(m.typeParameters()),
+                    parameters(m.parameterList()),
                     MethodSyntax.CLASSIC, documentation(m), location(m.identifier().start));
             case MetaLangParser.TrailingReturnMethodContext m -> new Method(identifier(m.identifier()),
-                    annotations(m.annotation()), typeRef(m.typeRef()), parameters(m.parameterList()),
+                    annotations(m.annotation()), typeRef(m.typeRef()), typeParameters(m.typeParameters()),
+                    parameters(m.parameterList()),
                     MethodSyntax.TRAILING_RETURN, documentation(m), location(m.identifier().start));
             default -> throw new IllegalStateException("Unexpected method form: " + ctx.getClass());
         };
@@ -165,6 +166,10 @@ final class AstBuilder {
     }
 
     // --- types -----------------------------------------------------------------------------------
+
+    private List<TypeParameter> typeParameters(final MetaLangParser.TypeParametersContext ctx) {
+        return ctx == null ? List.of() : ctx.typeParameter().stream().map(this::typeParameter).toList();
+    }
 
     private TypeParameter typeParameter(final MetaLangParser.TypeParameterContext ctx) {
         return new TypeParameter(ctx.GENERIC_NAME().getText(), ctx.typeRef() == null ? null : typeRef(ctx.typeRef()),
@@ -217,7 +222,7 @@ final class AstBuilder {
                         ? new Literal.NameLiteral(a.KEBAB_ID().getText(), location(a.start))
                         : literal(a.literal()))
                 .toList();
-        return new Annotation(name, arguments, location(ctx.start));
+        return new Annotation(name, arguments, ctx.LPAREN() != null, location(ctx.start));
     }
 
     private Literal literal(final MetaLangParser.LiteralContext ctx) {

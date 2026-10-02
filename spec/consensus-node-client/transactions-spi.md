@@ -20,7 +20,7 @@ requires {Receipt, Response, Transaction, Record} from consensusnode.transaction
 requires {MethodDescriptor} from grpc
 requires {TransactionBody, TransactionResponse, TransactionReceipt, TransactionRecord} from consensusnode.proto
 
-abstraction TransactionSupport<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>> {
+abstraction TransactionSupport<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt, $$Transaction>> {
 
     type getTransactionType() 
 

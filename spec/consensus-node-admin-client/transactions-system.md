@@ -49,7 +49,7 @@ requires {Receipt, Transaction} from consensusnode.transactions
 // expirationTime is ignored.
 @@finalType
 @@oneOf(fileId, contractId)
-SystemDeleteTransaction extends Transaction<SystemDeleteReceipt> {
+SystemDeleteTransaction extends Transaction<SystemDeleteReceipt, SystemDeleteTransaction> {
     @@immutable @@nullable fileId: Address
     @@immutable @@nullable contractId: ContractId
     @@immutable @@nullable expirationTime: zonedDateTime  // when a system-deleted file becomes permanently unrecoverable; required when fileId is set, ignored when contractId is set
@@ -64,7 +64,7 @@ SystemDeleteReceipt extends Receipt {
 // the un-delete fails with INVALID_FILE_ID.
 @@finalType
 @@oneOf(fileId, contractId)
-SystemUndeleteTransaction extends Transaction<SystemUndeleteReceipt> {
+SystemUndeleteTransaction extends Transaction<SystemUndeleteReceipt, SystemUndeleteTransaction> {
     @@immutable @@nullable fileId: Address
     @@immutable @@nullable contractId: ContractId
 }

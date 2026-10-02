@@ -231,7 +231,7 @@ flowchart LR
   them. (`enterprise.service.contract` keeps a thin local `Contract` type and therefore does not depend on
   `mirrornode.contract`.)
 - **Admin layer is opt-in and one-way:** `consensus-node-admin-client` depends on `consensus-node-client` (it
-  reuses `Transaction<$$Receipt>`, `Receipt`, and the signing / packing lifecycle) but is not depended on by it —
+  reuses `Transaction<$$Receipt, $$Self>`, `Receipt`, and the signing / packing lifecycle) but is not depended on by it —
   the edge is strictly `admin --> consensus-node-client`. Applications that never call freeze / system-delete / DAB
   node operations do not pull the admin module in. `enterprise` does not depend on the admin module either; surfacing
   these privileged operations through the high-level service layer is intentionally out of scope.

@@ -56,7 +56,7 @@ Use the following canonical mappings when turning meta types into Java:
 ### Type Parameter for Runtime Type Information
 
 The meta-language defines `type` as a way to specify runtime type information.
-In Java, this maps to `java.lang.Class<?>`.
+In Java, this maps to `java.lang.Class<?>`; the bounded form `type<T>` maps to `java.lang.Class<? extends T>`.
 
 **Basic Usage**:
 
@@ -345,6 +345,37 @@ public final class CarFactory implements Factory<Car> {
 1. Drop the `$$` prefix — `$$T` becomes `T`, `$$Product` becomes `Product`
 2. Keep descriptive names where the meta-language uses them (e.g., `Product` instead of shortening to `T`)
 3. Apply `@NonNull`/`@Nullable` annotations to generic return types and parameters as usual
+
+### Generic Methods and `@@finalMethod`
+
+A [generic method](api-guideline.md#generic-methods) maps to a Java generic method; the type parameters move in front
+of the return type and lose the `$$` prefix:
+
+```
+// Meta-language
+@@static Response<$$Receipt> getResponse<$$Receipt extends Receipt>(transactionId: TransactionId,
+        transactionType: type<Transaction<$$Receipt, ANY>>, client: HieroClient)
+```
+
+```java
+static <Receipt extends org.hiero.Receipt> Response<Receipt> getResponse(@NonNull TransactionId transactionId,
+        @NonNull Class<? extends Transaction<Receipt, ?>> transactionType, @NonNull HieroClient client)
+```
+
+`@@finalMethod` maps to a `final` method. Because the declaring type must provide the implementation and Java
+interfaces cannot declare `final` methods, an abstraction that declares a `@@finalMethod` maps to an **abstract class**
+instead of an interface. The meta-language guarantees that a type never inherits `@@finalMethod` methods from two
+different abstractions via different supertypes, so single class inheritance is always sufficient.
+
+```java
+public abstract class Obj {
+
+    // @@finalMethod $$T convert<$$T>(x: X)
+    public final <T> T convert(@NonNull final X x) {
+        // implemented in terms of the other methods of Obj
+    }
+}
+```
 
 ### Inheritance and Nullability Narrowing
 

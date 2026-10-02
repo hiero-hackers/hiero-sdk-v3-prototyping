@@ -140,6 +140,11 @@ abstraction BaseAddress {
 @@finalType
 Address extends BaseAddress {
     @@immutable @@override num: uint64                        // tightening: on Address, num is always set
+
+    // Parses Address from string format: "shard.realm.num" or "shard.realm.num-checksum"
+    // (optional checksum suffix after the dash). Throws illegal-format if the format is invalid,
+    // values are negative, or parsing fails.
+    @@throws(illegal-format) @@static Address fromString(address: string)
 }
 
 // 20-byte EVM address — a flat, single-value identifier for EVM-side entities. NOT a
@@ -151,14 +156,14 @@ type EvmAddress {
 
     // Canonical EIP-55-style "0x<40 hex chars>" form.
     string toString()
+
+    // Parses an EvmAddress from its hex-string form. Accepts both "0xabc…" and bare "abc…"
+    // (40 hex chars). Throws illegal-format on anything else (wrong length, non-hex characters).
+    @@throws(illegal-format) @@static EvmAddress fromString(value: string)
+
+    // Wraps raw bytes. `value.length` must equal 20; otherwise throws illegal-format.
+    @@throws(illegal-format) @@static EvmAddress fromBytes(value: bytes)
 }
-
-// Parses an EvmAddress from its hex-string form. Accepts both "0xabc…" and bare "abc…"
-// (40 hex chars). Throws illegal-format on anything else (wrong length, non-hex characters).
-@@throws(illegal-format) @@static EvmAddress EvmAddress.fromString(value: string)
-
-// Wraps raw bytes. `value.length` must equal 20; otherwise throws illegal-format.
-@@throws(illegal-format) @@static EvmAddress EvmAddress.fromBytes(value: bytes)
 
 // Abstract subtype of BaseAddress for entities that can be addressed either by their numeric
 // Hiero id (shard, realm, num) OR by a 20-byte EVM address. `num` is inherited from
@@ -178,13 +183,13 @@ abstraction EvmCapableAddress extends BaseAddress {
 ContractId extends EvmCapableAddress {
     // Structurally empty — `num` and `evmAddress` are inherited from EvmCapableAddress.
     // ContractId's only contribution over its parent is the @@oneOf constraint.
+
+    // Parses "shard.realm.num" or "shard.realm.0x<40-hex>" (with optional "-<checksum>" suffix).
+    @@throws(illegal-format) @@static ContractId fromString(value: string)
+
+    // Builds a ContractId from a 20-byte EVM address.
+    @@static ContractId fromEvmAddress(shard: uint64, realm: uint64, address: EvmAddress)
 }
-
-// Parses "shard.realm.num" or "shard.realm.0x<40-hex>" (with optional "-<checksum>" suffix).
-@@throws(illegal-format) @@static ContractId ContractId.fromString(value: string)
-
-// Builds a ContractId from a 20-byte EVM address.
-@@static ContractId ContractId.fromEvmAddress(shard: uint64, realm: uint64, address: EvmAddress)
 
 // Identifier of an account. An account may be addressed either by its numeric Hiero id
 // (shard, realm, num), by a 20-byte EVM-address alias (HIP-583), or by a HIP-32 public-key
@@ -201,14 +206,14 @@ ContractId extends EvmCapableAddress {
 @@finalType
 AccountId extends EvmCapableAddress {
     @@immutable @@nullable alias: bytes                       // serialised public-key alias (HIP-32); absent when addressed by Hiero number or by EVM address
+
+    // Parses "shard.realm.num", "shard.realm.0x<40-hex>", or "shard.realm.<base32 key alias>"
+    // (with optional "-<checksum>" suffix).
+    @@throws(illegal-format) @@static AccountId fromString(value: string)
+
+    // Builds an AccountId from a 20-byte EVM address (HIP-583 auto-create form).
+    @@static AccountId fromEvmAddress(shard: uint64, realm: uint64, address: EvmAddress)
 }
-
-// Parses "shard.realm.num", "shard.realm.0x<40-hex>", or "shard.realm.<base32 key alias>"
-// (with optional "-<checksum>" suffix).
-@@throws(illegal-format) @@static AccountId AccountId.fromString(value: string)
-
-// Builds an AccountId from a 20-byte EVM address (HIP-583 auto-create form).
-@@static AccountId AccountId.fromEvmAddress(shard: uint64, realm: uint64, address: EvmAddress)
 
 // Id of a transaction
 abstraction TransactionId {
@@ -218,6 +223,12 @@ abstraction TransactionId {
 
   string toString() // returns the transaction id as a string
   string toStringWithChecksum() // returns the transaction id as a string with a checksum
+
+  // Generates a new TransactionId for the given payer account.
+  @@static TransactionId generateTransactionId(accountId:Address)
+
+  // Parses a TransactionId from its string form.
+  @@throws(illegal-format) @@static TransactionId fromString(transactionId:string)
 }
 
 // Single IP address representation, stored as raw network-order bytes. Today the type
@@ -235,15 +246,15 @@ type IpAddress {
     // Dotted-quad form ("10.0.0.7") today; once IPv6 lands, this returns the RFC 5952
     // canonical form for 16-byte values.
     string toString()
+
+    // Parses an IpAddress from its textual form. Today only dotted-quad IPv4 ("10.0.0.7") is
+    // accepted; everything else throws illegal-format.
+    @@throws(illegal-format) @@static IpAddress fromString(value: string)
+
+    // Wraps raw network-order bytes. `value.length` must equal 4; otherwise throws
+    // illegal-format. Loosens to {4, 16} when IPv6 support is added.
+    @@throws(illegal-format) @@static IpAddress fromBytes(value: bytes)
 }
-
-// Parses an IpAddress from its textual form. Today only dotted-quad IPv4 ("10.0.0.7") is
-// accepted; everything else throws illegal-format.
-@@throws(illegal-format) @@static IpAddress IpAddress.fromString(value: string)
-
-// Wraps raw network-order bytes. `value.length` must equal 4; otherwise throws
-// illegal-format. Loosens to {4, 16} when IPv6 support is added.
-@@throws(illegal-format) @@static IpAddress IpAddress.fromBytes(value: bytes)
 
 // Represents a consensus node on a network. This is the routing / fee view: clients use
 // (ip, port) to reach the node and `account` to identify where its transaction fees flow.
@@ -287,17 +298,6 @@ constant ZERO_ACCOUNT_ID: AccountId = AccountId{shard: 0, realm: 0, num: 0, chec
 // fields (e.g. once smart-contract transactions land). Carries num = 0; evmAddress is null.
 // Not a real contract.
 constant ZERO_CONTRACT_ID: ContractId = ContractId{shard: 0, realm: 0, num: 0, checksum: "", evmAddress: null}
-
-// factory methods of Address that should be added to the namespace in the best language dependent way
-
-// Parses Address from string format: "shard.realm.num" or "shard.realm.num-checksum"
-// @@throws(illegal-format) if format is invalid, values are negative, or parsing fails
-// Supports optional checksum suffix after dash
-@@throws(illegal-format) @@static Address fromString(address: string)
-
-// Factory methods for TransactionId
-@@static TransactionId generateTransactionId(accountId:Address)
-@@throws(illegal-format) @@static TransactionId fromString(transactionId:string)
 
 ```
 

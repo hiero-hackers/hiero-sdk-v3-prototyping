@@ -62,29 +62,29 @@ each of them under its own rule id. Everything else is a hard `syntax.error`.
 |---|---|---|
 | `type` keyword before a complex type | `type NodeBody { ... }` | `syntax.type-keyword` |
 | `...` placeholder in an enum | `enum BasicTransactionStatus { OK ... }` | `syntax.enum-placeholder` |
-| Bound on a generic argument at the use site | `PackedTransaction<$$R extends Receipt, ...> pack(...)` | `syntax.use-site-bound` |
+| Bound on a generic argument at the use site (reported as **error**) | `PackedTransaction<$$R extends Receipt, ...> pack(...)` | `syntax.use-site-bound` |
 | Trailing return type | `copy(): Copyable` | `syntax.trailing-return-type` |
 | Method without return type (not allowed inside enums because it is ambiguous there) | `unsubscribe()` | `syntax.missing-return-type` |
 | Annotation written inside a comment | `// @@throws(unknown-node-error) if ...` | `syntax.annotation-in-comment` |
-| Function at namespace level | `@@static Authority of(children: Authority...)` | `syntax.namespace-function` |
-| Function attached to a type from outside | `@@static EvmAddress EvmAddress.fromString(value: string)` | `syntax.detached-member` |
 
 ## Open questions for the guideline
 
 Building the grammar surfaced decisions that only the spec authors can make. The tool currently reports these
 cases but does not resolve them:
 
-1. **Namespace-level functions** (57×) and `Type.method(...)` (8×) are used heavily but not defined. Should they
-   become part of the language (with which semantics per language), or move into the types?
-2. **Generic methods** are not defined, yet specs need them (e.g. `@@static Response<$$Receipt> getResponse(...)`).
-   Today they are written with use-site bounds. A declaration syntax is needed (e.g. `<$$R extends Receipt>
-   Response<$$R> getResponse(...)`).
-3. **Enum attribute values:** enums may have `@@immutable` attributes (e.g. `HbarUnit.symbol`), but there is no
+1. **Enum attribute values:** enums may have `@@immutable` attributes (e.g. `HbarUnit.symbol`), but there is no
    syntax to assign them per value; specs put the values in comments (`enum.unassignable-fields`).
-4. **Is `@@name()` (empty parentheses) valid** for marker annotations? It is currently accepted silently.
-
 Resolved so far (now part of the guideline and enforced by the validator):
 
+- Generic methods: `ReturnType name<$$T extends B>(...)`. `@@static` methods and namespace functions may be generic;
+  generic instance methods must be `@@finalMethod` (not overridable), because overridable generic methods cannot be
+  mapped to Go, C++ and Rust. `type<T>` is a typed type token. See "Generic methods" in the guideline.
+- Attaching a function to a type from outside (`@@static EvmAddress EvmAddress.fromString(...)`) is not part of the
+  language (syntax error); `@@static` methods of a type are declared inside the type.
+- Namespace-level functions are allowed if they are `@@static` (`function.not-static` otherwise; they cannot be
+  `@@streaming` or `@@threadSafe`).
+- `@@name()` is tolerated for annotations without arguments but should be written `@@name`
+  (`annotation.empty-parentheses`, warning).
 - `@@threadSafe[(group)]` on a complex type, abstraction or enum makes all methods declared by the type thread-safe
   (see "Thread safety on types" in the guideline); a method-level `@@threadSafe` inside such a type is reported as
   `annotation.redundant-thread-safe`.
@@ -93,18 +93,17 @@ Resolved so far (now part of the guideline and enforced by the validator):
 
 ## Current findings on `spec/`
 
-`validate --summary --min-severity=warning spec` reports 21 errors and 79 warnings (no syntax errors). The
+`validate --summary --min-severity=warning spec` reports 20 errors and 45 warnings (no syntax errors). The
 errors are real deviations from the guideline, for example:
 
 - `duration` used instead of the basic type `seconds` (`base/http.md`, `mirror-node-client/mirror-node-http.md`)
 - `@@nullable` collections (`collection.nullable`, 7×)
 - raw use of the generic `HieroClient` without a type argument (`type.arity`, 7×)
 - missing `requires {PublicKey} from keys` (`consensus-node-client/client.md`)
-- two namespace-level `fromString(string)` functions in `ledger` that only differ in their return type
 
 ## Tests
 
-`mvn verify` runs about 170 tests. JaCoCo fails the build below 95 % line / 90 % branch coverage (generated
+`mvn verify` runs about 185 tests. JaCoCo fails the build below 95 % line / 90 % branch coverage (generated
 ANTLR code excluded). Besides unit tests per component and positive/negative tests per rule, the
 `RepositorySpecsTest` checks the real repository content: every spec under `spec/` must be free of syntax errors,
 every `namespace` example of the guideline must parse, all reported locations must exist, and the report must be

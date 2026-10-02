@@ -100,7 +100,7 @@ type ServiceEndpoint {
 // Registers a new consensus node in the address book. All endpoint, certificate, and key
 // fields are required; the network has no defaults for any of them.
 @@finalType
-NodeCreateTransaction extends Transaction<NodeCreateReceipt> {
+NodeCreateTransaction extends Transaction<NodeCreateReceipt, NodeCreateTransaction> {
     @@immutable accountId: AccountId                                     // account that receives the node's staking rewards
     @@immutable @@nullable description: string                           // free-form description (max 100 chars)
     @@immutable @@minSize(1) gossipEndpoints: list<ServiceEndpoint>    // inter-node hashgraph gossip endpoints
@@ -121,7 +121,7 @@ NodeCreateReceipt extends Receipt {
 // when null. Lists are replace-on-set: passing a non-null endpoint list replaces the entire
 // current list (there is no per-entry append / remove).
 @@finalType
-NodeUpdateTransaction extends Transaction<NodeUpdateReceipt> {
+NodeUpdateTransaction extends Transaction<NodeUpdateReceipt, NodeUpdateTransaction> {
     @@immutable nodeId: int64
     @@immutable @@nullable accountId: AccountId                          // when set, the new account's key must also sign
     @@immutable @@nullable description: string
@@ -141,7 +141,7 @@ NodeUpdateReceipt extends Receipt {
 // Tombstones a node entry. The nodeId is not freed; subsequent lookups return a deleted
 // flag rather than NOT_FOUND so historical references resolve.
 @@finalType
-NodeDeleteTransaction extends Transaction<NodeDeleteReceipt> {
+NodeDeleteTransaction extends Transaction<NodeDeleteReceipt, NodeDeleteTransaction> {
     @@immutable nodeId: int64
 }
 

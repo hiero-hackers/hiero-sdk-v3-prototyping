@@ -67,7 +67,7 @@ requires {NativeToken} from nativeToken
 requires {Receipt, Transaction} from consensusnode.transactions
 
 @@finalType
-AccountCreateTransaction extends Transaction<AccountCreateReceipt> {
+AccountCreateTransaction extends Transaction<AccountCreateReceipt, AccountCreateTransaction> {
     @@immutable authority: Authority
     @@immutable @@default(0) initialBalance: NativeToken<ANY, ANY>
     @@immutable @@nullable accountMemo: string
@@ -86,7 +86,7 @@ AccountCreateReceipt extends Receipt {
 }
 
 @@finalType
-AccountUpdateTransaction extends Transaction<AccountUpdateReceipt> {
+AccountUpdateTransaction extends Transaction<AccountUpdateReceipt, AccountUpdateTransaction> {
     @@immutable accountId: AccountId                            // the account that is being updated
     @@immutable @@nullable authority: Authority                          // the new key (requires signatures with both old and new keys)
     @@immutable @@nullable accountMemo: string
@@ -104,7 +104,7 @@ AccountUpdateReceipt extends Receipt {
 }
 
 @@finalType
-AccountDeleteTransaction extends Transaction<AccountDeleteReceipt> {
+AccountDeleteTransaction extends Transaction<AccountDeleteReceipt, AccountDeleteTransaction> {
     @@immutable accountId: AccountId                            // the account that is being deleted (must sign)
     @@immutable transferAccountId: AccountId                    // the account that receives the remaining hbar balance
 }
@@ -145,7 +145,7 @@ type NftTransfer {
 // leg fails (insufficient balance, missing signature, frozen / KYC-blocked token account, ...)
 // the entire transaction is rolled back.
 @@finalType
-TransferTransaction extends Transaction<TransferReceipt> {
+TransferTransaction extends Transaction<TransferReceipt, TransferTransaction> {
     @@immutable @@default([]) hbarTransfers: list<HbarTransfer>
     @@immutable @@default([]) tokenTransfers: list<TokenTransfer>
     @@immutable @@default([]) nftTransfers: list<NftTransfer>
@@ -200,7 +200,7 @@ type NftAllowance {
 // - The owner of each leg (`ownerAccountId`, or `delegatingSpender` for HIP-336 NFT
 //   sub-approvals) must sign the transaction.
 @@finalType
-AccountAllowanceApproveTransaction extends Transaction<AccountAllowanceApproveReceipt> {
+AccountAllowanceApproveTransaction extends Transaction<AccountAllowanceApproveReceipt, AccountAllowanceApproveTransaction> {
     @@immutable @@default([]) hbarAllowances: list<HbarAllowance>
     @@immutable @@default([]) tokenAllowances: list<TokenAllowance>
     @@immutable @@default([]) nftAllowances: list<NftAllowance>
@@ -223,7 +223,7 @@ type NftAllowanceDeletion {
 // revoked by approving them with amount = 0, and blanket `approveAll` grants are revoked by
 // approving with approveAll = false.
 @@finalType
-AccountAllowanceDeleteTransaction extends Transaction<AccountAllowanceDeleteReceipt> {
+AccountAllowanceDeleteTransaction extends Transaction<AccountAllowanceDeleteReceipt, AccountAllowanceDeleteTransaction> {
     @@immutable nftAllowanceDeletions: list<NftAllowanceDeletion>
 }
 

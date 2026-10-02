@@ -7,7 +7,7 @@ builder through a wire-ready, signed payload to an executed response.
 
 A transaction passes through two clearly separated states, modelled as two distinct types:
 
-1. **`Transaction<$$Receipt>`** — a mutable builder. Concrete subtypes (defined under sub-namespaces
+1. **`Transaction<$$Receipt, $$Self>`** — a mutable builder. Concrete subtypes (defined under sub-namespaces
    such as `consensusnode.transactions.accounts`) expose service-specific fields; the generic
    transaction-level fields (`maxTransactionFee`, `validDuration`, `memo`) are inherited from this
    abstraction. A `Transaction` is not yet bound to a payer, target nodes, or a `TransactionId`.
@@ -128,19 +128,22 @@ type NodeBody {
     @@immutable bytes: bytes
 }
 
-abstraction Transaction<$$Receipt extends Receipt> {
+// $$Self is the concrete transaction type itself (e.g. AccountCreateTransaction extends
+// Transaction<AccountCreateReceipt, AccountCreateTransaction>), so that pack/sign return a PackedTransaction that
+// knows the concrete transaction type.
+abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$Receipt, $$Self>> {
   
   @@nullable maxTransactionFee: NativeToken<ANY, ANY>
   @@nullable validDuration: seconds
   @@nullable memo: string
 
-  PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>> pack(payer: Account, nodes: list<AccountId>)  
+  PackedTransaction<$$Receipt, $$Self> pack(payer: Account, nodes: list<AccountId>)  
     
-  PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>> signWithOperator(client: HieroClient)
+  PackedTransaction<$$Receipt, $$Self> signWithOperator(client: HieroClient)
   
-  PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>> sign(payer: Account, nodes: list<AccountId>)
+  PackedTransaction<$$Receipt, $$Self> sign(payer: Account, nodes: list<AccountId>)
   
-  PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>> sign(payerId: AccountId, signer: TransactionSigner, nodes: list<AccountId>)
+  PackedTransaction<$$Receipt, $$Self> sign(payerId: AccountId, signer: TransactionSigner, nodes: list<AccountId>)
   
   @@async Response<$$Receipt> signWithOperatorAndSubmit(client: HieroClient)
 
@@ -160,7 +163,7 @@ abstraction Transaction<$$Receipt extends Receipt> {
   // structural guarantees (illegal states unrepresentable) instead of preconditions the network has
   // to reject. (Which transaction *types* may be batched remains a network-side policy the SDK
   // cannot know; see transactions-batch.md.)
-  PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>> packForBatch(payer: Account, batchKey: Authority)
+  PackedTransaction<$$Receipt, $$Self> packForBatch(payer: Account, batchKey: Authority)
 
   // The batch counterparts of the non-batch signing tiers, each mirroring its sign(...) sibling
   // but without a nodes parameter (an inner batch transaction has a single body, nodeAccountID =
@@ -169,29 +172,29 @@ abstraction Transaction<$$Receipt extends Receipt> {
 
   // Operator convenience: pack for batch with the client's operator as payer + operator signature.
   // Mirrors signWithOperator(client); the V3 equivalent of v2's batchify(client, batchKey).
-  PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>> signForBatchWithOperator(client: HieroClient, batchKey: Authority)
+  PackedTransaction<$$Receipt, $$Self> signForBatchWithOperator(client: HieroClient, batchKey: Authority)
 
   // A single Account both pays and signs. Mirrors sign(payer, nodes).
-  PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>> signForBatch(payer: Account, batchKey: Authority)
+  PackedTransaction<$$Receipt, $$Self> signForBatch(payer: Account, batchKey: Authority)
 
   // Most general: the payer identity is decoupled from the signing mechanism (HSM, hardware wallet,
   // paymaster). Mirrors sign(payerId, signer, nodes).
-  PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>> signForBatch(payerId: AccountId, signer: TransactionSigner, batchKey: Authority)
+  PackedTransaction<$$Receipt, $$Self> signForBatch(payerId: AccountId, signer: TransactionSigner, batchKey: Authority)
 
 }
 
 // PackedTransaction is a Submittable that yields a Response when handed to the network.
 // Retry-tuning fields (maxAttempts, maxBackoff, minBackoff, attemptTimeout) and the
 // submit(client) method are inherited from Submittable.
-abstraction PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>>
+abstraction PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt, $$Transaction>>
         extends Submittable<Response<$$Receipt>> {
 
   @@immutable transactionId: TransactionId
   @@immutable nodeSignatures: list<NodeSignature> 
 
-  PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>> sign(account: Account)
+  PackedTransaction<$$Receipt, $$Transaction> sign(account: Account)
   
-  PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>> sign(signer: TransactionSigner)
+  PackedTransaction<$$Receipt, $$Transaction> sign(signer: TransactionSigner)
 
   // Returns the serialized TransactionBody bytes for every target node. Used by out-of-process
   // signing flows (raw HSMs, async signing pipelines, multi-party coordination, audit archival)
@@ -205,9 +208,13 @@ abstraction PackedTransaction<$$Receipt extends Receipt, $$Transaction extends T
   // INVALID_SIGNATURE on the chosen node.
   // @@throws(unknown-node-error)        if a signature references a node not in `nodes`
   // @@throws(incomplete-signatures-error) if signatures for any target node are missing
-  PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>> sign(signatures: list<NodeSignature>)
+  PackedTransaction<$$Receipt, $$Transaction> sign(signatures: list<NodeSignature>)
 
   bytes toBytes()
+
+  // Loads a PackedTransaction from its serialized form (see toBytes()). The concrete transaction type is only known
+  // at runtime, so the result is typed with wildcards; callers check the concrete type themselves.
+  @@static PackedTransaction<ANY, ANY> fromBytes(bytes: bytes)
 }
 
 Response<$$Receipt extends Receipt> {
@@ -239,19 +246,17 @@ Record<$$Receipt extends Receipt> {
   @@immutable @@nullable parentConsensusTimestamp: zonedDateTime
 }
 
-// Factory methods for transaction loading
-@@static PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt>> fromBytes(bytes: bytes)
-
 // Reconstructs a client-bound Response for a transaction that was submitted elsewhere — e.g. the
 // inner transaction of a schedule (identified by ScheduleCreateReceipt.scheduledTransactionId),
 // which executes on the network without the caller ever holding a Response for it.
 //
-// `transactionType` is the type token of the Transaction<$$Receipt> subtype, so $$Receipt is bound
+// `transactionType` is the type token of the Transaction<$$Receipt, ...> subtype, so $$Receipt is bound
 // and the returned Response is typed (not Response<ANY>); the SDK resolves the matching
 // TransactionSupport (consensusnode.transactions.spi) to parse the proto receipt/record into the
 // typed $$Receipt. This call makes no network request — querying happens lazily through the
 // returned Response's queryReceipt() / queryRecord(), exactly as for a Response from submit().
-@@static Response<$$Receipt> getResponse(transactionId: TransactionId, transactionType: type, client: HieroClient)
+@@static Response<$$Receipt> getResponse<$$Receipt extends Receipt>(transactionId: TransactionId,
+        transactionType: type<Transaction<$$Receipt, ANY>>, client: HieroClient)
 ```
 
 ## Examples

@@ -26,7 +26,7 @@ limit — an over-large batch is rejected by the network as a `TransactionStatus
 
 This is the key difference from `ScheduleCreate` (see
 [`transactions-schedule.md`](transactions-schedule.md)). A schedule *captures* an inner transaction
-as a plain `Transaction<ANY>` builder and never packs or signs it — the network materializes it
+as a plain `Transaction<ANY, ANY>` builder and never packs or signs it — the network materializes it
 later. A batch is the opposite: every inner transaction is **fully packed and signed up front**,
 possibly by different parties on different machines, and the batch carries the finished, signed
 payloads. Inner transactions are therefore modelled as a list of `PackedTransaction`, not as
@@ -119,7 +119,7 @@ requires {Receipt, Transaction, PackedTransaction} from consensusnode.transactio
 // inner transaction's batchKey (ordinary signatures on this outer transaction; see the signing
 // model in transactions.md).
 @@finalType
-BatchTransaction extends Transaction<BatchReceipt> {
+BatchTransaction extends Transaction<BatchReceipt, BatchTransaction> {
     // The inner transactions to execute atomically, in execution order. Each is an already-packed,
     // already-signed PackedTransaction produced by Transaction.packForBatch(...). Never empty.
     @@immutable @@minSize(1) innerTransactions: list<PackedTransaction<ANY, ANY>>

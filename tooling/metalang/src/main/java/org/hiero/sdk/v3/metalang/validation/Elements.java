@@ -72,7 +72,13 @@ final class Elements {
     private static void visitMethod(final SchemaFile file, final Method method, final Set<String> outerScope,
                                     final Consumer<TypeSite> visitor) {
         final Set<String> scope = new LinkedHashSet<>(outerScope);
+        method.typeParameters().forEach(p -> scope.add(p.name()));
         scope.addAll(useSiteGenerics(method));
+        for (final TypeParameter parameter : method.typeParameters()) {
+            if (parameter.bound() != null) {
+                visitor.accept(new TypeSite(file, parameter.bound(), Position.TYPE_PARAMETER_BOUND, scope));
+            }
+        }
         final Position returnPosition = method.hasAnnotation("streaming") ? Position.STREAMING_RETURN : Position.RETURN;
         visitor.accept(new TypeSite(file, method.returnType(), returnPosition, scope));
         for (final Parameter parameter : method.parameters()) {

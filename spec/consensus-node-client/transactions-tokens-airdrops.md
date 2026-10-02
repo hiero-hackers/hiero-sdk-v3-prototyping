@@ -2,7 +2,7 @@
 
 This file extends the HTS token service ([`transactions-tokens.md`](transactions-tokens.md)) with
 the **HIP-904 frictionless-airdrop** transactions. They share the
-`consensusnode.transactions.tokens` namespace and the `Transaction<$$Receipt>` lifecycle.
+`consensusnode.transactions.tokens` namespace and the `Transaction<$$Receipt, $$Self>` lifecycle.
 
 ## Description
 
@@ -71,7 +71,7 @@ type TokenReference {
 // transfer leg types from TransferTransaction. The protocol caps the combined transfer list at 10.
 // The pending airdrops created are reported on the record, not this receipt (see Q&C).
 @@finalType
-TokenAirdropTransaction extends Transaction<TokenAirdropReceipt> {
+TokenAirdropTransaction extends Transaction<TokenAirdropReceipt, TokenAirdropTransaction> {
     @@immutable @@default([]) tokenTransfers: list<TokenTransfer>   // fungible legs (sum per token must be zero)
     @@immutable @@default([]) nftTransfers: list<NftTransfer>       // NFT legs
 }
@@ -83,7 +83,7 @@ TokenAirdropReceipt extends Receipt {
 // The receiver accepts pending airdrops, auto-associating and crediting the tokens. Each receiver
 // must sign. Protocol cap 10 per transaction; no duplicates.
 @@finalType
-TokenClaimAirdropTransaction extends Transaction<TokenClaimAirdropReceipt> {
+TokenClaimAirdropTransaction extends Transaction<TokenClaimAirdropReceipt, TokenClaimAirdropTransaction> {
     @@immutable @@minSize(1) @@maxSize(10) pendingAirdrops: list<PendingAirdrop>
 }
 
@@ -94,7 +94,7 @@ TokenClaimAirdropReceipt extends Receipt {
 // The sender withdraws its own outstanding pending airdrops before they are claimed. Each sender
 // must sign. Protocol cap 10 per transaction; no duplicates.
 @@finalType
-TokenCancelAirdropTransaction extends Transaction<TokenCancelAirdropReceipt> {
+TokenCancelAirdropTransaction extends Transaction<TokenCancelAirdropReceipt, TokenCancelAirdropTransaction> {
     @@immutable @@minSize(1) @@maxSize(10) pendingAirdrops: list<PendingAirdrop>
 }
 
@@ -105,7 +105,7 @@ TokenCancelAirdropReceipt extends Receipt {
 // Returns unwanted, already-held tokens to their treasury at no cost to the holder. Protocol cap
 // 10 references per transaction.
 @@finalType
-TokenRejectTransaction extends Transaction<TokenRejectReceipt> {
+TokenRejectTransaction extends Transaction<TokenRejectReceipt, TokenRejectTransaction> {
     @@immutable @@nullable owner: AccountId                          // the holder returning the tokens; defaults to the payer when unset
     @@immutable @@minSize(1) @@maxSize(10) rejections: list<TokenReference>
 }

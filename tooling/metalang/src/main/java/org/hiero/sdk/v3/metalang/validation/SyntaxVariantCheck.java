@@ -8,7 +8,6 @@ import org.hiero.sdk.v3.metalang.ast.SchemaFile;
 import org.hiero.sdk.v3.metalang.diagnostic.DiagnosticCollector;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
 import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
-import org.hiero.sdk.v3.metalang.semantic.ResolvedType;
 import org.hiero.sdk.v3.metalang.semantic.SpecModel;
 
 /**
@@ -44,7 +43,7 @@ final class SyntaxVariantCheck implements Check {
                         }
                         enumType.methods().forEach(m -> checkMethodSyntax(m, out));
                     }
-                    case Declaration.Function function -> checkFunction(model, file, function, out);
+                    case Declaration.Function function -> checkFunction(function, out);
                     case Declaration.Constant ignored -> {
                         // nothing to check
                     }
@@ -65,19 +64,10 @@ final class SyntaxVariantCheck implements Check {
         }
     }
 
-    private static void checkFunction(final SpecModel model, final SchemaFile file,
-                                      final Declaration.Function function, final DiagnosticCollector out) {
-        if (function.owner() == null) {
-            out.report(Rule.SYNTAX_NAMESPACE_FUNCTION, "Function '" + function.name()
-                    + "' is declared at namespace level", function.location());
-            return;
-        }
-        out.report(Rule.SYNTAX_DETACHED_MEMBER, "Declare '" + function.method().name() + "' inside type '"
-                + function.owner() + "'", function.location());
-        if (!(model.resolve(file, function.owner()) instanceof ResolvedType.Declared declared)
-                || !declared.namespace().equals(file.namespace())) {
-            out.report(Rule.TYPE_UNKNOWN, "Owner type '" + function.owner() + "' is not declared in namespace '"
-                    + file.namespace() + "'", function.location());
+    private static void checkFunction(final Declaration.Function function, final DiagnosticCollector out) {
+        if (!function.hasAnnotation("static")) {
+            out.report(Rule.FUNCTION_NOT_STATIC, "Add @@static to namespace-level function '" + function.name() + "'",
+                    function.location());
         }
     }
 }

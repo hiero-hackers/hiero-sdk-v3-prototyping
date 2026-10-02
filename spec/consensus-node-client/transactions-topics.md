@@ -71,7 +71,7 @@ requires {Receipt, Transaction} from consensusnode.transactions
 //   - adminAuthority unset  → topic is immutable (no update / delete possible)
 //   - submitAuthority unset → topic is public (anyone may submit messages)
 @@finalType
-TopicCreateTransaction extends Transaction<TopicCreateReceipt> {
+TopicCreateTransaction extends Transaction<TopicCreateReceipt, TopicCreateTransaction> {
     @@immutable @@nullable adminAuthority: Authority          // controls update / delete; unset → immutable topic; must sign the create transaction when set (anti-spoofing)
     @@immutable @@nullable submitAuthority: Authority         // controls message submission; unset → public topic; does NOT need to sign creation
     @@immutable @@nullable topicMemo: string            // short human-readable label (max 100 chars)
@@ -88,7 +88,7 @@ TopicCreateReceipt extends Receipt {
 // when null. Requires the topic's current adminAuthority to sign; an immutable topic (no adminAuthority)
 // cannot be updated.
 @@finalType
-TopicUpdateTransaction extends Transaction<TopicUpdateReceipt> {
+TopicUpdateTransaction extends Transaction<TopicUpdateReceipt, TopicUpdateTransaction> {
     @@immutable topicId: Address
     @@immutable @@nullable adminAuthority: Authority          // when set, replaces the admin key; the new key must also sign
     @@immutable @@nullable submitAuthority: Authority         // when set, replaces the submit key
@@ -105,7 +105,7 @@ TopicUpdateReceipt extends Receipt {
 // Deletes a topic. Only possible if the topic has an adminAuthority (an immutable topic cannot be
 // deleted). The adminAuthority must sign.
 @@finalType
-TopicDeleteTransaction extends Transaction<TopicDeleteReceipt> {
+TopicDeleteTransaction extends Transaction<TopicDeleteReceipt, TopicDeleteTransaction> {
     @@immutable topicId: Address
 }
 

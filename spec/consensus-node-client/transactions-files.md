@@ -59,7 +59,7 @@ requires {Authority} from authority
 requires {Receipt, Transaction} from consensusnode.transactions
 
 @@finalType
-FileCreateTransaction extends Transaction<FileCreateReceipt> {
+FileCreateTransaction extends Transaction<FileCreateReceipt, FileCreateTransaction> {
     @@immutable @@default([]) contents: bytes                  // initial content; further bytes via FileAppend
     @@immutable @@nullable authority: Authority                    // write-access authorization; an all-must-sign rule is an AuthorityList
     @@immutable @@nullable expirationTime: zonedDateTime       // when the file expires; SDK default if unset
@@ -74,7 +74,7 @@ FileCreateReceipt extends Receipt {
 // Appends `contents` to the end of the file. The SDK transparently splits this into multiple
 // consensus transactions when `contents` exceeds the single-transaction body limit.
 @@finalType
-FileAppendTransaction extends Transaction<FileAppendReceipt> {
+FileAppendTransaction extends Transaction<FileAppendReceipt, FileAppendTransaction> {
     @@immutable fileId: Address
     @@immutable contents: bytes                                // bytes to append; large payloads are chunked by the SDK
 }
@@ -87,7 +87,7 @@ FileAppendReceipt extends Receipt {
 // when null. Setting `contents` REPLACES the file contents in full — to add bytes without
 // dropping the existing content, use `FileAppendTransaction` instead.
 @@finalType
-FileUpdateTransaction extends Transaction<FileUpdateReceipt> {
+FileUpdateTransaction extends Transaction<FileUpdateReceipt, FileUpdateTransaction> {
     @@immutable fileId: Address
     @@immutable @@nullable contents: bytes                     // when set, replaces the entire file contents
     @@immutable @@nullable authority: Authority                    // write-access authorization; an all-must-sign rule is an AuthorityList
@@ -100,7 +100,7 @@ FileUpdateReceipt extends Receipt {
 }
 
 @@finalType
-FileDeleteTransaction extends Transaction<FileDeleteReceipt> {
+FileDeleteTransaction extends Transaction<FileDeleteReceipt, FileDeleteTransaction> {
     @@immutable fileId: Address
 }
 

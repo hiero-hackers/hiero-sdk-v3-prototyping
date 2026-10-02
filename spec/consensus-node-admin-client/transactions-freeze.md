@@ -67,7 +67,7 @@ enum FreezeType {
 }
 
 @@finalType
-FreezeTransaction extends Transaction<FreezeReceipt> {
+FreezeTransaction extends Transaction<FreezeReceipt, FreezeTransaction> {
     @@immutable freezeType: FreezeType
     @@immutable @@nullable startTime: zonedDateTime          // wall-clock time at which the network freezes; required for FREEZE_ONLY, FREEZE_UPGRADE, TELEMETRY_UPGRADE; ignored for PREPARE_UPGRADE, FREEZE_ABORT
     @@immutable @@nullable updateFile: Address               // id of a file holding the upgrade payload; required for PREPARE_UPGRADE, FREEZE_UPGRADE, TELEMETRY_UPGRADE

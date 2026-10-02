@@ -4,7 +4,7 @@ This file extends the HTS token service specified in
 [`transactions-tokens.md`](transactions-tokens.md) with the **management** transactions —
 the permissioned operations gated by a token's individual keys (wipe, freeze, KYC, pause,
 per-serial metadata). They share the `consensusnode.transactions.tokens` namespace, the
-`Transaction<$$Receipt>` lifecycle, and the signing model of the core lifecycle file; the split is
+`Transaction<$$Receipt, $$Self>` lifecycle, and the signing model of the core lifecycle file; the split is
 purely for readability.
 
 ## Description
@@ -56,7 +56,7 @@ requires {Receipt, Transaction} from consensusnode.transactions
 // Mixing the two is rejected; the @@oneOf makes it statically checkable.
 @@oneOf(amount, serials)
 @@finalType
-TokenWipeTransaction extends Transaction<TokenWipeReceipt> {
+TokenWipeTransaction extends Transaction<TokenWipeReceipt, TokenWipeTransaction> {
     @@immutable tokenId: Address
     @@immutable accountId: AccountId                                // the non-treasury account to wipe from (MUST NOT be the treasury)
     @@immutable @@nullable @@min(1) amount: int64                   // FUNGIBLE_COMMON only
@@ -71,7 +71,7 @@ TokenWipeReceipt extends Receipt {
 // Freezes a specific account for a token: until unfrozen it cannot send or receive the token.
 // Requires the token's freezeAuthority (unset → TOKEN_HAS_NO_FREEZE_KEY).
 @@finalType
-TokenFreezeTransaction extends Transaction<TokenFreezeReceipt> {
+TokenFreezeTransaction extends Transaction<TokenFreezeReceipt, TokenFreezeTransaction> {
     @@immutable tokenId: Address
     @@immutable accountId: AccountId
 }
@@ -82,7 +82,7 @@ TokenFreezeReceipt extends Receipt {
 
 // Reverses a freeze. Requires the token's freezeAuthority.
 @@finalType
-TokenUnfreezeTransaction extends Transaction<TokenUnfreezeReceipt> {
+TokenUnfreezeTransaction extends Transaction<TokenUnfreezeReceipt, TokenUnfreezeTransaction> {
     @@immutable tokenId: Address
     @@immutable accountId: AccountId
 }
@@ -94,7 +94,7 @@ TokenUnfreezeReceipt extends Receipt {
 // Grants KYC to a specific account for a token, enabling it to transact the token.
 // Requires the token's kycAuthority (unset → TOKEN_HAS_NO_KYC_KEY).
 @@finalType
-TokenGrantKycTransaction extends Transaction<TokenGrantKycReceipt> {
+TokenGrantKycTransaction extends Transaction<TokenGrantKycReceipt, TokenGrantKycTransaction> {
     @@immutable tokenId: Address
     @@immutable accountId: AccountId
 }
@@ -105,7 +105,7 @@ TokenGrantKycReceipt extends Receipt {
 
 // Revokes KYC from a specific account for a token. Requires the token's kycAuthority.
 @@finalType
-TokenRevokeKycTransaction extends Transaction<TokenRevokeKycReceipt> {
+TokenRevokeKycTransaction extends Transaction<TokenRevokeKycReceipt, TokenRevokeKycTransaction> {
     @@immutable tokenId: Address
     @@immutable accountId: AccountId
 }
@@ -117,7 +117,7 @@ TokenRevokeKycReceipt extends Receipt {
 // Pauses every operation on the token network-wide (transfers, mints, burns, ...) until unpaused.
 // Requires the token's pauseAuthority (unset → TOKEN_HAS_NO_PAUSE_KEY).
 @@finalType
-TokenPauseTransaction extends Transaction<TokenPauseReceipt> {
+TokenPauseTransaction extends Transaction<TokenPauseReceipt, TokenPauseTransaction> {
     @@immutable tokenId: Address
 }
 
@@ -127,7 +127,7 @@ TokenPauseReceipt extends Receipt {
 
 // Resumes a paused token. Requires the token's pauseAuthority.
 @@finalType
-TokenUnpauseTransaction extends Transaction<TokenUnpauseReceipt> {
+TokenUnpauseTransaction extends Transaction<TokenUnpauseReceipt, TokenUnpauseTransaction> {
     @@immutable tokenId: Address
 }
 
@@ -139,7 +139,7 @@ TokenUnpauseReceipt extends Receipt {
 // metadataAuthority (unset → metadata is immutable). Applies the same `metadata` to every listed
 // serial; null metadata leaves it unchanged.
 @@finalType
-TokenUpdateNftsTransaction extends Transaction<TokenUpdateNftsReceipt> {
+TokenUpdateNftsTransaction extends Transaction<TokenUpdateNftsReceipt, TokenUpdateNftsTransaction> {
     @@immutable tokenId: Address
     @@immutable @@minSize(1) @@maxSize(10) serials: list<int64>   // serials to update; protocol cap 10 per transaction
     @@immutable @@nullable @@maxSize(100) metadata: bytes           // new per-serial metadata (≤ 100 bytes); null → leave unchanged

@@ -23,6 +23,7 @@ public final class Validator {
             new OneOfCheck(),
             new InheritanceCheck(),
             new MemberCheck(),
+            new GenericMethodCheck(),
             new EnumCheck());
 
     /**

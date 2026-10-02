@@ -16,7 +16,7 @@ own authorization requires (or, for HIP-423 long-term schedules, when the schedu
 
 ### The inner transaction
 
-The inner transaction is modelled as a plain `Transaction<ANY>` — the *same* builder type used
+The inner transaction is modelled as a plain `Transaction<ANY, ANY>` — the *same* builder type used
 everywhere else. `ScheduleCreate` only captures its body; it is **never packed or signed itself**.
 The `pack()` / `sign()` methods inherited from `Transaction` are simply not used on the inner
 instance — calling them produces an unrelated `PackedTransaction` that the schedule flow ignores;
@@ -70,8 +70,8 @@ requires {Receipt, Transaction} from consensusnode.transactions
 // Additional signatures placed on this ScheduleCreate (beyond the payer) that match the inner
 // transaction's required keys are credited to the schedule on creation.
 @@finalType
-ScheduleCreateTransaction extends Transaction<ScheduleCreateReceipt> {
-    @@immutable scheduledTransaction: Transaction<ANY>     // the inner transaction to execute later; only its body is captured (never packed/signed)
+ScheduleCreateTransaction extends Transaction<ScheduleCreateReceipt, ScheduleCreateTransaction> {
+    @@immutable scheduledTransaction: Transaction<ANY, ANY>     // the inner transaction to execute later; only its body is captured (never packed/signed)
     @@immutable @@nullable adminKey: Authority             // may delete the schedule before execution; unset → schedule is immutable and cannot be deleted
     @@immutable @@nullable payerAccountId: AccountId       // pays the fee of the inner transaction when it executes; null → the payer of this ScheduleCreate pays it
     @@immutable @@nullable scheduleMemo: string            // free-form memo on the schedule entity
@@ -89,7 +89,7 @@ ScheduleCreateReceipt extends Receipt {
 // scheduleId; the actual authorization comes from signing this transaction with the required keys
 // through the normal multi-signature flow (see transactions.md).
 @@finalType
-ScheduleSignTransaction extends Transaction<ScheduleSignReceipt> {
+ScheduleSignTransaction extends Transaction<ScheduleSignReceipt, ScheduleSignTransaction> {
     @@immutable scheduleId: Address                        // the schedule to add signatures to
 }
 
@@ -101,7 +101,7 @@ ScheduleSignReceipt extends Receipt {
 // Deletes a stored schedule before it executes. Requires a signature from the schedule's adminKey;
 // a schedule created without an adminKey cannot be deleted.
 @@finalType
-ScheduleDeleteTransaction extends Transaction<ScheduleDeleteReceipt> {
+ScheduleDeleteTransaction extends Transaction<ScheduleDeleteReceipt, ScheduleDeleteTransaction> {
     @@immutable scheduleId: Address                        // the schedule to delete; only valid before execution
 }
 
@@ -199,7 +199,7 @@ new ScheduleDeleteTransaction()
 - **Reading the scheduled execution's outcome** uses the general
   `Transaction.getResponse(transactionId, transactionType, client)` factory in
   [`transactions.md`](transactions.md). Because the inner transaction is captured as
-  `Transaction<ANY>`, `scheduledTransactionId` carries no compile-time link to the inner receipt
+  `Transaction<ANY, ANY>`, `scheduledTransactionId` carries no compile-time link to the inner receipt
   type; the caller re-supplies the inner transaction's type token to `getResponse(...)` and gets a
   typed `Response<$$Receipt>` back (the SDK resolves the matching `TransactionSupport`). See the
   *Read the executed inner transaction's receipt* example above.

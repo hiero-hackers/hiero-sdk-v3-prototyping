@@ -44,16 +44,13 @@ final class TypeReferenceCheck implements Check {
         }
     }
 
-    /** Type names used outside of type references: @@sealed arguments, struct literals, function owners. */
+    /** Type names used outside of type references: @@sealed arguments and struct literals. */
     private static void collectNonTypeRefUsages(final SchemaFile file, final Set<String> used) {
         for (final Declaration declaration : file.declarations()) {
             declaration.annotation("sealed").map(Annotation::arguments).ifPresent(args ->
                     args.forEach(a -> used.add(a.text())));
             if (declaration instanceof Declaration.Constant constant) {
                 collectStructTypes(constant.value(), used);
-            }
-            if (declaration instanceof Declaration.Function function && function.owner() != null) {
-                used.add(function.owner());
             }
         }
     }
@@ -79,7 +76,8 @@ final class TypeReferenceCheck implements Check {
             case TypeRef.GenericParameter generic -> {
                 if (!scope.contains(generic.name())) {
                     out.report(Rule.GENERIC_UNDECLARED, "Generic parameter '" + generic.name()
-                            + "' is not declared by the enclosing type", generic.location());
+                            + "' is not declared; declare it on the type or on the method ('name<"
+                            + generic.name() + ">(...)')", generic.location());
                 }
             }
             case TypeRef.Any any -> out.report(Rule.TYPE_ANY_STANDALONE,
@@ -132,8 +130,9 @@ final class TypeReferenceCheck implements Check {
                     }
                 }
                 case TypeRef.BoundedGeneric bounded -> {
-                    out.report(Rule.SYNTAX_USE_SITE_BOUND, "Write '" + bounded.name() + "' here and declare the bound '"
-                            + bounded.text() + "' on the type parameter", bounded.location());
+                    out.report(Rule.SYNTAX_USE_SITE_BOUND, "Write '" + bounded.name() + "' here and declare '"
+                            + bounded.text() + "' where the parameter is declared (on the type or the method)",
+                            bounded.location());
                     check(model, file, bounded.bound(), position, scope, false, used, out);
                 }
             }
@@ -147,7 +146,7 @@ final class TypeReferenceCheck implements Check {
             out.report(Rule.TYPE_INT_WIDTH, "Integer width " + builtin.bits() + " of '" + builtin.name()
                     + "' is outside " + BuiltinType.MIN_INT_BITS + ".." + BuiltinType.MAX_INT_BITS, named.location());
         }
-        if (builtin.arity() != named.arguments().size()) {
+        if (!builtin.acceptsArity(named.arguments().size())) {
             out.report(Rule.TYPE_ARITY, "'" + builtin.name() + "' expects " + builtin.arity()
                     + " type argument(s) but got " + named.arguments().size(), named.location());
         }

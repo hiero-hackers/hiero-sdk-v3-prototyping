@@ -127,7 +127,7 @@ requires {Receipt, Transaction} from consensusnode.transactions
 // be added later (HAPI: `KEY_NOT_PROVIDED`); leaving e.g. `supplyAuthority` unset permanently fixes
 // the token's supply at `initialSupply`.
 @@finalType
-TokenCreateTransaction extends Transaction<TokenCreateReceipt> {
+TokenCreateTransaction extends Transaction<TokenCreateReceipt, TokenCreateTransaction> {
     @@immutable @@maxLength(100) name: string                       // human-readable token name
     @@immutable @@maxLength(100) symbol: string                     // short ticker / symbol
     @@immutable tokenType: TokenType                                // FUNGIBLE_COMMON | NON_FUNGIBLE_UNIQUE; cannot be changed later
@@ -169,7 +169,7 @@ TokenCreateReceipt extends Receipt {
 // key field to make the corresponding capability permanently disabled is allowed per HIP-540 but
 // has no portable representation until the `Key` sum type lands — see Questions & Comments.
 @@finalType
-TokenUpdateTransaction extends Transaction<TokenUpdateReceipt> {
+TokenUpdateTransaction extends Transaction<TokenUpdateReceipt, TokenUpdateTransaction> {
     @@immutable tokenId: Address                                    // the token being updated
     @@immutable @@nullable @@maxLength(100) name: string
     @@immutable @@nullable @@maxLength(100) symbol: string
@@ -201,7 +201,7 @@ TokenUpdateReceipt extends Receipt {
 // `TOKEN_WAS_DELETED`. Existing balances are NOT swept by this transaction — they remain
 // recorded but unusable for transfer.
 @@finalType
-TokenDeleteTransaction extends Transaction<TokenDeleteReceipt> {
+TokenDeleteTransaction extends Transaction<TokenDeleteReceipt, TokenDeleteTransaction> {
     @@immutable tokenId: Address
 }
 
@@ -216,7 +216,7 @@ TokenDeleteReceipt extends Receipt {
 // `TokenAssociate` remains the explicit path for accounts that do not, or that exceeded their
 // auto-association budget.
 @@finalType
-TokenAssociateTransaction extends Transaction<TokenAssociateReceipt> {
+TokenAssociateTransaction extends Transaction<TokenAssociateReceipt, TokenAssociateTransaction> {
     @@immutable accountId: AccountId                                // the account opting in to hold the listed tokens (MUST sign)
     @@immutable @@maxSize(100) tokens: set<Address>               // tokens to associate; duplicates are protocol-rejected (TOKEN_ID_REPEATED_IN_TOKEN_LIST) and order is irrelevant — hence a set, not a list
 }
@@ -231,7 +231,7 @@ TokenAssociateReceipt extends Receipt {
 // `TRANSACTION_REQUIRES_ZERO_TOKEN_BALANCES`. Use `TransferTransaction` first to drain the
 // account if necessary.
 @@finalType
-TokenDissociateTransaction extends Transaction<TokenDissociateReceipt> {
+TokenDissociateTransaction extends Transaction<TokenDissociateReceipt, TokenDissociateTransaction> {
     @@immutable accountId: AccountId                                // the account opting out (MUST sign)
     @@immutable @@maxSize(100) tokens: set<Address>               // tokens to dissociate; same set semantics as TokenAssociateTransaction.tokens
 }
@@ -252,7 +252,7 @@ TokenDissociateReceipt extends Receipt {
 // statically checkable.
 @@oneOf(amount, metadata)
 @@finalType
-TokenMintTransaction extends Transaction<TokenMintReceipt> {
+TokenMintTransaction extends Transaction<TokenMintReceipt, TokenMintTransaction> {
     @@immutable tokenId: Address
     @@immutable @@nullable @@min(1) amount: int64                   // FUNGIBLE_COMMON only: amount to mint (in smallest unit)
     @@immutable @@nullable @@maxSize(10) metadata: list<bytes>    // NON_FUNGIBLE_UNIQUE only: one metadata blob per new serial; the protocol caps the list at 10 per transaction
@@ -276,7 +276,7 @@ TokenMintReceipt extends Receipt {
 // the @@oneOf at the type level makes this statically checkable.
 @@oneOf(amount, serials)
 @@finalType
-TokenBurnTransaction extends Transaction<TokenBurnReceipt> {
+TokenBurnTransaction extends Transaction<TokenBurnReceipt, TokenBurnTransaction> {
     @@immutable tokenId: Address
     @@immutable @@nullable @@min(1) amount: int64                   // FUNGIBLE_COMMON only: amount to burn (in smallest unit)
     @@immutable @@nullable @@maxSize(10) serials: list<int64>     // NON_FUNGIBLE_UNIQUE only: serials to burn (must be held by the treasury); the protocol caps the list at 10 per transaction

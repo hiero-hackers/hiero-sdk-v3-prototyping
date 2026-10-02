@@ -37,7 +37,7 @@ requires {Receipt, Transaction} from consensusnode.transactions
 //   - range unset      → the receipt carries prngBytes (384 bits / 48 bytes of randomness)
 //   - range set (> 0)  → the receipt carries prngNumber, uniform in [0, range)
 @@finalType
-PrngTransaction extends Transaction<PrngReceipt> {
+PrngTransaction extends Transaction<PrngReceipt, PrngTransaction> {
     @@immutable @@nullable @@min(1) range: int32   // unset → 384 random bits; set → a random int in [0, range)
 }
 
@@ -98,6 +98,6 @@ bytes seed = receipt.prngBytes;   // 48 bytes
 
 - **Why a transaction and not a query.** The value is produced *during* consensus handling and
   recorded on the receipt; it cannot be read back without changing the network's running-hash state.
-  Modelling it as a `Transaction<PrngReceipt>` keeps it on the existing receipt-per-transaction
+  Modelling it as a `Transaction<PrngReceipt, PrngTransaction>` keeps it on the existing receipt-per-transaction
   pattern (see [`missing-features.md`](../../missing-features.md) §3.5) rather than inventing a
   side-effecting query.

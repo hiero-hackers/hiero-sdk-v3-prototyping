@@ -114,21 +114,32 @@ class ValidatorTest {
             // THEN
             assertThat(rules(schema)).containsExactly("syntax.annotation-in-comment", "syntax.annotation-in-comment");
         }
+    }
+
+    @Nested
+    class NamespaceFunctions {
 
         @Test
-        void shouldReportNamespaceFunctionsAndDetachedMembers() {
+        void shouldRequireStatic() {
             // GIVEN
             final String schema = """
                     namespace a
                     Foo {}
                     @@static Foo create()
-                    @@static Foo Foo.parse(value: string)
-                    @@static Foo Bar.parse(value: string)
+                    @@throws(parse-error)
+                    Foo parse(value: string)
                     """;
 
             // THEN
-            assertThat(rules(schema)).containsExactlyInAnyOrder("syntax.namespace-function",
-                    "syntax.detached-member", "syntax.detached-member", "type.unknown");
+            assertThat(diagnostics(schema)).extracting(Diagnostic::ruleId, Diagnostic::message).containsExactly(
+                    org.assertj.core.groups.Tuple.tuple("function.not-static",
+                            "Add @@static to namespace-level function 'parse'"));
+        }
+
+        @Test
+        void shouldNotAllowInstanceOnlyAnnotations() {
+            assertThat(rules("namespace a\n@@static @@streaming int8 f()\n@@static @@threadSafe int8 g()"))
+                    .containsExactlyInAnyOrder("annotation.target", "method.streaming-static", "annotation.target");
         }
 
         @Test
@@ -142,7 +153,7 @@ class ValidatorTest {
                     """;
 
             // THEN the use-site bound declares $$R for the function, so only the bound is reported
-            assertThat(rules(schema)).containsExactlyInAnyOrder("syntax.use-site-bound", "syntax.namespace-function");
+            assertThat(rules(schema)).containsExactly("syntax.use-site-bound");
         }
     }
 
@@ -187,7 +198,7 @@ class ValidatorTest {
         @Test
         void shouldNotTreatOverloadedFunctionsAsDuplicateDeclarations() {
             assertThat(rules("namespace a\n@@static int32 f(a: int32)\n@@static int32 f(a: string)"))
-                    .containsOnly("syntax.namespace-function");
+                    .isEmpty();
         }
 
         @Test
@@ -338,9 +349,15 @@ class ValidatorTest {
 
         @Test
         void shouldReportUndeclaredGenerics() {
-            assertThat(rules("namespace a\nG<$$T, $$T> { @@immutable a: $$T\n@@immutable b: $$U\n"
-                    + "$$V m(cb: function<$$T run()>) }"))
+            assertThat(rules("namespace a\nG<$$T> { @@immutable a: $$T\n@@immutable b: $$U\n"
+                    + "$$V m(cb: function<$$T run()>)\n@@finalMethod $$W n<$$W>(v: $$T) }"))
                     .containsExactly("generic.undeclared", "generic.undeclared");
+        }
+
+        @Test
+        void shouldAcceptTypedTypeTokens() {
+            assertThat(rules("namespace a\nB {}\nX { void m(t: type, u: type<B>, v: type<B, B>) }"))
+                    .containsExactly("type.arity");
         }
 
         @Test
@@ -350,21 +367,18 @@ class ValidatorTest {
         }
 
         @Test
-        void shouldCountTypesUsedInSealedStructsAndOwnersAsImportUsages() {
+        void shouldCountTypesUsedInSealedAndStructsAsImportUsages() {
             // GIVEN
             final String schema = """
                     namespace a
                     requires {Leaf} from b
                     requires {Address} from c
-                    requires {Owner} from d
                     @@sealed(Leaf) abstraction Root {}
                     constant ZERO: Address = Address{num: 0}
-                    @@static int32 Owner.f()
                     """;
 
             // THEN no requires.unused (other findings are irrelevant here)
-            assertThat(rules(schema, "namespace b\nLeaf {}", "namespace c\nAddress { @@immutable num: int64 }",
-                    "namespace d\nOwner {}")).doesNotContain("requires.unused");
+            assertThat(rules(schema, "namespace b\nLeaf {}", "namespace c\nAddress { @@immutable num: int64 }")).doesNotContain("requires.unused");
         }
     }
 
@@ -416,6 +430,30 @@ class ValidatorTest {
         })
         void shouldReportInvalidArguments(final String declaration) {
             assertThat(rules("namespace a\n" + declaration)).contains("annotation.arguments");
+        }
+
+        @Test
+        void shouldWarnAboutEmptyParenthesesOnAnnotationsWithoutArguments() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    X {
+                        @@immutable() @@nullable() a: int32
+                        @@threadSafe() void m()
+                        @@threadSafe(group) @@async void n()
+                    }
+                    """;
+
+            // THEN
+            assertThat(diagnostics(schema)).extracting(Diagnostic::ruleId, Diagnostic::severity)
+                    .containsOnly(org.assertj.core.groups.Tuple.tuple("annotation.empty-parentheses",
+                            org.hiero.sdk.v3.metalang.diagnostic.Severity.WARNING))
+                    .hasSize(3);
+        }
+
+        @Test
+        void shouldReportEmptyParenthesesAsArgumentErrorWhereArgumentsAreRequired() {
+            assertThat(rules("namespace a\nX { @@immutable @@min() a: int32 }")).containsExactly("annotation.arguments");
         }
 
         @Test
@@ -761,8 +799,7 @@ class ValidatorTest {
 
             // THEN
             assertThat(rules(schema)).containsExactlyInAnyOrder("member.duplicate-field",
-                    "member.duplicate-parameter", "member.duplicate-method", "member.duplicate-method",
-                    "syntax.namespace-function", "syntax.namespace-function");
+                    "member.duplicate-parameter", "member.duplicate-method", "member.duplicate-method");
         }
 
         @Test
@@ -785,13 +822,146 @@ class ValidatorTest {
                     + "@@immutable @@nullable b: map<string, int8>\n@@immutable @@nullable c: string\n"
                     + "@@nullable set<int8> m(@@nullable p: list<int8>) }\n@@nullable @@static list<int8> f()"))
                     .containsExactly("collection.nullable", "collection.nullable", "collection.nullable",
-                            "collection.nullable", "collection.nullable", "syntax.namespace-function");
+                            "collection.nullable", "collection.nullable");
         }
 
         @Test
         void shouldReportMutableFieldsOfComplexTypesOnly() {
             assertThat(ruleIds("namespace a\nX { a: int32 }\nenum E { A\n@@immutable v: int8 }"))
                     .containsExactlyInAnyOrder("field.mutable", "enum.unassignable-fields");
+        }
+    }
+
+    @Nested
+    class GenericMethods {
+
+        @Test
+        void shouldAcceptStaticAndFinalGenericMethodsAndFunctions() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    abstraction Receipt {}
+                    abstraction Response<$$R extends Receipt> {}
+                    abstraction Obj<$$T> {
+                        @@finalMethod $$U convert<$$U>(x: $$T)
+                        @@static Obj<$$V> of<$$V>(value: $$V)
+                    }
+                    @@static Response<$$R> load<$$R extends Receipt>(kind: type<Response<$$R>>)
+                    """;
+
+            // THEN
+            assertThat(rules(schema)).isEmpty();
+        }
+
+        @Test
+        void shouldRequireFinalMethodOnGenericInstanceMethods() {
+            assertThat(diagnostics("namespace a\nabstraction Obj { $$U convert<$$U>(x: $$U) }"))
+                    .extracting(Diagnostic::ruleId, Diagnostic::message)
+                    .containsExactly(org.assertj.core.groups.Tuple.tuple("generic.method-not-final",
+                            "Generic instance method 'convert' must be annotated with @@finalMethod (or be @@static)"));
+        }
+
+        @Test
+        void shouldReportDuplicateAndShadowingTypeParameters() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    G<$$T, $$T> {
+                        @@finalMethod $$T m<$$T>()
+                        @@static void n<$$U, $$U>()
+                    }
+                    @@static void f<$$A, $$A>()
+                    """;
+
+            // THEN
+            assertThat(diagnostics(schema)).extracting(Diagnostic::ruleId).containsOnly("generic.duplicate").hasSize(4);
+        }
+
+        @Test
+        void shouldReportUseSiteBoundsAsErrors() {
+            // WHEN
+            final List<Diagnostic> diagnostics = diagnostics(
+                    "namespace a\nabstraction R {}\nG<$$T> {}\n@@static G<$$X extends R> f()");
+
+            // THEN
+            assertThat(diagnostics).extracting(Diagnostic::ruleId).containsExactly("syntax.use-site-bound");
+            assertThat(diagnostics.getFirst().severity()).isEqualTo(org.hiero.sdk.v3.metalang.diagnostic.Severity.ERROR);
+        }
+
+        @Test
+        void shouldCheckBoundsAndNamesOfMethodTypeParameters() {
+            assertThat(rules("namespace a\n@@static void f<$$t extends Missing>()"))
+                    .containsExactlyInAnyOrder("naming.generic", "type.unknown");
+        }
+
+        @Test
+        void shouldReportOverriddenFinalMethods() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    abstraction Base {
+                        @@finalMethod int8 size()
+                        int8 other()
+                    }
+                    abstraction Middle extends Base {}
+                    Leaf extends Middle {
+                        int8 size()
+                        int8 other()
+                    }
+                    """;
+
+            // THEN
+            assertThat(diagnostics(schema)).extracting(Diagnostic::ruleId, Diagnostic::message).containsExactly(
+                    org.assertj.core.groups.Tuple.tuple("method.final-overridden",
+                            "'size()' is @@finalMethod in 'Base' and must not be re-declared"));
+        }
+
+        @Test
+        void shouldForbidFinalMethodsFromTwoUnrelatedAbstractions() {
+            // GIVEN A and B both declare @@finalMethod (classes in Java); C chains them, D mixes unrelated ones
+            final String schema = """
+                    namespace a
+                    abstraction A { @@finalMethod int8 a() }
+                    abstraction B { @@finalMethod int8 b() }
+                    abstraction Chained extends A { @@finalMethod int8 c() }
+                    abstraction Plain { int8 p() }
+                    C extends Chained, A, Plain {}
+                    D extends A, B {}
+                    E extends D {}
+                    """;
+
+            // WHEN
+            final List<Diagnostic> diagnostics = diagnostics(schema).stream()
+                    .filter(d -> !d.ruleId().equals("extends.multiple"))
+                    .toList();
+
+            // THEN only D introduces the conflict
+            assertThat(diagnostics).extracting(Diagnostic::ruleId, Diagnostic::message).containsExactly(
+                    org.assertj.core.groups.Tuple.tuple("method.final-multiple-inheritance",
+                            "'D' inherits @@finalMethod methods from both 'A' and 'B', which would require multiple"
+                                    + " class inheritance"));
+        }
+
+        @Test
+        void shouldReportRedundantFinalMethod() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    abstraction A { @@static @@finalMethod int8 a() }
+                    @@finalType F { @@finalMethod int8 b() }
+                    enum E { V
+                        @@finalMethod int8 c() }
+                    """;
+
+            // THEN
+            assertThat(rules(schema)).containsExactly("method.final-redundant", "method.final-redundant",
+                    "method.final-redundant");
+        }
+
+        @Test
+        void shouldNotAllowFinalMethodOnFunctionsOrFields() {
+            assertThat(rules("namespace a\n@@static @@finalMethod int8 f()\nX { @@finalMethod @@immutable a: int8 }"))
+                    .containsExactly("annotation.target", "annotation.target");
         }
     }
 

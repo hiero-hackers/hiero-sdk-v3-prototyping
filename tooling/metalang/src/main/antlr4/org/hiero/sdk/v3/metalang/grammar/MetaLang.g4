@@ -76,19 +76,20 @@ fieldDecl
 
 methodDecl
     : returningMethodDecl                                                              # withReturnMethod
-    | annotation* identifier LPAREN parameterList? RPAREN SEMI?                        # noReturnMethod
+    | annotation* identifier typeParameters? LPAREN parameterList? RPAREN SEMI?        # noReturnMethod
     ;
 
 returningMethodDecl
-    : annotation* typeRef identifier LPAREN parameterList? RPAREN SEMI?                 # classicMethod
-    | annotation* identifier LPAREN parameterList? RPAREN COLON typeRef SEMI?          # trailingReturnMethod
+    : annotation* typeRef identifier typeParameters? LPAREN parameterList? RPAREN SEMI?                 # classicMethod
+    | annotation* identifier typeParameters? LPAREN parameterList? RPAREN COLON typeRef SEMI?          # trailingReturnMethod
     ;
 
 // --- namespace-level functions -----------------------------------------------------------------
-// `Owner.name(...)` attaches a (static) function to a type declared elsewhere in the namespace.
+// Attaching a function to a type from outside (`Owner.name(...)`) is deliberately not part of the
+// language: methods of a type are declared inside the type.
 
 functionDecl
-    : annotation* typeRef (owner=identifier DOT)? name=identifier LPAREN parameterList? RPAREN SEMI?
+    : annotation* typeRef identifier typeParameters? LPAREN parameterList? RPAREN SEMI?
     ;
 
 // --- enums -------------------------------------------------------------------------------------

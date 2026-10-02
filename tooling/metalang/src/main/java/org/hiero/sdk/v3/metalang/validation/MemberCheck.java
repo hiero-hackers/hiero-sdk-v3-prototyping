@@ -32,8 +32,7 @@ final class MemberCheck implements Check {
                 switch (declaration) {
                     case Declaration.TypeDeclaration type -> checkType(model, file, type, out);
                     case Declaration.Function function -> {
-                        final String key = (function.owner() == null ? "" : function.owner() + ".")
-                                + function.method().signature();
+                        final String key = function.method().signature();
                         final Method previous = functions.putIfAbsent(key, function.method());
                         if (previous != null) {
                             out.report(Rule.MEMBER_DUPLICATE_METHOD, "Function '" + key + "' is already declared at "
