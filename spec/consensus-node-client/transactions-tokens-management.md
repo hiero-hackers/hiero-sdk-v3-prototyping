@@ -60,7 +60,7 @@ TokenWipeTransaction extends Transaction<TokenWipeReceipt> {
     @@immutable tokenId: Address
     @@immutable accountId: AccountId                                // the non-treasury account to wipe from (MUST NOT be the treasury)
     @@immutable @@nullable @@min(1) amount: int64                   // FUNGIBLE_COMMON only
-    @@immutable @@nullable @@minLength(1) @@maxLength(10) serials: list<int64>   // NON_FUNGIBLE_UNIQUE only; protocol cap 10 per transaction
+    @@immutable @@nullable @@minSize(1) @@maxSize(10) serials: list<int64>   // NON_FUNGIBLE_UNIQUE only; protocol cap 10 per transaction
 }
 
 @@finalType
@@ -141,8 +141,8 @@ TokenUnpauseReceipt extends Receipt {
 @@finalType
 TokenUpdateNftsTransaction extends Transaction<TokenUpdateNftsReceipt> {
     @@immutable tokenId: Address
-    @@immutable @@minLength(1) @@maxLength(10) serials: list<int64>   // serials to update; protocol cap 10 per transaction
-    @@immutable @@nullable @@maxLength(100) metadata: bytes           // new per-serial metadata (≤ 100 bytes); null → leave unchanged
+    @@immutable @@minSize(1) @@maxSize(10) serials: list<int64>   // serials to update; protocol cap 10 per transaction
+    @@immutable @@nullable @@maxSize(100) metadata: bytes           // new per-serial metadata (≤ 100 bytes); null → leave unchanged
 }
 
 @@finalType

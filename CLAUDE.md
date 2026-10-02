@@ -11,8 +11,8 @@ networks build on Hiero, V3 targets all of them — it is explicitly broader tha
 The current SDKs are all at version 2; **V3 is the codename for the new generation** that replaces them. V3 is
 designed from scratch with **no backward-compatibility constraints** with V2.
 
-**This repo contains specifications, not a shippable SDK.** There is no build system (no Maven/Gradle/npm/Cargo) and
-nothing compiles. The API is defined once in a **language-agnostic meta-language** and is meant to be translated into
+**This repo contains specifications, not a shippable SDK.** The specs themselves have no build system and do not
+compile; the only buildable module is the spec tooling under `tooling/metalang` (Maven, Java 21). The API is defined once in a **language-agnostic meta-language** and is meant to be translated into
 idiomatic implementations per language (Java, JavaScript/TypeScript, Go, Rust, Python, C++, Swift). The `.java`/`.js`
 files under `guidelines/` are **illustrative reference snippets**, not a buildable module.
 
@@ -60,6 +60,8 @@ spec/                           # The actual V3 public-API specifications, writt
     service.md (enterprise.service)
     service-account.md (enterprise.service.account)
     service-contract.md (enterprise.service.contract)
+
+tooling/metalang/               # Prototype: ANTLR grammar, parser, semantic model and validator for the meta-language
 ```
 
 ### How the layers relate
@@ -112,7 +114,12 @@ points to keep specs valid and consistent:
 
 - **Editing/adding a spec:** keep the section skeleton, declare the `namespace` and import external types with
   `requires {Type} from ns`, reference them by simple name, and follow the naming + annotation rules above. Match the
-  style of neighboring spec files.
+  style of neighboring spec files. Validate the result with the spec tooling (see `tooling/metalang/README.md`):
+  `mvn -f tooling/metalang/pom.xml -q package -DskipTests` then
+  `java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar validate spec`. A change must not introduce
+  new `syntax.error` or ERROR findings.
+- **Changing the meta-language itself** (guideline syntax, new annotation): update the grammar
+  (`MetaLang.g4`), `KnownAnnotation`, the `Rule` catalog and the tests in `tooling/metalang` in the same change.
 - **Open design questions** belong under each file's `## Questions & Comments` (often attributed to a GitHub handle).
   Don't silently resolve them; surface them.
 - **Language best-practice docs** (`api-best-practices-*.md`) describe how a meta-language concept maps to one

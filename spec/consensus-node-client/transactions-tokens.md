@@ -218,7 +218,7 @@ TokenDeleteReceipt extends Receipt {
 @@finalType
 TokenAssociateTransaction extends Transaction<TokenAssociateReceipt> {
     @@immutable accountId: AccountId                                // the account opting in to hold the listed tokens (MUST sign)
-    @@immutable @@maxLength(100) tokens: set<Address>               // tokens to associate; duplicates are protocol-rejected (TOKEN_ID_REPEATED_IN_TOKEN_LIST) and order is irrelevant — hence a set, not a list
+    @@immutable @@maxSize(100) tokens: set<Address>               // tokens to associate; duplicates are protocol-rejected (TOKEN_ID_REPEATED_IN_TOKEN_LIST) and order is irrelevant — hence a set, not a list
 }
 
 @@finalType
@@ -233,7 +233,7 @@ TokenAssociateReceipt extends Receipt {
 @@finalType
 TokenDissociateTransaction extends Transaction<TokenDissociateReceipt> {
     @@immutable accountId: AccountId                                // the account opting out (MUST sign)
-    @@immutable @@maxLength(100) tokens: set<Address>               // tokens to dissociate; same set semantics as TokenAssociateTransaction.tokens
+    @@immutable @@maxSize(100) tokens: set<Address>               // tokens to dissociate; same set semantics as TokenAssociateTransaction.tokens
 }
 
 @@finalType
@@ -255,7 +255,7 @@ TokenDissociateReceipt extends Receipt {
 TokenMintTransaction extends Transaction<TokenMintReceipt> {
     @@immutable tokenId: Address
     @@immutable @@nullable @@min(1) amount: int64                   // FUNGIBLE_COMMON only: amount to mint (in smallest unit)
-    @@immutable @@nullable @@maxLength(10) metadata: list<bytes>    // NON_FUNGIBLE_UNIQUE only: one metadata blob per new serial; the protocol caps the list at 10 per transaction
+    @@immutable @@nullable @@maxSize(10) metadata: list<bytes>    // NON_FUNGIBLE_UNIQUE only: one metadata blob per new serial; the protocol caps the list at 10 per transaction
 }
 
 @@finalType
@@ -279,7 +279,7 @@ TokenMintReceipt extends Receipt {
 TokenBurnTransaction extends Transaction<TokenBurnReceipt> {
     @@immutable tokenId: Address
     @@immutable @@nullable @@min(1) amount: int64                   // FUNGIBLE_COMMON only: amount to burn (in smallest unit)
-    @@immutable @@nullable @@maxLength(10) serials: list<int64>     // NON_FUNGIBLE_UNIQUE only: serials to burn (must be held by the treasury); the protocol caps the list at 10 per transaction
+    @@immutable @@nullable @@maxSize(10) serials: list<int64>     // NON_FUNGIBLE_UNIQUE only: serials to burn (must be held by the treasury); the protocol caps the list at 10 per transaction
 }
 
 @@finalType
@@ -495,6 +495,6 @@ new TokenDeleteTransaction()
   1.2.
 
 - **`TokenMint` / `TokenBurn` cap at 10 NFTs per transaction.** That is the current HAPI limit
-  (`TOKEN_MAX_BATCH_SIZE_REACHED`) and is encoded as `@@maxLength(10)` on the `metadata` and
+  (`TOKEN_MAX_BATCH_SIZE_REACHED`) and is encoded as `@@maxSize(10)` on the `metadata` and
   `serials` lists. If a future HIP raises the cap (HIP-1300 jumbo transactions touch this area),
   the annotation widens — callers that respected the previous cap remain valid.

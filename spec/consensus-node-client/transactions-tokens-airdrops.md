@@ -84,7 +84,7 @@ TokenAirdropReceipt extends Receipt {
 // must sign. Protocol cap 10 per transaction; no duplicates.
 @@finalType
 TokenClaimAirdropTransaction extends Transaction<TokenClaimAirdropReceipt> {
-    @@immutable @@minLength(1) @@maxLength(10) pendingAirdrops: list<PendingAirdrop>
+    @@immutable @@minSize(1) @@maxSize(10) pendingAirdrops: list<PendingAirdrop>
 }
 
 @@finalType
@@ -95,7 +95,7 @@ TokenClaimAirdropReceipt extends Receipt {
 // must sign. Protocol cap 10 per transaction; no duplicates.
 @@finalType
 TokenCancelAirdropTransaction extends Transaction<TokenCancelAirdropReceipt> {
-    @@immutable @@minLength(1) @@maxLength(10) pendingAirdrops: list<PendingAirdrop>
+    @@immutable @@minSize(1) @@maxSize(10) pendingAirdrops: list<PendingAirdrop>
 }
 
 @@finalType
@@ -107,7 +107,7 @@ TokenCancelAirdropReceipt extends Receipt {
 @@finalType
 TokenRejectTransaction extends Transaction<TokenRejectReceipt> {
     @@immutable @@nullable owner: AccountId                          // the holder returning the tokens; defaults to the payer when unset
-    @@immutable @@minLength(1) @@maxLength(10) rejections: list<TokenReference>
+    @@immutable @@minSize(1) @@maxSize(10) rejections: list<TokenReference>
 }
 
 @@finalType

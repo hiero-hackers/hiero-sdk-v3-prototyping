@@ -147,7 +147,7 @@ Address extends BaseAddress {
 // selector inside ContractId and AccountId, and as a stand-alone value type wherever an EVM
 // address appears on its own.
 type EvmAddress {
-    @@immutable @@minLength(20) @@maxLength(20) bytes: bytes   // 20 raw bytes (network byte order)
+    @@immutable @@minSize(20) @@maxSize(20) bytes: bytes   // 20 raw bytes (network byte order)
 
     // Canonical EIP-55-style "0x<40 hex chars>" form.
     string toString()
@@ -224,13 +224,13 @@ abstraction TransactionId {
 // only accepts IPv4 (exactly 4 bytes), matching the HAPI consensus-node wire shape
 // (`ServiceEndpoint.ipAddressV4`, which is IPv4-only). The type is intentionally named
 // `IpAddress` (not `IpV4Address`) so that adding IPv6 support later is purely additive:
-// a future HIP that adds IPv6 to the wire shape only needs to relax the @@maxLength
+// a future HIP that adds IPv6 to the wire shape only needs to relax the @@maxSize
 // constraint to 16; every call site that takes `IpAddress` keeps working unchanged. Until
 // then, IPv6 reachability for a node is achieved via a domain name in
 // `consensusnode.admin.nodes.ServiceEndpoint.domainName` whose DNS AAAA record resolves to
 // the v6 address.
 type IpAddress {
-    @@immutable @@minLength(4) @@maxLength(4) bytes: bytes   // 4 bytes, network byte order (IPv4); constraint widens to allow 16 bytes once IPv6 lands
+    @@immutable @@minSize(4) @@maxSize(4) bytes: bytes   // 4 bytes, network byte order (IPv4); constraint widens to allow 16 bytes once IPv6 lands
 
     // Dotted-quad form ("10.0.0.7") today; once IPv6 lands, this returns the RFC 5952
     // canonical form for 16-byte values.

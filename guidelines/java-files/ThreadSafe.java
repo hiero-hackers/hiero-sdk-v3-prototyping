@@ -8,6 +8,8 @@ import java.lang.annotation.Target;
 
 /**
  * Indicates that the annotated method or attribute accessor must be implemented in a thread-safe manner.
+ * When applied to a <strong>type</strong>, all methods declared by that type are thread-safe, as if each of them was
+ * annotated with the same {@link #group()}.
  * The SDK may invoke the annotated element concurrently from multiple threads, and the implementation must
  * guarantee correctness under concurrent access.
  *
@@ -66,7 +68,7 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
+@Target({ElementType.METHOD, ElementType.TYPE})
 public @interface ThreadSafe {
 
     /**

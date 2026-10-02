@@ -121,6 +121,11 @@ The following annotations should be used:
 - `@@finalType`: Indicates that the type is final and cannot be extended.
 - `@@deprecated`: Indicates that the type is retained for compatibility but should no longer be used. See
   [Deprecation](#deprecation) for the full semantics.
+- `@@threadSafe[(groupName)]`: Indicates that **all methods** declared by the type (complex type, abstraction or
+  enum) can be called concurrently by the SDK and must be implemented in a thread-safe manner. It is equivalent to
+  annotating every method of the type with `@@threadSafe[(groupName)]`. See the
+  [method annotation](#method-annotations) section for the full semantics and
+  [Thread safety on types](#thread-safety-on-types) for the details.
 
 Rules and recommendations for `@@oneOf`:
 
@@ -422,9 +427,15 @@ The following annotations should be used:
 - `@@max(value)`: Indicates the maximum value for numeric fields. Should be included if the value must be enforced at
   the SDK level.
 - `@@minLength(value)`: Indicates the minimum length for string fields. Should be included if the value must be enforced
-  at the SDK level.
+  at the SDK level. Only allowed on `string`; use `@@minSize` for collections and `bytes`.
 - `@@maxLength(value)`: Indicates the maximum length for string fields. Should be included if the value must be enforced
-  at the SDK level.
+  at the SDK level. Only allowed on `string`; use `@@maxSize` for collections and `bytes`.
+- `@@minSize(value)`: Indicates the minimum number of elements of a `list`, `set` or `map` (number of entries) or the
+  minimum number of bytes of a `bytes` value. `value` is a non-negative integer. Should be included if the value must
+  be enforced at the SDK level.
+- `@@maxSize(value)`: Indicates the maximum number of elements of a `list`, `set` or `map` (number of entries) or the
+  maximum number of bytes of a `bytes` value. `value` is a non-negative integer. Should be included if the value must
+  be enforced at the SDK level.
 - `@@pattern(regex)`: Indicates a regex pattern that the string field must match. Should be included if the value must
   be enforced at the SDK level.
 - `@@urlPattern`: Indicates that the string field must hold a syntactically valid, absolute URL (scheme + authority).
@@ -549,10 +560,39 @@ ensures that most objects can be shared safely across threads without synchroniz
 setters are not individually annotated with `@@threadSafe` — it is the user's responsibility to synchronize access to
 mutable objects if they choose to share them across threads.
 
+#### Thread safety on types
+
+`@@threadSafe[(groupName)]` can also annotate a complex type, an abstraction or an enum. In that case every method
+**declared by that type** is thread-safe exactly as if it carried `@@threadSafe[(groupName)]` itself:
+
+```
+@@threadSafe
+abstraction Session {
+    @@async void awaitConsistency()
+    void close()
+}
+```
+
+is equivalent to annotating `awaitConsistency()` and `close()` individually with `@@threadSafe`. With a group name,
+all methods of the type belong to that group and may be called concurrently with each other.
+
+Rules:
+
+- The annotation covers methods only. Attribute accessors are not covered; annotate an attribute individually with
+  `@@threadSafe` if its accessors can be called concurrently.
+- A method of a type annotated with `@@threadSafe` must not carry its own `@@threadSafe` annotation — the type-level
+  annotation is the single source of truth for the type.
+- The annotation covers the methods declared by the type. A subtype inherits the thread-safety contract of every
+  inherited method (as for a method-level annotation), but methods newly declared by the subtype are only covered if
+  the subtype is annotated as well.
+
 #### Method Parameter annotations
 
 The following attribute annotations can be used on method parameters: `@@nullable`, `@@min(value)`, `@@max(value)`,
-`@@minLength(value)`, `@@maxLength(value)`, `@@pattern(regex)`, `@@urlPattern`
+`@@minLength(value)`, `@@maxLength(value)`, `@@minSize(value)`, `@@maxSize(value)`, `@@pattern(regex)`, `@@urlPattern`
+
+On a [varargs](#variable-arguments-varargs) parameter, `@@minSize(value)` and `@@maxSize(value)` constrain the number
+of passed arguments (e.g. `addSigners(@@minSize(1) signers: Key...)` requires at least one signer).
 
 #### Method Return Types annotations
 

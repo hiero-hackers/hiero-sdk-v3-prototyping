@@ -122,7 +122,7 @@ requires {Receipt, Transaction, PackedTransaction} from consensusnode.transactio
 BatchTransaction extends Transaction<BatchReceipt> {
     // The inner transactions to execute atomically, in execution order. Each is an already-packed,
     // already-signed PackedTransaction produced by Transaction.packForBatch(...). Never empty.
-    @@immutable @@minLength(1) innerTransactions: list<PackedTransaction<ANY, ANY>>
+    @@immutable @@minSize(1) innerTransactions: list<PackedTransaction<ANY, ANY>>
 }
 
 // The batch transaction's own receipt. Carries only the base Receipt fields (status, exchange

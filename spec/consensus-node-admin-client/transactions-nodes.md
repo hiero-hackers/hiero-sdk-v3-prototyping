@@ -103,8 +103,8 @@ type ServiceEndpoint {
 NodeCreateTransaction extends Transaction<NodeCreateReceipt> {
     @@immutable accountId: AccountId                                     // account that receives the node's staking rewards
     @@immutable @@nullable description: string                           // free-form description (max 100 chars)
-    @@immutable @@minLength(1) gossipEndpoints: list<ServiceEndpoint>    // inter-node hashgraph gossip endpoints
-    @@immutable @@minLength(1) serviceEndpoints: list<ServiceEndpoint>   // public gRPC endpoints for client transactions
+    @@immutable @@minSize(1) gossipEndpoints: list<ServiceEndpoint>    // inter-node hashgraph gossip endpoints
+    @@immutable @@minSize(1) serviceEndpoints: list<ServiceEndpoint>   // public gRPC endpoints for client transactions
     @@immutable gossipCaCertificate: bytes                               // X.509 DER bytes of the certificate that terminates mutual TLS for gossip
     @@immutable grpcCertificateHash: bytes                               // SHA-384 of the certificate served on serviceEndpoints; clients pin against this
     @@immutable adminAuthority: Authority                                    // required to update / delete the node; must co-sign this create
@@ -235,9 +235,9 @@ new NodeDeleteTransaction()
 
 - **`ServiceEndpoint.ipAddress` is typed as `IpAddress` (IPv4-only today).** The
   byte-length invariant is enforced by [`IpAddress`](../base/ledger.md) itself
-  (`@@minLength(4) @@maxLength(4)`), not by server-side validation only. The type is
+  (`@@minSize(4) @@maxSize(4)`), not by server-side validation only. The type is
   intentionally named `IpAddress` rather than `IpV4Address`: once a HIP adds IPv6 to the
-  consensus-node wire shape, only the `@@maxLength` constraint relaxes to `16` and every
+  consensus-node wire shape, only the `@@maxSize` constraint relaxes to `16` and every
   existing `IpAddress`-typed call site automatically supports both. Until that HIP exists,
   IPv6 reachability is achieved through `domainName` + a DNS AAAA record on the resolved
   host.

@@ -20,8 +20,8 @@ Examples of good defensive practices:
   explicit locks. The overhead is minimal for collections that are read far more often than written.
 - **Immutable return values** — Return unmodifiable views or copies of internal collections to prevent callers from
   accidentally modifying SDK state.
-- **Validation of constraints** — Enforce `@@min`, `@@max`, `@@minLength`, `@@maxLength`, `@@pattern`, and
-  `@@urlPattern` annotations in constructors and setters to catch invalid data early.
+- **Validation of constraints** — Enforce `@@min`, `@@max`, `@@minLength`, `@@maxLength`, `@@minSize`, `@@maxSize`,
+  `@@pattern`, and `@@urlPattern` annotations in constructors and setters to catch invalid data early.
 
 Defensive implementation does **not** mean:
 
@@ -1186,8 +1186,9 @@ public class Example {
 }
 ```
 
-The `@@min(value)`, `@@max(value)`, `@@minLength(value)`, `@@maxLength(value)`, `@@pattern(regex)`, and `@@urlPattern`
-annotations are all handled in the same way: Checks based on the value must be added to the constructor and setter
+The `@@min(value)`, `@@max(value)`, `@@minLength(value)`, `@@maxLength(value)`, `@@minSize(value)`, `@@maxSize(value)`,
+`@@pattern(regex)`, and `@@urlPattern` annotations are all handled in the same way (`@@minSize`/`@@maxSize` check
+`size()` of a collection or `length` of a `byte[]`): Checks based on the value must be added to the constructor and setter
 methods. Attributes annotated with any of those annotations must never be set directly in the field declaration.
 The following example shows how to implement this annotation:
 
@@ -1312,6 +1313,19 @@ public class ConnectionManager {
 
 All methods that implement a `@ThreadSafe`-annotated interface method must also carry the `@ThreadSafe` annotation on
 the implementation.
+
+When `@@threadSafe` annotates a **type** in the meta-language, put `@ThreadSafe` (with the same `group`) on the Java
+interface or class. It applies to all methods declared by that type; the methods themselves are not annotated
+individually. Implementation classes of such an interface carry `@ThreadSafe` on the class as well:
+
+```java
+// @@threadSafe abstraction Session { ... }
+@ThreadSafe
+public interface Session {
+
+    CompletableFuture<Void> awaitConsistency();
+}
+```
 
 ### Implementation strategies
 

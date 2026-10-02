@@ -37,7 +37,7 @@ composed:
   requirement; [`PrivateKey`](keys.md) has no wrapper here, so it is structurally excluded.
 - **No in-band sentinels.** Every distinct meaning is its own type/variant — never a magic value
   or overloaded `null`. `threshold` is therefore always set and always meaningful (n-of-n is a
-  real value, not `null`); an empty `AuthorityList` is forbidden (`@@minLength(1)`). "Remove this
+  real value, not `null`); an empty `AuthorityList` is forbidden (`@@minSize(1)`). "Remove this
   key" is an *operation* on the write side, not an `Authority` value, and is modelled separately
   (a future `KeyUpdate` type — see ADR-0004 follow-ups), not by an empty list.
 - **Construction goes through the factories** (`of` / `ofContract` / `ofDelegatable`). They are the
@@ -76,7 +76,7 @@ ContractAuthority extends Authority {
 // n-of-n is `threshold == children.size()`; m-of-n is any smaller threshold.
 @@finalType
 AuthorityList extends Authority {
-    @@immutable @@minLength(1) children: list<Authority>   // never empty
+    @@immutable @@minSize(1) children: list<Authority>   // never empty
     @@immutable @@min(1) threshold: int32                    // invariant: 1 ≤ threshold ≤ children.size()
 }
 
