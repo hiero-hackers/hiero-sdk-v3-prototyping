@@ -37,8 +37,6 @@ public enum Rule {
             "Text does not match the meta-language grammar", "api-guideline.md#syntax"),
     SYNTAX_TYPE_KEYWORD("syntax.type-keyword", Severity.WARNING,
             "Complex type declared with the non-standard 'type' keyword", "api-guideline.md#complex-types"),
-    SYNTAX_ENUM_PLACEHOLDER("syntax.enum-placeholder", Severity.WARNING,
-            "Enum uses '...' as placeholder; its values are incomplete", "api-guideline.md#enumerations"),
     SYNTAX_USE_SITE_BOUND("syntax.use-site-bound", Severity.ERROR,
             "Bound on a generic argument at the use site; bounds belong to the declaration",
             "api-guideline.md#generic-methods"),

@@ -26,7 +26,7 @@ enum TransactionType {
     CONTRACT_CREATE
     CONTRACT_CALL
     ETHEREUM
-    ...              // full list derived from the Mirror Node OpenAPI spec
+    // not complete yet: the full list is to be derived from the Mirror Node OpenAPI spec
     UNKNOWN
 
     @@immutable protocolName: string

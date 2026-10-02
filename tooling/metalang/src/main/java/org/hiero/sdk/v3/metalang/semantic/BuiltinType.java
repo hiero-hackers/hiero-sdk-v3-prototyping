@@ -49,7 +49,7 @@ public record BuiltinType(String name, Category category, int arity, int bits) {
         UUID,
         /** {@code date}, {@code time}, {@code dateTime}, {@code zonedDateTime}. */
         TEMPORAL,
-        /** {@code seconds}. */
+        /** {@code seconds} (whole seconds) and {@code duration} (milliseconds). */
         DURATION,
         /** {@code streamResult}. */
         STREAM_RESULT
@@ -71,6 +71,7 @@ public record BuiltinType(String name, Category category, int arity, int bits) {
             fixed("dateTime", Category.TEMPORAL, 0),
             fixed("zonedDateTime", Category.TEMPORAL, 0),
             fixed("seconds", Category.DURATION, 0),
+            fixed("duration", Category.DURATION, 0),
             fixed("streamResult", Category.STREAM_RESULT, 1));
 
     /**

@@ -30,7 +30,7 @@ final class EnumCheck implements Check {
 
     private static void check(final SpecModel model, final Declaration.EnumType enumType,
                               final DiagnosticCollector out) {
-        if (enumType.values().isEmpty() && enumType.placeholders().isEmpty()) {
+        if (enumType.values().isEmpty()) {
             out.report(Rule.ENUM_EMPTY, "Enum '" + enumType.name() + "' declares no values", enumType.location());
         }
         final Set<String> names = new HashSet<>();

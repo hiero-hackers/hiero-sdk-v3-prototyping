@@ -71,8 +71,7 @@ final class LiteralTypes {
             case Declaration.EnumType enumType -> {
                 if (literal instanceof Literal.NameLiteral name) {
                     final String valueName = name.text().substring(name.text().lastIndexOf('.') + 1);
-                    if (enumType.values().stream().map(EnumValue::name).anyMatch(valueName::equals)
-                            || !enumType.placeholders().isEmpty()) {
+                    if (enumType.values().stream().map(EnumValue::name).anyMatch(valueName::equals)) {
                         return Optional.empty();
                     }
                     return Optional.of("'" + valueName + "' is not a value of enum '" + enumType.name() + "'");

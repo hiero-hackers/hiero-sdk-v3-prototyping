@@ -23,8 +23,12 @@ Param<$$LangType, $$SolidityType> {
 ContractCallResult {
     @@immutable size: uint8
     
+    // Runtime type of the result value at `index`; use it to check the value returned by get(index).
     type getType(index:uint8)
-    
+
+    // Deliberately ANY: the type of a contract call result is only known at runtime (it depends on the called
+    // Solidity function), so no static type can describe it. The concrete type of the value at `index` is reported by
+    // getType(index); callers check it before using the value.
     ANY get(index:uint8)
 }
 

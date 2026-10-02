@@ -52,6 +52,7 @@ The following basic data types should be used in the API documentation.
 | `dateTime`                 | A date and time value without timezone (nanosecond precision)         |
 | `zonedDateTime`            | A date and time value with timezone (nanosecond precision)            |
 | `seconds`                  | A time based duration expressed in whole seconds (see note below)     |
+| `duration`                 | A time based duration with millisecond precision (see note below)     |
 | `streamResult<TYPE>`       | A stream item that is either a success value of TYPE or an error      |
 | `function<R m(p: T, ...)>` | A function type (often called lambda/callable)                        |
 | `ANY`                      | A top type — accepts any value. Use sparingly (see best practices)    |
@@ -70,8 +71,24 @@ the user-visible precision to whole seconds**. A caller setting `Duration.ofMill
 on a `seconds`-typed field is rounded (implementation-defined: truncate or round-half-up;
 language guides specify their choice) to a whole-second value before serialization; bindings
 SHOULD surface this as a documented contract, not a hidden behaviour. If a future spec field
-genuinely needs sub-second precision, introduce a separate higher-precision type rather than
-widening `seconds`.
+genuinely needs sub-second precision, use `duration` instead of widening `seconds`.
+
+Numeric values for a `seconds` field (e.g. in `@@default`, `@@min`, `@@max`) are given in seconds.
+
+#### Note on `duration`
+
+`duration` is a time based duration with **millisecond precision**. Use it where values below one second are
+meaningful and no wire format restricts the precision — typically timeouts and intervals of SDK-internal
+infrastructure such as HTTP connections (e.g. a connect timeout of 500 ms). For values that are serialized into HAPI
+messages, use `seconds`.
+
+Language bindings map `duration` to the most idiomatic native duration type (`java.time.Duration` in Java,
+`std::time::Duration` in Rust, `time.Duration` in Go, `Duration` in Swift, a number of milliseconds in
+JavaScript/TypeScript). If the native type is more precise, the binding must cap the user-visible precision to
+milliseconds: sub-millisecond parts are truncated (e.g. 1.9 ms becomes 1 ms), and bindings document this as part of
+their contract.
+
+Numeric values for a `duration` field (e.g. in `@@default`, `@@min`, `@@max`) are given in milliseconds.
 
 ### Function Types
 
@@ -371,7 +388,7 @@ namespace consensusnode.transactions
 
 // The caller chooses $$Receipt by passing a transaction type; the returned Response is typed accordingly.
 @@static Response<$$Receipt> getResponse<$$Receipt extends Receipt>(transactionId: TransactionId,
-        transactionType: type<Transaction<$$Receipt, ANY>>, client: HieroClient)
+        transactionType: type<Transaction<$$Receipt, ANY>>, client: HieroClient<ANY>)
 ```
 
 Rules:
@@ -419,6 +436,9 @@ enum EnumName {
     VALUE2
 }
 ```
+
+If the list of values is not complete yet, mark that with a comment inside the enum (e.g. `// not complete yet:
+further values are still to be added`). `...` is not valid syntax inside an enum.
 
 Every enum implicitly provides a static method that returns all of its values, equivalent to
 `@@static list<EnumName> values()`. This method is always available and must therefore not be declared explicitly.

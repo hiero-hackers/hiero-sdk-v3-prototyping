@@ -7,7 +7,7 @@
  * Design notes:
  * - The grammar is intentionally *lenient* for a small, closed set of syntax variants that occur in
  *   the existing specs but are not (yet) part of the guideline (e.g. the `type` keyword before a
- *   complex type, `...` placeholders in enums, bounds on generic arguments at the use site, methods
+ *   complex type, bounds on generic arguments at the use site, methods
  *   without a return type). They are parsed into the model and reported by the validator as
  *   diagnostics, so a spec author gets a precise message instead of a syntax error.
  * - Everything that is not one of those known variants is a hard syntax error.
@@ -102,7 +102,6 @@ enumDecl
 // ambiguous with the enum value `bool` followed by a method `supportsType(...)` without return type.
 enumEntry
     : annotation* identifier (COMMA | SEMI)?     # enumValue
-    | ELLIPSIS                                   # enumPlaceholder
     | fieldDecl                                  # enumField
     | returningMethodDecl                        # enumMethod
     ;

@@ -62,7 +62,7 @@ class SpecModelTest {
     @CsvSource({
             "int8, INTEGER, 0, true", "uint256, INTEGER, 0, true", "int512, INTEGER, 0, false",
             "list, COLLECTION, 1, true", "map, MAP, 2, true", "streamResult, STREAM_RESULT, 1, true",
-            "seconds, DURATION, 0, true", "zonedDateTime, TEMPORAL, 0, true"
+            "seconds, DURATION, 0, true", "duration, DURATION, 0, true", "zonedDateTime, TEMPORAL, 0, true"
     })
     void shouldKnowBuiltinTypes(final String name, final BuiltinType.Category category, final int arity,
                                 final boolean validWidth) {

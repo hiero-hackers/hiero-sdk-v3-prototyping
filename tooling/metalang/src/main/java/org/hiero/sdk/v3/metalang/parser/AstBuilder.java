@@ -92,7 +92,6 @@ final class AstBuilder {
 
     private Declaration.EnumType enumType(final MetaLangParser.EnumDeclContext ctx) {
         final List<EnumValue> values = new ArrayList<>();
-        final List<SourceLocation> placeholders = new ArrayList<>();
         final List<Field> fields = new ArrayList<>();
         final List<Method> methods = new ArrayList<>();
         for (final MetaLangParser.EnumEntryContext entry : ctx.enumEntry()) {
@@ -100,15 +99,13 @@ final class AstBuilder {
                 case MetaLangParser.EnumValueContext value -> values.add(new EnumValue(
                         identifier(value.identifier()), annotations(value.annotation()), documentation(value),
                         location(value.identifier().start)));
-                case MetaLangParser.EnumPlaceholderContext placeholder ->
-                        placeholders.add(location(placeholder.start));
                 case MetaLangParser.EnumFieldContext field -> fields.add(field(field.fieldDecl()));
                 case MetaLangParser.EnumMethodContext method -> methods.add(method(method.returningMethodDecl()));
                 default -> throw new IllegalStateException("Unexpected enum entry: " + entry.getClass());
             }
         }
         return new Declaration.EnumType(identifier(ctx.identifier()), annotations(ctx.annotation()),
-                documentation(ctx), supertypes(ctx.extendsClause()), values, placeholders, fields, methods,
+                documentation(ctx), supertypes(ctx.extendsClause()), values, fields, methods,
                 location(ctx.identifier().start));
     }
 

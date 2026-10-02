@@ -50,6 +50,8 @@ Use the following canonical mappings when turning meta types into Java:
 | `time`            | `java.time.LocalTime`                                                                                                              | -                                                                                |
 | `dateTime`        | `java.time.LocalDateTime`                                                                                                          | -                                                                                |
 | `zonedDateTime`   | `java.time.ZonedDateTime`                                                                                                          | -                                                                                |
+| `seconds`         | `java.time.Duration`                                                                                                               | Precision capped to whole seconds (see API guideline)                            |
+| `duration`        | `java.time.Duration`                                                                                                               | Precision capped to milliseconds; sub-millisecond parts are truncated            |
 | `type`            | `java.lang.Class<?>`                                                                                                               | Used for runtime type information, typically with generics `Class<T>`            |
 | `function<...>`   | `@FunctionalInterface` or `java.util.function.*`                                                                                   | See [Function Types](#function-types) section below                              |
 
@@ -354,12 +356,12 @@ of the return type and lose the `$$` prefix:
 ```
 // Meta-language
 @@static Response<$$Receipt> getResponse<$$Receipt extends Receipt>(transactionId: TransactionId,
-        transactionType: type<Transaction<$$Receipt, ANY>>, client: HieroClient)
+        transactionType: type<Transaction<$$Receipt, ANY>>, client: HieroClient<ANY>)
 ```
 
 ```java
 static <Receipt extends org.hiero.Receipt> Response<Receipt> getResponse(@NonNull TransactionId transactionId,
-        @NonNull Class<? extends Transaction<Receipt, ?>> transactionType, @NonNull HieroClient client)
+        @NonNull Class<? extends Transaction<Receipt, ?>> transactionType, @NonNull HieroClient<?> client)
 ```
 
 `@@finalMethod` maps to a `final` method. Because the declaring type must provide the implementation and Java

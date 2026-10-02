@@ -37,10 +37,6 @@ final class SyntaxVariantCheck implements Check {
                         type.methods().forEach(m -> checkMethodSyntax(m, out));
                     }
                     case Declaration.EnumType enumType -> {
-                        for (final SourceLocation placeholder : enumType.placeholders()) {
-                            out.report(Rule.SYNTAX_ENUM_PLACEHOLDER, "Enum '" + enumType.name()
-                                    + "' uses '...' instead of listing all values", placeholder);
-                        }
                         enumType.methods().forEach(m -> checkMethodSyntax(m, out));
                     }
                     case Declaration.Function function -> checkFunction(function, out);

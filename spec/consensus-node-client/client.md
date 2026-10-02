@@ -13,7 +13,7 @@ A client defines a concrete network connection to a specific network with a spec
 namespace consensusnode.client
 requires {AccountId, Network} from ledger
 requires {NetworkSetting} from ledger.config
-requires {PrivateKey} from keys
+requires {PrivateKey, PublicKey} from keys
 requires {NativeTokenUnit} from nativeToken
 
 // Definition of an account that signs and pays for requests
@@ -51,7 +51,7 @@ abstraction Submittable<$$Result> {
     // Hand off to the network and return the typed result. Node selection,
     // retry, and any operation-specific protocol details (e.g. cost discovery
     // and payment for PaidQuery) are handled by the SDK transparently.
-    @@async $$Result submit(client: HieroClient)
+    @@async $$Result submit(client: HieroClient<ANY>)
 }
 
 // The client API that will be used by the SDK to interact with the network

@@ -61,7 +61,6 @@ each of them under its own rule id. Everything else is a hard `syntax.error`.
 | Variant | Example | Rule |
 |---|---|---|
 | `type` keyword before a complex type | `type NodeBody { ... }` | `syntax.type-keyword` |
-| `...` placeholder in an enum | `enum BasicTransactionStatus { OK ... }` | `syntax.enum-placeholder` |
 | Bound on a generic argument at the use site (reported as **error**) | `PackedTransaction<$$R extends Receipt, ...> pack(...)` | `syntax.use-site-bound` |
 | Trailing return type | `copy(): Copyable` | `syntax.trailing-return-type` |
 | Method without return type (not allowed inside enums because it is ambiguous there) | `unsubscribe()` | `syntax.missing-return-type` |
@@ -93,13 +92,10 @@ Resolved so far (now part of the guideline and enforced by the validator):
 
 ## Current findings on `spec/`
 
-`validate --summary --min-severity=warning spec` reports 20 errors and 45 warnings (no syntax errors). The
-errors are real deviations from the guideline, for example:
-
-- `duration` used instead of the basic type `seconds` (`base/http.md`, `mirror-node-client/mirror-node-http.md`)
-- `@@nullable` collections (`collection.nullable`, 7×)
-- raw use of the generic `HieroClient` without a type argument (`type.arity`, 7×)
-- missing `requires {PublicKey} from keys` (`consensus-node-client/client.md`)
+`validate --summary --min-severity=warning spec` reports 7 errors and 43 warnings (no syntax errors). All
+errors are `@@nullable` collections (`collection.nullable`) on update transactions and one mirror-node type, where
+`null` currently means "leave unchanged" — this conflicts with the guideline rule "never define nullable collections"
+and needs a design decision.
 
 ## Tests
 

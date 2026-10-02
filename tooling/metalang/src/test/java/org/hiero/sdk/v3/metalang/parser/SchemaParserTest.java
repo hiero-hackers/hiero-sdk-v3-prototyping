@@ -230,13 +230,13 @@ class SchemaParserTest {
     class Enums {
 
         @Test
-        void shouldParseValuesFieldsMethodsAndPlaceholders() {
+        void shouldParseValuesFieldsAndMethods() {
             // WHEN
             final Declaration.EnumType enumType = single("""
                     enum KeyEncoding extends Base {
                         DER, // Distinguished Encoding Rules
                         @@deprecated PEM
-                        ...
+                        // not complete yet
                         @@immutable rawFormat: RawFormat
                         bytes decode(keyType: KeyType, value: string)
                         bool supportsType(type: KeyType)
@@ -247,7 +247,6 @@ class SchemaParserTest {
             assertThat(enumType.values()).extracting(EnumValue::name).containsExactly("DER", "PEM");
             assertThat(enumType.values().getFirst().documentation()).isEqualTo("Distinguished Encoding Rules");
             assertThat(enumType.values().get(1).hasAnnotation("deprecated")).isTrue();
-            assertThat(enumType.placeholders()).hasSize(1);
             assertThat(enumType.fields()).extracting(Field::name).containsExactly("rawFormat");
             assertThat(enumType.methods()).extracting(Method::name).containsExactly("decode", "supportsType");
             assertThat(enumType.supertypes()).extracting(TypeRef::text).containsExactly("Base");
@@ -353,6 +352,7 @@ class SchemaParserTest {
                 "namespace a\nFoo { x: int32",  // missing brace
                 "namespace a\nFoo { # }",       // illegal character
                 "namespace a\nenum E { bool m( }",
+                "namespace a\nenum E { A\n... }",                              // placeholder is not valid syntax
                 "namespace a\nE {}\n@@static E E.fromString(value: string)"   // attached from outside
         })
         void shouldRejectInvalidInput(final String text) {

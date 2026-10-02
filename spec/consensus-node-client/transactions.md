@@ -117,7 +117,7 @@ enum BasicTransactionStatus extends TransactionStatus {
     OK
     INVALID_TRANSACTION
     PAYER_ACCOUNT_NOT_FOUND
-    ...
+    // not complete yet: further status codes are still to be added here
     GRPC_WEB_PROXY_NOT_SUPPORTED
 }
 
@@ -139,13 +139,13 @@ abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$
 
   PackedTransaction<$$Receipt, $$Self> pack(payer: Account, nodes: list<AccountId>)  
     
-  PackedTransaction<$$Receipt, $$Self> signWithOperator(client: HieroClient)
+  PackedTransaction<$$Receipt, $$Self> signWithOperator(client: HieroClient<ANY>)
   
   PackedTransaction<$$Receipt, $$Self> sign(payer: Account, nodes: list<AccountId>)
   
   PackedTransaction<$$Receipt, $$Self> sign(payerId: AccountId, signer: TransactionSigner, nodes: list<AccountId>)
   
-  @@async Response<$$Receipt> signWithOperatorAndSubmit(client: HieroClient)
+  @@async Response<$$Receipt> signWithOperatorAndSubmit(client: HieroClient<ANY>)
 
   // Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551). Unlike
   // pack(payer, nodes), this produces a single TransactionBody addressed to no consensus node
@@ -172,7 +172,7 @@ abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$
 
   // Operator convenience: pack for batch with the client's operator as payer + operator signature.
   // Mirrors signWithOperator(client); the V3 equivalent of v2's batchify(client, batchKey).
-  PackedTransaction<$$Receipt, $$Self> signForBatchWithOperator(client: HieroClient, batchKey: Authority)
+  PackedTransaction<$$Receipt, $$Self> signForBatchWithOperator(client: HieroClient<ANY>, batchKey: Authority)
 
   // A single Account both pays and signs. Mirrors sign(payer, nodes).
   PackedTransaction<$$Receipt, $$Self> signForBatch(payer: Account, batchKey: Authority)
@@ -256,7 +256,7 @@ Record<$$Receipt extends Receipt> {
 // typed $$Receipt. This call makes no network request — querying happens lazily through the
 // returned Response's queryReceipt() / queryRecord(), exactly as for a Response from submit().
 @@static Response<$$Receipt> getResponse<$$Receipt extends Receipt>(transactionId: TransactionId,
-        transactionType: type<Transaction<$$Receipt, ANY>>, client: HieroClient)
+        transactionType: type<Transaction<$$Receipt, ANY>>, client: HieroClient<ANY>)
 ```
 
 ## Examples

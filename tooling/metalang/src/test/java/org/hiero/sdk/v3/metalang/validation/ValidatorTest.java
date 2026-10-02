@@ -83,10 +83,6 @@ class ValidatorTest {
             assertThat(rules("namespace a\ntype Foo {}")).containsExactly("syntax.type-keyword");
         }
 
-        @Test
-        void shouldReportEnumPlaceholder() {
-            assertThat(rules("namespace a\nenum E { A\n... }")).containsExactly("syntax.enum-placeholder");
-        }
 
         @Test
         void shouldReportNonClassicMethodForms() {
@@ -262,7 +258,7 @@ class ValidatorTest {
                         @@immutable c: int
                         @@immutable d: nowhere.D
                         @@immutable e: b.Missing
-                        @@immutable f: duration
+                        @@immutable f: timespan
                     }
                     """;
 
@@ -599,6 +595,7 @@ class ValidatorTest {
                         @@immutable @@default(1) any: type
                         @@immutable @@default("2024-01-01") date: date
                         @@immutable @@default(5) dur: seconds
+                        @@immutable @@default(500) ms: duration
                     }
                     """;
 
@@ -989,8 +986,8 @@ class ValidatorTest {
         }
 
         @Test
-        void shouldAllowEnumWithPlaceholderOnly() {
-            assertThat(rules("namespace a\nenum E { ... }")).containsExactly("syntax.enum-placeholder");
+        void shouldReportEnumWithOnlyACommentAsEmpty() {
+            assertThat(rules("namespace a\nenum E { // not complete yet\n }")).containsExactly("enum.empty");
         }
     }
 }

@@ -22,6 +22,8 @@ It aims to keep SDK APIs consistent, ergonomic, and maintainable across modules.
 | `time`            | `chrono::NaiveTime`                             | Using `chrono` crate                        |
 | `dateTime`        | `chrono::NaiveDateTime`                         | Using `chrono` crate                        |
 | `zonedDateTime`   | `chrono::DateTime<Tz>`                          | Using `chrono` crate                        |
+| `seconds`         | `std::time::Duration`                           | Precision capped to whole seconds           |
+| `duration`        | `std::time::Duration`                           | Precision capped to milliseconds (truncate) |
 
 ## Inheritance and Nullability Narrowing
 

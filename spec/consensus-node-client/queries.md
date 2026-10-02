@@ -132,13 +132,13 @@ abstraction PaidQuery<$$Result> extends Query<$$Result> {
     @@nullable maxQueryPayment: NativeToken<ANY, ANY>
     
     // Covariant override: PaidQueryResponse extends QueryResponse.
-    @@async PaidQueryResponse<$$Result> submit(client: HieroClient)
+    @@async PaidQueryResponse<$$Result> submit(client: HieroClient<ANY>)
 
     // Issue a COST_ANSWER round-trip and return the network's quoted price for
     // this query without consuming it. The returned value is a snapshot — a
     // subsequent call may return a different price as conditions change.
     // @@throws(max-query-payment-exceeded-error) if maxQueryPayment is set and the quote exceeds it
-    @@async NativeToken<ANY, ANY> getCost(client: HieroClient)
+    @@async NativeToken<ANY, ANY> getCost(client: HieroClient<ANY>)
 }
 ```
 
