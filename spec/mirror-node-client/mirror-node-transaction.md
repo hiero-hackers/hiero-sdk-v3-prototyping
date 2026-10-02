@@ -12,24 +12,23 @@ requires {Page} from common
 
 // All known transaction types. Each carries a protocolName matching the REST API wire value.
 //TODO: That must be changed in future to make new services pluggable.
-enum TransactionType {
-    ACCOUNT_CREATE
-    ACCOUNT_DELETE
-    ACCOUNT_UPDATE
-    CRYPTO_TRANSFER
-    TOPIC_CREATE
-    TOPIC_MESSAGE_SUBMIT
-    TOKEN_CREATE
-    TOKEN_MINT
-    TOKEN_BURN
-    TOKEN_TRANSFER
-    CONTRACT_CREATE
-    CONTRACT_CALL
-    ETHEREUM
+// protocolName values are the `TransactionTypes` enum of the Mirror Node REST OpenAPI spec.
+enum TransactionType(protocolName: string) {
+    ACCOUNT_CREATE("CRYPTOCREATEACCOUNT")
+    ACCOUNT_DELETE("CRYPTODELETE")
+    ACCOUNT_UPDATE("CRYPTOUPDATEACCOUNT")
+    CRYPTO_TRANSFER("CRYPTOTRANSFER")
+    TOPIC_CREATE("CONSENSUSCREATETOPIC")
+    TOPIC_MESSAGE_SUBMIT("CONSENSUSSUBMITMESSAGE")
+    TOKEN_CREATE("TOKENCREATION")
+    TOKEN_MINT("TOKENMINT")
+    TOKEN_BURN("TOKENBURN")
+    TOKEN_TRANSFER      // open: the Mirror Node API has no own type for token transfers (part of CRYPTOTRANSFER)
+    CONTRACT_CREATE("CONTRACTCREATEINSTANCE")
+    CONTRACT_CALL("CONTRACTCALL")
+    ETHEREUM("ETHEREUMTRANSACTION")
     // not complete yet: the full list is to be derived from the Mirror Node OpenAPI spec
-    UNKNOWN
-
-    @@immutable protocolName: string
+    UNKNOWN             // open: no wire value; fallback for types unknown to the SDK
 }
 
 enum TransactionResult {
@@ -85,3 +84,10 @@ abstraction TransactionRepository {
 @@static TransactionRepository createRepository(mirrorNode: MirrorNode)
 
 ```
+
+## Questions & Comments
+
+- **`TransactionType.TOKEN_TRANSFER` and `TransactionType.UNKNOWN` have no `protocolName`.** The `TransactionTypes`
+  enum of the Mirror Node REST OpenAPI spec has no own value for token transfers (they are part of `CRYPTOTRANSFER`)
+  and no `UNKNOWN` value. Should `TOKEN_TRANSFER` be removed, and should `UNKNOWN` become a `@@nullable` protocolName
+  (or be modelled differently, e.g. as an SDK-side fallback outside the enum)?

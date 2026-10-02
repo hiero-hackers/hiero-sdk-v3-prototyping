@@ -444,17 +444,27 @@ Every enum implicitly provides a static method that returns all of its values, e
 `@@static list<EnumName> values()`. This method is always available and must therefore not be declared explicitly.
 Each language maps it to its idiomatic mechanism (see the language best-practice guides).
 
-[Attributes](#attributes) can be added to enumerations. Attributes added to enumerations must be immutable (annotated
-with `@@immutable`).
+Enumerations can carry attributes. The attributes are declared in parentheses after the enum name — name and type, like
+method parameters — and every value assigns them positionally, in the declared order:
 
 ```
-enum EnumName {
-    VALUE1
-    VALUE2
-    
-    @@immutable primitiveValue: int
+enum HbarUnit(symbol: string, baseUnitFactor: int64) extends NativeTokenUnit {
+    TINYBAR("tℏ", 1)
+    HBAR("ℏ", 100_000_000)
 }
 ```
+
+The declaration works like the header of a table: the attribute list names the columns, each value is one row. Rules:
+
+- Attributes of an enum are declared **only** in this attribute list; attribute declarations inside the enum body are
+  not allowed. Enum attributes are implicitly immutable, so `@@immutable` is not written. Value annotations such as
+  `@@nullable`, `@@min(...)` or `@@maxLength(...)` may be used on attributes.
+- Every value passes exactly one argument per attribute, and each argument must be a valid literal of the attribute's
+  type (a string, a number, `true`/`false`, `null` for `@@nullable` attributes, a value of another enum, ...).
+- If the enum extends an abstraction that declares attributes (e.g. `NativeTokenUnit.symbol`), every such inherited
+  attribute must be listed in the attribute list with the same type, so that the types of all values are visible in
+  the enum itself.
+- An enum without attributes has no attribute list and its values have no arguments (and no parentheses).
 
 [Methods](#methods) can be added to enumerations:
 
@@ -463,7 +473,7 @@ enum EnumName {
     VALUE1
     VALUE2
     
-    int calcPrimitiveType()
+    int32 calcPrimitiveType()
 }
 ```
 

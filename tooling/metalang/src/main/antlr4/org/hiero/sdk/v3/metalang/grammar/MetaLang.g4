@@ -94,15 +94,18 @@ functionDecl
 
 // --- enums -------------------------------------------------------------------------------------
 
+// `enum Name(attr: Type, ...)`: the attribute list works like a table header; every value assigns
+// the attributes positionally: `VALUE("a", 1)`. A value with parentheses needs at least one argument:
+// `int8 code()` must stay a method and must not be read as the two values `int8` and `code()`.
 enumDecl
-    : annotation* ENUM identifier extendsClause? LBRACE enumEntry* RBRACE
+    : annotation* ENUM identifier (LPAREN parameterList? RPAREN)? extendsClause? LBRACE enumEntry* RBRACE
     ;
 
 // Methods inside enums must declare a return type: `bool supportsType(...)` would otherwise be
 // ambiguous with the enum value `bool` followed by a method `supportsType(...)` without return type.
 enumEntry
-    : annotation* identifier (COMMA | SEMI)?     # enumValue
-    | fieldDecl                                  # enumField
+    : annotation* identifier (LPAREN literal (COMMA literal)* RPAREN)? (COMMA | SEMI)?     # enumValue
+    | fieldDecl                                  # enumField      // not allowed; reported by the validator
     | returningMethodDecl                        # enumMethod
     ;
 

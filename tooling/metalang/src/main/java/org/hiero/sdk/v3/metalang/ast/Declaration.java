@@ -107,13 +107,15 @@ public sealed interface Declaration extends Annotated {
      * @param name          the enum name
      * @param annotations   the annotations
      * @param documentation the documentation
+     * @param attributes    the attributes declared in the enum header ({@code enum Name(attr: Type)})
      * @param supertypes    the super types
      * @param values        the enum values
      * @param fields        the fields
      * @param methods       the methods
      * @param location      the source location
      */
-    record EnumType(String name, List<Annotation> annotations, String documentation, List<TypeRef> supertypes,
+    record EnumType(String name, List<Annotation> annotations, String documentation, List<Parameter> attributes,
+                    List<TypeRef> supertypes,
                     List<EnumValue> values, List<Field> fields,
                     List<Method> methods, SourceLocation location) implements TypeDeclaration {
         /**
@@ -122,6 +124,7 @@ public sealed interface Declaration extends Annotated {
          * @param name          the name
          * @param annotations   the annotations
          * @param documentation the documentation
+         * @param attributes    the header attributes
          * @param supertypes    the super types
          * @param values        the values
          * @param fields        the fields
@@ -132,6 +135,7 @@ public sealed interface Declaration extends Annotated {
             Objects.requireNonNull(name, "name must not be null");
             annotations = List.copyOf(Objects.requireNonNull(annotations, "annotations must not be null"));
             Objects.requireNonNull(documentation, "documentation must not be null");
+            attributes = List.copyOf(Objects.requireNonNull(attributes, "attributes must not be null"));
             supertypes = List.copyOf(Objects.requireNonNull(supertypes, "supertypes must not be null"));
             values = List.copyOf(Objects.requireNonNull(values, "values must not be null"));
             fields = List.copyOf(Objects.requireNonNull(fields, "fields must not be null"));

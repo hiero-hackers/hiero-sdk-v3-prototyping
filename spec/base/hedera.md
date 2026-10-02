@@ -16,16 +16,16 @@ HederaNetworkSetting extends NetworkSetting {
 }
 
 // Definition of the different units of HBAR, the native token of the Hedera network.
-// `symbol` and `baseUnitFactor` are inherited from NativeTokenUnit; each constant provides its own
-// normative values below. `baseUnitFactor` is the number of tinybars represented by one unit.
-enum HbarUnit extends NativeTokenUnit {
-    TINYBAR  // symbol: "tℏ", baseUnitFactor: 1
-    MICROBAR // symbol: "μℏ", baseUnitFactor: 100
-    MILLIBAR // symbol: "mℏ", baseUnitFactor: 100_000
-    HBAR     // symbol: "ℏ", baseUnitFactor: 100_000_000
-    KILOBAR  // symbol: "kℏ", baseUnitFactor: 100_000_000_000
-    MEGABAR  // symbol: "Mℏ", baseUnitFactor: 100_000_000_000_000
-    GIGABAR  // symbol: "Gℏ", baseUnitFactor: 100_000_000_000_000_000
+// `symbol` and `baseUnitFactor` are inherited from NativeTokenUnit; each value assigns its own
+// normative values. `baseUnitFactor` is the number of tinybars represented by one unit.
+enum HbarUnit(symbol: string, baseUnitFactor: int64) extends NativeTokenUnit {
+    TINYBAR("tℏ", 1)
+    MICROBAR("μℏ", 100)
+    MILLIBAR("mℏ", 100_000)
+    HBAR("ℏ", 100_000_000)
+    KILOBAR("kℏ", 100_000_000_000)
+    MEGABAR("Mℏ", 100_000_000_000_000)
+    GIGABAR("Gℏ", 100_000_000_000_000_000)
 }
 
 // HBAR, the native token of the Hedera network. `amount`, `unit`, and `to(...)` are inherited from

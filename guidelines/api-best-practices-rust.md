@@ -114,3 +114,33 @@ impl<O: Obj + ?Sized> ObjExt for O {}
 ```
 
 A non-generic `@@finalMethod` on an abstraction uses the same extension-trait pattern.
+
+## Enumerations with Attributes
+
+Rust enum variants cannot carry per-variant constant fields. An [enum attribute list](api-guideline.md#enumerations)
+therefore maps to one accessor method per attribute that matches on `self`; the values come from the arguments of each
+meta-language enum value:
+
+```
+// Meta-language
+enum KeyAlgorithm(keySize: int32) {
+    ED25519(32)
+    ECDSA_SECP256K1(33)
+}
+```
+
+```rust
+pub enum KeyAlgorithm {
+    Ed25519,
+    EcdsaSecp256k1,
+}
+
+impl KeyAlgorithm {
+    pub const fn key_size(&self) -> i32 {
+        match self {
+            KeyAlgorithm::Ed25519 => 32,
+            KeyAlgorithm::EcdsaSecp256k1 => 33,
+        }
+    }
+}
+```

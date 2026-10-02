@@ -254,6 +254,27 @@ class SchemaParserTest {
         }
     }
 
+    @Test
+    void shouldParseEnumAttributeListAndArguments() {
+        // WHEN
+        final Declaration.EnumType enumType = single("""
+                enum HbarUnit(symbol: string, @@min(1) factor: int64) extends NativeTokenUnit {
+                    TINYBAR("tℏ", 1),
+                    HBAR("ℏ", 100_000_000) // main unit
+                    int8 code()
+                }
+                """, Declaration.EnumType.class);
+
+        // THEN
+        assertThat(enumType.attributes()).extracting(Parameter::text)
+                .containsExactly("symbol: string", "factor: int64");
+        assertThat(enumType.attributes().get(1).hasAnnotation("min")).isTrue();
+        assertThat(enumType.values()).extracting(v -> v.arguments().stream().map(Literal::text).toList())
+                .containsExactly(List.of("\"tℏ\"", "1"), List.of("\"ℏ\"", "100_000_000"));
+        assertThat(enumType.methods()).extracting(Method::name).containsExactly("code");
+        assertThat(enumType.values().get(1).documentation()).isEqualTo("main unit");
+    }
+
     @Nested
     class ConstantsAndFunctions {
 
@@ -353,6 +374,7 @@ class SchemaParserTest {
                 "namespace a\nFoo { # }",       // illegal character
                 "namespace a\nenum E { bool m( }",
                 "namespace a\nenum E { A\n... }",                              // placeholder is not valid syntax
+                "namespace a\nenum E(a: int8) { A() }",                        // empty argument list
                 "namespace a\nE {}\n@@static E E.fromString(value: string)"   // attached from outside
         })
         void shouldRejectInvalidInput(final String text) {

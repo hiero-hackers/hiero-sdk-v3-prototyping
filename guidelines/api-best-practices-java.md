@@ -513,18 +513,17 @@ public enum TransactionStatus {
 }
 ```
 
-**Enumeration with immutable attributes:**
+**Enumeration with attributes:**
 
-All attributes on enumerations must be `@@immutable` in the meta-language. In Java, enum fields are declared `final` and
-set via the constructor.
+Enum attributes are declared in the attribute list of the meta-language enum and are implicitly immutable. In Java,
+they become `final` fields set via the constructor; the constructor parameters follow the order of the attribute list,
+so each value's arguments map 1:1.
 
 ```
 // Meta-language
-enum KeyAlgorithm {
-    ED25519
-    ECDSA_SECP256K1
-
-    @@immutable keySize: int32
+enum KeyAlgorithm(keySize: int32) {
+    ED25519(32)
+    ECDSA_SECP256K1(33)
 }
 ```
 

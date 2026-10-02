@@ -66,14 +66,16 @@ each of them under its own rule id. Everything else is a hard `syntax.error`.
 | Method without return type (not allowed inside enums because it is ambiguous there) | `unsubscribe()` | `syntax.missing-return-type` |
 | Annotation written inside a comment | `// @@throws(unknown-node-error) if ...` | `syntax.annotation-in-comment` |
 
-## Open questions for the guideline
+## Guideline decisions driven by the tooling
 
-Building the grammar surfaced decisions that only the spec authors can make. The tool currently reports these
-cases but does not resolve them:
+Building the grammar surfaced gaps in the guideline. Resolved so far (now part of the guideline and enforced by the
+validator):
 
-1. **Enum attribute values:** enums may have `@@immutable` attributes (e.g. `HbarUnit.symbol`), but there is no
-   syntax to assign them per value; specs put the values in comments (`enum.unassignable-fields`).
-Resolved so far (now part of the guideline and enforced by the validator):
+- Enum attributes are declared in an attribute list after the enum name and assigned positionally per value:
+  `enum HbarUnit(symbol: string, baseUnitFactor: int64) extends NativeTokenUnit { TINYBAR("tℏ", 1) }`. Inherited
+  attributes must be listed with the same type; `enum.*` rules check counts and literal types.
+- `...` is no valid syntax in enums; an incomplete enum is marked with a comment.
+- `duration` is a basic type with millisecond precision (for e.g. HTTP timeouts); `seconds` stays whole-second.
 
 - Generic methods: `ReturnType name<$$T extends B>(...)`. `@@static` methods and namespace functions may be generic;
   generic instance methods must be `@@finalMethod` (not overridable), because overridable generic methods cannot be
@@ -92,14 +94,16 @@ Resolved so far (now part of the guideline and enforced by the validator):
 
 ## Current findings on `spec/`
 
-`validate --summary --min-severity=warning spec` reports 7 errors and 43 warnings (no syntax errors). All
-errors are `@@nullable` collections (`collection.nullable`) on update transactions and one mirror-node type, where
-`null` currently means "leave unchanged" — this conflicts with the guideline rule "never define nullable collections"
-and needs a design decision.
+`validate --summary --min-severity=warning spec` reports 9 errors (no syntax errors):
+
+- 7× `collection.nullable` on update transactions and one mirror-node type, where `null` currently means "leave
+  unchanged" — conflicts with the guideline rule "never define nullable collections"; needs a design decision.
+- 2× `enum.argument-count` in `mirror-node-client/mirror-node-transaction.md`: `TransactionType.TOKEN_TRANSFER` and
+  `UNKNOWN` have no wire value in the Mirror Node OpenAPI spec (open question in that spec).
 
 ## Tests
 
-`mvn verify` runs about 185 tests. JaCoCo fails the build below 95 % line / 90 % branch coverage (generated
+`mvn verify` runs about 190 tests. JaCoCo fails the build below 95 % line / 90 % branch coverage (generated
 ANTLR code excluded). Besides unit tests per component and positive/negative tests per rule, the
 `RepositorySpecsTest` checks the real repository content: every spec under `spec/` must be free of syntax errors,
 every `namespace` example of the guideline must parse, all reported locations must exist, and the report must be

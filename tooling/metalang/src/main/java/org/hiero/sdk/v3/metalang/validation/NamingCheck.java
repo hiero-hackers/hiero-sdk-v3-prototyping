@@ -50,6 +50,10 @@ final class NamingCheck implements Check {
                 type.fields().forEach(f -> checkField(f, out));
                 type.methods().forEach(m -> checkMethod(m, out));
                 if (type instanceof Declaration.EnumType enumType) {
+                    for (final Parameter attribute : enumType.attributes()) {
+                        check(LOWER_CAMEL, Rule.NAMING_MEMBER, "Enum attribute", attribute.name(),
+                                attribute.location(), out);
+                    }
                     for (final EnumValue value : enumType.values()) {
                         check(UPPER_SNAKE, Rule.NAMING_ENUM_VALUE, "Enum value", value.name(), value.location(), out);
                     }

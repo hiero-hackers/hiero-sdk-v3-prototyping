@@ -113,12 +113,13 @@ abstraction TransactionStatus {
 }
 
 // Defines the status codes that are currently used by services that are part of the consensus node repository
-enum BasicTransactionStatus extends TransactionStatus {
-    OK
-    INVALID_TRANSACTION
-    PAYER_ACCOUNT_NOT_FOUND
+// The codes are the HAPI ResponseCodeEnum values (services/response_code.proto).
+enum BasicTransactionStatus(code: int32) extends TransactionStatus {
+    OK(0)
+    INVALID_TRANSACTION(1)
+    PAYER_ACCOUNT_NOT_FOUND(2)
     // not complete yet: further status codes are still to be added here
-    GRPC_WEB_PROXY_NOT_SUPPORTED
+    GRPC_WEB_PROXY_NOT_SUPPORTED(399)
 }
 
 // A serialized TransactionBody for one target consensus node — the exact bytes an external signer

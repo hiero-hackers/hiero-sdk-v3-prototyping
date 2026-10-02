@@ -59,6 +59,10 @@ final class Elements {
                                 new TypeSite(file, s, Position.SUPERTYPE, typeScope)));
                         type.fields().forEach(f -> visitor.accept(
                                 new TypeSite(file, f.type(), Position.FIELD, typeScope)));
+                        if (type instanceof Declaration.EnumType enumType) {
+                            enumType.attributes().forEach(a -> visitor.accept(
+                                    new TypeSite(file, a.type(), Position.FIELD, typeScope)));
+                        }
                         type.methods().forEach(m -> visitMethod(file, m, typeScope, visitor));
                     }
                     case Declaration.Function function -> visitMethod(file, function.method(), Set.of(), visitor);

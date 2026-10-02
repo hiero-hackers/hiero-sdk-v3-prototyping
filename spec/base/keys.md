@@ -117,11 +117,11 @@ enum RawFormat {
 }
 
 // all supported encodings that can be used to import/export a container format
-enum KeyEncoding {
-    DER, // Distinguished Encoding Rules
-    PEM // Privacy Enhanced Mail
-    
-    @@immutable rawFormat: RawFormat // the raw format of the import / export
+// rawFormat: the raw format of the import / export
+enum KeyEncoding(rawFormat: RawFormat) {
+    DER(BYTES), // Distinguished Encoding Rules (binary)
+    PEM(STRING) // Privacy Enhanced Mail (Base64 text)
+
     bytes decode(keyType : KeyType, value : string)
 }
 
@@ -142,14 +142,12 @@ enum ByteImportEncoding {
 }
 
 // combined container format and encoding
-enum KeyFormat {
-    PKCS8_WITH_DER,
-    SPKI_WITH_DER,
-    PKCS8_WITH_PEM,
-    SPKI_WITH_PEM
-    
-    @@immutable container: KeyContainer // the container format
-    @@immutable encoding: KeyEncoding // the encoding
+// container: the container format; encoding: the encoding
+enum KeyFormat(container: KeyContainer, encoding: KeyEncoding) {
+    PKCS8_WITH_DER(PKCS8, DER),
+    SPKI_WITH_DER(SPKI, DER),
+    PKCS8_WITH_PEM(PKCS8, PEM),
+    SPKI_WITH_PEM(SPKI, PEM)
     
     bool supportsType(type: KeyType) // returns true if the internal container format supports the given key type
     bytes decode(keyType : KeyType, value : string) // decodes the given string value into raw bytes for the given key type

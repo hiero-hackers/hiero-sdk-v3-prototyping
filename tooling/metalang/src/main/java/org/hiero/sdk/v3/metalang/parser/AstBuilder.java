@@ -97,7 +97,8 @@ final class AstBuilder {
         for (final MetaLangParser.EnumEntryContext entry : ctx.enumEntry()) {
             switch (entry) {
                 case MetaLangParser.EnumValueContext value -> values.add(new EnumValue(
-                        identifier(value.identifier()), annotations(value.annotation()), documentation(value),
+                        identifier(value.identifier()), value.literal().stream().map(this::literal).toList(),
+                        annotations(value.annotation()), documentation(value),
                         location(value.identifier().start)));
                 case MetaLangParser.EnumFieldContext field -> fields.add(field(field.fieldDecl()));
                 case MetaLangParser.EnumMethodContext method -> methods.add(method(method.returningMethodDecl()));
@@ -105,7 +106,7 @@ final class AstBuilder {
             }
         }
         return new Declaration.EnumType(identifier(ctx.identifier()), annotations(ctx.annotation()),
-                documentation(ctx), supertypes(ctx.extendsClause()), values, fields, methods,
+                documentation(ctx), parameters(ctx.parameterList()), supertypes(ctx.extendsClause()), values, fields, methods,
                 location(ctx.identifier().start));
     }
 

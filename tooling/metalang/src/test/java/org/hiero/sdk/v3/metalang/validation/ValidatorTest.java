@@ -825,7 +825,7 @@ class ValidatorTest {
         @Test
         void shouldReportMutableFieldsOfComplexTypesOnly() {
             assertThat(ruleIds("namespace a\nX { a: int32 }\nenum E { A\n@@immutable v: int8 }"))
-                    .containsExactlyInAnyOrder("field.mutable", "enum.unassignable-fields");
+                    .containsExactlyInAnyOrder("field.mutable", "enum.body-attribute");
         }
     }
 
@@ -982,7 +982,72 @@ class ValidatorTest {
 
             // THEN
             assertThat(rules(schema)).containsExactlyInAnyOrder("enum.empty", "enum.duplicate-value",
-                    "enum.field-not-immutable", "enum.explicit-values-method", "enum.unassignable-fields");
+                    "enum.body-attribute", "enum.explicit-values-method", "enum.inherited-attribute-missing");
+        }
+
+        @Test
+        void shouldAcceptEnumWithAttributeList() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    abstraction Unit { @@immutable symbol: string }
+                    enum Container { PKCS8, SPKI }
+                    enum HbarUnit(symbol: string, @@min(1) factor: int64, container: Container,
+                                  @@nullable @@maxLength(10) note: string) extends Unit {
+                        TINYBAR("tℏ", 1, PKCS8, null)
+                        HBAR("ℏ", 100_000_000, Container.SPKI, "main unit"),
+                    }
+                    """;
+
+            // THEN
+            assertThat(rules(schema)).isEmpty();
+        }
+
+        @Test
+        void shouldReportWrongArgumentCountsAndTypes() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    enum Plain { A("x") }
+                    enum Unit(symbol: string, factor: int64) {
+                        TOO_FEW("x")
+                        NO_ARGS
+                        WRONG_TYPES(1, "x")
+                        NOT_NULLABLE(null, 1)
+                    }
+                    """;
+
+            // WHEN
+            final List<Diagnostic> diagnostics = diagnostics(schema);
+
+            // THEN
+            assertThat(diagnostics).extracting(Diagnostic::ruleId).containsExactly("enum.argument-count",
+                    "enum.argument-count", "enum.argument-count", "enum.argument-type", "enum.argument-type",
+                    "enum.argument-type");
+            assertThat(diagnostics.get(3).message())
+                    .isEqualTo("'WRONG_TYPES', attribute 'symbol': Value 1 is not a valid 'string'");
+        }
+
+        @Test
+        void shouldReportInvalidAttributeLists() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    abstraction Unit { @@immutable symbol: string }
+                    enum Dup(a: int8, a: int8, b: int8...) { V(1, 1, 1) }
+                    enum Mismatch(symbol: int32) extends Unit { V(1) }
+                    enum Annotated(@@immutable Bad_Name: Missing) { V(1) }
+                    """;
+
+            // THEN
+            assertThat(rules(schema)).containsExactlyInAnyOrder("enum.attribute-invalid", "enum.attribute-invalid",
+                    "enum.attribute-type-mismatch", "annotation.target", "naming.member", "type.unknown");
+        }
+
+        @Test
+        void shouldCountAttributeTypesAsImportUsages() {
+            assertThat(rules("namespace a\nrequires {C} from b\nenum E(c: C) { V(X) }", "namespace b\nenum C { X }"))
+                    .isEmpty();
         }
 
         @Test

@@ -151,7 +151,7 @@ final class InheritanceCheck implements Check {
         }
     }
 
-    private static boolean sameType(final SpecModel model, final SchemaFile fileA, final TypeRef a,
+    static boolean sameType(final SpecModel model, final SchemaFile fileA, final TypeRef a,
                                     final SchemaFile fileB, final TypeRef b) {
         if (a instanceof TypeRef.GenericParameter || b instanceof TypeRef.GenericParameter) {
             return true;

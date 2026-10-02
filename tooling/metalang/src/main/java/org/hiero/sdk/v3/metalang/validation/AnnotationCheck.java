@@ -47,6 +47,11 @@ final class AnnotationCheck implements Check {
                         checkElement(enumType, ElementKind.ENUM, "enum '" + enumType.name() + "'", out);
                         enumType.values().forEach(v -> checkElement(v, ElementKind.ENUM_VALUE,
                                 "enum value '" + v.name() + "'", out));
+                        for (final Parameter attribute : enumType.attributes()) {
+                            checkElement(attribute, ElementKind.PARAMETER, "enum attribute '" + attribute.name() + "'",
+                                    out);
+                            checkValueAnnotations(model, file, attribute, attribute.type(), attribute.varargs(), out);
+                        }
                         checkMembers(model, file, enumType.fields(), enumType.methods(), out);
                         checkRedundantThreadSafe(enumType, out);
                     }

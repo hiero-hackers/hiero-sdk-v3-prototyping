@@ -212,17 +212,26 @@ public enum Rule {
             "api-guideline.md#prefer-immutable-fields-and-objects"),
 
     // --- enums -----------------------------------------------------------------------------------
-    ENUM_FIELD_NOT_IMMUTABLE("enum.field-not-immutable", Severity.ERROR,
-            "Enum attributes must be @@immutable", "api-guideline.md#enumerations"),
+    ENUM_BODY_ATTRIBUTE("enum.body-attribute", Severity.ERROR,
+            "Enum attributes must be declared in the attribute list after the enum name, not in the body",
+            "api-guideline.md#enumerations"),
+    ENUM_INHERITED_ATTRIBUTE_MISSING("enum.inherited-attribute-missing", Severity.ERROR,
+            "Attribute inherited from an abstraction is missing in the enum's attribute list",
+            "api-guideline.md#enumerations"),
+    ENUM_ATTRIBUTE_TYPE_MISMATCH("enum.attribute-type-mismatch", Severity.ERROR,
+            "Enum attribute has a different type than the inherited attribute", "api-guideline.md#enumerations"),
+    ENUM_ATTRIBUTE_INVALID("enum.attribute-invalid", Severity.ERROR,
+            "Enum attribute declared twice or as varargs", "api-guideline.md#enumerations"),
+    ENUM_ARGUMENT_COUNT("enum.argument-count", Severity.ERROR,
+            "Enum value does not pass exactly one argument per attribute", "api-guideline.md#enumerations"),
+    ENUM_ARGUMENT_TYPE("enum.argument-type", Severity.ERROR,
+            "Enum value argument does not match the attribute type", "api-guideline.md#enumerations"),
     ENUM_DUPLICATE_VALUE("enum.duplicate-value", Severity.ERROR,
             "Enum value declared twice", "api-guideline.md#enumerations"),
     ENUM_EMPTY("enum.empty", Severity.WARNING,
             "Enum declares no values", "api-guideline.md#enumerations"),
     ENUM_EXPLICIT_VALUES_METHOD("enum.explicit-values-method", Severity.ERROR,
-            "Enums provide values() implicitly; it must not be declared", "api-guideline.md#enumerations"),
-    ENUM_UNASSIGNABLE_FIELDS("enum.unassignable-fields", Severity.INFO,
-            "Enum has attributes, but the meta-language has no syntax to assign per-value attribute values",
-            "api-guideline.md#enumerations");
+            "Enums provide values() implicitly; it must not be declared", "api-guideline.md#enumerations");
 
     private final String id;
     private final Severity severity;
