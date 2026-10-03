@@ -35,6 +35,8 @@ openspec-common-delta-changes/  # Plain language-neutral feature proposals and s
 
 sdk-java/openspec/             # Java-only OpenSpec root
 sdk-java/generator.properties  # Java generator configuration (e.g. java.interfaces), see tooling/metalang/README.md
+generated/java/                # Generated Java API (tracked in git; regenerate after spec or generator changes,
+                               #   command in tooling/metalang/README.md). Never edit by hand.
 sdk-ts/openspec/               # TypeScript-only OpenSpec root
 
 spec/                           # The actual V3 public-API specifications, written in the meta-language

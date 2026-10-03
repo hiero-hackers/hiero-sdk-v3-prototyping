@@ -79,10 +79,13 @@ model. The output is deterministic: a diff of two runs shows exactly how a spec 
 
 ### Generate the Java API
 
-Generates the Java API into `tooling/metalang/target/generated/java` (ignored by git):
+Generates the Java API into `generated/java` at the repository root. The directory is under version control, so that
+every change of the specs or the generator shows up as a diff of the generated code. Files are only rewritten if their
+content changes, and generated files that are no longer produced (e.g. of a removed or deferred type) are deleted;
+files without the generator's header line are never touched. `--output` takes any directory.
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=java --fail-on=never --config=sdk-java/generator.properties --output=tooling/metalang/target/generated/java spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=java --fail-on=never --config=sdk-java/generator.properties --output=generated/java spec
 ```
 
 Without `--fail-on=never` nothing is generated as long as the specs have validation errors. See
@@ -93,14 +96,15 @@ To check the result with a JDK 25 (`javac`/`javadoc` of JDK 25 on the `PATH`; th
 repository after the build), compile all generated modules and render their Markdown Javadoc:
 
 ```bash
-javac -Xlint:all -Werror --release 25 --module-source-path "tooling/metalang/target/generated/java/*/src/main/java" --module-path ~/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar -d tooling/metalang/target/generated/classes $(find tooling/metalang/target/generated/java -name '*.java')
+javac -Xlint:all -Werror --release 25 --module-source-path "generated/java/*/src/main/java" --module-path ~/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar -d tooling/metalang/target/generated/classes $(find generated/java -name '*.java')
 ```
 
 ```bash
-javadoc -Xdoclint:all,-missing -quiet --module-source-path "tooling/metalang/target/generated/java/*/src/main/java" --module-path ~/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar -d tooling/metalang/target/generated/apidocs --module $(ls tooling/metalang/target/generated/java | paste -sd, -)
+javadoc -Xdoclint:all,-missing -quiet --module-source-path "generated/java/*/src/main/java" --module-path ~/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar -d tooling/metalang/target/generated/apidocs --module $(ls generated/java | paste -sd, -)
 ```
 
-The rendered Javadoc is then in `tooling/metalang/target/generated/apidocs/index.html` (only packages that contain
+Class files and the rendered Javadoc are build output and stay in `tooling/metalang/target`; the Javadoc is then in
+`tooling/metalang/target/generated/apidocs/index.html` (only packages that contain
 generated types are exported and therefore documented).
 
 ### List all rules
@@ -331,6 +335,7 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `RobustnessTest` | Seeded random mutations and every prefix of every real spec never crash the tool and never report a location outside the document; results do not depend on document order; AST locations point at the element; the textual form of every type and literal parses back to itself. |
 | `RepositorySpecsTest` | All specs under `spec/` are free of syntax errors and the report is deterministic. |
 | `ModelCommandTest` | `metalang model` output for the example specs in `src/test/resources/model-golden/spec` equals the golden file `model-golden/model.json` byte for byte; filters, exit codes and determinism on the real specs. After an intended change, regenerate the golden file (command in the test's Javadoc). |
+| `GeneratedOutputTest` | Writing into a version-controlled output directory: new files and directories, unchanged files are not rewritten, stale generated files and the directories they leave empty are deleted, hand-written and binary files and other empty directories are kept. |
 | `ConstantsGeneratorTest` | Class name rule, basic and struct-literal constants (record, class, `null` and `@@default` filling, `@Deprecated`), loading the compiled constants, and every deferral reason (type not generated, abstraction, missing value, clashing class name). |
 | `ExceptionGeneratorTest` | Exception names, standard mapping (checked/unchecked), placement across modules (shortest namespace, transitive requires), errors without common module or with clashing names, `throws` clauses and async documentation, and the runtime behaviour of a generated exception (single constructor, message check, cause). |
 | `ClassGeneratorTest` | Which abstraction becomes an abstract class or an interface (attributes, enums, interfaces, multiple inheritance with *none* as result, upward propagation, configuration, `@@finalMethod`), configuration errors, covariant `@@async` overrides, generated classes (state, constructors with `super(...)`, `$$Self` setters, covariant setter overrides, narrowed nullability, defaults, value classes, sealed hierarchies) and their **runtime behaviour** (checks, defensive copies, chained setters, equality). |

@@ -16,6 +16,7 @@ import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
 import org.hiero.sdk.v3.metalang.diagnostic.Severity;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
+import org.hiero.sdk.v3.metalang.generator.GeneratedOutput;
 import org.hiero.sdk.v3.metalang.generator.GenerationException;
 import org.hiero.sdk.v3.metalang.generator.java.JavaGenerator;
 import org.hiero.sdk.v3.metalang.generator.java.JavaGeneratorConfig;
@@ -298,17 +299,16 @@ public final class MetaLangCli {
             return EXIT_FINDINGS;
         }
         final Path outputDirectory = Path.of(output);
+        final GeneratedOutput.Result result;
         try {
-            for (final GeneratedFile file : files) {
-                final Path target = outputDirectory.resolve(file.path());
-                Files.createDirectories(target.getParent());
-                Files.writeString(target, file.content(), StandardCharsets.UTF_8);
-            }
+            result = GeneratedOutput.write(outputDirectory, files, JavaGenerator.HEADER);
         } catch (final IOException e) {
             err.println("Cannot write to " + outputDirectory + ": " + e.getMessage());
             return EXIT_FINDINGS;
         }
-        out.println(files.size() + " file(s) written to " + outputDirectory);
+        out.println(files.size() + " file(s) generated in " + outputDirectory + " (" + result.written()
+                + " changed, " + result.removed().size() + " stale removed)");
+        result.removed().forEach(p -> out.println("  removed " + p));
         final SortedMap<QualifiedName, String> deferred = generator.deferredTypes(model);
         if (!deferred.isEmpty()) {
             out.println(deferred.size() + " type(s) deferred until the types they refer to are generated"
