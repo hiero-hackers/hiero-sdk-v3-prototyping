@@ -12,6 +12,7 @@ import org.hiero.sdk.v3.metalang.ValidationReport;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
 import org.hiero.sdk.v3.metalang.diagnostic.Severity;
+import org.hiero.sdk.v3.metalang.model.LinkedModel;
 
 /**
  * Command line interface.
@@ -19,6 +20,7 @@ import org.hiero.sdk.v3.metalang.diagnostic.Severity;
  * <pre>
  * metalang validate [--min-severity=error|warning|info] [--fail-on=error|warning|info|never]
  *                   [--format=text|json] [--summary] &lt;spec-dir-or-file&gt;
+ * metalang model [--namespace=ns] [--type=ns.Type] [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
  * metalang rules
  * </pre>
  *
@@ -36,6 +38,7 @@ public final class MetaLangCli {
     private static final String USAGE = """
             Usage:
               metalang validate [options] <spec-dir-or-file>
+              metalang model [options] <spec-dir-or-file>
               metalang rules
 
             Options for 'validate':
@@ -43,6 +46,12 @@ public final class MetaLangCli {
               --fail-on=error|warning|info|never  lowest severity that fails the run (default: error)
               --format=text|json                  output format (default: text)
               --summary                           print counts per rule instead of every finding
+
+            Options for 'model' (prints the linked model as JSON):
+              --namespace=<ns>                    only this namespace and its sub-namespaces
+              --type=<namespace.Type>             only this type (no functions and constants)
+              --fail-on=error|warning|info|never  lowest severity that fails the run (default: error);
+                                                  the model is printed in any case
             """;
 
     private final PrintStream out;
@@ -81,6 +90,7 @@ public final class MetaLangCli {
         }
         return switch (args[0]) {
             case "validate" -> validate(List.of(args).subList(1, args.length));
+            case "model" -> model(List.of(args).subList(1, args.length));
             case "rules" -> rules();
             case "help", "--help", "-h" -> {
                 out.print(USAGE);
@@ -148,6 +158,53 @@ public final class MetaLangCli {
             shown.forEach(out::println);
             printTotals(report);
         }
+        final Severity failThreshold = failOn;
+        final boolean failed = failThreshold != null && report.diagnostics().stream()
+                .anyMatch(d -> d.severity().ordinal() <= failThreshold.ordinal());
+        return failed ? EXIT_FINDINGS : EXIT_OK;
+    }
+
+    private int model(final List<String> args) {
+        Severity failOn = Severity.ERROR;
+        String namespace = null;
+        String type = null;
+        final List<String> paths = new ArrayList<>();
+        for (final String arg : args) {
+            if (arg.startsWith("--fail-on=")) {
+                final String value = arg.substring("--fail-on=".length());
+                failOn = value.equals("never") ? null : parseSeverity(value);
+                if (failOn == null && !value.equals("never")) {
+                    return usageError("Invalid severity in " + arg);
+                }
+            } else if (arg.startsWith("--namespace=")) {
+                namespace = arg.substring("--namespace=".length());
+            } else if (arg.startsWith("--type=")) {
+                type = arg.substring("--type=".length());
+            } else if (arg.startsWith("--")) {
+                return usageError("Unknown option " + arg);
+            } else {
+                paths.add(arg);
+            }
+        }
+        if (paths.size() != 1) {
+            return usageError("Expected exactly one spec directory or file");
+        }
+        final Path root = Path.of(paths.getFirst());
+        if (!Files.exists(root)) {
+            return usageError("Path does not exist: " + root);
+        }
+        final ValidationReport report = new MetaLang().validate(root);
+        final LinkedModel model = LinkedModel.of(report.model());
+        final String namespaceFilter = namespace;
+        final String typeFilter = type;
+        if (typeFilter != null && model.types().stream().noneMatch(t -> t.name().toString().equals(typeFilter))) {
+            err.println("Unknown type '" + typeFilter + "'");
+            return EXIT_USAGE;
+        }
+        out.print(ModelJson.render(report, model,
+                ns -> namespaceFilter == null || ns.equals(namespaceFilter) || ns.startsWith(namespaceFilter + "."),
+                t -> typeFilter == null || t.name().toString().equals(typeFilter),
+                typeFilter != null));
         final Severity failThreshold = failOn;
         final boolean failed = failThreshold != null && report.diagnostics().stream()
                 .anyMatch(d -> d.severity().ordinal() <= failThreshold.ordinal());

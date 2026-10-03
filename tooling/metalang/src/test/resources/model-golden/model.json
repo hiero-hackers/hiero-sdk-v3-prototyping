@@ -1,0 +1,266 @@
+{
+  "specs": 2,
+  "errors": 0,
+  "warnings": 0,
+  "types": [
+    {
+      "name": "shop.Category",
+      "kind": "enum",
+      "location": "shop.md:28:6",
+      "documentation": "",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [],
+      "attributes": [
+        {
+          "name": "code",
+          "type": "int8",
+          "varargs": false,
+          "annotations": []
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "varargs": false,
+          "annotations": [
+            "@@nullable"
+          ]
+        }
+      ],
+      "values": [
+        {
+          "name": "FOOD",
+          "arguments": [
+            "1",
+            "\"Food\""
+          ],
+          "annotations": [],
+          "documentation": "things to eat",
+          "location": "shop.md:29:5"
+        },
+        {
+          "name": "OTHER",
+          "arguments": [
+            "2",
+            "null"
+          ],
+          "annotations": [],
+          "documentation": "",
+          "location": "shop.md:30:5"
+        }
+      ],
+      "methods": []
+    },
+    {
+      "name": "shop.Entity",
+      "kind": "abstraction",
+      "location": "shop.md:14:13",
+      "documentation": "Something with an id.",
+      "annotations": [],
+      "typeParameters": [
+        {
+          "name": "$$Id",
+          "bound": null
+        }
+      ],
+      "supertypes": [],
+      "fields": [
+        {
+          "name": "id",
+          "type": "$$Id",
+          "declaredIn": "shop.Entity",
+          "annotations": [
+            "@@immutable",
+            "@@nullable"
+          ],
+          "documentation": "",
+          "location": "shop.md:15:28"
+        }
+      ],
+      "methods": [
+        {
+          "name": "sameAs",
+          "signature": "sameAs(shop.Entity<$$O>)",
+          "returnType": "bool",
+          "typeParameters": [
+            {
+              "name": "$$O",
+              "bound": null
+            }
+          ],
+          "parameters": [
+            {
+              "name": "other",
+              "type": "shop.Entity<$$O>",
+              "varargs": false,
+              "annotations": []
+            }
+          ],
+          "declaredIn": "shop.Entity",
+          "annotations": [
+            "@@finalMethod"
+          ],
+          "documentation": "",
+          "location": "shop.md:16:24"
+        }
+      ]
+    },
+    {
+      "name": "shop.Product",
+      "kind": "type",
+      "location": "shop.md:21:1",
+      "documentation": "A product.",
+      "annotations": [
+        "@@finalType"
+      ],
+      "typeParameters": [],
+      "supertypes": [
+        "shop.Entity<int64>"
+      ],
+      "fields": [
+        {
+          "name": "id",
+          "type": "int64",
+          "declaredIn": "shop.Product",
+          "annotations": [
+            "@@immutable",
+            "@@override"
+          ],
+          "documentation": "",
+          "location": "shop.md:22:28"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "declaredIn": "shop.Product",
+          "annotations": [
+            "@@immutable",
+            "@@maxLength(40)"
+          ],
+          "documentation": "",
+          "location": "shop.md:23:33"
+        },
+        {
+          "name": "price",
+          "type": "shop.money.Money",
+          "declaredIn": "shop.Product",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "shop.md:24:17"
+        }
+      ],
+      "methods": [
+        {
+          "name": "sameAs",
+          "signature": "sameAs(shop.Entity<$$O>)",
+          "returnType": "bool",
+          "typeParameters": [
+            {
+              "name": "$$O",
+              "bound": null
+            }
+          ],
+          "parameters": [
+            {
+              "name": "other",
+              "type": "shop.Entity<$$O>",
+              "varargs": false,
+              "annotations": []
+            }
+          ],
+          "declaredIn": "shop.Entity",
+          "annotations": [
+            "@@finalMethod"
+          ],
+          "documentation": "",
+          "location": "shop.md:16:24"
+        },
+        {
+          "name": "related",
+          "signature": "related(int32)",
+          "returnType": "list<shop.Product>",
+          "typeParameters": [],
+          "parameters": [
+            {
+              "name": "limit",
+              "type": "int32",
+              "varargs": false,
+              "annotations": [
+                "@@min(1)"
+              ]
+            }
+          ],
+          "declaredIn": "shop.Product",
+          "annotations": [
+            "@@async",
+            "@@throws(not-found-error)"
+          ],
+          "documentation": "",
+          "location": "shop.md:25:53"
+        }
+      ]
+    },
+    {
+      "name": "shop.money.Money",
+      "kind": "type",
+      "location": "money.md:10:1",
+      "documentation": "",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [],
+      "fields": [
+        {
+          "name": "cents",
+          "type": "int64",
+          "declaredIn": "shop.money.Money",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "money.md:11:17"
+        }
+      ],
+      "methods": []
+    }
+  ],
+  "functions": [
+    {
+      "namespace": "shop",
+      "name": "create",
+      "signature": "create(string,string...)",
+      "returnType": "shop.Product",
+      "typeParameters": [],
+      "parameters": [
+        {
+          "name": "name",
+          "type": "string",
+          "varargs": false,
+          "annotations": []
+        },
+        {
+          "name": "tags",
+          "type": "string",
+          "varargs": true,
+          "annotations": []
+        }
+      ],
+      "annotations": [
+        "@@static"
+      ],
+      "documentation": "",
+      "location": "shop.md:35:18"
+    }
+  ],
+  "constants": [
+    {
+      "name": "shop.MAX_PRODUCTS",
+      "type": "int32",
+      "value": "1_000",
+      "annotations": [],
+      "documentation": "",
+      "location": "shop.md:33:1"
+    }
+  ]
+}

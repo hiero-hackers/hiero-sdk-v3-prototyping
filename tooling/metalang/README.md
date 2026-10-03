@@ -9,27 +9,79 @@ Status: **prototype**. The scope is grammar + parser + semantic model + validato
 
 ## Quick start
 
-Requires Java 21+ and Maven.
+Requires Java 21+ and Maven. All commands are meant to be run from the **repository root**
+(`hiero-sdk-v3-prototyping/`) and can be copied 1:1.
+
+### Build
 
 ```bash
 mvn -f tooling/metalang/pom.xml verify
 ```
 
+This runs all tests and creates the self-contained CLI jar `tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar`.
+For a quick build without tests:
+
+```bash
+mvn -f tooling/metalang/pom.xml -q package -DskipTests
+```
+
+### Validate the specs
+
+All findings of all specs under `spec/`:
+
 ```bash
 java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar validate spec
 ```
+
+Only the number of findings per rule (errors and warnings):
 
 ```bash
 java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar validate --summary --min-severity=warning spec
 ```
 
+Only errors, as JSON:
+
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar rules
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar validate --min-severity=error --format=json spec
 ```
 
 `validate` options: `--min-severity=error|warning|info` (what is printed), `--fail-on=error|warning|info|never`
 (exit code 1 if a finding at or above this severity exists; default `error`), `--format=text|json`, `--summary`.
 Output is sorted and contains paths relative to the given directory, so it is byte-for-byte reproducible.
+
+### Show the linked model
+
+The `model` command prints the [linked model](#linked-model-input-for-generators) as JSON: every type with its
+resolved supertypes, effective fields and methods (inherited members included, type arguments substituted,
+`declaredIn` shows where a member comes from), enum attributes and values, functions and constants.
+
+The complete model of all specs, written to a file:
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar model --fail-on=never spec > spec-model.json
+```
+
+A single namespace (including its sub-namespaces), e.g. everything about transactions:
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar model --fail-on=never --namespace=consensusnode.transactions spec
+```
+
+A single type, e.g. `AccountCreateTransaction` with all members inherited from `Transaction`:
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar model --fail-on=never --type=consensusnode.transactions.accounts.AccountCreateTransaction spec
+```
+
+The model is always printed. Without `--fail-on=never` the command ends with exit code 1 as long as the specs have
+validation errors (`"errors"` in the JSON shows how many), so a pipeline does not silently continue with a broken
+model. The output is deterministic: a diff of two runs shows exactly how a spec change affects the model.
+
+### List all rules
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar rules
+```
 
 ## Pipeline
 
@@ -119,7 +171,7 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 435 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
+`mvn verify` runs about 445 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
 excluded). Besides unit tests per component, the suite contains these systematic checks:
 
 | Test | What it guarantees |
@@ -130,6 +182,7 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `MarkdownEdgeCasesTest` | CommonMark fences (longer fences, indentation, info strings), ATX headings, CRLF, Unicode. |
 | `RobustnessTest` | Seeded random mutations and every prefix of every real spec never crash the tool and never report a location outside the document; results do not depend on document order; AST locations point at the element; the textual form of every type and literal parses back to itself. |
 | `RepositorySpecsTest` | All specs under `spec/` are free of syntax errors and the report is deterministic. |
+| `ModelCommandTest` | `metalang model` output for the example specs in `src/test/resources/model-golden/spec` equals the golden file `model-golden/model.json` byte for byte; filters, exit codes and determinism on the real specs. After an intended change, regenerate the golden file (command in the test's Javadoc). |
 | `LinkedRepositorySpecsTest` | Linking all real specs leaves no unresolved reference, every declared type exists, self types are substituted (`Transaction`, `NativeToken`), and linking is deterministic. |
 
 ## Known limitations
