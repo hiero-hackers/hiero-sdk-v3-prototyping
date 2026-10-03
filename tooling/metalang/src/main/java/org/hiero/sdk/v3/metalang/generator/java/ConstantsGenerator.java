@@ -33,7 +33,7 @@ final class ConstantsGenerator {
                                   final List<ConstantDefinition> constants, final JavaContext context) {
         final String packageName = JavaNames.packageName(namespace);
         final String className = className(namespace);
-        final Imports imports = new Imports(packageName, className);
+        final Imports imports = context.imports(packageName, className);
         final String fields = constants.stream().map(c -> constant(c, imports, context))
                 .collect(Collectors.joining("\n"));
         final StringBuilder java = new StringBuilder(JavaGenerator.HEADER).append('\n');

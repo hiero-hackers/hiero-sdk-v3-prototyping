@@ -134,6 +134,14 @@ public final class JavaGenerator {
                     files.add(ConstantsGenerator.generate(module.name(), namespace.name(), constants, context));
                     packagesWithTypes.add(namespace.name());
                 }
+                for (final Map.Entry<String, QualifiedName> function : context.functionInterfaces().names()
+                        .entrySet()) {
+                    if (function.getValue().namespace().equals(namespace.name())) {
+                        files.add(FunctionInterfaceGenerator.generate(module.name(), function.getValue(),
+                                context.functionInterfaces().types().get(function.getKey()), context));
+                        packagesWithTypes.add(namespace.name());
+                    }
+                }
                 for (final Map.Entry<String, QualifiedName> exception : context.exceptions().entrySet()) {
                     if (exception.getValue().namespace().equals(namespace.name())) {
                         files.add(ExceptionGenerator.generate(module.name(), exception.getKey(), exception.getValue()));
@@ -178,6 +186,8 @@ public final class JavaGenerator {
         final Map<String, String> moduleOfNamespace = new HashMap<>();
         modules.forEach(m -> m.namespaces().forEach(n -> moduleOfNamespace.put(n.name(), m.name())));
         final Map<String, QualifiedName> exceptions = exceptions(model, modules, moduleOfNamespace);
+        final FunctionInterfaces functionInterfaces = functionInterfaces(model, modules, moduleOfNamespace,
+                exceptions);
         final Set<QualifiedName> abstractClasses = abstractClasses(model);
         final Set<QualifiedName> extended = extendedTypes(model);
         final Set<QualifiedName> classes = new HashSet<>(abstractClasses);
@@ -196,7 +206,8 @@ public final class JavaGenerator {
         boolean changed = true;
         while (changed) {
             changed = false;
-            final JavaContext context = new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes, exceptions);
+            final JavaContext context = new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes,
+                    exceptions, functionInterfaces);
             for (final TypeDefinition type : List.copyOf(candidates.values())) {
                 final Optional<String> reason = missingType(type, context)
                         .or(() -> unsupported(type, context));
@@ -208,7 +219,7 @@ public final class JavaGenerator {
             }
         }
         final JavaContext context = new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes,
-                exceptions);
+                exceptions, functionInterfaces);
         return new Plan(context, deferred, constants(model, moduleOfNamespace, context, deferred),
                 functions(model, moduleOfNamespace, context, deferred));
     }
@@ -279,7 +290,8 @@ public final class JavaGenerator {
                     .map(n -> "refers to " + n + " (" + kind(context, n) + ", not generated yet)");
             if (reason.isEmpty()) {
                 try {
-                    ConstantsGenerator.constant(constant, new Imports(JavaNames.packageName(namespace)), context);
+                    ConstantsGenerator.constant(constant, context.imports(JavaNames.packageName(namespace),
+                            holder.name()), context);
                 } catch (final JavaTypes.UnsupportedTypeException e) {
                     reason = Optional.of(e.getMessage());
                 }
@@ -321,10 +333,7 @@ public final class JavaGenerator {
             final List<String> used = namespaces.stream().filter(moduleOfNamespace::containsKey).toList();
             final Set<String> usedModules = used.stream().map(moduleOfNamespace::get)
                     .collect(Collectors.toCollection(TreeSet::new));
-            final Optional<String> home = used.stream()
-                    .filter(n -> usedModules.stream().allMatch(m -> m.equals(moduleOfNamespace.get(n))
-                            || required.get(m).contains(moduleOfNamespace.get(n))))
-                    .min(java.util.Comparator.comparing(String::length).thenComparing(n -> n));
+            final Optional<String> home = home(used, moduleOfNamespace, required);
             if (home.isEmpty()) {
                 if (!used.isEmpty()) {
                     problems.add("Error '" + errorId + "' is used in the modules " + usedModules
@@ -342,6 +351,123 @@ public final class JavaGenerator {
             throw new GenerationException(problems);
         }
         return exceptions;
+    }
+
+    /**
+     * The namespace for a declaration that several namespaces use: one of them whose module all other using modules
+     * require (so every use can see it), the shortest name first.
+     */
+    private static Optional<String> home(final List<String> used, final Map<String, String> moduleOfNamespace,
+                                         final Map<String, Set<String>> required) {
+        final Set<String> usedModules = used.stream().map(moduleOfNamespace::get).collect(Collectors.toSet());
+        return used.stream()
+                .filter(n -> usedModules.stream().allMatch(m -> m.equals(moduleOfNamespace.get(n))
+                        || required.get(m).contains(moduleOfNamespace.get(n))))
+                .min(java.util.Comparator.comparing(String::length).thenComparing(n -> n));
+    }
+
+    /**
+     * Places the {@code @FunctionalInterface} of every function type that no {@code java.util.function} interface
+     * matches, like the exception classes: one interface per function type, in a using namespace that all users can
+     * see. A function type without home, with type variables, or whose interface name clashes with a type, an
+     * exception class or the interface of another function type gets no interface; the declarations that use it are
+     * deferred with that reason.
+     */
+    private static FunctionInterfaces functionInterfaces(final LinkedModel model, final List<Module> modules,
+                                                         final Map<String, String> moduleOfNamespace,
+                                                         final Map<String, QualifiedName> exceptions) {
+        final Map<String, Type.FunctionType> types = new TreeMap<>();
+        final Map<String, Set<String>> usage = new TreeMap<>();
+        final java.util.function.BiConsumer<Type, String> collect = (type, namespace) -> functionTypes(type, f -> {
+            if (!JavaTypes.isStandard(f)) {
+                types.putIfAbsent(f.text(), f);
+                usage.computeIfAbsent(f.text(), k -> new TreeSet<>()).add(namespace);
+            }
+        });
+        for (final TypeDefinition type : model.types()) {
+            final String namespace = type.name().namespace();
+            type.typeParameters().forEach(p -> collect.accept(p.bound(), namespace));
+            type.fields().forEach(f -> collect.accept(f.type(), namespace));
+            for (final MethodDefinition method : type.declaredMethods()) {
+                method.typeParameters().forEach(p -> collect.accept(p.bound(), namespace));
+                collect.accept(method.returnType(), namespace);
+                method.parameters().forEach(p -> collect.accept(p.type(), namespace));
+            }
+        }
+        for (final FunctionDefinition function : model.functions()) {
+            final MethodDefinition method = function.method();
+            collect.accept(method.returnType(), function.namespace());
+            method.parameters().forEach(p -> collect.accept(p.type(), function.namespace()));
+        }
+        model.constants().forEach(c -> collect.accept(c.type(), c.name().namespace()));
+        final Map<String, Set<String>> required = new HashMap<>();
+        modules.forEach(m -> required.put(m.name(), requiredModules(m.name(), modules)));
+        final Map<String, QualifiedName> names = new TreeMap<>();
+        final Map<String, String> problems = new TreeMap<>();
+        usage.forEach((text, namespaces) -> {
+            final List<String> used = namespaces.stream().filter(moduleOfNamespace::containsKey).toList();
+            if (containsTypeVariable(types.get(text))) {
+                problems.put(text, "Function type '" + text + "' needs its own functional interface, which cannot "
+                        + "use type variables (only function types with at most two parameters can)");
+                return;
+            }
+            final Optional<String> home = home(used, moduleOfNamespace, required);
+            if (home.isEmpty()) {
+                problems.put(text, "Function type '" + text + "' is used in modules of which none is required by all "
+                        + "others; its functional interface has no home");
+                return;
+            }
+            names.put(text, new QualifiedName(home.get(), FunctionInterfaceGenerator.className(types.get(text))));
+        });
+        // a name may be used only once: by one function type, and not by a type or an exception class
+        final Map<QualifiedName, List<String>> byName = new TreeMap<>();
+        names.forEach((text, name) -> byName.computeIfAbsent(name, k -> new ArrayList<>()).add(text));
+        byName.forEach((name, texts) -> {
+            final boolean clash = texts.size() > 1 || model.type(name).isPresent()
+                    || exceptions.containsValue(name);
+            if (clash) {
+                texts.forEach(text -> {
+                    names.remove(text);
+                    problems.put(text, "The functional interface " + name + " of function type '" + text
+                            + "' clashes with " + (texts.size() > 1 ? "the interface of another function type"
+                            : "a type of the same name"));
+                });
+            }
+        });
+        types.keySet().retainAll(names.keySet());
+        return new FunctionInterfaces(names, types, problems);
+    }
+
+    /** Calls {@code sink} for every function type in {@code type}, including nested ones. */
+    private static void functionTypes(final @Nullable Type type,
+                                      final java.util.function.Consumer<Type.FunctionType> sink) {
+        switch (type) {
+            case null -> {
+            }
+            case Type.FunctionType function -> {
+                sink.accept(function);
+                functionTypes(function.returnType(), sink);
+                function.parameters().forEach(p -> functionTypes(p.type(), sink));
+            }
+            case Type.DeclaredType declared -> declared.arguments().forEach(a -> functionTypes(a, sink));
+            case Type.BasicType basic -> basic.arguments().forEach(a -> functionTypes(a, sink));
+            case Type.WildcardType wildcard -> functionTypes(wildcard.upperBound(), sink);
+            default -> {
+            }
+        }
+    }
+
+    private static boolean containsTypeVariable(final @Nullable Type type) {
+        return switch (type) {
+            case null -> false;
+            case Type.TypeVariable ignored -> true;
+            case Type.FunctionType function -> containsTypeVariable(function.returnType())
+                    || function.parameters().stream().anyMatch(p -> containsTypeVariable(p.type()));
+            case Type.DeclaredType declared -> declared.arguments().stream().anyMatch(JavaGenerator::containsTypeVariable);
+            case Type.BasicType basic -> basic.arguments().stream().anyMatch(JavaGenerator::containsTypeVariable);
+            case Type.WildcardType wildcard -> containsTypeVariable(wildcard.upperBound());
+            default -> false;
+        };
     }
 
     private static List<String> errorIds(final MethodDefinition method) {

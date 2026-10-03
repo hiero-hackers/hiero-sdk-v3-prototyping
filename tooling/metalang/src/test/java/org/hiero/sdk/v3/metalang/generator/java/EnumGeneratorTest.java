@@ -24,6 +24,10 @@ class EnumGeneratorTest {
 
     private static final SourceLocation AT = new SourceLocation("x.md", 1, 1);
 
+    private static org.hiero.sdk.v3.metalang.model.ParameterDefinition parameter(final String name, final Type type) {
+        return new org.hiero.sdk.v3.metalang.model.ParameterDefinition(name, type, false, List.of(), AT);
+    }
+
     private static Type basic(final String name, final Type... arguments) {
         return new Type.BasicType(BuiltinType.lookup(name).orElseThrow(), List.of(arguments));
     }
@@ -88,8 +92,13 @@ class EnumGeneratorTest {
         @Test
         void shouldRejectTypesWithoutJavaMappingYet() {
             final Imports imports = new Imports("p");
-            assertThatThrownBy(() -> JavaTypes.type(new Type.FunctionType(new Type.VoidType(), "run", List.of()),
-                    false, imports)).isInstanceOf(JavaTypes.UnsupportedTypeException.class);
+            // a function type with three parameters needs a generated interface, which this file does not know
+            final Type string = basic("string");
+            final Type.FunctionType three = new Type.FunctionType(new Type.VoidType(), "run", List.of(
+                    parameter("a", string), parameter("b", string), parameter("c", string)));
+            assertThatThrownBy(() -> JavaTypes.type(three, false, imports))
+                    .isInstanceOf(JavaTypes.UnsupportedTypeException.class)
+                    .hasMessage("Function type '" + three.text() + "' has no functional interface");
             assertThatThrownBy(() -> JavaTypes.type(new Type.UnresolvedType("X"), false, imports))
                     .isInstanceOf(JavaTypes.UnsupportedTypeException.class);
             assertThatThrownBy(() -> JavaTypes.type(basic("streamResult", basic("int8")), false, imports))
@@ -123,7 +132,8 @@ class EnumGeneratorTest {
         @Test
         void shouldRenameTypeVariablesThatShadowSpecOrJavaLangTypes() {
             // GIVEN the spec types Receipt and ReceiptT
-            final Imports imports = new Imports("p", java.util.Set.of("Receipt", "ReceiptT"));
+            final Imports imports = new Imports("p", java.util.Set.of("Receipt", "ReceiptT"),
+                    FunctionInterfaces.NONE);
 
             // THEN
             assertThat(imports.typeVariable("$$Self")).isEqualTo("Self");
@@ -238,22 +248,22 @@ class EnumGeneratorTest {
             final LinkedModel model = LinkedModel.of(new MetaLang().validate(Map.of("f/a.md", TestSpecs.markdown("""
                     namespace a
                     enum E { A
-                        void each(cb: function<void run()>)
+                        void each(cb: streamResult<int8>)
                     }
                     enum S { A
                         @@streaming int8 items()
                     }
                     enum N(name: string) { A("a") }
                     Mutable { value: int32
-                        void each(cb: function<void run()>) }
+                        void each(cb: streamResult<int8>) }
                     enum M(value: Mutable) { }
                     """))).model());
 
             // WHEN / THEN
             assertThat(new JavaGenerator().deferredTypes(model)).containsExactly(
-                    Map.entry(new QualifiedName("a", "E"), "Type 'function<void run()>' has no Java mapping yet"),
+                    Map.entry(new QualifiedName("a", "E"), "Type 'streamResult<int8>' has no Java mapping yet"),
                     Map.entry(new QualifiedName("a", "M"), "refers to a.Mutable (class, not generated yet)"),
-                    Map.entry(new QualifiedName("a", "Mutable"), "Type 'function<void run()>' has no Java mapping yet"),
+                    Map.entry(new QualifiedName("a", "Mutable"), "Type 'streamResult<int8>' has no Java mapping yet"),
                     Map.entry(new QualifiedName("a", "N"), "Attribute 'name' clashes with Enum.name()"),
                     Map.entry(new QualifiedName("a", "S"), "Type '@@streaming int8' has no Java mapping yet"));
             assertThat(new JavaGenerator().generate(model)).noneMatch(f -> f.path().endsWith(".java")

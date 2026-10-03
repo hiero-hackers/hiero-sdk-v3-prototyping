@@ -163,6 +163,14 @@ matches.
 | `function<bool test(value: T)>`               | `java.util.function.Predicate<T>`      |
 | `function<R apply(value1: T, value2: U)>`     | `java.util.function.BiFunction<T,U,R>` |
 | `function<void accept(value1: T, value2: U)>` | `java.util.function.BiConsumer<T,U>`   |
+| `function<bool test(value1: T, value2: U)>`   | `java.util.function.BiPredicate<T,U>`  |
+
+The mapping depends only on the shape of the function type — the number of parameters and whether the result is
+`void`, `bool` or another type — not on the names of the function and its parameters
+(`function<void onEvent(event: Event)>` is a `Consumer<Event>`). The generic interfaces are always used with wrapper
+types, also for primitives (`function<int32 apply(value: int64)>` is a `Function<Long, Integer>`, not a
+`LongToIntFunction`): one consistent mapping, and lambdas look the same; the specialized interfaces would only save
+boxing. A `@@nullable` parameter makes the type argument nullable (`Function<@Nullable Event, String>`).
 
 **Example with standard interface:**
 
@@ -181,9 +189,13 @@ public void subscribe(final Consumer<Event> callback) {
 
 **Custom functional interface:**
 
-When the function signature does not match any standard interface (e.g., more than two parameters or checked
-exceptions),
-define a custom `@FunctionalInterface`:
+When the function signature does not match any standard interface (three or more parameters, or varargs), a custom
+`@FunctionalInterface` is defined. Its name is the function name in PascalCase followed by `Function`
+(`function<bool onMessage(...)>` → `OnMessageFunction`), and its single method is the function itself. There is
+exactly one interface per function type, also if several types use it — an implementation must use the same type as
+the method it overrides. It lives in the package of a namespace that uses the function type and that every other user
+can see (the same rule as for exception classes). Such a function type cannot use type variables (`$$T`), and its
+interface name must not clash with a type, an exception class or the interface of another function type:
 
 ```
 // Meta-language
@@ -193,11 +205,11 @@ execute(handler: function<bool onMessage(topic: string, message: bytes, timestam
 ```java
 // Java implementation with custom functional interface
 @FunctionalInterface
-public interface MessageHandler {
+public interface OnMessageFunction {
     boolean onMessage(String topic, byte[] message, LocalDateTime timestamp);
 }
 
-public void execute(final MessageHandler handler) {
+public void execute(final OnMessageFunction handler) {
     Objects.requireNonNull(handler, "handler must not be null");
     // ...
 }

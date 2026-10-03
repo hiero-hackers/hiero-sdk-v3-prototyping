@@ -236,7 +236,7 @@ class InterfaceGeneratorTest {
             final LinkedModel model = model(Map.of("one/a.md", """
                     namespace a
                     Mutable { value: int32
-                        void run(cb: function<void run()>) }
+                        void run(cb: streamResult<int8>) }
                     abstraction Uses { @@immutable m: Mutable }
                     abstraction Child extends Uses { }
                     Base { @@immutable a: int32 }
@@ -245,7 +245,7 @@ class InterfaceGeneratorTest {
                     @@sealed(Open, b.Remote)
                     abstraction Closed { }
                     Open extends Closed { value: int32
-                        void run(cb: function<void run()>) }
+                        void run(cb: streamResult<int8>) }
                     @@sealed(Fine)
                     abstraction AlsoClosed { }
                     Fine extends AlsoClosed { @@immutable a: int32 }
@@ -261,7 +261,7 @@ class InterfaceGeneratorTest {
             final Map<QualifiedName, String> deferred = generator(model).deferredTypes(model);
 
             // THEN
-            final String noMapping = "Type 'function<void run()>' has no Java mapping yet";
+            final String noMapping = "Type 'streamResult<int8>' has no Java mapping yet";
             assertThat(deferred).containsExactly(
                     Map.entry(new QualifiedName("a", "Child"), "refers to a.Mutable (class, not generated yet)"),
                     Map.entry(new QualifiedName("a", "Closed"), "permits b.Remote, which is in another Java module"),
@@ -286,7 +286,7 @@ class InterfaceGeneratorTest {
                     @@sealed(Open)
                     abstraction Closed { }
                     Open extends Closed { value: int32
-                        void run(cb: function<void run()>) }
+                        void run(cb: streamResult<int8>) }
                     """);
             assertThat(generator(open).deferredTypes(open)).containsEntry(new QualifiedName("a", "Closed"),
                     "permits a.Open (class, not generated yet)");
@@ -297,7 +297,7 @@ class InterfaceGeneratorTest {
             assertThat(new JavaGenerator().deferredTypes(model("""
                     namespace a
                     abstraction Final { @@finalMethod int32 id()
-                        void run(cb: function<void run()>) }
+                        void run(cb: streamResult<int8>) }
                     UsesFinal { @@immutable f: Final }
                     """))).containsEntry(new QualifiedName("a", "UsesFinal"),
                     "refers to a.Final (abstract class, not generated yet)");

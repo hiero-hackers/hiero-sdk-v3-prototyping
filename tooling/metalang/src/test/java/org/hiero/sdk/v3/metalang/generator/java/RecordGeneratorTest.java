@@ -146,9 +146,9 @@ class RecordGeneratorTest {
             final LinkedModel model = model("""
                     namespace a
                     Shape { size: int32
-                        void run(cb: function<void run()>) }
+                        void run(cb: streamResult<int8>) }
                     Mutable { a: int32
-                        void run(cb: function<void run()>) }
+                        void run(cb: streamResult<int8>) }
                     Uses { @@immutable shape: Shape }
                     UsesUses { @@immutable uses: Uses }
                     InMethod { @@immutable a: int32
@@ -191,7 +191,7 @@ class RecordGeneratorTest {
             // GIVEN
             final LinkedModel model = model("""
                     namespace a
-                    Callback { @@immutable run: function<void run()> }
+                    Callback { @@immutable run: streamResult<int8> }
                     Stream { @@immutable a: int32
                         @@streaming int8 items() }
                     UsesCallback { @@immutable callback: Callback }
@@ -199,7 +199,7 @@ class RecordGeneratorTest {
 
             // WHEN / THEN
             assertThat(new JavaGenerator().deferredTypes(model)).containsExactly(
-                    Map.entry(new QualifiedName("a", "Callback"), "Type 'function<void run()>' has no Java mapping yet"),
+                    Map.entry(new QualifiedName("a", "Callback"), "Type 'streamResult<int8>' has no Java mapping yet"),
                     Map.entry(new QualifiedName("a", "Stream"), "Type '@@streaming int8' has no Java mapping yet"),
                     Map.entry(new QualifiedName("a", "UsesCallback"),
                             "refers to a.Callback (record, not generated yet)"));

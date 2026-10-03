@@ -2,6 +2,7 @@ package org.hiero.sdk.v3.metalang.generator.java;
 
 import java.util.List;
 import java.util.Objects;
+import org.hiero.sdk.v3.metalang.model.QualifiedName;
 import org.hiero.sdk.v3.metalang.model.Type;
 import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 
@@ -78,9 +79,58 @@ final class JavaTypes {
                     : "? extends " + type(wildcard.upperBound(), true, imports);
             case Type.AnyType ignored -> "Object";
             case Type.VoidType ignored -> boxed ? "Void" : "void";
-            case Type.FunctionType function -> throw new UnsupportedTypeException(function.text());
+            case Type.FunctionType function -> functional(function, imports);
             case Type.UnresolvedType unresolved -> throw new UnsupportedTypeException(unresolved.text());
         };
+    }
+
+    /**
+     * Maps a function type by its shape (number of parameters; {@code void}, {@code bool} or another result) to a
+     * {@code java.util.function} interface with wrapper types; the name of the function does not matter. Function
+     * types with three or more parameters or varargs use a generated {@code @FunctionalInterface}
+     * ({@link FunctionInterfaces}).
+     */
+    private static String functional(final Type.FunctionType function, final Imports imports) {
+        if (!isStandard(function)) {
+            final QualifiedName name = imports.functionInterfaces().of(function);
+            return imports.use(JavaNames.packageName(name.namespace()), name.name());
+        }
+        final List<String> parameters = function.parameters().stream()
+                .map(p -> argument(p.type(), p.hasAnnotation("nullable"), imports)).toList();
+        final Type result = function.returnType();
+        final boolean isVoid = result instanceof Type.VoidType;
+        final boolean isBool = result instanceof Type.BasicType basic
+                && basic.builtin().category() == BuiltinType.Category.BOOL;
+        final String returned = isVoid ? "" : type(result, true, imports);
+        return switch (parameters.size()) {
+            case 0 -> isVoid ? "Runnable" : imports.use("java.util.function", "Supplier") + "<" + returned + ">";
+            case 1 -> isVoid ? imports.use("java.util.function", "Consumer") + "<" + parameters.getFirst() + ">"
+                    : isBool ? imports.use("java.util.function", "Predicate") + "<" + parameters.getFirst() + ">"
+                    : imports.use("java.util.function", "Function") + "<" + parameters.getFirst() + ", "
+                    + returned + ">";
+            default -> {
+                final String both = parameters.get(0) + ", " + parameters.get(1);
+                yield isVoid ? imports.use("java.util.function", "BiConsumer") + "<" + both + ">"
+                        : isBool ? imports.use("java.util.function", "BiPredicate") + "<" + both + ">"
+                        : imports.use("java.util.function", "BiFunction") + "<" + both + ", " + returned + ">";
+            }
+        };
+    }
+
+    /**
+     * Whether a {@code java.util.function} interface (or {@code Runnable}) matches the function type: at most two
+     * parameters and no varargs.
+     *
+     * @param function the function type
+     * @return {@code true} if no custom functional interface is needed
+     */
+    static boolean isStandard(final Type.FunctionType function) {
+        return function.parameters().size() <= 2 && function.parameters().stream().noneMatch(p -> p.varargs());
+    }
+
+    private static String argument(final Type type, final boolean nullable, final Imports imports) {
+        final String java = type(type, true, imports);
+        return nullable ? annotate(java, imports.use(JSPECIFY, "Nullable")) : java;
     }
 
     private static String arguments(final List<Type> arguments, final Imports imports) {

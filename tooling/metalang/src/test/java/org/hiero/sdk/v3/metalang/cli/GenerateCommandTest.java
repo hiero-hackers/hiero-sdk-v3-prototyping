@@ -37,7 +37,7 @@ class GenerateCommandTest {
         Files.createDirectories(spec.getParent());
         Files.writeString(spec, TestSpecs.markdown("""
                 namespace a
-                Callback { @@immutable run: function<void run()> }
+                Callback { @@immutable run: streamResult<int8> }
                 Uses { @@immutable callback: Callback }
                 abstraction Named { @@immutable name: string }
                 """));
@@ -54,7 +54,7 @@ class GenerateCommandTest {
         assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
         assertThat(out.toString(StandardCharsets.UTF_8)).endsWith(
                 "2 declaration(s) deferred until the types they refer to are generated:\n"
-                        + "  a.Callback: Type 'function<void run()>' has no Java mapping yet\n"
+                        + "  a.Callback: Type 'streamResult<int8>' has no Java mapping yet\n"
                         + "  a.Uses: refers to a.Callback (record, not generated yet)\n");
     }
 

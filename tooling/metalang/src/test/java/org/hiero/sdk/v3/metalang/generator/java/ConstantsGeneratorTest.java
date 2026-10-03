@@ -95,7 +95,7 @@ class ConstantsGeneratorTest {
         // namespace whose constants class would clash with a type
         final LinkedModel model = model("""
                 namespace a
-                Callback { @@immutable run: function<void run()> }
+                Callback { @@immutable run: streamResult<int8> }
                 abstraction Shape { @@immutable size: int32 }
                 Point { @@immutable x: int32
                     @@immutable y: int32 }
@@ -119,7 +119,7 @@ class ConstantsGeneratorTest {
         // WHEN the clash is gone
         final LinkedModel other = model("""
                 namespace a
-                Callback { @@immutable run: function<void run()> }
+                Callback { @@immutable run: streamResult<int8> }
                 abstraction Shape { @@immutable size: int32 }
                 Point { @@immutable x: int32
                     @@immutable y: int32 }

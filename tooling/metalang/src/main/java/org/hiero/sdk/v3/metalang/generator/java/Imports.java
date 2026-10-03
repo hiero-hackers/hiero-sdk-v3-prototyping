@@ -19,6 +19,7 @@ final class Imports {
 
     private final String ownPackage;
     private final Set<String> typeNames;
+    private final FunctionInterfaces functionInterfaces;
     private final Map<String, String> bySimpleName = new HashMap<>();
     private final SortedSet<String> imports = new TreeSet<>();
 
@@ -29,19 +30,22 @@ final class Imports {
      * @param reservedNames   simple names that are already taken in the file (e.g. the declared type itself)
      */
     Imports(final String ownPackage, final String... reservedNames) {
-        this(ownPackage, Set.of(), reservedNames);
+        this(ownPackage, Set.of(), FunctionInterfaces.NONE, reservedNames);
     }
 
     /**
      * Creates the imports of a file.
      *
      * @param ownPackage      the package of the file
-     * @param typeNames       the simple names of all spec types (type variables must not shadow them)
-     * @param reservedNames   simple names that are already taken in the file (e.g. the declared type itself)
+     * @param typeNames          the simple names of all spec types (type variables must not shadow them)
+     * @param functionInterfaces the custom functional interfaces of function types
+     * @param reservedNames      simple names that are already taken in the file (e.g. the declared type itself)
      */
-    Imports(final String ownPackage, final Set<String> typeNames, final String... reservedNames) {
+    Imports(final String ownPackage, final Set<String> typeNames, final FunctionInterfaces functionInterfaces,
+            final String... reservedNames) {
         this.ownPackage = Objects.requireNonNull(ownPackage, "ownPackage must not be null");
         this.typeNames = Set.copyOf(Objects.requireNonNull(typeNames, "typeNames must not be null"));
+        this.functionInterfaces = Objects.requireNonNull(functionInterfaces, "functionInterfaces must not be null");
         for (final String reserved : reservedNames) {
             bySimpleName.put(reserved, ownPackage + "." + reserved);
         }
@@ -89,6 +93,15 @@ final class Imports {
             java = java + "T";
         }
         return java;
+    }
+
+    /**
+     * Returns the custom functional interfaces of the generation.
+     *
+     * @return the functional interfaces
+     */
+    FunctionInterfaces functionInterfaces() {
+        return functionInterfaces;
     }
 
     String render() {

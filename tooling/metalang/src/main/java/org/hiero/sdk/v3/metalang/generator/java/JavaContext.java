@@ -28,6 +28,7 @@ final class JavaContext {
     private final Map<String, String> moduleOfNamespace;
     private final Set<QualifiedName> classes;
     private final Map<String, QualifiedName> exceptions;
+    private final FunctionInterfaces functionInterfaces;
     private final Set<String> typeNames;
 
     /**
@@ -38,15 +39,17 @@ final class JavaContext {
      * @param moduleOfNamespace the Java module of every namespace
      * @param classes           the types that are (abstract or concrete) Java classes
      * @param exceptions        the generated exception class of every error identifier without standard exception
+     * @param functionInterfaces the custom functional interfaces of function types
      */
     JavaContext(final LinkedModel model, final Set<QualifiedName> generated,
                 final Map<String, String> moduleOfNamespace, final Set<QualifiedName> classes,
-                final Map<String, QualifiedName> exceptions) {
+                final Map<String, QualifiedName> exceptions, final FunctionInterfaces functionInterfaces) {
         this.model = Objects.requireNonNull(model, "model must not be null");
         this.generated = Set.copyOf(generated);
         this.moduleOfNamespace = Map.copyOf(moduleOfNamespace);
         this.classes = Set.copyOf(classes);
         this.exceptions = Map.copyOf(exceptions);
+        this.functionInterfaces = Objects.requireNonNull(functionInterfaces, "functionInterfaces must not be null");
         this.typeNames = model.types().stream().map(t -> t.name().name()).collect(Collectors.toUnmodifiableSet());
     }
 
@@ -75,6 +78,15 @@ final class JavaContext {
      */
     Map<String, QualifiedName> exceptions() {
         return exceptions;
+    }
+
+    /**
+     * Returns the custom functional interfaces of function types.
+     *
+     * @return the functional interfaces
+     */
+    FunctionInterfaces functionInterfaces() {
+        return functionInterfaces;
     }
 
         boolean isGenerated(final QualifiedName name) {
@@ -129,7 +141,7 @@ final class JavaContext {
      * @return the imports
      */
     Imports imports(final String packageName, final String className) {
-        return new Imports(packageName, typeNames, className);
+        return new Imports(packageName, typeNames, functionInterfaces, className);
     }
 
     /**
