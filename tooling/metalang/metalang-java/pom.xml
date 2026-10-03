@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.hiero.sdk.v3.tooling</groupId>
+        <artifactId>metalang-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>metalang-java</artifactId>
+
+    <name>Hiero SDK V3 meta-language: java</name>
+    <description>Generator of the Java API and its tests, conformance check of Java projects.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>metalang-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>metalang-core</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <resources>
+            <!-- The support files have a single source: the files of the language guideline. The generator copies
+                 them 1:1 into the generated code. -->
+            <resource>
+                <directory>${project.basedir}/../../../guidelines/java-files</directory>
+                <targetPath>org/hiero/sdk/v3/metalang/generator/java/support</targetPath>
+                <includes>
+                    <include>*.java</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
+        </resources>
+    </build>
+</project>

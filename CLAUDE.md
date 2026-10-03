@@ -78,7 +78,11 @@ spec/                           # The actual V3 public-API specifications, writt
     service-account.md (enterprise.service.account)
     service-contract.md (enterprise.service.contract)
 
-tooling/metalang/               # Prototype: ANTLR grammar, parser, semantic model and validator for the meta-language
+tooling/metalang/               # Prototype tooling, multi-module Maven build (see its README):
+  metalang-core/                #   ANTLR grammar, parser, semantic model, validator, shared generator support
+  metalang-java/                #   Java generator + Java conformance check
+  metalang-typescript/          #   TypeScript generator + TypeScript conformance check
+  metalang-cli/                 #   command line tool; builds tooling/metalang/target/metalang-*-cli.jar
 ```
 
 ### How the layers relate
@@ -146,7 +150,7 @@ points to keep specs valid and consistent:
   new `syntax.error` or ERROR findings.
 - **Changing the meta-language itself** (guideline syntax, new annotation): update the grammar
   (`MetaLang.g4`), `KnownAnnotation`, the `Rule` catalog and the tests in `tooling/metalang` in the same change. Every
-  new rule needs a fixture in `tooling/metalang/src/test/resources/rule-fixtures/<rule-id>/` (enforced by
+  new rule needs a fixture in `tooling/metalang/metalang-core/src/test/resources/rule-fixtures/<rule-id>/` (enforced by
   `RuleFixturesTest`).
 - **Open design questions** belong under each file's `## Questions & Comments` (often attributed to a GitHub handle).
   Don't silently resolve them; surface them.

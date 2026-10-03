@@ -1,6 +1,6 @@
 # metalang — grammar, parser and validator for the V3 API meta-language (prototype)
 
-This module turns the language-agnostic meta-language defined in
+This multi-module Maven build turns the language-agnostic meta-language defined in
 [`guidelines/api-guideline.md`](../../guidelines/api-guideline.md) into something machines can check
 deterministically. It is the foundation for the planned follow-up tools (per-language code generation,
 API conformance checks of existing SDKs, per-language exceptions, generated contract tests).
@@ -25,6 +25,18 @@ For a quick build without tests:
 ```bash
 mvn -f tooling/metalang/pom.xml -q package -DskipTests
 ```
+
+### Modules
+
+| Module | Content |
+|---|---|
+| `metalang-core` | Grammar, parser, AST, semantic and linked model, default instances, validator and rule catalog, and what every generator shares (`GeneratedFile`, `GeneratedOutput`, `Constraints`, `IntegerRange`, `RegexSamples`, `SpecFolders`, `check.ApiDifference`). Its test-jar holds the shared test helpers (`TestSpecs`) and test resources (`rule-fixtures`, `model-golden`). |
+| `metalang-java` | Java generator (`generator.java`: API, Maven project, JUnit tests) and Java conformance check (`check.java`). The support files are copied from `guidelines/java-files`. |
+| `metalang-typescript` | TypeScript generator (`generator.ts`: npm workspace, API, `node:test` tests) and TypeScript conformance check (`check.ts`). The support files are copied from `guidelines/ts-files`. |
+| `metalang-cli` | The command line tool (`MetaLangCli`) on top of all modules; builds the self-contained jar `tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar`. |
+
+A language generator depends only on `metalang-core`; a new language gets its own module next to them and is wired
+into `metalang-cli`.
 
 ### Validate the specs
 
@@ -170,12 +182,12 @@ spec/*.md
 ValidationReport (sorted diagnostics) → CLI (text / JSON / summary)
 ```
 
-- **Grammar:** [`MetaLang.g4`](src/main/antlr4/org/hiero/sdk/v3/metalang/grammar/MetaLang.g4) is the
+- **Grammar:** [`MetaLang.g4`](metalang-core/src/main/antlr4/org/hiero/sdk/v3/metalang/grammar/MetaLang.g4) is the
   machine-readable definition of the language. It is not newline-sensitive; comments go to a hidden channel and
   the comment lines directly above a declaration (plus a trailing comment on its line) become its documentation.
 - **AST:** the ANTLR parse tree is only used inside `AstBuilder`. Everything after that works on immutable records
   with source locations that point into the original Markdown file.
-- **Rules:** [`Rule`](src/main/java/org/hiero/sdk/v3/metalang/diagnostic/Rule.java) is the catalog of all checks
+- **Rules:** [`Rule`](metalang-core/src/main/java/org/hiero/sdk/v3/metalang/diagnostic/Rule.java) is the catalog of all checks
   (id, severity, description, guideline section). Rule ids are stable; later tools (e.g. per-language exception
   files) will reference them.
 
@@ -381,13 +393,15 @@ types that need an interface with type variables, and clashing names.
 - **Imports** (`TsImports`): relative within a package, the namespace subpath between packages, `import type` for
   names used only as types, aliases for clashing names, only names that the file uses.
 - **Support files**: `Duration`, `StreamItem`, `AbstractConstructor` from `guidelines/ts-files`, copied 1:1 into the
-  package all their users require.
+  package all their users require. `type<T>` is `AbstractConstructor<T>`, any class object whose prototype is a `T`
+  (also abstract classes and enum classes with their private constructor); a primitive is represented by its
+  wrapper class (`type<string>` → `AbstractConstructor<String>`).
 - **Tests** (`TsTestGenerator`, `TsSamples`): the same contract as the Java tests for the Node.js test runner, with a
   test name that says what is checked; values from the default instances first. Number types also get a fraction test.
   Tests whose values cannot be built become `test.todo` entries.
 
 The language-neutral parts — value constraints (`Constraints`), integer ranges (`IntegerRange`), pattern samples
-(`RegexSamples`), spec folders (`SpecFolders`) — live in the `generator` package and are shared by both languages.
+(`RegexSamples`), spec folders (`SpecFolders`) — live in the `generator` package of `metalang-core` and are shared by both languages.
 
 ## Generated tests
 
@@ -523,19 +537,23 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 710 tests (the TypeScript tests that need Node.js and an installed TypeScript are skipped
-without them); JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
-excluded). Besides unit tests per component, the suite contains these systematic checks:
+`mvn verify` runs about 730 tests (the TypeScript tests that need Node.js and an installed TypeScript are skipped
+without them); JaCoCo fails the build of **each module** below 95 % line / 90 % branch coverage (generated ANTLR
+code excluded). The tests live in the module of the code they test: parser, model and validator tests in
+`metalang-core`, generator and check tests in `metalang-java` / `metalang-typescript`, the command tests
+(`*CommandTest`, `MetaLangCliTest`) in `metalang-cli`. The cross-JVM determinism tests start the generator of their
+module (`GenerateMain` in the test sources). Besides unit tests per component, the suite contains these systematic
+checks:
 
 | Test | What it guarantees |
 |---|---|
-| `RuleFixturesTest` | Every rule of the `Rule` catalog has a fixture directory `src/test/resources/rule-fixtures/<rule-id>/` that produces **exactly** the expected set of rule ids (`*.ml` = schema wrapped into the spec skeleton, `*.md` = raw Markdown, optional `also.txt` = further expected ids). A new rule without fixture fails the build. |
+| `RuleFixturesTest` | Every rule of the `Rule` catalog has a fixture directory `metalang-core/src/test/resources/rule-fixtures/<rule-id>/` that produces **exactly** the expected set of rule ids (`*.ml` = schema wrapped into the spec skeleton, `*.md` = raw Markdown, optional `also.txt` = further expected ids). A new rule without fixture fails the build. |
 | `GuidelineExamplesTest` | Every meta-language code block of `guidelines/api-guideline.md` parses (as-is, in a namespace, in a type body, or as type expressions). Non-meta-language blocks are listed with a reason; stale entries fail the test. |
 | `GrammarEdgeCasesTest` | ~60 boundary cases of the grammar: keywords as names, nested generics, comments everywhere, literal formats, CRLF, and constructs that must be rejected — always with a diagnostic, never an exception. |
 | `MarkdownEdgeCasesTest` | CommonMark fences (longer fences, indentation, info strings), ATX headings, CRLF, Unicode. |
 | `RobustnessTest` | Seeded random mutations and every prefix of every real spec never crash the tool and never report a location outside the document; results do not depend on document order; AST locations point at the element; the textual form of every type and literal parses back to itself. |
 | `RepositorySpecsTest` | All specs under `spec/` are free of syntax errors and the report is deterministic. |
-| `ModelCommandTest` | `metalang model` output for the example specs in `src/test/resources/model-golden/spec` equals the golden file `model-golden/model.json` byte for byte; filters, exit codes and determinism on the real specs. After an intended change, regenerate the golden file (command in the test's Javadoc). |
+| `ModelCommandTest` | `metalang model` output for the example specs in `metalang-core/src/test/resources/model-golden/spec` equals the golden file `model-golden/model.json` byte for byte; filters, exit codes and determinism on the real specs. After an intended change, regenerate the golden file (command in the test's Javadoc). |
 | `GeneratedOutputTest` | Writing into a version-controlled output directory: new files and directories, unchanged files are not rewritten, stale generated files and the directories they leave empty are deleted, hand-written and binary files and other empty directories are kept. |
 | `FunctionTypeTest` | Mapping of every function shape to `java.util.function` with wrapper types and `@Nullable` arguments, generated functional interfaces (shared per function type, varargs), placement across modules with an implementation in another package, and every deferral reason (type variables, name clashes, no home). All cases are compiled. |
 | `FactoryGeneratorTest` | Class name rule, static methods (overloads, generics with renamed type variables, varargs, `@@async @@nullable`, errors), compiled and called, and the deferral of functions (type not generated, no Java mapping, clashing class name). |
@@ -547,10 +565,12 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `ClassGeneratorTest` | Which abstraction becomes an abstract class or an interface (attributes, enums, interfaces, multiple inheritance with *none* as result, upward propagation, configuration, `@@finalMethod`), configuration errors, covariant `@@async` overrides, generated classes (state, constructors with `super(...)`, `$$Self` setters, covariant setter overrides, narrowed nullability, defaults, value classes, sealed hierarchies) and their **runtime behaviour** (checks, defensive copies, chained setters, equality). |
 | `InterfaceGeneratorTest` | Generated interfaces (accessors, setters returning the self type, abstract and static methods, renamed type variables), records and enums implementing generic interfaces with wrapper types and `@Override`, nullability narrowing, `sealed`/`non-sealed`, supertypes as comment, and every deferral reason. Every case is compiled with `-Xlint:all -Werror`. |
 | `RecordGeneratorTest` | Which types become records (inherited attributes, extended types, inherited `@@finalMethod`, type arguments of supertypes), deferral (transitive, through methods, bounds, wildcards; unmapped types), generated source details, and the **runtime behaviour** of the golden records: they are compiled in-process and called (null checks, every constraint, `URI` check, defensive copies, default constructor, `bytes` equality, method stubs). |
-| `JavaGeneratorTest` | Golden files for the example specs (`generator-golden/java`), module/package rules and the three structural errors, Markdown comment escaping, and: the modules generated for **all real specs compile** with `-Xlint:all -Werror` through the module system, and their **generated tests compile and run** — every failure is a method that is not implemented yet. |
+| `JavaGeneratorTest` | Golden files for the example specs (`metalang-java/src/test/resources/generator-golden/java`), module/package rules and the three structural errors, Markdown comment escaping, and: the modules generated for **all real specs compile** with `-Xlint:all -Werror` through the module system, and their **generated tests compile and run** — every failure is a method that is not implemented yet. |
 | `TestGeneratorTest` | The generated tests of small specs: their content (test names, boundary values, null and copy tests, setters, methods, factories, values of every type, subtypes, factory methods and test doubles, only types of required modules, what cannot be tested), and their **execution**: they are compiled with `-Xlint:all -Werror` and run with the JUnit platform; all pass against the generated code, the method tests fail only because of the stubs, and they **detect mutations** of the generated code (a removed range check, copy or validation). |
+| `TestValuesTest` | Test values and generated tests for edge cases (`ANY`, wildcards, sets of enums, unreachable `@@minSize`, functions, deprecated members, nullable parameters, default instances with factory calls); the result is compiled and run. |
 | `JavaIntegersTest`, `RegexSamplesTest` | Ranges, range checks and literals of all integer types; accepted and rejected strings for patterns, never a wrong one. |
 | `TsGeneratorTest`, `TsTestGeneratorTest` | The TypeScript workspace (packages, exports, dependencies, project references, support files), every type mapping (classes, interfaces, enum classes, sealed unions, narrowing, constants, overloaded functions, errors), deferral, configuration, determinism across JVM runs, the generated tests (names, boundaries, copies, setters, methods, todo entries), and — with Node.js and TypeScript installed (`npm install` in `generated/ts`) — that **all real specs compile** with the strict configuration and their tests only fail for stubs, and that the tests **detect mutations**. |
+| `TsEdgeCasesTest` | Edge cases of the TypeScript generator, built and run with Node.js: every builtin type as value (`uuid`, `decimal`, `seconds`, `type<T>`, `streamResult`), sealed unions, narrowed attributes, reserved and global names, values that cannot be built (`test.todo`), subtypes, factory methods, default instances with constants, bounds of type parameters for `ANY` arguments, and string escaping. |
 | `TsConformanceTest` | Comparison of TypeScript APIs (additions allowed, every kind of difference), a missing TypeScript installation, and — with TypeScript installed — implemented and outdated projects and **`generated/ts` provides the API of the current specs**. |
 | `InstanceResolverTest` | Every kind of default-instance expression (construction with generic arguments, functions of other namespaces, static methods, method calls, attributes, constants, enum constants, lists, bytes), overload selection, and every error message. Rule fixtures cover `instance.invalid`, `instance.cycle` and `instance.missing`. |
 | `JavaApiTest` | Reading the API of Java sources: name resolution (imports, wildcards, same package, `java.lang`, nested types, type variables), nullness including `String @Nullable []` vs. `@Nullable String[]`, implicit modifiers of interfaces, records, enums and nested types, ignored implementation details, module declarations, parse errors, duplicate types and skipped build output. |

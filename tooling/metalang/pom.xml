@@ -5,15 +5,26 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.hiero.sdk.v3.tooling</groupId>
-    <artifactId>metalang</artifactId>
+    <artifactId>metalang-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
     <name>Hiero SDK V3 meta-language tooling</name>
     <description>
-        Grammar, parser, semantic model and validator for the language-agnostic API meta-language
-        defined in guidelines/api-guideline.md (prototype).
+        Grammar, parser, semantic model and validator for the language-agnostic API meta-language defined in
+        guidelines/api-guideline.md, with one module per generated language and the command line tool (prototype).
     </description>
+
+    <modules>
+        <!-- grammar, parser, model, validator, language-neutral generator and check parts -->
+        <module>metalang-core</module>
+        <!-- Java: API and test generator, conformance check -->
+        <module>metalang-java</module>
+        <!-- TypeScript: API and test generator, conformance check -->
+        <module>metalang-typescript</module>
+        <!-- the command line tool (target/metalang-<version>-cli.jar of this directory) -->
+        <module>metalang-cli</module>
+    </modules>
 
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
@@ -25,8 +36,10 @@
         <junit.version>6.0.3</junit.version>
         <assertj.version>3.27.7</assertj.version>
 
-        <!-- Root of the repository; used by the integration test that parses all specs -->
-        <spec.root>${project.basedir}/../../spec</spec.root>
+        <!-- Root of the repository's specs (the modules are tooling/metalang/<module>); used by tests on all specs -->
+        <spec.root>${project.basedir}/../../../spec</spec.root>
+        <!-- Test resources shared by all modules: example specs (model-golden) and rule fixtures -->
+        <metalang.test.resources>${project.basedir}/../metalang-core/src/test/resources</metalang.test.resources>
     </properties>
 
     <dependencyManagement>
@@ -38,21 +51,50 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <dependency>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-runtime</artifactId>
+                <version>${antlr.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jspecify</groupId>
+                <artifactId>jspecify</artifactId>
+                <version>${jspecify.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>metalang-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>metalang-core</artifactId>
+                <version>${project.version}</version>
+                <type>test-jar</type>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>metalang-java</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>metalang-typescript</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
         <dependency>
-            <groupId>org.antlr</groupId>
-            <artifactId>antlr4-runtime</artifactId>
-            <version>${antlr.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>
-            <version>${jspecify.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -66,34 +108,11 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
-        <resources>
-            <!-- The Java support files of the SDK (@ThreadSafe, HieroStream, ...) have a single source: the files of
-                 the Java guideline. The generator copies them 1:1 into the generated code. -->
-            <resource>
-                <directory>${project.basedir}/../../guidelines/java-files</directory>
-                <targetPath>org/hiero/sdk/v3/metalang/generator/java/support</targetPath>
-                <includes>
-                    <include>*.java</include>
-                </includes>
-            </resource>
-            <!-- The TypeScript support files (Duration, StreamItem, ...), likewise from the TypeScript guideline. -->
-            <resource>
-                <directory>${project.basedir}/../../guidelines/ts-files</directory>
-                <targetPath>org/hiero/sdk/v3/metalang/generator/ts/support</targetPath>
-                <includes>
-                    <include>*.ts</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>${project.basedir}/src/main/resources</directory>
-            </resource>
-        </resources>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -115,6 +134,12 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.5.3</version>
+                    <configuration>
+                        <systemPropertyVariables>
+                            <spec.root>${spec.root}</spec.root>
+                            <metalang.test.resources>${metalang.test.resources}</metalang.test.resources>
+                        </systemPropertyVariables>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -131,42 +156,27 @@
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>3.1.4</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.antlr</groupId>
+                    <artifactId>antlr4-maven-plugin</artifactId>
+                    <version>${antlr.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.6.0</version>
+                </plugin>
             </plugins>
         </pluginManagement>
 
         <plugins>
-            <plugin>
-                <groupId>org.antlr</groupId>
-                <artifactId>antlr4-maven-plugin</artifactId>
-                <version>${antlr.version}</version>
-                <configuration>
-                    <visitor>false</visitor>
-                    <listener>false</listener>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>antlr4</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <systemPropertyVariables>
-                        <spec.root>${spec.root}</spec.root>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
+            <!-- every module keeps its own coverage: 95 % lines, 90 % branches (ANTLR code excluded) -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.13</version>
                 <configuration>
                     <excludes>
-                        <!-- ANTLR-generated code -->
                         <exclude>org/hiero/sdk/v3/metalang/grammar/**</exclude>
                     </excludes>
                 </configuration>
@@ -191,6 +201,7 @@
                             <goal>check</goal>
                         </goals>
                         <configuration>
+                            <haltOnFailure>true</haltOnFailure>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>
@@ -213,53 +224,10 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>org.hiero.sdk.v3.metalang.cli.MetaLangCli</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.6.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <!-- self-contained CLI jar next to the plain jar: target/metalang-<version>-cli.jar -->
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>cli</shadedClassifierName>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/versions/9/module-info.class</exclude>
-                                        <exclude>module-info.class</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.hiero.sdk.v3.metalang.cli.MetaLangCli</mainClass>
-                                </transformer>
-                            </transformers>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.cyclonedx</groupId>
                 <artifactId>cyclonedx-maven-plugin</artifactId>
                 <version>2.9.1</version>
+                <inherited>false</inherited>
                 <executions>
                     <execution>
                         <phase>package</phase>

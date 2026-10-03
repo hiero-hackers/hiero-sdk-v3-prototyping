@@ -41,7 +41,7 @@ import { createClient } from "@hiero/consensus-node-client/consensusnode/client"
 | `date`, `time`, `dateTime`, `zonedDateTime` | `Date` | copied; `Temporal` once it is available everywhere |
 | `duration`, `seconds` | `Duration` | support class (immutable, milliseconds) |
 | `uuid` | `string` | |
-| `type<T>` | `AbstractConstructor<T>` | the class object, e.g. `AccountCreateTransaction` |
+| `type<T>` | `AbstractConstructor<T>` | the class object, e.g. `AccountCreateTransaction`; `String` for `type<string>` |
 | `ANY` | `unknown` | as type argument: the bound of the type parameter |
 | `function<R name(p: T)>` | `(p: T) => R` | |
 | `streamResult<T>` | `StreamItem<T>` | `{ ok: true, value }` or `{ ok: false, error }` |

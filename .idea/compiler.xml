@@ -6,7 +6,10 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="metalang" />
+        <module name="metalang-cli" />
+        <module name="metalang-typescript" />
+        <module name="metalang-core" />
+        <module name="metalang-java" />
       </profile>
     </annotationProcessing>
   </component>
