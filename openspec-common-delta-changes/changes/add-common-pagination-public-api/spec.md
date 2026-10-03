@@ -45,16 +45,16 @@ The SDK SHALL expose asynchronous `next()` and `first()` operations. `next()` SH
 - **When** the caller awaits `first()`.
 - **Then** the operation completes with the first `Page<T>`.
 
-### Requirement: Mirror Node navigation failures
+### Requirement: Navigation failures
 
-Asynchronous page navigation SHALL report `mirror-node-error` when the associated Mirror Node request cannot produce
-the requested page.
+Asynchronous page navigation SHALL report `pagination-error` when the requested page cannot be produced. The error
+SHALL carry the underlying failure (for example the failed Mirror Node request) as its cause.
 
 #### Scenario: Page retrieval fails
 
 - **Given** a page whose navigation requires a Mirror Node request.
 - **When** `next()` or `first()` cannot retrieve the requested page.
-- **Then** the asynchronous operation terminates with `mirror-node-error`.
+- **Then** the asynchronous operation terminates with `pagination-error`, whose cause is the failure of the request.
 
 ## Language-Neutral API Schema
 
@@ -70,11 +70,11 @@ abstraction Page<$$T> {
     bool isFirst()
 
     @@async
-    @@throws(mirror-node-error)
+    @@throws(pagination-error)
     Page<$$T> next()
 
     @@async
-    @@throws(mirror-node-error)
+    @@throws(pagination-error)
     Page<$$T> first()
 }
 ```

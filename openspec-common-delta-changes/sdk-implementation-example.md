@@ -147,7 +147,7 @@ Keep every common requirement in the TypeScript `spec.md`, then add the TypeScri
 | Generic page | Exported `Page<T>` interface or abstract class |
 | Immutable data | `ReadonlyArray<T>` and a runtime copy where data is constructed |
 | Async navigation | `Promise<Page<T>>` |
-| `mirror-node-error` | `MirrorNodeError` |
+| `pagination-error` | `PaginationError` |
 
 Do not copy Java-specific choices such as JPMS, JSpecify, or `CompletionStage`.
 

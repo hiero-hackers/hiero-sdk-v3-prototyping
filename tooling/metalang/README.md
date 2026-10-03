@@ -250,8 +250,9 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   using modules require, preferring the shortest namespace (`service-error` → `org.hiero.enterprise.service`); if no
   such module exists or the name clashes with a type, generation fails. Synchronous methods document errors with
   `@throws` and declare checked ones with `throws`; `@@async` methods describe with which exceptions the returned stage
-  completes exceptionally. Today: `ClientClosedException`, `ConnectionException`, `MirrorNodeException`,
-  `ServiceException`.
+  completes exceptionally. Today: `ClientClosedException`, `ConnectionException` (`org.hiero.http`),
+  `MirrorNodeException` (`org.hiero.mirrornode`), `PaginationException` (`org.hiero.common`, thrown by `Page`),
+  `ServiceException` (`org.hiero.enterprise.service`).
 - **Type mapping** (`JavaTypes`): `intX`/`uintX` → `byte`/`short`/`int`/`long`/`BigInteger` by width; `uint8`/`uint16`/`uint32` use the next
   wider type (`short`/`int`/`long`) because Java integers are signed, `uint64` stays `long`, primitives
   unless nullable or a type argument, `bytes` → `byte[]`, collections → `List`/`Set`/`Map`, time types →

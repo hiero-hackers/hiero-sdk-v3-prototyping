@@ -9,7 +9,8 @@ the same reviewed starting point while keeping language-specific OpenSpec workfl
 - Define a generic page with immutable data, size, and page-index values.
 - Define synchronous page-position inspection through `hasNext()` and `isFirst()`.
 - Define asynchronous navigation to the next and first pages.
-- Define `mirror-node-error` as the terminal failure contract for asynchronous page navigation.
+- Define `pagination-error` as the terminal failure contract for asynchronous page navigation; it carries the
+  underlying failure (e.g. of the Mirror Node request) as cause.
 - Require SDK owners to preserve this behavior while selecting idiomatic language-specific representations.
 
 ## Capabilities
