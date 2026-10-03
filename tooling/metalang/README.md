@@ -100,8 +100,28 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 190 tests. JaCoCo fails the build below 95 % line / 90 % branch coverage (generated
-ANTLR code excluded). Besides unit tests per component and positive/negative tests per rule, the
-`RepositorySpecsTest` checks the real repository content: every spec under `spec/` must be free of syntax errors,
-every `namespace` example of the guideline must parse, all reported locations must exist, and the report must be
-deterministic.
+`mvn verify` runs about 420 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
+excluded). Besides unit tests per component, the suite contains these systematic checks:
+
+| Test | What it guarantees |
+|---|---|
+| `RuleFixturesTest` | Every rule of the `Rule` catalog has a fixture directory `src/test/resources/rule-fixtures/<rule-id>/` that produces **exactly** the expected set of rule ids (`*.ml` = schema wrapped into the spec skeleton, `*.md` = raw Markdown, optional `also.txt` = further expected ids). A new rule without fixture fails the build. |
+| `GuidelineExamplesTest` | Every meta-language code block of `guidelines/api-guideline.md` parses (as-is, in a namespace, in a type body, or as type expressions). Non-meta-language blocks are listed with a reason; stale entries fail the test. |
+| `GrammarEdgeCasesTest` | ~60 boundary cases of the grammar: keywords as names, nested generics, comments everywhere, literal formats, CRLF, and constructs that must be rejected — always with a diagnostic, never an exception. |
+| `MarkdownEdgeCasesTest` | CommonMark fences (longer fences, indentation, info strings), ATX headings, CRLF, Unicode. |
+| `RobustnessTest` | Seeded random mutations and every prefix of every real spec never crash the tool and never report a location outside the document; results do not depend on document order; AST locations point at the element; the textual form of every type and literal parses back to itself. |
+| `RepositorySpecsTest` | All specs under `spec/` are free of syntax errors and the report is deterministic. |
+
+## Known limitations
+
+- **No substitution of type arguments** when comparing inherited members: overriding a field `v: $$T` of `P<int8>`
+  with `v: string` is not reported (the check is lenient, never a false positive; pinned by a test).
+- **Generic bounds** are checked on the head type only (`G<$$T extends B>` used as `G<Other>`); arguments that are
+  generic parameters are not checked.
+- **Error positions** can be one token late when the input so far is a valid prefix of another construct
+  (e.g. `b int8` is the start of a method declaration).
+- **Nesting** of brackets is limited to 100 levels (`syntax.nesting-too-deep`) to keep the recursive parser and
+  validator away from stack exhaustion.
+- **Markdown:** only ATX headings (`## ...`) are recognized, not setext headings (`---` underlines).
+- **Lexical scope:** identifiers are ASCII; number literals support digits, `_`, sign and decimals, but no exponent
+  or hex notation. `@@pattern` values are evaluated with Java regular expressions (`find` semantics).

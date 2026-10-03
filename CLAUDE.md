@@ -119,7 +119,9 @@ points to keep specs valid and consistent:
   `java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar validate spec`. A change must not introduce
   new `syntax.error` or ERROR findings.
 - **Changing the meta-language itself** (guideline syntax, new annotation): update the grammar
-  (`MetaLang.g4`), `KnownAnnotation`, the `Rule` catalog and the tests in `tooling/metalang` in the same change.
+  (`MetaLang.g4`), `KnownAnnotation`, the `Rule` catalog and the tests in `tooling/metalang` in the same change. Every
+  new rule needs a fixture in `tooling/metalang/src/test/resources/rule-fixtures/<rule-id>/` (enforced by
+  `RuleFixturesTest`).
 - **Open design questions** belong under each file's `## Questions & Comments` (often attributed to a GitHub handle).
   Don't silently resolve them; surface them.
 - **Language best-practice docs** (`api-best-practices-*.md`) describe how a meta-language concept maps to one

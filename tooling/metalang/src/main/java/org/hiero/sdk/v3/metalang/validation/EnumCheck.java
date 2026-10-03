@@ -104,9 +104,16 @@ final class EnumCheck implements Check {
             for (int i = 0; i < attributes.size(); i++) {
                 final Parameter attribute = attributes.get(i);
                 final Literal argument = value.arguments().get(i);
-                LiteralTypes.mismatch(model, file, argument, attribute.type(), attribute.hasAnnotation("nullable"))
-                        .ifPresent(m -> out.report(Rule.ENUM_ARGUMENT_TYPE, "'" + value.name() + "', attribute '"
-                                + attribute.name() + "': " + m, argument.location()));
+                final Optional<String> mismatch = LiteralTypes.mismatch(model, file, argument, attribute.type(),
+                        attribute.hasAnnotation("nullable"));
+                if (mismatch.isPresent()) {
+                    out.report(Rule.ENUM_ARGUMENT_TYPE, "'" + value.name() + "', attribute '" + attribute.name()
+                            + "': " + mismatch.get(), argument.location());
+                } else {
+                    LiteralTypes.constraintViolation(argument, attribute).ifPresent(v -> out.report(
+                            Rule.VALUE_CONSTRAINT_VIOLATION, "'" + value.name() + "', attribute '" + attribute.name()
+                                    + "': " + v, argument.location()));
+                }
             }
         }
     }

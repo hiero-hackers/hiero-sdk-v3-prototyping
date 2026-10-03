@@ -1,5 +1,6 @@
 package org.hiero.sdk.v3.metalang.validation;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -158,6 +159,14 @@ final class AnnotationCheck implements Check {
         };
         if (problem != null) {
             out.report(Rule.ANNOTATION_ARGUMENTS, "@@" + annotation.name() + " " + problem, annotation.location());
+            return;
+        }
+        final Set<String> seen = new HashSet<>();
+        for (final Literal argument : args) {
+            if (!seen.add(argument.text())) {
+                out.report(Rule.ANNOTATION_ARGUMENTS, "@@" + annotation.name() + " lists '" + argument.text()
+                        + "' twice", argument.location());
+            }
         }
     }
 
@@ -174,8 +183,30 @@ final class AnnotationCheck implements Check {
         }
     }
 
+    private static final List<List<String>> BOUND_PAIRS = List.of(
+            List.of("min", "max"), List.of("minLength", "maxLength"), List.of("minSize", "maxSize"));
+
+    private static void checkContradictoryBounds(final Annotated element, final DiagnosticCollector out) {
+        for (final List<String> pair : BOUND_PAIRS) {
+            final Optional<BigDecimal> lower = numericArgument(element, pair.get(0));
+            final Optional<BigDecimal> upper = numericArgument(element, pair.get(1));
+            if (lower.isPresent() && upper.isPresent() && lower.get().compareTo(upper.get()) > 0) {
+                out.report(Rule.ANNOTATION_CONTRADICTORY_BOUNDS, "@@" + pair.get(0) + "(" + lower.get().toPlainString()
+                        + ") is greater than @@" + pair.get(1) + "(" + upper.get().toPlainString() + ")",
+                        element.annotation(pair.get(0)).orElseThrow().location());
+            }
+        }
+    }
+
+    private static Optional<BigDecimal> numericArgument(final Annotated element, final String annotation) {
+        return element.annotation(annotation)
+                .filter(a -> a.arguments().size() == 1 && a.arguments().getFirst() instanceof Literal.NumberLiteral)
+                .map(a -> ((Literal.NumberLiteral) a.arguments().getFirst()).value());
+    }
+
     private void checkValueAnnotations(final SpecModel model, final SchemaFile file, final Annotated element,
                                        final TypeRef type, final boolean varargs, final DiagnosticCollector out) {
+        checkContradictoryBounds(element, out);
         final BuiltinType builtin = varargs ? null : builtinOf(model, file, type);
         for (final Annotation annotation : element.annotations()) {
             switch (annotation.name()) {
@@ -235,9 +266,15 @@ final class AnnotationCheck implements Check {
         if (annotation.arguments().size() != 1) {
             return;
         }
-        LiteralTypes.mismatch(model, file, annotation.arguments().getFirst(), field.type(),
-                        field.hasAnnotation("nullable"))
-                .ifPresent(m -> out.report(Rule.DEFAULT_VALUE_TYPE, "@@default of '" + field.name() + "': " + m,
-                        annotation.location()));
+        final Literal value = annotation.arguments().getFirst();
+        final Optional<String> mismatch = LiteralTypes.mismatch(model, file, value, field.type(),
+                field.hasAnnotation("nullable"));
+        if (mismatch.isPresent()) {
+            out.report(Rule.DEFAULT_VALUE_TYPE, "@@default of '" + field.name() + "': " + mismatch.get(),
+                    annotation.location());
+            return;
+        }
+        LiteralTypes.constraintViolation(value, field).ifPresent(v -> out.report(Rule.VALUE_CONSTRAINT_VIOLATION,
+                "@@default of '" + field.name() + "': " + v, annotation.location()));
     }
 }

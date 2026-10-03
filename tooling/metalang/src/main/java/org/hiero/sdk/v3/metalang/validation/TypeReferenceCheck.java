@@ -2,6 +2,7 @@ package org.hiero.sdk.v3.metalang.validation;
 
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.hiero.sdk.v3.metalang.ast.Annotation;
@@ -10,6 +11,7 @@ import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.ast.Parameter;
 import org.hiero.sdk.v3.metalang.ast.Requires;
 import org.hiero.sdk.v3.metalang.ast.SchemaFile;
+import org.hiero.sdk.v3.metalang.ast.TypeParameter;
 import org.hiero.sdk.v3.metalang.ast.TypeRef;
 import org.hiero.sdk.v3.metalang.diagnostic.DiagnosticCollector;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
@@ -112,6 +114,8 @@ final class TypeReferenceCheck implements Check {
                 if (expected != named.arguments().size()) {
                     out.report(Rule.TYPE_ARITY, "'" + declared.declaration().name() + "' expects " + expected
                             + " type argument(s) but got " + named.arguments().size(), named.location());
+                } else {
+                    checkBounds(model, file, named, declared, out);
                 }
                 if (named.isQualified() && model.resolve(file, named.simpleName()) instanceof ResolvedType.Declared d
                         && d.declaration() == declared.declaration()) {
@@ -135,6 +139,37 @@ final class TypeReferenceCheck implements Check {
                             bounded.location());
                     check(model, file, bounded.bound(), position, scope, false, used, out);
                 }
+            }
+        }
+    }
+
+    /**
+     * Checks concrete type arguments against the declared bounds of the type parameters. Only the head of the bound
+     * is compared (no substitution of type parameters); arguments that are generic parameters or wildcards and bounds
+     * that are not declared types are skipped, so the check never reports a false positive.
+     */
+    private static void checkBounds(final SpecModel model, final SchemaFile file, final TypeRef.Named named,
+                                    final ResolvedType.Declared declared, final DiagnosticCollector out) {
+        final List<TypeParameter> parameters = declared.declaration().typeParameters();
+        final SchemaFile declaringFile = model.fileOf(declared.declaration());
+        for (int i = 0; i < parameters.size(); i++) {
+            if (!(parameters.get(i).bound() instanceof TypeRef.Named bound)
+                    || !(model.resolve(declaringFile, bound) instanceof ResolvedType.Declared boundType)
+                    || !(named.arguments().get(i) instanceof TypeRef.Concrete concrete)
+                    || !(concrete.type() instanceof TypeRef.Named argument)) {
+                continue;
+            }
+            final ResolvedType resolvedArgument = model.resolve(file, argument);
+            final boolean satisfies = switch (resolvedArgument) {
+                case ResolvedType.Declared arg -> arg.declaration() == boundType.declaration()
+                        || model.ancestors(arg.declaration()).stream().anyMatch(a -> a == boundType.declaration());
+                case ResolvedType.Builtin ignored -> false;
+                case ResolvedType.Unresolved ignored -> true;
+            };
+            if (!satisfies) {
+                out.report(Rule.GENERIC_BOUND_VIOLATION, "'" + argument.text() + "' does not satisfy '"
+                        + parameters.get(i).name() + " extends " + bound.text() + "' of '"
+                        + declared.declaration().name() + "'", argument.location());
             }
         }
     }

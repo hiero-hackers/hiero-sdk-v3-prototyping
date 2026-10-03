@@ -3,6 +3,8 @@ package org.hiero.sdk.v3.metalang.source;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.hiero.sdk.v3.metalang.diagnostic.DiagnosticCollector;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
 import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
@@ -27,10 +29,59 @@ public final class MarkdownSchemaExtractor {
     private static final List<String> REQUIRED_SECTIONS = List.of(
             "Description", "API Schema", "Testing", "Questions & Comments");
 
+    private static final Pattern FENCE_OPEN = Pattern.compile("^ {0,3}(`{3,}|~{3,})(.*)$");
+    private static final Pattern HEADING_2 = Pattern.compile("^ {0,3}## +(.*?)(?: +#+)? *$");
+
     private record Heading(String text, int line) {
     }
 
-    private record CodeBlock(int firstContentLine, String content, @Nullable Heading section) {
+    /**
+     * A fenced code block of a Markdown document.
+     *
+     * @param openingLine      1-based line of the opening fence
+     * @param firstContentLine 1-based line of the first content line
+     * @param info             the info string after the opening fence (e.g. {@code java}), may be empty
+     * @param content          the content without the fences, each line terminated by {@code \n}
+     * @param section          text of the enclosing level-2 heading, or {@code null} before the first one
+     * @param sectionLine      1-based line of the enclosing level-2 heading, or 0
+     * @param closed           whether the block has a closing fence
+     */
+    public record CodeBlock(int openingLine, int firstContentLine, String info, String content,
+                            @Nullable String section, int sectionLine, boolean closed) {
+
+        /**
+         * Creates a code block.
+         *
+         * @param openingLine      line of the opening fence
+         * @param firstContentLine line of the first content line
+         * @param info             the info string
+         * @param content          the content
+         * @param section          the enclosing section or {@code null}
+         * @param sectionLine      line of the enclosing section or 0
+         * @param closed           whether the block is closed
+         */
+        public CodeBlock {
+            Objects.requireNonNull(info, "info must not be null");
+            Objects.requireNonNull(content, "content must not be null");
+        }
+    }
+
+    private record Scan(List<Heading> headings, List<CodeBlock> blocks) {
+    }
+
+    /**
+     * Returns all fenced code blocks of a Markdown document in document order.
+     *
+     * <p>Fences follow CommonMark: an opening fence is at least three backticks or tildes, indented by at most
+     * three spaces; the block is closed by a fence of the same character that is at least as long and has nothing
+     * but whitespace after it.
+     *
+     * @param markdown the Markdown content
+     * @return the code blocks
+     */
+    public List<CodeBlock> codeBlocks(final String markdown) {
+        Objects.requireNonNull(markdown, "markdown must not be null");
+        return scan(markdown).blocks();
     }
 
     /**
@@ -44,31 +95,44 @@ public final class MarkdownSchemaExtractor {
         Objects.requireNonNull(file, "file must not be null");
         Objects.requireNonNull(markdown, "markdown must not be null");
         final DiagnosticCollector diagnostics = new DiagnosticCollector();
+        final Scan scan = scan(markdown);
+        scan.blocks().stream().filter(b -> !b.closed()).forEach(b -> diagnostics.report(Rule.DOC_UNCLOSED_FENCE,
+                "Fenced code block is never closed", new SourceLocation(file, b.openingLine(), 1)));
+        final SchemaSource source = selectSchema(file, scan.headings(), scan.blocks(), diagnostics);
+        if (source != null) {
+            checkSkeleton(file, scan.headings(), diagnostics);
+        }
+        return new ExtractionResult(source, diagnostics.sorted());
+    }
+
+    private static Scan scan(final String markdown) {
         // a trailing line break terminates the last line; it does not start an extra empty line
         final String[] lines = markdown.split("\\R");
-
         final List<Heading> headings = new ArrayList<>();
         final List<CodeBlock> blocks = new ArrayList<>();
         Heading currentSection = null;
         String fence = null;
         int fenceStart = 0;
+        String info = "";
         StringBuilder blockContent = null;
 
         for (int i = 0; i < lines.length; i++) {
             final String line = lines[i];
             final int lineNumber = i + 1;
-            final String trimmed = line.strip();
             if (fence == null) {
-                if (trimmed.startsWith("```") || trimmed.startsWith("~~~")) {
-                    fence = trimmed.substring(0, 3);
+                final Matcher opening = FENCE_OPEN.matcher(line);
+                final Matcher heading = HEADING_2.matcher(line);
+                if (opening.matches() && !(opening.group(1).charAt(0) == '`' && opening.group(2).contains("`"))) {
+                    fence = opening.group(1);
+                    info = opening.group(2).strip();
                     fenceStart = lineNumber;
                     blockContent = new StringBuilder();
-                } else if (line.startsWith("## ")) {
-                    currentSection = new Heading(line.substring(3).strip(), lineNumber);
+                } else if (heading.matches()) {
+                    currentSection = new Heading(heading.group(1).strip(), lineNumber);
                     headings.add(currentSection);
                 }
-            } else if (trimmed.startsWith(fence) && trimmed.substring(3).isBlank()) {
-                blocks.add(new CodeBlock(fenceStart + 1, blockContent.toString(), currentSection));
+            } else if (isClosingFence(line, fence)) {
+                blocks.add(block(fenceStart, info, blockContent, currentSection, true));
                 fence = null;
                 blockContent = null;
             } else {
@@ -76,16 +140,25 @@ public final class MarkdownSchemaExtractor {
             }
         }
         if (fence != null) {
-            diagnostics.report(Rule.DOC_UNCLOSED_FENCE, "Fenced code block is never closed",
-                    new SourceLocation(file, fenceStart, 1));
-            blocks.add(new CodeBlock(fenceStart + 1, blockContent.toString(), currentSection));
+            blocks.add(block(fenceStart, info, blockContent, currentSection, false));
         }
+        return new Scan(List.copyOf(headings), List.copyOf(blocks));
+    }
 
-        final SchemaSource source = selectSchema(file, headings, blocks, diagnostics);
-        if (source != null) {
-            checkSkeleton(file, headings, diagnostics);
+    private static CodeBlock block(final int openingLine, final String info, final StringBuilder content,
+                                   final @Nullable Heading section, final boolean closed) {
+        return new CodeBlock(openingLine, openingLine + 1, info, content.toString(),
+                section == null ? null : section.text(), section == null ? 0 : section.line(), closed);
+    }
+
+    private static boolean isClosingFence(final String line, final String fence) {
+        final String withoutIndent = line.replaceFirst("^ {0,3}", "");
+        final char fenceChar = fence.charAt(0);
+        int length = 0;
+        while (length < withoutIndent.length() && withoutIndent.charAt(length) == fenceChar) {
+            length++;
         }
-        return new ExtractionResult(source, diagnostics.sorted());
+        return length >= fence.length() && withoutIndent.substring(length).isBlank();
     }
 
     private @Nullable SchemaSource selectSchema(final String file, final List<Heading> headings,
@@ -97,7 +170,7 @@ public final class MarkdownSchemaExtractor {
                 .orElse(null);
         if (schemaSection != null) {
             final List<CodeBlock> inSection = blocks.stream()
-                    .filter(b -> b.section() == schemaSection)
+                    .filter(b -> b.sectionLine() == schemaSection.line())
                     .toList();
             if (inSection.isEmpty()) {
                 diagnostics.report(Rule.DOC_EMPTY_SCHEMA_SECTION,

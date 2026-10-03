@@ -963,6 +963,189 @@ class ValidatorTest {
     }
 
     @Nested
+    class ValuesAndConstraints {
+
+        @Test
+        void shouldCheckIntegerRanges() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    constant OK_MIN: int8 = -128
+                    constant OK_MAX: int8 = 127
+                    constant TOO_SMALL: int8 = -129
+                    constant TOO_BIG: int8 = 128
+                    constant U_MAX: uint8 = 255
+                    constant U_TOO_BIG: uint8 = 256
+                    constant BIG: int256 = 100_000_000_000_000_000_000_000_000
+                    enum E(a: int16) { V(40000) }
+                    """;
+
+            // WHEN
+            final List<Diagnostic> diagnostics = diagnostics(schema);
+
+            // THEN
+            assertThat(diagnostics).extracting(Diagnostic::ruleId).containsExactly("constant.value-type",
+                    "constant.value-type", "constant.value-type", "enum.argument-type");
+            assertThat(diagnostics.getFirst().message()).isEqualTo("Value -129 is outside the range of 'int8' (-128..127)");
+        }
+
+        @Test
+        void shouldReportContradictoryBoundsForFieldsParametersAndAttributes() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    X {
+                        @@immutable @@min(10) @@max(1) a: int32
+                        @@immutable @@minLength(5) @@maxLength(2) b: string
+                        @@immutable @@minSize(3) @@maxSize(1) c: list<int8>
+                        @@immutable @@min(1) @@max(1) ok: int32
+                        void m(@@min(2) @@max(1) p: int8)
+                    }
+                    enum E(@@min(3) @@max(2) v: int8) { A(3) }
+                    """;
+
+            // THEN
+            assertThat(rules(schema)).containsOnly("annotation.contradictory-bounds", "value.constraint-violation")
+                    .filteredOn("annotation.contradictory-bounds"::equals).hasSize(5);
+        }
+
+        @Test
+        void shouldCheckDefaultsAndEnumArgumentsAgainstConstraints() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    X {
+                        @@immutable @@min(5) @@default(1) a: int32
+                        @@immutable @@max(5) @@default(9) b: int32
+                        @@immutable @@minLength(3) @@default("ab") c: string
+                        @@immutable @@maxLength(2) @@default("tℏtℏ") d: string
+                        @@immutable @@minSize(1) @@default([]) e: list<int8>
+                        @@immutable @@pattern("^[0-9]+$") @@default("12a") f: string
+                        @@immutable @@urlPattern @@default("/relative") g: string
+                        @@immutable @@urlPattern @@default("https://example.com/x") ok1: string
+                        @@immutable @@pattern("^[0-9]+$") @@default("123") ok2: string
+                        @@immutable @@maxLength(2) @@default("tℏ") ok3: string
+                        @@immutable @@nullable @@min(5) @@default(null) ok4: int32
+                        @@immutable @@pattern("[") @@default("x") badRegex: string
+                    }
+                    enum E(@@maxLength(1) symbol: string) { A("x")
+                     B("xy") }
+                    """;
+
+            // WHEN
+            final List<Diagnostic> diagnostics = diagnostics(schema);
+
+            // THEN 7 field defaults and one enum argument violate their constraints; the broken regex is only
+            // reported once (as annotation.arguments)
+            assertThat(diagnostics).extracting(Diagnostic::ruleId).containsExactlyInAnyOrder(
+                    "value.constraint-violation", "value.constraint-violation", "value.constraint-violation",
+                    "value.constraint-violation", "value.constraint-violation", "value.constraint-violation",
+                    "value.constraint-violation", "value.constraint-violation", "annotation.arguments");
+            assertThat(diagnostics).extracting(Diagnostic::message)
+                    .contains("@@default of 'a': Value 1 violates @@min(5)",
+                            "@@default of 'g': Value \"/relative\" is not an absolute URL (@@urlPattern)",
+                            "'B', attribute 'symbol': Value \"xy\" violates @@maxLength(1)");
+        }
+
+        @Test
+        void shouldCheckStructLiteralsForMissingFieldsAndAbstractions() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    abstraction Base { @@immutable @@nullable id: int8 }
+                    P extends Base { @@immutable x: int8
+                                     @@immutable y: int8
+                                     @@immutable @@default(0) z: int8
+                                     @@immutable @@nullable w: int8 }
+                    constant OK: P = P{x: 1, y: 2}
+                    constant MISSING: P = P{x: 1}
+                    constant ABSTRACT: Base = Base{}
+                    """;
+
+            // WHEN
+            final List<Diagnostic> diagnostics = diagnostics(schema);
+
+            // THEN
+            assertThat(diagnostics).extracting(Diagnostic::message).containsExactly(
+                    "Missing value for field 'y' of 'P'", "'Base' is an abstraction and has no literal form");
+        }
+
+        @Test
+        void shouldReportDuplicateAnnotationArguments() {
+            assertThat(diagnostics("namespace a\n@@sealed(Y, Y) abstraction X {}\nY extends X {}\n"
+                    + "Z { @@throws(a-error, b-error, a-error) void m() }"))
+                    .extracting(Diagnostic::message)
+                    .containsExactly("@@sealed lists 'Y' twice", "@@throws lists 'a-error' twice");
+        }
+    }
+
+    @Nested
+    class GenericBounds {
+
+        @Test
+        void shouldAcceptArgumentsThatSatisfyBounds() {
+            // GIVEN direct match, subtype, F-bounded self type, generic parameter, wildcard and unresolved argument
+            final String schema = """
+                    namespace a
+                    abstraction B {}
+                    abstraction Sub extends B {}
+                    G<$$T extends B> {}
+                    abstraction Self<$$S extends Self<$$S>> {}
+                    Concrete extends Self<Concrete> {}
+                    H<$$U extends B> { @@immutable g: G<$$U> }
+                    X {
+                        @@immutable a: G<B>
+                        @@immutable b: G<Sub>
+                        @@immutable c: G<ANY>
+                        @@immutable d: G<ANY extends Sub>
+                    }
+                    """;
+
+            // THEN
+            assertThat(rules(schema)).isEmpty();
+        }
+
+        @Test
+        void shouldReportArgumentsThatViolateBounds() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    abstraction B {}
+                    Other {}
+                    G<$$T extends B> {}
+                    abstraction Self<$$S extends Self<$$S>> {}
+                    Wrong extends Self<Other> {}
+                    X {
+                        @@immutable a: G<Other>
+                        @@immutable b: G<int8>
+                        @@immutable c: list<G<string>>
+                    }
+                    """;
+
+            // THEN
+            assertThat(diagnostics(schema)).extracting(Diagnostic::message).containsExactly(
+                    "'Other' does not satisfy '$$S extends Self<$$S>' of 'Self'",
+                    "'Other' does not satisfy '$$T extends B' of 'G'",
+                    "'int8' does not satisfy '$$T extends B' of 'G'",
+                    "'string' does not satisfy '$$T extends B' of 'G'");
+        }
+
+        @Test
+        void knownLimitationOverrideOfGenericFieldIsNotSubstituted() {
+            // KNOWN LIMITATION: inherited generic fields are compared without substituting the type arguments of the
+            // supertype ($$T of P<int8> is not replaced by int8), so this mismatch is not reported. The check is
+            // lenient by design: it never reports a false positive. If this test fails, the limitation was fixed —
+            // update the test and the README.
+            final String schema = """
+                    namespace a
+                    abstraction P<$$T> { @@immutable @@nullable v: $$T }
+                    C extends P<int8> { @@immutable @@override v: string }
+                    """;
+            assertThat(rules(schema)).isEmpty();
+        }
+    }
+
+    @Nested
     class Enums {
 
         @Test
