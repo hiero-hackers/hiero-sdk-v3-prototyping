@@ -69,7 +69,9 @@ requires {Receipt, Transaction} from consensusnode.transactions
 @@finalType
 AccountCreateTransaction extends Transaction<AccountCreateReceipt, AccountCreateTransaction> {
     @@immutable authority: Authority
-    @@immutable @@default(0) initialBalance: NativeToken<ANY, ANY>
+    // Amount transferred from the payer to the new account. If absent, the account is created with a balance
+    // of 0 in the native token of the network.
+    @@immutable @@nullable initialBalance: NativeToken<ANY, ANY>
     @@immutable @@nullable accountMemo: string
     @@immutable @@default(false) receiverSignatureRequired: bool
     @@immutable @@nullable maxAutomaticTokenAssociations: int32
