@@ -50,7 +50,7 @@ type avoids a duplicate read/write shape that would have to evolve in lockstep.
 ```
 namespace consensusnode.admin.network
 requires {AccountId} from ledger
-requires {Query, PaidQuery} from consensusnode.queries
+requires {FreeQuery, PaidQuery} from consensusnode.queries
 requires {ServiceEndpoint} from consensusnode.admin.nodes
 
 // Defined inline here for now; once the missing-features §3.1 SemanticVersion lands in `base/common`,
@@ -79,7 +79,7 @@ type NetworkVersionInfo {
 // Free query that returns the network's current HAPI and services version. Has no input
 // fields — the answer is per-network, not per-entity.
 @@finalType
-NetworkVersionInfoQuery extends Query<NetworkVersionInfo> {
+NetworkVersionInfoQuery extends FreeQuery<NetworkVersionInfo> {
 }
 
 // One address-book entry: the stable node id plus everything a client needs to reach the node and verify its TLS

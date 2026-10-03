@@ -3,7 +3,7 @@
 /// A query is a read-only request to a consensus node that returns a typed result without changing ledger state. There
 /// are two kinds of queries:
 ///
-/// - **`Query<$$Result>`** — a free query that the network answers without charging you, for example an account
+/// - **`FreeQuery<$$Result>`** — a free query that the network answers without charging you, for example an account
 ///   balance or a transaction receipt.
 /// - **`PaidQuery<$$Result>`** — a query that must be paid for in the network's native token. It adds `getCost` to
 ///   ask for the current price and `maxQueryPayment` to cap what you are willing to pay. Paid queries are always paid

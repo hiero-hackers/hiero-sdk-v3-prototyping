@@ -10,7 +10,7 @@ cost-discovery shape.
 A query is a read-only request to a consensus node that returns a typed result without changing ledger state. There
 are two kinds of queries:
 
-- **`Query<$$Result>`** — a free query that the network answers without charging you, for example an account
+- **`FreeQuery<$$Result>`** — a free query that the network answers without charging you, for example an account
   balance or a transaction receipt.
 - **`PaidQuery<$$Result>`** — a query that must be paid for in the network's native token. It adds `getCost` to
   ask for the current price and `maxQueryPayment` to cap what you are willing to pay. Paid queries are always paid
@@ -47,12 +47,20 @@ The query is paid by the client's operator; see
 [ADR-0002](../../docs/adr/0002-defer-paid-query-payer-customization.md) for the rationale behind deferring a
 configurable payer.
 
-`Query` and `PaidQuery` both extend `Submittable<$$Result>` (defined in `consensusnode.client`), the shared execution
-abstraction that also backs `PackedTransaction`.
+`Query` extends `Submittable<$$Result>` (defined in `consensusnode.client`), the shared execution abstraction that
+also backs `PackedTransaction`. `FreeQuery` and `PaidQuery` are the two kinds of `Query`.
 
-The split between `Query` and `PaidQuery` mirrors the protocol distinction the consensus node
+`Query` carries the response envelope as a second type parameter (`Query<$$Result, $$Response>`), instead of
+`PaidQuery` overriding `submit` with the more specific `PaidQueryResponse`. The meta-language allows such a covariant
+return type, but `submit` is `@@async`, and in languages with invariant generics (Java: `CompletionStage<T>`) a
+`CompletionStage<PaidQueryResponse<R>>` is no `CompletionStage<QueryResponse<R>>`, so the override cannot be expressed.
+With the type parameter `PaidQuery.submit` returns `PaidQueryResponse` without overriding anything — the same pattern
+as the receipt type of `Transaction<$$Receipt, $$Self>`. `FreeQuery` fixes the parameter to `QueryResponse`, so free
+queries stay as short to declare as before.
+
+The split between `FreeQuery` and `PaidQuery` mirrors the protocol distinction the consensus node
 makes between free and paid queries, and makes the difference visible at the type level rather
-than at runtime. A caller holding a `Query` cannot configure payment that would have no effect;
+than at runtime. A caller holding a `FreeQuery` cannot configure payment that would have no effect;
 a caller holding a `PaidQuery` is reminded by the type that payment must be considered.
 Promotion from free to paid (should network policy ever change) is a breaking type change
 rather than a silent behavioural one.
@@ -101,13 +109,18 @@ type PaidQueryResponse<$$T> extends QueryResponse<$$T> {
     @@immutable cost: NativeToken<ANY, ANY>   // amount transferred to the answering node
 }
 
-// A read-only request to a consensus node. Direct subtypes are free queries that the network answers without
-// charging the caller (for example account balance or transaction receipt); queries that require payment are
-// `PaidQuery` subtypes.
+// A read-only request to a consensus node. Free queries are `FreeQuery` subtypes, queries that require payment are
+// `PaidQuery` subtypes; use `Query` where both kinds are accepted.
 //
 // Use the inherited retry settings to tune how the request is sent and `submit(client)` to send it. The result
-// is returned wrapped in a `QueryResponse`.
-abstraction Query<$$Result> extends Submittable<QueryResponse<$$Result>> {
+// is returned wrapped in the response envelope `$$Response`: a `QueryResponse` for free queries, a
+// `PaidQueryResponse` for paid ones.
+abstraction Query<$$Result, $$Response extends QueryResponse<$$Result>> extends Submittable<$$Response> {
+}
+
+// A query that the network answers without charging the caller, for example an account balance or a transaction
+// receipt. `submit(client)` returns the result wrapped in a `QueryResponse`.
+abstraction FreeQuery<$$Result> extends Query<$$Result, QueryResponse<$$Result>> {
 }
 
 // A query whose answer must be paid for in the network's native token. The price is determined from the
@@ -115,17 +128,14 @@ abstraction Query<$$Result> extends Submittable<QueryResponse<$$Result>> {
 // Use `maxQueryPayment` to bound the spend and read `cost` from the returned `PaidQueryResponse` to see what was
 // actually charged.
 //
-// `submit()` fails without paying anything if the quoted price exceeds `maxQueryPayment`.
-abstraction PaidQuery<$$Result> extends Query<$$Result> {
+// `submit(client)` pays the quoted price from the operator account and returns the result together with the
+// amount actually paid; it fails without paying anything if the quoted price exceeds `maxQueryPayment`.
+abstraction PaidQuery<$$Result> extends Query<$$Result, PaidQueryResponse<$$Result>> {
 
     // Upper bound on the price you are willing to pay. If the price quoted by the network exceeds this limit,
     // `submit()` and `getCost()` fail and no payment is made. If absent, the quoted price is always paid.
     @@nullable maxQueryPayment: NativeToken<ANY, ANY>
     
-    // Sends the query, paying the quoted price from the operator account, and returns the result together with
-    // the amount actually paid.
-    @@async PaidQueryResponse<$$Result> submit(client: HieroClient<ANY>)
-
     // Asks the network for the current price of this query without executing it. The returned value is a
     // snapshot — a subsequent call may return a different price as conditions change.
     // Throws if `maxQueryPayment` is set and the quoted price exceeds it.

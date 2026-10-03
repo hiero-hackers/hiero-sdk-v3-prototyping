@@ -242,10 +242,9 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   a greatest fixed point, so types that refer to each other are generated together. Records, enums and classes
   implement only generated interfaces; other interfaces are written as a comment. An `@@async` method that overrides
   an inherited one with another return type is deferred too: the meta-language allows the covariant return type, but
-  `CompletionStage<T>` is invariant in Java. Today 16 enums, 84 records, 16 interfaces, 15 abstract classes and 107
-  classes are generated; 12 types are deferred: `PaidQuery` (covariant `@@async submit`, see above) and the 9 paid
-  queries extending it, `AccountCreateTransaction` (`@@default(0)` on a `NativeToken` attribute has no Java form) and
-  `TopicService` (`@@streaming` is not mapped yet).
+  `CompletionStage<T>` is invariant in Java. Today 336 files are generated (enums, records, interfaces, abstract and concrete classes,
+  constants and factory classes, exceptions); 2 declarations are deferred: `TopicService` and its factory method
+  `createService` (`@@streaming` is not mapped yet).
 - **Constants** (`ConstantsGenerator`): the constants of a namespace become `public static final` fields of a
   `final` class named after the last namespace segment (`ledger` → `LedgerConstants`) with a private constructor.
   Struct literals become constructor calls (entries in constructor order, missing `@@nullable` → `null`, missing

@@ -4,7 +4,7 @@ package org.hiero.consensusnode.queries.accounts;
 
 import java.util.concurrent.CompletionStage;
 import org.hiero.consensusnode.client.HieroClient;
-import org.hiero.consensusnode.queries.Query;
+import org.hiero.consensusnode.queries.FreeQuery;
 import org.hiero.consensusnode.queries.QueryResponse;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.ContractId;
@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
 
 /// Free query for the current balance of an account or smart contract.
 /// Exactly one of accountId or contractId must be set.
-public final class AccountBalanceQuery extends Query<AccountBalance> {
+public final class AccountBalanceQuery extends FreeQuery<AccountBalance> {
 
     private final @Nullable AccountId accountId;
     private final @Nullable ContractId contractId;

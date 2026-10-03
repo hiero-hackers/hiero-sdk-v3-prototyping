@@ -33,7 +33,7 @@ namespace consensusnode.queries.accounts
 requires {Address, AccountId, ContractId, EvmAddress} from ledger
 requires {Authority} from authority
 requires {NativeToken} from nativeToken
-requires {Query, PaidQuery} from consensusnode.queries
+requires {FreeQuery, PaidQuery} from consensusnode.queries
 requires {Receipt, Record} from consensusnode.transactions
 
 // Current balance snapshot of an account or contract. Returned by `AccountBalanceQuery`.
@@ -47,7 +47,7 @@ type AccountBalance {
 // Exactly one of accountId or contractId must be set.
 @@finalType
 @@oneOf(accountId, contractId)
-AccountBalanceQuery extends Query<AccountBalance> {
+AccountBalanceQuery extends FreeQuery<AccountBalance> {
     @@immutable @@nullable accountId: AccountId
     @@immutable @@nullable contractId: ContractId
 }

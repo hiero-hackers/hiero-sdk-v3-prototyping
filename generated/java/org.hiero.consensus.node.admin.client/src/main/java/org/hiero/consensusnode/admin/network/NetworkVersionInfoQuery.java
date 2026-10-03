@@ -4,13 +4,13 @@ package org.hiero.consensusnode.admin.network;
 
 import java.util.concurrent.CompletionStage;
 import org.hiero.consensusnode.client.HieroClient;
-import org.hiero.consensusnode.queries.Query;
+import org.hiero.consensusnode.queries.FreeQuery;
 import org.hiero.consensusnode.queries.QueryResponse;
 import org.jspecify.annotations.Nullable;
 
 /// Free query that returns the network's current HAPI and services version. Has no input
 /// fields — the answer is per-network, not per-entity.
-public final class NetworkVersionInfoQuery extends Query<NetworkVersionInfo> {
+public final class NetworkVersionInfoQuery extends FreeQuery<NetworkVersionInfo> {
 
     /// Creates a new `NetworkVersionInfoQuery`.
     public NetworkVersionInfoQuery() {

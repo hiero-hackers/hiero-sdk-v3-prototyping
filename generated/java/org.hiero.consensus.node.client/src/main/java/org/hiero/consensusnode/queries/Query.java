@@ -5,13 +5,13 @@ package org.hiero.consensusnode.queries;
 import org.hiero.consensusnode.client.Submittable;
 import org.jspecify.annotations.Nullable;
 
-/// A read-only request to a consensus node. Direct subtypes are free queries that the network answers without
-/// charging the caller (for example account balance or transaction receipt); queries that require payment are
-/// `PaidQuery` subtypes.
+/// A read-only request to a consensus node. Free queries are `FreeQuery` subtypes, queries that require payment are
+/// `PaidQuery` subtypes; use `Query` where both kinds are accepted.
 ///
 /// Use the inherited retry settings to tune how the request is sent and `submit(client)` to send it. The result
-/// is returned wrapped in a `QueryResponse`.
-public abstract class Query<Result> extends Submittable<QueryResponse<Result>> {
+/// is returned wrapped in the response envelope `$$Response`: a `QueryResponse` for free queries, a
+/// `PaidQueryResponse` for paid ones.
+public abstract class Query<Result, ResponseT extends QueryResponse<Result>> extends Submittable<ResponseT> {
 
     /// Creates a new `Query`.
     protected Query() {
@@ -23,7 +23,7 @@ public abstract class Query<Result> extends Submittable<QueryResponse<Result>> {
     /// @param maxAttempts the new value
     /// @return this object
     @Override
-    public Query<Result> setMaxAttempts(final @Nullable Integer maxAttempts) {
+    public Query<Result, ResponseT> setMaxAttempts(final @Nullable Integer maxAttempts) {
         super.setMaxAttempts(maxAttempts);
         return this;
     }
@@ -33,7 +33,7 @@ public abstract class Query<Result> extends Submittable<QueryResponse<Result>> {
     /// @param maxBackoff the new value
     /// @return this object
     @Override
-    public Query<Result> setMaxBackoff(final @Nullable Long maxBackoff) {
+    public Query<Result, ResponseT> setMaxBackoff(final @Nullable Long maxBackoff) {
         super.setMaxBackoff(maxBackoff);
         return this;
     }
@@ -43,7 +43,7 @@ public abstract class Query<Result> extends Submittable<QueryResponse<Result>> {
     /// @param minBackoff the new value
     /// @return this object
     @Override
-    public Query<Result> setMinBackoff(final @Nullable Long minBackoff) {
+    public Query<Result, ResponseT> setMinBackoff(final @Nullable Long minBackoff) {
         super.setMinBackoff(minBackoff);
         return this;
     }
@@ -53,7 +53,7 @@ public abstract class Query<Result> extends Submittable<QueryResponse<Result>> {
     /// @param attemptTimeout the new value
     /// @return this object
     @Override
-    public Query<Result> setAttemptTimeout(final @Nullable Long attemptTimeout) {
+    public Query<Result, ResponseT> setAttemptTimeout(final @Nullable Long attemptTimeout) {
         super.setAttemptTimeout(attemptTimeout);
         return this;
     }
