@@ -38,6 +38,7 @@ spec/*.md
   │ source/      MarkdownSchemaExtractor  "## API Schema" code block + skeleton checks (doc.*)
   │ parser/      ANTLR4 grammar → parse tree → immutable AST (ast/, records + sealed interfaces)
   │ semantic/    SpecModel: namespaces, type index, name resolution (local / requires / wildcard / qualified)
+  │ model/       LinkedModel: every reference resolved, effective members with substituted type arguments
   │ validation/  Validator: one Check per guideline topic, every finding refers to a stable Rule id
   ▼
 ValidationReport (sorted diagnostics) → CLI (text / JSON / summary)
@@ -51,6 +52,24 @@ ValidationReport (sorted diagnostics) → CLI (text / JSON / summary)
 - **Rules:** [`Rule`](src/main/java/org/hiero/sdk/v3/metalang/diagnostic/Rule.java) is the catalog of all checks
   (id, severity, description, guideline section). Rule ids are stable; later tools (e.g. per-language exception
   files) will reference them.
+
+## Linked model (input for generators)
+
+`LinkedModel.of(report.model())` turns the semantic model into a fully resolved model:
+
+- **Resolved types** (`model.Type`): `BasicType` (`list<…>`, `map<…>`, `type<…>`, …), `DeclaredType` (identified by
+  its `QualifiedName`, e.g. `consensusnode.transactions.Transaction`, plus type arguments), `TypeVariable` (with its
+  owning type or method), `WildcardType`, `AnyType`, `VoidType`, `FunctionType`. Types are values: `equals` means
+  "same type". `UnresolvedType` only appears in specs with validation errors — generators must not run on those.
+- **Definitions**: `ComplexTypeDefinition`, `EnumDefinition` (attribute list and values with their arguments),
+  `FunctionDefinition`, `ConstantDefinition`; documentation, annotations and source locations are kept.
+- **Effective members**: `fields()` / `methods()` contain own and inherited members with the type arguments of the
+  supertypes substituted (also across several levels), e.g. `AccountCreateTransaction.pack(...)` returns
+  `PackedTransaction<AccountCreateReceipt, AccountCreateTransaction>` and `Hbar.to(...)` returns `Hbar`. Inherited
+  members come first (in `extends` order), an override takes the position of the inherited member, `@@static`
+  methods are not inherited. `declaredFields()` / `declaredMethods()` contain only what the type itself declares.
+
+The validator uses the linked model as well (override and enum-attribute type checks with substitution).
 
 ## Lenient grammar: syntax variants found in the specs
 
@@ -100,7 +119,7 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 420 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
+`mvn verify` runs about 435 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
 excluded). Besides unit tests per component, the suite contains these systematic checks:
 
 | Test | What it guarantees |
@@ -111,11 +130,10 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `MarkdownEdgeCasesTest` | CommonMark fences (longer fences, indentation, info strings), ATX headings, CRLF, Unicode. |
 | `RobustnessTest` | Seeded random mutations and every prefix of every real spec never crash the tool and never report a location outside the document; results do not depend on document order; AST locations point at the element; the textual form of every type and literal parses back to itself. |
 | `RepositorySpecsTest` | All specs under `spec/` are free of syntax errors and the report is deterministic. |
+| `LinkedRepositorySpecsTest` | Linking all real specs leaves no unresolved reference, every declared type exists, self types are substituted (`Transaction`, `NativeToken`), and linking is deterministic. |
 
 ## Known limitations
 
-- **No substitution of type arguments** when comparing inherited members: overriding a field `v: $$T` of `P<int8>`
-  with `v: string` is not reported (the check is lenient, never a false positive; pinned by a test).
 - **Generic bounds** are checked on the head type only (`G<$$T extends B>` used as `G<Other>`); arguments that are
   generic parameters are not checked.
 - **Error positions** can be one token late when the input so far is a valid prefix of another construct

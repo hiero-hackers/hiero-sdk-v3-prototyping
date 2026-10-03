@@ -26,7 +26,8 @@ import org.hiero.sdk.v3.metalang.semantic.SpecModel;
 final class TypeReferenceCheck implements Check {
 
     @Override
-    public void run(final SpecModel model, final DiagnosticCollector out) {
+    public void run(final ValidationContext context, final DiagnosticCollector out) {
+        final SpecModel model = context.model();
         final Map<SchemaFile, Set<String>> usedNames = new IdentityHashMap<>();
         Elements.forEachTypeSite(model, site -> {
             final Set<String> used = usedNames.computeIfAbsent(site.file(), k -> new HashSet<>());

@@ -28,6 +28,7 @@ import org.hiero.sdk.v3.metalang.ast.Parameter;
 import org.hiero.sdk.v3.metalang.ast.SchemaFile;
 import org.hiero.sdk.v3.metalang.ast.TypeRef;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
+import org.hiero.sdk.v3.metalang.model.LinkedModel;
 import org.hiero.sdk.v3.metalang.parser.SchemaParser;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -37,8 +38,8 @@ import org.junit.jupiter.api.TestInstance;
  * Robustness and consistency checks against the real specs of this repository:
  *
  * <ul>
- *   <li>deterministic random mutations and truncations never crash the tool and never produce diagnostics outside
- *       the document,</li>
+ *   <li>deterministic random mutations and truncations never crash the tool (validation and linking) and never
+ *       produce diagnostics outside the document,</li>
  *   <li>the result does not depend on the order in which documents are passed in,</li>
  *   <li>source locations of AST nodes point at the element in the Markdown file,</li>
  *   <li>the textual form of every type reference and literal parses back to the same text.</li>
@@ -69,6 +70,8 @@ class RobustnessTest {
         final ValidationReport[] report = new ValidationReport[1];
         assertThatCode(() -> report[0] = new MetaLang().validate(Map.of(name, markdown)))
                 .as("crash for mutated " + name).doesNotThrowAnyException();
+        assertThatCode(() -> LinkedModel.of(report[0].model()))
+                .as("linking crashed for mutated " + name).doesNotThrowAnyException();
         assertThat(report[0].diagnostics()).allSatisfy(d -> {
             assertThat(d.location().file()).isEqualTo(name);
             assertThat(d.location().line()).as(d.toString()).isBetween(1, lines);

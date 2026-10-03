@@ -25,7 +25,8 @@ import org.hiero.sdk.v3.metalang.semantic.SpecModel;
 final class MemberCheck implements Check {
 
     @Override
-    public void run(final SpecModel model, final DiagnosticCollector out) {
+    public void run(final ValidationContext context, final DiagnosticCollector out) {
+        final SpecModel model = context.model();
         for (final SchemaFile file : model.files()) {
             final Map<String, Method> functions = new HashMap<>();
             for (final Declaration declaration : file.declarations()) {

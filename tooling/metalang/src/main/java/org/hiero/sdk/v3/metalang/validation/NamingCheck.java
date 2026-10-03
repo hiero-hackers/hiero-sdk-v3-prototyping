@@ -28,7 +28,8 @@ final class NamingCheck implements Check {
     static final Pattern GENERIC = Pattern.compile("\\$\\$[A-Z][a-zA-Z0-9]*");
 
     @Override
-    public void run(final SpecModel model, final DiagnosticCollector out) {
+    public void run(final ValidationContext context, final DiagnosticCollector out) {
+        final SpecModel model = context.model();
         for (final SchemaFile file : model.files()) {
             for (final String segment : file.namespace().split("\\.")) {
                 if (!LOWER_CAMEL.matcher(segment).matches()) {

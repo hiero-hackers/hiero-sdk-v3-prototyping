@@ -1131,17 +1131,36 @@ class ValidatorTest {
         }
 
         @Test
-        void knownLimitationOverrideOfGenericFieldIsNotSubstituted() {
-            // KNOWN LIMITATION: inherited generic fields are compared without substituting the type arguments of the
-            // supertype ($$T of P<int8> is not replaced by int8), so this mismatch is not reported. The check is
-            // lenient by design: it never reports a false positive. If this test fails, the limitation was fixed —
-            // update the test and the README.
+        void shouldSubstituteTypeArgumentsWhenComparingOverriddenFields() {
+            // GIVEN P<$$T> -> Q<$$U> extends P<list<$$U>> -> concrete types binding $$U = int8
             final String schema = """
                     namespace a
                     abstraction P<$$T> { @@immutable @@nullable v: $$T }
-                    C extends P<int8> { @@immutable @@override v: string }
+                    abstraction Q<$$U> extends P<list<$$U>> {}
+                    Ok extends Q<int8> { @@immutable @@override v: list<int8> }
+                    Wrong extends Q<int8> { @@immutable @@override v: list<string> }
+                    Direct extends P<int8> { @@immutable @@override v: string }
                     """;
-            assertThat(rules(schema)).isEmpty();
+
+            // WHEN
+            final List<Diagnostic> diagnostics = diagnostics(schema);
+
+            // THEN
+            assertThat(diagnostics).extracting(Diagnostic::message).containsExactly(
+                    "'list<string>' differs from the inherited type 'list<int8>' (P)",
+                    "'string' differs from the inherited type 'int8' (P)");
+        }
+
+        @Test
+        void shouldSubstituteTypeArgumentsForInheritedEnumAttributes() {
+            final String schema = """
+                    namespace a
+                    abstraction Coded<$$C> { @@immutable code: $$C }
+                    enum Ok(code: int32) extends Coded<int32> { A(1) }
+                    enum Wrong(code: string) extends Coded<int32> { A("1") }
+                    """;
+            assertThat(diagnostics(schema)).extracting(Diagnostic::message)
+                    .containsExactly("'string' differs from the inherited type 'int32' (Coded)");
         }
     }
 

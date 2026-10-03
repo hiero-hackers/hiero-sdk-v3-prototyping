@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
 import org.hiero.sdk.v3.metalang.diagnostic.DiagnosticCollector;
+import org.hiero.sdk.v3.metalang.model.LinkedModel;
 import org.hiero.sdk.v3.metalang.semantic.SpecModel;
 
 /**
@@ -35,8 +36,9 @@ public final class Validator {
     public List<Diagnostic> validate(final SpecModel model) {
         Objects.requireNonNull(model, "model must not be null");
         final DiagnosticCollector out = new DiagnosticCollector();
+        final ValidationContext context = new ValidationContext(model, LinkedModel.of(model));
         for (final Check check : checks) {
-            check.run(model, out);
+            check.run(context, out);
         }
         return out.sorted();
     }

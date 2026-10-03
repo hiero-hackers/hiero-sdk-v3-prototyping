@@ -22,18 +22,20 @@ import org.hiero.sdk.v3.metalang.semantic.SpecModel;
 final class EnumCheck implements Check {
 
     @Override
-    public void run(final SpecModel model, final DiagnosticCollector out) {
+    public void run(final ValidationContext context, final DiagnosticCollector out) {
+        final SpecModel model = context.model();
         for (final SchemaFile file : model.files()) {
             for (final Declaration declaration : file.declarations()) {
                 if (declaration instanceof Declaration.EnumType enumType) {
-                    check(model, file, enumType, out);
+                    check(context, file, enumType, out);
                 }
             }
         }
     }
 
-    private static void check(final SpecModel model, final SchemaFile file, final Declaration.EnumType enumType,
-                              final DiagnosticCollector out) {
+    private static void check(final ValidationContext context, final SchemaFile file,
+                              final Declaration.EnumType enumType, final DiagnosticCollector out) {
+        final SpecModel model = context.model();
         if (enumType.values().isEmpty()) {
             out.report(Rule.ENUM_EMPTY, "Enum '" + enumType.name() + "' declares no values", enumType.location());
         }
@@ -55,12 +57,13 @@ final class EnumCheck implements Check {
                         + "'; it is provided implicitly", method.location());
             }
         }
-        checkAttributes(model, file, enumType, out);
+        checkAttributes(context, enumType, out);
         checkArguments(model, file, enumType, out);
     }
 
-    private static void checkAttributes(final SpecModel model, final SchemaFile file,
-                                        final Declaration.EnumType enumType, final DiagnosticCollector out) {
+    private static void checkAttributes(final ValidationContext context, final Declaration.EnumType enumType,
+                                        final DiagnosticCollector out) {
+        final SpecModel model = context.model();
         final Set<String> names = new HashSet<>();
         for (final Parameter attribute : enumType.attributes()) {
             if (!names.add(attribute.name())) {
@@ -81,11 +84,11 @@ final class EnumCheck implements Check {
                     out.report(Rule.ENUM_INHERITED_ATTRIBUTE_MISSING, "Add '" + inherited.name() + ": "
                             + inherited.type().text() + "' (inherited from '" + ancestor.name()
                             + "') to the attribute list of '" + enumType.name() + "'", enumType.location());
-                } else if (!InheritanceCheck.sameType(model, file, attribute.get().type(), model.fileOf(ancestor),
-                        inherited.type())) {
-                    out.report(Rule.ENUM_ATTRIBUTE_TYPE_MISMATCH, "'" + attribute.get().type().text()
-                            + "' differs from '" + inherited.type().text() + "' in '" + ancestor.name() + "'",
-                            attribute.get().location());
+                } else {
+                    context.inheritedTypeIfDifferent(enumType, inherited.name()).ifPresent(type -> out.report(
+                            Rule.ENUM_ATTRIBUTE_TYPE_MISMATCH, "'" + attribute.get().type().text()
+                                    + "' differs from the inherited type '" + type.text() + "' (" + ancestor.name()
+                                    + ")", attribute.get().location()));
                 }
             }
         }

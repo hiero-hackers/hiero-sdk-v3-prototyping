@@ -19,7 +19,8 @@ final class SyntaxVariantCheck implements Check {
     private static final Pattern ANNOTATION_COMMENT = Pattern.compile("^@@[a-zA-Z]+(\\(.*|\\s*)$");
 
     @Override
-    public void run(final SpecModel model, final DiagnosticCollector out) {
+    public void run(final ValidationContext context, final DiagnosticCollector out) {
+        final SpecModel model = context.model();
         for (final SchemaFile file : model.files()) {
             for (final Comment comment : file.comments()) {
                 if (ANNOTATION_COMMENT.matcher(comment.text()).matches()) {

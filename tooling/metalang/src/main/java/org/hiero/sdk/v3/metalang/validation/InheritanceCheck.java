@@ -25,12 +25,13 @@ import org.hiero.sdk.v3.metalang.semantic.SpecModel;
 final class InheritanceCheck implements Check {
 
     @Override
-    public void run(final SpecModel model, final DiagnosticCollector out) {
+    public void run(final ValidationContext context, final DiagnosticCollector out) {
+        final SpecModel model = context.model();
         for (final SchemaFile file : model.files()) {
             for (final Declaration.TypeDeclaration type : file.types()) {
                 checkSupertypes(model, file, type, out);
                 checkSealed(model, file, type, out);
-                checkOverrides(model, type, out);
+                checkOverrides(context, type, out);
                 if (type instanceof Declaration.ComplexType complex && complex.abstraction()
                         && complex.hasAnnotation("finalType")) {
                     out.report(Rule.FINAL_TYPE_ON_ABSTRACTION, "Abstraction '" + type.name()
@@ -112,8 +113,9 @@ final class InheritanceCheck implements Check {
         }
     }
 
-    private static void checkOverrides(final SpecModel model, final Declaration.TypeDeclaration type,
+    private static void checkOverrides(final ValidationContext context, final Declaration.TypeDeclaration type,
                                        final DiagnosticCollector out) {
+        final SpecModel model = context.model();
         final List<Declaration.TypeDeclaration> ancestors = model.ancestors(type);
         for (final Field field : type.fields()) {
             final Optional<LiteralTypes.FieldWithFile> parent = ancestors.stream()
@@ -136,10 +138,9 @@ final class InheritanceCheck implements Check {
                         + "'; re-declaring it requires @@override", field.location());
                 continue;
             }
-            if (!sameType(model, model.fileOf(type), field.type(), parent.get().file(), parentField.type())) {
-                out.report(Rule.OVERRIDE_TYPE_MISMATCH, "'" + field.type().text() + "' differs from '"
-                        + parentField.type().text() + "' in '" + parentName + "'", field.location());
-            }
+            context.inheritedTypeIfDifferent(type, field.name()).ifPresent(inherited -> out.report(
+                    Rule.OVERRIDE_TYPE_MISMATCH, "'" + field.type().text() + "' differs from the inherited type '"
+                            + inherited.text() + "' (" + parentName + ")", field.location()));
             if (field.hasAnnotation("immutable") != parentField.hasAnnotation("immutable")) {
                 out.report(Rule.OVERRIDE_IMMUTABILITY_MISMATCH, "@@immutable of '" + field.name()
                         + "' differs from '" + parentName + "'", field.location());
@@ -149,39 +150,6 @@ final class InheritanceCheck implements Check {
                         + "' must turn a @@nullable parent field into a non-nullable one", field.location());
             }
         }
-    }
-
-    static boolean sameType(final SpecModel model, final SchemaFile fileA, final TypeRef a,
-                                    final SchemaFile fileB, final TypeRef b) {
-        if (a instanceof TypeRef.GenericParameter || b instanceof TypeRef.GenericParameter) {
-            return true;
-        }
-        if (a instanceof TypeRef.Named na && b instanceof TypeRef.Named nb) {
-            final ResolvedType ra = model.resolve(fileA, na);
-            final ResolvedType rb = model.resolve(fileB, nb);
-            final boolean sameHead = switch (ra) {
-                case ResolvedType.Declared da -> rb instanceof ResolvedType.Declared db
-                        && da.declaration() == db.declaration();
-                case ResolvedType.Builtin ba -> rb instanceof ResolvedType.Builtin bb
-                        && ba.type().name().equals(bb.type().name());
-                case ResolvedType.Unresolved ignored -> na.name().equals(nb.name());
-            };
-            if (!sameHead || na.arguments().size() != nb.arguments().size()) {
-                return false;
-            }
-            for (int i = 0; i < na.arguments().size(); i++) {
-                final TypeRef.TypeArgument argA = na.arguments().get(i);
-                final TypeRef.TypeArgument argB = nb.arguments().get(i);
-                final boolean same = argA instanceof TypeRef.Concrete ca && argB instanceof TypeRef.Concrete cb
-                        ? sameType(model, fileA, ca.type(), fileB, cb.type())
-                        : argA.text().equals(argB.text());
-                if (!same) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return a.text().equals(b.text());
     }
 
     private static void checkCycles(final SpecModel model, final DiagnosticCollector out) {

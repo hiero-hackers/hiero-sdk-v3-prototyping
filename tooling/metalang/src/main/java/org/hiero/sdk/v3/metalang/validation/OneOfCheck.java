@@ -18,7 +18,8 @@ import org.hiero.sdk.v3.metalang.semantic.SpecModel;
 final class OneOfCheck implements Check {
 
     @Override
-    public void run(final SpecModel model, final DiagnosticCollector out) {
+    public void run(final ValidationContext context, final DiagnosticCollector out) {
+        final SpecModel model = context.model();
         for (final SchemaFile file : model.files()) {
             for (final Declaration.TypeDeclaration type : file.types()) {
                 for (final Annotation annotation : type.annotations()) {

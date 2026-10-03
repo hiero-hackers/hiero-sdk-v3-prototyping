@@ -18,7 +18,8 @@ import org.hiero.sdk.v3.metalang.semantic.SpecModel;
 final class NamespaceCheck implements Check {
 
     @Override
-    public void run(final SpecModel model, final DiagnosticCollector out) {
+    public void run(final ValidationContext context, final DiagnosticCollector out) {
+        final SpecModel model = context.model();
         for (final String namespace : model.namespaceNames()) {
             final List<SchemaFile> files = model.filesOf(namespace);
             if (files.size() > 1) {

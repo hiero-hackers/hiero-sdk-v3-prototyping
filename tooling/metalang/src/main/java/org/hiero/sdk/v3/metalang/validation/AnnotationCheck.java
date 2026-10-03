@@ -34,7 +34,8 @@ final class AnnotationCheck implements Check {
     private static final Pattern SIMPLE_NAME = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
 
     @Override
-    public void run(final SpecModel model, final DiagnosticCollector out) {
+    public void run(final ValidationContext context, final DiagnosticCollector out) {
+        final SpecModel model = context.model();
         for (final SchemaFile file : model.files()) {
             for (final Declaration declaration : file.declarations()) {
                 switch (declaration) {
