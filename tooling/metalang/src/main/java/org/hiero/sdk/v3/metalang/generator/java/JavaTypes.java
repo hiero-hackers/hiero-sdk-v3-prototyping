@@ -160,7 +160,9 @@ final class JavaTypes {
                 default -> "ZonedDateTime";
             });
             case DURATION -> imports.use("java.time", "Duration");
-            case STREAM_RESULT -> throw new UnsupportedTypeException(basic.text());
+            // per-item result of a stream (guidelines/java-files/StreamItem.java)
+            case STREAM_RESULT -> imports.use(SupportFiles.STREAMING_PACKAGE, "StreamItem")
+                    + arguments(basic.arguments(), imports);
         };
     }
 

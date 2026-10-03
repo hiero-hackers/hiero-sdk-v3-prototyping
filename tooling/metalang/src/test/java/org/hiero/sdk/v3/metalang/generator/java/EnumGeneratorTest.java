@@ -101,8 +101,9 @@ class EnumGeneratorTest {
                     .hasMessage("Function type '" + three.text() + "' has no functional interface");
             assertThatThrownBy(() -> JavaTypes.type(new Type.UnresolvedType("X"), false, imports))
                     .isInstanceOf(JavaTypes.UnsupportedTypeException.class);
-            assertThatThrownBy(() -> JavaTypes.type(basic("streamResult", basic("int8")), false, imports))
-                    .isInstanceOf(JavaTypes.UnsupportedTypeException.class);
+            // streamResult<T> maps to the StreamItem support type
+            assertThat(JavaTypes.type(basic("streamResult", basic("int8")), false, imports)).isEqualTo("StreamItem<Byte>");
+            assertThat(imports.render()).contains("import org.hiero.sdk.common.StreamItem;");
         }
     }
 
@@ -248,24 +249,24 @@ class EnumGeneratorTest {
             final LinkedModel model = LinkedModel.of(new MetaLang().validate(Map.of("f/a.md", TestSpecs.markdown("""
                     namespace a
                     enum E { A
-                        void each(cb: streamResult<int8>)
+                        void each(cb: Unknown)
                     }
                     enum S { A
-                        @@streaming int8 items()
+                        @@streaming Unknown items()
                     }
                     enum N(name: string) { A("a") }
                     Mutable { value: int32
-                        void each(cb: streamResult<int8>) }
+                        void each(cb: Unknown) }
                     enum M(value: Mutable) { }
                     """))).model());
 
             // WHEN / THEN
             assertThat(new JavaGenerator().deferredTypes(model)).containsExactly(
-                    Map.entry(new QualifiedName("a", "E"), "Type 'streamResult<int8>' has no Java mapping yet"),
+                    Map.entry(new QualifiedName("a", "E"), "Type '?Unknown' has no Java mapping yet"),
                     Map.entry(new QualifiedName("a", "M"), "refers to a.Mutable (class, not generated yet)"),
-                    Map.entry(new QualifiedName("a", "Mutable"), "Type 'streamResult<int8>' has no Java mapping yet"),
+                    Map.entry(new QualifiedName("a", "Mutable"), "Type '?Unknown' has no Java mapping yet"),
                     Map.entry(new QualifiedName("a", "N"), "Attribute 'name' clashes with Enum.name()"),
-                    Map.entry(new QualifiedName("a", "S"), "Type '@@streaming int8' has no Java mapping yet"));
+                    Map.entry(new QualifiedName("a", "S"), "Type '?Unknown' has no Java mapping yet"));
             assertThat(new JavaGenerator().generate(model)).noneMatch(f -> f.path().endsWith(".java")
                     && !f.path().endsWith("-info.java"));
         }

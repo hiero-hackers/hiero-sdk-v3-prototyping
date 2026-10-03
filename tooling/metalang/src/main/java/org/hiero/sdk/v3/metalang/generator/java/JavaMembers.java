@@ -52,12 +52,15 @@ final class JavaMembers {
         final List<String> paragraphs = new ArrayList<>(List.of(method.documentation()));
         final List<String> tags = new ArrayList<>();
         final List<String> declared = new ArrayList<>();
-        if (method.hasAnnotation("async")) {
-            // nothing is thrown: the errors complete the returned stage exceptionally (text only, no import)
+        if (method.hasAnnotation("async") || method.hasAnnotation("streaming")) {
+            // nothing is thrown by the call itself: the errors complete the returned stage exceptionally or end the
+            // stream (thrown by its iterator); text only, no import
             final List<String> names = errorIds.stream().map(id -> context.exception(id).simpleName()).distinct()
                     .map(n -> "`" + n + "`").toList();
             if (!names.isEmpty()) {
-                paragraphs.add("The returned stage completes exceptionally with " + enumeration(names)
+                paragraphs.add(method.hasAnnotation("streaming")
+                        ? "The stream ends with " + enumeration(names) + " if it fails."
+                        : "The returned stage completes exceptionally with " + enumeration(names)
                         + " if the operation fails.");
             }
         } else {
@@ -130,7 +133,9 @@ final class JavaMembers {
 
     private static String returnType(final MethodDefinition method, final boolean boxed, final Imports imports) {
         if (method.hasAnnotation("streaming")) {
-            throw new JavaTypes.UnsupportedTypeException("@@streaming " + method.returnType().text());
+            // a pull-based stream of items (guidelines/java-files/HieroStream.java)
+            return imports.use(SupportFiles.STREAMING_PACKAGE, "HieroStream") + "<"
+                    + JavaTypes.type(method.returnType(), true, imports) + ">";
         }
         if (method.hasAnnotation("async")) {
             final String result = JavaTypes.type(method.returnType(), true, imports);

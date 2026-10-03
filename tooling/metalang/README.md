@@ -245,9 +245,7 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   a greatest fixed point, so types that refer to each other are generated together. Records, enums and classes
   implement only generated interfaces; other interfaces are written as a comment. An `@@async` method that overrides
   an inherited one with another return type is deferred too: the meta-language allows the covariant return type, but
-  `CompletionStage<T>` is invariant in Java. Today 336 files are generated (enums, records, interfaces, abstract and concrete classes,
-  constants and factory classes, exceptions); 2 declarations are deferred: `TopicService` and its factory method
-  `createService` (`@@streaming` is not mapped yet).
+  `CompletionStage<T>` is invariant in Java. Today nothing of the specs is deferred.
 - **Constants** (`ConstantsGenerator`): the constants of a namespace become `public static final` fields of a
   `final` class named after the last namespace segment (`ledger` → `LedgerConstants`) with a private constructor.
   Struct literals become constructor calls (entries in constructor order, missing `@@nullable` → `null`, missing
@@ -268,6 +266,14 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   type (`onMessage` → `OnMessageFunction`), placed like the exception classes so that overriding methods in other
   packages use the same type. Function types with type variables in such an interface, unplaceable ones and name
   clashes defer the declarations that use them. The current specs use no function types.
+- **Support files** (`SupportFiles`): classes the generated API uses but the specs do not declare — `@ThreadSafe`
+  (`org.hiero.sdk.annotation`) and the streaming types `HieroStream`, `StreamItem`, `HieroPublisher`,
+  `HieroSubscription` (`org.hiero.sdk.common`). Their single source are the files in `guidelines/java-files`: the build
+  copies them into the tool, the generator writes them 1:1 (only preceded by the header line) when a generated
+  declaration needs them, into the base module that all other modules require, and exports their packages.
+  `SupportFilesTest` checks that the generated files are identical to the guideline files.
+- **Streaming**: `@@streaming T m()` returns `HieroStream<T>`, `streamResult<T>` is `StreamItem<T>`; the errors of a
+  streaming method are documented as "The stream ends with `X` if it fails." (they are thrown by the iterator).
 - **Thread safety** (`ThreadSafeGenerator`): `@@threadSafe[(group)]` becomes the SDK annotation
   `@ThreadSafe(group = "...")` (`RetentionPolicy.CLASS`: kept in the JARs for readers, IDEs and static analysis, not
   evaluated at runtime). The annotation is generated once, in the package `org.hiero.sdk.annotation` of the module
@@ -295,11 +301,11 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
 - **Type mapping** (`JavaTypes`): `intX`/`uintX` → `byte`/`short`/`int`/`long`/`BigInteger` by width; `uint8`/`uint16`/`uint32` use the next
   wider type (`short`/`int`/`long`) because Java integers are signed, `uint64` stays `long`, primitives
   unless nullable or a type argument, `bytes` → `byte[]`, collections → `List`/`Set`/`Map`, time types →
-  `java.time`, `seconds`/`duration` → `Duration`, `type<T>` → `Class<? extends T>`, `ANY` → `Object`. Not mapped
-  yet (the declaration is deferred): `streamResult`, `@@streaming`. Java keywords used as names
-  get a trailing `_`. Function types: see above.
+  `java.time`, `seconds`/`duration` → `Duration`, `type<T>` → `Class<? extends T>`, `ANY` → `Object`,
+  `streamResult<T>` → `StreamItem<T>`. Java keywords used as names get a trailing `_`. Function types: see above.
 
-Not generated yet: `@@streaming` methods and `streamResult<T>`.
+Everything the specs declare is generated; what can still be deferred are declarations with unresolved types, function
+types that need an interface with type variables, and clashing names.
 
 ## Lenient grammar: syntax variants found in the specs
 
@@ -366,6 +372,7 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `GeneratedOutputTest` | Writing into a version-controlled output directory: new files and directories, unchanged files are not rewritten, stale generated files and the directories they leave empty are deleted, hand-written and binary files and other empty directories are kept. |
 | `FunctionTypeTest` | Mapping of every function shape to `java.util.function` with wrapper types and `@Nullable` arguments, generated functional interfaces (shared per function type, varargs), placement across modules with an implementation in another package, and every deferral reason (type variables, name clashes, no home). All cases are compiled. |
 | `FactoryGeneratorTest` | Class name rule, static methods (overloads, generics with renamed type variables, varargs, `@@async @@nullable`, errors), compiled and called, and the deferral of functions (type not generated, no Java mapping, clashing class name). |
+| `SupportFilesTest` | Every support file is generated 1:1 from `guidelines/java-files` (header line plus the identical content), streaming methods and `streamResult` map to `HieroStream`/`StreamItem`, support files only appear when used, and at runtime the push adapter delivers only the requested items, waits without polling, caps an overflowing demand, cancels and rejects a non-positive demand. |
 | `ThreadSafeTest` | The `@ThreadSafe` annotation (generated once in the module all users require, exported, `RetentionPolicy.CLASS`, not visible via reflection), annotations on members, types and implementations, `volatile` for mutable thread-safe state (checked via reflection), and the error without common module. |
 | `MavenGeneratorTest` | The parent and module `pom.xml` files are well-formed XML with the generator marker, list one sub-module per Java module, depend on the required modules and jspecify, pin every plugin, attach Javadoc JARs, and use the configured groupId and version (invalid values are rejected). |
 | `ConstantsGeneratorTest` | Class name rule, basic and struct-literal constants (record, class, `null` and `@@default` filling, `@Deprecated`), loading the compiled constants, and every deferral reason (type not generated, abstraction, missing value, clashing class name). |

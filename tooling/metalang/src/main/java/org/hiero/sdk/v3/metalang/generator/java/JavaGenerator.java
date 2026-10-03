@@ -24,6 +24,7 @@ import org.hiero.sdk.v3.metalang.model.NamespaceDefinition;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
 import org.hiero.sdk.v3.metalang.model.Type;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
+import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -118,7 +119,9 @@ public final class JavaGenerator {
         final List<Module> modules = modules(model);
         final Plan plan = plan(model, modules);
         final JavaContext context = plan.context();
-        final Optional<String> threadSafeModule = threadSafeModule(model, modules);
+        // support files only if a generated declaration uses them
+        final Optional<String> threadSafeModule = threadSafeModule(model, modules, context);
+        final Optional<String> streamingModule = streamingModule(model, modules, plan);
         final List<GeneratedFile> files = new ArrayList<>();
         for (final Module module : modules) {
             final Set<String> packagesWithTypes = new TreeSet<>();
@@ -155,12 +158,17 @@ public final class JavaGenerator {
                     }
                 }
             }
-            final boolean annotationHome = threadSafeModule.filter(module.name()::equals).isPresent();
-            if (annotationHome) {
+            // the support files of the guideline (guidelines/java-files), in the module all their users require
+            final List<String> supportPackages = new ArrayList<>();
+            if (threadSafeModule.filter(module.name()::equals).isPresent()) {
                 files.add(ThreadSafeGenerator.generate(module.name()));
+                supportPackages.add(ThreadSafeGenerator.PACKAGE);
             }
-            files.add(moduleInfo(module, packagesWithTypes,
-                    annotationHome ? List.of(ThreadSafeGenerator.PACKAGE) : List.of()));
+            if (streamingModule.filter(module.name()::equals).isPresent()) {
+                SupportFiles.STREAMING.forEach(name -> files.add(SupportFiles.generate(module.name(), name)));
+                supportPackages.add(SupportFiles.STREAMING_PACKAGE);
+            }
+            files.add(moduleInfo(module, packagesWithTypes, supportPackages.stream().sorted().toList()));
         }
         // the Maven build: one sub-module (and JAR) per JPMS module
         final Map<String, String> folderOf = new HashMap<>();
@@ -387,16 +395,15 @@ public final class JavaGenerator {
     }
 
     /**
-     * The module that contains the {@code @ThreadSafe} annotation: one of the modules that use {@code @@threadSafe}
-     * that all other using modules require. Empty if no module uses it.
-     *
-     * @throws GenerationException if no using module is required by all others
+     * The module that contains the {@code @ThreadSafe} annotation: see {@link #supportModule}.
      */
-    private static Optional<String> threadSafeModule(final LinkedModel model, final List<Module> modules) {
-        final Map<String, String> moduleOfNamespace = new HashMap<>();
-        modules.forEach(m -> m.namespaces().forEach(n -> moduleOfNamespace.put(n.name(), m.name())));
+    private static Optional<String> threadSafeModule(final LinkedModel model, final List<Module> modules,
+                                                     final JavaContext context) {
         final Set<String> namespaces = new TreeSet<>();
         for (final TypeDefinition type : model.types()) {
+            if (!context.isGenerated(type.name())) {
+                continue;
+            }
             final boolean used = type.hasAnnotation("threadSafe")
                     || type.declaredMethods().stream().anyMatch(m -> m.hasAnnotation("threadSafe"))
                     || (type instanceof TypeDefinition.ComplexTypeDefinition complex
@@ -405,17 +412,86 @@ public final class JavaGenerator {
                 namespaces.add(type.name().namespace());
             }
         }
+        return supportModule("@@threadSafe", "the @ThreadSafe annotation", namespaces, modules);
+    }
+
+    /**
+     * The module that contains the streaming support ({@code HieroStream}, {@code StreamItem}, ...): see
+     * {@link #supportModule}. Used by {@code @@streaming} methods and {@code streamResult<T>} types.
+     */
+    private static Optional<String> streamingModule(final LinkedModel model, final List<Module> modules,
+                                                    final Plan plan) {
+        final Set<String> namespaces = new TreeSet<>();
+        for (final TypeDefinition type : model.types()) {
+            if (!plan.context().isGenerated(type.name())) {
+                continue;
+            }
+            final List<Type> types = new ArrayList<>();
+            type.fields().forEach(f -> types.add(f.type()));
+            boolean streaming = false;
+            for (final MethodDefinition method : type.declaredMethods()) {
+                streaming |= method.hasAnnotation("streaming");
+                types.add(method.returnType());
+                method.parameters().forEach(p -> types.add(p.type()));
+            }
+            if (streaming || types.stream().anyMatch(JavaGenerator::containsStreamResult)) {
+                namespaces.add(type.name().namespace());
+            }
+        }
+        for (final FunctionDefinition function : plan.functions().values().stream().flatMap(List::stream).toList()) {
+            final MethodDefinition method = function.method();
+            if (method.hasAnnotation("streaming") || containsStreamResult(method.returnType())
+                    || method.parameters().stream().anyMatch(p -> containsStreamResult(p.type()))) {
+                namespaces.add(function.namespace());
+            }
+        }
+        plan.constants().values().stream().flatMap(List::stream).filter(c -> containsStreamResult(c.type()))
+                .forEach(c -> namespaces.add(c.name().namespace()));
+        return supportModule("@@streaming / streamResult", "the streaming support", namespaces, modules);
+    }
+
+    private static boolean containsStreamResult(final @Nullable Type type) {
+        return switch (type) {
+            case null -> false;
+            case Type.BasicType basic -> basic.builtin().category() == BuiltinType.Category.STREAM_RESULT
+                    || basic.arguments().stream().anyMatch(JavaGenerator::containsStreamResult);
+            case Type.DeclaredType declared -> declared.arguments().stream().anyMatch(JavaGenerator::containsStreamResult);
+            case Type.FunctionType function -> containsStreamResult(function.returnType())
+                    || function.parameters().stream().anyMatch(p -> containsStreamResult(p.type()));
+            case Type.WildcardType wildcard -> containsStreamResult(wildcard.upperBound());
+            default -> false;
+        };
+    }
+
+    /**
+     * The module that contains a group of support files (guidelines/java-files). It is the base module that all other
+     * modules require, so that the support packages never move when another module starts to use them; without such
+     * a module, one of the using modules that all other using modules require. Empty if nobody uses the support.
+     *
+     * @throws GenerationException if there is neither a base module nor a using module required by all others
+     */
+    private static Optional<String> supportModule(final String feature, final String support,
+                                                  final Set<String> namespaces, final List<Module> modules) {
+        final Map<String, String> moduleOfNamespace = new HashMap<>();
+        modules.forEach(m -> m.namespaces().forEach(n -> moduleOfNamespace.put(n.name(), m.name())));
         final List<String> used = namespaces.stream().filter(moduleOfNamespace::containsKey).toList();
         if (used.isEmpty()) {
             return Optional.empty();
         }
         final Map<String, Set<String>> required = new HashMap<>();
         modules.forEach(m -> required.put(m.name(), requiredModules(m.name(), modules)));
+        final Optional<String> base = modules.stream().map(Module::name)
+                .filter(candidate -> modules.stream().allMatch(m -> m.name().equals(candidate)
+                        || required.get(m.name()).contains(candidate)))
+                .findFirst();
+        if (base.isPresent()) {
+            return base;
+        }
         return home(used, moduleOfNamespace, required).map(moduleOfNamespace::get)
                 .or(() -> {
-                    throw new GenerationException(List.of("@@threadSafe is used in the modules "
+                    throw new GenerationException(List.of(feature + " is used in the modules "
                             + used.stream().map(moduleOfNamespace::get).collect(Collectors.toCollection(TreeSet::new))
-                            + ", but none of them is required by all others; the @ThreadSafe annotation has no home"));
+                            + ", but none of them is required by all others; " + support + " has no home"));
                 });
     }
 

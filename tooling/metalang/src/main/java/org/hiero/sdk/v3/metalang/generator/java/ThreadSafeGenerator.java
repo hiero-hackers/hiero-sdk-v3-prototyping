@@ -7,7 +7,8 @@ import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 
 /**
  * Generates the {@code @ThreadSafe} annotation of the SDK (see "Thread Safety" in
- * {@code guidelines/api-best-practices-java.md}) and renders its usages. The annotation lives in the package
+ * {@code guidelines/api-best-practices-java.md}; the source is {@code guidelines/java-files/ThreadSafe.java}) and renders
+ * its usages. The annotation lives in the package
  * {@value #PACKAGE} of the module that all modules using {@code @@threadSafe} require.
  */
 final class ThreadSafeGenerator {
@@ -21,37 +22,14 @@ final class ThreadSafeGenerator {
     private ThreadSafeGenerator() {
     }
 
+    /**
+     * Generates the annotation: the file {@code guidelines/java-files/ThreadSafe.java}, copied 1:1.
+     *
+     * @param module the Java module
+     * @return the generated file
+     */
     static GeneratedFile generate(final String module) {
-        final String java = JavaGenerator.HEADER + "\npackage " + PACKAGE + ";\n\n"
-                + """
-                import java.lang.annotation.Documented;
-                import java.lang.annotation.ElementType;
-                import java.lang.annotation.Retention;
-                import java.lang.annotation.RetentionPolicy;
-                import java.lang.annotation.Target;
-
-                /// The annotated method or attribute accessor (and setter) may be called concurrently from multiple
-                /// threads and is implemented in a thread-safe manner. On a type, it applies to all methods declared by
-                /// the type, as if each of them was annotated with the same `group`.
-                ///
-                /// On an abstract method it is a contract that every implementation must fulfill; on a concrete method
-                /// or accessor it states that the implementation is thread-safe.
-                ///
-                /// Methods and accessors in the same `group` may be called concurrently with each other. Without a
-                /// group, an element is only safe for concurrent calls on its own.
-                @Documented
-                @Retention(RetentionPolicy.CLASS)
-                @Target({ElementType.METHOD, ElementType.TYPE})
-                public @interface ThreadSafe {
-
-                    /// The group of elements that may be called concurrently with each other; empty for no group.
-                    ///
-                    /// @return the group name, or an empty string
-                    String group() default "";
-                }
-                """;
-        return new GeneratedFile(JavaNames.sourceRoot(module) + "/" + PACKAGE.replace('.', '/') + "/" + NAME
-                + ".java", java);
+        return SupportFiles.generate(module, NAME);
     }
 
     /**

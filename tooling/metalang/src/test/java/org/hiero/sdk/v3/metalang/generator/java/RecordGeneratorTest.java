@@ -146,9 +146,9 @@ class RecordGeneratorTest {
             final LinkedModel model = model("""
                     namespace a
                     Shape { size: int32
-                        void run(cb: streamResult<int8>) }
+                        void run(cb: Unknown) }
                     Mutable { a: int32
-                        void run(cb: streamResult<int8>) }
+                        void run(cb: Unknown) }
                     Uses { @@immutable shape: Shape }
                     UsesUses { @@immutable uses: Uses }
                     InMethod { @@immutable a: int32
@@ -191,16 +191,16 @@ class RecordGeneratorTest {
             // GIVEN
             final LinkedModel model = model("""
                     namespace a
-                    Callback { @@immutable run: streamResult<int8> }
+                    Callback { @@immutable run: Unknown }
                     Stream { @@immutable a: int32
-                        @@streaming int8 items() }
+                        @@streaming Unknown items() }
                     UsesCallback { @@immutable callback: Callback }
                     """);
 
             // WHEN / THEN
             assertThat(new JavaGenerator().deferredTypes(model)).containsExactly(
-                    Map.entry(new QualifiedName("a", "Callback"), "Type 'streamResult<int8>' has no Java mapping yet"),
-                    Map.entry(new QualifiedName("a", "Stream"), "Type '@@streaming int8' has no Java mapping yet"),
+                    Map.entry(new QualifiedName("a", "Callback"), "Type '?Unknown' has no Java mapping yet"),
+                    Map.entry(new QualifiedName("a", "Stream"), "Type '?Unknown' has no Java mapping yet"),
                     Map.entry(new QualifiedName("a", "UsesCallback"),
                             "refers to a.Callback (record, not generated yet)"));
             assertThat(new JavaGenerator().generate(model)).noneMatch(f -> f.content().contains("public record"));

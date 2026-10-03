@@ -325,20 +325,26 @@ class JavaGeneratorTest {
                             "org.hiero.consensus.node.client/src/main/java/module-info.java",
                             "org.hiero.enterprise/src/main/java/module-info.java",
                             "org.hiero.mirror.node.client/src/main/java/module-info.java");
+            // the types generated from the specs (without the support files of the guideline)
+            final List<GeneratedFile> specFiles = files.stream().filter(f -> !f.path().contains("/org/hiero/sdk/"))
+                    .toList();
             final long withDescription = model.namespaces().stream()
                     .filter(n -> n.sources().stream().anyMatch(src -> !src.description().isBlank())).count();
-            final long records = files.stream().filter(f -> f.content().contains("\npublic record ")).count();
-            final long interfaces = files.stream()
+            final long records = specFiles.stream().filter(f -> f.content().contains("\npublic record ")).count();
+            final long interfaces = specFiles.stream()
                     .filter(f -> f.content().matches("(?s).*\npublic (sealed |non-sealed )?interface .*")).count();
-            final long enumFiles = files.stream().filter(f -> f.content().contains("\npublic enum ")).count();
-            final long classes = files.stream()
+            final long enumFiles = specFiles.stream().filter(f -> f.content().contains("\npublic enum ")).count();
+            final long classes = specFiles.stream()
                     .filter(f -> f.content().matches("(?s).*\npublic (abstract )?(sealed |non-sealed |final )?class .*"))
                     .count();
-            // 5 module-info.java, 6 pom.xml (parent and one per module), the @ThreadSafe annotation
-            assertThat(files).filteredOn(f -> f.path().endsWith("org/hiero/sdk/annotation/ThreadSafe.java"))
-                    .extracting(GeneratedFile::path)
-                    .containsExactly("org.hiero.base/src/main/java/org/hiero/sdk/annotation/ThreadSafe.java");
-            assertThat(files).hasSize(5 + 6 + 1 + (int) withDescription + (int) enumFiles + (int) records + (int) interfaces
+            // 5 module-info.java, 6 pom.xml (parent and one per module), the support files of the guideline
+            assertThat(files).filteredOn(f -> f.path().contains("/org/hiero/sdk/")).extracting(GeneratedFile::path)
+                    .containsExactly("org.hiero.base/src/main/java/org/hiero/sdk/annotation/ThreadSafe.java",
+                            "org.hiero.base/src/main/java/org/hiero/sdk/common/HieroPublisher.java",
+                            "org.hiero.base/src/main/java/org/hiero/sdk/common/HieroStream.java",
+                            "org.hiero.base/src/main/java/org/hiero/sdk/common/HieroSubscription.java",
+                            "org.hiero.base/src/main/java/org/hiero/sdk/common/StreamItem.java");
+            assertThat(files).hasSize(5 + 6 + 5 + (int) withDescription + (int) enumFiles + (int) records + (int) interfaces
                     + (int) classes);
             assertThat(enumFiles).isEqualTo(enums);
             assertThat(records).isGreaterThanOrEqualTo(80);

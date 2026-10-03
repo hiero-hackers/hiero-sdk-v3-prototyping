@@ -72,6 +72,17 @@
     </dependencies>
 
     <build>
+        <resources>
+            <!-- The Java support files of the SDK (@ThreadSafe, HieroStream, ...) have a single source: the files of
+                 the Java guideline. The generator copies them 1:1 into the generated code. -->
+            <resource>
+                <directory>${project.basedir}/../../guidelines/java-files</directory>
+                <targetPath>org/hiero/sdk/v3/metalang/generator/java/support</targetPath>
+                <includes>
+                    <include>*.java</include>
+                </includes>
+            </resource>
+        </resources>
         <pluginManagement>
             <plugins>
                 <plugin>

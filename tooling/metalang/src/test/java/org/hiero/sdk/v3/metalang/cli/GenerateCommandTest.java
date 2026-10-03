@@ -37,7 +37,7 @@ class GenerateCommandTest {
         Files.createDirectories(spec.getParent());
         Files.writeString(spec, TestSpecs.markdown("""
                 namespace a
-                Callback { @@immutable run: streamResult<int8> }
+                Callback { @@immutable run: Unknown }
                 Uses { @@immutable callback: Callback }
                 abstraction Named { @@immutable name: string }
                 """));
@@ -47,14 +47,14 @@ class GenerateCommandTest {
     @Test
     void shouldListTheDeferredTypesOnRequest() throws Exception {
         // WHEN
-        final int exit = cli.run("generate", "--language=java", "--show-deferred",
+        final int exit = cli.run("generate", "--language=java", "--fail-on=never", "--show-deferred",
                 "--output=" + temp.resolve("out"), deferringSpec().toString());
 
         // THEN
         assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
         assertThat(out.toString(StandardCharsets.UTF_8)).endsWith(
                 "2 declaration(s) deferred until the types they refer to are generated:\n"
-                        + "  a.Callback: Type 'streamResult<int8>' has no Java mapping yet\n"
+                        + "  a.Callback: Type '?Unknown' has no Java mapping yet\n"
                         + "  a.Uses: refers to a.Callback (record, not generated yet)\n");
     }
 
@@ -65,7 +65,7 @@ class GenerateCommandTest {
         Files.writeString(config, "# comment\njava.interfaces = a.Named\n");
 
         // WHEN
-        final int exit = cli.run("generate", "--language=java", "--config=" + config,
+        final int exit = cli.run("generate", "--language=java", "--fail-on=never", "--config=" + config,
                 "--output=" + temp.resolve("out"), deferringSpec().toString());
 
         // THEN
@@ -81,16 +81,16 @@ class GenerateCommandTest {
         Files.writeString(config, "java.interface = a.Named\njava.interfaces = Named a.Missing a.Uses\n");
 
         // WHEN / THEN
-        assertThat(cli.run("generate", "--language=java", "--config=" + config, "--output=" + temp.resolve("out"),
+        assertThat(cli.run("generate", "--language=java", "--fail-on=never", "--config=" + config, "--output=" + temp.resolve("out"),
                 deferringSpec().toString())).isEqualTo(MetaLangCli.EXIT_FINDINGS);
         assertThat(err()).contains("Cannot generate: Unknown key 'java.interface'")
                 .contains("Cannot generate: 'Named' in java.interfaces is no qualified type name (namespace.Type)");
         Files.writeString(config, "java.interfaces = a.Missing, a.Uses\n");
-        assertThat(cli.run("generate", "--language=java", "--config=" + config, "--output=" + temp.resolve("out"),
+        assertThat(cli.run("generate", "--language=java", "--fail-on=never", "--config=" + config, "--output=" + temp.resolve("out"),
                 deferringSpec().toString())).isEqualTo(MetaLangCli.EXIT_FINDINGS);
         assertThat(err()).contains("Cannot generate: java.interfaces: unknown type a.Missing")
                 .contains("Cannot generate: java.interfaces: a.Uses is no abstraction");
-        assertThat(cli.run("generate", "--language=java", "--config=" + temp.resolve("missing.properties"),
+        assertThat(cli.run("generate", "--language=java", "--fail-on=never", "--config=" + temp.resolve("missing.properties"),
                 "--output=" + temp.resolve("out"), deferringSpec().toString())).isEqualTo(MetaLangCli.EXIT_FINDINGS);
         assertThat(err()).contains("Cannot read the configuration");
     }

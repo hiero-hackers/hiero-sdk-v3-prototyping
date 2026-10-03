@@ -14,7 +14,9 @@ designed from scratch with **no backward-compatibility constraints** with V2.
 **This repo contains specifications, not a shippable SDK.** The specs themselves have no build system and do not
 compile; the only buildable module is the spec tooling under `tooling/metalang` (Maven, Java 21). The API is defined once in a **language-agnostic meta-language** and is meant to be translated into
 idiomatic implementations per language (Java, JavaScript/TypeScript, Go, Rust, Python, C++, Swift). The `.java`/`.js`
-files under `guidelines/` are **illustrative reference snippets**, not a buildable module.
+files under `guidelines/` are reference snippets, not a buildable module — except `guidelines/java-files/`: these are
+the single source of the Java support types (`@ThreadSafe`, `HieroStream`, `StreamItem`, `HieroPublisher`,
+`HieroSubscription`), which the Java generator copies 1:1 into `generated/java`, so they must always compile.
 
 ## Repository structure
 
@@ -24,7 +26,7 @@ guidelines/
   api-best-practices-java.md    # How meta-language concepts map to idiomatic Java
   api-best-practices-rust.md    # ... Rust
   api-best-practices-js.md      # ... JavaScript
-  java-files/                   # Illustrative Java reference implementations (streaming, thread-safety, etc.)
+  java-files/                   # Java support types (streaming, thread-safety); copied 1:1 into the generated code
   js-files/                     # Illustrative JS reference snippets
 
 openspec-common-delta-changes/  # Plain language-neutral feature proposals and specifications (not an OpenSpec root)

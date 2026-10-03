@@ -88,15 +88,15 @@ class FactoryGeneratorTest {
         // factory class name is taken
         final Map<QualifiedName, String> deferred = new JavaGenerator().deferredTypes(model("""
                 namespace a
-                Callback { @@immutable run: streamResult<int8> }
+                Callback { @@immutable run: Unknown }
                 @@static Callback callback()
-                @@static void each(cb: streamResult<int8>)
+                @@static void each(cb: Unknown)
                 @@static int32 one()
                 """));
         assertThat(deferred)
                 .containsEntry(new QualifiedName("a", "callback()"), "refers to a.Callback (record, not generated yet)")
-                .containsEntry(new QualifiedName("a", "each(streamResult<int8>)"),
-                        "Type 'streamResult<int8>' has no Java mapping yet")
+                .containsEntry(new QualifiedName("a", "each(?Unknown)"),
+                        "Type '?Unknown' has no Java mapping yet")
                 .doesNotContainKey(new QualifiedName("a", "one()"));
         assertThat(new JavaGenerator().deferredTypes(model("""
                 namespace a

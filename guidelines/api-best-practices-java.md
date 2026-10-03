@@ -3398,6 +3398,10 @@ package org.hiero.accounts;
 The meta-language `@@streaming` annotation declares methods that return an asynchronous stream of items. In Java, the
 SDK must provide two consumption modes:
 
+The support types `HieroStream`, `StreamItem`, `HieroPublisher` and `HieroSubscription` live in the package
+`org.hiero.sdk.common`. The files in [java-files](java-files) are their single source: the Java generator copies them
+1:1 into the base module of the generated code (a test ensures that both stay identical), so they must always compile.
+
 1. **Pull-based** (primary) — The canonical implementation. Returns a `HieroStream<T>` that the consumer iterates over
    using a standard `for` loop or `Iterator`. All retry, reconnect, and domain logic lives here.
 2. **Push-based** (convenience adapter) — Built on top of the pull implementation using `java.util.concurrent.Flow`. The
@@ -3512,67 +3516,15 @@ public final class HieroPublisher<T> implements Flow.Publisher<T> {
 #### The `HieroSubscription<T>` implementation
 
 The subscription drives the pull-based `HieroStream` on a virtual thread and respects backpressure through the
-`Flow.Subscription.request(long)` protocol:
+`Flow.Subscription.request(long)` protocol. See [java-files/HieroSubscription.java](java-files/HieroSubscription.java)
+for the full source. Its key properties:
 
-```java
-final class HieroSubscription<T> implements Flow.Subscription {
-
-    private final HieroStream<T> stream;
-    private final Flow.Subscriber<? super T> subscriber;
-    private final AtomicLong requested = new AtomicLong(0);
-    private final AtomicBoolean cancelled = new AtomicBoolean(false);
-
-    HieroSubscription(final HieroStream<T> stream,
-                      final Flow.Subscriber<? super T> subscriber) {
-        this.stream = stream;
-        this.subscriber = subscriber;
-        Thread.ofVirtual().start(this::drainLoop);
-    }
-
-    @Override
-    public void request(final long n) {
-        if (n <= 0) {
-            cancel();
-            subscriber.onError(new IllegalArgumentException("request count must be positive"));
-            return;
-        }
-        requested.addAndGet(n);
-    }
-
-    @Override
-    public void cancel() {
-        if (cancelled.compareAndSet(false, true)) {
-            stream.close();
-        }
-    }
-
-    private void drainLoop() {
-        try {
-            for (T item : stream) {
-                // Wait until demand is available
-                while (requested.get() <= 0) {
-                    if (cancelled.get()) {
-                        return;
-                    }
-                    Thread.sleep(1); // virtual thread parks cheaply
-                }
-                if (cancelled.get()) {
-                    return;
-                }
-                requested.decrementAndGet();
-                subscriber.onNext(item);
-            }
-            if (!cancelled.get()) {
-                subscriber.onComplete();
-            }
-        } catch (final Exception e) {
-            if (!cancelled.get()) {
-                subscriber.onError(e);
-            }
-        }
-    }
-}
-```
+- Items are only delivered while there is outstanding demand. Without demand the virtual thread **parks** until
+  `request(n)` or `cancel()` unparks it — there is no polling.
+- The demand is capped at `Long.MAX_VALUE` (unbounded according to the Reactive Streams specification) instead of
+  overflowing.
+- `request(n)` with `n <= 0` cancels the subscription and signals an `IllegalArgumentException`; `cancel()` is idempotent
+  and closes the underlying stream; no terminal signal is sent after cancellation.
 
 #### Consumer usage with `Flow.Subscriber`
 
