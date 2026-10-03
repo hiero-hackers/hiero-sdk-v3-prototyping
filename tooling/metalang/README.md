@@ -5,7 +5,8 @@ This module turns the language-agnostic meta-language defined in
 deterministically. It is the foundation for the planned follow-up tools (per-language code generation,
 API conformance checks of existing SDKs, per-language exceptions, generated contract tests).
 
-Status: **prototype**. The scope is grammar + parser + semantic model + validator.
+Status: **prototype**. The scope is grammar + parser + semantic model + validator, generators for Java and
+TypeScript (API and tests) and conformance checks of projects against the specs.
 
 ## Quick start
 
@@ -111,6 +112,22 @@ runs all modules even if tests fail:
 JAVA_HOME=~/.sdkman/candidates/java/25.0.1-tem mvn -f generated/java/pom.xml test -Dmaven.test.failure.ignore=true
 ```
 
+### Generate the TypeScript API
+
+Generates the TypeScript API into `generated/ts` (an npm workspace, also under version control); see
+[TypeScript generator](#typescript-generator):
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=ts --fail-on=never --config=sdk-ts/generator.properties --output=generated/ts spec
+```
+
+Build and test it with Node.js 22 (`npm install` once; `node_modules`, `dist` and `package-lock.json` are ignored by
+git). As for Java, the tests of methods that are not implemented yet fail:
+
+```bash
+cd generated/ts && npm install && npm test
+```
+
 ### Check a project against the specs
 
 Checks whether a Java project provides the API that the generator derives from the specs — for the generated code
@@ -124,6 +141,13 @@ The command generates the expected API in memory and compares it **structurally*
 `--project` (build output in `target` directories excluded). The sources are only parsed with the JDK compiler tree
 API, not compiled, so the project's dependencies are not needed. It prints every difference with file and line and
 exits with 1 if there is one. See [Conformance check](#conformance-check) for what is compared.
+
+For TypeScript (`--language=ts`) the sources below `<project>/packages/*/src` are read with the TypeScript compiler
+API; it is taken from `<project>/node_modules/typescript` or from `--typescript=<dir>`, and `node` must be on the path:
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --language=ts --fail-on=never --config=sdk-ts/generator.properties --project=generated/ts spec
+```
 
 ### List all rules
 
@@ -337,6 +361,34 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
 Everything the specs declare is generated; what can still be deferred are declarations with unresolved types, function
 types that need an interface with type variables, and clashing names.
 
+## TypeScript generator
+
+`generator/ts` maps the model to TypeScript as described in
+[`guidelines/api-best-practices-ts.md`](../../guidelines/api-best-practices-ts.md):
+
+- **npm workspace** (`TsProjectGenerator`): one package per spec folder (`packages/<folder>`, name
+  `<ts.scope>/<folder>`), one subpath export per namespace (`@hiero/base/ledger`), dependencies and project references
+  to the packages of the used namespaces, a strict `tsconfig.base.json`, pinned `typescript` (6.0.3, the last version
+  with the JavaScript compiler API) and `@types/node`. Configuration: `sdk-ts/generator.properties` (`ts.scope`,
+  `ts.version`).
+- **Types** (`TsTypeGenerator`): abstractions become interfaces (static methods: functions of a namespace with the
+  name of the interface; sealed abstractions: the union of the permitted classes), complex types classes with
+  `#private` fields, getters/setters and a constructor that takes one object with all attributes, enums classes with a
+  `static readonly` instance per value. Constructors and setters check `null` (`TypeError`), integer ranges (also that a
+  `number` is an integer) and validation annotations (`RangeError`) and copy `bytes`, collections and dates.
+- **Namespaces** (`TsNamespaceGenerator`): `functions.ts` (overloads as TypeScript overload signatures),
+  `constants.ts`, `errors.ts` (one `Error` subclass per error id, placed like the Java exceptions), `index.ts`.
+- **Imports** (`TsImports`): relative within a package, the namespace subpath between packages, `import type` for
+  names used only as types, aliases for clashing names, only names that the file uses.
+- **Support files**: `Duration`, `StreamItem`, `AbstractConstructor` from `guidelines/ts-files`, copied 1:1 into the
+  package all their users require.
+- **Tests** (`TsTestGenerator`, `TsSamples`): the same contract as the Java tests for the Node.js test runner, with a
+  test name that says what is checked; values from the default instances first. Number types also get a fraction test.
+  Tests whose values cannot be built become `test.todo` entries.
+
+The language-neutral parts — value constraints (`Constraints`), integer ranges (`IntegerRange`), pattern samples
+(`RegexSamples`), spec folders (`SpecFolders`) — live in the `generator` package and are shared by both languages.
+
 ## Generated tests
 
 `TestGenerator` writes a JUnit test class into `src/test/java` of the module, in the package of the tested type: one
@@ -409,6 +461,18 @@ The canonical and compact constructors of records and the constructors of enums 
 A test (`JavaConformanceTest`) runs the check for `generated/java`, so a spec or generator change without
 regeneration fails the build.
 
+### TypeScript
+
+`metalang check --language=ts` (`check.ts.TsConformance`) runs `ts-api.mjs` with the TypeScript compiler API on the
+generated and on the project's sources (parsing only) and compares the declarations: a declaration belongs to the
+namespace of its directory (`packages/<folder>/src/<namespace>`), type names are resolved through the imports to
+`<folder>:<namespace>#<Name>`, a getter counts as `readonly` property, `ReadonlyArray<T>` as `readonly T[]`, and unions
+are compared without order. Every expected declaration must exist with its kind (class, interface, namespace, type,
+function, const), type parameters and supertypes; every expected member (property with `readonly`, optional and type,
+method and constructor signatures, functions of a namespace) must exist with its signature. Additional files,
+declarations, members, overloads and supertypes, `#private` members and method bodies are allowed. A test runs the
+check for `generated/ts` when TypeScript is installed there.
+
 ## Lenient grammar: syntax variants found in the specs
 
 The existing specs use a few constructs the guideline does not define. Rejecting them as syntax errors would make
@@ -459,7 +523,8 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 680 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
+`mvn verify` runs about 710 tests (the TypeScript tests that need Node.js and an installed TypeScript are skipped
+without them); JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
 excluded). Besides unit tests per component, the suite contains these systematic checks:
 
 | Test | What it guarantees |
@@ -485,6 +550,8 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `JavaGeneratorTest` | Golden files for the example specs (`generator-golden/java`), module/package rules and the three structural errors, Markdown comment escaping, and: the modules generated for **all real specs compile** with `-Xlint:all -Werror` through the module system, and their **generated tests compile and run** — every failure is a method that is not implemented yet. |
 | `TestGeneratorTest` | The generated tests of small specs: their content (test names, boundary values, null and copy tests, setters, methods, factories, values of every type, subtypes, factory methods and test doubles, only types of required modules, what cannot be tested), and their **execution**: they are compiled with `-Xlint:all -Werror` and run with the JUnit platform; all pass against the generated code, the method tests fail only because of the stubs, and they **detect mutations** of the generated code (a removed range check, copy or validation). |
 | `JavaIntegersTest`, `RegexSamplesTest` | Ranges, range checks and literals of all integer types; accepted and rejected strings for patterns, never a wrong one. |
+| `TsGeneratorTest`, `TsTestGeneratorTest` | The TypeScript workspace (packages, exports, dependencies, project references, support files), every type mapping (classes, interfaces, enum classes, sealed unions, narrowing, constants, overloaded functions, errors), deferral, configuration, determinism across JVM runs, the generated tests (names, boundaries, copies, setters, methods, todo entries), and — with Node.js and TypeScript installed (`npm install` in `generated/ts`) — that **all real specs compile** with the strict configuration and their tests only fail for stubs, and that the tests **detect mutations**. |
+| `TsConformanceTest` | Comparison of TypeScript APIs (additions allowed, every kind of difference), a missing TypeScript installation, and — with TypeScript installed — implemented and outdated projects and **`generated/ts` provides the API of the current specs**. |
 | `InstanceResolverTest` | Every kind of default-instance expression (construction with generic arguments, functions of other namespaces, static methods, method calls, attributes, constants, enum constants, lists, bytes), overload selection, and every error message. Rule fixtures cover `instance.invalid`, `instance.cycle` and `instance.missing`. |
 | `JavaApiTest` | Reading the API of Java sources: name resolution (imports, wildcards, same package, `java.lang`, nested types, type variables), nullness including `String @Nullable []` vs. `@Nullable String[]`, implicit modifiers of interfaces, records, enums and nested types, ignored implementation details, module declarations, parse errors, duplicate types and skipped build output. |
 | `JavaApiComparisonTest` | Implementations and additions are accepted; every kind of difference (missing module/type/member, kind, modifiers, type parameters, superclass, interfaces, permits, record components, enum constants, annotations, member declarations, `requires`/`exports`) is reported with file and line. |

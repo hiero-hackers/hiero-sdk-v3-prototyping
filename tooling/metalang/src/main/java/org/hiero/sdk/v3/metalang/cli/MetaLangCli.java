@@ -12,8 +12,9 @@ import java.util.Map;
 import java.util.SortedMap;
 import org.hiero.sdk.v3.metalang.MetaLang;
 import org.hiero.sdk.v3.metalang.ValidationReport;
-import org.hiero.sdk.v3.metalang.check.java.ApiDifference;
+import org.hiero.sdk.v3.metalang.check.ApiDifference;
 import org.hiero.sdk.v3.metalang.check.java.JavaConformance;
+import org.hiero.sdk.v3.metalang.check.ts.TsConformance;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
 import org.hiero.sdk.v3.metalang.diagnostic.Severity;
@@ -23,6 +24,9 @@ import org.hiero.sdk.v3.metalang.generator.GenerationException;
 import org.hiero.sdk.v3.metalang.generator.java.JavaGenerator;
 import org.hiero.sdk.v3.metalang.generator.java.JavaGeneratorConfig;
 import org.hiero.sdk.v3.metalang.generator.java.TestGenerator;
+import org.hiero.sdk.v3.metalang.generator.ts.TsGenerator;
+import org.hiero.sdk.v3.metalang.generator.ts.TsGeneratorConfig;
+import org.hiero.sdk.v3.metalang.generator.ts.TsTestGenerator;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
 
@@ -33,10 +37,11 @@ import org.hiero.sdk.v3.metalang.model.QualifiedName;
  * metalang validate [--min-severity=error|warning|info] [--fail-on=error|warning|info|never]
  *                   [--format=text|json] [--summary] &lt;spec-dir-or-file&gt;
  * metalang model [--namespace=ns] [--type=ns.Type] [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
- * metalang generate --language=java --output=dir [--fail-on=error|warning|info|never] [--show-deferred]
+ * metalang generate --language=java|ts --output=dir [--fail-on=error|warning|info|never] [--show-deferred]
  *     [--show-untested]
  *     &lt;spec-dir-or-file&gt;
- * metalang check --language=java --project=dir [--config=file] [--fail-on=error|warning|info|never]
+ * metalang check --language=java|ts --project=dir [--config=file] [--typescript=dir]
+ *     [--fail-on=error|warning|info|never]
  *     &lt;spec-dir-or-file&gt;
  * metalang rules
  * </pre>
@@ -57,8 +62,8 @@ public final class MetaLangCli {
             Usage:
               metalang validate [options] <spec-dir-or-file>
               metalang model [options] <spec-dir-or-file>
-              metalang generate --language=java --output=<dir> [options] <spec-dir-or-file>
-              metalang check --language=java --project=<dir> [options] <spec-dir-or-file>
+              metalang generate --language=java|ts --output=<dir> [options] <spec-dir-or-file>
+              metalang check --language=java|ts --project=<dir> [options] <spec-dir-or-file>
               metalang rules
 
             Options for 'validate':
@@ -74,7 +79,7 @@ public final class MetaLangCli {
                                                   the model is printed in any case
 
             Options for 'generate':
-              --language=java                     target language (required; only java so far)
+              --language=java|ts                  target language (required): Java or TypeScript
               --output=<dir>                      output directory (required; created if missing)
               --fail-on=error|warning|info|never  do not generate if a finding at or above this severity
                                                   exists (default: error)
@@ -85,10 +90,12 @@ public final class MetaLangCli {
 
             Options for 'check' (does a project provide the API generated from the specs? Additional files,
             types and members and implemented methods are allowed):
-              --language=java                     target language (required; only java so far)
+              --language=java|ts                  target language (required): Java or TypeScript
               --project=<dir>                     directory of the project to check (required), e.g. the
                                                   generated code or an implementation based on it
               --config=<file>                     generator configuration (as for 'generate')
+              --typescript=<dir>                  TypeScript only: the typescript package that reads the
+                                                  sources (default: <project>/node_modules/typescript)
               --fail-on=error|warning|info|never  do not check if a spec finding at or above this severity
                                                   exists (default: error)
             """;
@@ -283,7 +290,7 @@ public final class MetaLangCli {
                 paths.add(arg);
             }
         }
-        if (!"java".equals(language)) {
+        if (!"java".equals(language) && !"ts".equals(language)) {
             return usageError(language == null ? "Missing --language" : "Unsupported language '" + language + "'");
         }
         if (output == null || output.isBlank()) {
@@ -306,13 +313,10 @@ public final class MetaLangCli {
                     + failThreshold.name().toLowerCase(Locale.ROOT) + " (see 'metalang validate')");
             return EXIT_FINDINGS;
         }
-        final List<GeneratedFile> files;
         final LinkedModel model = LinkedModel.of(report.model());
-        final JavaGenerator generator;
+        final Generation generation;
         try {
-            generator = new JavaGenerator(config == null ? JavaGeneratorConfig.DEFAULT
-                    : JavaGeneratorConfig.load(Path.of(config)));
-            files = generator.generate(model);
+            generation = generation(language, config, model);
         } catch (final GenerationException e) {
             e.problems().forEach(p -> err.println("Cannot generate: " + p));
             return EXIT_FINDINGS;
@@ -320,6 +324,7 @@ public final class MetaLangCli {
             err.println("Cannot read the configuration " + config + ": " + e.getMessage());
             return EXIT_FINDINGS;
         }
+        final List<GeneratedFile> files = generation.files();
         final Path outputDirectory = Path.of(output);
         final GeneratedOutput.Result result;
         try {
@@ -331,7 +336,7 @@ public final class MetaLangCli {
         out.println(files.size() + " file(s) generated in " + outputDirectory + " (" + result.written()
                 + " changed, " + result.removed().size() + " stale removed)");
         result.removed().forEach(p -> out.println("  removed " + p));
-        final SortedMap<QualifiedName, String> deferred = generator.deferredTypes(model);
+        final SortedMap<QualifiedName, String> deferred = generation.deferred();
         if (!deferred.isEmpty()) {
             out.println(deferred.size() + " declaration(s) deferred until the types they refer to are generated"
                     + (showDeferred ? ":" : " (--show-deferred lists them)"));
@@ -339,7 +344,7 @@ public final class MetaLangCli {
                 deferred.forEach((type, reason) -> out.println("  " + type + ": " + reason));
             }
         }
-        final List<String> untested = TestGenerator.untested(files);
+        final List<String> untested = generation.untested();
         if (!untested.isEmpty()) {
             out.println(untested.size() + " test(s) not generated because their values cannot be built"
                     + (showUntested ? ":" : " (--show-untested lists them; see the instance.missing warnings of "
@@ -356,6 +361,7 @@ public final class MetaLangCli {
         String language = null;
         String project = null;
         String config = null;
+        String typescript = null;
         final List<String> paths = new ArrayList<>();
         for (final String arg : args) {
             if (arg.startsWith("--fail-on=")) {
@@ -370,13 +376,15 @@ public final class MetaLangCli {
                 project = arg.substring("--project=".length());
             } else if (arg.startsWith("--config=")) {
                 config = arg.substring("--config=".length());
+            } else if (arg.startsWith("--typescript=")) {
+                typescript = arg.substring("--typescript=".length());
             } else if (arg.startsWith("--")) {
                 return usageError("Unknown option " + arg);
             } else {
                 paths.add(arg);
             }
         }
-        if (!"java".equals(language)) {
+        if (!"java".equals(language) && !"ts".equals(language)) {
             return usageError(language == null ? "Missing --language" : "Unsupported language '" + language + "'");
         }
         if (project == null || project.isBlank()) {
@@ -403,11 +411,24 @@ public final class MetaLangCli {
                     + failThreshold.name().toLowerCase(Locale.ROOT) + " (see 'metalang validate')");
             return EXIT_FINDINGS;
         }
-        final JavaConformance.Result result;
+        final List<ApiDifference> differences;
+        final String expected;
         try {
-            final JavaGenerator generator = new JavaGenerator(config == null ? JavaGeneratorConfig.DEFAULT
-                    : JavaGeneratorConfig.load(Path.of(config)));
-            result = JavaConformance.check(LinkedModel.of(report.model()), generator, projectDirectory);
+            final LinkedModel model = LinkedModel.of(report.model());
+            if ("ts".equals(language)) {
+                final TsGenerator generator = new TsGenerator(config == null ? TsGeneratorConfig.DEFAULT
+                        : TsGeneratorConfig.load(Path.of(config)));
+                final TsConformance.Result result = TsConformance.check(model, generator, projectDirectory,
+                        typescript == null ? null : Path.of(typescript));
+                differences = result.differences();
+                expected = result.declarations() + " declaration(s), " + result.packages() + " package(s)";
+            } else {
+                final JavaGenerator generator = new JavaGenerator(config == null ? JavaGeneratorConfig.DEFAULT
+                        : JavaGeneratorConfig.load(Path.of(config)));
+                final JavaConformance.Result result = JavaConformance.check(model, generator, projectDirectory);
+                differences = result.differences();
+                expected = result.types() + " type(s), " + result.modules() + " module(s)";
+            }
         } catch (final GenerationException e) {
             e.problems().forEach(p -> err.println("Cannot generate: " + p));
             return EXIT_FINDINGS;
@@ -416,14 +437,37 @@ public final class MetaLangCli {
                     + ": " + e.getMessage());
             return EXIT_FINDINGS;
         }
-        result.differences().forEach(out::println);
-        final List<ApiDifference> differences = result.differences();
+        differences.forEach(out::println);
         out.println(differences.isEmpty()
-                ? projectDirectory + " provides the API of the specs (" + result.types() + " type(s), "
-                        + result.modules() + " module(s))"
+                ? projectDirectory + " provides the API of the specs (" + expected + ")"
                 : differences.size() + " difference(s) between " + projectDirectory + " and the API of the specs ("
-                        + result.types() + " type(s), " + result.modules() + " module(s) expected)");
+                        + expected + " expected)");
         return differences.isEmpty() ? EXIT_OK : EXIT_FINDINGS;
+    }
+
+    /**
+     * The result of a generator.
+     *
+     * @param files    the generated files
+     * @param deferred the declarations that are not generated yet, with the reason
+     * @param untested the tests that cannot be generated
+     */
+    private record Generation(List<GeneratedFile> files, SortedMap<QualifiedName, String> deferred,
+                              List<String> untested) {
+    }
+
+    private static Generation generation(final String language, final String config, final LinkedModel model)
+            throws IOException {
+        if ("ts".equals(language)) {
+            final TsGenerator generator = new TsGenerator(config == null ? TsGeneratorConfig.DEFAULT
+                    : TsGeneratorConfig.load(Path.of(config)));
+            final List<GeneratedFile> files = generator.generate(model);
+            return new Generation(files, generator.deferredTypes(model), TsTestGenerator.untested(files));
+        }
+        final JavaGenerator generator = new JavaGenerator(config == null ? JavaGeneratorConfig.DEFAULT
+                : JavaGeneratorConfig.load(Path.of(config)));
+        final List<GeneratedFile> files = generator.generate(model);
+        return new Generation(files, generator.deferredTypes(model), TestGenerator.untested(files));
     }
 
     private void printSummary(final ValidationReport report, final Severity threshold) {

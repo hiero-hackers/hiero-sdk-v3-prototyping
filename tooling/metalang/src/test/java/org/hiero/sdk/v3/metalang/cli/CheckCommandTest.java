@@ -66,6 +66,31 @@ class CheckCommandTest {
     }
 
     @Test
+    void shouldCheckTypeScriptProjects() throws Exception {
+        // GIVEN a generated TypeScript project without installed TypeScript
+        final Path spec = spec("namespace a\nabstraction Client { void close() }\n");
+        final Path project = temp.resolve("ts");
+        cli.run("generate", "--language=ts", "--output=" + project, spec.toString());
+        out.reset();
+
+        // WHEN / THEN
+        assertThat(cli.run("check", "--language=ts", "--project=" + project, spec.toString()))
+                .isEqualTo(MetaLangCli.EXIT_FINDINGS);
+        assertThat(err()).contains("TypeScript not found in " + project.resolve("node_modules/typescript"));
+
+        // WHEN TypeScript is installed (npm install in generated/ts)
+        final Path typescript = Path.of(System.getProperty("spec.root", "../../spec")).toAbsolutePath().normalize()
+                .resolveSibling("generated/ts/node_modules/typescript");
+        org.junit.jupiter.api.Assumptions.assumeTrue(Files.isRegularFile(typescript.resolve("lib/typescript.js")));
+        final int exit = cli.run("check", "--language=ts", "--project=" + project, "--typescript=" + typescript,
+                spec.toString());
+
+        // THEN
+        assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
+        assertThat(out()).isEqualTo(project + " provides the API of the specs (1 declaration(s), 1 package(s))\n");
+    }
+
+    @Test
     void shouldApplyTheConfiguration() throws Exception {
         // GIVEN a project generated without configuration: the abstraction with an attribute is a class
         final Path spec = spec("namespace a\nabstraction Named { @@immutable name: string }\n");
@@ -111,6 +136,8 @@ class CheckCommandTest {
         final String project = "--project=" + Files.createDirectories(temp.resolve("project"));
         assertThat(cli.run("check", project, spec.toString())).isEqualTo(MetaLangCli.EXIT_USAGE);
         assertThat(cli.run("check", "--language=rust", project, spec.toString())).isEqualTo(MetaLangCli.EXIT_USAGE);
+        assertThat(cli.run("check", "--language=ts", "--config=" + temp.resolve("none"), project, spec.toString()))
+                .isEqualTo(MetaLangCli.EXIT_FINDINGS);
         assertThat(cli.run("check", "--language=java", spec.toString())).isEqualTo(MetaLangCli.EXIT_USAGE);
         assertThat(cli.run("check", "--language=java", "--project=" + temp.resolve("none"), spec.toString()))
                 .isEqualTo(MetaLangCli.EXIT_USAGE);
@@ -124,6 +151,6 @@ class CheckCommandTest {
         assertThat(err()).contains("Missing --language", "Unsupported language 'rust'", "Missing --project",
                 "Project directory does not exist: ", "Expected exactly one spec directory or file",
                 "Path does not exist: ", "Invalid severity in --fail-on=sometimes", "Unknown option --unknown",
-                "metalang check --language=java --project=<dir> [options] <spec-dir-or-file>");
+                "metalang check --language=java|ts --project=<dir> [options] <spec-dir-or-file>");
     }
 }

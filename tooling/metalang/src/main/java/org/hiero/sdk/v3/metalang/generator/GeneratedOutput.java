@@ -41,6 +41,9 @@ public final class GeneratedOutput {
         }
     }
 
+    /** Directories with build output (Maven, TypeScript) or installed dependencies (npm). */
+    private static final Set<String> BUILD_DIRECTORIES = Set.of("target", "dist", "node_modules");
+
     private GeneratedOutput() {
     }
 
@@ -72,7 +75,7 @@ public final class GeneratedOutput {
         final List<Path> removed = new ArrayList<>();
         try (Stream<Path> existing = Files.walk(root)) {
             for (final Path file : existing.filter(Files::isRegularFile).sorted().toList()) {
-                if (!targets.contains(file) && isGenerated(file, marker)) {
+                if (!targets.contains(file) && !isBuildOutput(root.relativize(file)) && isGenerated(file, marker)) {
                     Files.delete(file);
                     removed.add(root.relativize(file));
                 }
@@ -94,6 +97,16 @@ public final class GeneratedOutput {
             }
         }
         return new Result(written, removed);
+    }
+
+    /** Build output and installed dependencies may contain copies of generated files; they are never removed. */
+    private static boolean isBuildOutput(final Path relative) {
+        for (final Path part : relative) {
+            if (BUILD_DIRECTORIES.contains(part.toString())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean isGenerated(final Path file, final String marker) {

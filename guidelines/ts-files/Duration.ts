@@ -1,0 +1,75 @@
+/**
+ * An immutable amount of time with millisecond precision: the mapping of the meta-language types `duration` and
+ * `seconds` (JavaScript has no duration type yet; `Temporal.Duration` will replace it once it is available everywhere).
+ */
+export class Duration {
+
+    readonly #millis: number;
+
+    private constructor(millis: number) {
+        if (!Number.isSafeInteger(millis)) {
+            throw new RangeError(`A duration must be a whole number of milliseconds: ${millis}`);
+        }
+        this.#millis = millis;
+        Object.freeze(this);
+    }
+
+    /**
+     * Creates a duration of milliseconds.
+     *
+     * @param millis the number of milliseconds
+     * @returns the duration
+     * @throws RangeError if the number is not a safe integer
+     */
+    static ofMillis(millis: number): Duration {
+        return new Duration(millis);
+    }
+
+    /**
+     * Creates a duration of seconds.
+     *
+     * @param seconds the number of seconds
+     * @returns the duration
+     * @throws RangeError if the number of milliseconds is not a safe integer
+     */
+    static ofSeconds(seconds: number): Duration {
+        return new Duration(seconds * 1000);
+    }
+
+    /**
+     * Returns the duration in milliseconds.
+     *
+     * @returns the number of milliseconds
+     */
+    toMillis(): number {
+        return this.#millis;
+    }
+
+    /**
+     * Returns the duration in whole seconds (rounded towards zero).
+     *
+     * @returns the number of seconds
+     */
+    toSeconds(): number {
+        return Math.trunc(this.#millis / 1000);
+    }
+
+    /**
+     * Whether another value is a duration of the same length.
+     *
+     * @param other the other value
+     * @returns `true` if both durations have the same number of milliseconds
+     */
+    equals(other: unknown): boolean {
+        return other instanceof Duration && other.#millis === this.#millis;
+    }
+
+    /**
+     * Returns the duration in ISO-8601 form, e.g. `PT1.5S`.
+     *
+     * @returns the text
+     */
+    toString(): string {
+        return `PT${this.#millis / 1000}S`;
+    }
+}

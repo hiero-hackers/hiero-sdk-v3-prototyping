@@ -14,9 +14,11 @@ designed from scratch with **no backward-compatibility constraints** with V2.
 **This repo contains specifications, not a shippable SDK.** The specs themselves have no build system and do not
 compile; the only buildable module is the spec tooling under `tooling/metalang` (Maven, Java 21). The API is defined once in a **language-agnostic meta-language** and is meant to be translated into
 idiomatic implementations per language (Java, JavaScript/TypeScript, Go, Rust, Python, C++, Swift). The `.java`/`.js`
-files under `guidelines/` are reference snippets, not a buildable module — except `guidelines/java-files/`: these are
-the single source of the Java support types (`@ThreadSafe`, `HieroStream`, `StreamItem`, `HieroPublisher`,
-`HieroSubscription`), which the Java generator copies 1:1 into `generated/java`, so they must always compile.
+files under `guidelines/` are reference snippets, not a buildable module — except `guidelines/java-files/` and
+`guidelines/ts-files/`: these are the single source of the Java support types (`@ThreadSafe`, `HieroStream`,
+`StreamItem`, `HieroPublisher`, `HieroSubscription`) and the TypeScript support types (`Duration`, `StreamItem`,
+`AbstractConstructor`), which the generators copy 1:1 into `generated/java` and `generated/ts`, so they must always
+compile.
 
 ## Repository structure
 
@@ -26,7 +28,9 @@ guidelines/
   api-best-practices-java.md    # How meta-language concepts map to idiomatic Java
   api-best-practices-rust.md    # ... Rust
   api-best-practices-js.md      # ... JavaScript
+  api-best-practices-ts.md      # ... TypeScript (the mapping of the TypeScript generator)
   java-files/                   # Java support types (streaming, thread-safety); copied 1:1 into the generated code
+  ts-files/                     # TypeScript support types (Duration, StreamItem, ...); copied 1:1 into generated/ts
   js-files/                     # Illustrative JS reference snippets
 
 openspec-common-delta-changes/  # Plain language-neutral feature proposals and specifications (not an OpenSpec root)
@@ -44,6 +48,10 @@ generated/java/                # Generated Java API as Maven project, one sub-mo
                                #   src/test/java holds generated JUnit tests of the spec contract; the tests of
                                #   method stubs fail until the methods are implemented.
 sdk-ts/openspec/               # TypeScript-only OpenSpec root
+sdk-ts/generator.properties    # TypeScript generator configuration (npm scope, version)
+generated/ts/                  # Generated TypeScript API as npm workspace, one package per spec folder, with
+                               #   generated node:test tests (tracked in git; regenerate after spec or generator
+                               #   changes; `npm install && npm test` builds and tests it). Never edit by hand.
 
 spec/                           # The actual V3 public-API specifications, written in the meta-language
   base/                         # Foundational namespaces shared by everything
@@ -146,8 +154,9 @@ points to keep specs valid and consistent:
   language — when you add a new meta-language feature, consider whether each language guide needs a mapping (the
   guideline lists per-language mappings for varargs, wildcards, streaming cancellation, `streamResult`, etc.).
 - Note: `api-guideline.md` references a `proposals/` folder, but in this repo the specs live under `spec/`.
-- Some language guides referenced by `api-guideline.md` (cpp, ts, python, go, swift) do not exist yet — that's
-  expected; only Java, Rust, and JS guides are present so far.
+- Some language guides referenced by `api-guideline.md` (cpp, python, go, swift) do not exist yet — that's
+  expected; Java, TypeScript, Rust and JS guides are present so far. The Java and TypeScript guides are implemented
+  by the generators in `tooling/metalang` (`generate --language=java|ts`, `check --language=java|ts`).
 
 ## Relevant skills
 

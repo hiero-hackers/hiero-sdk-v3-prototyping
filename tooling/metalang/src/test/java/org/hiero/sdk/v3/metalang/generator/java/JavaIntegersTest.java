@@ -3,6 +3,7 @@ package org.hiero.sdk.v3.metalang.generator.java;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigInteger;
+import org.hiero.sdk.v3.metalang.generator.IntegerRange;
 import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -27,7 +28,7 @@ class JavaIntegersTest {
             "int128,  -170141183460469231731687303715884105728, 170141183460469231731687303715884105727, true"})
     void shouldKnowRangeAndWhetherItMustBeChecked(final String name, final String min, final String max,
                                                   final boolean check) {
-        assertThat(JavaIntegers.range(type(name))).isEqualTo(new JavaIntegers.Range(new BigInteger(min),
+        assertThat(IntegerRange.of(type(name))).isEqualTo(new IntegerRange(new BigInteger(min),
                 new BigInteger(max)));
         assertThat(JavaIntegers.needsRangeCheck(type(name))).isEqualTo(check);
         assertThat(JavaIntegers.isUnsignedLong(type(name))).isEqualTo(name.equals("uint64"));

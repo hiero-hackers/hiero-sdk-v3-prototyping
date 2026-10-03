@@ -1,5 +1,6 @@
 package org.hiero.sdk.v3.metalang.check.java;
 
+import org.hiero.sdk.v3.metalang.check.ApiDifference;
 import com.sun.source.tree.AnnotatedTypeTree;
 import com.sun.source.tree.AnnotationTree;
 import com.sun.source.tree.ArrayTypeTree;

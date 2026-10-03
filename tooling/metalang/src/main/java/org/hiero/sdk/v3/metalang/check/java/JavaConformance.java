@@ -1,5 +1,6 @@
 package org.hiero.sdk.v3.metalang.check.java;
 
+import org.hiero.sdk.v3.metalang.check.ApiDifference;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;

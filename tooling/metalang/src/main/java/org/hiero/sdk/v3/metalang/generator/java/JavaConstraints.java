@@ -1,5 +1,6 @@
 package org.hiero.sdk.v3.metalang.generator.java;
 
+import org.hiero.sdk.v3.metalang.generator.IntegerRange;
 import java.util.ArrayList;
 import java.util.List;
 import org.hiero.sdk.v3.metalang.ast.Annotation;
@@ -44,8 +45,8 @@ final class JavaConstraints {
         final boolean nullable = field.hasAnnotation("nullable");
         final StringBuilder out = new StringBuilder();
         final List<String> constants = new ArrayList<>();
-        JavaIntegers.integer(field.type()).filter(JavaIntegers::needsRangeCheck).ifPresent(builtin -> {
-            final JavaIntegers.Range range = JavaIntegers.range(builtin);
+        IntegerRange.integer(field.type()).filter(JavaIntegers::needsRangeCheck).ifPresent(builtin -> {
+            final IntegerRange range = IntegerRange.of(builtin);
             final String condition;
             if (JavaTypes.javaBits(builtin) > 64) {
                 final String constant = constantName(field.name());

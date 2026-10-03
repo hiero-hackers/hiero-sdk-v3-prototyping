@@ -1,5 +1,8 @@
 package org.hiero.sdk.v3.metalang.generator.java;
 
+import org.hiero.sdk.v3.metalang.generator.RegexSamples;
+import org.hiero.sdk.v3.metalang.generator.Constraints;
+import org.hiero.sdk.v3.metalang.generator.IntegerRange;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
@@ -53,8 +56,6 @@ import org.jspecify.annotations.Nullable;
  */
 final class JavaSamples {
 
-    /** The {@code string} type, the default for type variables without bound. */
-    static final Type STRING = new Type.BasicType(BuiltinType.lookup("string").orElseThrow(), List.of());
 
     private final JavaContext context;
     private final Imports imports;
@@ -88,26 +89,6 @@ final class JavaSamples {
         return deprecated;
     }
 
-    /**
-     * Returns the type arguments the tests use for type parameters: the bound, or {@code string} without bound.
-     *
-     * @param parameters the type parameters
-     * @return the type argument of every type variable; empty if a bound refers to a type variable (e.g. a self
-     *         type), which has no simple type argument
-     */
-    static Optional<Map<Type.TypeVariable, Type>> defaults(final List<TypeParameterDefinition> parameters) {
-        final Map<Type.TypeVariable, Type> result = new HashMap<>();
-        for (final TypeParameterDefinition parameter : parameters) {
-            if (parameter.bound() == null) {
-                result.put(parameter.variable(), STRING);
-            } else if (containsVariable(parameter.bound())) {
-                return Optional.empty();
-            } else {
-                result.put(parameter.variable(), parameter.bound());
-            }
-        }
-        return Optional.of(result);
-    }
 
     /**
      * Returns a valid value.
@@ -147,10 +128,10 @@ final class JavaSamples {
         return switch (type) {
             case Type.BasicType basic -> basic(basic, annotations, variant, visiting);
             case Type.DeclaredType declared -> declared(declared, variant, visiting);
-            case Type.TypeVariable ignored -> value(STRING, annotations, variant, visiting);
-            case Type.WildcardType wildcard -> value(wildcard.upperBound() == null ? STRING : wildcard.upperBound(),
+            case Type.TypeVariable ignored -> value(Constraints.STRING, annotations, variant, visiting);
+            case Type.WildcardType wildcard -> value(wildcard.upperBound() == null ? Constraints.STRING : wildcard.upperBound(),
                     annotations, variant, visiting);
-            case Type.AnyType ignored -> Optional.of(JavaLiterals.quote("value" + suffix(variant)));
+            case Type.AnyType ignored -> Optional.of(JavaLiterals.quote("value" + (variant == 0 ? "" : String.valueOf(variant))));
             case Type.FunctionType function -> lambda(function, visiting);
             case Type.VoidType ignored -> Optional.empty();
             case Type.UnresolvedType ignored -> Optional.empty();
@@ -162,11 +143,11 @@ final class JavaSamples {
         final BuiltinType builtin = type.builtin();
         return switch (builtin.category()) {
             case INTEGER -> integer(builtin, annotations, variant);
-            case FLOAT -> decimal(annotations, variant).map(JavaSamples::doubleLiteral);
-            case DECIMAL -> decimal(annotations, variant)
+            case FLOAT -> Constraints.decimal(annotations, variant).map(JavaSamples::doubleLiteral);
+            case DECIMAL -> Constraints.decimal(annotations, variant)
                     .map(v -> "new " + imports.use("java.math", "BigDecimal") + "(\"" + v.toPlainString() + "\")");
             case BOOL -> Optional.of(variant % 2 == 0 ? "true" : "false");
-            case STRING -> string(annotations, variant).map(JavaLiterals::quote);
+            case STRING -> Constraints.string(annotations, variant).map(JavaLiterals::quote);
             case BYTES -> bytes(annotations, variant);
             case COLLECTION -> collection(type, annotations, variant, visiting);
             case MAP -> map(type, annotations, variant, visiting);
@@ -179,32 +160,10 @@ final class JavaSamples {
         };
     }
 
-    /**
-     * The values of an integer type with its {@code @@min}/{@code @@max}: the range of the type intersected with the
-     * annotations.
-     *
-     * @param builtin     the integer type
-     * @param annotations the annotations
-     * @return the range; {@code min > max} if the constraints contradict each other
-     */
-    static JavaIntegers.Range range(final BuiltinType builtin, final List<Annotation> annotations) {
-        JavaIntegers.Range range = JavaIntegers.range(builtin);
-        final Optional<BigDecimal> min = bound(annotations, "min");
-        final Optional<BigDecimal> max = bound(annotations, "max");
-        if (min.isPresent()) {
-            range = range.intersect(new JavaIntegers.Range(min.get().setScale(0, java.math.RoundingMode.CEILING)
-                    .toBigIntegerExact(), range.max()));
-        }
-        if (max.isPresent()) {
-            range = range.intersect(new JavaIntegers.Range(range.min(), max.get()
-                    .setScale(0, java.math.RoundingMode.FLOOR).toBigIntegerExact()));
-        }
-        return range;
-    }
 
     private Optional<String> integer(final BuiltinType builtin, final List<Annotation> annotations,
                                      final int variant) {
-        final JavaIntegers.Range range = range(builtin, annotations);
+        final IntegerRange range = Constraints.range(builtin, annotations);
         if (range.min().compareTo(range.max()) > 0) {
             return Optional.empty();
         }
@@ -218,21 +177,6 @@ final class JavaSamples {
         return Optional.of(JavaIntegers.literal(builtin, value, imports));
     }
 
-    private static Optional<BigDecimal> decimal(final List<Annotation> annotations, final int variant) {
-        BigDecimal value = new BigDecimal("1.5").add(BigDecimal.valueOf(variant));
-        final Optional<BigDecimal> min = bound(annotations, "min");
-        final Optional<BigDecimal> max = bound(annotations, "max");
-        if (min.isPresent() && max.isPresent() && min.get().compareTo(max.get()) > 0) {
-            return Optional.empty();
-        }
-        if (min.isPresent() && value.compareTo(min.get()) < 0) {
-            value = min.get();
-        }
-        if (max.isPresent() && value.compareTo(max.get()) > 0) {
-            value = max.get();
-        }
-        return Optional.of(value);
-    }
 
     /**
      * Renders a number as {@code double} literal.
@@ -245,71 +189,8 @@ final class JavaSamples {
         return text.contains(".") ? text : text + ".0";
     }
 
-    /**
-     * Returns a string that fulfils the string constraints ({@code @@pattern}, {@code @@urlPattern},
-     * {@code @@minLength}, {@code @@maxLength}), verified like the generated checks.
-     *
-     * @param annotations the annotations
-     * @param variant     the variant
-     * @return the string, empty if none was found
-     */
-    static Optional<String> string(final List<Annotation> annotations, final int variant) {
-        final Optional<String> pattern = stringArgument(annotations, "pattern");
-        final boolean url = annotations.stream().anyMatch(a -> a.name().equals("urlPattern"));
-        final List<String> bases = new ArrayList<>();
-        if (url) {
-            bases.add("https://example.com/v" + variant);
-        }
-        if (pattern.isPresent()) {
-            final Optional<String> accepted = RegexSamples.accepted(pattern.get());
-            accepted.ifPresent(a -> bases.add(a + suffix(variant)));
-            accepted.ifPresent(bases::add);
-        }
-        bases.add("value" + suffix(variant));
-        bases.add("a" + suffix(variant));
-        return bases.stream().map(b -> fitLength(b, annotations))
-                .filter(c -> isValidString(c, annotations)).findFirst();
-    }
 
-    private static String fitLength(final String value, final List<Annotation> annotations) {
-        final int min = size(annotations, "minLength").orElse(0);
-        final int max = size(annotations, "maxLength").orElse(Integer.MAX_VALUE);
-        String result = value;
-        if (result.length() < min) {
-            result = result + "a".repeat(min - result.length());
-        }
-        if (result.length() > max) {
-            result = result.substring(0, max);
-        }
-        return result;
-    }
 
-    /**
-     * Whether the generated checks accept the string.
-     *
-     * @param value       the string
-     * @param annotations the annotations of the attribute or parameter
-     * @return {@code true} if every string constraint is fulfilled
-     */
-    static boolean isValidString(final String value, final List<Annotation> annotations) {
-        if (size(annotations, "minLength").filter(min -> value.length() < min).isPresent()
-                || size(annotations, "maxLength").filter(max -> value.length() > max).isPresent()) {
-            return false;
-        }
-        final Optional<String> pattern = stringArgument(annotations, "pattern");
-        if (pattern.isPresent() && !Pattern.compile(pattern.get()).matcher(value).find()) {
-            return false;
-        }
-        if (annotations.stream().anyMatch(a -> a.name().equals("urlPattern"))) {
-            try {
-                final URI uri = new URI(value);
-                return uri.isAbsolute() && uri.getHost() != null;
-            } catch (final URISyntaxException e) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     private static Optional<String> bytesValue(final int size, final int variant) {
         if (size == 0) {
@@ -323,31 +204,15 @@ final class JavaSamples {
     }
 
     private Optional<String> bytes(final List<Annotation> annotations, final int variant) {
-        final int size = elementCount(annotations, 3);
+        final int size = Constraints.elementCount(annotations, 3);
         return size < 0 ? Optional.empty() : bytesValue(size, variant);
     }
 
-    /**
-     * The number of elements of a value with {@code @@minSize}/{@code @@maxSize}: the preferred number within the
-     * bounds.
-     *
-     * @param annotations the annotations
-     * @param preferred   the preferred number
-     * @return the number, -1 if the bounds contradict each other
-     */
-    static int elementCount(final List<Annotation> annotations, final int preferred) {
-        final int min = size(annotations, "minSize").orElse(0);
-        final int max = size(annotations, "maxSize").orElse(Integer.MAX_VALUE);
-        if (min > max) {
-            return -1;
-        }
-        return Math.max(min, Math.min(max, preferred));
-    }
 
     private Optional<String> collection(final Type.BasicType type, final List<Annotation> annotations,
                                         final int variant, final Set<QualifiedName> visiting) {
         final boolean set = type.builtin().name().equals("set");
-        final int size = elementCount(annotations, 1);
+        final int size = Constraints.elementCount(annotations, 1);
         if (size < 0 || type.arguments().isEmpty()) {
             return Optional.empty();
         }
@@ -369,7 +234,7 @@ final class JavaSamples {
 
     private Optional<String> map(final Type.BasicType type, final List<Annotation> annotations, final int variant,
                                  final Set<QualifiedName> visiting) {
-        final int size = elementCount(annotations, 1);
+        final int size = Constraints.elementCount(annotations, 1);
         if (size < 0 || type.arguments().size() != 2) {
             return Optional.empty();
         }
@@ -436,7 +301,7 @@ final class JavaSamples {
         final TypeDefinition definition = context.model().definition(type);
         // the default instance of the specs comes first: it defines the values the tests must use
         final Optional<InstanceDefinition> instance = context.model().instance(type.name())
-                .filter(i -> !visiting.contains(type.name()) && fitsInstance(i.type(), type));
+                .filter(i -> !visiting.contains(type.name()) && Constraints.fitsInstance(i.type(), type));
         if (instance.isPresent()) {
             final Set<QualifiedName> nested = new HashSet<>(visiting);
             nested.add(type.name());
@@ -482,7 +347,7 @@ final class JavaSamples {
         if (visiting.contains(definition.name())) {
             return Optional.empty();
         }
-        final Optional<Map<Type.TypeVariable, Type>> arguments = arguments(definition, type);
+        final Optional<Map<Type.TypeVariable, Type>> arguments = Constraints.arguments(definition, type);
         if (arguments.isEmpty()) {
             return Optional.empty();
         }
@@ -521,31 +386,6 @@ final class JavaSamples {
                 : definition.fields();
     }
 
-    /**
-     * The type arguments used for a generic type: the given ones, the defaults for wildcards and missing ones.
-     *
-     * @param definition the type
-     * @param type       the type as used
-     * @return the type argument of every type variable, empty if a default does not exist
-     */
-    static Optional<Map<Type.TypeVariable, Type>> arguments(final TypeDefinition definition,
-                                                           final Type.DeclaredType type) {
-        final Optional<Map<Type.TypeVariable, Type>> defaults = defaults(definition.typeParameters());
-        final Map<Type.TypeVariable, Type> result = new HashMap<>();
-        final List<TypeParameterDefinition> parameters = definition.typeParameters();
-        for (int i = 0; i < parameters.size(); i++) {
-            final Type argument = i < type.arguments().size() ? type.arguments().get(i) : null;
-            if (argument == null || argument instanceof Type.WildcardType) {
-                if (defaults.isEmpty()) {
-                    return Optional.empty();
-                }
-                result.put(parameters.get(i).variable(), defaults.get().get(parameters.get(i).variable()));
-            } else {
-                result.put(parameters.get(i).variable(), argument);
-            }
-        }
-        return Optional.of(result);
-    }
 
     /** A value of an abstraction: a value of a generated concrete subtype whose type arguments fit. */
     private Optional<String> subtype(final Type.DeclaredType type, final int variant,
@@ -722,18 +562,6 @@ final class JavaSamples {
         return Optional.empty();
     }
 
-    /** Whether the default instance (e.g. of {@code HieroClient<ANY>}) can be used where the type is required. */
-    private static boolean fitsInstance(final Type.DeclaredType instance, final Type.DeclaredType required) {
-        for (int i = 0; i < required.arguments().size(); i++) {
-            final Type argument = required.arguments().get(i);
-            if (!(argument instanceof Type.WildcardType) && !(argument instanceof Type.AnyType)
-                    && (i >= instance.arguments().size() || !argument.text().equals(instance.arguments().get(i)
-                    .text()))) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     /**
      * Renders an expression of a default instance as Java expression.
@@ -931,58 +759,8 @@ final class JavaSamples {
         return value(function.returnType(), List.of(), 0, visiting).map(v -> names + " -> " + v);
     }
 
-    /**
-     * The numeric argument of a {@code @@min}/{@code @@max}.
-     *
-     * @param annotations the annotations
-     * @param name        {@code min} or {@code max}
-     * @return the bound
-     */
-    static Optional<BigDecimal> bound(final List<Annotation> annotations, final String name) {
-        return annotations.stream().filter(a -> a.name().equals(name)).findFirst()
-                .map(a -> a.arguments().getFirst())
-                .filter(Literal.NumberLiteral.class::isInstance)
-                .map(l -> ((Literal.NumberLiteral) l).value());
-    }
 
-    /**
-     * The integer argument of a size or length annotation.
-     *
-     * @param annotations the annotations
-     * @param name        e.g. {@code minSize}
-     * @return the value
-     */
-    static Optional<Integer> size(final List<Annotation> annotations, final String name) {
-        return bound(annotations, name).map(BigDecimal::intValueExact);
-    }
 
-    /**
-     * The string argument of an annotation.
-     *
-     * @param annotations the annotations
-     * @param name        e.g. {@code pattern}
-     * @return the value
-     */
-    static Optional<String> stringArgument(final List<Annotation> annotations, final String name) {
-        return annotations.stream().filter(a -> a.name().equals(name)).findFirst()
-                .map(a -> a.arguments().getFirst())
-                .map(l -> l instanceof Literal.StringLiteral string ? string.value() : l.text());
-    }
 
-    private static String suffix(final int variant) {
-        return variant == 0 ? "" : String.valueOf(variant);
-    }
 
-    private static boolean containsVariable(final @Nullable Type type) {
-        return switch (type) {
-            case null -> false;
-            case Type.TypeVariable ignored -> true;
-            case Type.BasicType basic -> basic.arguments().stream().anyMatch(JavaSamples::containsVariable);
-            case Type.DeclaredType declared -> declared.arguments().stream().anyMatch(JavaSamples::containsVariable);
-            case Type.WildcardType wildcard -> containsVariable(wildcard.upperBound());
-            case Type.FunctionType function -> containsVariable(function.returnType())
-                    || function.parameters().stream().anyMatch(p -> containsVariable(p.type()));
-            default -> false;
-        };
-    }
 }

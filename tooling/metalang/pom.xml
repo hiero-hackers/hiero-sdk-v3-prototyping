@@ -82,6 +82,17 @@
                     <include>*.java</include>
                 </includes>
             </resource>
+            <!-- The TypeScript support files (Duration, StreamItem, ...), likewise from the TypeScript guideline. -->
+            <resource>
+                <directory>${project.basedir}/../../guidelines/ts-files</directory>
+                <targetPath>org/hiero/sdk/v3/metalang/generator/ts/support</targetPath>
+                <includes>
+                    <include>*.ts</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
         </resources>
         <pluginManagement>
             <plugins>

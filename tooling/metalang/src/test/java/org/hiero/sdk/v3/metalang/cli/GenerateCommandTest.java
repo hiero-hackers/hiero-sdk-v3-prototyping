@@ -49,6 +49,31 @@ class GenerateCommandTest {
     }
 
     @Test
+    void shouldGenerateTypeScript() throws Exception {
+        // GIVEN
+        final Path config = temp.resolve("generator.properties");
+        Files.writeString(config, "ts.scope = @shop\n");
+
+        // WHEN
+        final int exit = cli.run("generate", "--language=ts", "--config=" + config, "--output=" + temp.resolve("ts"),
+                goldenSpec().toString());
+
+        // THEN
+        assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
+        assertThat(out.toString(StandardCharsets.UTF_8)).startsWith("").contains(" file(s) generated in ");
+        assertThat(Files.readString(temp.resolve("ts/packages/shop/package.json"))).contains("\"name\": \"@shop/shop\"");
+        assertThat(Files.readString(temp.resolve("ts/tsconfig.base.json"))).contains("\"strict\": true");
+
+        // WHEN the configuration is invalid
+        Files.writeString(config, "ts.scope = shop\n");
+
+        // THEN
+        assertThat(cli.run("generate", "--language=ts", "--config=" + config, "--output=" + temp.resolve("ts"),
+                goldenSpec().toString())).isEqualTo(MetaLangCli.EXIT_FINDINGS);
+        assertThat(err()).contains("Cannot generate: ts.scope: 'shop' is no npm scope");
+    }
+
+    @Test
     void shouldListTheUntestedTestsOnRequest() throws Exception {
         // WHEN
         final int exit = cli.run("generate", "--language=java", "--show-untested",

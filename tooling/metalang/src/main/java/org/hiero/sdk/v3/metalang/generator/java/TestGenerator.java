@@ -1,5 +1,7 @@
 package org.hiero.sdk.v3.metalang.generator.java;
 
+import org.hiero.sdk.v3.metalang.generator.RegexSamples;
+import org.hiero.sdk.v3.metalang.generator.Constraints;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -14,6 +16,7 @@ import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.ast.Annotation;
 import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
+import org.hiero.sdk.v3.metalang.generator.IntegerRange;
 import org.hiero.sdk.v3.metalang.model.EnumValueDefinition;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
 import org.hiero.sdk.v3.metalang.model.FunctionDefinition;
@@ -237,7 +240,7 @@ public final class TestGenerator {
 
         /** Tests of a record or class. */
         private boolean objectTests(final TypeDefinition.ComplexTypeDefinition type) {
-            final Optional<Map<Type.TypeVariable, Type>> variables = JavaSamples.defaults(type.typeParameters());
+            final Optional<Map<Type.TypeVariable, Type>> variables = Constraints.defaults(type.typeParameters());
             if (variables.isEmpty()) {
                 notes.add("no type arguments for " + type.name().name() + " (a type parameter refers to itself)");
                 return true;
@@ -583,7 +586,7 @@ public final class TestGenerator {
          */
         private void methodTest(final MethodDefinition method, final String target,
                                 final Map<Type.TypeVariable, Type> variables) {
-            final Optional<Map<Type.TypeVariable, Type>> own = JavaSamples.defaults(method.typeParameters());
+            final Optional<Map<Type.TypeVariable, Type>> own = Constraints.defaults(method.typeParameters());
             if (own.isEmpty()) {
                 notes.add("no type arguments for `" + method.signature() + "`");
                 return;
@@ -660,7 +663,7 @@ public final class TestGenerator {
             for (final FunctionDefinition function : functions) {
                 final MethodDefinition method = function.method();
                 methodTest(method, factoryName, Map.of());
-                final Optional<Map<Type.TypeVariable, Type>> variables = JavaSamples.defaults(method.typeParameters());
+                final Optional<Map<Type.TypeVariable, Type>> variables = Constraints.defaults(method.typeParameters());
                 final Optional<List<String>> arguments = variables.flatMap(v -> arguments(method, v));
                 if (arguments.isEmpty()) {
                     continue;
@@ -795,7 +798,7 @@ public final class TestGenerator {
 
         private void integerCases(final BuiltinType builtin, final List<Annotation> annotations,
                                   final List<Case> cases) {
-            final JavaIntegers.Range range = JavaSamples.range(builtin, annotations);
+            final IntegerRange range = Constraints.range(builtin, annotations);
             if (range.min().compareTo(range.max()) > 0) {
                 return;
             }
@@ -826,12 +829,12 @@ public final class TestGenerator {
                 final String rejected;
                 switch (type.builtin().category()) {
                     case FLOAT -> {
-                        final BigDecimal bound = JavaSamples.bound(annotations, annotation.name()).orElseThrow();
+                        final BigDecimal bound = Constraints.bound(annotations, annotation.name()).orElseThrow();
                         accepted = JavaSamples.doubleLiteral(bound);
                         rejected = "Math." + (min ? "nextDown(" : "nextUp(") + accepted + ")";
                     }
                     case DECIMAL -> {
-                        final BigDecimal bound = JavaSamples.bound(annotations, annotation.name()).orElseThrow();
+                        final BigDecimal bound = Constraints.bound(annotations, annotation.name()).orElseThrow();
                         final String decimal = imports.use("java.math", "BigDecimal");
                         accepted = "new " + decimal + "(\"" + bound.toPlainString() + "\")";
                         final BigDecimal step = new BigDecimal("0.001");
@@ -850,11 +853,11 @@ public final class TestGenerator {
         }
 
         private void stringCases(final List<Annotation> annotations, final List<Case> cases) {
-            final Optional<Integer> minLength = JavaSamples.size(annotations, "minLength");
-            final Optional<Integer> maxLength = JavaSamples.size(annotations, "maxLength");
+            final Optional<Integer> minLength = Constraints.size(annotations, "minLength");
+            final Optional<Integer> maxLength = Constraints.size(annotations, "maxLength");
             if (minLength.isPresent()) {
                 final int length = minLength.get();
-                JavaSamples.string(sized(annotations, "minLength", "maxLength", length), 0)
+                Constraints.string(sized(annotations, "minLength", "maxLength", length), 0)
                         .ifPresent(s -> cases.add(new Case("AtMinimumLength", JavaLiterals.quote(s), true)));
                 if (length > 0) {
                     cases.add(new Case("BelowMinimumLength", JavaLiterals.quote("a".repeat(length - 1)), false));
@@ -862,12 +865,12 @@ public final class TestGenerator {
             }
             if (maxLength.isPresent()) {
                 final int length = maxLength.get();
-                JavaSamples.string(sized(annotations, "minLength", "maxLength", length), 0)
+                Constraints.string(sized(annotations, "minLength", "maxLength", length), 0)
                         .ifPresent(s -> cases.add(new Case("AtMaximumLength", JavaLiterals.quote(s), true)));
                 cases.add(new Case("AboveMaximumLength", JavaLiterals.quote("a".repeat(length + 1)), false));
             }
-            JavaSamples.stringArgument(annotations, "pattern").flatMap(RegexSamples::rejected)
-                    .filter(s -> !JavaSamples.isValidString(s, annotations))
+            Constraints.stringArgument(annotations, "pattern").flatMap(RegexSamples::rejected)
+                    .filter(s -> !Constraints.isValidString(s, annotations))
                     .ifPresent(s -> cases.add(new Case("NotMatchingThePattern", JavaLiterals.quote(s), false)));
             if (annotations.stream().anyMatch(a -> a.name().equals("urlPattern"))) {
                 cases.add(new Case("ThatIsNoUrl", JavaLiterals.quote("not a url"), false));
@@ -876,8 +879,8 @@ public final class TestGenerator {
 
         private void sizeCases(final Input input, final List<Case> cases) {
             final List<Annotation> annotations = input.annotations();
-            final Optional<Integer> minSize = JavaSamples.size(annotations, "minSize");
-            final Optional<Integer> maxSize = JavaSamples.size(annotations, "maxSize");
+            final Optional<Integer> minSize = Constraints.size(annotations, "minSize");
+            final Optional<Integer> maxSize = Constraints.size(annotations, "maxSize");
             if (minSize.isPresent()) {
                 sizedValue(input, minSize.get()).ifPresent(v -> cases.add(new Case("AtMinimumSize", v, true)));
                 if (minSize.get() > 0) {
@@ -927,7 +930,7 @@ public final class TestGenerator {
                                 && complex.fields().stream().allMatch(f -> f.hasAnnotation("immutable"))
                                         && complex.methods("equals").isEmpty() && complex.methods("hashCode").isEmpty()
                                         && complex.fields().stream().allMatch(f -> f.hasAnnotation("nullable")
-                                        || hasValueSemantics(LinkedModel.substitute(f.type(), JavaSamples
+                                        || hasValueSemantics(LinkedModel.substitute(f.type(), Constraints
                                         .arguments(complex, declared).orElse(Map.of())), visited));
                     };
                 }
