@@ -2,8 +2,33 @@
 
 ## Description
 
-This namespace hosts the foundational network / addressing types that every other namespace
-builds on.
+Foundational types that identify a Hiero network and the entities that live on it. They are used
+throughout the SDK wherever a network, a node, an account, a contract or another ledger entity is
+referenced.
+
+`Network` identifies a specific network instance and the unit of its native token. `ConsensusNode`
+and `MirrorNode` describe the nodes of a network that a client talks to; `IpAddress` holds the
+address of a consensus node.
+
+Every entity on a Hiero ledger lives in a `(shard, realm)` space and is selected within that space by
+a third part — usually a number. `BaseAddress` is the common base of all entity identifiers and
+provides the shard, the realm, the checksum and the string forms. The concrete identifier types are:
+
+- `Address` — entities that are always identified by `shard.realm.num`: tokens, topics, files and
+  schedules. `num` is always set.
+- `ContractId` — a smart contract, identified either by its number or by its 20-byte EVM address
+  (exactly one of the two is set).
+- `AccountId` — an account, identified by its number, by an EVM-address alias, or by a public-key
+  alias (exactly one of the three is set).
+- `EvmAddress` — a raw 20-byte EVM address, used inside `ContractId` / `AccountId` and wherever an
+  EVM address appears on its own.
+
+All identifier types can be parsed from and formatted to their canonical string form
+(e.g. `0.0.1234` or `0.0.1234-abcde` with checksum). `TransactionId` identifies a transaction by its
+payer account and valid-start time. The constants `ZERO_ADDRESS`, `ZERO_ACCOUNT_ID` and
+`ZERO_CONTRACT_ID` are used in update transactions to remove a previously configured value.
+
+## Design Notes
 
 ### The address hierarchy
 
@@ -97,6 +122,29 @@ constraints sit on the concrete children only, so no constraint widening is need
 `evmAddress` slot in `EvmCapableAddress` and as a stand-alone return type wherever a flat
 EVM address appears (mirror-node responses, contract-call results, ...).
 
+### Other settled decisions
+
+- **`EvmCapableAddress` and `@@oneOf`:** `EvmCapableAddress` keeps `num` `@@nullable` (no
+  `@@override`) and adds the `@@nullable evmAddress` slot shared by `ContractId` and `AccountId`.
+  It does NOT itself carry an `@@oneOf` — each concrete child tightens the constraint with its own
+  `@@oneOf`, which is the LSP-safe direction. `ContractId` is structurally empty; its only
+  contribution over its parent is the `@@oneOf` constraint.
+- **`IpAddress` naming:** The type is intentionally named `IpAddress` (not `IpV4Address`) so that
+  adding IPv6 support later is purely additive: a future HIP that adds IPv6 to the wire shape
+  (today `ServiceEndpoint.ipAddressV4`, IPv4-only) only needs to relax the `@@maxSize` constraint to
+  16; every call site that takes `IpAddress` keeps working unchanged. Until then, IPv6 reachability
+  for a node is achieved via `consensusnode.admin.nodes.ServiceEndpoint.domainName`.
+- **`ConsensusNode` vs. DAB `nodeId`:** `ConsensusNode` is the routing / fee view and is
+  intentionally distinct from the DAB `nodeId: int64` (HIP-869) that `consensusnode.admin.nodes`
+  transactions use.
+- **`MirrorNode.restBaseUrl` and `@@urlPattern`:** `@@urlPattern` makes "well-formed absolute URL"
+  an invariant of the field, enforced wherever a `MirrorNode` is built rather than on the first
+  request that uses it. `mirrornode.http` resolves request paths by concatenating onto this value,
+  so both halves of every mirror-node URL are constrained and the resolved string is well-formed by
+  construction.
+- **Zero sentinels:** The consensus node interprets the `ZERO_*` clear-sentinels server-side; SDKs
+  do not invent the semantic locally.
+
 ## API Schema
 
 ```
@@ -114,12 +162,12 @@ Network<$$Unit extends NativeTokenUnit> {
 // ledger. Every concrete address kind has a num "slot" (the numeric selector within
 // (shard, realm)) — required on Address, optional on EvmCapableAddress and its children. The
 // shared methods (checksum validation, string formatting) live here as well. Never
-// instantiated directly. See the description above for the full hierarchy.
+// instantiated directly; use Address, ContractId or AccountId.
 abstraction BaseAddress {
     @@immutable shard: uint64                                 // shard number
     @@immutable realm: uint64                                 // realm number
     @@immutable checksum: string                              // protocol-side checksum over the (shard, realm, selector) form; empty string when no checksum applies (e.g. an EVM-address-only ContractId / AccountId before materialisation)
-    @@immutable @@nullable num: uint64                        // Hiero entity number. NULLABLE here because EVM-form ContractId / AccountId can be addressed without a num. Tightened to non-nullable on `Address` via @@override (see api-guideline.md → Narrowing inherited nullability).
+    @@immutable @@nullable num: uint64                        // Hiero entity number. May be absent here because a ContractId / AccountId can be addressed by EVM address or alias without a num; always set on `Address`.
 
     // Validates the checksum against the given network's checksum scheme.
     bool validateChecksum(network: Network<ANY>)
@@ -135,15 +183,15 @@ abstraction BaseAddress {
 
 // Concrete address with a single numeric selector. Used for entities whose HAPI id is purely
 // (shard, realm, num): tokens, topics, files, schedules. NOT used for accounts or contracts —
-// those carry additional selector variants (see ContractId / AccountId below). This is also
-// the typed identifier referenced throughout the spec wherever a single-num entity appears.
+// those carry additional selector variants (see ContractId / AccountId). This is also the
+// typed identifier used throughout the SDK wherever a single-num entity appears.
 @@finalType
 Address extends BaseAddress {
-    @@immutable @@override num: uint64                        // tightening: on Address, num is always set
+    @@immutable @@override num: uint64                        // Hiero entity number; always set on an Address
 
     // Parses Address from string format: "shard.realm.num" or "shard.realm.num-checksum"
-    // (optional checksum suffix after the dash). Throws illegal-format if the format is invalid,
-    // values are negative, or parsing fails.
+    // (optional checksum suffix after the dash). Throws if the format is invalid, values are
+    // negative, or parsing fails.
     @@throws(illegal-format) @@static Address fromString(address: string)
 }
 
@@ -158,18 +206,17 @@ type EvmAddress {
     string toString()
 
     // Parses an EvmAddress from its hex-string form. Accepts both "0xabc…" and bare "abc…"
-    // (40 hex chars). Throws illegal-format on anything else (wrong length, non-hex characters).
+    // (40 hex chars). Throws on anything else (wrong length, non-hex characters).
     @@throws(illegal-format) @@static EvmAddress fromString(value: string)
 
-    // Wraps raw bytes. `value.length` must equal 20; otherwise throws illegal-format.
+    // Wraps raw bytes. `value.length` must equal 20; otherwise throws.
     @@throws(illegal-format) @@static EvmAddress fromBytes(value: bytes)
 }
 
 // Abstract subtype of BaseAddress for entities that can be addressed either by their numeric
-// Hiero id (shard, realm, num) OR by a 20-byte EVM address. `num` is inherited from
-// BaseAddress (still @@nullable here — no @@override). Adds the @@nullable evmAddress slot
-// shared by ContractId and AccountId. Does NOT itself carry an @@oneOf — each concrete child
-// tightens the constraint with its own @@oneOf, which is the LSP-safe direction.
+// Hiero id (shard, realm, num) OR by a 20-byte EVM address. Both `num` (inherited from
+// BaseAddress) and `evmAddress` may be absent on this level; each concrete subtype
+// (ContractId, AccountId) defines which combinations are valid.
 abstraction EvmCapableAddress extends BaseAddress {
     @@immutable @@nullable evmAddress: EvmAddress             // 20-byte EVM-side address; absent when addressed by Hiero number only
 }
@@ -177,7 +224,7 @@ abstraction EvmCapableAddress extends BaseAddress {
 // Identifier of a smart contract. A contract may be addressed either by its numeric Hiero id
 // (shard, realm, num) or by its 20-byte EVM address (e.g. from CREATE / CREATE2 / EIP-1014).
 // HAPI carries this as `ContractID { shardNum, realmNum, oneof { contractNum, evm_address } }`;
-// this type mirrors that wire shape exactly.
+// this type mirrors that wire shape exactly: exactly one of `num` and `evmAddress` is set.
 @@oneOf(num, evmAddress)
 @@finalType
 ContractId extends EvmCapableAddress {
@@ -185,6 +232,7 @@ ContractId extends EvmCapableAddress {
     // ContractId's only contribution over its parent is the @@oneOf constraint.
 
     // Parses "shard.realm.num" or "shard.realm.0x<40-hex>" (with optional "-<checksum>" suffix).
+    // Throws if the format is invalid.
     @@throws(illegal-format) @@static ContractId fromString(value: string)
 
     // Builds a ContractId from a 20-byte EVM address.
@@ -201,14 +249,14 @@ ContractId extends EvmCapableAddress {
 // address (HIP-583), a longer payload is interpreted as a serialised public key (HIP-32). V3
 // splits that single HAPI alias slot into two typed fields (`evmAddress`, inherited from
 // EvmCapableAddress, and `alias`) so the type system tells the caller which alias form they
-// hold — no length-checking by callers.
+// hold — no length-checking by callers. Exactly one of `num`, `evmAddress` and `alias` is set.
 @@oneOf(num, evmAddress, alias)
 @@finalType
 AccountId extends EvmCapableAddress {
     @@immutable @@nullable alias: bytes                       // serialised public-key alias (HIP-32); absent when addressed by Hiero number or by EVM address
 
     // Parses "shard.realm.num", "shard.realm.0x<40-hex>", or "shard.realm.<base32 key alias>"
-    // (with optional "-<checksum>" suffix).
+    // (with optional "-<checksum>" suffix). Throws if the format is invalid.
     @@throws(illegal-format) @@static AccountId fromString(value: string)
 
     // Builds an AccountId from a 20-byte EVM address (HIP-583 auto-create form).
@@ -227,19 +275,15 @@ abstraction TransactionId {
   // Generates a new TransactionId for the given payer account.
   @@static TransactionId generateTransactionId(accountId:Address)
 
-  // Parses a TransactionId from its string form.
+  // Parses a TransactionId from its string form. Throws if the format is invalid.
   @@throws(illegal-format) @@static TransactionId fromString(transactionId:string)
 }
 
 // Single IP address representation, stored as raw network-order bytes. Today the type
-// only accepts IPv4 (exactly 4 bytes), matching the HAPI consensus-node wire shape
-// (`ServiceEndpoint.ipAddressV4`, which is IPv4-only). The type is intentionally named
-// `IpAddress` (not `IpV4Address`) so that adding IPv6 support later is purely additive:
-// a future HIP that adds IPv6 to the wire shape only needs to relax the @@maxSize
-// constraint to 16; every call site that takes `IpAddress` keeps working unchanged. Until
-// then, IPv6 reachability for a node is achieved via a domain name in
-// `consensusnode.admin.nodes.ServiceEndpoint.domainName` whose DNS AAAA record resolves to
-// the v6 address.
+// only accepts IPv4 (exactly 4 bytes), matching the consensus-node wire format, which is
+// IPv4-only. IPv6 support may be added later without changing the type. Until then, IPv6
+// reachability for a node is achieved via a domain name in `ServiceEndpoint.domainName`
+// whose DNS AAAA record resolves to the v6 address.
 type IpAddress {
     @@immutable @@minSize(4) @@maxSize(4) bytes: bytes   // 4 bytes, network byte order (IPv4); constraint widens to allow 16 bytes once IPv6 lands
 
@@ -248,22 +292,19 @@ type IpAddress {
     string toString()
 
     // Parses an IpAddress from its textual form. Today only dotted-quad IPv4 ("10.0.0.7") is
-    // accepted; everything else throws illegal-format.
+    // accepted; everything else throws.
     @@throws(illegal-format) @@static IpAddress fromString(value: string)
 
-    // Wraps raw network-order bytes. `value.length` must equal 4; otherwise throws
-    // illegal-format. Loosens to {4, 16} when IPv6 support is added.
+    // Wraps raw network-order bytes. `value.length` must equal 4; otherwise throws.
+    // Will also accept 16 bytes once IPv6 support is added.
     @@throws(illegal-format) @@static IpAddress fromBytes(value: bytes)
 }
 
 // Represents a consensus node on a network. This is the routing / fee view: clients use
 // (ip, port) to reach the node and `account` to identify where its transaction fees flow.
-// It is intentionally distinct from the DAB `nodeId: int64` (HIP-869) that
-// `consensusnode.admin.nodes` transactions use to identify a node for create / update /
-// delete — `account` can be rotated by NodeUpdate while `nodeId` is stable across the
-// node's lifetime. Carrying `nodeId` here is deferred until the typed-identifier roll-out
-// (see missing-features.md §3.1); see also the *Questions & Comments* in
-// consensus-node-admin-client/transactions-nodes.md.
+// It is distinct from the stable node id (`nodeId`, HIP-869) that node administration
+// transactions use to identify a node for create / update / delete — `account` can be
+// rotated by a node update while the node id is stable across the node's lifetime.
 ConsensusNode {
     @@immutable ip: IpAddress // ip address of the node (IPv4 today; extensible to IPv6)
     @@immutable port: uint16 // port of the node
@@ -272,11 +313,9 @@ ConsensusNode {
 
 // Represents a mirror node on a network.
 MirrorNode {
-    // @@urlPattern makes "well-formed absolute URL" an invariant of the field, enforced wherever a
-    // MirrorNode is built rather than on the first request that uses it. mirrornode.http resolves
-    // request paths by concatenating onto this value, so both halves of every mirror-node URL are
-    // constrained and the resolved string is well-formed by construction.
-    @@immutable @@urlPattern restBaseUrl: string // base url of the mirror node REST API (scheme://host[:port]/api/v1)
+    // Base URL of the mirror node REST API (scheme://host[:port]/api/v1). Must be a well-formed
+    // absolute URL; this is checked when the MirrorNode is created, not on the first request.
+    @@immutable @@urlPattern restBaseUrl: string
 }
 
 // The zero address (0.0.0). HAPI uses this value as a clear-sentinel on update
@@ -290,12 +329,12 @@ constant ZERO_ADDRESS: Address = Address{shard: 0, realm: 0, num: 0, checksum: "
 // Account-typed clear-sentinel. Same role as ZERO_ADDRESS, but for AccountId-typed update
 // fields (e.g. AccountUpdateTransaction.stakedAccountId, TopicUpdateTransaction.autoRenewAccount,
 // TokenUpdateTransaction.autoRenewAccount). Writing ZERO_ACCOUNT_ID to such a field removes
-// the previously configured account. Carries num = 0 (satisfying the AccountId `@@oneOf`);
-// evmAddress and alias remain null. Not a real account.
+// the previously configured account. Carries num = 0 (so exactly one identifier form is set);
+// evmAddress and alias are absent. Not a real account.
 constant ZERO_ACCOUNT_ID: AccountId = AccountId{shard: 0, realm: 0, num: 0, checksum: "", evmAddress: null, alias: null}
 
 // Contract-typed clear-sentinel. Same role as ZERO_ADDRESS, but for ContractId-typed update
-// fields (e.g. once smart-contract transactions land). Carries num = 0; evmAddress is null.
+// fields. Carries num = 0; evmAddress is absent.
 // Not a real contract.
 constant ZERO_CONTRACT_ID: ContractId = ContractId{shard: 0, realm: 0, num: 0, checksum: "", evmAddress: null}
 
@@ -306,3 +345,6 @@ constant ZERO_CONTRACT_ID: ContractId = ContractId{shard: 0, realm: 0, num: 0, c
 - [@hendrikebbers](https://github.com/hendrikebbers): Should we rename `Ledger` to `Network`?
   > [@oGranny](https://github.com/oGranny): In `ledger.config` we have `NetworkSetting` which does not match with `Ledger`, I think either we should rename `Ledger` to `Network` or `NetworkSetting` to `LedgerSetting`
 - [@oGranny](https://github.com/oGranny): what are the rules for assigning and creating `Ledger.id` bytes?
+- `ConsensusNode` does not carry the stable DAB `nodeId` (HIP-869) yet. Adding it is deferred until the
+  typed-identifier roll-out (see `missing-features.md` §3.1); see also the *Questions & Comments* in
+  `consensus-node-admin-client/transactions-nodes.md`.

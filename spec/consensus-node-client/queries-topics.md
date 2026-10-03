@@ -6,26 +6,25 @@ node charges a fee for serving a topic's metadata snapshot.
 
 ## Description
 
-- **`TopicInfoQuery`** extends `PaidQuery<TopicInfo>` — returns the topic's metadata snapshot:
-  current admin / submit keys, memo, expiration, auto-renew configuration, and the running
-  state of the message stream (`runningHash` + `sequenceNumber`). It does **not** return
-  topic messages — those are not stored on the consensus node and must be read from a mirror
-  node (see [`mirror-node-topic.md`](../mirror-node-client/mirror-node-topic.md)).
+`TopicInfoQuery` is a paid query that returns the metadata of a consensus topic: its admin and submit authorities,
+memo, expiration, auto-renew configuration and the current state of its message stream (`runningHash` and
+`sequenceNumber`). It does **not** return topic messages — consensus nodes do not store them; read messages from a
+mirror node instead.
 
-The query extends `PaidQuery`, so it inherits the `maxQueryPayment` knob, the
-`getCost(client)` cost-discovery method, and the `PaidQueryResponse<...>` envelope. See
+Querying a topic that does not exist (never created, deleted, or expired) fails. Unlike files, accounts or tokens,
+a removed topic is not returned with a "deleted" flag, because the consensus node does not keep the metadata of a
+topic once it is gone.
+
+`runningHash` and `sequenceNumber` let you cheaply verify that the messages you read from a mirror node match what
+the consensus node has actually ordered, without downloading the messages from the consensus node. The running hash
+is a SHA-384 hash chain over all messages submitted to the topic so far.
+
+## Design Notes
+
+This namespace is the read-side counterpart to the topic transactions in
+[`transactions-topics.md`](transactions-topics.md). Topic messages must be read from a mirror node (see
+[`mirror-node-topic.md`](../mirror-node-client/mirror-node-topic.md)). The query extends `PaidQuery`; see
 [`queries.md`](queries.md) for the full payment / envelope semantics.
-
-A query against a topic that does not exist (never created, or expired and reaped) fails at
-the protocol level — it does not return a `TopicInfo` with a "deleted" flag. This differs
-from the file / account info queries, where deleted entities are still returned as a
-snapshot with `deleted = true`: the consensus node does not retain a topic's metadata once
-the topic is gone.
-
-The `runningHash` + `sequenceNumber` pair lets a caller cheaply verify that a stream of
-messages read from a mirror node is consistent with what the consensus node has actually
-ordered — without downloading the messages themselves. The running hash is the
-SHA-384 chain over all `TopicMessageSubmit`s applied to the topic so far.
 
 ## API Schema
 
@@ -35,21 +34,21 @@ requires {Address, AccountId} from ledger
 requires {Authority} from authority
 requires {PaidQuery} from consensusnode.queries
 
-// Full topic metadata snapshot. Returned by TopicInfoQuery.
+// Full topic metadata snapshot. Returned by `TopicInfoQuery`.
 type TopicInfo {
     @@immutable topicId: Address
     @@immutable @@nullable topicMemo: string                  // short human-readable label
     @@immutable runningHash: bytes                            // SHA-384 over all submitted messages so far
     @@immutable sequenceNumber: int64                         // number of messages submitted so far
     @@immutable expirationTime: zonedDateTime
-    @@immutable @@nullable adminAuthority: Authority              // unset → topic is immutable (no update / delete)
-    @@immutable @@nullable submitAuthority: Authority             // unset → topic is public (any account may submit)
+    @@immutable @@nullable adminAuthority: Authority              // absent → topic is immutable (no update / delete)
+    @@immutable @@nullable submitAuthority: Authority             // absent → topic is public (any account may submit)
     @@immutable @@nullable autoRenewPeriod: seconds
-    @@immutable @@nullable autoRenewAccount: AccountId        // pays auto-renewal; if unset, the topic itself pays
+    @@immutable @@nullable autoRenewAccount: AccountId        // pays auto-renewal; if absent, the topic itself pays
 }
 
 // Paid query for the metadata snapshot of a topic. Topic *messages* are not returned by
-// this query — they live only on mirror nodes (see mirrornode.topic.TopicRepository).
+// this query — they are only available from a mirror node.
 @@finalType
 TopicInfoQuery extends PaidQuery<TopicInfo> {
     @@immutable topicId: Address

@@ -20,13 +20,11 @@ A token's supply policy is independent of its kind:
 - **`FINITE`** — the protocol enforces `totalSupply ≤ maxSupply` at every mint. A mint that would
   exceed `maxSupply` fails atomically.
 
-This file covers the **core lifecycle and supply** transactions: `TokenCreate`, `TokenUpdate`,
-`TokenDelete`, `TokenAssociate`, `TokenDissociate`, `TokenMint`, `TokenBurn`. The remaining
-HTS transactions (`TokenWipe`, `TokenFreeze` / `TokenUnfreeze`, `TokenGrantKyc` / `TokenRevokeKyc`,
-`TokenPause` / `TokenUnpause`, `TokenFeeScheduleUpdate`, `TokenUpdateNfts`, and the
-HIP-904 airdrop family) are tracked in
-[`missing-features.md`](../../missing-features.md) section 1.2 and will land in follow-up files
-under this same namespace.
+The **core lifecycle and supply** transactions are `TokenCreateTransaction`,
+`TokenUpdateTransaction`, `TokenDeleteTransaction`, `TokenAssociateTransaction`,
+`TokenDissociateTransaction`, `TokenMintTransaction` and `TokenBurnTransaction`. The permissioned
+management transactions (wipe, freeze, KYC, pause, NFT metadata updates) and the HIP-904 airdrop
+transactions are provided alongside them.
 
 ### Token keys
 
@@ -90,8 +88,7 @@ A token's lifecycle is:
 | `TokenBurn`       | the *payer*; **and** the token's `supplyAuthority`. Burns always draw from the treasury account; the treasury itself does not need to co-sign.                                                                                                                                                                        |
 
 When the operator holds every required key (e.g. operator = treasury = admin) `signWithOperatorAndSubmit(client)`
-is sufficient. Multi-key flows go through the `signWithOperator(client).sign(...)` pattern shown
-in [`transactions-accounts.md`](transactions-accounts.md).
+is sufficient. Multi-key flows go through the `signWithOperator(client).sign(...)` pattern.
 
 The general rule (as in topics): a key field on a create transaction must sign **if** binding it
 would grant that key authority over a real asset (`adminAuthority`, `treasuryAccountId`,
@@ -103,12 +100,25 @@ right now (`supplyAuthority`, `kycAuthority`, `freezeAuthority`, `wipeAuthority`
 
 `TokenUpdate` distinguishes "leave unchanged" from "clear":
 
-- A `@@nullable` field set to **null** (or never set on the builder) means *leave unchanged*.
-- Clearing an optional `Address`-typed field (`autoRenewAccount`, `treasuryAccountId` is
-  non-clearable) uses [`ZERO_ADDRESS`](../base/ledger.md) as the sentinel value.
-- Each token key is now the `Authority` authorization type (see
-  [`authority.md`](../base/authority.md) / [ADR-0004](../../docs/adr/0004-authority-authorization-sum-type.md)),
-  so it can carry a single key, a contract, or an m-of-n threshold. HIP-540 added the ability to
+- An optional field that is left unset means *leave unchanged*.
+- Clearing an optional `Address`-typed field (`autoRenewAccount`; `treasuryAccountId` is
+  non-clearable) uses `ZERO_ADDRESS` as the sentinel value.
+- Each token key is an `Authority`, so it can be a single key, a contract, or an m-of-n threshold.
+  Clearing a key to an irrevocably-empty state (HIP-540) is not supported yet.
+
+## Design Notes
+
+- The remaining HTS transactions were originally tracked in
+  [`missing-features.md`](../../missing-features.md) section 1.2; the management transactions are
+  specified in [`transactions-tokens-management.md`](transactions-tokens-management.md) and the
+  HIP-904 airdrops in [`transactions-tokens-airdrops.md`](transactions-tokens-airdrops.md), all in
+  the same `consensusnode.transactions.tokens` namespace. `TokenFeeScheduleUpdate` is still missing.
+- `TokenMint` / `TokenBurn` mixing fungible and NFT payloads is rejected by the network; the
+  `@@oneOf` at the type level makes this statically checkable.
+- The multi-signature pattern is shown in [`transactions-accounts.md`](transactions-accounts.md).
+- `ZERO_ADDRESS` is defined in [`ledger.md`](../base/ledger.md).
+- Each token key is the `Authority` authorization type (see [`authority.md`](../base/authority.md) /
+  [ADR-0004](../../docs/adr/0004-authority-authorization-sum-type.md)). HIP-540 added the ability to
   *clear* any lower-privilege key to an irrevocably-empty state; clearing is a future write-side
   `KeyUpdate` operation (per ADR-0004), not expressible as an `Authority` value — see
   *Questions & Comments*.
@@ -124,8 +134,8 @@ requires {Receipt, Transaction} from consensusnode.transactions
 
 // Creates a new token. The token is identified by the `tokenId` returned in the receipt. All
 // seven key fields are optional and follow the rule that a key not set at create time can never
-// be added later (HAPI: `KEY_NOT_PROVIDED`); leaving e.g. `supplyAuthority` unset permanently fixes
-// the token's supply at `initialSupply`.
+// be added later (the network rejects it with `KEY_NOT_PROVIDED`); leaving e.g. `supplyAuthority`
+// unset permanently fixes the token's supply at `initialSupply`.
 @@finalType
 TokenCreateTransaction extends Transaction<TokenCreateReceipt, TokenCreateTransaction> {
     @@immutable @@maxLength(100) name: string                       // human-readable token name
@@ -145,6 +155,7 @@ TokenCreateTransaction extends Transaction<TokenCreateReceipt, TokenCreateTransa
 
     // Optional key fields — see "Token keys" in the description above for what each one grants.
     // A key NOT set at create time CANNOT be added by TokenUpdate.
+
     @@immutable @@nullable adminAuthority: Authority                      // controls update / delete; unset → immutable token; MUST sign the create transaction when set (anti-spoofing)
     @@immutable @@nullable supplyAuthority: Authority                     // controls mint / burn; unset → fixed supply after creation
     @@immutable @@nullable kycAuthority: Authority                        // controls KYC grant / revoke; unset → KYC disabled
@@ -165,9 +176,9 @@ TokenCreateReceipt extends Receipt {
 // are fixed at create.
 //
 // Rotating a key field to a new key requires the new key to also sign (anti-spoofing). A key
-// field that was unset at create cannot be added here (HAPI: `KEY_NOT_PROVIDED`). Clearing a
-// key field to make the corresponding capability permanently disabled is allowed per HIP-540 but
-// has no portable representation until the `Key` sum type lands — see Questions & Comments.
+// field that was unset at create cannot be added here (the network rejects it with
+// `KEY_NOT_PROVIDED`). Clearing a key field to permanently disable the corresponding capability
+// (HIP-540) is not supported yet.
 @@finalType
 TokenUpdateTransaction extends Transaction<TokenUpdateReceipt, TokenUpdateTransaction> {
     @@immutable tokenId: Address                                    // the token being updated
@@ -248,8 +259,7 @@ TokenDissociateReceipt extends Receipt {
 //                           the consensus node assigns sequential serial numbers and returns
 //                           them in the receipt.
 //
-// Mixing the two is rejected by the network; the @@oneOf at the type level makes this
-// statically checkable.
+// Exactly one of `amount` and `metadata` must be set.
 @@oneOf(amount, metadata)
 @@finalType
 TokenMintTransaction extends Transaction<TokenMintReceipt, TokenMintTransaction> {
@@ -272,8 +282,8 @@ TokenMintReceipt extends Receipt {
 //                           treasury account; max 10 per transaction).
 //
 // Burning NFT serials held by a non-treasury account is not possible via this transaction —
-// use `TokenWipe` (gated by `wipeAuthority`) instead. Mixing fungible and NFT payloads is rejected;
-// the @@oneOf at the type level makes this statically checkable.
+// use `TokenWipeTransaction` (gated by `wipeAuthority`) instead. Exactly one of `amount` and
+// `serials` must be set.
 @@oneOf(amount, serials)
 @@finalType
 TokenBurnTransaction extends Transaction<TokenBurnReceipt, TokenBurnTransaction> {

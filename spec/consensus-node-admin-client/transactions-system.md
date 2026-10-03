@@ -13,7 +13,7 @@ deletes:
   (configured at the consensus-node level), bypasses the asset's keys entirely, and can be
   *reversed* by a subsequent `SystemUndelete` until `expirationTime` is reached.
 
-There are two flavours, distinguished by `@@oneOf(fileId, contractId)`:
+Each transaction targets either a file (`fileId`) or a contract (`contractId`) — exactly one of the two:
 
 - **File system-delete** sets the file's "deleted" flag and schedules its permanent
   removal at `expirationTime`. Reads against the file return `FILE_DELETED` during that
@@ -24,17 +24,20 @@ There are two flavours, distinguished by `@@oneOf(fileId, contractId)`:
 `SystemUndelete` does not take an `expirationTime` — it only un-marks. If the file is
 already past its `expirationTime` the un-delete fails with `INVALID_FILE_ID`.
 
-### Signing requirements (system delete / undelete)
+### Signing requirements
 
 | Transaction                | Signers required                                                                                      |
 |----------------------------|-------------------------------------------------------------------------------------------------------|
 | `SystemDeleteTransaction`  | the *payer* **and** the network's privileged *system-admin* (or *system-delete*) key                  |
 | `SystemUndeleteTransaction`| the *payer* **and** the network's privileged *system-undelete* key                                    |
 
-The privileged keys are configured by the council out-of-band; SDKs feed them through
-`TransactionSigner` exactly like any other externally held key. See
-[`transactions.md`](../consensus-node-client/transactions.md) for the HSM-friendly signing
-flows.
+The privileged keys are configured by the council out-of-band. Provide them through a `TransactionSigner` (or sign
+the packed transaction externally, for example with an HSM) exactly like any other externally held key.
+
+## Design Notes
+
+The two flavours are distinguished by `@@oneOf(fileId, contractId)`. See
+[`transactions.md`](../consensus-node-client/transactions.md) for the HSM-friendly signing flows.
 
 ## API Schema
 
@@ -43,32 +46,34 @@ namespace consensusnode.admin.system
 requires {Address, ContractId} from ledger
 requires {Receipt, Transaction} from consensusnode.transactions
 
-// Marks a file or contract as deleted by privileged council action. Exactly one of fileId /
-// contractId must be set. For files, expirationTime is required and marks when the deletion
+// Marks a file or contract as deleted by privileged council action. Exactly one of `fileId` and
+// `contractId` must be set. For files, expirationTime is required and marks when the deletion
 // becomes permanent (a SystemUndelete before that time reverses it). For contracts,
 // expirationTime is ignored.
 @@finalType
 @@oneOf(fileId, contractId)
 SystemDeleteTransaction extends Transaction<SystemDeleteReceipt, SystemDeleteTransaction> {
-    @@immutable @@nullable fileId: Address
-    @@immutable @@nullable contractId: ContractId
+    @@immutable @@nullable fileId: Address                // the file to delete; absent when contractId is set
+    @@immutable @@nullable contractId: ContractId         // the contract to delete; absent when fileId is set
     @@immutable @@nullable expirationTime: zonedDateTime  // when a system-deleted file becomes permanently unrecoverable; required when fileId is set, ignored when contractId is set
 }
 
+// Receipt of a `SystemDeleteTransaction`.
 @@finalType
 SystemDeleteReceipt extends Receipt {
 }
 
-// Reverses a prior SystemDelete. Exactly one of fileId / contractId must match the prior
-// SystemDelete's target. Must be submitted before the file's expirationTime; afterwards
+// Reverses a prior `SystemDeleteTransaction`. Exactly one of `fileId` and `contractId` must be set, matching the
+// target of the prior system delete. Must be submitted before the file's expirationTime; afterwards
 // the un-delete fails with INVALID_FILE_ID.
 @@finalType
 @@oneOf(fileId, contractId)
 SystemUndeleteTransaction extends Transaction<SystemUndeleteReceipt, SystemUndeleteTransaction> {
-    @@immutable @@nullable fileId: Address
-    @@immutable @@nullable contractId: ContractId
+    @@immutable @@nullable fileId: Address                // the file to restore; absent when contractId is set
+    @@immutable @@nullable contractId: ContractId         // the contract to restore; absent when fileId is set
 }
 
+// Receipt of a `SystemUndeleteTransaction`.
 @@finalType
 SystemUndeleteReceipt extends Receipt {
 }

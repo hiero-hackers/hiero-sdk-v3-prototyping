@@ -7,26 +7,20 @@ builder through a wire-ready, signed payload to an executed response.
 
 A transaction passes through two clearly separated states, modelled as two distinct types:
 
-1. **`Transaction<$$Receipt, $$Self>`** — a mutable builder. Concrete subtypes (defined under sub-namespaces
-   such as `consensusnode.transactions.accounts`) expose service-specific fields; the generic
-   transaction-level fields (`maxTransactionFee`, `validDuration`, `memo`) are inherited from this
-   abstraction. A `Transaction` is not yet bound to a payer, target nodes, or a `TransactionId`.
+1. **`Transaction<$$Receipt, $$Self>`** — a mutable builder. Concrete subtypes such as
+   `AccountCreateTransaction` expose service-specific fields; the generic transaction-level fields
+   (`maxTransactionFee`, `validDuration`, `memo`) are inherited from `Transaction`. A `Transaction`
+   is not yet bound to a payer, target nodes, or a `TransactionId`.
 
 2. **`PackedTransaction<$$Receipt, $$Transaction>`** — a frozen, serializable, wire-ready
    transaction. Packing binds the transaction to a payer, a set of target consensus nodes, and a
-   freshly generated `TransactionId`. The body is byte-stable from this point on; further
-   `NodeSignature` entries may be appended (multi-sig), but no field of the body may change.
+   freshly generated `TransactionId`. From this point on the transaction content cannot change;
+   only further `NodeSignature` entries can be added (multi-sig).
 
-The split exists because signing is a function over **exact byte content**: a signature is computed
-over the serialized `TransactionBody`, which includes the target node's `nodeAccountID`. Allowing
-the body to mutate after signing would silently invalidate every previously collected signature and
-break round-trips through serialization. Modelling the two states as two types makes this constraint
-visible in the type system rather than relying on documentation or runtime checks.
-
-The naming follows that purpose: `Transaction` is the editable form; `PackedTransaction` is the form
-that has been *packed* for the wire (carrying its target nodes, transaction id, and any signatures
-collected so far). See ADR-0001 for the full rationale, including why this is preferred over a
-single mutable type or a `freeze()` step on `Transaction`.
+Signatures are computed over the exact serialized transaction bytes, so a transaction must not
+change after it has been signed. `Transaction` is the editable form; `PackedTransaction` is the
+form that has been *packed* for the wire, carrying its target nodes, transaction id, and the
+signatures collected so far.
 
 ### Lifecycle
 
@@ -43,12 +37,11 @@ single mutable type or a `freeze()` step on `Transaction`.
 - **sign** — append one or more `NodeSignature` entries. Several mechanisms are supported
   (see *Signing mechanisms* below).
 - **submit** — hand the packed transaction to one of the target consensus nodes and obtain a
-  `Response`. The chosen node is an SDK-internal detail; the caller does not steer it. Actual
-  ledger execution happens on the network asynchronously — the `Response` is the submission
-  acknowledgment, not the execution result. Use `Response.queryReceipt()` /
-  `Response.queryRecord()` to read the outcome once consensus is reached. `submit(client)` is
-  inherited from `Submittable` (defined in `consensusnode.client`), which also carries the
-  shared retry-tuning fields.
+  `Response`. The SDK chooses the node; the caller does not steer it. Actual ledger execution
+  happens on the network asynchronously — the `Response` is the submission acknowledgment, not the
+  execution result. Use `Response.queryReceipt()` / `Response.queryRecord()` to read the outcome
+  once consensus is reached. `submit(client)` and the retry-tuning fields are inherited from
+  `Submittable`.
 
 A `PackedTransaction` may be serialized via `toBytes()` at any point, shipped to another process or
 machine, re-loaded via the static `fromBytes(...)` factory, and have further signatures appended on
@@ -57,8 +50,8 @@ survive the round-trip.
 
 ### Signing mechanisms
 
-The signing surface is intentionally tiered, with one convenience method per common case and one
-data-oriented escape hatch for out-of-process workflows:
+There is one convenience method per common case and one data-oriented option for out-of-process
+workflows:
 
 | Caller has | Method |
 |---|---|
@@ -71,6 +64,9 @@ data-oriented escape hatch for out-of-process workflows:
 Signature ordering is irrelevant — `NodeSignature` entries form a set; the consensus node accepts
 them in any order. The packed transaction can also be built first via `Transaction.pack(...)`
 without any signature and shipped to one or more signers downstream.
+
+Any transaction can also be prepared as an inner transaction of a `BatchTransaction` through
+`packForBatch(...)`, `signForBatchWithOperator(...)` and `signForBatch(...)`.
 
 ### Why one signing key contributes N signatures
 
@@ -94,8 +90,40 @@ during `pack(...)`. The fields are set as follows:
 - `nonce` — always `0`; the consensus node uses non-zero values only for child transactions
   spawned by smart-contract execution.
 
-The `TransactionId` is **never user-settable** through this API. Custom validity windows or
-deterministic ids for testing must be modelled by a different mechanism if needed in the future.
+The `TransactionId` cannot be set by the caller.
+
+## Design Notes
+
+- **Why two types.** Signing is a function over **exact byte content**: a signature is computed
+  over the serialized `TransactionBody`, which includes the target node's `nodeAccountID`. Allowing
+  the body to mutate after signing would silently invalidate every previously collected signature and
+  break round-trips through serialization. Modelling the two states as two types makes this constraint
+  visible in the type system rather than relying on documentation or runtime checks. See ADR-0001 for
+  the full rationale, including why this is preferred over a single mutable type or a `freeze()` step
+  on `Transaction`.
+- `submit(client)` is inherited from `Submittable` (defined in `consensusnode.client`), which also
+  carries the shared retry-tuning fields.
+- Concrete transaction subtypes are defined under sub-namespaces such as
+  `consensusnode.transactions.accounts`. The `BatchTransaction` container is specified in
+  [`transactions-batch.md`](transactions-batch.md).
+- **`TransactionId` is never user-settable** through this API. Custom validity windows or
+  deterministic ids for testing must be modelled by a different mechanism if needed in the future.
+- **`Record.parentConsensusTimestamp` keying.** HAPI keys the child-to-parent link on the consensus
+  timestamp rather than a parent `TransactionId` because the consensus timestamp is the canonical,
+  always-unique key of the record stream (children sit at nanosecond offsets adjacent to the parent),
+  and not every child has an independent id — node-synthesized children share the parent's payer +
+  validStart and are disambiguated only by a nonce. Batch inner transactions are specified in
+  `consensusnode.transactions.batch`.
+- **`getResponse(...)` resolution.** The SDK resolves the matching `TransactionSupport`
+  (`consensusnode.transactions.spi`) for the given transaction type to parse the proto receipt/record
+  into the typed `$$Receipt`.
+- **`packForBatch(...)` and `batchKey`.** `batchKey` is a `TransactionBody` field that must be fixed
+  before signing, so it is taken as a required parameter of the batch-pack entry points rather than a
+  free-standing build-phase field: this makes "an inner transaction always has a batchKey" and "a
+  non-batch transaction never has one" structural guarantees (illegal states unrepresentable) instead
+  of preconditions the network has to reject. Which transaction *types* may be batched remains a
+  network-side policy the SDK cannot know; see [`transactions-batch.md`](transactions-batch.md).
+  `signForBatchWithOperator(client, batchKey)` is the V3 equivalent of v2's `batchify(client, batchKey)`.
 
 ## API Schema
 
@@ -106,19 +134,20 @@ requires {NativeToken, ExchangeRate} from nativeToken
 requires {Authority} from authority
 requires {Account, HieroClient, NodeSignature, Submittable, TransactionSigner} from consensusnode.client
 
-// Defines the status of a transaction. Since we can have custom transaction types based on custom
-// services in the consensus node we cannot use an enum here anymore.
+// The status of a transaction, identified by a numeric code. The set of statuses is open: custom
+// services on the consensus node can define their own transaction types and status codes.
 abstraction TransactionStatus {
-  @@immutable code:int32 // the status code that should be unique based on the consensus node
+  @@immutable code:int32 // the numeric status code reported by the consensus node
 }
 
-// Defines the status codes that are currently used by services that are part of the consensus node repository
-// The codes are the HAPI ResponseCodeEnum values (services/response_code.proto).
+// The status codes used by the built-in services of the consensus node. The codes are the HAPI
+// ResponseCodeEnum values.
 enum BasicTransactionStatus(code: int32) extends TransactionStatus {
     OK(0)
     INVALID_TRANSACTION(1)
     PAYER_ACCOUNT_NOT_FOUND(2)
     // not complete yet: further status codes are still to be added here
+
     GRPC_WEB_PROXY_NOT_SUPPORTED(399)
 }
 
@@ -129,9 +158,11 @@ type NodeBody {
     @@immutable bytes: bytes
 }
 
-// $$Self is the concrete transaction type itself (e.g. AccountCreateTransaction extends
-// Transaction<AccountCreateReceipt, AccountCreateTransaction>), so that pack/sign return a PackedTransaction that
-// knows the concrete transaction type.
+// Base type of all transactions: a mutable builder that is packed and signed into a PackedTransaction
+// before it is submitted. The first type parameter is the receipt type; the second is the concrete
+// transaction type itself (e.g. AccountCreateTransaction extends
+// Transaction<AccountCreateReceipt, AccountCreateTransaction>), so that pack and sign return a
+// PackedTransaction that knows the concrete transaction type.
 abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$Receipt, $$Self>> {
   
   @@nullable maxTransactionFee: NativeToken<ANY, ANY>
@@ -148,22 +179,17 @@ abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$
   
   @@async Response<$$Receipt> signWithOperatorAndSubmit(client: HieroClient<ANY>)
 
-  // Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551). Unlike
-  // pack(payer, nodes), this produces a single TransactionBody addressed to no consensus node
-  // (nodeAccountID = 0.0.0) instead of one body per target node — an inner batch transaction is
-  // never submitted to a node on its own; it is embedded into BatchTransaction.innerTransactions
-  // and executed by the network as part of the batch. The returned PackedTransaction still carries
-  // its own TransactionId (payer + validStart); further signatures use the inherited
-  // PackedTransaction.sign(...) / signableBodies() flow.
+  // Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
+  // signing it. Unlike pack(payer, nodes), this produces a single TransactionBody addressed to no
+  // consensus node (nodeAccountID = 0.0.0) instead of one body per target node — an inner batch
+  // transaction is never submitted to a node on its own; it is embedded into
+  // BatchTransaction.innerTransactions and executed by the network as part of the batch. The
+  // returned PackedTransaction still carries its own TransactionId (payer + validStart); further
+  // signatures use PackedTransaction.sign(...) / signableBodies().
   //
   // batchKey names the Authority that must sign the *outer* BatchTransaction for this inner
-  // transaction to execute — the inner author's controlled opt-in to being batched. It is a
-  // TransactionBody field that must be fixed before signing, so it is taken here as a required
-  // parameter of the batch-pack entry point rather than a free-standing build-phase field: this
-  // makes "an inner transaction always has a batchKey" and "a non-batch transaction never has one"
-  // structural guarantees (illegal states unrepresentable) instead of preconditions the network has
-  // to reject. (Which transaction *types* may be batched remains a network-side policy the SDK
-  // cannot know; see transactions-batch.md.)
+  // transaction to execute — the inner author's controlled opt-in to being batched. Whether a
+  // transaction type may be batched at all is decided by the network.
   PackedTransaction<$$Receipt, $$Self> packForBatch(payer: Account, batchKey: Authority)
 
   // The batch counterparts of the non-batch signing tiers, each mirroring its sign(...) sibling
@@ -171,20 +197,23 @@ abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$
   // 0.0.0) and without an ...AndSubmit form (it is never submitted on its own). Each takes the
   // required batchKey, exactly as packForBatch.
 
-  // Operator convenience: pack for batch with the client's operator as payer + operator signature.
-  // Mirrors signWithOperator(client); the V3 equivalent of v2's batchify(client, batchKey).
+  // Packs this transaction for a batch with the client's operator as payer and adds the operator's
+  // signature. The batch counterpart of signWithOperator(client).
   PackedTransaction<$$Receipt, $$Self> signForBatchWithOperator(client: HieroClient<ANY>, batchKey: Authority)
 
-  // A single Account both pays and signs. Mirrors sign(payer, nodes).
+  // Packs this transaction for a batch with the given Account as payer and adds its signature. The
+  // batch counterpart of sign(payer, nodes).
   PackedTransaction<$$Receipt, $$Self> signForBatch(payer: Account, batchKey: Authority)
 
-  // Most general: the payer identity is decoupled from the signing mechanism (HSM, hardware wallet,
-  // paymaster). Mirrors sign(payerId, signer, nodes).
+  // Packs this transaction for a batch with payerId as payer and signs it with the given
+  // TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
+  // sign(payerId, signer, nodes).
   PackedTransaction<$$Receipt, $$Self> signForBatch(payerId: AccountId, signer: TransactionSigner, batchKey: Authority)
 
 }
 
-// PackedTransaction is a Submittable that yields a Response when handed to the network.
+// A packed, wire-ready transaction bound to a payer, a set of target nodes and a TransactionId. Its
+// content cannot change anymore; signatures can be added. Submitting it yields a Response.
 // Retry-tuning fields (maxAttempts, maxBackoff, minBackoff, attemptTimeout) and the
 // submit(client) method are inherited from Submittable.
 abstraction PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt, $$Transaction>>
@@ -200,15 +229,15 @@ abstraction PackedTransaction<$$Receipt extends Receipt, $$Transaction extends T
   // Returns the serialized TransactionBody bytes for every target node. Used by out-of-process
   // signing flows (raw HSMs, async signing pipelines, multi-party coordination, audit archival)
   // that cannot be wrapped behind a synchronous TransactionSigner. The returned list has one
-  // NodeBody per node in `nodes`.
+  // NodeBody per target node.
   list<NodeBody> signableBodies()
 
   // Attaches externally-produced NodeSignatures to this PackedTransaction and returns a new
   // PackedTransaction containing them. The provided list must contain one signature per node
   // returned by signableBodies() for the same PublicKey; otherwise submit() will fail with
   // INVALID_SIGNATURE on the chosen node.
-  // @@throws(unknown-node-error)        if a signature references a node not in `nodes`
-  // @@throws(incomplete-signatures-error) if signatures for any target node are missing
+  // Throws if a signature references a node that is not a target node of this transaction, or if
+  // signatures for any target node are missing.
   PackedTransaction<$$Receipt, $$Transaction> sign(signatures: list<NodeSignature>)
 
   bytes toBytes()
@@ -237,13 +266,9 @@ Record<$$Receipt extends Receipt> {
   @@immutable consensusTimestamp: zonedDateTime      // the consensus time of the transaction
   @@immutable receipt: $$Receipt                     // the typed receipt of the transaction
 
-  // For a child/triggered transaction — a batch inner transaction (consensusnode.transactions.batch),
-  // a scheduled transaction, or a contract-spawned child — the consensusTimestamp of the parent that
-  // spawned it; null for an ordinary top-level transaction. This is the link from a child record back
-  // to its parent. HAPI keys it on the consensus timestamp rather than a parent TransactionId because
-  // the consensus timestamp is the canonical, always-unique key of the record stream (children sit at
-  // nanosecond offsets adjacent to the parent), and not every child has an independent id — node-
-  // synthesized children share the parent's payer + validStart and are disambiguated only by a nonce.
+  // For a child/triggered transaction — a batch inner transaction, a scheduled transaction, or a
+  // contract-spawned child — the consensusTimestamp of the parent that spawned it; absent for an
+  // ordinary top-level transaction. This is the link from a child record back to its parent.
   @@immutable @@nullable parentConsensusTimestamp: zonedDateTime
 }
 
@@ -251,11 +276,10 @@ Record<$$Receipt extends Receipt> {
 // inner transaction of a schedule (identified by ScheduleCreateReceipt.scheduledTransactionId),
 // which executes on the network without the caller ever holding a Response for it.
 //
-// `transactionType` is the type token of the Transaction<$$Receipt, ...> subtype, so $$Receipt is bound
-// and the returned Response is typed (not Response<ANY>); the SDK resolves the matching
-// TransactionSupport (consensusnode.transactions.spi) to parse the proto receipt/record into the
-// typed $$Receipt. This call makes no network request — querying happens lazily through the
-// returned Response's queryReceipt() / queryRecord(), exactly as for a Response from submit().
+// `transactionType` is the concrete transaction type (e.g. TransferTransaction); it determines the
+// receipt type, so the returned Response is typed. This call makes no network request — querying
+// happens lazily through the returned Response's queryReceipt() / queryRecord(), exactly as for a
+// Response from submit().
 @@static Response<$$Receipt> getResponse<$$Receipt extends Receipt>(transactionId: TransactionId,
         transactionType: type<Transaction<$$Receipt, ANY>>, client: HieroClient<ANY>)
 ```
@@ -414,3 +438,9 @@ signed.submit(client);
   field on `Transaction` with a `missing-batch-key-error` thrown by `packForBatch`; folding it into
   the parameter removes both the nullable field and the error. The `BatchTransaction` container
   itself is specified in [`transactions-batch.md`](transactions-batch.md).
+
+- **Errors of `PackedTransaction.sign(signatures)` are only documented in prose.** The method
+  comment used to list `@@throws(unknown-node-error)` (a signature references a node not in the
+  target nodes) and `@@throws(incomplete-signatures-error)` (signatures for a target node are
+  missing) inside the comment, but the declaration does not carry these `@@throws` annotations.
+  Should they be added to the schema?

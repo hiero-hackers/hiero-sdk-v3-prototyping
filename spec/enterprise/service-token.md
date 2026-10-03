@@ -1,13 +1,11 @@
 # Fungible Token Service API
 
-Service definition for creating and managing fungible tokens (the Token Service).
-
 ## Description
 
-Provides high-level operations for fungible tokens: creation, account association, minting, burning, and transfers.
-Token ids are `ledger.Address` values (pure shard.realm.num); account ids are `ledger.AccountId`. Amounts are
-expressed in the token's smallest unit as `int64`. A token that should support later minting/burning must be
-created with a supply key.
+`FungibleTokenService` creates and manages fungible tokens (the Token Service): creation, account association,
+minting, burning, transfers and lookups of token information and balances. Tokens are identified by an `Address`
+(shard.realm.num), accounts by an `AccountId`. Amounts are given in the token's smallest unit. A token that should
+support minting and burning later must be created with a supply authority.
 
 ## API Schema
 
@@ -21,7 +19,8 @@ requires {Session} from enterprise.service
 
 FungibleTokenService {
 
-    // Create a fungible token. The treasury defaults to the operator account; a supply key enables mint/burn.
+    // Create a fungible token and return its id. The treasury defaults to the operator account; a supply authority
+    // enables minting and burning.
     @@throws(service-error) Address createToken(name: string, symbol: string)
 
     @@throws(service-error) Address createToken(name: string, symbol: string, supplyAuthority: Authority)
@@ -59,7 +58,8 @@ FungibleTokenService {
     @@throws(service-error) Page<Balance> getBalancesForAccount(tokenId: Address, accountId: AccountId)
 }
 
-// Factory method to create the service (not needed for real framework integration where injection is used)
+// Creates the service for the given session. With a framework integration the service is usually obtained via
+// dependency injection instead.
 @@static
 FungibleTokenService createService(session: Session)
 ```

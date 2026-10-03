@@ -330,7 +330,9 @@ class SchemaParserTest {
             // WHEN
             final Declaration.ComplexType type = single("""
                     // first line
-                    /* second line */
+                    /*
+                     * second line
+                     */
                     @@finalType
                     Foo { // trailing type comment
                         @@immutable a: int32 // doc of a
@@ -342,6 +344,27 @@ class SchemaParserTest {
             // THEN
             assertThat(type.documentation()).isEqualTo("first line\nsecond line");
             assertThat(type.fields()).extracting(Field::documentation).containsExactly("doc of a", "doc of b");
+        }
+
+        @Test
+        void shouldOnlyAttachTheCommentBlockDirectlyAboveTheDeclaration() {
+            // WHEN a section comment is separated from the member comment by a blank line
+            final Declaration.ComplexType type = single("""
+                    // section comment for several members
+
+                    // doc of m
+                    X {
+                        // section inside
+
+                        /* doc of n, line 1
+                           line 2 */
+                        void n()
+                    }
+                    """, Declaration.ComplexType.class);
+
+            // THEN
+            assertThat(type.documentation()).isEqualTo("doc of m");
+            assertThat(type.methods().getFirst().documentation()).isEqualTo("doc of n, line 1\nline 2");
         }
 
         @Test

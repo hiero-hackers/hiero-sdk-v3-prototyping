@@ -84,8 +84,12 @@ tooling/metalang/               # Prototype: ANTLR grammar, parser, semantic mod
 **Before writing or editing any `spec/*.md`, read `guidelines/api-guideline.md`** — it is the source of truth. Key
 points to keep specs valid and consistent:
 
-- Each spec file follows the same skeleton: `# Title` → `## Description` → `## API Schema` (a fenced code block) →
-  optional `## Examples` → `## Questions & Comments`.
+- Each spec file follows the same skeleton: `# Title` → `## Description` → optional `## Design Notes` →
+  `## API Schema` (a fenced code block) → optional `## Examples` → optional `## Testing` → `## Questions & Comments`.
+- `## Description` and the comments directly above declarations become the **public API documentation** (Javadoc,
+  rustdoc, …): write them for SDK users. Spec-author rationale, links to other spec files, ADR references and
+  meta-language details go to `## Design Notes` (resolved) or `## Questions & Comments` (open). The validator warns
+  about leaks (`doc.internal-reference`).
 - The `## API Schema` block opens with `namespace <name>`. Types from other namespaces are imported explicitly, one
   statement per source namespace: `requires {Address, Ledger} from ledger`. Import only what is used; `requires {*}
   from ns` imports everything.

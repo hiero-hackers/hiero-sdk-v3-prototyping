@@ -1,6 +1,8 @@
 package org.hiero.sdk.v3.metalang.cli;
 
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -12,6 +14,9 @@ import org.hiero.sdk.v3.metalang.ValidationReport;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
 import org.hiero.sdk.v3.metalang.diagnostic.Severity;
+import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
+import org.hiero.sdk.v3.metalang.generator.GenerationException;
+import org.hiero.sdk.v3.metalang.generator.java.JavaGenerator;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
 
 /**
@@ -21,6 +26,7 @@ import org.hiero.sdk.v3.metalang.model.LinkedModel;
  * metalang validate [--min-severity=error|warning|info] [--fail-on=error|warning|info|never]
  *                   [--format=text|json] [--summary] &lt;spec-dir-or-file&gt;
  * metalang model [--namespace=ns] [--type=ns.Type] [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
+ * metalang generate --language=java --output=dir [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
  * metalang rules
  * </pre>
  *
@@ -39,6 +45,7 @@ public final class MetaLangCli {
             Usage:
               metalang validate [options] <spec-dir-or-file>
               metalang model [options] <spec-dir-or-file>
+              metalang generate --language=java --output=<dir> [options] <spec-dir-or-file>
               metalang rules
 
             Options for 'validate':
@@ -52,6 +59,12 @@ public final class MetaLangCli {
               --type=<namespace.Type>             only this type (no functions and constants)
               --fail-on=error|warning|info|never  lowest severity that fails the run (default: error);
                                                   the model is printed in any case
+
+            Options for 'generate':
+              --language=java                     target language (required; only java so far)
+              --output=<dir>                      output directory (required; created if missing)
+              --fail-on=error|warning|info|never  do not generate if a finding at or above this severity
+                                                  exists (default: error)
             """;
 
     private final PrintStream out;
@@ -91,6 +104,7 @@ public final class MetaLangCli {
         return switch (args[0]) {
             case "validate" -> validate(List.of(args).subList(1, args.length));
             case "model" -> model(List.of(args).subList(1, args.length));
+            case "generate" -> generate(List.of(args).subList(1, args.length));
             case "rules" -> rules();
             case "help", "--help", "-h" -> {
                 out.print(USAGE);
@@ -209,6 +223,73 @@ public final class MetaLangCli {
         final boolean failed = failThreshold != null && report.diagnostics().stream()
                 .anyMatch(d -> d.severity().ordinal() <= failThreshold.ordinal());
         return failed ? EXIT_FINDINGS : EXIT_OK;
+    }
+
+    private int generate(final List<String> args) {
+        Severity failOn = Severity.ERROR;
+        String language = null;
+        String output = null;
+        final List<String> paths = new ArrayList<>();
+        for (final String arg : args) {
+            if (arg.startsWith("--fail-on=")) {
+                final String value = arg.substring("--fail-on=".length());
+                failOn = value.equals("never") ? null : parseSeverity(value);
+                if (failOn == null && !value.equals("never")) {
+                    return usageError("Invalid severity in " + arg);
+                }
+            } else if (arg.startsWith("--language=")) {
+                language = arg.substring("--language=".length());
+            } else if (arg.startsWith("--output=")) {
+                output = arg.substring("--output=".length());
+            } else if (arg.startsWith("--")) {
+                return usageError("Unknown option " + arg);
+            } else {
+                paths.add(arg);
+            }
+        }
+        if (!"java".equals(language)) {
+            return usageError(language == null ? "Missing --language" : "Unsupported language '" + language + "'");
+        }
+        if (output == null || output.isBlank()) {
+            return usageError("Missing --output");
+        }
+        if (paths.size() != 1) {
+            return usageError("Expected exactly one spec directory or file");
+        }
+        final Path root = Path.of(paths.getFirst());
+        if (!Files.exists(root)) {
+            return usageError("Path does not exist: " + root);
+        }
+        final ValidationReport report = new MetaLang().validate(root);
+        final Severity failThreshold = failOn;
+        final long blocking = report.diagnostics().stream()
+                .filter(d -> failThreshold != null && d.severity().ordinal() <= failThreshold.ordinal())
+                .count();
+        if (blocking > 0) {
+            err.println("Not generating: the specs have " + blocking + " finding(s) at or above "
+                    + failThreshold.name().toLowerCase(Locale.ROOT) + " (see 'metalang validate')");
+            return EXIT_FINDINGS;
+        }
+        final List<GeneratedFile> files;
+        try {
+            files = new JavaGenerator().generate(LinkedModel.of(report.model()));
+        } catch (final GenerationException e) {
+            e.problems().forEach(p -> err.println("Cannot generate: " + p));
+            return EXIT_FINDINGS;
+        }
+        final Path outputDirectory = Path.of(output);
+        try {
+            for (final GeneratedFile file : files) {
+                final Path target = outputDirectory.resolve(file.path());
+                Files.createDirectories(target.getParent());
+                Files.writeString(target, file.content(), StandardCharsets.UTF_8);
+            }
+        } catch (final IOException e) {
+            err.println("Cannot write to " + outputDirectory + ": " + e.getMessage());
+            return EXIT_FINDINGS;
+        }
+        out.println(files.size() + " file(s) written to " + outputDirectory);
+        return EXIT_OK;
     }
 
     private void printSummary(final ValidationReport report, final Severity threshold) {

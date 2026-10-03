@@ -450,6 +450,21 @@ The narrowing rule is currently scoped to nullability only — Java code should 
 narrowings of `@@max`, `@@maxLength`, or other inherited constraints, since those are not
 part of the meta-language today.
 
+## Documentation
+
+Public API documentation is written as Markdown documentation comments (`///`, JEP 467, Java 23+; the SDK targets
+Java 25). The content follows [Write documentation for the users of the API](api-guideline.md#write-documentation-for-the-users-of-the-api):
+it is taken from the spec comments and `## Description` sections and never contains references to the spec itself.
+Errors of `@@throws` are documented with `@throws` and the Java exception type the error maps to (see
+[Exception Handling](#exception-handling-throws)), never with the meta-language error identifier.
+
+```java
+/// Parses an address from its textual form `shard.realm.num`.
+///
+/// @throws IllegalArgumentException if the text is not a valid address
+public static @NonNull Address fromString(final @NonNull String address) { ... }
+```
+
 ## Deprecation (`@@deprecated`)
 
 The meta-language `@@deprecated` annotation maps to Java's standard `java.lang.Deprecated` annotation. Apply
@@ -2692,7 +2707,7 @@ module org.hiero.keys {
     // (org.hiero.keys.impl is not exported and therefore not accessible from outside)
 
     // Declare compile-time only dependencies (annotations, etc.)
-    requires static org.jspecify;
+    requires static transitive org.jspecify;
 
     // Declare runtime dependencies
     requires org.bouncycastle.provider;
@@ -2709,7 +2724,10 @@ module org.hiero.keys {
 2. **Only export packages that contain public API** - never export `impl` packages to consumers
 3. **Use `requires` for all dependencies** - make dependencies explicit
 4. **Use `requires static` for compile-time only dependencies** - annotations (like `org.jspecify`), code generators, or
-   other tools that are not needed at runtime must use `requires static`
+   other tools that are not needed at runtime must use `requires static`. If the annotations appear in the exported
+   API — always the case for the jspecify nullness annotations `@NonNull` / `@Nullable` on public signatures — use
+   `requires static transitive org.jspecify;` instead, so that consumers of the module see the annotations at compile
+   time (otherwise `javac -Xlint:exports` reports that the annotation types are not exported to dependent modules)
 5. **Avoid `requires transitive` whenever possible** - exposing types from dependencies in your public API should be
    avoided. If unavoidable (e.g., your public API returns or accepts types from another module), you must use
    `requires transitive` so consumers have access to those types
@@ -2750,7 +2768,7 @@ Understanding the difference between compile-time and runtime dependencies is cr
 ```java
 module org.hiero.keys {
     // Compile-time only: annotations are erased after compilation
-    requires static org.jspecify;
+    requires static transitive org.jspecify;
 
     // Runtime: BouncyCastle is used internally but NOT exposed in public API
     requires org.bouncycastle.provider;
@@ -2764,7 +2782,7 @@ module org.hiero.keys {
 
 ```java
 module org.hiero.client {
-    requires static org.jspecify;
+    requires static transitive org.jspecify;
 
     // Our public API returns CompletionStage, so we use standard Java types (no transitive needed)
     requires java.base;
@@ -2792,7 +2810,7 @@ module org.hiero.keys {
     // Export internal implementation ONLY to test module
     exports org.hiero.keys.impl to org.hiero.keys.test;
 
-    requires static org.jspecify;
+    requires static transitive org.jspecify;
     requires org.bouncycastle.provider;
 }
 ```
@@ -2892,7 +2910,7 @@ module org.hiero.transactions {
     requires org.hiero.keys;
 
     // Compile-time dependencies
-    requires static org.jspecify;
+    requires static transitive org.jspecify;
 
     // Export public API (namespace types)
     exports org.hiero.transactions;

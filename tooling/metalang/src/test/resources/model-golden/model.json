@@ -6,8 +6,8 @@
     {
       "name": "shop.Category",
       "kind": "enum",
-      "location": "shop.md:28:6",
-      "documentation": "",
+      "location": "shop/shop.md:29:6",
+      "documentation": "A product category.",
       "annotations": [],
       "typeParameters": [],
       "supertypes": [],
@@ -36,7 +36,7 @@
           ],
           "annotations": [],
           "documentation": "things to eat",
-          "location": "shop.md:29:5"
+          "location": "shop/shop.md:30:5"
         },
         {
           "name": "OTHER",
@@ -46,15 +46,60 @@
           ],
           "annotations": [],
           "documentation": "",
-          "location": "shop.md:30:5"
+          "location": "shop/shop.md:31:5"
+        },
+        {
+          "name": "LEGACY",
+          "arguments": [
+            "3",
+            "\"Legacy \\\"old\\\"\""
+          ],
+          "annotations": [
+            "@@deprecated"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:32:18"
         }
       ],
-      "methods": []
+      "methods": [
+        {
+          "name": "isFood",
+          "signature": "isFood()",
+          "returnType": "bool",
+          "typeParameters": [],
+          "parameters": [],
+          "declaredIn": "shop.Category",
+          "annotations": [],
+          "documentation": "Whether this category is about food.",
+          "location": "shop/shop.md:35:10"
+        },
+        {
+          "name": "byCode",
+          "signature": "byCode(int8)",
+          "returnType": "shop.Category",
+          "typeParameters": [],
+          "parameters": [
+            {
+              "name": "code",
+              "type": "int8",
+              "varargs": false,
+              "annotations": []
+            }
+          ],
+          "declaredIn": "shop.Category",
+          "annotations": [
+            "@@static",
+            "@@throws(not-found-error)"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:37:49"
+        }
+      ]
     },
     {
       "name": "shop.Entity",
       "kind": "abstraction",
-      "location": "shop.md:14:13",
+      "location": "shop/shop.md:14:13",
       "documentation": "Something with an id.",
       "annotations": [],
       "typeParameters": [
@@ -74,7 +119,7 @@
             "@@nullable"
           ],
           "documentation": "",
-          "location": "shop.md:15:28"
+          "location": "shop/shop.md:15:28"
         }
       ],
       "methods": [
@@ -101,14 +146,52 @@
             "@@finalMethod"
           ],
           "documentation": "",
-          "location": "shop.md:16:24"
+          "location": "shop/shop.md:16:24"
         }
       ]
     },
     {
+      "name": "shop.Flag",
+      "kind": "enum",
+      "location": "shop/shop.md:40:6",
+      "documentation": "",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [],
+      "attributes": [
+        {
+          "name": "default",
+          "type": "bool",
+          "varargs": false,
+          "annotations": []
+        }
+      ],
+      "values": [
+        {
+          "name": "ON",
+          "arguments": [
+            "true"
+          ],
+          "annotations": [],
+          "documentation": "",
+          "location": "shop/shop.md:41:5"
+        },
+        {
+          "name": "OFF",
+          "arguments": [
+            "false"
+          ],
+          "annotations": [],
+          "documentation": "",
+          "location": "shop/shop.md:42:5"
+        }
+      ],
+      "methods": []
+    },
+    {
       "name": "shop.Product",
       "kind": "type",
-      "location": "shop.md:21:1",
+      "location": "shop/shop.md:21:1",
       "documentation": "A product.",
       "annotations": [
         "@@finalType"
@@ -127,7 +210,7 @@
             "@@override"
           ],
           "documentation": "",
-          "location": "shop.md:22:28"
+          "location": "shop/shop.md:22:28"
         },
         {
           "name": "name",
@@ -138,7 +221,7 @@
             "@@maxLength(40)"
           ],
           "documentation": "",
-          "location": "shop.md:23:33"
+          "location": "shop/shop.md:23:33"
         },
         {
           "name": "price",
@@ -148,7 +231,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop.md:24:17"
+          "location": "shop/shop.md:24:17"
         }
       ],
       "methods": [
@@ -175,7 +258,7 @@
             "@@finalMethod"
           ],
           "documentation": "",
-          "location": "shop.md:16:24"
+          "location": "shop/shop.md:16:24"
         },
         {
           "name": "related",
@@ -198,14 +281,14 @@
             "@@throws(not-found-error)"
           ],
           "documentation": "",
-          "location": "shop.md:25:53"
+          "location": "shop/shop.md:25:53"
         }
       ]
     },
     {
       "name": "shop.money.Money",
       "kind": "type",
-      "location": "money.md:10:1",
+      "location": "core/money.md:10:1",
       "documentation": "",
       "annotations": [],
       "typeParameters": [],
@@ -219,7 +302,61 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "money.md:11:17"
+          "location": "core/money.md:11:17"
+        }
+      ],
+      "methods": []
+    },
+    {
+      "name": "shop.money.Plan",
+      "kind": "enum",
+      "location": "core/money.md:14:6",
+      "documentation": "",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [],
+      "attributes": [
+        {
+          "name": "timeout",
+          "type": "seconds",
+          "varargs": false,
+          "annotations": []
+        },
+        {
+          "name": "limit",
+          "type": "int256",
+          "varargs": false,
+          "annotations": []
+        },
+        {
+          "name": "tags",
+          "type": "list<string>",
+          "varargs": false,
+          "annotations": []
+        }
+      ],
+      "values": [
+        {
+          "name": "BASIC",
+          "arguments": [
+            "30",
+            "1_000",
+            "[\"a\", \"b\"]"
+          ],
+          "annotations": [],
+          "documentation": "",
+          "location": "core/money.md:15:5"
+        },
+        {
+          "name": "PREMIUM",
+          "arguments": [
+            "3_600",
+            "100_000_000_000_000_000_000",
+            "[]"
+          ],
+          "annotations": [],
+          "documentation": "",
+          "location": "core/money.md:16:5"
         }
       ],
       "methods": []
@@ -250,7 +387,7 @@
         "@@static"
       ],
       "documentation": "",
-      "location": "shop.md:35:18"
+      "location": "shop/shop.md:47:18"
     }
   ],
   "constants": [
@@ -260,7 +397,7 @@
       "value": "1_000",
       "annotations": [],
       "documentation": "",
-      "location": "shop.md:33:1"
+      "location": "shop/shop.md:45:1"
     }
   ]
 }

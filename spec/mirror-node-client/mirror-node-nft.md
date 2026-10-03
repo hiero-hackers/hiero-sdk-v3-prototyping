@@ -2,6 +2,11 @@
 
 ## Description
 
+Query NFTs and NFT types (collections) from the Mirror Node. Use the `NftRepository` (available as
+`MirrorNodeClient.nft`) to find NFTs by owner, by type or by type and serial number, and to look up the
+`NftMetadata` (name, symbol and treasury account) of NFT types. An individual `Nft` is identified by the token id of
+its type plus its serial number and carries its owner and metadata bytes.
+
 ## API Schema
 
 ```
@@ -51,3 +56,5 @@ abstraction NftRepository {
 @@static NftRepository createRepository(mirrorNode: MirrorNode)
 
 ```
+
+## Questions & Comments

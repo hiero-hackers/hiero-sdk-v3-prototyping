@@ -1,29 +1,39 @@
 # Authority API
 
+## Description
+
+An `Authority` describes *who or what may act* on an entity — sign for it, update it, mint, and so
+on. Accounts, tokens, topics and other entities are guarded by an `Authority`. It is an immutable,
+recursive value that is satisfied in one of three ways; composed, it forms a **multi-signature
+(m-of-n)** structure:
+
+- **`PublicKeyAuthority`** — satisfied by a signature from a single `PublicKey`.
+- **`ContractAuthority`** — satisfied not by a signature but by the named smart **contract** being
+  the active executing frame. With `delegatable = false` the contract must be the direct caller;
+  with `delegatable = true` the authority may also be exercised via `delegatecall`. This is how,
+  e.g., a token's `supplyAuthority` can be a contract so that only that contract's logic may mint.
+- **`AuthorityList`** — a composition of child authorities with a `threshold`: at least
+  `threshold` of the `children` must be satisfied. **n-of-n** ("all must sign") is simply
+  `threshold == children.size()`; **m-of-n** is any smaller threshold. Children are themselves
+  `Authority`s, so an account can be guarded by "Alice **and** (2-of-3 of {Bob, Carol, contract})".
+
+Create authorities with the factory methods `of(...)`, `ofContract(...)` and `ofDelegatable(...)`.
+An `Authority` received from the network (e.g. in account or token information) can be inspected
+by matching on its three variants; the set of variants is closed. A private key is never part of an
+`Authority` — only public information is.
+
+## Design Notes
+
 This namespace defines the **authorization model** for the SDK: the structure that decides *who or
 what may act* on an entity (sign for it, update it, mint, …). It is the V3 replacement for the
 `PublicKey` / `list<PublicKey>` placeholder used across the transaction, query, and mirror-node
 specs, and corresponds to HAPI's `Key` message. The design and the alternatives it rejects are
 recorded in [ADR-0004](../../docs/adr/0004-authority-authorization-sum-type.md).
 
-## Description
-
-An `Authority` is an immutable, recursive **sum type** — an *authorization requirement* that is
-satisfied in one of three ways. It is also known as a **multi-signature (m-of-n)** structure when
-composed:
-
-- **`PublicKeyAuthority`** — satisfied by a signature from a single public key. The leaf wraps a
-  [`PublicKey`](keys.md); it deliberately *wraps* rather than *is* a `PublicKey` (see below).
-- **`ContractAuthority`** — satisfied not by a signature but by the named smart **contract**
-  being the active executing frame. `delegatable = false` maps to HAPI's `ContractID` (the
-  contract must be the direct caller); `delegatable = true` maps to `DelegatableContractID`
-  (authority may also be exercised via `delegatecall`). This is how, e.g., a token's `supplyAuthority`
-  can be a contract so that only that contract's logic may mint.
-- **`AuthorityList`** — a composition of child authorities with a `threshold`: at least
-  `threshold` of the `children` must be satisfied. **n-of-n** ("all must sign") is simply
-  `threshold == children.size()`; **m-of-n** is any smaller threshold. Children are themselves
-  `Authority`s, so the structure is **recursive**: an account can be guarded by
-  "Alice **and** (2-of-3 of {Bob, Carol, contract})".
+- `PublicKeyAuthority` wraps a [`PublicKey`](keys.md); it deliberately *wraps* rather than *is* a
+  `PublicKey` (see below).
+- `ContractAuthority.delegatable = false` maps to HAPI's `ContractID`; `delegatable = true` maps to
+  `DelegatableContractID`.
 
 ### Design rules (see ADR-0004)
 
@@ -43,6 +53,8 @@ composed:
 - **Construction goes through the factories** (`of` / `ofContract` / `ofDelegatable`). They are the
   documented, forward-compatible path; the variants are public so that a received `Authority`
   can be destructured by pattern matching.
+- **`@@sealed`** closes the set of variants so consumers can match exhaustively. The annotation is
+  not yet part of the meta-language — it is introduced together with this namespace; see ADR-0004.
 
 ## API Schema
 
@@ -53,10 +65,9 @@ requires {ContractId} from ledger
 
 // Authorization requirement (HAPI `Key`). Pure data sum type — no behavior methods. Immutable
 // value type with structural equality (provided idiomatically per language: Java records,
-// Rust derive(PartialEq), …): two Authorities are equal iff their trees match.
-//
-// @@sealed closes the set of variants so consumers can match exhaustively. The annotation is not
-// yet part of the meta-language — it is introduced together with this namespace; see ADR-0004.
+// Rust derive(PartialEq), …): two Authorities are equal iff their trees match. The set of
+// variants (PublicKeyAuthority, ContractAuthority, AuthorityList) is closed, so consumers can
+// match exhaustively.
 @@sealed(PublicKeyAuthority, ContractAuthority, AuthorityList) abstraction Authority {}
 
 // Leaf: satisfied by a signature from this public key.
@@ -69,7 +80,7 @@ PublicKeyAuthority extends Authority {
 @@finalType
 ContractAuthority extends Authority {
     @@immutable contractId: ContractId
-    @@immutable @@default(false) delegatable: bool   // false → ContractID; true → DelegatableContractID
+    @@immutable @@default(false) delegatable: bool   // false: the contract must be the direct caller (HAPI ContractID); true: also usable via delegatecall (HAPI DelegatableContractID)
 }
 
 // Composition: at least `threshold` of `children` must be satisfied.
@@ -77,7 +88,7 @@ ContractAuthority extends Authority {
 @@finalType
 AuthorityList extends Authority {
     @@immutable @@minSize(1) children: list<Authority>   // never empty
-    @@immutable @@min(1) threshold: int32                    // invariant: 1 ≤ threshold ≤ children.size()
+    @@immutable @@min(1) threshold: int32                    // must be between 1 and children.size() (inclusive)
 }
 
 // --- factories (the blessed construction path; leaves are wrapped internally) ---

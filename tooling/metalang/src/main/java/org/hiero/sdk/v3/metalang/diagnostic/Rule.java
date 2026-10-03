@@ -34,6 +34,11 @@ public enum Rule {
     DOC_INVALID_ENCODING("doc.invalid-encoding", Severity.ERROR,
             "File is not valid UTF-8 and cannot be read", "CLAUDE.md#audience--language"),
 
+    // --- API documentation -----------------------------------------------------------------------
+    DOC_INTERNAL_REFERENCE("doc.internal-reference", Severity.WARNING,
+            "API documentation (description or declaration comment) refers to spec internals",
+            "api-guideline.md#write-documentation-for-the-users-of-the-api"),
+
     // --- syntax ----------------------------------------------------------------------------------
     SYNTAX_ERROR("syntax.error", Severity.ERROR,
             "Text does not match the meta-language grammar", "api-guideline.md#syntax"),

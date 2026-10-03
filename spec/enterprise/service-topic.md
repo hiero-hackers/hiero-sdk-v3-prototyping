@@ -1,7 +1,11 @@
 # Topic Service API
 
-
 ## Description
+
+`TopicService` works with consensus topics (the Consensus Service): creating and deleting topics, submitting messages
+and reading them. Messages can be read page by page with `getMessages`, fetched by sequence number, or received live
+with `subscribe`, which keeps delivering new messages as they reach consensus. A topic without a submit authority is
+public, so anyone may submit messages to it; a topic with an admin authority can be updated or deleted later.
 
 ## API Schema
 
@@ -32,7 +36,7 @@ TopicMessage {
 
 TopicService {
 
-    // Create a public topic (anyone may submit messages). An admin key allows later updates/deletion.
+    // Create a public topic (anyone may submit messages). An admin authority allows later updates and deletion.
     @@throws(service-error) Topic createTopic()
 
     @@throws(service-error) Topic createTopic(memo: string)
@@ -43,7 +47,7 @@ TopicService {
     
     @@throws(service-error) Page<Topic> getAll()
 
-    // Delete a topic (requires admin-key authority)
+    // Delete a topic (requires the topic's admin authority)
     @@throws(service-error) void deleteTopic(topicId: Address)
 
     // Submit a message to a topic
@@ -56,7 +60,8 @@ TopicService {
     @@streaming TopicMessage subscribe(topicId: Address)
 }
 
-// Factory method to create the service (not needed for real framework integration where injection is used)
+// Creates the service for the given session. With a framework integration the service is usually obtained via
+// dependency injection instead.
 @@static
 TopicService createService(session: Session)
 ```

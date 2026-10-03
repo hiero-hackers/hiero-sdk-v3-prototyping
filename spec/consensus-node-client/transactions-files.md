@@ -14,12 +14,12 @@ A file's lifecycle is:
   create ── (append | update)* ── delete
 ```
 
-- `FileCreate` allocates a new file id, sets the initial key list, optional memo, expiration
-  time, and the first slice of content.
-- `FileAppend` appends bytes to the end of the file.
-- `FileUpdate` replaces any subset of the metadata (keys, memo, expiration) and optionally
-  *replaces* the entire content (not appends — see the field comment on `contents`).
-- `FileDelete` deletes the file. The file id is not reusable; reads against a deleted file
+- `FileCreateTransaction` allocates a new file id, sets the initial key list, optional memo,
+  expiration time, and the first slice of content.
+- `FileAppendTransaction` appends bytes to the end of the file.
+- `FileUpdateTransaction` replaces any subset of the metadata (keys, memo, expiration) and
+  optionally *replaces* the entire content (it does not append).
+- `FileDeleteTransaction` deletes the file. The file id is not reusable; reads against a deleted file
   return `FILE_DELETED`.
 
 ### Chunked appends
@@ -30,11 +30,8 @@ N consecutive `FileAppend` transactions on the same `fileId` and submits them in
 the caller's perspective this remains a single `Transaction.signWithOperator…` call — the SDK
 hides the split. The receipt surfaced back to the caller is the receipt of the *last* chunk.
 
-This is a leaky abstraction: each underlying chunk is a separate consensus transaction with
-its own fee and its own `TransactionId`. The current model intentionally keeps the surface
-simple; surfacing per-chunk receipts is deferred (see *Questions & Comments*). The same
-chunking concept applies to `TopicMessageSubmit` and other HAPI transactions that ride on the
-consensus-node body size limit.
+Note that each underlying chunk is a separate consensus transaction with its own fee and its own
+`TransactionId`.
 
 ### Signing requirements (file)
 
@@ -46,9 +43,18 @@ consensus-node body size limit.
 | `FileDelete`        | the *payer* **and** every key in the file's current key list                              |
 
 When the operator is also the sole key on the file, `signWithOperatorAndSubmit(client)` is
-enough. Multi-key files require the multi-signature flow shown in
-[`transactions-accounts.md`](transactions-accounts.md): build → `signWithOperator(client)` →
+enough. Multi-key files require the multi-signature flow: build → `signWithOperator(client)` →
 `.sign(...)` per custodian → `submit(client)`.
+
+## Design Notes
+
+- **Chunked appends are a leaky abstraction.** Each underlying chunk is a separate consensus
+  transaction with its own fee and its own `TransactionId`. The current model intentionally keeps
+  the surface simple; surfacing per-chunk receipts is deferred (see *Questions & Comments*). The
+  same chunking concept applies to `TopicMessageSubmit` and other HAPI transactions that ride on the
+  consensus-node body size limit.
+- The multi-signature flow for multi-key files is the one shown in
+  [`transactions-accounts.md`](transactions-accounts.md).
 
 ## API Schema
 

@@ -17,8 +17,7 @@ Each topic carries two optional keys that control how it can be modified and use
 Like accounts, topics expire and can be auto-renewed: `autoRenewPeriod` is the renewal window
 the protocol applies when expiration approaches, and `autoRenewAccount` (optional) names the
 account that pays the renewal fee. If `autoRenewAccount` is unset, renewal is paid by the
-topic itself (from any HBAR it received via HIP-991 custom fees — outside the scope of this
-file).
+topic itself (from any HBAR it received via HIP-991 custom fees).
 
 A topic's lifecycle is:
 
@@ -28,8 +27,8 @@ A topic's lifecycle is:
                   └── (TopicMessageSubmit, modelled separately)
 ```
 
-`TopicMessageSubmit` and the HIP-991 custom-fee fields (`customFees`, `feeScheduleAuthority`,
-`feeExemptAuthorities`) are deliberately out of scope of this file — see *Questions & Comments*.
+Submitting messages (`TopicMessageSubmit`) and the HIP-991 custom-fee fields are not covered by
+these transactions yet.
 
 ### Signing requirements (topic lifecycle)
 
@@ -40,8 +39,7 @@ A topic's lifecycle is:
 | `TopicDelete`    | the *payer*; **and** the topic's current `adminAuthority` (an immutable topic — `adminAuthority` unset — cannot be deleted; the request fails with `UNAUTHORIZED`) |
 
 When the operator holds every required key, `signWithOperatorAndSubmit(client)` suffices.
-Multi-key flows go through the same `signWithOperator(client).sign(...)` pattern shown in
-[`transactions-accounts.md`](transactions-accounts.md).
+Multi-key flows go through the `signWithOperator(client).sign(...)` pattern.
 
 The general rule: a key field on a create transaction must sign **if** binding it would grant
 that key authority over a real asset (admin / auto-renew payer / treasury / ...). A key field
@@ -52,12 +50,21 @@ now (here: `submitAuthority`) does not need to sign creation.
 
 `TopicUpdate` distinguishes "leave unchanged" from "clear":
 
-- A `@@nullable` field set to **null** (or never set on the builder) means *leave unchanged*.
-- `adminAuthority` / `submitAuthority` are now the `Authority` authorization type (see
+- An optional field that is left unset means *leave unchanged*.
+- `adminAuthority` / `submitAuthority` are `Authority` values (a single key, a contract, or an
+  m-of-n threshold). Clearing an optional key (e.g. removing `adminAuthority` to make the topic
+  immutable, or removing `submitAuthority` to make the topic public) is not supported yet.
+- `autoRenewAccount` can be removed by setting it to `ZERO_ADDRESS`.
+
+## Design Notes
+
+- `TopicMessageSubmit` and the HIP-991 custom-fee fields (`customFees`, `feeScheduleAuthority`,
+  `feeExemptAuthorities`) are deliberately out of scope of this file — see *Questions & Comments*.
+- The multi-signature pattern is shown in [`transactions-accounts.md`](transactions-accounts.md).
+- `adminAuthority` / `submitAuthority` are the `Authority` authorization type (see
   [`authority.md`](../base/authority.md) / [ADR-0004](../../docs/adr/0004-authority-authorization-sum-type.md)).
-  Clearing an optional key (e.g. removing `adminAuthority` to make the topic immutable, or removing
-  `submitAuthority` to make the topic public) is a future write-side `KeyUpdate` operation (per
-  ADR-0004), not expressible as an `Authority` value — see *Questions & Comments*.
+  Clearing an optional key is a future write-side `KeyUpdate` operation (per ADR-0004), not
+  expressible as an `Authority` value — see *Questions & Comments*.
 
 ## API Schema
 

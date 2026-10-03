@@ -9,10 +9,11 @@ purely for readability.
 
 ## Description
 
-Each transaction here is authorised by one specific token key (an [`Authority`](../base/authority.md)),
-set at `TokenCreate`. A key that was left unset at create permanently disables the corresponding
-capability (HAPI: `KEY_NOT_PROVIDED` / `TOKEN_HAS_NO_*_KEY`), so these transactions are only valid
-on tokens that opted into the capability.
+The token management transactions are the permissioned operations gated by a token's individual
+keys. Each is authorised by one specific token key (an `Authority`), set when the token is created.
+A key that was left unset at creation permanently disables the corresponding capability (the
+network rejects the transaction with `KEY_NOT_PROVIDED` / `TOKEN_HAS_NO_*_KEY`), so these
+transactions are only valid on tokens that opted into the capability.
 
 - **`TokenWipe`** — burns units from a **non-treasury** account (e.g. to claw back after a
   compliance event). Gated by `wipeAuthority`. Fungible: an `amount`; NFT: up to 10 `serials`.
@@ -27,10 +28,7 @@ on tokens that opted into the capability.
 - **`TokenUpdateNfts`** (HIP-657) — replace the metadata of specific NFT serials after mint. Gated
   by `metadataAuthority`.
 
-`TokenFeeScheduleUpdate` belongs to this group conceptually (gated by `feeScheduleAuthority`) but is
-**not specified here** — its sole payload is the custom-fee schedule, which depends on the
-write-side `CustomFee` hierarchy that does not yet exist (tracked in
-[`missing-features.md`](../../missing-features.md) §3.3). It lands once that hierarchy does.
+Updating a token's custom-fee schedule (gated by `feeScheduleAuthority`) is not supported yet.
 
 ### Signing requirements
 
@@ -41,6 +39,16 @@ write-side `CustomFee` hierarchy that does not yet exist (tracked in
 | `TokenGrantKyc` / `TokenRevokeKyc` | the *payer*; **and** the token's `kycAuthority`. |
 | `TokenPause` / `TokenUnpause` | the *payer*; **and** the token's `pauseAuthority`. |
 | `TokenUpdateNfts` | the *payer*; **and** the token's `metadataAuthority`. |
+
+## Design Notes
+
+- `TokenFeeScheduleUpdate` belongs to this group conceptually (gated by `feeScheduleAuthority`) but
+  is **not specified here** — its sole payload is the custom-fee schedule, which depends on the
+  write-side `CustomFee` hierarchy that does not yet exist (tracked in
+  [`missing-features.md`](../../missing-features.md) §3.3). It lands once that hierarchy does.
+- The token key type `Authority` is specified in [`authority.md`](../base/authority.md).
+- `TokenWipe` mixing fungible and NFT payloads is rejected by the network; the `@@oneOf` makes it
+  statically checkable.
 
 ## API Schema
 
@@ -53,7 +61,7 @@ requires {Receipt, Transaction} from consensusnode.transactions
 // wipeAuthority. The payload differs by token kind:
 //   - FUNGIBLE_COMMON     → set `amount` (count in the smallest unit, must be > 0).
 //   - NON_FUNGIBLE_UNIQUE → set `serials` (the serials held by `accountId`, max 10).
-// Mixing the two is rejected; the @@oneOf makes it statically checkable.
+// Exactly one of `amount` and `serials` must be set.
 @@oneOf(amount, serials)
 @@finalType
 TokenWipeTransaction extends Transaction<TokenWipeReceipt, TokenWipeTransaction> {

@@ -7,8 +7,7 @@ or upgraded. It is authorised by the network's *freeze key* (configured at the c
 node out-of-band — not the operator's normal account key), which is held by the governance
 council and rotates independently of any application's keys. Submitting a
 `FreezeTransaction` from a non-privileged payer fails with `AUTHORIZATION_FAILED`; this
-transaction has no use case for end-user applications and is the reason the
-`consensus-node-admin-client` module exists.
+transaction has no use case for end-user applications.
 
 The transaction encodes one of five distinct operations selected by `freezeType`:
 
@@ -28,15 +27,20 @@ The transaction encodes one of five distinct operations selected by `freezeType`
   only. The consensus path stays live (no downtime). Requires `updateFile` and `fileHash`
   like `PREPARE_UPGRADE` / `FREEZE_UPGRADE`.
 
-Typical upgrade flow:
+A typical upgrade first submits `PREPARE_UPGRADE` (the network stays live while the nodes stage the upgrade) and then
+`FREEZE_UPGRADE` with a `startTime`, at which the network freezes, applies the upgrade and is restarted by the
+council.
 
-```
-  PREPARE_UPGRADE ──▶ (network stays live, nodes pre-stage the upgrade)
-                  ──▶ FREEZE_UPGRADE @ startTime
-                  ──▶ (network freezes, applies upgrade, council restarts)
-```
+### Signing requirements
 
-### Signing requirements (freeze)
+A `FreezeTransaction` must be signed by the *payer* **and** by the network's privileged *freeze key*. The freeze key
+is configured at the consensus node, not on the transaction. If the freeze key is held in an HSM, sign the packed
+transaction with an external signer or with externally created signatures.
+
+## Design Notes
+
+The `consensus-node-admin-client` module exists because of transactions like this one, which have no use case for
+end-user applications.
 
 | Transaction         | Signers required                                                                          |
 |---------------------|-------------------------------------------------------------------------------------------|
@@ -55,25 +59,28 @@ namespace consensusnode.admin.freeze
 requires {Address} from ledger
 requires {Receipt, Transaction} from consensusnode.transactions
 
-// Selects which of the five operations to perform. The per-value field requirements
-// (described in the file header) are enforced server-side; the consensus node rejects
-// mismatched payloads with INVALID_FREEZE_TRANSACTION_BODY.
+// Selects which of the five freeze operations to perform. Each operation requires a different set of
+// `FreezeTransaction` fields; the consensus node rejects a transaction whose fields do not match the operation
+// with INVALID_FREEZE_TRANSACTION_BODY.
 enum FreezeType {
-    FREEZE_ONLY
-    PREPARE_UPGRADE
-    FREEZE_UPGRADE
-    FREEZE_ABORT
-    TELEMETRY_UPGRADE
+    FREEZE_ONLY        // pause consensus at startTime until the council resumes the network
+    PREPARE_UPGRADE    // stage the upgrade in updateFile without freezing the network
+    FREEZE_UPGRADE     // freeze at startTime and apply the previously staged upgrade
+    FREEZE_ABORT       // cancel a pending freeze whose startTime has not yet arrived
+    TELEMETRY_UPGRADE  // upgrade only the telemetry subsystem, without downtime
 }
 
+// Pauses or upgrades the consensus network. Must be signed by the network's privileged freeze key.
 @@finalType
 FreezeTransaction extends Transaction<FreezeReceipt, FreezeTransaction> {
-    @@immutable freezeType: FreezeType
+    @@immutable freezeType: FreezeType                       // the operation to perform
     @@immutable @@nullable startTime: zonedDateTime          // wall-clock time at which the network freezes; required for FREEZE_ONLY, FREEZE_UPGRADE, TELEMETRY_UPGRADE; ignored for PREPARE_UPGRADE, FREEZE_ABORT
     @@immutable @@nullable updateFile: Address               // id of a file holding the upgrade payload; required for PREPARE_UPGRADE, FREEZE_UPGRADE, TELEMETRY_UPGRADE
     @@immutable @@nullable fileHash: bytes                   // SHA-384 of the upgrade file's contents; required whenever updateFile is set; the consensus node rejects with FREEZE_UPDATE_FILE_HASH_DOES_NOT_MATCH on mismatch
 }
 
+// Receipt of a `FreezeTransaction`. It confirms that the network accepted the freeze schedule, not that an
+// upgrade has been applied.
 @@finalType
 FreezeReceipt extends Receipt {
 }

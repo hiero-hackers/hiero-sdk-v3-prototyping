@@ -261,6 +261,34 @@ class LinkedModelTest {
     }
 
     @Nested
+    class Namespaces {
+
+        @Test
+        void shouldDescribeNamespacesWithSourcesAndRequiredNamespaces() {
+            // GIVEN namespace a is declared in two files, imports c (unused), uses b qualified and inherits from d
+            final LinkedModel model = LinkedModel.of(new org.hiero.sdk.v3.metalang.MetaLang().validate(java.util.Map.of(
+                    "f/a1.md", "## Description\n\nPart one.\n\n## API Schema\n```\nnamespace a\n"
+                            + "requires {C} from c\nrequires {D} from d\nX extends D { @@immutable b: b.B }\n```\n",
+                    "f/a2.md", "## API Schema\n```\nnamespace a\nY {}\n```\n",
+                    "f/b.md", TestSpecs.markdown("namespace b\nB {}\n"),
+                    "f/c.md", TestSpecs.markdown("namespace c\nC {}\n"),
+                    "f/d.md", TestSpecs.markdown("namespace d\nrequires {E} from e\nabstraction D { @@immutable e: E }\n"),
+                    "f/e.md", TestSpecs.markdown("namespace e\nE {}\n"))).model());
+
+            // WHEN
+            final NamespaceDefinition a = model.namespaces().stream().filter(n -> n.name().equals("a"))
+                    .findFirst().orElseThrow();
+
+            // THEN e is only reached through the inherited field of D and is therefore not required directly
+            assertThat(model.namespaces()).extracting(NamespaceDefinition::name).containsExactly("a", "b", "c", "d", "e");
+            assertThat(a.requiredNamespaces()).containsExactly("b", "c", "d");
+            assertThat(a.sources()).containsExactly(new NamespaceDefinition.Source("f/a1.md", "Part one."),
+                    new NamespaceDefinition.Source("f/a2.md", ""));
+            assertThat(model.types("a")).extracting(t -> t.name().name()).containsExactly("X", "Y");
+        }
+    }
+
+    @Nested
     class Api {
 
         private final LinkedModel model = link("""

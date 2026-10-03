@@ -2,6 +2,12 @@
 
 ## Description
 
+Query consensus topics and their messages from the Mirror Node. Use the `TopicRepository` (available as
+`MirrorNodeClient.topic`) to look up a `Topic`, to page through the messages submitted to a topic, or to fetch a
+single message by its sequence number. A `TopicMessage` carries the consensus timestamp, payer, running hash and
+sequence number of the message; messages that were submitted in several chunks carry `ChunkInfo` describing the
+chunk.
+
 ## API Schema
 
 ```
@@ -63,3 +69,5 @@ abstraction TopicRepository {
 @@static TopicRepository createRepository(mirrorNode: MirrorNode)
 
 ```
+
+## Questions & Comments

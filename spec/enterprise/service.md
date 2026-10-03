@@ -1,24 +1,41 @@
 # Service API
 
+## Description
+
+The enterprise service layer sits on top of the low-level consensus node and Mirror Node APIs and makes common tasks
+easy to perform and to integrate into enterprise applications and frameworks. Every concrete service
+(`AccountService`, `FungibleTokenService`, `NftService`, `TopicService`, `FileService`, `SmartContractService`) is
+created from a `Session`.
+
+A `Session` bundles what all services of one workflow share:
+
+1. **Network configuration** — the `NetworkSetting` describing the target ledger and any tunables.
+2. **Operator credentials** — the `Account` used to pay for transactions, plus an optional `TransactionSigner` if the
+   private key lives outside the process (HSM, KMS, wallet).
+3. **Read-your-writes consistency across services** — every successful write executed through a service of the
+   session advances a *high-water-mark* (the consensus timestamp of the receipt). Before any service of the same
+   session reads from the Mirror Node, it waits until the Mirror Node has data at or beyond that high-water-mark. So
+   within one session, `nftService.transferNft(...)` followed by `accountService.findById(...)` reflects the balance
+   change, even though the two calls hit different back-ends with different propagation delays. The wait cannot be
+   disabled; use the low-level APIs directly if you need raw throughput without this guarantee.
+
+Streaming operations such as `TopicService.subscribe(topicId)` are live subscriptions and do not wait; every other
+Mirror Node read does. A session that never writes never waits. Sessions are independent of each other: a write in one
+session never blocks a read in another. A `Session` is thread-safe and can be used concurrently from any number of
+threads or asynchronous tasks.
+
+Use one `Session` per **workflow** — the logical unit a write and its follow-up reads belong to, such as an HTTP
+request, a batch-job iteration or a processed message — not one per process. Sharing a single session across a whole
+server would make unrelated workflows wait for each other. Framework integrations bind the session to the matching
+scope (for example request scope) so that injected services just work. Consistency across process boundaries is not
+supported yet.
+
+## Design Notes
+
 The service layer is a layer on top of the classical SDK functionalities (that exist in V2 and V3). The idea is to
 make it easier to use the SDK and to allow a better integration in enterprise applications. Every concrete service
 (`AccountService`, `FungibleTokenService`, `NftService`, `TopicService`, `FileService`, `SmartContractService`) is
 constructed from a `Session` defined in this namespace.
-
-## Description
-
-A `Session` is the **consistency boundary** of the enterprise service layer. It bundles three concerns that every
-concrete service shares:
-
-1. **Network configuration** — the `NetworkSetting` describing the target ledger and any tunables.
-2. **Operator credentials** — the `Account` used to pay for transactions, plus an optional `TransactionSigner` if the
-   private material lives outside the process (HSM, KMS, wallet).
-3. **Read-your-writes consistency across services** — every successful write executed through a service of the
-   session advances a *high-water-mark* (the `consensusTimestamp` of the receipt). Before any service of the same
-   session performs a Mirror-Node-backed read, it waits until the Mirror Node has data at or beyond that high-water-
-   mark. This ensures that, within one session, `nftService.transferNft(...)` followed by
-   `accountService.findById(...)` reflects the balance change, even though the two calls hit different back-ends
-   (consensus node vs. mirror node) with different propagation delays.
 
 ### Why the session must span all services
 
@@ -27,33 +44,11 @@ can change HBAR balances, NFT ownership, token supply, and topic state in a sing
 consistency scope per service type would let a follow-up `accountService.findById` see a stale state right after the
 contract call. Putting every service of a workflow into the same session is therefore the only correct granularity.
 
-### Streaming reads
-
-Streaming operations such as `TopicService.subscribe(topicId)` do **not** participate in the wait — they are live
-subscriptions, not snapshot reads, and applying the wait would defeat their purpose. Every non-streaming Mirror-Node-
-backed read does participate.
-
-### Multiple sessions
-
-Sessions are independent of each other. Using two sessions in the same process (e.g. one per request, one per
-background worker, one per user, one per operator account) creates two isolated consistency boundaries. There is no
-implicit cross-session synchronisation; a write in session `A` does not block a read in session `B`.
-
-### Read-only workflows
-
-If a session never performs a write, its high-water-mark stays `null` and no Mirror Node read ever blocks. Pure read
-workloads pay no consistency cost.
-
 ### Opt-out
 
 The service layer offers **no toggle to disable the wait**. Applications that need raw throughput should go directly
 to the lower-level `mirrornode.*` and `consensusnode.*` APIs, which expose the same operations without the
 consistency guarantee.
-
-### Threading
-
-`Session` is `@@threadSafe`: the high-water-mark is monotonically advanced (newer timestamps win) and can be read and
-advanced concurrently from any number of threads or asynchronous tasks.
 
 ### Scoping in framework integrations
 
@@ -85,6 +80,11 @@ A framework adapter is therefore responsible for two things:
 1. Picking the right scope abstraction (request, exchange, job, message, …) and binding `Session` to it.
 2. Hiding the scope from the developer so that `@Autowired NftService` (or its language-equivalent) "just works".
 
+### Threading
+
+`Session` is `@@threadSafe`: the high-water-mark is monotonically advanced (newer timestamps win) and can be read and
+advanced concurrently from any number of threads or asynchronous tasks.
+
 ### Distributed workflows (multiple processes)
 
 When one workflow spans multiple processes — e.g. service A submits a transaction and synchronously calls service B
@@ -104,8 +104,9 @@ requires {Account, TransactionSigner} from consensusnode.client
 @@threadSafe
 abstraction Session {
 
-    // Block until the Mirror Node has caught up to the current high-water-mark (with timeout).
-    // Returns immediately when the high-water-mark is null. Throws service-error on timeout.
+    // Waits until the Mirror Node has caught up to the session's high-water-mark, i.e. until it reflects
+    // all writes executed through this session. Returns immediately if no write has been executed yet.
+    // Throws if the Mirror Node does not catch up within the session's timeout.
     @@async @@throws(service-error) void awaitConsistency()
 }
 

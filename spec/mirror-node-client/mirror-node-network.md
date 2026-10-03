@@ -2,9 +2,10 @@
 
 ## Description
 
-Network-wide read queries: exchange rates, the current fee schedule (`fees`), HIP-1313 fee
-estimation (`estimateFees`), staking parameters, HBAR supply, and the consensus-node address book
-(`nodes`).
+Query network-wide data from the Mirror Node. Use the `NetworkRepository` (available as `MirrorNodeClient.network`)
+to read the current and next HBAR exchange rate, the current fee schedule (`fees`), the staking parameters (`stake`),
+the HBAR supply (`supplies`) and the address book of consensus nodes (`nodes`). `estimateFees` estimates the fee of a
+candidate transaction before it is submitted (HIP-1313).
 
 ## API Schema
 
@@ -81,9 +82,7 @@ NetworkNode {
 }
 
 // Estimated fee for a candidate transaction (HIP-1313, congestion-adjusted). Returned by
-// NetworkRepository.estimateFees(). PROVISIONAL: the authoritative HIP-1313 response model
-// (full breakdown + high-volume multiplier) is tracked in missing-features.md §3.4; only the
-// estimated total is modelled here for now.
+// NetworkRepository.estimateFees().
 @@finalType
 FeeEstimate {
     @@immutable estimatedFee: int64                    // estimated total fee in tinybars
@@ -107,9 +106,8 @@ NetworkRepository {
     @@async @@throws(mirror-node-error)
     Page<NetworkNode> nodes()
 
-    // Estimate the fee for a protobuf-encoded candidate transaction (HIP-1313). The transaction
-    // is passed as encoded bytes — the mirror-node layer does not depend on the consensus-client
-    // transaction types. Maps to POST /api/v1/network/fees.
+    // Estimate the fee for a candidate transaction (HIP-1313). The transaction is passed as its
+    // protobuf-encoded bytes. Maps to POST /api/v1/network/fees.
     @@async @@throws(mirror-node-error)
     FeeEstimate estimateFees(transaction: bytes)
 }

@@ -2,6 +2,33 @@
 
 ## Description
 
+Low-level HTTP access to one specific Mirror Node. A `MirrorNodeHttpClient` combines a `MirrorNode` with an
+`HttpClient` and executes `MirrorNodeHttpRequest`s against it. Requests contain only the **path** of the REST
+endpoint, never a host name, so the same code works unchanged against mainnet, testnet, previewnet or a local
+network — the `MirrorNode` decides which one is called.
+
+How a request is resolved:
+
+- `MirrorNode.restBaseUrl` is an absolute URL that already includes the API version segment
+  (`scheme://host[:port]/api/v1`). A trailing slash on it is ignored.
+- `MirrorNodeHttpRequest.path` always starts with `/` and does not repeat `/api/v1`. An absolute URL is rejected when
+  the request is created.
+- The final URL is the base URL followed by the path: `https://mainnet.mirrornode.hedera.com/api/v1` +
+  `/accounts/0.0.1234` resolves to `https://mainnet.mirrornode.hedera.com/api/v1/accounts/0.0.1234`. Endpoints named
+  in the Mirror Node REST documentation as `/api/v1/...` are therefore called with the part after `/api/v1`.
+
+The client returns the raw `HttpResponse`: it does not interpret status codes, does not retry and does not paginate.
+Mapping a `404` to an absent result, a `5xx` to an error or following the `links.next` value of a response is up to
+the caller. Because `links.next` is returned by the Mirror Node as a path, fetching the next page is just another
+`execute` call. Transport failures (connection problems, timeouts, a closed `HttpClient`) are passed through
+unchanged.
+
+A `MirrorNodeHttpClient` does not own the `HttpClient` it wraps and never closes it. One `HttpClient` (and its
+connection pool) can therefore be shared across several Mirror Nodes; whoever created it is responsible for closing
+it.
+
+## Design Notes
+
 This namespace is the thin adapter that binds the generic [`http`](../base/http.md) transport to
 **one specific** Mirror Node. It is the single place in the mirror-node client where a host name
 exists; everything above it — `MirrorNodeClient` and the per-domain repositories in
@@ -60,6 +87,15 @@ Ownership of the underlying `HttpClient` stays with whoever created it: `MirrorN
 exposes no lifecycle methods and does not close the client it wraps. This makes it possible — and
 intended — to share one transport client, with one connection pool, across several mirror nodes.
 
+On `MirrorNodeHttpRequest.path`: the mirror image of HttpRequest.url's @@urlPattern: this one must NOT be absolute.
+The leading slash is mandatory (so resolution against restBaseUrl is plain concatenation) and an accidentally absolute
+"https://…" is rejected at construction, because it has none. Unlike URL syntax, this constraint is small enough to
+state as a readable regex, so the existing @@pattern is used rather than a dedicated annotation.
+
+On `MirrorNodeHttpClient.execute`: it adds no error of its own: both halves of the URL are already constrained, so
+resolution cannot fail, and the three ids it declares are exactly those of http.HttpClient.execute, propagated
+unchanged so a repository can still tell a retryable transport failure from a permanent one.
+
 ## API Schema
 
 ```
@@ -69,11 +105,9 @@ requires {HttpMethod, HttpClient, HttpResponse} from http
 
 MirrorNodeHttpRequest {
     @@immutable method: HttpMethod
-    // The mirror image of HttpRequest.url's @@urlPattern: this one must NOT be absolute. The
-    // leading slash is mandatory (so resolution against restBaseUrl is plain concatenation) and
-    // an accidentally absolute "https://…" is rejected at construction, because it has none.
-    // Unlike URL syntax, this constraint is small enough to state as a readable regex, so the
-    // existing @@pattern is used rather than a dedicated annotation.
+    // Path of the REST endpoint relative to the Mirror Node's REST base URL, including any query string
+    // (e.g. "/accounts/0.0.1234?limit=25"). Must start with "/", must not contain whitespace and must not
+    // repeat the "/api/v1" prefix; an absolute URL is rejected when the request is created.
     @@pattern("^/[^\s]*$") @@immutable path: string
     @@nullable @@immutable body: bytes
     @@nullable @@immutable timeout: duration
@@ -86,12 +120,10 @@ abstraction MirrorNodeHttpClient {
 
     @@immutable httpClient:HttpClient
 
-    // Resolves request.path against mirrorNode.restBaseUrl and delegates to httpClient. Adds no
-    // error of its own: both halves of the URL are already constrained, so resolution cannot
-    // fail, and the three ids below are exactly those of http.HttpClient.execute, propagated
-    // unchanged so a repository can still tell a retryable transport failure from a permanent
-    // one. A non-2xx status code is NOT an error here either — it is returned in
-    // HttpResponse.statusCode for the repository to interpret.
+    // Resolves request.path against mirrorNode.restBaseUrl and sends the request with httpClient.
+    // Throws if the connection fails, the request times out or httpClient has been closed; these
+    // failures are passed through unchanged. A non-2xx status code is not an error: it is returned
+    // in HttpResponse.statusCode for the caller to interpret.
     @@async
     @@threadSafe(client)
     @@throws(connection-error, timeout-error, client-closed-error)
@@ -100,7 +132,7 @@ abstraction MirrorNodeHttpClient {
 
 ```
 
-## Example
+## Examples
 
 The following example shows what a repository does internally when it serves
 `client.accounts.findById(...)`:

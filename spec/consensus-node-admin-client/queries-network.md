@@ -2,20 +2,21 @@
 
 ## Description
 
-This namespace defines the admin-side read queries against the consensus node:
+Queries for network operators and tooling that need a live view of the consensus network:
 
-- **`NetworkVersionInfoQuery`** — free query returning the network's HAPI protocol version
-  and the Hedera-services build version. Used by tooling that needs to gate behaviour on a
-  specific protocol revision (e.g. probing whether a HIP is live on the targeted network).
-  Maps to HAPI's free `NetworkGetVersionInfoQuery` on the `NetworkService`.
+- **`NetworkVersionInfoQuery`** — a free query that returns the network's HAPI protocol version and the version of
+  the consensus node software (services). Use it to adapt behavior to a specific protocol revision, for example to
+  check whether a HIP is already live on the network.
+- **`NodeAddressBookQuery`** — a paid query that returns the current address book: all consensus nodes with their
+  node ids, accounts, service endpoints and certificates. Use it to refresh your view of the network topology
+  without going through a mirror node. Because the network charges for reading the address book, the query behaves
+  like every other paid query: the price is determined automatically, paid by the operator, and can be capped with
+  `maxQueryPayment`.
 
-- **`NodeAddressBookQuery`** — paid query returning the current address book (the list of
-  consensus nodes with their accounts, endpoints, certificates, and stable node ids).
-  Useful for clients that want to refresh their network topology without going through the
-  mirror node. Under the hood the query reads the network's address-book file
-  (file `0.0.102` on default Hedera shards/realms) via the file service; this is a paid
-  read, so the query inherits `PaidQuery` semantics (cost discovery, `maxQueryPayment`
-  ceiling, operator-paid by default).
+Ordinary applications rarely need these queries: a `HieroClient` already knows the network's version and node list
+from its network settings. A free node list is also available from a mirror node.
+
+## Design Notes
 
 Both queries are admin-flavoured in the sense that ordinary applications normally do not
 issue them — `HieroClient` already exposes the version and node list via its
@@ -24,11 +25,13 @@ in the main `consensus-node-client` because operator / tooling code that *does* 
 snapshot is the same audience that runs the DAB transactions, and pulling the dependency
 on the admin module is acceptable there.
 
+`NetworkVersionInfoQuery` maps to HAPI's free `NetworkGetVersionInfoQuery` on the `NetworkService`.
+
 ### Why `NodeAddressBookQuery` is `PaidQuery`, not `Query`
 
 HAPI does not have a dedicated free "address book" query on the network service. The
-canonical way to read the address book is via `FileGetContents` on file `0.0.102`, which is
-a paid `FileService` query. `NodeAddressBookQuery` is a typed convenience that hides the
+canonical way to read the address book is via `FileGetContents` on file `0.0.102` (on default Hedera
+shards/realms), which is a paid `FileService` query. `NodeAddressBookQuery` is a typed convenience that hides the
 file mechanism but **not** the cost: the underlying file read is still billed by the
 network, so the query honestly extends `PaidQuery` with full cost-discovery behaviour. A
 caller that wants a free node list today uses the mirror node (`GET /network/nodes` —
@@ -50,26 +53,27 @@ requires {AccountId} from ledger
 requires {Query, PaidQuery} from consensusnode.queries
 requires {ServiceEndpoint} from consensusnode.admin.nodes
 
-// A semantic version triple (major.minor.patch) with optional pre-release / build
-// metadata labels, as defined by semver.org. Defined inline here for now; once the
-// missing-features §3.1 SemanticVersion lands in `base/common`, this local definition
-// should be removed and the base type imported instead.
+// Defined inline here for now; once the missing-features §3.1 SemanticVersion lands in `base/common`,
+// this local definition should be removed and the base type imported instead.
+
+// A semantic version (major.minor.patch) with optional pre-release and build metadata labels, as defined by
+// semver.org.
 type SemanticVersion {
-    @@immutable major: int32
-    @@immutable minor: int32
-    @@immutable patch: int32
-    @@immutable @@nullable preReleaseLabel: string   // semver "-rc.1" etc.; null when absent
-    @@immutable @@nullable buildMetadata: string     // semver "+exp.sha.5114f85" etc.; null when absent
+    @@immutable major: int32                         // major version
+    @@immutable minor: int32                         // minor version
+    @@immutable patch: int32                         // patch version
+    @@immutable @@nullable preReleaseLabel: string   // pre-release label such as "rc.1"; absent for a release version
+    @@immutable @@nullable buildMetadata: string     // build metadata such as "exp.sha.5114f85"; absent if none
 
     // Canonical semver string, e.g. "0.49.1-rc.1+exp.sha.5114f85"
     string toString()
 }
 
 // Combined version snapshot: the HAPI protocol revision the network is speaking and the
-// Hedera-services build that implements it. Returned by NetworkVersionInfoQuery.
+// consensus node software (services) build that implements it. Returned by `NetworkVersionInfoQuery`.
 type NetworkVersionInfo {
     @@immutable hapiVersion: SemanticVersion        // HAPI / protobuf protocol revision
-    @@immutable servicesVersion: SemanticVersion    // Hedera-services build that hosts that protocol
+    @@immutable servicesVersion: SemanticVersion    // consensus node software (services) build that implements the protocol
 }
 
 // Free query that returns the network's current HAPI and services version. Has no input
@@ -78,29 +82,26 @@ type NetworkVersionInfo {
 NetworkVersionInfoQuery extends Query<NetworkVersionInfo> {
 }
 
-// One address-book entry. Carries the stable DAB identifier (`nodeId`) plus everything a
-// client needs to reach the node and authenticate its TLS material. Mirrors the
-// write-side `NodeCreateTransaction` shape but is the read-only return form.
+// One address-book entry: the stable node id plus everything a client needs to reach the node and verify its TLS
+// certificates. Read-only counterpart of the data set with `NodeCreateTransaction`.
 type NodeAddress {
     @@immutable nodeId: int64                                // stable HIP-869 identifier; survives account / endpoint rotation
     @@immutable accountId: AccountId                         // fee account that receives this node's per-transaction share
     @@immutable @@default([]) serviceEndpoints: list<ServiceEndpoint>   // public gRPC endpoints (clients submit transactions here)
-    @@immutable @@nullable description: string               // free-form description set at NodeCreate (max 100 chars)
+    @@immutable @@nullable description: string               // free-form description of the node (at most 100 characters)
     @@immutable gossipCaCertificate: bytes                   // X.509 DER bytes of the certificate that terminates mutual TLS for gossip
     @@immutable grpcCertificateHash: bytes                   // SHA-384 of the certificate served on serviceEndpoints; clients pin against this
-    @@immutable rsaPublicKey: bytes                          // legacy gossip RSA public key (DER); kept for backwards compatibility with pre-DAB tooling
+    @@immutable rsaPublicKey: bytes                          // legacy gossip RSA public key (DER); only for tooling that still reads the legacy address-book format — prefer gossipCaCertificate and grpcCertificateHash
 }
 
-// Snapshot of the entire address book at consensus time. Order matches HAPI: nodes are
-// listed by ascending `nodeId`.
+// Snapshot of the entire address book at consensus time. Nodes are listed by ascending `nodeId`.
 type NodeAddressBook {
-    @@immutable nodes: list<NodeAddress>
+    @@immutable nodes: list<NodeAddress>     // all consensus nodes of the network
 }
 
-// Paid query that returns the current address book. The implementation reads the
-// network's address-book file (HAPI file 0.0.102 on default Hedera shards/realms) via
-// the file service; the operator pays the FileContents query fee. Has no input fields —
-// the answer is per-network.
+// Paid query that returns the current address book of the network. The network charges for reading the
+// address-book file (0.0.102 on default Hedera shards/realms), and the operator pays that fee. Has no input
+// fields — the answer is per network.
 @@finalType
 NodeAddressBookQuery extends PaidQuery<NodeAddressBook> {
 }

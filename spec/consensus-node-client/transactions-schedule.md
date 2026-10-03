@@ -3,59 +3,65 @@
 
 ## Description
 
-This namespace groups the schedule-service transactions: `ScheduleCreate` (store a transaction
-on the ledger to be executed later, once its required signatures are collected), `ScheduleSign`
-(contribute a signature toward a stored transaction), and `ScheduleDelete` (remove a stored
-transaction before it executes).
+Provides the schedule-service transactions: `ScheduleCreateTransaction` (store a transaction on the
+ledger to be executed later, once its required signatures are collected),
+`ScheduleSignTransaction` (contribute a signature toward a stored transaction), and
+`ScheduleDeleteTransaction` (remove a stored transaction before it executes).
 
-A *scheduled transaction* is an ordinary transaction whose execution is deferred. `ScheduleCreate`
-captures an **inner transaction** and persists its body on the network under a new `scheduleId`.
-The inner transaction executes automatically once the network has collected every signature its
-own authorization requires (or, for HIP-423 long-term schedules, when the schedule expires — see
-`waitForExpiry`).
+A *scheduled transaction* is an ordinary transaction whose execution is deferred.
+`ScheduleCreateTransaction` captures an **inner transaction** and persists its body on the network
+under a new `scheduleId`. The inner transaction executes automatically once the network has
+collected every signature its own authorization requires (or, for HIP-423 long-term schedules, when
+the schedule expires — see `waitForExpiry`).
 
 ### The inner transaction
 
-The inner transaction is modelled as a plain `Transaction<ANY, ANY>` — the *same* builder type used
-everywhere else. `ScheduleCreate` only captures its body; it is **never packed or signed itself**.
-The `pack()` / `sign()` methods inherited from `Transaction` are simply not used on the inner
-instance — calling them produces an unrelated `PackedTransaction` that the schedule flow ignores;
-the inner builder is left untouched.
+The inner transaction is a plain `Transaction` builder — the *same* type used everywhere else.
+`ScheduleCreateTransaction` only captures its body; the inner transaction is **never packed or
+signed itself**. Do not call `pack()` / `sign()` on the inner instance — doing so produces an
+unrelated `PackedTransaction` that the schedule ignores; the inner builder is left untouched.
 
-There is **no SDK-side check** that the inner transaction is actually schedulable. HAPI restricts
-the schedulable set (e.g. a `ScheduleCreate`, `ScheduleSign`, `ScheduleDelete`, or `freeze` cannot
-be scheduled), but because the consensus node is service-oriented and supports *custom* services
-and transaction types (see `consensusnode.transactions.spi`), the SDK cannot know whether a future
-custom transaction type is schedulable. A non-schedulable inner transaction is therefore rejected
-by the network as a `TransactionStatus` on the receipt, not by a client-side error.
+The SDK does not check whether the inner transaction can be scheduled. Some transactions cannot
+(e.g. a `ScheduleCreate`, `ScheduleSign`, `ScheduleDelete`, or `freeze`); such an inner transaction
+is rejected by the network with a `TransactionStatus` on the receipt.
 
 ### Signing model
 
 Signatures that authorize the inner transaction are **ordinary signatures on the outer schedule
 transaction** — there is no separate "schedule signature" payload:
 
-- Any signature placed on a `ScheduleCreate` (beyond the payer) whose public key belongs to the
-  inner transaction's required key set is credited to the schedule immediately on creation.
-- `ScheduleSign` carries only the `scheduleId`. Each required key signs the `ScheduleSign`
-  transaction through the normal `pack()` / `sign(...)` multi-signature flow; the network extracts
-  the public keys from the signature set, verifies them against the `ScheduleSign` body, and
-  credits those that match the inner transaction's required keys (key-presence accounting).
-
-This means schedule signing needs **no new concept** on top of the existing `Transaction` →
-`PackedTransaction` lifecycle: a schedule signature *is* a normal `NodeSignature` over the outer
-transaction. The per-node body fan-out (one body per target node, one submitted, the rest spare)
-is exactly the standard model from [`transactions.md`](transactions.md).
+- Any signature placed on a `ScheduleCreateTransaction` (beyond the payer) whose public key belongs
+  to the inner transaction's required key set is credited to the schedule immediately on creation.
+- `ScheduleSignTransaction` carries only the `scheduleId`. Each required key signs the
+  `ScheduleSignTransaction` through the normal `pack()` / `sign(...)` multi-signature flow; the
+  network extracts the public keys from the signature set, verifies them against the
+  `ScheduleSign` body, and credits those that match the inner transaction's required keys.
 
 ### Lifecycle and deletion
 
-`ScheduleDelete` removes a stored schedule **before** it executes; it requires a signature from the
-schedule's `adminKey`. A schedule created without an `adminKey` is immutable and cannot be deleted
-— it can only execute or expire. Deleting an already-executed (or already-deleted) schedule is
-rejected by the network as a `TransactionStatus`.
+`ScheduleDeleteTransaction` removes a stored schedule **before** it executes; it requires a
+signature from the schedule's `adminKey`. A schedule created without an `adminKey` is immutable and
+cannot be deleted — it can only execute or expire. Deleting an already-executed (or already-deleted)
+schedule is rejected by the network with a `TransactionStatus`.
 
 The `scheduled` flag of the inner transaction's `TransactionId` is set by the consensus node when
-it materializes the inner transaction (see *TransactionId generation* in
-[`transactions.md`](transactions.md)); it is never set by the SDK.
+it materializes the inner transaction; it is never set by the SDK.
+
+To read the outcome of the executed inner transaction, pass the `scheduledTransactionId` from the
+receipt together with the inner transaction's type to `Transaction.getResponse(...)`.
+
+## Design Notes
+
+- **No SDK-side schedulability check.** Because the consensus node is service-oriented and supports
+  *custom* services and transaction types (see `consensusnode.transactions.spi`), the SDK cannot know
+  whether a future custom transaction type is schedulable.
+- **Signing model — no new concept.** Schedule signing needs nothing on top of the existing
+  `Transaction` → `PackedTransaction` lifecycle: a schedule signature *is* a normal `NodeSignature`
+  over the outer transaction (key-presence accounting). The per-node body fan-out (one body per
+  target node, one submitted, the rest spare) is exactly the standard model from
+  [`transactions.md`](transactions.md).
+- The `scheduled` flag handling is described under *TransactionId generation* in
+  [`transactions.md`](transactions.md).
 
 ## API Schema
 
@@ -87,7 +93,7 @@ ScheduleCreateReceipt extends Receipt {
 
 // Contributes one or more signatures toward a stored schedule. The transaction carries only the
 // scheduleId; the actual authorization comes from signing this transaction with the required keys
-// through the normal multi-signature flow (see transactions.md).
+// through the normal multi-signature flow.
 @@finalType
 ScheduleSignTransaction extends Transaction<ScheduleSignReceipt, ScheduleSignTransaction> {
     @@immutable scheduleId: Address                        // the schedule to add signatures to

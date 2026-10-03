@@ -44,7 +44,7 @@ final class AstBuilder {
         final List<Requires> requires = ctx.requiresDecl().stream().map(this::requires).toList();
         final List<Declaration> declarations = ctx.topLevelDecl().stream().map(this::declaration).toList();
         return new SchemaFile(qualifiedName(ns.qualifiedName()), requires, declarations, comments(),
-                location(ns.start));
+                location(ns.start), source.description(), source.descriptionLine());
     }
 
     // --- top level -------------------------------------------------------------------------------
@@ -272,8 +272,8 @@ final class AstBuilder {
     // --- comments --------------------------------------------------------------------------------
 
     /**
-     * Documentation of a declaration: the comment lines directly above it (not separated from it by
-     * another declaration) followed by a trailing comment on its last line.
+     * Documentation of a declaration: the contiguous block of comments directly above it (a blank line or another
+     * declaration ends the block) followed by a trailing comment on its last line.
      */
     private String documentation(final ParserRuleContext ctx) {
         final List<String> parts = new ArrayList<>();
@@ -281,7 +281,18 @@ final class AstBuilder {
         final List<Token> left = tokens.getHiddenTokensToLeft(startIndex, MetaLangLexer.HIDDEN);
         if (left != null) {
             final int previousLine = previousDefaultTokenLine(startIndex);
-            left.stream().filter(t -> t.getLine() > previousLine).map(AstBuilder::commentText).forEach(parts::add);
+            final List<String> block = new ArrayList<>();
+            int expectedLine = ctx.start.getLine();
+            for (int i = left.size() - 1; i >= 0; i--) {
+                final Token comment = left.get(i);
+                final int endLine = comment.getLine() + (int) comment.getText().chars().filter(c -> c == '\n').count();
+                if (comment.getLine() <= previousLine || endLine < expectedLine - 1) {
+                    break; // belongs to the previous declaration, or separated by a blank line
+                }
+                block.addFirst(commentText(comment));
+                expectedLine = comment.getLine();
+            }
+            parts.addAll(block);
         }
         final Token stop = ctx.stop;
         if (stop != null) {
@@ -311,12 +322,19 @@ final class AstBuilder {
                 .toList();
     }
 
-    private static String commentText(final Token token) {
+    /**
+     * Text of a comment without markers. Lines of a block comment are stripped and a leading {@code *} (Javadoc
+     * style) is removed.
+     */
+    static String commentText(final Token token) {
         final String text = token.getText();
         if (text.startsWith("//")) {
             return text.substring(2).strip();
         }
-        return text.substring(2, text.length() - 2).strip();
+        return String.join("\n", text.substring(2, text.length() - 2).lines()
+                .map(String::strip)
+                .map(l -> l.startsWith("*") ? l.substring(1).strip() : l)
+                .toList()).strip();
     }
 
     private SourceLocation location(final Token token) {

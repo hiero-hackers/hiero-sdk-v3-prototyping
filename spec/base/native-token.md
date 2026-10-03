@@ -2,7 +2,12 @@
 
 ## Description
 
-
+Every Hiero network has a native token that is used, for example, to pay transaction fees. This
+package provides the network-independent abstraction for it: `NativeToken` is an amount of the
+native token expressed in a `NativeTokenUnit`, and can be converted to other units of the same token
+or to its smallest (base) unit. Each network provides its own concrete implementation — for Hedera
+this is `Hbar`. `ExchangeRate` describes the value of the native token in USD cents for a limited
+period of time.
 
 ## API Schema — Abstraction
 

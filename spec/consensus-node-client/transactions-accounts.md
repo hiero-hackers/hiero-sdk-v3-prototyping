@@ -3,8 +3,8 @@
 
 ## Description
 
-This namespace groups all crypto-service transactions that operate on accounts: lifecycle
-(`AccountCreate` / `AccountUpdate` / `AccountDelete`), value movement
+Provides all crypto-service transactions that operate on accounts: lifecycle
+(`AccountCreateTransaction` / `AccountUpdateTransaction` / `AccountDeleteTransaction`), value movement
 (`TransferTransaction` — HBAR, fungible tokens, and NFTs in one atomic transaction), and
 delegated-spending authorization (`AccountAllowanceApproveTransaction` /
 `AccountAllowanceDeleteTransaction`).

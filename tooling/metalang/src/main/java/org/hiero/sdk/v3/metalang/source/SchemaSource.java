@@ -10,8 +10,10 @@ import java.util.Objects;
  * @param text       the content of the schema code block (without the fences)
  * @param lineOffset number of Markdown lines that precede the first line of {@code text}; line
  *                   {@code n} of the schema is line {@code n + lineOffset} of the Markdown file
+ * @param description the Markdown text of the spec's {@code ## Description} section (empty if there is none)
+ * @param descriptionLine the Markdown line of the first line of {@code description} (0 if there is none)
  */
-public record SchemaSource(String file, String text, int lineOffset) {
+public record SchemaSource(String file, String text, int lineOffset, String description, int descriptionLine) {
 
     /**
      * Creates a new schema source.
@@ -19,13 +21,27 @@ public record SchemaSource(String file, String text, int lineOffset) {
      * @param file       the spec file name
      * @param text       the schema text
      * @param lineOffset line offset into the Markdown file, must not be negative
+     * @param description the description section (Markdown)
+     * @param descriptionLine line of the first description line or 0
      */
     public SchemaSource {
         Objects.requireNonNull(file, "file must not be null");
         Objects.requireNonNull(text, "text must not be null");
+        Objects.requireNonNull(description, "description must not be null");
         if (lineOffset < 0) {
             throw new IllegalArgumentException("lineOffset must not be negative: " + lineOffset);
         }
+    }
+
+    /**
+     * Creates a schema source without a description.
+     *
+     * @param file       the spec file name
+     * @param text       the schema text
+     * @param lineOffset line offset into the Markdown file, must not be negative
+     */
+    public SchemaSource(final String file, final String text, final int lineOffset) {
+        this(file, text, lineOffset, "", 0);
     }
 
     /**

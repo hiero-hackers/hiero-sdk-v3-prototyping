@@ -76,7 +76,78 @@ final class Linker {
                 }
             }
         }
-        return new LinkedModel(types, functions, constants);
+        return new LinkedModel(types, functions, constants, namespaces(types, functions, constants));
+    }
+
+    // --- namespaces ------------------------------------------------------------------------------
+
+    private List<NamespaceDefinition> namespaces(final Map<QualifiedName, TypeDefinition> types,
+                                                 final List<FunctionDefinition> functions,
+                                                 final List<ConstantDefinition> constants) {
+        final Map<String, Set<String>> required = new TreeMap<>();
+        for (final String namespace : model.namespaceNames()) {
+            final Set<String> namespaces = required.computeIfAbsent(namespace, k -> new java.util.TreeSet<>());
+            for (final SchemaFile file : model.filesOf(namespace)) {
+                file.requires().stream().map(r -> r.namespace()).filter(model::hasNamespace)
+                        .forEach(namespaces::add);
+            }
+        }
+        final java.util.function.BiConsumer<String, Type> use = (namespace, type) ->
+                referencedNamespaces(type, required.get(namespace));
+        for (final TypeDefinition type : types.values()) {
+            final String namespace = type.name().namespace();
+            type.supertypes().forEach(t -> use.accept(namespace, t));
+            type.typeParameters().stream().filter(p -> p.bound() != null).forEach(p -> use.accept(namespace, p.bound()));
+            // only what the type declares itself: inherited members are reachable through the supertype's module
+            switch (type) {
+                case TypeDefinition.ComplexTypeDefinition complex ->
+                        complex.declaredFields().forEach(f -> use.accept(namespace, f.type()));
+                case TypeDefinition.EnumDefinition enumType ->
+                        enumType.attributes().forEach(a -> use.accept(namespace, a.type()));
+            }
+            type.declaredMethods().forEach(m -> methodTypes(m).forEach(t -> use.accept(namespace, t)));
+        }
+        functions.forEach(f -> methodTypes(f.method()).forEach(t -> use.accept(f.namespace(), t)));
+        constants.forEach(c -> use.accept(c.name().namespace(), c.type()));
+
+        final List<NamespaceDefinition> result = new ArrayList<>();
+        required.forEach((namespace, namespaces) -> {
+            namespaces.remove(namespace);
+            result.add(new NamespaceDefinition(namespace, model.filesOf(namespace).stream()
+                    .map(f -> new NamespaceDefinition.Source(f.file(), f.description()))
+                    .toList(), List.copyOf(namespaces)));
+        });
+        return result;
+    }
+
+    private static List<Type> methodTypes(final MethodDefinition method) {
+        final List<Type> result = new ArrayList<>();
+        result.add(method.returnType());
+        method.parameters().forEach(p -> result.add(p.type()));
+        method.typeParameters().stream().filter(p -> p.bound() != null).forEach(p -> result.add(p.bound()));
+        return result;
+    }
+
+    private static void referencedNamespaces(final Type type, final Set<String> out) {
+        switch (type) {
+            case Type.DeclaredType declared -> {
+                out.add(declared.name().namespace());
+                declared.arguments().forEach(a -> referencedNamespaces(a, out));
+            }
+            case Type.BasicType basic -> basic.arguments().forEach(a -> referencedNamespaces(a, out));
+            case Type.WildcardType wildcard -> {
+                if (wildcard.upperBound() != null) {
+                    referencedNamespaces(wildcard.upperBound(), out);
+                }
+            }
+            case Type.FunctionType function -> {
+                referencedNamespaces(function.returnType(), out);
+                function.parameters().forEach(p -> referencedNamespaces(p.type(), out));
+            }
+            default -> {
+                // no namespaces
+            }
+        }
     }
 
     // --- declared parts --------------------------------------------------------------------------

@@ -21,9 +21,14 @@ The payload is a single optional `range`:
 - **`range` set** (must be `> 0`) → the receipt carries `prngNumber`: a pseudorandom 32-bit integer
   uniformly distributed in the half-open interval `[0, range)`.
 
-Exactly one of the two receipt fields is populated, mirroring which input mode was chosen; this is
-expressed with `@@oneOf(prngNumber, prngBytes)` on `PrngReceipt`. The transaction changes no ledger
-state beyond charging the fee — its sole observable effect is the value on the receipt.
+Exactly one of the two receipt fields of `PrngReceipt` is populated, mirroring which input mode was
+chosen. The transaction changes no ledger state beyond charging the fee — its sole observable effect
+is the value on the receipt.
+
+## Design Notes
+
+- The "exactly one receipt field" rule is expressed with `@@oneOf(prngNumber, prngBytes)` on
+  `PrngReceipt`.
 
 ## API Schema
 

@@ -1,6 +1,18 @@
 # Contract Service API
 
-Service definition for smart contract interaction.
+## Description
+
+`SmartContractService` deploys smart contracts and calls their functions. A contract is created either from bytecode
+stored in a file or directly from bytecode, optionally with constructor parameters. Function and constructor
+parameters are passed as `Param` values, created with the factory functions such as `ofString`, `ofAddress`,
+`ofBool` or `uint256`, which wrap a value of your language as the matching Solidity type. The values returned by a
+function call are available from the `ContractCallResult` by index.
+
+## Design Notes
+
+`ContractCallResult.get(index)` is deliberately `ANY`: the type of a contract call result is only known at runtime (it
+depends on the called Solidity function), so no static type can describe it. The concrete type of the value at `index`
+is reported by `getType(index)`; callers check it before using the value.
 
 ## API Schema
 
@@ -26,9 +38,8 @@ ContractCallResult {
     // Runtime type of the result value at `index`; use it to check the value returned by get(index).
     type getType(index:uint8)
 
-    // Deliberately ANY: the type of a contract call result is only known at runtime (it depends on the called
-    // Solidity function), so no static type can describe it. The concrete type of the value at `index` is reported by
-    // getType(index); callers check it before using the value.
+    // Returns the result value at `index`. Its type depends on the called Solidity function and is only known at
+    // runtime; check it with getType(index) before using the value.
     ANY get(index:uint8)
 }
 
@@ -54,11 +65,10 @@ SmartContractService {
     @@throws(service-error) Page<Contract> findAll()
 }
 
-// Factory methods for params to wrap native types in solidity types.
-// Solidity's `address` type is a 20-byte EVM address — the EvmAddress overload is the
-// canonical typed entry point. The string overload accepts hex form ("0x..."), and the
-// long-form (shard.realm.num) Hedera id overloads (AccountId / ContractId) belong here as
-// follow-ups once a HAPI long-form-encoding helper is decided.
+// Factory functions that wrap values of the host language as Solidity parameter types.
+// Solidity's `address` type is a 20-byte EVM address: prefer the EvmAddress overload of ofAddress;
+// the string overload accepts the hex form ("0x...").
+
 @@static Param<string, ANY> ofString(value:string)
 @@static Param<string, ANY> ofBytes(value:string)
 @@static Param<string, ANY> ofBytes23(value:string)
@@ -72,8 +82,14 @@ SmartContractService {
 @@static Param<uint256, ANY> uint256(value:uint256)
 @@static Param<int256, ANY> int256(value:int256)
 
-//Factory method to create Service (not needed for real framework integration where injection is used)
+// Creates the service for the given session. With a framework integration the service is usually obtained via
+// dependency injection instead.
 @@static
 SmartContractService createService(session: Session)
 
 ```
+
+## Questions & Comments
+
+- Long-form (shard.realm.num) Hedera id overloads of `ofAddress` (taking `AccountId` / `ContractId`) belong next to the
+  other param factory functions as follow-ups once a HAPI long-form-encoding helper is decided.

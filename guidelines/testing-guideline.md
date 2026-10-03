@@ -111,6 +111,7 @@ Each spec file gains a `## Testing` section. In the file skeleton it sits **afte
 ```
 # Title
 ## Description
+## Design Notes      (optional)
 ## API Schema
 ## Examples          (optional)
 ## Testing           (new)

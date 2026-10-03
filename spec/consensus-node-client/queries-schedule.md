@@ -6,46 +6,53 @@ This namespace defines the read-side counterpart to the schedule transactions in
 
 ## Description
 
-- **`ScheduleInfoQuery`** extends `PaidQuery<ScheduleInfo>` — returns a metadata snapshot of a
-  schedule: who created it, who pays the inner transaction's fee, the captured inner transaction,
-  the keys collected so far, and whether the schedule is still pending, has executed, or was
-  deleted.
+`ScheduleInfoQuery` is a paid query that returns the current state of a stored schedule: who created it, who pays
+the fee of the scheduled transaction, the scheduled transaction itself, the keys that have signed so far, and whether
+the schedule is still pending, has executed or was deleted.
 
-The query extends `PaidQuery`, so it inherits the `maxQueryPayment` knob, the `getCost(client)`
-cost-discovery method, and the `PaidQueryResponse<...>` envelope. See [`queries.md`](queries.md)
-for the full payment / envelope semantics.
+### Pending, executed or deleted
 
-### Pending / executed / deleted
+A schedule is always in exactly one of three states, which you can read from `executionTime` and `deletionTime`
+(at most one of them is set):
 
-A schedule is in exactly one of three states, captured by `@@oneOrNoneOf(executionTime,
-deletionTime)`:
+- **pending** — neither timestamp is set; the schedule is still collecting signatures (or, for a long-term
+  schedule, waiting for `expirationTime`).
+- **executed** — `executionTime` is the consensus time at which the scheduled transaction ran after its required
+  signatures were collected.
+- **deleted** — `deletionTime` is the consensus time at which the schedule was deleted before it could execute.
 
-- **pending** — neither timestamp is set; the schedule is still collecting signatures (or, for an
-  HIP-423 long-term schedule, waiting for `expirationTime`).
-- **executed** — `executionTime` is set to the consensus time at which the inner transaction ran
-  once its required signatures were collected.
-- **deleted** — `deletionTime` is set to the consensus time at which a `ScheduleDelete` removed the
-  schedule before it could execute.
+A deleted or executed schedule remains queryable for a while, so its state is part of the result rather than a
+query failure.
 
-Unlike `TopicInfo` (where a removed topic disappears from the consensus node), a deleted or executed
-schedule remains queryable until it is reaped, so the state is modelled as data on the snapshot
-rather than as a query failure.
+### The scheduled transaction
 
-### The inner transaction
+`scheduledTransaction` is a read-only reconstruction of the stored transaction, of the same type you pass when
+creating a schedule. It is never packed or signed. To read the *outcome* of an executed schedule, pass
+`scheduledTransactionId` to `Transaction.getResponse(...)`.
 
-The captured inner transaction is exposed as a `Transaction<ANY, ANY>` — the same builder type
-`ScheduleCreate` accepts (see [`transactions-schedule.md`](transactions-schedule.md)). It is a
-read-only reconstruction of the stored body; it is never packed or signed. To read the *outcome* of
-an executed schedule, use `scheduledTransactionId` with the `Transaction.getResponse(...)` factory
-in [`transactions.md`](transactions.md), exactly as shown in the schedule examples.
+### Signers and admin key
 
-### Signers
+`signers` lists the individual public keys whose signatures have already been credited to the scheduled
+transaction. `adminKey`, in contrast, is an `Authority`: the requirement that must be met to delete the schedule.
 
-`signers` lists the individual public keys whose signatures the network has already credited toward
-the inner transaction's required key set. It is `list<PublicKey>` (concrete keys that have signed),
-not `list<Authority>` — a signer is a single key that produced a signature, whereas an `Authority`
-is an authorization *requirement* (see [`authority.md`](../base/authority.md)). `adminKey`, by
-contrast, is an `Authority`: it is the requirement that must be met to delete the schedule.
+## Design Notes
+
+This namespace is the read-side counterpart to the schedule transactions in
+[`transactions-schedule.md`](transactions-schedule.md). The query extends `PaidQuery`; see
+[`queries.md`](queries.md) for the full payment / envelope semantics.
+
+The state is captured by `@@oneOrNoneOf(executionTime, deletionTime)`. Unlike `TopicInfo` (where a removed topic
+disappears from the consensus node), a deleted or executed schedule remains queryable until it is reaped, so the
+state is modelled as data on the snapshot rather than as a query failure.
+
+The captured inner transaction is exposed as a `Transaction<ANY, ANY>` — the same builder type `ScheduleCreate`
+accepts (see [`transactions-schedule.md`](transactions-schedule.md)). To read the outcome of an executed schedule,
+use `scheduledTransactionId` with the `Transaction.getResponse(...)` factory in [`transactions.md`](transactions.md),
+exactly as shown in the schedule examples.
+
+`signers` is `list<PublicKey>` (concrete keys that have signed), not `list<Authority>` — a signer is a single key
+that produced a signature, whereas an `Authority` is an authorization *requirement* (see
+[`authority.md`](../base/authority.md)).
 
 ## API Schema
 
@@ -57,19 +64,20 @@ requires {Authority} from authority
 requires {PaidQuery} from consensusnode.queries
 requires {Transaction} from consensusnode.transactions
 
-// Full metadata snapshot of a schedule. Returned by ScheduleInfoQuery.
+// Full metadata snapshot of a schedule. Returned by `ScheduleInfoQuery`. At most one of `executionTime` and
+// `deletionTime` is set; if neither is set, the schedule is still pending.
 @@oneOrNoneOf(executionTime, deletionTime)
 type ScheduleInfo {
     @@immutable scheduleId: Address                        // the id of the schedule
-    @@immutable creatorAccountId: AccountId                // account that submitted the ScheduleCreate
+    @@immutable creatorAccountId: AccountId                // account that created the schedule
     @@immutable payerAccountId: AccountId                  // pays the inner transaction's fee when it executes
     @@immutable scheduledTransaction: Transaction<ANY, ANY>     // read-only reconstruction of the captured inner transaction
     @@immutable scheduledTransactionId: TransactionId      // the id the inner transaction carries when it executes (scheduled flag set)
     @@immutable @@default([]) signers: list<PublicKey>     // public keys whose signatures have been credited so far
-    @@immutable @@nullable adminKey: Authority             // may delete the schedule; unset → schedule is immutable
+    @@immutable @@nullable adminKey: Authority             // may delete the schedule; absent if the schedule is immutable
     @@immutable @@nullable scheduleMemo: string            // free-form memo on the schedule entity
-    @@immutable expirationTime: zonedDateTime              // when the schedule expires (HIP-423 long-term, or the default expiry)
-    @@immutable @@default(false) waitForExpiry: bool       // HIP-423 long-term: execute only at expirationTime even if signatures are collected earlier
+    @@immutable expirationTime: zonedDateTime              // when the schedule expires (the requested long-term expiry, or the default expiry)
+    @@immutable @@default(false) waitForExpiry: bool       // if true, execute only at expirationTime even if all signatures are collected earlier (long-term schedule, HIP-423)
     @@immutable @@nullable executionTime: zonedDateTime    // set once the inner transaction has executed
     @@immutable @@nullable deletionTime: zonedDateTime     // set once the schedule has been deleted before execution
 }

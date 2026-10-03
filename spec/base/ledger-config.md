@@ -25,10 +25,10 @@ NetworkSetting {
 
 // factory methods of `NetworkSetting` that should be added to the namespace in the best language dependent way
 
-// Method to register a network configuration
+// Registers a network setting under the given identifier.
 @@static void registerNetworkSetting(identifier: string, setting: NetworkSetting)
 
-// throws not-found-error if no network with that identifier exists
+// Returns the network setting registered for the given identifier; throws if none exists.
 // Network settings can be added as plug and play by external modules
 @@throws(not-found-error) @@static NetworkSetting getNetworkSetting(identifier: string) 
 ```

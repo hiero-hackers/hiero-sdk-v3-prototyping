@@ -126,6 +126,75 @@ class MarkdownEdgeCasesTest {
     }
 
     @Nested
+    class Description {
+
+        @Test
+        void shouldCaptureTheDescriptionSectionIncludingCodeBlocksAndSubheadings() {
+            // GIVEN a description with a code block that contains a "## " line and a level-3 heading
+            final String markdown = """
+                    # Title
+
+                    ## Description
+
+                    First paragraph.
+
+                    ```
+                    ## not a heading
+                    ```
+
+                    ### Details
+                    More.
+
+                    ## API Schema
+
+                    ```
+                    namespace a
+                    ```
+                    """;
+
+            // WHEN
+            final SchemaSource source = extractor.extract("a.md", markdown).source();
+
+            // THEN
+            assertThat(source.description()).isEqualTo(
+                    "First paragraph.\n\n```\n## not a heading\n```\n\n### Details\nMore.");
+        }
+
+        @Test
+        void shouldUseEmptyDescriptionIfTheSectionIsMissingOrLast() {
+            assertThat(extractor.extract("a.md", "## API Schema\n```\nnamespace a\n```\n").source().description())
+                    .isEmpty();
+            assertThat(extractor.extract("a.md", "## API Schema\n```\nnamespace a\n```\n## Description\n\nLast.\n")
+                    .source().description()).isEqualTo("Last.");
+            assertThat(extractor.extract("a.md", "## Description\n## API Schema\n```\nnamespace a\n```\n")
+                    .source().descriptionLine()).isZero();
+        }
+
+        @Test
+        void shouldTrackTheLineOfTheFirstDescriptionLine() {
+            // GIVEN a description that starts after two blank lines (Markdown line 5)
+            final String markdown = "# T\n## Description\n\n\nFirst.\nSecond.\n## API Schema\n```\nnamespace a\n```\n";
+
+            // WHEN
+            final SchemaSource source = extractor.extract("a.md", markdown).source();
+
+            // THEN
+            assertThat(source.description()).isEqualTo("First.\nSecond.");
+            assertThat(source.descriptionLine()).isEqualTo(5);
+        }
+
+        @Test
+        void shouldAcceptDesignNotesBetweenDescriptionAndSchema() {
+            final String markdown = "# T\n## Description\nA.\n## Design Notes\nWhy.\n## API Schema\n```\nnamespace a\n```\n"
+                    + "## Testing\nNone.\n## Questions & Comments\nNone.\n";
+            assertThat(ruleIds(markdown)).isEmpty();
+            assertThat(extractor.extract("a.md", markdown).source().description()).isEqualTo("A.");
+            assertThat(ruleIds(markdown.replace("## Design Notes\nWhy.\n", "")
+                    .replace("## Testing", "## Design Notes\nWhy.\n## Testing"))).contains("doc.section-order");
+        }
+    }
+
+    @Nested
     class LineEndings {
 
         @Test

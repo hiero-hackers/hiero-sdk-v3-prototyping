@@ -2,6 +2,12 @@
 
 ## Description
 
+Query fungible and non-fungible tokens from the Mirror Node. Use the `TokenRepository` (available as
+`MirrorNodeClient.token`) to look up the full `TokenInfo` of a token, to list the tokens associated with an account,
+and to read token balances. `TokenInfo` includes the token's supply settings and its custom fees, grouped in
+`CustomFee` into fixed, fractional and royalty fees. Balances are given in the token's smallest unit together with
+the token's number of decimals.
+
 ## API Schema
 
 ```
@@ -92,3 +98,5 @@ abstraction TokenRepository {
 @@static TokenRepository createRepository(mirrorNode: MirrorNode)
 
 ```
+
+## Questions & Comments

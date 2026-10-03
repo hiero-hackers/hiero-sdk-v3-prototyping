@@ -13,9 +13,12 @@ import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
  * @param declarations the top-level declarations in source order
  * @param comments     all comments of the schema in source order
  * @param location     location of the {@code namespace} statement
+ * @param description  the Markdown text of the spec's {@code ## Description} section (may be empty)
+ * @param descriptionLine the Markdown line of the first line of {@code description} (0 if there is none)
  */
 public record SchemaFile(String namespace, List<Requires> requires, List<Declaration> declarations,
-                         List<Comment> comments, SourceLocation location) implements Node {
+                         List<Comment> comments, SourceLocation location, String description, int descriptionLine)
+        implements Node {
 
     /**
      * Creates a schema file.
@@ -25,8 +28,11 @@ public record SchemaFile(String namespace, List<Requires> requires, List<Declara
      * @param declarations the declarations
      * @param comments     the comments
      * @param location     the location of the namespace statement
+     * @param description  the description section (Markdown)
+     * @param descriptionLine line of the first description line or 0
      */
     public SchemaFile {
+        Objects.requireNonNull(description, "description must not be null");
         Objects.requireNonNull(namespace, "namespace must not be null");
         requires = List.copyOf(Objects.requireNonNull(requires, "requires must not be null"));
         declarations = List.copyOf(Objects.requireNonNull(declarations, "declarations must not be null"));

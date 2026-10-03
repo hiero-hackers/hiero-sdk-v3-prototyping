@@ -22,16 +22,15 @@ static JSON files baked into a release. Each consensus node is identified by a n
 - An optional **`grpcWebProxyEndpoint`** (HIP-1046) — a gRPC-web proxy endpoint that
   browser clients can use without their own TLS terminator.
 
-A node's lifecycle is:
+A node is created once with `NodeCreateTransaction`, can be updated any number of times with `NodeUpdateTransaction`,
+and is finally removed with `NodeDeleteTransaction`. Deleting a node does not free its `nodeId`; deleted nodes remain
+in the address book in a tombstoned state so that historical references still resolve.
 
-```
-  create ── update* ── delete
-```
+The `nodeId` is the node's **stable network identifier**: it is assigned on creation, returned in
+`NodeCreateReceipt.nodeId`, and stays the same for the lifetime of the node — independent of account rotation,
+endpoint migration or certificate rollover. The node's account, in contrast, may change.
 
-`NodeDelete` does not free the `nodeId`; deleted nodes remain in the address book in a
-tombstoned state so that historical references still resolve.
-
-### Signing requirements (DAB)
+### Signing requirements
 
 | Transaction               | Signers required                                                                                                                                              |
 |---------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -39,8 +38,17 @@ tombstoned state so that historical references still resolve.
 | `NodeUpdateTransaction`   | the *payer*; **and** the node's current `adminAuthority`; **and**, if `adminAuthority` itself is being rotated, the *new* key; **and**, if `accountId` is changed, the new account's key |
 | `NodeDeleteTransaction`   | the *payer*; **and** the node's current `adminAuthority`                                                                                                            |
 
-The council signer is configured at the consensus-node level and reaches the SDK through
-`TransactionSigner` like any other externally held key.
+The council signer is configured at the consensus-node level and is provided through a `TransactionSigner` like any
+other externally held key.
+
+### Service endpoints
+
+Each `ServiceEndpoint` has a port and either an `IpAddress` **or** a domain name — exactly one of the two. IP
+addresses are IPv4 only today; use a domain name if the node runs behind a load balancer, if you want to decouple the
+address from a specific IP, or if you need IPv6 reachability (via an AAAA record). The network rejects an endpoint
+with both or neither set with `INVALID_ENDPOINT`.
+
+## Design Notes
 
 ### `nodeId` vs. the read-side `ConsensusNode.account`
 
@@ -66,9 +74,6 @@ pending `NodeUpdate`). `ConsensusNode` does **not** currently carry `nodeId` —
 
 ### ServiceEndpoint addressing
 
-Each `ServiceEndpoint` carries either an `IpAddress` **or** a domain name (mutually
-exclusive) plus a port:
-
 - `ipAddress` — an `IpAddress` value (defined in [`base/ledger.md`](../base/ledger.md)).
   IPv4-only today (the wire shape is HAPI `ipAddressV4`, 4 bytes); the type is named
   `IpAddress` rather than `IpV4Address` so adding IPv6 later only requires loosening the
@@ -92,8 +97,8 @@ requires {Receipt, Transaction} from consensusnode.transactions
 // be set; the network rejects an endpoint with both (or neither) as INVALID_ENDPOINT.
 @@oneOf(ipAddress, domainName)
 type ServiceEndpoint {
-    @@immutable @@nullable ipAddress: IpAddress   // IPv4 today (HAPI ipAddressV4 wire shape); null when domainName is used
-    @@immutable @@nullable domainName: string     // DNS name; null when ipAddress is used
+    @@immutable @@nullable ipAddress: IpAddress   // IPv4 address; absent when domainName is used
+    @@immutable @@nullable domainName: string     // DNS name; absent when ipAddress is used
     @@immutable port: uint16                      // listening port (0 is invalid)
 }
 
@@ -102,7 +107,7 @@ type ServiceEndpoint {
 @@finalType
 NodeCreateTransaction extends Transaction<NodeCreateReceipt, NodeCreateTransaction> {
     @@immutable accountId: AccountId                                     // account that receives the node's staking rewards
-    @@immutable @@nullable description: string                           // free-form description (max 100 chars)
+    @@immutable @@nullable description: string                           // free-form description (at most 100 characters)
     @@immutable @@minSize(1) gossipEndpoints: list<ServiceEndpoint>    // inter-node hashgraph gossip endpoints
     @@immutable @@minSize(1) serviceEndpoints: list<ServiceEndpoint>   // public gRPC endpoints for client transactions
     @@immutable gossipCaCertificate: bytes                               // X.509 DER bytes of the certificate that terminates mutual TLS for gossip
@@ -112,39 +117,41 @@ NodeCreateTransaction extends Transaction<NodeCreateReceipt, NodeCreateTransacti
     @@immutable @@nullable grpcWebProxyEndpoint: ServiceEndpoint         // optional gRPC-web proxy endpoint (HIP-1046)
 }
 
+// Receipt of a `NodeCreateTransaction`; contains the id assigned to the new node.
 @@finalType
 NodeCreateReceipt extends Receipt {
     @@immutable nodeId: int64                                            // network-assigned numeric id of the new node
 }
 
-// Updates one or more of a node's mutable fields. Every nullable field is "leave unchanged"
-// when null. Lists are replace-on-set: passing a non-null endpoint list replaces the entire
-// current list (there is no per-entry append / remove).
+// Updates one or more of a node's mutable fields. Fields that are not set are left unchanged. Setting an endpoint
+// list replaces the entire current list — there is no way to add or remove a single entry.
 @@finalType
 NodeUpdateTransaction extends Transaction<NodeUpdateReceipt, NodeUpdateTransaction> {
-    @@immutable nodeId: int64
+    @@immutable nodeId: int64                                            // the node to update
     @@immutable @@nullable accountId: AccountId                          // when set, the new account's key must also sign
-    @@immutable @@nullable description: string
+    @@immutable @@nullable description: string                           // new free-form description
     @@immutable @@nullable gossipEndpoints: list<ServiceEndpoint>        // replaces the entire list when set
     @@immutable @@nullable serviceEndpoints: list<ServiceEndpoint>       // replaces the entire list when set
-    @@immutable @@nullable gossipCaCertificate: bytes
-    @@immutable @@nullable grpcCertificateHash: bytes
+    @@immutable @@nullable gossipCaCertificate: bytes                    // new gossip CA certificate (X.509 DER bytes)
+    @@immutable @@nullable grpcCertificateHash: bytes                    // new SHA-384 hash of the gRPC certificate
     @@immutable @@nullable adminAuthority: Authority                         // when set, the new key must also sign
-    @@immutable @@nullable declineReward: bool
-    @@immutable @@nullable grpcWebProxyEndpoint: ServiceEndpoint
+    @@immutable @@nullable declineReward: bool                           // whether the node opts out of staking rewards
+    @@immutable @@nullable grpcWebProxyEndpoint: ServiceEndpoint         // new gRPC-web proxy endpoint (HIP-1046)
 }
 
+// Receipt of a `NodeUpdateTransaction`.
 @@finalType
 NodeUpdateReceipt extends Receipt {
 }
 
-// Tombstones a node entry. The nodeId is not freed; subsequent lookups return a deleted
-// flag rather than NOT_FOUND so historical references resolve.
+// Deletes a node from the address book. The node stays in the address book as a deleted (tombstoned) entry and its
+// nodeId is not freed, so historical references still resolve.
 @@finalType
 NodeDeleteTransaction extends Transaction<NodeDeleteReceipt, NodeDeleteTransaction> {
-    @@immutable nodeId: int64
+    @@immutable nodeId: int64                                            // the node to delete
 }
 
+// Receipt of a `NodeDeleteTransaction`.
 @@finalType
 NodeDeleteReceipt extends Receipt {
 }

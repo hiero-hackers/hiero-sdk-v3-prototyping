@@ -2,6 +2,40 @@
 
 ## Description
 
+A minimal, transport-level HTTP client used by the SDK for everything that is not gRPC — today the
+Mirror Node REST API. `HttpClient` is an abstraction: the SDK ships a default implementation that
+wraps the language's native HTTP stack, and an application can supply its own client to control
+proxies, TLS material, connection pooling, retries or tracing.
+
+The client is payload-agnostic and does not interpret responses:
+
+- **Bodies are raw `bytes`.** The content type is just a header; serialisation (e.g. JSON) is up to
+  the caller.
+- **Status codes are reported, never interpreted.** A `404` or a `500` is a successful HTTP exchange:
+  `execute` completes normally and returns the `HttpResponse`. Only a transport failure fails the
+  returned future.
+- **No policies.** No retry, no redirect handling, no rate limiting, no circuit breaking.
+
+`HttpConfiguration` holds what the client applies to every exchange: `defaultHeaders` are merged into
+each request (a header set on the request wins on a key collision), `connectTimeout` bounds
+establishing the connection, and `defaultRequestTimeout` applies whenever `HttpRequest.timeout` is
+not set. `HttpRequest.url` must be an absolute, well-formed URL; this is checked when the request is
+created, so a malformed URL is reported where the mistake is made and not later in `execute`. No
+base-URL resolution happens at this level.
+
+`execute` fails only when no response can be produced at all, in one of three ways: the connection
+could not be established or was broken (DNS, connection refused, TLS handshake, reset or truncated
+exchange; possibly transient), a connect or request timeout elapsed (possibly transient), or the
+client was closed before or while the request was submitted (permanent; never retry).
+
+A client owns resources (sockets, pools, worker threads) and must be closed. All methods of
+`HttpClient` may be called concurrently, including `execute` while a `close` is in progress.
+`close()` waits for in-flight exchanges, which are bounded by their timeouts; `close(closeTimeout)`
+bounds that wait and aborts whatever is left — aborted exchanges fail with the "client closed"
+error. `close` itself never fails and is idempotent.
+
+## Design Notes
+
 The SDK has to speak HTTP for everything that is not gRPC — today that is the Mirror Node REST API
 (see [`mirrornode.http`](../mirror-node-client/mirror-node-http.md) and the repositories above it),
 tomorrow potentially any other REST/JSON service a network exposes. This namespace defines the
@@ -14,23 +48,13 @@ exactly that level. By keeping the SDK's own dependency on HTTP down to the hand
 binding can wrap its native stack and an application can plug in its own client, without either of
 them affecting the layers above.
 
-The layer is payload-agnostic and semantics-free:
-
-- **Bodies are raw `bytes`.** The content type is just a header. Serialisation (JSON for the Mirror
-  Node) is the caller's business, which keeps this namespace usable for non-JSON payloads.
-- **Status codes are reported, never interpreted.** A `404` or a `500` is a *successful* HTTP
-  exchange: `execute` completes normally and hands back the `HttpResponse`. Only a transport failure
-  (DNS, connect, TLS, timeout) fails the returned future. Translating a status code into a domain
-  error such as `not-found-error` or `mirror-node-error` is the job of the layer that knows what the
-  call meant.
-- **No policies.** No retry, no redirect handling, no rate limiting, no circuit breaking. Those
-  belong either to the concrete implementation or to the calling layer.
-
-`HttpConfiguration` carries what the client applies to every exchange: `defaultHeaders` are merged
-into each request (a header set on the request wins on a key collision), `connectTimeout` bounds
-establishing the connection, and `defaultRequestTimeout` applies whenever `HttpRequest.timeout` is
-null. `HttpRequest.url` is **absolute** — this type performs no base-URL resolution; that is
-precisely what `mirrornode.http.MirrorNodeHttpClient` adds on top.
+- Serialisation being the caller's business keeps this namespace usable for non-JSON payloads.
+- Translating a status code into a domain error such as `not-found-error` or `mirror-node-error` is
+  the job of the layer that knows what the call meant.
+- Retry, redirect, rate-limit and circuit-breaker policies belong either to the concrete
+  implementation or to the calling layer.
+- `HttpRequest.url` is **absolute** — this type performs no base-URL resolution; that is precisely
+  what `mirrornode.http.MirrorNodeHttpClient` adds on top.
 
 That "absolute" is not just documentation: `url` carries `@@urlPattern`, so a well-formed absolute
 URL is an **invariant of the type**, enforced wherever an `HttpRequest` is built. The malformed-URL
@@ -71,14 +95,21 @@ while `close(closeTimeout)` bounds that wait and aborts whatever is left. Aborti
 which is why neither overload declares `@@throws`. A bounded shutdown is the guarantee it gives, not
 an outcome it reports. Both are `@@async` because a graceful shutdown is itself an I/O operation.
 
+### Schema remarks
+
+- `HttpMethod` is listed in full so the enum is closed for good — bindings that map it to a native
+  closed enum (and callers that switch exhaustively over it) never face a breaking addition later.
+- `HttpRequest.url`: `@@urlPattern` makes "absolute, well-formed URL" an invariant of the type rather
+  than a check somebody has to remember to run: so a request that is guaranteed to fail cannot exist
+  and `execute` never re-checks the string.
+
 ## API Schema
 
 ```
 namespace http
 
 // The complete set of HTTP methods: the eight defined by RFC 9110 plus PATCH (RFC 5789).
-// Listed in full so the enum is closed for good — bindings that map it to a native closed
-// enum (and callers that switch exhaustively over it) never face a breaking addition later.
+// The set is complete and will not grow.
 enum HttpMethod {
     GET,
     HEAD,
@@ -91,38 +122,39 @@ enum HttpMethod {
     CONNECT   // proxy tunnelling; normally issued by the HTTP stack itself, not by a caller
 }
 
+// Settings an HttpClient applies to every exchange.
 HttpConfiguration {
-  @@immutable defaultHeaders: map<string, string> 
-  @@immutable connectTimeout: duration
-  @@immutable defaultRequestTimeout: duration
+  @@immutable defaultHeaders: map<string, string> // merged into every request; a header set on the request wins
+  @@immutable connectTimeout: duration // maximum time to establish a connection
+  @@immutable defaultRequestTimeout: duration // request timeout used when HttpRequest.timeout is not set
 }
 
+// A single HTTP request.
 HttpRequest {
     @@immutable method: HttpMethod
-    // @@urlPattern makes "absolute, well-formed URL" an invariant of the type rather than a
-    // check somebody has to remember to run: it is enforced wherever an HttpRequest is built,
-    // so a request that is guaranteed to fail cannot exist and `execute` never re-checks the
-    // string. No base-URL resolution happens here — that is what
-    // mirrornode.http.MirrorNodeHttpClient adds on top.
+    // Absolute, well-formed URL of the request. Checked when the request is created, so an
+    // invalid URL fails there and never reaches `execute`. No base-URL resolution happens here.
     @@urlPattern @@immutable url: string
-    @@nullable @@immutable body: bytes
-    @@nullable @@immutable timeout: duration
+    @@nullable @@immutable body: bytes // request body; absent for requests without a body
+    @@nullable @@immutable timeout: duration // request timeout; if absent, the configuration's defaultRequestTimeout applies
     @@immutable headers: map<string, string>
 }
 
+// The response of an HTTP exchange, whatever its status code.
 HttpResponse {
     @@immutable statusCode: uint16
     @@immutable body: bytes
     @@immutable headers: map<string, string>
 }
 
+// Executes HTTP exchanges. Safe for concurrent use; must be closed to release its resources.
 abstraction HttpClient {
 
     @@immutable configuration:HttpConfiguration
     
     // Executes a single HTTP exchange. A non-2xx status code is NOT an error — it is returned
-    // in HttpResponse.statusCode. `request.url` needs no checking here — @@urlPattern already
-    // guarantees it. Only the three failures below prevent an exchange from producing a
+    // in HttpResponse.statusCode. The URL of the request has already been validated when the
+    // request was created. Only the three failures below prevent an exchange from producing a
     // response.
     //   connection-error    — the exchange could not be carried out: DNS failure, connection
     //                         refused, TLS handshake failure, connection reset or truncated
@@ -152,10 +184,11 @@ abstraction HttpClient {
     void close(closeTimeout: duration)
 }
 
+// Creates the default HttpClient of the SDK, wrapping the language's native HTTP stack.
 @@static HttpClient createHttpClient(configuration: HttpConfiguration)
 ```
 
-## Example
+## Examples
 
 The following example performs a single GET request and shows that a `404` is a normal result of
 this layer, not an error:

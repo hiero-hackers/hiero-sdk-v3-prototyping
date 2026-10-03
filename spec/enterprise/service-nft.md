@@ -1,13 +1,11 @@
 # NFT Service API
 
-Service definition for creating and managing non-fungible tokens (NFTs).
-
 ## Description
 
-Provides high-level operations for NFTs: creating an NFT type (collection), account association, minting NFTs with
-metadata, burning, and transfers. An NFT type id is a `ledger.Address` (pure shard.realm.num); accounts are
-`ledger.AccountId`. Individual NFTs are identified by their type plus an `int64` serial number. Metadata is an
-opaque `bytes` payload.
+`NftService` creates and manages non-fungible tokens (NFTs): creating an NFT type (collection), account association,
+minting NFTs with metadata, burning, transfers and lookups. An NFT type is identified by an `Address`
+(shard.realm.num), accounts by an `AccountId`. An individual NFT is identified by its type plus its serial number.
+NFT metadata is an opaque byte payload.
 
 ## API Schema
 
@@ -21,8 +19,8 @@ requires {Session} from enterprise.service
 
 NftService {
 
-    // Create a new NFT type (collection); returns the token id of the new type.
-    // The treasury defaults to the operator account; a supply key enables minting.
+    // Create a new NFT type (collection); returns the metadata of the new type, including its token id.
+    // The treasury defaults to the operator account; a supply authority enables minting.
     @@throws(service-error) NftMetadata createNftType(name: string, symbol: string)
 
     @@throws(service-error) NftMetadata createNftType(name: string, symbol: string, supplyAuthority: Authority)
@@ -35,22 +33,22 @@ NftService {
     // Remove the association between an account and one or more NFT types
     @@throws(service-error) void dissociateNft(accountId: AccountId, tokenIds: Address...)
 
-    // Mint a single NFT with the given metadata; returns the new serial number
+    // Mint a single NFT with the given metadata; returns the new NFT including its serial number
     @@throws(service-error) Nft mintNft(tokenId: Address, metadata: bytes)
 
-    // Mint multiple NFTs in one operation; returns the new serial numbers in order
+    // Mint multiple NFTs in one operation; returns the new NFTs in the order of the given metadata
     @@throws(service-error) list<Nft> mintNfts(tokenId: Address, metadata: bytes...)
 
     // Burn a single NFT by serial number
     @@throws(service-error) void burnNft(tokenId: Address, serialNumber: int64)
 
-    // Burn a single NFT by serial number
+    // Burn the given NFT
     @@throws(service-error) void burnNft(nft: Nft)
 
     // Burn multiple NFTs by serial number
     @@throws(service-error) void burnNfts(tokenId: Address, serialNumbers: set<int64>)
 
-    // Burn multiple NFTs by serial number
+    // Burn the given NFTs
     @@throws(service-error) void burnNfts(nfts: set<Nft>)
 
     // Transfer a single NFT to another account
@@ -89,7 +87,8 @@ NftService {
     @@throws(service-error) @@nullable Nft findByOwnerAndTypeAndSerial(ownerId: AccountId, tokenId: Address, serialNumber: int64)
 }
 
-// Factory method to create the service (not needed for real framework integration where injection is used)
+// Creates the service for the given session. With a framework integration the service is usually obtained via
+// dependency injection instead.
 @@static
 NftService createService(session: Session)
 ```

@@ -1,11 +1,10 @@
 # File Service API
 
-Service definition for storing and retrieving files on a Hiero network (the File Service).
-
 ## Description
 
-Files hold an arbitrary byte payload on the ledger together with an expiration time. The service abstracts the
-chunking that is required for payloads larger than a single transaction. Entity ids are `ledger.Address` values.
+`FileService` stores and retrieves files on a Hiero network (the File Service). A file holds an arbitrary byte payload
+on the ledger together with an expiration time. The service takes care of splitting payloads that are larger than a
+single transaction into chunks. Files are identified by an `Address`.
 
 ## API Schema
 
@@ -43,7 +42,8 @@ FileService {
     @@throws(service-error) zonedDateTime getExpirationTime(fileId: Address)
 }
 
-// Factory method to create the service (not needed for real framework integration where injection is used)
+// Creates the service for the given session. With a framework integration the service is usually obtained via
+// dependency injection instead.
 @@static
 FileService createService(session: Session)
 ```

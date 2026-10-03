@@ -12,8 +12,8 @@ auto-association slot. HIP-904 adds a *push* model that never fails for that rea
 - **`TokenAirdrop`** — transfers tokens to recipients exactly like a `TransferTransaction`'s token
   legs, **but** if a recipient is not associated and has no free auto-association slot, the
   transfer is parked as a **pending airdrop** instead of failing. Associated recipients (or those
-  with a free slot) receive immediately. The set of pending airdrops created lands on the
-  transaction **record** (not the receipt) — see *Questions & Comments*.
+  with a free slot) receive immediately. The set of pending airdrops created is reported on the
+  transaction **record**, not on the receipt.
 - **`TokenClaimAirdrop`** — the **recipient** accepts one or more pending airdrops, auto-associating
   and crediting the tokens. Signed by the receiver.
 - **`TokenCancelAirdrop`** — the **sender** withdraws one or more of its own outstanding pending
@@ -21,16 +21,14 @@ auto-association slot. HIP-904 adds a *push* model that never fails for that rea
 - **`TokenReject`** — the current **holder** returns unwanted tokens to the token's treasury at no
   cost (the anti-spam counterpart: reject already-held tokens). Signed by the holder.
 
-Airdrop transfers reuse the same [`TokenTransfer`](transactions-accounts.md) /
-[`NftTransfer`](transactions-accounts.md) leg types as `TransferTransaction` (HAPI reuses
-`TokenTransferList`); HBAR is not airdroppable, so there is no `hbarTransfers` leg.
+Airdrop transfers reuse the same `TokenTransfer` / `NftTransfer` leg types as
+`TransferTransaction`; HBAR is not airdroppable, so there is no `hbarTransfers` leg.
 
 ### Pending-airdrop identity
 
 A pending airdrop is identified by `(senderId, receiverId, token)` — fungible by token id, or NFT
-by token id + serial. HAPI types this as `PendingAirdropId`; V3 does not yet have that typed
-identifier (nor `NftId`), so it is modelled here as the `PendingAirdrop` shape below with a
-`@@nullable serial`. Both are tracked in [`missing-features.md`](../../missing-features.md) §3.1.
+by token id + serial. It is represented by `PendingAirdrop`, whose optional `serial` is absent for a
+fungible airdrop and set for a specific NFT.
 
 ### Signing requirements
 
@@ -41,6 +39,14 @@ identifier (nor `NftId`), so it is modelled here as the `PendingAirdrop` shape b
 | `TokenCancelAirdrop` | the *payer*; **and** each pending airdrop's `senderId` (the account withdrawing its offer). |
 | `TokenReject` | the *payer*; **and** the `owner` returning the tokens (defaults to the payer when unset). |
 
+## Design Notes
+
+- The `TokenTransfer` / `NftTransfer` leg types are defined in
+  [`transactions-accounts.md`](transactions-accounts.md) (HAPI reuses `TokenTransferList`).
+- HAPI types the pending-airdrop identity as `PendingAirdropId`; V3 does not yet have that typed
+  identifier (nor `NftId`), so it is modelled here as the `PendingAirdrop` shape with a
+  `@@nullable serial`. Both are tracked in [`missing-features.md`](../../missing-features.md) §3.1.
+
 ## API Schema
 
 ```
@@ -49,9 +55,10 @@ requires {Address, AccountId} from ledger
 requires {Receipt, Transaction} from consensusnode.transactions
 requires {TokenTransfer, NftTransfer} from consensusnode.transactions.accounts
 
+// Placeholder for HAPI's typed PendingAirdropId (see missing-features §3.1).
+
 // A single pending airdrop, identified by its sender, receiver, and token. `serial` is null for a
-// fungible airdrop and set for a specific NFT. Placeholder for HAPI's typed PendingAirdropId
-// (see missing-features §3.1).
+// fungible airdrop and set for a specific NFT.
 type PendingAirdrop {
     @@immutable senderId: AccountId
     @@immutable receiverId: AccountId
@@ -59,8 +66,10 @@ type PendingAirdrop {
     @@immutable @@nullable serial: int64        // null → fungible; set → that NFT serial
 }
 
-// A reference to tokens being rejected: either a whole fungible token (serial null) or a single
-// NFT serial. Placeholder for HAPI's TokenReference / NftId (see missing-features §3.1).
+// Placeholder for HAPI's TokenReference / NftId (see missing-features §3.1).
+
+// A reference to tokens being rejected: either a whole fungible token (serial absent) or a single
+// NFT serial.
 type TokenReference {
     @@immutable tokenId: Address
     @@immutable @@nullable serial: int64        // null → fungible token; set → that NFT serial
@@ -69,7 +78,7 @@ type TokenReference {
 // Transfers tokens to recipients; recipients that are not associated and have no free
 // auto-association slot receive a pending airdrop instead of the transaction failing. Reuses the
 // transfer leg types from TransferTransaction. The protocol caps the combined transfer list at 10.
-// The pending airdrops created are reported on the record, not this receipt (see Q&C).
+// The pending airdrops created are reported on the record, not on this receipt.
 @@finalType
 TokenAirdropTransaction extends Transaction<TokenAirdropReceipt, TokenAirdropTransaction> {
     @@immutable @@default([]) tokenTransfers: list<TokenTransfer>   // fungible legs (sum per token must be zero)

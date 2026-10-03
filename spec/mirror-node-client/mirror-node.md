@@ -2,8 +2,16 @@
 
 ## Description
 
-This API defines the types and repository abstractions for querying a Hiero Mirror Node via its REST API.
-It covers accounts, tokens, NFTs, transactions, topics, contracts, and network-level data.
+Query historical and current ledger data from a Hiero Mirror Node via its REST API.
+
+Create a `MirrorNodeClient` for a `MirrorNode` with `createMirrorNodeClient`. The client groups its queries into
+repositories, one per domain: `accounts`, `contracts`, `network`, `nft`, `token`, `topic` and `transaction`. Lookups by
+id return the entity or nothing if it does not exist; list queries return a `Page` that can be used to navigate
+through the full result. All queries are asynchronous and fail with a mirror node error if the Mirror Node cannot be
+reached or returns an unexpected response.
+
+For endpoints that have no typed repository method, `mirrorNodeHttpClient` gives direct access to the Mirror Node REST
+API.
 
 ## API Schema
 
@@ -36,7 +44,7 @@ MirrorNodeClient {
 MirrorNodeClient createMirrorNodeClient(mirrorNode: MirrorNode)
 ```
 
-## Example
+## Examples
 
 ```
 mirrorNode = MirrorNode(restBaseUrl: "https://mainnet.mirrornode.hedera.com/api/v1")
@@ -45,3 +53,5 @@ client = createMirrorNodeClient(mirrorNode)
 // Look up an contract
 contract = await client.contracts.findById(ContractId.fromString("0.0.1234"))
 ```
+
+## Questions & Comments

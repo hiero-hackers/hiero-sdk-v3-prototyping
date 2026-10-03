@@ -20,91 +20,97 @@ rolled back. Atomicity therefore governs committed state, not fees.
 
 The number of inner transactions is bounded by a network configuration parameter (currently tied to
 the maximum number of preceding child transactions, ~50), so the SDK does not impose a fixed upper
-limit — an over-large batch is rejected by the network as a `TransactionStatus`.
+limit — an over-large batch is rejected by the network with a `TransactionStatus`.
 
-### The inner transactions — independently packed and signed
+### Preparing the inner transactions
 
-This is the key difference from `ScheduleCreate` (see
-[`transactions-schedule.md`](transactions-schedule.md)). A schedule *captures* an inner transaction
-as a plain `Transaction<ANY, ANY>` builder and never packs or signs it — the network materializes it
-later. A batch is the opposite: every inner transaction is **fully packed and signed up front**,
-possibly by different parties on different machines, and the batch carries the finished, signed
-payloads. Inner transactions are therefore modelled as a list of `PackedTransaction`, not as
-builders.
+Every inner transaction is **fully packed and signed up front**, possibly by different parties on
+different machines, and the batch carries the finished, signed `PackedTransaction` payloads. (This
+differs from `ScheduleCreateTransaction`, which takes an unsigned `Transaction` builder.)
 
-Each inner transaction is prepared through the batch-specific entry point on `Transaction` (see
-[`transactions.md`](transactions.md)):
+An inner transaction is prepared through the batch-specific methods on `Transaction`, which mirror
+the regular signing methods without a `nodes` parameter:
 
-- **`batchKey` (a required parameter of the batch-pack methods).** Every batch-pack method takes a
-  `batchKey`: the `Authority` that must sign the *outer* `BatchTransaction` for this inner
-  transaction to run — the inner author's controlled opt-in to being batched. Because `batchKey` is
-  a `TransactionBody` field, it must be fixed **before** signing; setting it afterwards would
-  invalidate the inner signatures, the same invariant that drives the `Transaction` →
-  `PackedTransaction` split. Passing it as a parameter (rather than as a free-standing build-phase
-  field) makes two illegal states unrepresentable instead of network-rejected: an inner transaction
-  can never be packed *without* a `batchKey`, and a normally-submitted transaction can never carry
-  one. This is deliberately *not* the same as the batchability check below — `batchKey` is an
-  SDK-owned, knowable invariant of the batch-pack entry point, whereas which transaction *types* may
-  be batched is network policy the SDK cannot know.
-- **`packForBatch(...)` / `signForBatch(...)` (pack + sign).** Unlike `pack(payer, nodes)`, these
-  produce a **single** `TransactionBody` addressed to no consensus node (`nodeAccountID = 0.0.0`):
-  an inner batch transaction is never submitted to a node on its own. They mirror the non-batch
-  signing tiers without a `nodes` parameter (each additionally taking the required `batchKey`) —
-  `packForBatch(payer, batchKey)` (pure pack, no signature), `signForBatchWithOperator(client,
-  batchKey)` (operator convenience), `signForBatch(payer, batchKey)` (one Account pays and signs),
-  and the most general `signForBatch(payerId, signer, batchKey)` (payer identity decoupled from an
-  HSM / hardware-wallet / paymaster `TransactionSigner`). Any further signatures (multi-sig, offline)
-  reuse the inherited `PackedTransaction.sign(...)` / `signableBodies()` flow unchanged.
+- `packForBatch(payer, batchKey)` — pack only, no signature;
+- `signForBatchWithOperator(client, batchKey)` — the client's operator pays and signs;
+- `signForBatch(payer, batchKey)` — one `Account` pays and signs;
+- `signForBatch(payerId, signer, batchKey)` — the payer identity is decoupled from a
+  `TransactionSigner` (HSM, hardware wallet, paymaster).
+
+Each method produces a **single** `TransactionBody` addressed to no consensus node
+(`nodeAccountID = 0.0.0`), because an inner batch transaction is never submitted to a node on its
+own. Further signatures (multi-sig, offline) use the regular `PackedTransaction.sign(...)` /
+`signableBodies()` methods.
+
+The required `batchKey` is the `Authority` that must sign the *outer* `BatchTransaction` for this
+inner transaction to run — the inner author's controlled opt-in to being batched. It is part of the
+signed body, so it is fixed when the inner transaction is packed.
 
 The resulting `PackedTransaction` instances are passed to `BatchTransaction.innerTransactions`. The
 list is **ordered**: the network executes the inner transactions in list order.
 
-### Signing model — no new concept
+### Signing the batch
 
-Authorizing a batch needs nothing beyond the existing `Transaction` → `PackedTransaction`
-multi-signature flow, exactly as for schedules:
+Authorizing a batch uses the regular multi-signature flow:
 
 - The `BatchTransaction` is signed by its own payer, **plus** the `batchKey` of every inner
   transaction. These are ordinary `NodeSignature` entries on the outer transaction; the network
   matches each inner transaction's `batchKey` against the signature set.
-- The inner transactions are already self-contained (signed by their own required keys during
-  `packForBatch`). The batch does not re-sign them.
-
-So a `batchKey` signature *is* a normal signature on the outer `BatchTransaction` — there is no
-separate "batch signature" payload, and the per-node body fan-out of the outer transaction is the
-standard model from [`transactions.md`](transactions.md).
+- The inner transactions are already self-contained (signed by their own required keys when they
+  were packed for the batch). The batch does not re-sign them.
 
 ### Reading the inner outcomes
 
 Per HIP-551, the batch record does **not** aggregate the inner results: each inner transaction
-produces its own record whose `Record.parentConsensusTimestamp` (see
-[`transactions.md`](transactions.md)) equals the batch's `consensusTimestamp` — the link from an
-inner record back to the batch that ran it — and callers *"must query the individual inner
-transactions receipts"* separately to see each inner response code. `BatchReceipt` therefore carries
-only the batch transaction's own status (the base `Receipt` fields). To read an inner transaction's
-typed receipt, the caller already holds each inner `TransactionId` (the `transactionId` field of the
-`PackedTransaction` it packed) and resolves it through the general
-`Transaction.getResponse(transactionId, transactionType, client)` factory — the same mechanism used
-for the executed inner transaction of a schedule. See the example below.
+produces its own record whose `Record.parentConsensusTimestamp` equals the batch's
+`consensusTimestamp`, and the receipts of the inner transactions must be queried individually.
+`BatchReceipt` therefore carries only the batch transaction's own status (the base `Receipt`
+fields). To read an inner transaction's typed receipt, take its `TransactionId` (the
+`transactionId` field of the inner `PackedTransaction`) and resolve it through
+`Transaction.getResponse(transactionId, transactionType, client)` — the same mechanism used for the
+executed inner transaction of a schedule. See the example below.
 
-Per-inner queries are the *only* protocol-supported read path; the inner outcomes cannot be fetched
-in bulk through HAPI's child-records query either. `TransactionGetRecordQuery.include_child_records`
-returns only node-synthesized children that share the parent's `TransactionId` (disambiguated by a
-`nonce`, e.g. HTS precompile calls inside a contract call). Batch inner transactions instead keep
-their own independent, user-supplied `TransactionId` (often a different payer), so they are not
-nonce-children of the batch and are not returned by a record query against the batch's id. They are
-therefore addressed individually by their own ids, and only *correlated* as a group after the fact
-via `parentConsensusTimestamp` in the record stream / mirror node.
+### Restrictions
 
-### No client-side batchability check
+Per HIP-551 an inner transaction cannot be a network `freeze`, cannot be another
+`BatchTransaction` (batches do not nest), and a batch itself must not be scheduled via
+`ScheduleCreateTransaction`. The SDK does not check this; a disallowed inner transaction is rejected
+by the network with a `TransactionStatus` on the receipt.
 
-HAPI restricts what may appear inside a batch. Per HIP-551 an inner transaction cannot be a network
-`freeze`, cannot be another `BatchTransaction` (batches do not nest), and a batch itself must not be
-scheduled to run later via `ScheduleCreate`. As with schedulable transactions, the SDK does **not**
-enforce this: because the consensus node is service-oriented and supports custom services and
-transaction types (see [`transactions-spi.md`](transactions-spi.md)), the SDK cannot know the
-batchable set. A disallowed inner transaction is rejected by the network as a `TransactionStatus` on
-the receipt, not by a client-side error.
+## Design Notes
+
+- **Packed inner transactions vs. schedule builders.** This is the key difference from
+  `ScheduleCreate` (see [`transactions-schedule.md`](transactions-schedule.md)). A schedule
+  *captures* an inner transaction as a plain `Transaction<ANY, ANY>` builder and never packs or signs
+  it — the network materializes it later. A batch is the opposite, so inner transactions are modelled
+  as a list of `PackedTransaction`, not as builders. The batch-specific entry points are specified on
+  `Transaction` in [`transactions.md`](transactions.md).
+- **`batchKey` as a required parameter.** Because `batchKey` is a `TransactionBody` field, it must be
+  fixed **before** signing; setting it afterwards would invalidate the inner signatures, the same
+  invariant that drives the `Transaction` → `PackedTransaction` split. Passing it as a parameter
+  (rather than as a free-standing build-phase field) makes two illegal states unrepresentable instead
+  of network-rejected: an inner transaction can never be packed *without* a `batchKey`, and a
+  normally-submitted transaction can never carry one. This is deliberately *not* the same as the
+  batchability check — `batchKey` is an SDK-owned, knowable invariant of the batch-pack entry point,
+  whereas which transaction *types* may be batched is network policy the SDK cannot know.
+- **Signing model — no new concept.** A `batchKey` signature *is* a normal signature on the outer
+  `BatchTransaction` — there is no separate "batch signature" payload, and the per-node body fan-out
+  of the outer transaction is the standard model from [`transactions.md`](transactions.md). This
+  mirrors schedules.
+- **Why inner outcomes cannot be fetched in bulk.** Per-inner queries are the *only*
+  protocol-supported read path; the inner outcomes cannot be fetched in bulk through HAPI's
+  child-records query either. `TransactionGetRecordQuery.include_child_records` returns only
+  node-synthesized children that share the parent's `TransactionId` (disambiguated by a `nonce`,
+  e.g. HTS precompile calls inside a contract call). Batch inner transactions instead keep their own
+  independent, user-supplied `TransactionId` (often a different payer), so they are not
+  nonce-children of the batch and are not returned by a record query against the batch's id. They
+  are therefore addressed individually by their own ids, and only *correlated* as a group after the
+  fact via `parentConsensusTimestamp` (see [`transactions.md`](transactions.md)) in the record stream
+  / mirror node.
+- **No client-side batchability check.** As with schedulable transactions, the SDK does **not**
+  enforce the HIP-551 restrictions: because the consensus node is service-oriented and supports custom
+  services and transaction types (see [`transactions-spi.md`](transactions-spi.md)), the SDK cannot
+  know the batchable set.
 
 ## API Schema
 
@@ -114,20 +120,20 @@ requires {Receipt, Transaction, PackedTransaction} from consensusnode.transactio
 
 // Submits a list of independent inner transactions as a single atomic unit (HIP-551): all inner
 // transactions execute, or none does. Each inner transaction must be packed via
-// Transaction.packForBatch(...) (a single body addressed to no node), carry a batchKey, and be
-// signed by its own required keys. This BatchTransaction must additionally be signed by every
-// inner transaction's batchKey (ordinary signatures on this outer transaction; see the signing
-// model in transactions.md).
+// Transaction.packForBatch(...) or one of the signForBatch(...) methods, and be signed by its own
+// required keys. This BatchTransaction must additionally be signed by every inner transaction's
+// batchKey (ordinary signatures on this outer transaction).
 @@finalType
 BatchTransaction extends Transaction<BatchReceipt, BatchTransaction> {
     // The inner transactions to execute atomically, in execution order. Each is an already-packed,
-    // already-signed PackedTransaction produced by Transaction.packForBatch(...). Never empty.
+    // already-signed PackedTransaction produced by Transaction.packForBatch(...) or
+    // signForBatch(...). Must not be empty.
     @@immutable @@minSize(1) innerTransactions: list<PackedTransaction<ANY, ANY>>
 }
 
 // The batch transaction's own receipt. Carries only the base Receipt fields (status, exchange
 // rates); each inner transaction's typed receipt is read separately via
-// Transaction.getResponse(innerTransactionId, innerType, client) — see transactions.md.
+// Transaction.getResponse(innerTransactionId, innerType, client).
 @@finalType
 BatchReceipt extends Receipt {
 }

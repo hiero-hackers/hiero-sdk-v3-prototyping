@@ -6,24 +6,22 @@ charges a fee for serving file content and metadata.
 
 ## Description
 
-Two queries are exposed:
+Queries for reading files stored on the network. Both queries are paid, so you can bound the spend with
+`maxQueryPayment`, ask for the price up front with `getCost(client)`, and read the actually paid `cost` from the
+`PaidQueryResponse`.
 
-- **`FileContentsQuery`** extends `PaidQuery<FileContents>` — returns the raw byte payload of
-  a file. The price is roughly proportional to file size; callers that fetch large files
-  should set `maxQueryPayment` to bound the spend.
+- **`FileContentsQuery`** — returns the raw bytes of a file. The price grows roughly with the file size; set
+  `maxQueryPayment` when you fetch large files.
+- **`FileInfoQuery`** — returns the file's metadata: size, expiration time, deletion flag, write-access authority
+  and memo. It does not return the content; use `FileContentsQuery` for that.
 
-- **`FileInfoQuery`** extends `PaidQuery<FileInfo>` — returns the file's metadata snapshot:
-  size, expiration time, deletion flag, current key list, and memo. Does not return the
-  content (use `FileContentsQuery` for that).
+Querying a deleted file does not fail: `FileInfoQuery` returns a `FileInfo` with `deleted = true` (most other fields
+cleared), and `FileContentsQuery` returns empty `contents`. Check `FileInfo.deleted` instead of treating empty
+contents as proof of deletion.
 
-Both extend `PaidQuery`, so they inherit the `maxQueryPayment` knob, the `getCost(client)`
-cost-discovery method, and the `PaidQueryResponse<...>` envelope. See
-[`queries.md`](queries.md) for the full payment / envelope semantics.
+## Design Notes
 
-A query against a deleted file does not fail — `FileInfoQuery` returns a `FileInfo` with
-`deleted = true` (and most other fields zeroed / cleared), and `FileContentsQuery` returns an
-empty `contents` byte array. Callers should branch on `FileInfo.deleted` rather than treat an
-empty `contents` payload as authoritative evidence of deletion.
+Both queries extend `PaidQuery`; see [`queries.md`](queries.md) for the full payment / envelope semantics.
 
 ## API Schema
 
@@ -33,7 +31,7 @@ requires {Address} from ledger
 requires {Authority} from authority
 requires {PaidQuery} from consensusnode.queries
 
-// Raw byte payload of a file. Returned by FileContentsQuery.
+// Raw byte payload of a file. Returned by `FileContentsQuery`.
 type FileContents {
     @@immutable fileId: Address                       // the file this snapshot belongs to
     @@immutable contents: bytes                       // full file content; empty for a deleted file
@@ -46,18 +44,18 @@ FileContentsQuery extends PaidQuery<FileContents> {
     @@immutable fileId: Address
 }
 
-// Full file metadata snapshot. Returned by FileInfoQuery.
+// Full file metadata snapshot. Returned by `FileInfoQuery`.
 type FileInfo {
     @@immutable fileId: Address
     @@immutable size: int64                            // current file size in bytes
     @@immutable expirationTime: zonedDateTime          // when the file expires
     @@immutable deleted: bool                          // true if the file has been deleted
-    @@immutable @@nullable authority: Authority            // write-access authorization (null → immutable file)
+    @@immutable @@nullable authority: Authority            // write-access authorization; absent if the file is immutable
     @@immutable @@nullable fileMemo: string
 }
 
 // Paid query for the metadata of a file. Does not return the file's byte content — use
-// FileContentsQuery for that.
+// `FileContentsQuery` for that.
 @@finalType
 FileInfoQuery extends PaidQuery<FileInfo> {
     @@immutable fileId: Address

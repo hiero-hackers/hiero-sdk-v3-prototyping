@@ -2,9 +2,20 @@
 
 ## Description
 
-Foundational types describing **HTS (Hedera Token Service) tokens** — first-class, protocol-level
-tokens issued and managed directly on the consensus node, as opposed to the *native* token of the
-network (HBAR), which is modelled separately under [`nativeToken`](native-token.md).
+Types that classify **HTS (Hedera Token Service) tokens** — first-class, protocol-level tokens issued
+and managed directly on the consensus node, as opposed to the *native* token of the network (HBAR).
+
+- `TokenType` tells whether a token is a divisible currency (`FUNGIBLE_COMMON`) or a collection of
+  unique, serial-numbered items (`NON_FUNGIBLE_UNIQUE`).
+- `TokenSupplyType` tells whether the supply of a token is unbounded (`INFINITE`) or capped by a
+  maximum supply (`FINITE`).
+
+Both are chosen when a token is created and cannot be changed afterwards. The same types are used
+when creating tokens and when reading token information from a mirror node.
+
+## Design Notes
+
+The native token is modelled separately under [`nativeToken`](native-token.md).
 
 This namespace is intentionally narrow today: it carries only the two enums that classify a token
 (`TokenType`, `TokenSupplyType`). Both the write side
@@ -22,15 +33,15 @@ serial), and `PendingAirdropId` — once those are promoted from the generic `Ad
 namespace token
 
 // Kind of a token: divisible currency (FUNGIBLE_COMMON) or unique-serial collection
-// (NON_FUNGIBLE_UNIQUE). Set once at TokenCreate; cannot be changed by TokenUpdate.
+// (NON_FUNGIBLE_UNIQUE). Set when the token is created; cannot be changed by a token update.
 enum TokenType {
     FUNGIBLE_COMMON
     NON_FUNGIBLE_UNIQUE
 }
 
 // Supply policy of a token: INFINITE → no protocol-enforced ceiling; FINITE → `totalSupply ≤
-// maxSupply` is enforced at every mint. Set once at TokenCreate; cannot be changed by
-// TokenUpdate.
+// maxSupply` is enforced at every mint. Set when the token is created; cannot be changed by a
+// token update.
 enum TokenSupplyType {
     INFINITE
     FINITE

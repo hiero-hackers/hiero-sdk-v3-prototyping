@@ -6,25 +6,25 @@ worked example of the free / paid split.
 
 ## Description
 
-Three queries are exposed here:
+Queries for reading the state of accounts directly from a consensus node:
 
-- **`AccountBalanceQuery`** extends `Query<AccountBalance>` — a free read that returns the
-  native-token balance and per-token balances for an account or smart contract. The protocol
-  does not charge for this query; no payment is built and the `PaidQuery` knobs do not apply.
+- **`AccountBalanceQuery`** — a free query that returns the native-token balance and the token balances of an
+  account or smart contract. Set either `accountId` or `contractId`.
+- **`AccountInfoQuery`** — a paid query that returns the full state of an account: its authority (key), memo,
+  expiration, staking configuration, EVM-address alias and more. The price is determined automatically and paid by
+  the client's operator account.
+- **`AccountRecordsQuery`** — a paid query that returns the recent transaction records in which the account was the
+  effective payer. On current networks this list is almost always empty; use the mirror node to read an account's
+  transaction history.
 
-- **`AccountInfoQuery`** extends `PaidQuery<AccountInfo>` — a paid read that returns the full
-  state of an account (key, memo, expiration, staking configuration, EVM-address alias,
-  etc.). Auto-discovered cost; the operator pays by default, or a `payer` `Account` may be
-  set for sponsored reads.
+The free query returns a `QueryResponse`, the paid queries return a `PaidQueryResponse` that also contains the cost
+that was actually paid.
 
-- **`AccountRecordsQuery`** extends `PaidQuery<AccountRecords>` — a paid read that returns the
-  recent transaction records in which the account was the effective payer. This is a legacy
-  ("threshold records") surface: on modern Hiero / Hedera networks the list is effectively
-  always empty (see *Questions & Comments*). Kept for V2 parity.
+## Design Notes
 
-The set illustrates the free / paid split established by `consensusnode.queries`: a free
-query's `submit(...)` returns a `QueryResponse<...>`, while a paid query's `submit(...)`
-returns the richer `PaidQueryResponse<...>` with the actually-paid cost.
+This namespace is the first concrete usage of the abstractions defined in [`queries.md`](queries.md) and serves as
+a worked example of the free / paid split established by `consensusnode.queries`. `AccountRecordsQuery` is a legacy
+("threshold records") surface kept for V2 parity (see *Questions & Comments*).
 
 ## API Schema
 
@@ -36,7 +36,7 @@ requires {NativeToken} from nativeToken
 requires {Query, PaidQuery} from consensusnode.queries
 requires {Receipt, Record} from consensusnode.transactions
 
-// Current balance snapshot of an account or contract. Returned by AccountBalanceQuery.
+// Current balance snapshot of an account or contract. Returned by `AccountBalanceQuery`.
 type AccountBalance {
     @@immutable accountId: AccountId                     // the account or contract this snapshot belongs to
     @@immutable balance: NativeToken<ANY, ANY>           // native-token balance
@@ -52,7 +52,7 @@ AccountBalanceQuery extends Query<AccountBalance> {
     @@immutable @@nullable contractId: ContractId
 }
 
-// Full account state snapshot. Returned by AccountInfoQuery.
+// Full account state snapshot. Returned by `AccountInfoQuery`.
 type AccountInfo {
     @@immutable accountId: AccountId
     @@immutable @@nullable evmAddress: EvmAddress                     // 20-byte EVM-address alias if assigned
@@ -76,19 +76,18 @@ AccountInfoQuery extends PaidQuery<AccountInfo> {
     @@immutable accountId: AccountId
 }
 
-// The recent transaction records associated with an account. Returned by AccountRecordsQuery.
-// `records` is heterogeneous — it mixes records of whatever transaction types the account
-// paid for — so it is typed against the base `Record<Receipt>` rather than a concrete
-// receipt subtype. The list is never null; an account with no qualifying records (the common
-// case on modern networks) yields an empty list.
+// The recent transaction records associated with an account. Returned by `AccountRecordsQuery`.
+// `records` mixes records of whatever transaction types the account paid for, so its elements are typed as the
+// general `Record<Receipt>`. An account without qualifying records (the common case on current networks) yields
+// an empty list.
 type AccountRecords {
     @@immutable accountId: AccountId
     @@immutable @@default([]) records: list<Record<Receipt>>
 }
 
 // Paid query for the recent transaction records in which `accountId` was the effective payer.
-// Legacy "threshold records" surface — on modern Hiero / Hedera networks the returned list is
-// effectively always empty (see Questions & Comments). Kept for V2 parity.
+// On current Hiero / Hedera networks the returned list is effectively always empty; use the mirror node to read
+// an account's transaction history.
 @@finalType
 AccountRecordsQuery extends PaidQuery<AccountRecords> {
     @@immutable accountId: AccountId
@@ -160,6 +159,23 @@ for (Record<Receipt> record : result.records) {
 transaction type can narrow its `receipt` at the language level. On modern networks the list
 is typically empty — see *Questions & Comments*.
 
+## Testing
+
+Tests run against a local [solo](https://solo.hiero.org) network and are described as
+language-agnostic Given / When / Then scenarios. See
+[`guidelines/testing-guideline.md`](../../guidelines/testing-guideline.md) for the test
+platform, the solo lifecycle, and the shared *"`HieroClient` connected to a solo network with a
+funded operator account"* fixture referenced below.
+
+### `queries.accounts/balance-of-operator-succeeds`
+
+- **Given** a `HieroClient` connected to a solo network with a funded operator account.
+- **When** an `AccountBalanceQuery` with `accountId` set to the operator's account id is
+  submitted (`submit(client)`).
+- **Then** the call completes without error, returns a `QueryResponse<AccountBalance>` whose
+  `value.accountId` equals the operator's account id, and whose `value.balance` is greater than
+  zero (the operator is funded by solo's one-shot deployment).
+
 ## Questions & Comments
 
 - **`AccountBalanceQuery` accepts either `accountId: AccountId` or `contractId: ContractId`.**
@@ -195,20 +211,3 @@ is typically empty — see *Questions & Comments*.
   need a typed receipt narrow the element at the language level (e.g. a pattern match / `instanceof`).
   This is the only place in the query specs that returns the base `Record` rather than a
   query-specific result type.
-
-## Testing
-
-Tests run against a local [solo](https://solo.hiero.org) network and are described as
-language-agnostic Given / When / Then scenarios. See
-[`guidelines/testing-guideline.md`](../../guidelines/testing-guideline.md) for the test
-platform, the solo lifecycle, and the shared *"`HieroClient` connected to a solo network with a
-funded operator account"* fixture referenced below.
-
-### `queries.accounts/balance-of-operator-succeeds`
-
-- **Given** a `HieroClient` connected to a solo network with a funded operator account.
-- **When** an `AccountBalanceQuery` with `accountId` set to the operator's account id is
-  submitted (`submit(client)`).
-- **Then** the call completes without error, returns a `QueryResponse<AccountBalance>` whose
-  `value.accountId` equals the operator's account id, and whose `value.balance` is greater than
-  zero (the operator is funded by solo's one-shot deployment).

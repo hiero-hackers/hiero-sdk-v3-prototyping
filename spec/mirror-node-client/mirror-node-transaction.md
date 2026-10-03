@@ -2,11 +2,22 @@
 
 ## Description
 
+Query transactions from the Mirror Node. Use the `TransactionRepository` (available as
+`MirrorNodeClient.transaction`) to look up a transaction by its `TransactionId` or to page through the transactions of
+an account, optionally filtered by transaction type, by result or by whether the account's balance was credited or
+debited. A `TransactionInfo` contains the fees, timestamps, result and all HBAR, token, NFT and staking-reward
+transfers of the transaction.
+
+The type of a transaction is a `TransactionType` that carries the value the Mirror Node REST API uses for it
+(`protocolName`). The types known to the SDK are available as constants in `BasicTransactionType`. A type the SDK does
+not know yet (for example from a service added to the network later) is still returned as a `TransactionType` with the
+received `protocolName`, so no information is lost and the value can be used as a filter again.
+
+## Design Notes
+
 Transaction types are modelled like `consensusnode.transactions.TransactionStatus`: `TransactionType` is an
 abstraction that carries the Mirror Node REST wire value (`protocolName`), and `BasicTransactionType` enumerates the
-types known to the SDK. A type that the SDK does not know yet (e.g. from a service added to the network later) is
-returned as a `TransactionType` that carries the received `protocolName`, so no information is lost and the value
-can be used as a filter again. There is no `UNKNOWN` value.
+types known to the SDK. There is no `UNKNOWN` value.
 
 ## API Schema
 
@@ -95,3 +106,6 @@ abstraction TransactionRepository {
 ```
 
 ## Questions & Comments
+
+- `BasicTransactionType` is not complete yet: the full list is to be derived from the `TransactionTypes` enum of the
+  Mirror Node OpenAPI spec.

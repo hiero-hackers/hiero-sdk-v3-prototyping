@@ -77,6 +77,31 @@ The model is always printed. Without `--fail-on=never` the command ends with exi
 validation errors (`"errors"` in the JSON shows how many), so a pipeline does not silently continue with a broken
 model. The output is deterministic: a diff of two runs shows exactly how a spec change affects the model.
 
+### Generate the Java API
+
+Generates the Java API into `tooling/metalang/target/generated/java` (ignored by git):
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=java --fail-on=never --output=tooling/metalang/target/generated/java spec
+```
+
+Without `--fail-on=never` nothing is generated as long as the specs have validation errors. See
+[Java generator](#java-generator) for what is generated.
+
+To check the result with a JDK 25 (`javac`/`javadoc` of JDK 25 on the `PATH`; the jspecify jar is in the local Maven
+repository after the build), compile all generated modules and render their Markdown Javadoc:
+
+```bash
+javac -Xlint:all -Werror --release 25 --module-source-path "tooling/metalang/target/generated/java/*/src/main/java" --module-path ~/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar -d tooling/metalang/target/generated/classes $(find tooling/metalang/target/generated/java -name '*.java')
+```
+
+```bash
+javadoc -Xdoclint:all,-missing -quiet --module-source-path "tooling/metalang/target/generated/java/*/src/main/java" --module-path ~/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar -d tooling/metalang/target/generated/apidocs --module $(ls tooling/metalang/target/generated/java | paste -sd, -)
+```
+
+The rendered Javadoc is then in `tooling/metalang/target/generated/apidocs/index.html` (only packages that contain
+generated types are exported and therefore documented).
+
 ### List all rules
 
 ```bash
@@ -123,6 +148,44 @@ ValidationReport (sorted diagnostics) → CLI (text / JSON / summary)
 
 The validator uses the linked model as well (override and enum-attribute type checks with substitution).
 
+## Java generator
+
+First increment of the Java mapping (`generator/java`, rules from `guidelines/api-best-practices-java.md`):
+
+- **One JPMS module per spec folder**: `spec/consensus-node-client/` becomes the module `org.hiero.consensus.node.client`
+  (folder name with `-` replaced by `.`), laid out like a Maven module (`<module>/src/main/java/`).
+- **One package per namespace**: `consensusnode.transactions` becomes `org.hiero.consensusnode.transactions`.
+- **`module-info.java`**: `requires transitive` for every module whose namespaces are used (specs only contain public
+  API, so these types are part of the module's API); `requires static transitive org.jspecify` (the nullness
+  annotations are part of the exported API, otherwise `javac -Xlint:exports` warns); one `exports` per package. As
+  long as a package contains no generated types, its `exports` is written as a comment — the module system rejects
+  exporting a package that only has a `package-info.java`.
+- **`package-info.java`**: the `## Description` of the spec file(s) as **Markdown Javadoc** (`///`, JEP 467); no
+  `package-info.java` is generated for a namespace without description. The generated code therefore requires
+  Java 23+; the SDK targets **Java 25**.
+- **API documentation is written for SDK users**: the generator adds no spec file names, line numbers or
+  meta-language terms. Spec-author content belongs in `## Design Notes` / `## Questions & Comments`, which are not
+  copied; `doc.internal-reference` (warning) flags descriptions and declaration comments that refer to spec files,
+  `@@annotations`, ADRs or TODOs.
+- The generator refuses (with a list of all problems) to generate if a namespace is spread over several spec folders
+  (split package), a spec file is not inside a folder, or the folders depend on each other in a cycle.
+- Output is deterministic; every file starts with a "Generated ... Do not edit." line.
+
+- **Enums**: values with their attribute arguments as typed Java literals (`(byte) 1`, `1L`, `new BigInteger("…")`,
+  `Duration.ofSeconds(…)`, `Kind.A`, `List.of(…)`), `private final` fields set by the constructor (non-nullable
+  references checked with `Objects.requireNonNull`), a getter per attribute (`getSymbol()`), Markdown Javadoc from the
+  declaration comments, `@Deprecated`. **Methods** are generated with their full signature (`@@async` →
+  `CompletionStage<T>`, generics, varargs, nullness annotations), but their behaviour is only described in the spec,
+  so the body throws `UnsupportedOperationException` for now. `implements` of an abstraction is written as a comment
+  until abstractions are generated.
+- **Type mapping** (`JavaTypes`): `intX`/`uintX` → `byte`/`short`/`int`/`long`/`BigInteger` by width, primitives
+  unless nullable or a type argument, `bytes` → `byte[]`, collections → `List`/`Set`/`Map`, time types →
+  `java.time`, `seconds`/`duration` → `Duration`, `type<T>` → `Class<? extends T>`, `ANY` → `Object`. Not mapped
+  yet (reported as generation problem): function types, `streamResult`, `@@streaming`. Java keywords used as names
+  get a trailing `_`.
+
+Not generated yet: complex types, abstractions, constants, namespace-level functions.
+
 ## Lenient grammar: syntax variants found in the specs
 
 The existing specs use a few constructs the guideline does not define. Rejecting them as syntax errors would make
@@ -146,6 +209,8 @@ validator):
   `enum HbarUnit(symbol: string, baseUnitFactor: int64) extends NativeTokenUnit { TINYBAR("tℏ", 1) }`. Inherited
   attributes must be listed with the same type; `enum.*` rules check counts and literal types.
 - `...` is no valid syntax in enums; an incomplete enum is marked with a comment.
+- Spec skeleton: `## Description` → optional `## Design Notes` (rationale for spec authors, not part of the API
+  docs) → `## API Schema` → `## Examples` → `## Testing` → `## Questions & Comments`.
 - `duration` is a basic type with millisecond precision (for e.g. HTTP timeouts); `seconds` stays whole-second.
 
 - Generic methods: `ReturnType name<$$T extends B>(...)`. `@@static` methods and namespace functions may be generic;
@@ -171,7 +236,7 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 445 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
+`mvn verify` runs about 500 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
 excluded). Besides unit tests per component, the suite contains these systematic checks:
 
 | Test | What it guarantees |
@@ -183,6 +248,7 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `RobustnessTest` | Seeded random mutations and every prefix of every real spec never crash the tool and never report a location outside the document; results do not depend on document order; AST locations point at the element; the textual form of every type and literal parses back to itself. |
 | `RepositorySpecsTest` | All specs under `spec/` are free of syntax errors and the report is deterministic. |
 | `ModelCommandTest` | `metalang model` output for the example specs in `src/test/resources/model-golden/spec` equals the golden file `model-golden/model.json` byte for byte; filters, exit codes and determinism on the real specs. After an intended change, regenerate the golden file (command in the test's Javadoc). |
+| `JavaGeneratorTest` | Golden files for the example specs (`generator-golden/java`), module/package rules and the three structural errors, Markdown comment escaping, and: the modules generated for **all real specs compile** with `-Xlint:all -Werror` through the module system. |
 | `LinkedRepositorySpecsTest` | Linking all real specs leaves no unresolved reference, every declared type exists, self types are substituted (`Transaction`, `NativeToken`), and linking is deterministic. |
 
 ## Known limitations

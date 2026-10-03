@@ -7,23 +7,48 @@ cost-discovery shape.
 
 ## Description
 
-A query is a read-only call to the consensus node that returns a typed result without changing
-ledger state. Two abstractions cover the read surface:
+A query is a read-only request to a consensus node that returns a typed result without changing ledger state. There
+are two kinds of queries:
 
-1. **`Query<$$Result>`** — a query that requires no payment. Used for status reads that the
-   network exposes for free (account balances, transaction receipts).
+- **`Query<$$Result>`** — a free query that the network answers without charging you, for example an account
+  balance or a transaction receipt.
+- **`PaidQuery<$$Result>`** — a query that must be paid for in the network's native token. It adds `getCost` to
+  ask for the current price and `maxQueryPayment` to cap what you are willing to pay. Paid queries are always paid
+  by the client's operator account.
 
-2. **`PaidQuery<$$Result>`** — a query that requires payment in the network's native token.
-   Extends `Query` and adds a cost-discovery method (`getCost`) plus the `maxQueryPayment`
-   ceiling that bounds the auto-discovered price. The query is paid by the client's
-   operator; see [ADR-0002](../../docs/adr/0002-defer-paid-query-payer-customization.md)
-   for the rationale behind deferring a configurable payer.
+Both are `Submittable`, so they share the retry settings (`maxAttempts`, `minBackoff`, `maxBackoff`,
+`attemptTimeout`) and are sent with `submit(client)`. Concrete query types (such as `AccountBalanceQuery` or
+`TokenInfoQuery`) only add their own inputs and result type.
 
-Both extend `Submittable<$$Result>` (defined in `consensusnode.client`), the shared execution
-abstraction that also backs `PackedTransaction`. From `Submittable` they inherit the retry-tuning
-fields (`maxAttempts`, `minBackoff`, `maxBackoff`, `attemptTimeout`) and the `submit(client)`
-method that hands the request off to the network. Concrete query types extend `Query` or
-`PaidQuery` and add only their own input setters and result type.
+### Payment
+
+You never build the payment of a paid query yourself. On every `submit(client)` the SDK first asks the network for
+the current price of the query, then pays exactly that amount from the operator account to the answering node and
+sends the actual query together with the payment. If `maxQueryPayment` is set and the quoted price is higher, the
+call fails before anything is paid.
+
+Use `getCost(client)` if you need to know the price before submitting, for example to ask a user for confirmation.
+The returned price is a snapshot, not a reservation — the price may change before you submit. Set
+`maxQueryPayment` if you need a hard upper bound.
+
+### Responses
+
+`submit(client)` returns the typed payload wrapped in an envelope:
+
+- `QueryResponse<$$Result>` contains the `value` and the consensus node that answered (`answeredBy`).
+- `PaidQueryResponse<$$Result>` additionally contains the `cost` that was actually paid.
+
+If you only need the payload, read `.value`: `query.submit(client).value`. Use the envelope when you need the
+metadata, for example for billing or auditing.
+
+## Design Notes
+
+The query is paid by the client's operator; see
+[ADR-0002](../../docs/adr/0002-defer-paid-query-payer-customization.md) for the rationale behind deferring a
+configurable payer.
+
+`Query` and `PaidQuery` both extend `Submittable<$$Result>` (defined in `consensusnode.client`), the shared execution
+abstraction that also backs `PackedTransaction`.
 
 The split between `Query` and `PaidQuery` mirrors the protocol distinction the consensus node
 makes between free and paid queries, and makes the difference visible at the type level rather
@@ -32,9 +57,7 @@ a caller holding a `PaidQuery` is reminded by the type that payment must be cons
 Promotion from free to paid (should network policy ever change) is a breaking type change
 rather than a silent behavioural one.
 
-### Payment model
-
-The consensus node accepts two response modes for a paid query: `COST_ANSWER` returns only the
+Payment model: the consensus node accepts two response modes for a paid query: `COST_ANSWER` returns only the
 quoted price; `ANSWER_ONLY` returns the actual data and requires a signed payment transaction
 attached to the request. Every `submit(client)` on a `PaidQuery` orchestrates both transparently:
 
@@ -46,35 +69,14 @@ attached to the request. Every `submit(client)` on a `PaidQuery` orchestrates bo
    from the client's operator to the chosen consensus node) and issues the `ANSWER_ONLY`
    round-trip carrying that payment.
 
-Callers do not assemble the payment transaction. The auto-discovered price always reflects
-the network's current state, so there is no exact-amount escape hatch — callers who need to
-bound spend use `maxQueryPayment`; callers who need to know what was actually charged read
-`cost` from the `PaidQueryResponse` envelope. The query is paid by the client's operator
-in this revision; a configurable payer is deferred and tracked in
-[ADR-0002](../../docs/adr/0002-defer-paid-query-payer-customization.md).
+The auto-discovered price always reflects the network's current state, so there is no exact-amount escape hatch.
+The query is paid by the client's operator in this revision; a configurable payer is deferred and tracked in
+[ADR-0002](../../docs/adr/0002-defer-paid-query-payer-customization.md). `getCost(client)` exposes the
+`COST_ANSWER` round-trip as a separate operation.
 
-`getCost(client)` exposes the `COST_ANSWER` round-trip as a separate operation for cases
-where the price must be confirmed before `submit(client)` is called — for example, in UI
-confirmation flows or fee-budget pre-computation. The quoted price is not a binding offer;
-the network may return a different value on a subsequent call as conditions change. Callers
-that want a hard ceiling should set `maxQueryPayment` on the query itself.
-
-### Response envelopes
-
-`submit(client)` does not return the typed payload directly — it returns it wrapped:
-
-- `Query.submit()` → `QueryResponse<$$Result>` with `value` (the typed payload) and
-  `answeredBy` (the consensus node that produced the answer, useful for audit and forensics).
-- `PaidQuery.submit()` → `PaidQueryResponse<$$Result>`, which extends `QueryResponse` with
-  `cost` (the native-token amount actually transferred for this query).
-
-This is structurally parallel to `Response<$$Receipt>` on the transaction side but lighter —
+The response envelopes are structurally parallel to `Response<$$Receipt>` on the transaction side but lighter —
 queries are synchronous, so the envelope is purely a metadata wrapper, not a handle to
-deferred work. Callers who only need the payload chain `.value` at the end of the call:
-`query.submit(client).value`. Callers in billing, audit, or forensics contexts read
-`response.cost` and `response.answeredBy` from the envelope.
-
-The free/paid distinction is reflected in the envelope hierarchy: `cost` lives only on
+deferred work. The free/paid distinction is reflected in the envelope hierarchy: `cost` lives only on
 `PaidQueryResponse` because it would be `0` and meaningless on free queries. The same
 type-level honesty as the `Query` / `PaidQuery` split itself.
 
@@ -86,58 +88,47 @@ requires {AccountId} from ledger
 requires {HieroClient, Submittable} from consensusnode.client
 requires {NativeToken} from nativeToken
 
-// Envelope around the typed result of a Query. Carries the payload plus minimal
-// metadata about how the answer was obtained. Returned by Query.submit().
+// Envelope around the typed result of a `Query`. Contains the payload plus metadata about how the answer was
+// obtained. Returned by `Query.submit()`.
 type QueryResponse<$$T> {
-    @@immutable value: $$T
+    @@immutable value: $$T              // the typed result of the query
     @@immutable answeredBy: AccountId   // consensus node that produced this answer
 }
 
-// Envelope around the typed result of a PaidQuery. Extends QueryResponse with the
-// amount actually paid. Returned by PaidQuery.submit().
+// Envelope around the typed result of a `PaidQuery`. In addition to the payload it contains the amount that was
+// actually paid. Returned by `PaidQuery.submit()`.
 type PaidQueryResponse<$$T> extends QueryResponse<$$T> {
     @@immutable cost: NativeToken<ANY, ANY>   // amount transferred to the answering node
 }
 
-// Base abstraction for any read-only call to the consensus node. Direct subtypes
-// represent "free" queries that the network answers without charging the caller
-// (e.g. account balance, transaction receipt). Queries that require payment must
-// extend PaidQuery instead.
+// A read-only request to a consensus node. Direct subtypes are free queries that the network answers without
+// charging the caller (for example account balance or transaction receipt); queries that require payment are
+// `PaidQuery` subtypes.
 //
-// Inherits retry-tuning fields (maxAttempts, maxBackoff, minBackoff, attemptTimeout)
-// and submit(client) from Submittable. submit() returns the payload wrapped in a
-// QueryResponse envelope.
+// Use the inherited retry settings to tune how the request is sent and `submit(client)` to send it. The result
+// is returned wrapped in a `QueryResponse`.
 abstraction Query<$$Result> extends Submittable<QueryResponse<$$Result>> {
 }
 
-// A query whose answer requires payment in the network's native token. The price is
-// always auto-discovered against the network's current fee schedule on each submit() /
-// getCost() — there is no exact-amount lock-in field. Callers who need to bound spend
-// use maxQueryPayment; callers who need to know what was actually charged read cost
-// from the returned PaidQueryResponse.
+// A query whose answer must be paid for in the network's native token. The price is determined from the
+// network's current fee schedule on each `submit()` or `getCost()` call and paid by the client's operator.
+// Use `maxQueryPayment` to bound the spend and read `cost` from the returned `PaidQueryResponse` to see what was
+// actually charged.
 //
-// Specialises the inherited submit() return type from QueryResponse<$$Result> to
-// PaidQueryResponse<$$Result>, so callers can read the actually-paid cost without an
-// extra round-trip.
-//
-// Submit-time errors specific to PaidQuery (in addition to the generic Submittable
-// failure modes):
-//   - max-query-payment-exceeded-error — auto-discovery returned a price above
-//     maxQueryPayment; nothing is sent.
+// `submit()` fails without paying anything if the quoted price exceeds `maxQueryPayment`.
 abstraction PaidQuery<$$Result> extends Query<$$Result> {
 
-    // Upper bound on the auto-discovered price. When the quoted cost from the
-    // network exceeds this limit, submit() and getCost() fail with
-    // max-query-payment-exceeded-error and no payment is made.
+    // Upper bound on the price you are willing to pay. If the price quoted by the network exceeds this limit,
+    // `submit()` and `getCost()` fail and no payment is made. If absent, the quoted price is always paid.
     @@nullable maxQueryPayment: NativeToken<ANY, ANY>
     
-    // Covariant override: PaidQueryResponse extends QueryResponse.
+    // Sends the query, paying the quoted price from the operator account, and returns the result together with
+    // the amount actually paid.
     @@async PaidQueryResponse<$$Result> submit(client: HieroClient<ANY>)
 
-    // Issue a COST_ANSWER round-trip and return the network's quoted price for
-    // this query without consuming it. The returned value is a snapshot — a
-    // subsequent call may return a different price as conditions change.
-    // @@throws(max-query-payment-exceeded-error) if maxQueryPayment is set and the quote exceeds it
+    // Asks the network for the current price of this query without executing it. The returned value is a
+    // snapshot — a subsequent call may return a different price as conditions change.
+    // Throws if `maxQueryPayment` is set and the quoted price exceeds it.
     @@async NativeToken<ANY, ANY> getCost(client: HieroClient<ANY>)
 }
 ```

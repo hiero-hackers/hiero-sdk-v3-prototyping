@@ -4,8 +4,17 @@ This section defines the client API.
 
 ## Description
 
-The client API is the API that will be used by the SDK to interact with the network.
-A client defines a concrete network connection to a specific network with a specific operator account.
+A `HieroClient` is your entry point to a Hiero network. It represents a connection to one concrete network and an
+operator `Account` — the account that pays for and signs the requests you send. Create a client once with
+`createClient(...)` from a `NetworkSetting` and an operator account, and reuse it for all queries and transactions.
+
+Everything you send to the network — queries as well as packed transactions — is a `Submittable`. Call
+`submit(client)` to hand it to the network and receive its typed result asynchronously. The SDK selects a consensus
+node, retries transient failures and bounds the total wait; you can tune that behavior per request with
+`maxAttempts`, `minBackoff`, `maxBackoff` and `attemptTimeout`.
+
+By default, transactions are signed with the operator's private key. If the key lives elsewhere (for example in an
+HSM or a remote signing service), pass your own `TransactionSigner` when creating the client.
 
 ## API Schema
 
@@ -16,55 +25,59 @@ requires {NetworkSetting} from ledger.config
 requires {PrivateKey, PublicKey} from keys
 requires {NativeTokenUnit} from nativeToken
 
-// Definition of an account that signs and pays for requests
+// An account that signs and pays for requests, identified by its id and private key.
 Account {
     @@immutable accountId: AccountId // the account id of the operator
     @@immutable privateKey: PrivateKey // the private key of the operator
 }
 
+// A signature of a transaction for one specific consensus node.
 type NodeSignature {
       @@immutable node: AccountId       // the consensus node's fee account
-      @@immutable publicKey: PublicKey
-      @@immutable signature: bytes
+      @@immutable publicKey: PublicKey  // the public key that verifies the signature
+      @@immutable signature: bytes      // the signature over the transaction bytes
 }
 
-// Helper to allow external signing of transactions
+// Signs transactions on behalf of the operator. Implement it to sign with a key that is not held in memory,
+// for example in an HSM or a remote signing service.
 abstraction TransactionSigner {
 
+  // Signs the given transaction bytes for the given consensus node.
   NodeSignature signTransaction(transactionBytes: bytes, node: AccountId)
 }
 
-// Common base for anything that is handed off to the consensus node network and
-// produces a typed result — both queries (consensusnode.queries.Query) and
-// packed transactions (consensusnode.transactions.PackedTransaction) extend this.
-// Carries the shared retry-tuning knobs (max attempts, backoff window, per-attempt
-// timeout) and the single submit() entry point. The SDK applies these settings
-// when selecting a consensus node, retrying transient gRPC failures, and bounding
-// the total wait.
+// Common base for anything that is sent to the consensus node network and produces a typed result — both
+// queries (`Query`) and packed transactions (`PackedTransaction`). It carries the retry settings (maximum
+// attempts, backoff window, per-attempt timeout) and the `submit()` entry point. The SDK applies these settings
+// when selecting a consensus node, retrying transient gRPC failures and bounding the total wait.
 abstraction Submittable<$$Result> {
 
-    @@nullable maxAttempts: int32
-    @@nullable maxBackoff: int64
-    @@nullable minBackoff: int64
-    @@nullable attemptTimeout: int64
+    @@nullable maxAttempts: int32      // maximum number of attempts; if absent, the SDK default is used
+    @@nullable maxBackoff: int64       // upper bound of the backoff between attempts; if absent, the SDK default is used
+    @@nullable minBackoff: int64       // lower bound of the backoff between attempts; if absent, the SDK default is used
+    @@nullable attemptTimeout: int64   // timeout for a single attempt; if absent, the SDK default is used
 
-    // Hand off to the network and return the typed result. Node selection,
-    // retry, and any operation-specific protocol details (e.g. cost discovery
-    // and payment for PaidQuery) are handled by the SDK transparently.
+    // Sends this request to the network and returns the typed result asynchronously. Node selection, retries
+    // and operation-specific protocol details (for example cost discovery and payment for a `PaidQuery`) are
+    // handled transparently.
     @@async $$Result submit(client: HieroClient<ANY>)
 }
 
-// The client API that will be used by the SDK to interact with the network
+// A connection to one network with one operator account; the entry point for all queries and transactions.
 HieroClient<$$Unit extends NativeTokenUnit> {
-    @@immutable operatorAccount: Account // the operator account
+    @@immutable operatorAccount: Account // the account that pays for and signs requests
     @@immutable network: Network<$$Unit> // the network to connect to
-    @@immutable transactionSigner: TransactionSigner // by default the operator account is used, but this allows to use an external signer for transactions
+    @@immutable transactionSigner: TransactionSigner // signs transactions; by default the operator account's private key is used
+
     // TO_BE_DEFINED_IN_FUTURE_VERSIONS
 }
 
 // factory methods of `HieroClient` that should be added to the namespace in the best language dependent way
 
+// Creates a client for the given network that uses the operator account to pay for and sign requests.
 @@static HieroClient<ANY> createClient(networkSettings: NetworkSetting, operatorAccount: Account)
+// Creates a client for the given network that uses the operator account to pay for requests and the given
+// signer to sign transactions.
 @@static HieroClient<ANY> createClient(networkSettings: NetworkSetting, operatorAccount: Account, transactionSigner: TransactionSigner)
 ```
 

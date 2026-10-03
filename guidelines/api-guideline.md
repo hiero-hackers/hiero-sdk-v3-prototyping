@@ -1094,6 +1094,25 @@ Note that this guidance applies to `ANY` used as a standalone type. `ANY` as a w
 When `ANY` is genuinely the right choice, document the expected shape and the conditions under which different
 runtime types may appear so consumers do not have to guess.
 
+#### Write documentation for the users of the API
+
+The comments in an API schema and the `## Description` section of a spec are the source of the public API
+documentation in every language (Javadoc, rustdoc, TSDoc, docstrings, ...). The audience of that documentation is the
+**user of the SDK**, not the author of the spec. Write it so that a developer who only sees the generated or
+implemented API understands what an element is, what it does, how to use it, and which constraints and errors apply.
+
+Do not put into API documentation — neither in the spec comments nor in documentation that tooling adds:
+
+- references to spec files, sections or line numbers, or to the meta-language itself (namespaces, annotations such as
+  `@@nullable`, error identifiers such as `not-found-error`) — every language expresses these in its own terms
+  (packages, nullness annotations, exception types);
+- notes about the specification process: open questions, TODOs, review discussions, alternatives that were rejected.
+  Open points belong in the `## Questions & Comments` section; settled design rationale belongs in the optional
+  `## Design Notes` section (directly after `## Description`) or in an ADR.
+
+A comment placed directly above (or behind) a declaration documents that declaration; a comment separated from the
+next declaration by a blank line is not part of the API documentation and can be used for remarks to spec authors.
+
 ### Naming conventions
 
 To keep the API surface consistent and predictable, use the following naming rules:

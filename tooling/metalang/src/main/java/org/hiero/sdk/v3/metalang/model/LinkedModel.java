@@ -22,12 +22,33 @@ public final class LinkedModel {
     private final SortedMap<QualifiedName, TypeDefinition> types;
     private final List<FunctionDefinition> functions;
     private final List<ConstantDefinition> constants;
+    private final List<NamespaceDefinition> namespaces;
 
     LinkedModel(final Map<QualifiedName, TypeDefinition> types, final List<FunctionDefinition> functions,
-                final List<ConstantDefinition> constants) {
+                final List<ConstantDefinition> constants, final List<NamespaceDefinition> namespaces) {
         this.types = Collections.unmodifiableSortedMap(new TreeMap<>(types));
         this.functions = List.copyOf(functions);
         this.constants = List.copyOf(constants);
+        this.namespaces = List.copyOf(namespaces);
+    }
+
+    /**
+     * Returns all namespaces, ordered by name.
+     *
+     * @return the namespaces
+     */
+    public List<NamespaceDefinition> namespaces() {
+        return namespaces;
+    }
+
+    /**
+     * Returns the types declared in the given namespace, ordered by name.
+     *
+     * @param namespace the namespace
+     * @return the types
+     */
+    public List<TypeDefinition> types(final String namespace) {
+        return types.values().stream().filter(t -> t.name().namespace().equals(namespace)).toList();
     }
 
     /**

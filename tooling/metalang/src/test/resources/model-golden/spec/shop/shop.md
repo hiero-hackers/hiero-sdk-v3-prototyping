@@ -25,9 +25,21 @@ Product extends Entity<int64> {
     @@async @@throws(not-found-error) list<Product> related(@@min(1) limit: int32)
 }
 
+// A product category.
 enum Category(code: int8, @@nullable label: string) {
     FOOD(1, "Food") // things to eat
     OTHER(2, null)
+    @@deprecated LEGACY(3, "Legacy \"old\"")
+
+    // Whether this category is about food.
+    bool isFood()
+
+    @@static @@throws(not-found-error) Category byCode(code: int8)
+}
+
+enum Flag(default: bool) {
+    ON(true)
+    OFF(false)
 }
 
 constant MAX_PRODUCTS: int32 = 1_000

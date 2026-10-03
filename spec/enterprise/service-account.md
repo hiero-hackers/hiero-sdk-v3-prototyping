@@ -1,6 +1,10 @@
 # Account Service API
 
-Service definition for account handling.
+## Description
+
+`AccountService` creates, updates and deletes accounts and looks them up. A new account is controlled by the given
+`Authority` and can be funded with an initial balance; the operator account of the `Session` pays for the
+transactions. `AccountInformation` describes an account with its balance and its current authority.
 
 ## API Schema
 
@@ -33,7 +37,8 @@ AccountService {
   @@throws(service-error) Page<AccountInformation> findAll()
 }
 
-//Factory method to create Service (not needed for real framework integration where injection is used)
+// Creates the service for the given session. With a framework integration the service is usually obtained via
+// dependency injection instead.
 @@static
 AccountService createService(session: Session)
 

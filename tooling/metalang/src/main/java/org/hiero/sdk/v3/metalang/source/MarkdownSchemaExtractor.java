@@ -24,7 +24,7 @@ import org.jspecify.annotations.Nullable;
 public final class MarkdownSchemaExtractor {
 
     private static final List<String> CANONICAL_ORDER = List.of(
-            "Description", "API Schema", "Examples", "Testing", "Questions & Comments");
+            "Description", "Design Notes", "API Schema", "Examples", "Testing", "Questions & Comments");
 
     private static final List<String> REQUIRED_SECTIONS = List.of(
             "Description", "API Schema", "Testing", "Questions & Comments");
@@ -66,7 +66,7 @@ public final class MarkdownSchemaExtractor {
         }
     }
 
-    private record Scan(List<Heading> headings, List<CodeBlock> blocks) {
+    private record Scan(List<Heading> headings, List<CodeBlock> blocks, List<String> lines) {
     }
 
     /**
@@ -98,7 +98,10 @@ public final class MarkdownSchemaExtractor {
         final Scan scan = scan(markdown);
         scan.blocks().stream().filter(b -> !b.closed()).forEach(b -> diagnostics.report(Rule.DOC_UNCLOSED_FENCE,
                 "Fenced code block is never closed", new SourceLocation(file, b.openingLine(), 1)));
-        final SchemaSource source = selectSchema(file, scan.headings(), scan.blocks(), diagnostics);
+        final SchemaSource selected = selectSchema(file, scan.headings(), scan.blocks(), diagnostics);
+        final Description description = description(scan);
+        final SchemaSource source = selected == null ? null : new SchemaSource(selected.file(), selected.text(),
+                selected.lineOffset(), description.text(), description.line());
         if (source != null) {
             checkSkeleton(file, scan.headings(), diagnostics);
         }
@@ -142,7 +145,30 @@ public final class MarkdownSchemaExtractor {
         if (fence != null) {
             blocks.add(block(fenceStart, info, blockContent, currentSection, false));
         }
-        return new Scan(List.copyOf(headings), List.copyOf(blocks));
+        return new Scan(List.copyOf(headings), List.copyOf(blocks), List.of(lines));
+    }
+
+    private record Description(String text, int line) {
+    }
+
+    /**
+     * Returns the Markdown of the {@code ## Description} section — all lines between its heading and the next
+     * level-2 heading, without leading and trailing blank lines — and the line of its first line.
+     */
+    private static Description description(final Scan scan) {
+        for (int i = 0; i < scan.headings().size(); i++) {
+            if (scan.headings().get(i).text().equals("Description")) {
+                int start = scan.headings().get(i).line(); // 1-based heading line = 0-based first content line
+                final int end = i + 1 < scan.headings().size()
+                        ? scan.headings().get(i + 1).line() - 1 : scan.lines().size();
+                while (start < end && scan.lines().get(start).isBlank()) {
+                    start++;
+                }
+                final String text = String.join("\n", scan.lines().subList(Math.min(start, end), end)).strip();
+                return new Description(text, text.isEmpty() ? 0 : start + 1);
+            }
+        }
+        return new Description("", 0);
     }
 
     private static CodeBlock block(final int openingLine, final String info, final StringBuilder content,
@@ -243,7 +269,7 @@ public final class MarkdownSchemaExtractor {
             return "API Schema";
         }
         return switch (heading) {
-            case "Description", "Examples", "Testing", "Questions & Comments" -> heading;
+            case "Description", "Design Notes", "Examples", "Testing", "Questions & Comments" -> heading;
             case "Example" -> "Examples";
             default -> null;
         };
