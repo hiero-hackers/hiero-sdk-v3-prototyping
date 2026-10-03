@@ -48,7 +48,8 @@ final class EnumGenerator {
                 final List<String> arguments = new ArrayList<>();
                 for (int a = 0; a < value.arguments().size(); a++) {
                     final Literal argument = value.arguments().get(a);
-                    arguments.add(JavaLiterals.expression(argument, enumType.attributes().get(a).type(), imports));
+                    arguments.add(JavaLiterals.expression(argument, enumType.attributes().get(a).type(), imports,
+                            context));
                 }
                 body.append('(').append(String.join(", ", arguments)).append(')');
             }

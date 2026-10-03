@@ -3183,7 +3183,7 @@ Namespaces are implemented using:
 org.hiero.transactions/
 ├── Transaction.java
 ├── TransactionStatus.java
-├── TransactionConstants.java
+├── TransactionsConstants.java
 └── impl/
     └── TransactionImpl.java
 ```
@@ -3236,7 +3236,10 @@ module org.hiero.transactions {
 
 ### Constants in Namespaces
 
-Constants defined at namespace level should be placed in a dedicated constants class:
+Constants defined at namespace level are placed in a dedicated constants class in the package of the namespace. Its
+name is the last segment of the namespace in PascalCase followed by `Constants` (`transactions` →
+`TransactionsConstants`, `consensusnode.transactions` → `TransactionsConstants`, `ledger` → `LedgerConstants`); every
+constant is a `public static final` field, and the private constructor prevents instantiation:
 
 **Meta-language**:
 
@@ -3253,9 +3256,9 @@ constant DEFAULT_TIMEOUT:int64 = 30000
 package org.hiero.transactions;
 
 /**
- * Constants for the transactions namespace.
+ * Constants of the package org.hiero.transactions.
  */
-public final class TransactionConstants {
+public final class TransactionsConstants {
 
     /** Maximum number of transactions per batch */
     public static final int MAX_TRANSACTIONS = 100;
@@ -3263,11 +3266,24 @@ public final class TransactionConstants {
     /** Default timeout in milliseconds */
     public static final long DEFAULT_TIMEOUT = 30000L;
 
-    private TransactionConstants() {
+    private TransactionsConstants() {
         // Prevent instantiation
         throw new UnsupportedOperationException("Constants class cannot be instantiated");
     }
 }
+```
+
+A constant whose value is a struct literal becomes a constructor call of the generated record or class: the entries
+are passed in the order of the constructor parameters; a missing `@@nullable` attribute is `null`, a missing attribute
+with `@@default` gets its default value.
+
+```
+// Meta-language (namespace ledger)
+constant ZERO_ADDRESS: Address = Address{shard: 0, realm: 0, num: 0, checksum: ""}
+```
+
+```java
+public static final Address ZERO_ADDRESS = new Address(0L, 0L, "", 0L);
 ```
 
 ### Cross-Namespace References

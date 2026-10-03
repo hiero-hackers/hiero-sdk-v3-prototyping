@@ -71,7 +71,7 @@ class JavaGeneratorTest {
             // GIVEN two namespaces in folder "my-base" and one in "client"
             final List<GeneratedFile> files = generate(Map.of(
                     "my-base/a.md", TestSpecs.markdown("namespace a\nA {}\n"),
-                    "my-base/b.md", TestSpecs.markdown("namespace b.sub\nconstant LIMIT: int32 = 1\n"),
+                    "my-base/b.md", TestSpecs.markdown("namespace b.sub\n@@static int32 limit()\n"),
                     "client/c.md", TestSpecs.markdown("namespace c\nrequires {A} from a\nC { @@immutable a: A }\n")));
 
             // THEN

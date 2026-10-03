@@ -15,6 +15,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 import org.hiero.sdk.v3.metalang.generator.GenerationException;
+import org.hiero.sdk.v3.metalang.model.ConstantDefinition;
 import org.hiero.sdk.v3.metalang.model.FunctionDefinition;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
 import org.hiero.sdk.v3.metalang.model.MethodDefinition;
@@ -68,10 +69,12 @@ public final class JavaGenerator {
     /**
      * The types to generate and the deferred types with the reason.
      *
-     * @param context  the context with the generated types
-     * @param deferred the candidates that are not generated yet, with the reason
+     * @param context   the context with the generated types
+     * @param deferred  the candidates (types and constants) that are not generated yet, with the reason
+     * @param constants the generated constants by namespace
      */
-    private record Plan(JavaContext context, SortedMap<QualifiedName, String> deferred) {
+    private record Plan(JavaContext context, SortedMap<QualifiedName, String> deferred,
+                        Map<String, List<ConstantDefinition>> constants) {
     }
 
     /** A module: its spec folder, its namespaces and the modules it requires. */
@@ -106,7 +109,8 @@ public final class JavaGenerator {
     public List<GeneratedFile> generate(final LinkedModel model) {
         Objects.requireNonNull(model, "model must not be null");
         final List<Module> modules = modules(model);
-        final JavaContext context = plan(model, modules).context();
+        final Plan plan = plan(model, modules);
+        final JavaContext context = plan.context();
         final List<GeneratedFile> files = new ArrayList<>();
         for (final Module module : modules) {
             final Set<String> packagesWithTypes = new TreeSet<>();
@@ -117,6 +121,11 @@ public final class JavaGenerator {
                         files.add(generate(module.name(), type, context));
                         packagesWithTypes.add(namespace.name());
                     }
+                }
+                final List<ConstantDefinition> constants = plan.constants().getOrDefault(namespace.name(), List.of());
+                if (!constants.isEmpty()) {
+                    files.add(ConstantsGenerator.generate(module.name(), namespace.name(), constants, context));
+                    packagesWithTypes.add(namespace.name());
                 }
                 for (final Map.Entry<String, QualifiedName> exception : context.exceptions().entrySet()) {
                     if (exception.getValue().namespace().equals(namespace.name())) {
@@ -191,7 +200,46 @@ public final class JavaGenerator {
                 }
             }
         }
-        return new Plan(new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes, exceptions), deferred);
+        final JavaContext context = new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes,
+                exceptions);
+        return new Plan(context, deferred, constants(model, moduleOfNamespace, context, deferred));
+    }
+
+    /**
+     * The constants that can be generated, by namespace. A constant whose type is not generated or whose value has no
+     * Java form is deferred; the other constants of its namespace are generated anyway.
+     */
+    private static Map<String, List<ConstantDefinition>> constants(final LinkedModel model,
+                                                                   final Map<String, String> moduleOfNamespace,
+                                                                   final JavaContext context,
+                                                                   final SortedMap<QualifiedName, String> deferred) {
+        final Map<String, List<ConstantDefinition>> constants = new TreeMap<>();
+        for (final ConstantDefinition constant : model.constants()) {
+            final String namespace = constant.name().namespace();
+            if (!moduleOfNamespace.containsKey(namespace)) {
+                continue;
+            }
+            final QualifiedName holder = new QualifiedName(namespace, ConstantsGenerator.className(namespace));
+            final Set<QualifiedName> used = new TreeSet<>();
+            referencedTypes(constant.type(), used);
+            Optional<String> reason = model.type(holder).isPresent()
+                    ? Optional.of("the constants class " + holder + " clashes with a type of the same name")
+                    : used.stream().filter(n -> !context.isGenerated(n)).findFirst()
+                    .map(n -> "refers to " + n + " (" + kind(context, n) + ", not generated yet)");
+            if (reason.isEmpty()) {
+                try {
+                    ConstantsGenerator.constant(constant, new Imports(JavaNames.packageName(namespace)), context);
+                } catch (final JavaTypes.UnsupportedTypeException e) {
+                    reason = Optional.of(e.getMessage());
+                }
+            }
+            if (reason.isPresent()) {
+                deferred.put(constant.name(), reason.get());
+            } else {
+                constants.computeIfAbsent(namespace, k -> new ArrayList<>()).add(constant);
+            }
+        }
+        return constants;
     }
 
     /**

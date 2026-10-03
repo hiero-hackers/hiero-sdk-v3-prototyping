@@ -78,7 +78,7 @@ final class ClassGenerator {
             for (final FieldDefinition field : stored) {
                 java.append(INDENT).append("private ").append(field.hasAnnotation("immutable") ? "final " : "")
                         .append(declarations.get(field.name())).append(' ')
-                        .append(JavaKeywords.identifier(field.name())).append(initializer(field, imports))
+                        .append(JavaKeywords.identifier(field.name())).append(initializer(field, imports, context))
                         .append(";\n");
             }
             members.add(java.toString());
@@ -133,7 +133,7 @@ final class ClassGenerator {
                     + JavaKeywords.identifier(f.name())).toList()) + " {\n"
                     + INDENT + INDENT + "this(" + parameters.stream().map(f -> f.hasAnnotation("default")
                     ? JavaLiterals.expression(f.annotation("default").orElseThrow().arguments().getFirst(), f.type(),
-                    imports) : JavaKeywords.identifier(f.name())).collect(Collectors.joining(", ")) + ");\n"
+                    imports, context) : JavaKeywords.identifier(f.name())).collect(Collectors.joining(", ")) + ");\n"
                     + INDENT + "}\n");
         }
 
@@ -232,12 +232,13 @@ final class ClassGenerator {
                 || !f.hasAnnotation("nullable") && !f.hasAnnotation("default")).toList();
     }
 
-    private static String initializer(final FieldDefinition field, final Imports imports) {
+    private static String initializer(final FieldDefinition field, final Imports imports,
+                                      final JavaContext context) {
         if (field.hasAnnotation("immutable") || !field.hasAnnotation("default")) {
             return "";
         }
         return " = " + JavaLiterals.expression(field.annotation("default").orElseThrow().arguments().getFirst(),
-                field.type(), imports);
+                field.type(), imports, context);
     }
 
     private static String header(final TypeDefinition.ComplexTypeDefinition type,

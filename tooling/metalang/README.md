@@ -242,6 +242,13 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   classes are generated; 12 types are deferred: `PaidQuery` (covariant `@@async submit`, see above) and the 9 paid
   queries extending it, `AccountCreateTransaction` (`@@default(0)` on a `NativeToken` attribute has no Java form) and
   `TopicService` (`@@streaming` is not mapped yet).
+- **Constants** (`ConstantsGenerator`): the constants of a namespace become `public static final` fields of a
+  `final` class named after the last namespace segment (`ledger` → `LedgerConstants`) with a private constructor.
+  Struct literals become constructor calls (entries in constructor order, missing `@@nullable` → `null`, missing
+  `@@default` → the default). A constant whose type is not generated or whose value has no Java form is deferred on its
+  own (`--show-deferred` lists it with the qualified constant name); a clash of the class name with a type defers all
+  constants of the namespace. Today: `LedgerConstants` (`ZERO_ADDRESS`, `ZERO_ACCOUNT_ID`, `ZERO_CONTRACT_ID`),
+  `HederaConstants`, `SoloConstants`.
 - **Exceptions** (`ExceptionGenerator`, `JavaExceptions`): error identifiers of `@@throws` with a JDK equivalent use
   it (`not-found-error` → `NoSuchElementException`, `illegal-format` → `IllegalArgumentException`, `timeout-error` →
   `TimeoutException`, `io-error` → `IOException`, …); every other identifier gets a `final` unchecked exception class
@@ -260,7 +267,7 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   yet (reported as generation problem): function types, `streamResult`, `@@streaming`. Java keywords used as names
   get a trailing `_`.
 
-Not generated yet: constants, namespace-level functions, `@@streaming` methods, function types.
+Not generated yet: namespace-level functions, `@@streaming` methods, function types.
 
 ## Lenient grammar: syntax variants found in the specs
 
@@ -324,6 +331,7 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `RobustnessTest` | Seeded random mutations and every prefix of every real spec never crash the tool and never report a location outside the document; results do not depend on document order; AST locations point at the element; the textual form of every type and literal parses back to itself. |
 | `RepositorySpecsTest` | All specs under `spec/` are free of syntax errors and the report is deterministic. |
 | `ModelCommandTest` | `metalang model` output for the example specs in `src/test/resources/model-golden/spec` equals the golden file `model-golden/model.json` byte for byte; filters, exit codes and determinism on the real specs. After an intended change, regenerate the golden file (command in the test's Javadoc). |
+| `ConstantsGeneratorTest` | Class name rule, basic and struct-literal constants (record, class, `null` and `@@default` filling, `@Deprecated`), loading the compiled constants, and every deferral reason (type not generated, abstraction, missing value, clashing class name). |
 | `ExceptionGeneratorTest` | Exception names, standard mapping (checked/unchecked), placement across modules (shortest namespace, transitive requires), errors without common module or with clashing names, `throws` clauses and async documentation, and the runtime behaviour of a generated exception (single constructor, message check, cause). |
 | `ClassGeneratorTest` | Which abstraction becomes an abstract class or an interface (attributes, enums, interfaces, multiple inheritance with *none* as result, upward propagation, configuration, `@@finalMethod`), configuration errors, covariant `@@async` overrides, generated classes (state, constructors with `super(...)`, `$$Self` setters, covariant setter overrides, narrowed nullability, defaults, value classes, sealed hierarchies) and their **runtime behaviour** (checks, defensive copies, chained setters, equality). |
 | `InterfaceGeneratorTest` | Generated interfaces (accessors, setters returning the self type, abstract and static methods, renamed type variables), records and enums implementing generic interfaces with wrapper types and `@Override`, nullability narrowing, `sealed`/`non-sealed`, supertypes as comment, and every deferral reason. Every case is compiled with `-Xlint:all -Werror`. |

@@ -105,7 +105,7 @@ class GenerateCommandTest {
 
         // THEN
         assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
-        assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("25 file(s) written to " + output + "\n");
+        assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("26 file(s) written to " + output + "\n");
         assertThat(output.resolve("org.hiero.shop/src/main/java/module-info.java")).exists();
         assertThat(Files.readString(output.resolve("org.hiero.shop/src/main/java/org/hiero/shop/package-info.java")))
                 .contains("package org.hiero.shop;");

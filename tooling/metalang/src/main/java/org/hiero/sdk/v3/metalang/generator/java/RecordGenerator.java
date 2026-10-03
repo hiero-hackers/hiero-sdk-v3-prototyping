@@ -87,7 +87,7 @@ final class RecordGenerator {
                     .append(INDENT).append(INDENT).append("this(").append(fields.stream()
                             .map(f -> f.hasAnnotation("default")
                                     ? JavaLiterals.expression(f.annotation("default").orElseThrow().arguments()
-                                    .getFirst(), f.type(), imports)
+                                    .getFirst(), f.type(), imports, context)
                                     : JavaKeywords.identifier(f.name()))
                             .collect(Collectors.joining(", "))).append(");\n")
                     .append(INDENT).append("}\n");
