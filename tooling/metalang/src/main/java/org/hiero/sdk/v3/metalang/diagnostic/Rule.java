@@ -38,6 +38,9 @@ public enum Rule {
     DOC_INTERNAL_REFERENCE("doc.internal-reference", Severity.WARNING,
             "API documentation (description or declaration comment) refers to spec internals",
             "api-guideline.md#write-documentation-for-the-users-of-the-api"),
+    DOC_DEPRECATED_WITHOUT_REASON("doc.deprecated-without-reason", Severity.WARNING,
+            "A @@deprecated element should explain why it is deprecated and name its replacement",
+            "api-guideline.md#deprecation"),
 
     // --- syntax ----------------------------------------------------------------------------------
     SYNTAX_ERROR("syntax.error", Severity.ERROR,

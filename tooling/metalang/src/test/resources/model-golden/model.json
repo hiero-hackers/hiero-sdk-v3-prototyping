@@ -1,7 +1,7 @@
 {
   "specs": 2,
   "errors": 0,
-  "warnings": 0,
+  "warnings": 2,
   "types": [
     {
       "name": "shop.Address",

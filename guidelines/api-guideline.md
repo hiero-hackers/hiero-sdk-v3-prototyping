@@ -728,7 +728,23 @@ overriding declaration. An inherited member still refers to its original depreca
 override must carry `@@deprecated` explicitly when that override is also deprecated.
 
 The prose immediately preceding or following a deprecated declaration should explain why it is deprecated and identify
-the preferred replacement when one exists. Versioning and removal schedules remain prose because this meta-language does
+the preferred replacement when one exists. Put the explanation in its own paragraph that mentions the deprecation —
+generators turn this paragraph into the deprecation text of the API documentation (e.g. the Javadoc `@deprecated`
+tag). The validator warns about a `@@deprecated` element whose documentation does not mention the deprecation
+(`doc.deprecated-without-reason`):
+
+```
+enum Category {
+    FOOD
+    OTHER
+    // The former catch-all category.
+    //
+    // Deprecated because it was never assigned; use `OTHER` instead.
+    @@deprecated MISC
+}
+```
+
+ Versioning and removal schedules remain prose because this meta-language does
 not currently define a shared SDK version model. Concrete language bindings must emit their idiomatic deprecation marker
 and preserve the explanation in generated API documentation.
 

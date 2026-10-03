@@ -271,6 +271,7 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
 - **Deprecation**: `@@deprecated` elements get `@Deprecated` and an `@deprecated` Javadoc tag. Its text is the
   paragraph of the documentation that mentions the deprecation (moved out of the description; repeated at the setter
   of a deprecated attribute), otherwise "Retained for compatibility; do not use it in new code."
+  The validator warns about `@@deprecated` elements without such a paragraph (`doc.deprecated-without-reason`).
 - **Exceptions** (`ExceptionGenerator`, `JavaExceptions`): error identifiers of `@@throws` with a JDK equivalent use
   it (`not-found-error` → `NoSuchElementException`, `illegal-format` → `IllegalArgumentException`, `timeout-error` →
   `TimeoutException`, `io-error` → `IOException`, …); every other identifier gets a `final` unchecked exception class
