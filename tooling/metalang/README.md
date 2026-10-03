@@ -86,7 +86,8 @@ java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --lan
 ```
 
 Without `--fail-on=never` nothing is generated as long as the specs have validation errors. See
-[Java generator](#java-generator) for what is generated.
+[Java generator](#java-generator) for what is generated. `--show-deferred` lists the record types that are not
+generated yet and why.
 
 To check the result with a JDK 25 (`javac`/`javadoc` of JDK 25 on the `PATH`; the jspecify jar is in the local Maven
 repository after the build), compile all generated modules and render their Markdown Javadoc:
@@ -178,6 +179,27 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   `CompletionStage<T>`, generics, varargs, nullness annotations), but their behaviour is only described in the spec,
   so the body throws `UnsupportedOperationException` for now. `implements` of an abstraction is written as a comment
   until abstractions are generated.
+- **Records** (`RecordGenerator`): a complex type becomes a `record` if it is no abstraction, has at least one
+  attribute, all its attributes (inherited ones included) are `@@immutable`, it extends no complex type, inherits no
+  `@@finalMethod` (that supertype becomes an abstract class) and no type extends it — records are final and cannot
+  extend classes. Types without attributes never become records. Generated:
+  - components = effective attributes (inherited first), documented with `@param`;
+  - a compact constructor with `Objects.requireNonNull` for non-nullable references, `List/Set/Map.copyOf` for
+    collections, `clone()` for `bytes`, and the checks of `@@min`/`@@max`/`@@minLength`/`@@maxLength`/`@@minSize`/
+    `@@maxSize`/`@@pattern` (Java regex, `find` semantics like the validator)/`@@urlPattern` (`java.net.URI`, absolute
+    with host) throwing `IllegalArgumentException`;
+  - a second constructor without the `@@default` attributes;
+  - `bytes` components: accessors return copies, `equals`/`hashCode` compare the array content (records would
+    compare the references), and `toString` prints only the length (`byte[32]`), because the content may be key
+    material or a large body;
+  - `@@deprecated` attributes: an explicit accessor with `@Deprecated` (on the component it only causes a javac
+    warning);
+  - methods as stubs (see Enums); `toString()`/`hashCode()`/`equals(ANY)` get `@Override`.
+
+  A record is only generated once every type it refers to (attributes, methods, bounds) is generated as well;
+  otherwise it is **deferred** (`generate --show-deferred`). Today 23 records are generated and 110 deferred — most
+  of them wait for abstractions (`Authority`, `TransactionStatus`, `NativeTokenUnit`, …) or for types that refer to
+  them (`AccountId` → `Network`).
 - **Type mapping** (`JavaTypes`): `intX`/`uintX` → `byte`/`short`/`int`/`long`/`BigInteger` by width, primitives
   unless nullable or a type argument, `bytes` → `byte[]`, collections → `List`/`Set`/`Map`, time types →
   `java.time`, `seconds`/`duration` → `Duration`, `type<T>` → `Class<? extends T>`, `ANY` → `Object`. Not mapped
@@ -236,7 +258,7 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 500 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
+`mvn verify` runs about 520 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
 excluded). Besides unit tests per component, the suite contains these systematic checks:
 
 | Test | What it guarantees |
@@ -248,6 +270,7 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `RobustnessTest` | Seeded random mutations and every prefix of every real spec never crash the tool and never report a location outside the document; results do not depend on document order; AST locations point at the element; the textual form of every type and literal parses back to itself. |
 | `RepositorySpecsTest` | All specs under `spec/` are free of syntax errors and the report is deterministic. |
 | `ModelCommandTest` | `metalang model` output for the example specs in `src/test/resources/model-golden/spec` equals the golden file `model-golden/model.json` byte for byte; filters, exit codes and determinism on the real specs. After an intended change, regenerate the golden file (command in the test's Javadoc). |
+| `RecordGeneratorTest` | Which types become records (inherited attributes, extended types, inherited `@@finalMethod`, type arguments of supertypes), deferral (transitive, through methods, bounds, wildcards; unmapped types), generated source details, and the **runtime behaviour** of the golden records: they are compiled in-process and called (null checks, every constraint, `URI` check, defensive copies, default constructor, `bytes` equality, method stubs). |
 | `JavaGeneratorTest` | Golden files for the example specs (`generator-golden/java`), module/package rules and the three structural errors, Markdown comment escaping, and: the modules generated for **all real specs compile** with `-Xlint:all -Werror` through the module system. |
 | `LinkedRepositorySpecsTest` | Linking all real specs leaves no unresolved reference, every declared type exists, self types are substituted (`Transaction`, `NativeToken`), and linking is deterministic. |
 

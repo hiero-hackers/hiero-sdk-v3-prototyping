@@ -10,15 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Stream;
-import javax.tools.Diagnostic;
-import javax.tools.DiagnosticCollector;
-import javax.tools.JavaCompiler;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
 import org.hiero.sdk.v3.metalang.MetaLang;
 import org.hiero.sdk.v3.metalang.TestSpecs;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
@@ -255,33 +248,13 @@ class JavaGeneratorTest {
             // GIVEN
             final Path specs = Path.of(System.getProperty("spec.root", "../../spec"));
             final List<GeneratedFile> files = generator.generate(LinkedModel.of(new MetaLang().validate(specs).model()));
-            final List<Path> sources = new ArrayList<>();
-            for (final GeneratedFile file : files) {
-                final Path target = output.resolve("src").resolve(file.path());
-                Files.createDirectories(target.getParent());
-                Files.writeString(target, file.content(), StandardCharsets.UTF_8);
-                sources.add(target);
-            }
 
             // WHEN compiling all modules with the module system (catches unknown modules and cycles)
-            final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-            final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-            final boolean success;
-            try (StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, Locale.ROOT,
-                    StandardCharsets.UTF_8)) {
-                final String jspecify = Stream.of(System.getProperty("java.class.path").split(java.io.File.pathSeparator))
-                        .filter(p -> p.contains("jspecify")).findFirst().orElseThrow();
-                success = compiler.getTask(null, fileManager, diagnostics, List.of(
-                                "-Xlint:all", "-Werror",
-                                "--module-source-path", output.resolve("src") + "/*/src/main/java",
-                                "--module-path", jspecify,
-                                "-d", output.resolve("classes").toString()),
-                        null, fileManager.getJavaFileObjectsFromPaths(sources)).call();
-            }
+            final GeneratedJava.Compilation compilation = GeneratedJava.compile(files, output);
 
             // THEN
-            assertThat(diagnostics.getDiagnostics()).extracting(Diagnostic::toString).isEmpty();
-            assertThat(success).isTrue();
+            assertThat(compilation.diagnostics()).isEmpty();
+            assertThat(compilation.success()).isTrue();
             final LinkedModel model = LinkedModel.of(new MetaLang().validate(specs).model());
             final int namespaces = model.namespaces().size();
             final long enums = model.types().stream()
@@ -295,7 +268,11 @@ class JavaGeneratorTest {
                             "org.hiero.mirror.node.client/src/main/java/module-info.java");
             final long withDescription = model.namespaces().stream()
                     .filter(n -> n.sources().stream().anyMatch(src -> !src.description().isBlank())).count();
-            assertThat(files).hasSize(5 + (int) withDescription + (int) enums);
+            final long records = files.stream().filter(f -> f.content().contains("\npublic record ")).count();
+            assertThat(files).hasSize(5 + (int) withDescription + (int) enums + (int) records);
+            assertThat(records).isGreaterThanOrEqualTo(20);
+            assertThat(generator.deferredRecords(model)).isNotEmpty()
+                    .allSatisfy((type, reason) -> assertThat(reason).startsWith("refers to "));
             assertThat(namespaces).isGreaterThanOrEqualTo((int) withDescription);
             assertThat(files).noneMatch(f -> f.content().contains("Specified in") || f.content().contains(".md`"));
             assertThat(enums).isEqualTo(16);

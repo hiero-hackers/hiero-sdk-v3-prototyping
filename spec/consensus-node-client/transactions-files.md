@@ -37,9 +37,9 @@ Note that each underlying chunk is a separate consensus transaction with its own
 
 | Transaction         | Signers required                                                                          |
 |---------------------|-------------------------------------------------------------------------------------------|
-| `FileCreate`        | the *payer* **and** every key in the new `key` authorization (anti-spoofing: cannot bind another party's key as a file modifier without their consent) |
-| `FileAppend`        | the *payer* **and** every key in the file's current `key` authorization                   |
-| `FileUpdate`        | the *payer* **and** every key in the *current* `key` authorization; if `key` changes, every key in the *new* authorization must sign as well |
+| `FileCreate`        | the *payer* **and** every key in the new `authority` authorization (anti-spoofing: cannot bind another party's key as a file modifier without their consent) |
+| `FileAppend`        | the *payer* **and** every key in the file's current `authority` authorization                   |
+| `FileUpdate`        | the *payer* **and** every key in the *current* `authority` authorization; if `authority` changes, every key in the *new* authorization must sign as well |
 | `FileDelete`        | the *payer* **and** every key in the file's current key list                              |
 
 When the operator is also the sole key on the file, `signWithOperatorAndSubmit(client)` is
@@ -170,9 +170,9 @@ new FileDeleteTransaction()
 
 ## Questions & Comments
 
-- **`key` is a single `Authority`.** HAPI's `FileCreateTransactionBody.keys` is a single
+- **`authority` is a single `Authority`.** HAPI's `FileCreateTransactionBody.keys` is a single
   `KeyList` — one authorization requirement whose entries must *all* sign to modify the file —
-  so V3 models it as one `key: Authority` rather than a `list`. The all-must-sign rule is an
+  so V3 models it as one `authority: Authority` rather than a `list`. The all-must-sign rule is an
   `AuthorityList` with `threshold == children.size()`, and because `Authority` is recursive
   each entry may itself be a single key, a contract, or a nested threshold — e.g.
   `Authority.of(Authority.of(alice), Authority.of(2, Authority.of(bob), Authority.of(carol), Authority.ofContract(dao)))`.

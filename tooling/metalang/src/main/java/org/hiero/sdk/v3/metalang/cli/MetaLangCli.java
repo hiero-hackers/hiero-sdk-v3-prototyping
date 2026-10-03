@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.SortedMap;
 import org.hiero.sdk.v3.metalang.MetaLang;
 import org.hiero.sdk.v3.metalang.ValidationReport;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
@@ -18,6 +19,7 @@ import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 import org.hiero.sdk.v3.metalang.generator.GenerationException;
 import org.hiero.sdk.v3.metalang.generator.java.JavaGenerator;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
+import org.hiero.sdk.v3.metalang.model.QualifiedName;
 
 /**
  * Command line interface.
@@ -26,7 +28,8 @@ import org.hiero.sdk.v3.metalang.model.LinkedModel;
  * metalang validate [--min-severity=error|warning|info] [--fail-on=error|warning|info|never]
  *                   [--format=text|json] [--summary] &lt;spec-dir-or-file&gt;
  * metalang model [--namespace=ns] [--type=ns.Type] [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
- * metalang generate --language=java --output=dir [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
+ * metalang generate --language=java --output=dir [--fail-on=error|warning|info|never] [--show-deferred]
+ *     &lt;spec-dir-or-file&gt;
  * metalang rules
  * </pre>
  *
@@ -65,6 +68,7 @@ public final class MetaLangCli {
               --output=<dir>                      output directory (required; created if missing)
               --fail-on=error|warning|info|never  do not generate if a finding at or above this severity
                                                   exists (default: error)
+              --show-deferred                     list the record types that are not generated yet and why
             """;
 
     private final PrintStream out;
@@ -229,6 +233,7 @@ public final class MetaLangCli {
         Severity failOn = Severity.ERROR;
         String language = null;
         String output = null;
+        boolean showDeferred = false;
         final List<String> paths = new ArrayList<>();
         for (final String arg : args) {
             if (arg.startsWith("--fail-on=")) {
@@ -241,6 +246,8 @@ public final class MetaLangCli {
                 language = arg.substring("--language=".length());
             } else if (arg.startsWith("--output=")) {
                 output = arg.substring("--output=".length());
+            } else if (arg.equals("--show-deferred")) {
+                showDeferred = true;
             } else if (arg.startsWith("--")) {
                 return usageError("Unknown option " + arg);
             } else {
@@ -271,8 +278,10 @@ public final class MetaLangCli {
             return EXIT_FINDINGS;
         }
         final List<GeneratedFile> files;
+        final JavaGenerator generator = new JavaGenerator();
+        final LinkedModel model = LinkedModel.of(report.model());
         try {
-            files = new JavaGenerator().generate(LinkedModel.of(report.model()));
+            files = generator.generate(model);
         } catch (final GenerationException e) {
             e.problems().forEach(p -> err.println("Cannot generate: " + p));
             return EXIT_FINDINGS;
@@ -289,6 +298,14 @@ public final class MetaLangCli {
             return EXIT_FINDINGS;
         }
         out.println(files.size() + " file(s) written to " + outputDirectory);
+        final SortedMap<QualifiedName, String> deferred = generator.deferredRecords(model);
+        if (!deferred.isEmpty()) {
+            out.println(deferred.size() + " record type(s) deferred until the types they refer to are generated"
+                    + (showDeferred ? ":" : " (--show-deferred lists them)"));
+            if (showDeferred) {
+                deferred.forEach((type, reason) -> out.println("  " + type + ": " + reason));
+            }
+        }
         return EXIT_OK;
     }
 

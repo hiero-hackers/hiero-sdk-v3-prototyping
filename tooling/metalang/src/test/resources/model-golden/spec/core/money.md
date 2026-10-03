@@ -7,8 +7,10 @@
 ```
 namespace shop.money
 
+// An amount of money.
 Money {
-    @@immutable cents: int64
+    @@immutable @@min(-1_000_000_000_000_000_000) cents: int256   // the amount in cents
+    @@immutable @@nullable timeout: duration
 }
 
 enum Plan(timeout: seconds, limit: int256, tags: list<string>) {

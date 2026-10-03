@@ -227,6 +227,84 @@ public record Person(@Nullable String name, @Nullable Integer age) {
 } // Usage of the @Nullable annotation is described in the following chapter
 ```
 
+A type is **not** declared as a `record`, even if all its fields are `@@immutable`, when
+
+- it has no fields at all (a record without components carries no value; such a type is a class or interface),
+- it extends a non-abstract type or another type extends it (records are final and cannot extend classes), or
+- it inherits a `@@finalMethod` (the declaring abstraction becomes an abstract class, see
+  [Generic Methods and `@@finalMethod`](#generic-methods-and-finalmethod)).
+
+The record keeps the immutability promise of the spec:
+
+- The compact constructor checks non-nullable references with `Objects.requireNonNull` and implements the validation
+  annotations (see [Implementation of Attribute annotations](#implementation-of-attribute-annotations)).
+- Components of a collection or array type need special care, see
+  [Records with collection and array components](#records-with-collection-and-array-components).
+- Fields with `@@default(value)` lead to an additional constructor without these fields that delegates to the
+  canonical constructor with the default values.
+- A `@@deprecated` field gets an explicit accessor annotated with `@Deprecated`; `@Deprecated` on the record component
+  itself is ignored for the accessor and only causes a compiler warning.
+
+### Records with collection and array components
+
+A record is only shallowly immutable, and the methods it generates (`equals`, `hashCode`, `toString`, accessors)
+treat every component as an opaque reference. For components that hold several values — collections
+(`list`, `set`, `map`) and arrays (`bytes` → `byte[]`) — this breaks the guarantees of an `@@immutable` value type
+unless the record reacts to it:
+
+| Problem | Collections (`List`, `Set`, `Map`) | Arrays (`byte[]`) |
+|---|---|---|
+| The caller keeps a reference to the value passed to the constructor and modifies it later | yes | yes |
+| The caller modifies the value returned by the accessor | yes (unless the collection is unmodifiable) | yes |
+| Generated `equals`/`hashCode` compare the reference instead of the content | no — `List.equals` etc. compare content | **yes** — `Objects.equals` on arrays is `==` |
+| Generated `toString` prints a reference (`[B@1b6d3586`) instead of the content | no | **yes** |
+
+Therefore:
+
+- **Collections** are copied into unmodifiable collections in the compact constructor (`List.copyOf`, `Set.copyOf`,
+  `Map.copyOf`; for a nullable component only if it is not `null`). The accessor can then return the component
+  directly, and the generated `equals`, `hashCode` and `toString` are correct. Note that `copyOf` rejects `null`
+  elements, which matches the meta-language (collection elements are never nullable).
+- **Arrays** are copied in the compact constructor (`clone()`) **and** in an explicit accessor, because an array
+  cannot be made unmodifiable. A record with an array component must override `equals` and `hashCode` with
+  `Arrays.equals`/`Arrays.hashCode` and must override `toString`, because the generated versions compare and print
+  references: two records created from equal arrays would otherwise never be equal.
+- `toString` prints **only the length** of an array (`value=byte[32]`), never its content: arrays often hold
+  sensitive data (private key material) or large payloads (HTTP bodies), and a string representation ends up in logs.
+  This applies to every `toString` of the SDK, not only to records.
+
+```java
+public record Hash(byte @NonNull [] value, @NonNull List<String> tags) {
+
+    public Hash {
+        Objects.requireNonNull(value, "value must not be null");
+        value = value.clone();                   // array: copy in
+        Objects.requireNonNull(tags, "tags must not be null");
+        tags = List.copyOf(tags);                // collection: unmodifiable copy, nothing else needed
+    }
+
+    @Override
+    public byte @NonNull [] value() {
+        return value.clone();                    // array: copy out
+    }
+
+    @Override
+    public boolean equals(final @Nullable Object obj) {
+        return obj instanceof Hash other && Arrays.equals(value, other.value) && tags.equals(other.tags);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(Arrays.hashCode(value), tags);
+    }
+
+    @Override
+    public String toString() {
+        return "Hash[value=byte[" + value.length + "], tags=" + tags + "]";   // length only, never the content
+    }
+}
+```
+
 If only some fields are annotated with `@@immutable`, the type should be declared as a Java `class`.
 Here all fields that are not annotated with `@@immutable` must be declared as `final`, set in the constructor and only
 accessible via getters.
@@ -442,9 +520,10 @@ public final class NumericIdentifier extends Identifier {
    ergonomic primitive access. This is a Java convenience, not required by the spec.
 4. Always annotate the child's getter with `@Override` so the narrowing is explicit at the
    override site.
-5. When the parent is an abstract class, the child may still be declared as a `record` if
-   all of its own fields are `@@immutable`; the narrowed getter is then implemented in the
-   record body.
+5. A record cannot extend a class. When the parent is an interface, the child may still be
+   declared as a `record` if all of its fields are `@@immutable`; the narrowed accessor is then
+   implemented in the record body. When the parent must be an abstract class (e.g. because it
+   declares a `@@finalMethod`), the child is a `final class`.
 
 The narrowing rule is currently scoped to nullability only — Java code should not invent
 narrowings of `@@max`, `@@maxLength`, or other inherited constraints, since those are not
@@ -608,6 +687,8 @@ create a copy of the collection.
 Here it is important to understand the difference between the two and what the correct choice is.
 Currently, the meta-language does not specify if a collection is a view or a copy.
 In most cases it makes most sense to return a view.
+For records with collection or array components, see
+[Records with collection and array components](#records-with-collection-and-array-components).
 
 Examples of how immutable collections can be implemented in Java:
 

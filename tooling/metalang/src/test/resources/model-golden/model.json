@@ -4,6 +4,273 @@
   "warnings": 0,
   "types": [
     {
+      "name": "shop.Address",
+      "kind": "type",
+      "location": "shop/shop.md:46:1",
+      "documentation": "A postal address.",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [],
+      "fields": [
+        {
+          "name": "street",
+          "type": "string",
+          "declaredIn": "shop.Address",
+          "annotations": [
+            "@@immutable",
+            "@@minLength(1)",
+            "@@maxLength(80)"
+          ],
+          "documentation": "street and house number",
+          "location": "shop/shop.md:47:48"
+        },
+        {
+          "name": "zip",
+          "type": "string",
+          "declaredIn": "shop.Address",
+          "annotations": [
+            "@@immutable",
+            "@@nullable",
+            "@@pattern(\"^[0-9]{5}$\")"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:48:52"
+        },
+        {
+          "name": "website",
+          "type": "string",
+          "declaredIn": "shop.Address",
+          "annotations": [
+            "@@immutable",
+            "@@nullable",
+            "@@urlPattern"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:49:41"
+        },
+        {
+          "name": "map",
+          "type": "string",
+          "declaredIn": "shop.Address",
+          "annotations": [
+            "@@immutable",
+            "@@urlPattern"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:50:30"
+        }
+      ],
+      "methods": []
+    },
+    {
+      "name": "shop.Attachment",
+      "kind": "type",
+      "location": "shop/shop.md:73:1",
+      "documentation": "A file attachment.",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [],
+      "fields": [
+        {
+          "name": "content",
+          "type": "bytes",
+          "declaredIn": "shop.Attachment",
+          "annotations": [
+            "@@immutable",
+            "@@minSize(1)"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:74:30"
+        },
+        {
+          "name": "checksum",
+          "type": "bytes",
+          "declaredIn": "shop.Attachment",
+          "annotations": [
+            "@@immutable",
+            "@@nullable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:75:28"
+        },
+        {
+          "name": "weight",
+          "type": "double",
+          "declaredIn": "shop.Attachment",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:76:17"
+        },
+        {
+          "name": "count",
+          "type": "int32",
+          "declaredIn": "shop.Attachment",
+          "annotations": [
+            "@@immutable",
+            "@@nullable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:77:28"
+        }
+      ],
+      "methods": []
+    },
+    {
+      "name": "shop.Base",
+      "kind": "type",
+      "location": "shop/shop.md:99:1",
+      "documentation": "Neither a record nor its subtype: records cannot be extended.",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [],
+      "fields": [
+        {
+          "name": "a",
+          "type": "int32",
+          "declaredIn": "shop.Base",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:100:17"
+        }
+      ],
+      "methods": []
+    },
+    {
+      "name": "shop.Cart",
+      "kind": "type",
+      "location": "shop/shop.md:54:1",
+      "documentation": "A shopping cart.",
+      "annotations": [],
+      "typeParameters": [
+        {
+          "name": "$$Item",
+          "bound": null
+        }
+      ],
+      "supertypes": [],
+      "fields": [
+        {
+          "name": "items",
+          "type": "list<$$Item>",
+          "declaredIn": "shop.Cart",
+          "annotations": [
+            "@@immutable",
+            "@@minSize(1)",
+            "@@maxSize(100)"
+          ],
+          "documentation": "the items in the cart;\nnever more than 100",
+          "location": "shop/shop.md:57:45"
+        },
+        {
+          "name": "coupons",
+          "type": "set<string>",
+          "declaredIn": "shop.Cart",
+          "annotations": [
+            "@@immutable",
+            "@@default([])"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:58:31"
+        },
+        {
+          "name": "notes",
+          "type": "map<string, string>",
+          "declaredIn": "shop.Cart",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:59:17"
+        },
+        {
+          "name": "quantity",
+          "type": "int32",
+          "declaredIn": "shop.Cart",
+          "annotations": [
+            "@@immutable",
+            "@@default(1)",
+            "@@min(1)",
+            "@@max(10)"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:60:49"
+        },
+        {
+          "name": "discount",
+          "type": "int32",
+          "declaredIn": "shop.Cart",
+          "annotations": [
+            "@@immutable",
+            "@@nullable",
+            "@@min(0)"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:61:37"
+        },
+        {
+          "name": "legacy",
+          "type": "bool",
+          "declaredIn": "shop.Cart",
+          "annotations": [
+            "@@immutable",
+            "@@deprecated"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:62:30"
+        },
+        {
+          "name": "category",
+          "type": "shop.Category",
+          "declaredIn": "shop.Cart",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:63:17"
+        },
+        {
+          "name": "total",
+          "type": "shop.money.Money",
+          "declaredIn": "shop.Cart",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:64:17"
+        }
+      ],
+      "methods": [
+        {
+          "name": "sum",
+          "signature": "sum()",
+          "returnType": "shop.money.Money",
+          "typeParameters": [],
+          "parameters": [],
+          "declaredIn": "shop.Cart",
+          "annotations": [],
+          "documentation": "Total price of the cart.",
+          "location": "shop/shop.md:67:11"
+        },
+        {
+          "name": "empty",
+          "signature": "empty()",
+          "returnType": "shop.Cart<string>",
+          "typeParameters": [],
+          "parameters": [],
+          "declaredIn": "shop.Cart",
+          "annotations": [
+            "@@static"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:69:27"
+        }
+      ]
+    },
+    {
       "name": "shop.Category",
       "kind": "enum",
       "location": "shop/shop.md:29:6",
@@ -97,6 +364,60 @@
       ]
     },
     {
+      "name": "shop.Counter",
+      "kind": "type",
+      "location": "shop/shop.md:89:1",
+      "documentation": "Not a record: the attribute is mutable.",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [],
+      "fields": [
+        {
+          "name": "value",
+          "type": "int32",
+          "declaredIn": "shop.Counter",
+          "annotations": [],
+          "documentation": "",
+          "location": "shop/shop.md:90:5"
+        }
+      ],
+      "methods": []
+    },
+    {
+      "name": "shop.Derived",
+      "kind": "type",
+      "location": "shop/shop.md:103:1",
+      "documentation": "",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [
+        "shop.Base"
+      ],
+      "fields": [
+        {
+          "name": "a",
+          "type": "int32",
+          "declaredIn": "shop.Base",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:100:17"
+        },
+        {
+          "name": "b",
+          "type": "int32",
+          "declaredIn": "shop.Derived",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:104:17"
+        }
+      ],
+      "methods": []
+    },
+    {
       "name": "shop.Entity",
       "kind": "abstraction",
       "location": "shop/shop.md:14:13",
@@ -187,6 +508,85 @@
         }
       ],
       "methods": []
+    },
+    {
+      "name": "shop.Hash",
+      "kind": "type",
+      "location": "shop/shop.md:81:1",
+      "documentation": "A hash; prints itself.",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [],
+      "fields": [
+        {
+          "name": "value",
+          "type": "bytes",
+          "declaredIn": "shop.Hash",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:82:17"
+        }
+      ],
+      "methods": [
+        {
+          "name": "toString",
+          "signature": "toString()",
+          "returnType": "string",
+          "typeParameters": [],
+          "parameters": [],
+          "declaredIn": "shop.Hash",
+          "annotations": [],
+          "documentation": "Hex representation.",
+          "location": "shop/shop.md:85:12"
+        }
+      ]
+    },
+    {
+      "name": "shop.Listing",
+      "kind": "type",
+      "location": "shop/shop.md:108:1",
+      "documentation": "Deferred: refers to an abstraction.",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [],
+      "fields": [
+        {
+          "name": "entity",
+          "type": "shop.Entity<string>",
+          "declaredIn": "shop.Listing",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:109:17"
+        }
+      ],
+      "methods": []
+    },
+    {
+      "name": "shop.Printer",
+      "kind": "type",
+      "location": "shop/shop.md:94:1",
+      "documentation": "Not a record: no attributes.",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [],
+      "fields": [],
+      "methods": [
+        {
+          "name": "print",
+          "signature": "print()",
+          "returnType": "void",
+          "typeParameters": [],
+          "parameters": [],
+          "declaredIn": "shop.Printer",
+          "annotations": [],
+          "documentation": "",
+          "location": "shop/shop.md:95:10"
+        }
+      ]
     },
     {
       "name": "shop.Product",
@@ -288,21 +688,33 @@
     {
       "name": "shop.money.Money",
       "kind": "type",
-      "location": "core/money.md:10:1",
-      "documentation": "",
+      "location": "core/money.md:11:1",
+      "documentation": "An amount of money.",
       "annotations": [],
       "typeParameters": [],
       "supertypes": [],
       "fields": [
         {
           "name": "cents",
-          "type": "int64",
+          "type": "int256",
           "declaredIn": "shop.money.Money",
           "annotations": [
-            "@@immutable"
+            "@@immutable",
+            "@@min(-1_000_000_000_000_000_000)"
+          ],
+          "documentation": "the amount in cents",
+          "location": "core/money.md:12:51"
+        },
+        {
+          "name": "timeout",
+          "type": "duration",
+          "declaredIn": "shop.money.Money",
+          "annotations": [
+            "@@immutable",
+            "@@nullable"
           ],
           "documentation": "",
-          "location": "core/money.md:11:17"
+          "location": "core/money.md:13:28"
         }
       ],
       "methods": []
@@ -310,7 +722,7 @@
     {
       "name": "shop.money.Plan",
       "kind": "enum",
-      "location": "core/money.md:14:6",
+      "location": "core/money.md:16:6",
       "documentation": "",
       "annotations": [],
       "typeParameters": [],
@@ -345,7 +757,7 @@
           ],
           "annotations": [],
           "documentation": "",
-          "location": "core/money.md:15:5"
+          "location": "core/money.md:17:5"
         },
         {
           "name": "PREMIUM",
@@ -356,7 +768,7 @@
           ],
           "annotations": [],
           "documentation": "",
-          "location": "core/money.md:16:5"
+          "location": "core/money.md:18:5"
         }
       ],
       "methods": []
@@ -387,7 +799,7 @@
         "@@static"
       ],
       "documentation": "",
-      "location": "shop/shop.md:47:18"
+      "location": "shop/shop.md:114:18"
     }
   ],
   "constants": [
@@ -397,7 +809,7 @@
       "value": "1_000",
       "annotations": [],
       "documentation": "",
-      "location": "shop/shop.md:45:1"
+      "location": "shop/shop.md:112:1"
     }
   ]
 }

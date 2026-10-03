@@ -42,6 +42,73 @@ enum Flag(default: bool) {
     OFF(false)
 }
 
+// A postal address.
+Address {
+    @@immutable @@minLength(1) @@maxLength(80) street: string   // street and house number
+    @@immutable @@nullable @@pattern("^[0-9]{5}$") zip: string
+    @@immutable @@nullable @@urlPattern website: string
+    @@immutable @@urlPattern map: string
+}
+
+// A shopping cart.
+Cart<$$Item> {
+    // the items in the cart;
+    // never more than 100
+    @@immutable @@minSize(1) @@maxSize(100) items: list<$$Item>
+    @@immutable @@default([]) coupons: set<string>
+    @@immutable notes: map<string, string>
+    @@immutable @@default(1) @@min(1) @@max(10) quantity: int32
+    @@immutable @@nullable @@min(0) discount: int32
+    @@immutable @@deprecated legacy: bool
+    @@immutable category: Category
+    @@immutable total: Money
+
+    // Total price of the cart.
+    Money sum()
+
+    @@static Cart<string> empty()
+}
+
+// A file attachment.
+Attachment {
+    @@immutable @@minSize(1) content: bytes
+    @@immutable @@nullable checksum: bytes
+    @@immutable weight: double
+    @@immutable @@nullable count: int32
+}
+
+// A hash; prints itself.
+Hash {
+    @@immutable value: bytes
+
+    // Hex representation.
+    string toString()
+}
+
+// Not a record: the attribute is mutable.
+Counter {
+    value: int32
+}
+
+// Not a record: no attributes.
+Printer {
+    void print()
+}
+
+// Neither a record nor its subtype: records cannot be extended.
+Base {
+    @@immutable a: int32
+}
+
+Derived extends Base {
+    @@immutable b: int32
+}
+
+// Deferred: refers to an abstraction.
+Listing {
+    @@immutable entity: Entity<string>
+}
+
 constant MAX_PRODUCTS: int32 = 1_000
 
 @@static Product create(name: string, tags: string...)

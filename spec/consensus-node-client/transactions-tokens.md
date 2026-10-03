@@ -28,7 +28,7 @@ transactions are provided alongside them.
 
 ### Token keys
 
-A token carries up to seven optional keys, each granting authority over a specific operation. None
+A token carries up to eight optional keys, each granting authority over a specific operation. None
 of these can be *added* via `TokenUpdate` if they were not set at creation time — leaving a key
 unset at create permanently disables that capability (HAPI: `KEY_NOT_PROVIDED`). The keys can be
 *rotated* by an update if they were set originally, and (under HIP-540) cleared to an immutable
@@ -133,7 +133,7 @@ requires {TokenType, TokenSupplyType} from token
 requires {Receipt, Transaction} from consensusnode.transactions
 
 // Creates a new token. The token is identified by the `tokenId` returned in the receipt. All
-// seven key fields are optional and follow the rule that a key not set at create time can never
+// eight key fields are optional and follow the rule that a key not set at create time can never
 // be added later (the network rejects it with `KEY_NOT_PROVIDED`); leaving e.g. `supplyAuthority`
 // unset permanently fixes the token's supply at `initialSupply`.
 @@finalType

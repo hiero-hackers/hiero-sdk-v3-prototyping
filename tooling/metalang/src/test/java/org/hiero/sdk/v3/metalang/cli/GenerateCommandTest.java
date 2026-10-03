@@ -32,6 +32,19 @@ class GenerateCommandTest {
     }
 
     @Test
+    void shouldListTheDeferredRecordsOnRequest() throws Exception {
+        // WHEN
+        final int exit = cli.run("generate", "--language=java", "--show-deferred",
+                "--output=" + temp.resolve("out"), goldenSpec().toString());
+
+        // THEN
+        assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
+        assertThat(out.toString(StandardCharsets.UTF_8)).endsWith(
+                "1 record type(s) deferred until the types they refer to are generated:\n"
+                        + "  shop.Listing: refers to shop.Entity (abstraction, not generated yet)\n");
+    }
+
+    @Test
     void shouldWriteTheGeneratedFiles() throws Exception {
         // GIVEN
         final Path output = temp.resolve("out/java");
@@ -41,7 +54,8 @@ class GenerateCommandTest {
 
         // THEN
         assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
-        assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("6 file(s) written to " + output + "\n");
+        assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("11 file(s) written to " + output + "\n"
+                + "1 record type(s) deferred until the types they refer to are generated (--show-deferred lists them)\n");
         assertThat(output.resolve("org.hiero.shop/src/main/java/module-info.java")).exists();
         assertThat(Files.readString(output.resolve("org.hiero.shop/src/main/java/org/hiero/shop/package-info.java")))
                 .contains("package org.hiero.shop;");
