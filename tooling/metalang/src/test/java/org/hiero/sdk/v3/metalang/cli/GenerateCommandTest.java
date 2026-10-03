@@ -53,7 +53,7 @@ class GenerateCommandTest {
         // THEN
         assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
         assertThat(out.toString(StandardCharsets.UTF_8)).endsWith(
-                "2 type(s) deferred until the types they refer to are generated:\n"
+                "2 declaration(s) deferred until the types they refer to are generated:\n"
                         + "  a.Callback: Type 'function<void run()>' has no Java mapping yet\n"
                         + "  a.Uses: refers to a.Callback (record, not generated yet)\n");
     }
@@ -109,7 +109,7 @@ class GenerateCommandTest {
 
         // THEN
         assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
-        assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("26 file(s) generated in " + output
+        assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("27 file(s) generated in " + output
                 + " (0 changed, 1 stale removed)\n  removed " + Path.of("org.hiero.shop/src/main/java/org/hiero/shop/Gone.java")
                 + "\n");
         assertThat(stale).doesNotExist();
@@ -126,7 +126,7 @@ class GenerateCommandTest {
         // THEN
         assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
         assertThat(out.toString(StandardCharsets.UTF_8))
-                .isEqualTo("26 file(s) generated in " + output + " (26 changed, 0 stale removed)\n");
+                .isEqualTo("27 file(s) generated in " + output + " (27 changed, 0 stale removed)\n");
         assertThat(output.resolve("org.hiero.shop/src/main/java/module-info.java")).exists();
         assertThat(Files.readString(output.resolve("org.hiero.shop/src/main/java/org/hiero/shop/package-info.java")))
                 .contains("package org.hiero.shop;");

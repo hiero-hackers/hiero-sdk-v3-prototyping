@@ -65,7 +65,7 @@ final class InterfaceGenerator {
             }
         }
         for (final MethodDefinition method : type.declaredMethods()) {
-            body.append(body.isEmpty() ? "" : "\n").append(JavaMembers.method(type, method, context, imports, JavaMembers.Body.INTERFACE));
+            body.append(body.isEmpty() ? "" : "\n").append(JavaMembers.method(type.name(), method, context, imports, JavaMembers.Body.INTERFACE));
         }
 
         final StringBuilder java = new StringBuilder(JavaGenerator.HEADER).append('\n');

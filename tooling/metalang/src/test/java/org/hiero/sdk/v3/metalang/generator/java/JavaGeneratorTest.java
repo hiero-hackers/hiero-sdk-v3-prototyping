@@ -71,7 +71,7 @@ class JavaGeneratorTest {
             // GIVEN two namespaces in folder "my-base" and one in "client"
             final List<GeneratedFile> files = generate(Map.of(
                     "my-base/a.md", TestSpecs.markdown("namespace a\nA {}\n"),
-                    "my-base/b.md", TestSpecs.markdown("namespace b.sub\n@@static int32 limit()\n"),
+                    "my-base/b.md", TestSpecs.markdown("namespace b.sub\n"),
                     "client/c.md", TestSpecs.markdown("namespace c\nrequires {A} from a\nC { @@immutable a: A }\n")));
 
             // THEN
@@ -285,7 +285,7 @@ class JavaGeneratorTest {
             assertThat(classes).isGreaterThanOrEqualTo(100);
             assertThat(interfaces).isGreaterThanOrEqualTo(10);
             // what is left are spec issues: covariant @@async overrides, missing Java mappings, and their dependants
-            assertThat(generator.deferredTypes(model)).hasSizeLessThanOrEqualTo(12);
+            assertThat(generator.deferredTypes(model)).hasSizeLessThanOrEqualTo(13);
             assertThat(namespaces).isGreaterThanOrEqualTo((int) withDescription);
             assertThat(files).noneMatch(f -> f.content().contains("Specified in") || f.content().contains(".md`"));
             // non-null is the default of every module; only @@nullable declarations are annotated

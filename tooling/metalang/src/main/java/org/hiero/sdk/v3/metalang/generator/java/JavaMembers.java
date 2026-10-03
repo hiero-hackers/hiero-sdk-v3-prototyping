@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.model.MethodDefinition;
 import org.hiero.sdk.v3.metalang.model.ParameterDefinition;
+import org.hiero.sdk.v3.metalang.model.QualifiedName;
 import org.hiero.sdk.v3.metalang.model.Type;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
 import org.hiero.sdk.v3.metalang.model.TypeParameterDefinition;
@@ -33,14 +34,14 @@ final class JavaMembers {
      * Renders a method. In classes, records and enums the behaviour is not generated, so the body throws
      * {@link UnsupportedOperationException}; in interfaces non-static methods are abstract.
      *
-     * @param owner    the type that contains the method (it may inherit the method)
+     * @param owner    the type or factory class that contains the method (a type may inherit the method)
      * @param method   the method
      * @param context  the generation context
      * @param imports  the imports of the file
      * @param body     how the method is rendered
      * @return the Java code
      */
-    static String method(final TypeDefinition owner, final MethodDefinition method, final JavaContext context,
+    static String method(final QualifiedName owner, final MethodDefinition method, final JavaContext context,
                          final Imports imports, final Body body) {
         final StringBuilder java = new StringBuilder();
         final List<String> errorIds = method.annotation("throws").stream()
@@ -74,8 +75,8 @@ final class JavaMembers {
             java.append("    @Deprecated\n");
         }
         if (overridesObjectMethod(method) || (!method.isStatic() && method.declaringType() != null
-                && !method.declaringType().equals(owner.name())
-                && context.inheritsFrom(owner.name(), method.declaringType()))) {
+                && !method.declaringType().equals(owner)
+                && context.inheritsFrom(owner, method.declaringType()))) {
             java.append("    @Override\n");
         }
         final boolean isFinal = method.hasAnnotation("finalMethod") && body == Body.ABSTRACT_CLASS;
@@ -116,7 +117,7 @@ final class JavaMembers {
         } else {
             java.append(" {\n")
                     .append("        throw new UnsupportedOperationException(\"Not implemented yet: ")
-                    .append(owner.name().name()).append('.').append(method.name()).append("\");\n")
+                    .append(owner.name()).append('.').append(method.name()).append("\");\n")
                     .append("    }\n");
         }
         return java.toString();
@@ -132,7 +133,9 @@ final class JavaMembers {
         }
         if (method.hasAnnotation("async")) {
             final String result = JavaTypes.type(method.returnType(), true, imports);
-            return imports.use("java.util.concurrent", "CompletionStage") + "<" + result + ">";
+            // a @@nullable result is a nullable type argument: CompletionStage<@Nullable T>
+            return imports.use("java.util.concurrent", "CompletionStage") + "<" + (method.hasAnnotation("nullable")
+                    ? JavaTypes.annotate(result, imports.use(JavaTypes.JSPECIFY, "Nullable")) : result) + ">";
         }
         return JavaTypes.declaration(method.returnType(), method.hasAnnotation("nullable"), boxed, imports);
     }

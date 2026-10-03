@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage;
 import org.hiero.common.Page;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.TransactionId;
+import org.jspecify.annotations.Nullable;
 
 public interface TransactionRepository {
 
@@ -22,5 +23,5 @@ public interface TransactionRepository {
     CompletionStage<Page<TransactionInfo>> findByAccountAndModification(final AccountId accountId, final BalanceModification modification);
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
-    CompletionStage<TransactionInfo> findById(final TransactionId transactionId);
+    CompletionStage<@Nullable TransactionInfo> findById(final TransactionId transactionId);
 }

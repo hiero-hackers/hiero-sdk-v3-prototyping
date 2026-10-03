@@ -311,7 +311,7 @@ public final class MetaLangCli {
         result.removed().forEach(p -> out.println("  removed " + p));
         final SortedMap<QualifiedName, String> deferred = generator.deferredTypes(model);
         if (!deferred.isEmpty()) {
-            out.println(deferred.size() + " type(s) deferred until the types they refer to are generated"
+            out.println(deferred.size() + " declaration(s) deferred until the types they refer to are generated"
                     + (showDeferred ? ":" : " (--show-deferred lists them)"));
             if (showDeferred) {
                 deferred.forEach((type, reason) -> out.println("  " + type + ": " + reason));

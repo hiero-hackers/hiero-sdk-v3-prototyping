@@ -119,7 +119,7 @@ final class RecordGenerator {
 
         // methods
         for (final MethodDefinition method : type.methods()) {
-            body.append(body.isEmpty() ? "" : "\n").append(JavaMembers.method(type, method, context, imports, JavaMembers.Body.STUB));
+            body.append(body.isEmpty() ? "" : "\n").append(JavaMembers.method(type.name(), method, context, imports, JavaMembers.Body.STUB));
         }
 
         // before rendering the imports: the header registers imports too

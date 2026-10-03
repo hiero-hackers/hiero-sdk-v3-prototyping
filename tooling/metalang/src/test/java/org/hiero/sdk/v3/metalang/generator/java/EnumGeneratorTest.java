@@ -225,7 +225,7 @@ class EnumGeneratorTest {
 
             // THEN
             assertThat(java).contains("@Deprecated\npublic enum E {")
-                    .contains("public CompletionStage<String> load() {")
+                    .contains("public CompletionStage<@Nullable String> load() {")
                     .contains("public CompletionStage<Void> fire() {")
                     .contains("    @Deprecated\n    public <T extends Base> T convert(final T value, "
                             + "final String... tags) {");

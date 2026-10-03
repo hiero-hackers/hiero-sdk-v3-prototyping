@@ -178,11 +178,11 @@ final class ClassGenerator {
             final boolean own = type.name().equals(method.declaringType());
             if (isAbstract) {
                 if (own) {
-                    members.add(JavaMembers.method(type, method, context, imports, JavaMembers.Body.ABSTRACT_CLASS));
+                    members.add(JavaMembers.method(type.name(), method, context, imports, JavaMembers.Body.ABSTRACT_CLASS));
                 }
             } else if (own || !method.hasAnnotation("finalMethod")
                     && !implementedBySuperclass(method, superDefinition)) {
-                members.add(JavaMembers.method(type, method, context, imports, JavaMembers.Body.STUB));
+                members.add(JavaMembers.method(type.name(), method, context, imports, JavaMembers.Body.STUB));
             }
         }
 

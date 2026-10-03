@@ -99,7 +99,7 @@ final class EnumGenerator {
 
         // methods
         for (final MethodDefinition method : enumType.methods()) {
-            body.append('\n').append(JavaMembers.method(enumType, method, context, imports, JavaMembers.Body.STUB));
+            body.append('\n').append(JavaMembers.method(enumType.name(), method, context, imports, JavaMembers.Body.STUB));
         }
 
         // before rendering the imports: the clause registers imports too

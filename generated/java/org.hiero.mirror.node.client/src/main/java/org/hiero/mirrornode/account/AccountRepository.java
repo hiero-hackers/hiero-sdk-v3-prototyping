@@ -5,11 +5,12 @@ package org.hiero.mirrornode.account;
 import java.util.concurrent.CompletionStage;
 import org.hiero.common.Page;
 import org.hiero.ledger.AccountId;
+import org.jspecify.annotations.Nullable;
 
 public interface AccountRepository {
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
-    CompletionStage<AccountInfo> findById(final AccountId accountId);
+    CompletionStage<@Nullable AccountInfo> findById(final AccountId accountId);
 
     /// Lists account entities known to the mirror node.
     /// Maps to GET /api/v1/accounts.

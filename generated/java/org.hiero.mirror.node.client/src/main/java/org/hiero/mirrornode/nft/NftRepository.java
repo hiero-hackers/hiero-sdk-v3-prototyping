@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage;
 import org.hiero.common.Page;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
+import org.jspecify.annotations.Nullable;
 
 public interface NftRepository {
 
@@ -16,7 +17,7 @@ public interface NftRepository {
     CompletionStage<Page<Nft>> findByType(final Address tokenId);
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
-    CompletionStage<Nft> findByTypeAndSerial(final Address tokenId, final long serialNumber);
+    CompletionStage<@Nullable Nft> findByTypeAndSerial(final Address tokenId, final long serialNumber);
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
     CompletionStage<Page<Nft>> findByOwnerAndType(final AccountId ownerId, final Address tokenId);
@@ -28,5 +29,5 @@ public interface NftRepository {
     CompletionStage<Page<NftMetadata>> findTypesByOwner(final AccountId ownerId);
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
-    CompletionStage<NftMetadata> getNftMetadata(final Address tokenId);
+    CompletionStage<@Nullable NftMetadata> getNftMetadata(final Address tokenId);
 }

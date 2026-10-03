@@ -118,7 +118,18 @@ final class JavaContext {
      * @return the imports
      */
     Imports imports(final TypeDefinition type) {
-        return new Imports(JavaNames.packageName(type.name().namespace()), typeNames, type.name().name());
+        return imports(JavaNames.packageName(type.name().namespace()), type.name().name());
+    }
+
+    /**
+     * Creates the imports of a file that declares a class which is no spec type (constants, factory).
+     *
+     * @param packageName the package of the file
+     * @param className   the simple name of the declared class
+     * @return the imports
+     */
+    Imports imports(final String packageName, final String className) {
+        return new Imports(packageName, typeNames, className);
     }
 
     /**

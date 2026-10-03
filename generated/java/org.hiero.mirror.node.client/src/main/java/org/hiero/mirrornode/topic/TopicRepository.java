@@ -5,15 +5,16 @@ package org.hiero.mirrornode.topic;
 import java.util.concurrent.CompletionStage;
 import org.hiero.common.Page;
 import org.hiero.ledger.Address;
+import org.jspecify.annotations.Nullable;
 
 public interface TopicRepository {
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
-    CompletionStage<Topic> findById(final Address topicId);
+    CompletionStage<@Nullable Topic> findById(final Address topicId);
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
     CompletionStage<Page<TopicMessage>> getMessages(final Address topicId);
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
-    CompletionStage<TopicMessage> getMessageBySequenceNumber(final Address topicId, final long sequenceNumber);
+    CompletionStage<@Nullable TopicMessage> getMessageBySequenceNumber(final Address topicId, final long sequenceNumber);
 }

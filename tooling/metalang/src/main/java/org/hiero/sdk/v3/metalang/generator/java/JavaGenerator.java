@@ -72,9 +72,11 @@ public final class JavaGenerator {
      * @param context   the context with the generated types
      * @param deferred  the candidates (types and constants) that are not generated yet, with the reason
      * @param constants the generated constants by namespace
+     * @param functions the generated namespace-level functions by namespace
      */
     private record Plan(JavaContext context, SortedMap<QualifiedName, String> deferred,
-                        Map<String, List<ConstantDefinition>> constants) {
+                        Map<String, List<ConstantDefinition>> constants,
+                        Map<String, List<FunctionDefinition>> functions) {
     }
 
     /** A module: its spec folder, its namespaces and the modules it requires. */
@@ -121,6 +123,11 @@ public final class JavaGenerator {
                         files.add(generate(module.name(), type, context));
                         packagesWithTypes.add(namespace.name());
                     }
+                }
+                final List<FunctionDefinition> functions = plan.functions().getOrDefault(namespace.name(), List.of());
+                if (!functions.isEmpty()) {
+                    files.add(FactoryGenerator.generate(module.name(), namespace.name(), functions, context));
+                    packagesWithTypes.add(namespace.name());
                 }
                 final List<ConstantDefinition> constants = plan.constants().getOrDefault(namespace.name(), List.of());
                 if (!constants.isEmpty()) {
@@ -202,7 +209,51 @@ public final class JavaGenerator {
         }
         final JavaContext context = new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes,
                 exceptions);
-        return new Plan(context, deferred, constants(model, moduleOfNamespace, context, deferred));
+        return new Plan(context, deferred, constants(model, moduleOfNamespace, context, deferred),
+                functions(model, moduleOfNamespace, context, deferred));
+    }
+
+    /**
+     * The namespace-level functions that can be generated, by namespace (static methods of the factory class). A
+     * function that refers to a type that is not generated, or whose types have no Java form, is deferred on its own;
+     * deferred functions are reported as {@code namespace.name(parameter types)}.
+     */
+    private static Map<String, List<FunctionDefinition>> functions(final LinkedModel model,
+                                                                   final Map<String, String> moduleOfNamespace,
+                                                                   final JavaContext context,
+                                                                   final SortedMap<QualifiedName, String> deferred) {
+        final Map<String, List<FunctionDefinition>> functions = new TreeMap<>();
+        for (final FunctionDefinition function : model.functions()) {
+            final String namespace = function.namespace();
+            if (!moduleOfNamespace.containsKey(namespace)) {
+                continue;
+            }
+            final QualifiedName holder = new QualifiedName(namespace, FactoryGenerator.className(namespace));
+            final MethodDefinition method = function.method();
+            final Set<QualifiedName> used = new TreeSet<>();
+            method.typeParameters().forEach(p -> referencedTypes(p.bound(), used));
+            referencedTypes(method.returnType(), used);
+            method.parameters().forEach(p -> referencedTypes(p.type(), used));
+            Optional<String> reason = model.type(holder).isPresent()
+                    ? Optional.of("the factory class " + holder + " clashes with a type of the same name")
+                    : used.stream().filter(n -> !context.isGenerated(n)).findFirst()
+                    .map(n -> "refers to " + n + " (" + kind(context, n) + ", not generated yet)");
+            if (reason.isEmpty()) {
+                try {
+                    FactoryGenerator.function(function, context.imports(JavaNames.packageName(namespace),
+                            holder.name()), context);
+                } catch (final JavaTypes.UnsupportedTypeException e) {
+                    reason = Optional.of(e.getMessage());
+                }
+            }
+            if (reason.isPresent()) {
+                deferred.put(new QualifiedName(namespace, method.signature().replace(namespace + ".", "")),
+                        reason.get());
+            } else {
+                functions.computeIfAbsent(namespace, k -> new ArrayList<>()).add(function);
+            }
+        }
+        return functions;
     }
 
     /**

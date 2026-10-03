@@ -5,6 +5,7 @@ package org.hiero.mirrornode.contract;
 import java.util.concurrent.CompletionStage;
 import org.hiero.common.Page;
 import org.hiero.ledger.ContractId;
+import org.jspecify.annotations.Nullable;
 
 public class ContractRepository {
 
@@ -18,7 +19,7 @@ public class ContractRepository {
     }
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
-    public CompletionStage<Contract> findById(final ContractId contractId) {
+    public CompletionStage<@Nullable Contract> findById(final ContractId contractId) {
         throw new UnsupportedOperationException("Not implemented yet: ContractRepository.findById");
     }
 }

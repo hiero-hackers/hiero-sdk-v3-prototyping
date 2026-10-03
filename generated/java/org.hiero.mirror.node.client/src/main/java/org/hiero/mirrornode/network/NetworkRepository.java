@@ -5,6 +5,7 @@ package org.hiero.mirrornode.network;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import org.hiero.common.Page;
+import org.jspecify.annotations.Nullable;
 
 public class NetworkRepository {
 
@@ -13,7 +14,7 @@ public class NetworkRepository {
     }
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
-    public CompletionStage<ExchangeRates> exchangeRates() {
+    public CompletionStage<@Nullable ExchangeRates> exchangeRates() {
         throw new UnsupportedOperationException("Not implemented yet: NetworkRepository.exchangeRates");
     }
 
@@ -23,12 +24,12 @@ public class NetworkRepository {
     }
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
-    public CompletionStage<NetworkStake> stake() {
+    public CompletionStage<@Nullable NetworkStake> stake() {
         throw new UnsupportedOperationException("Not implemented yet: NetworkRepository.stake");
     }
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
-    public CompletionStage<NetworkSupplies> supplies() {
+    public CompletionStage<@Nullable NetworkSupplies> supplies() {
         throw new UnsupportedOperationException("Not implemented yet: NetworkRepository.supplies");
     }
 
