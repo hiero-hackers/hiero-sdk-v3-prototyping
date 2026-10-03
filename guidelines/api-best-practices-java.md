@@ -3286,6 +3286,35 @@ constant ZERO_ADDRESS: Address = Address{shard: 0, realm: 0, num: 0, checksum: "
 public static final Address ZERO_ADDRESS = new Address(0L, 0L, "", 0L);
 ```
 
+### Functions in Namespaces
+
+Namespace-level functions (always `@@static`) are placed in a dedicated factory class in the package of the namespace,
+analogous to the constants class. Its name is the last segment of the namespace in PascalCase followed by `Factory`
+(`keys` → `KeysFactory`, `mirrornode.account` → `AccountFactory`); every function is a `public static` method, and the
+private constructor prevents instantiation.
+
+```
+// Meta-language
+namespace keys
+
+@@static PrivateKey generatePrivateKey(algorithm: KeyAlgorithm)
+```
+
+```java
+package org.hiero.keys;
+
+public final class KeysFactory {
+
+    public static PrivateKey generatePrivateKey(final KeyAlgorithm algorithm) {
+        // ...
+    }
+
+    private KeysFactory() {
+        throw new UnsupportedOperationException("Factory class cannot be instantiated");
+    }
+}
+```
+
 ### Cross-Namespace References
 
 When types from one namespace reference types from another:
