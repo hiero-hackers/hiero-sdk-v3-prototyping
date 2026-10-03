@@ -74,6 +74,7 @@ final class JavaMembers {
         if (method.hasAnnotation("deprecated")) {
             java.append("    @Deprecated\n");
         }
+        java.append(ThreadSafeGenerator.member(method, context.threadSafe(owner).isPresent(), "    ", imports));
         if (overridesObjectMethod(method) || (!method.isStatic() && method.declaringType() != null
                 && !method.declaringType().equals(owner)
                 && context.inheritsFrom(owner, method.declaringType()))) {

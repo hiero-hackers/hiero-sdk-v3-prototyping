@@ -5,6 +5,7 @@ package org.hiero.http;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
+import org.hiero.sdk.annotation.ThreadSafe;
 
 /// Executes HTTP exchanges. Safe for concurrent use; must be closed to release its resources.
 public abstract class HttpClient {
@@ -38,15 +39,18 @@ public abstract class HttpClient {
     /// Permanent for this client instance; never retry.
     ///
     /// The returned stage completes exceptionally with `ConnectionException`, `TimeoutException` or `ClientClosedException` if the operation fails.
+    @ThreadSafe(group = "client")
     public abstract CompletionStage<HttpResponse> execute(final HttpRequest request);
 
     /// Closes the client and releases its resources. Idempotent: closing an already-closed
     /// client completes normally. Waits for in-flight exchanges to finish — they are bounded
     /// by their own timeouts, so this terminates.
+    @ThreadSafe(group = "client")
     public abstract CompletionStage<Void> close();
 
     /// Same as close(), but waits at most closeTimeout for in-flight exchanges before aborting
     /// them. Aborted exchanges fail their own execute() with client-closed-error; close itself
     /// still completes normally — a bounded shutdown is the guarantee, not a possible failure.
+    @ThreadSafe(group = "client")
     public abstract CompletionStage<Void> close(final Duration closeTimeout);
 }

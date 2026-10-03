@@ -73,10 +73,16 @@ final class ClassGenerator {
         final List<String> members = new ArrayList<>();
 
         // fields
+        final boolean threadSafeType = context.threadSafe(type.name()).isPresent();
         if (!stored.isEmpty()) {
             final StringBuilder java = new StringBuilder();
             for (final FieldDefinition field : stored) {
+                // a mutable attribute of a thread-safe class (or a @@threadSafe attribute) is volatile: accessor and
+                // setter read or replace the whole value, so visibility is all that is needed (see the Java guide)
+                final boolean isVolatile = !field.hasAnnotation("immutable")
+                        && (threadSafeType || field.hasAnnotation("threadSafe"));
                 java.append(INDENT).append("private ").append(field.hasAnnotation("immutable") ? "final " : "")
+                        .append(isVolatile ? "volatile " : "")
                         .append(declarations.get(field.name())).append(' ')
                         .append(JavaKeywords.identifier(field.name())).append(initializer(field, imports, context))
                         .append(";\n");
@@ -139,7 +145,7 @@ final class ClassGenerator {
 
         // accessors and setters of the stored attributes
         for (final FieldDefinition field : stored) {
-            members.add(accessor(type, field, declarations.get(field.name()), context));
+            members.add(accessor(type, field, declarations.get(field.name()), context, imports));
             if (!field.hasAnnotation("immutable")) {
                 members.add(setter(type, field, declarations.get(field.name()), self, selfIsVariable, context,
                         imports, constants));
@@ -165,6 +171,7 @@ final class ClassGenerator {
                         + (selfIsVariable ? INDENT + "@SuppressWarnings(\"unchecked\")\n" : "")
                         + INDENT + "@Override\n"
                         + (field.hasAnnotation("deprecated") ? INDENT + "@Deprecated\n" : "")
+                        + ThreadSafeGenerator.member(field, threadSafeType, INDENT, imports)
                         + INDENT + "public " + self + ' ' + InterfaceGenerator.setter(field.name()) + "(final "
                         + declarations.get(field.name()) + ' ' + JavaKeywords.identifier(field.name()) + ") {\n"
                         + INDENT + INDENT + "super." + InterfaceGenerator.setter(field.name()) + '('
@@ -203,6 +210,9 @@ final class ClassGenerator {
         final String header = header(type, superclass, context, imports);
         final StringBuilder java = new StringBuilder(JavaGenerator.HEADER).append('\n');
         java.append("package ").append(packageName).append(";\n\n");
+        // before rendering the imports: the annotation registers its import
+        final String threadSafe = context.threadSafe(type.name()).map(a -> ThreadSafeGenerator.render(a, imports) + "\n")
+                .orElse("");
         final String importBlock = imports.render();
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
@@ -212,6 +222,7 @@ final class ClassGenerator {
         if (type.hasAnnotation("deprecated")) {
             java.append("@Deprecated\n");
         }
+        java.append(threadSafe);
         java.append(header).append(" {\n");
         if (!constants.isEmpty()) {
             java.append('\n');
@@ -298,7 +309,7 @@ final class ClassGenerator {
     }
 
     private static String accessor(final TypeDefinition type, final FieldDefinition field, final String declaration,
-                                   final JavaContext context) {
+                                   final JavaContext context, final Imports imports) {
         final String name = JavaKeywords.identifier(field.name());
         final boolean bytes = JavaConstraints.isBytes(field.type());
         final StringBuilder java = new StringBuilder(MarkdownComment.render(INDENT, List.of(
@@ -310,6 +321,7 @@ final class ClassGenerator {
         if (field.hasAnnotation("deprecated")) {
             java.append(INDENT).append("@Deprecated\n");
         }
+        java.append(ThreadSafeGenerator.member(field, context.threadSafe(type.name()).isPresent(), INDENT, imports));
         return java.append(INDENT).append("public ").append(declaration).append(' ').append(name).append("() {\n")
                 .append(INDENT).append(INDENT).append("return ")
                 .append(bytes && field.hasAnnotation("nullable") ? name + " == null ? null : " : "")
@@ -341,6 +353,7 @@ final class ClassGenerator {
         if (field.hasAnnotation("deprecated")) {
             java.append(INDENT).append("@Deprecated\n");
         }
+        java.append(ThreadSafeGenerator.member(field, context.threadSafe(type.name()).isPresent(), INDENT, imports));
         return java.append(INDENT).append("public ").append(self).append(' ')
                 .append(InterfaceGenerator.setter(field.name())).append("(final ").append(declaration).append(' ')
                 .append(name).append(") {\n").append(checks).append(assignment(field, imports, INDENT + INDENT))

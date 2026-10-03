@@ -13,6 +13,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 import org.hiero.sdk.v3.metalang.generator.GenerationException;
 import org.hiero.sdk.v3.metalang.model.ConstantDefinition;
@@ -117,6 +118,7 @@ public final class JavaGenerator {
         final List<Module> modules = modules(model);
         final Plan plan = plan(model, modules);
         final JavaContext context = plan.context();
+        final Optional<String> threadSafeModule = threadSafeModule(model, modules);
         final List<GeneratedFile> files = new ArrayList<>();
         for (final Module module : modules) {
             final Set<String> packagesWithTypes = new TreeSet<>();
@@ -153,7 +155,12 @@ public final class JavaGenerator {
                     }
                 }
             }
-            files.add(moduleInfo(module, packagesWithTypes));
+            final boolean annotationHome = threadSafeModule.filter(module.name()::equals).isPresent();
+            if (annotationHome) {
+                files.add(ThreadSafeGenerator.generate(module.name()));
+            }
+            files.add(moduleInfo(module, packagesWithTypes,
+                    annotationHome ? List.of(ThreadSafeGenerator.PACKAGE) : List.of()));
         }
         // the Maven build: one sub-module (and JAR) per JPMS module
         final Map<String, String> folderOf = new HashMap<>();
@@ -377,6 +384,39 @@ public final class JavaGenerator {
                 .filter(n -> usedModules.stream().allMatch(m -> m.equals(moduleOfNamespace.get(n))
                         || required.get(m).contains(moduleOfNamespace.get(n))))
                 .min(java.util.Comparator.comparing(String::length).thenComparing(n -> n));
+    }
+
+    /**
+     * The module that contains the {@code @ThreadSafe} annotation: one of the modules that use {@code @@threadSafe}
+     * that all other using modules require. Empty if no module uses it.
+     *
+     * @throws GenerationException if no using module is required by all others
+     */
+    private static Optional<String> threadSafeModule(final LinkedModel model, final List<Module> modules) {
+        final Map<String, String> moduleOfNamespace = new HashMap<>();
+        modules.forEach(m -> m.namespaces().forEach(n -> moduleOfNamespace.put(n.name(), m.name())));
+        final Set<String> namespaces = new TreeSet<>();
+        for (final TypeDefinition type : model.types()) {
+            final boolean used = type.hasAnnotation("threadSafe")
+                    || type.declaredMethods().stream().anyMatch(m -> m.hasAnnotation("threadSafe"))
+                    || (type instanceof TypeDefinition.ComplexTypeDefinition complex
+                    && complex.declaredFields().stream().anyMatch(f -> f.hasAnnotation("threadSafe")));
+            if (used) {
+                namespaces.add(type.name().namespace());
+            }
+        }
+        final List<String> used = namespaces.stream().filter(moduleOfNamespace::containsKey).toList();
+        if (used.isEmpty()) {
+            return Optional.empty();
+        }
+        final Map<String, Set<String>> required = new HashMap<>();
+        modules.forEach(m -> required.put(m.name(), requiredModules(m.name(), modules)));
+        return home(used, moduleOfNamespace, required).map(moduleOfNamespace::get)
+                .or(() -> {
+                    throw new GenerationException(List.of("@@threadSafe is used in the modules "
+                            + used.stream().map(moduleOfNamespace::get).collect(Collectors.toCollection(TreeSet::new))
+                            + ", but none of them is required by all others; the @ThreadSafe annotation has no home"));
+                });
     }
 
     /**
@@ -810,13 +850,15 @@ public final class JavaGenerator {
         return Optional.empty();
     }
 
-    private static GeneratedFile moduleInfo(final Module module, final Set<String> packagesWithTypes) {
+    private static GeneratedFile moduleInfo(final Module module, final Set<String> packagesWithTypes,
+                                            final List<String> sdkPackages) {
         final StringBuilder java = new StringBuilder(HEADER).append('\n');
         java.append("import org.jspecify.annotations.NullMarked;\n\n");
         java.append(MarkdownComment.render("", List.of(
                 "Module `" + module.name() + "` of the Hiero SDK.",
-                "Packages:\n" + String.join("\n", module.namespaces().stream()
-                        .map(n -> "- `" + JavaNames.packageName(n.name()) + "`")
+                "Packages:\n" + String.join("\n", Stream.concat(module.namespaces().stream()
+                        .map(n -> JavaNames.packageName(n.name())), sdkPackages.stream())
+                        .map(p -> "- `" + p + "`")
                         .toList()))));
         // non-null by default in all packages, like the meta-language; only @@nullable needs @Nullable
         java.append("@NullMarked\n");
@@ -838,6 +880,8 @@ public final class JavaGenerator {
                         .append("; (enabled as soon as the package contains generated types)\n");
             }
         }
+        // packages of the SDK itself, e.g. the @ThreadSafe annotation
+        sdkPackages.forEach(p -> java.append("    exports ").append(p).append(";\n"));
         java.append("}\n");
         return new GeneratedFile(JavaNames.sourceRoot(module.name()) + "/module-info.java", java.toString());
     }

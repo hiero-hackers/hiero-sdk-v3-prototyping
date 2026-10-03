@@ -89,7 +89,35 @@ final class JavaContext {
         return functionInterfaces;
     }
 
-        boolean isGenerated(final QualifiedName name) {
+        /**
+     * Returns the {@code @@threadSafe} annotation that makes a Java type thread-safe as a whole: its own, or the one of
+     * a generated supertype (implementations of a thread-safe interface or class are thread-safe as well).
+     *
+     * @param name the type
+     * @return the annotation, if the type is thread-safe as a whole
+     */
+    Optional<org.hiero.sdk.v3.metalang.ast.Annotation> threadSafe(final QualifiedName name) {
+        return threadSafe(name, new HashSet<>());
+    }
+
+    private Optional<org.hiero.sdk.v3.metalang.ast.Annotation> threadSafe(final QualifiedName name,
+                                                                         final Set<QualifiedName> visited) {
+        if (!visited.add(name)) {
+            return Optional.empty();
+        }
+        final Optional<TypeDefinition> type = model.type(name);
+        if (type.isEmpty()) {
+            return Optional.empty();
+        }
+        final Optional<org.hiero.sdk.v3.metalang.ast.Annotation> own = type.get().annotation("threadSafe");
+        if (own.isPresent()) {
+            return own;
+        }
+        return declaredSupertypes(name).stream().filter(s -> generated.contains(s.name()))
+                .map(s -> threadSafe(s.name(), visited)).flatMap(Optional::stream).findFirst();
+    }
+
+    boolean isGenerated(final QualifiedName name) {
         return generated.contains(name);
     }
 

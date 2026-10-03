@@ -1647,6 +1647,11 @@ In Java, the meta-language `@@threadSafe` maps to a custom `@ThreadSafe` annotat
 is defined in the `org.hiero.sdk.annotation` package (see [java-files/ThreadSafe.java](java-files/ThreadSafe.java) for
 the full source).
 
+The annotation has `RetentionPolicy.CLASS`: it documents a contract for readers, IDEs and static analysis and is
+therefore kept in the class files of the JARs, but it is not meant to be evaluated at runtime, so it is not available
+via reflection. The generator generates the annotation into the module that all modules using `@@threadSafe` require
+and exports its package.
+
 The annotation serves two purposes:
 
 - **On interface methods** — it documents a contract: any implementation of this method must be thread-safe.

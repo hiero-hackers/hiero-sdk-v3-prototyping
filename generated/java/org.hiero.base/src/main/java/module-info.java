@@ -17,6 +17,7 @@ import org.jspecify.annotations.NullMarked;
 /// - `org.hiero.proto`
 /// - `org.hiero.solo`
 /// - `org.hiero.token`
+/// - `org.hiero.sdk.annotation`
 @NullMarked
 module org.hiero.base {
     requires static transitive org.jspecify;
@@ -33,4 +34,5 @@ module org.hiero.base {
     // exports org.hiero.proto; (enabled as soon as the package contains generated types)
     exports org.hiero.solo;
     exports org.hiero.token;
+    exports org.hiero.sdk.annotation;
 }

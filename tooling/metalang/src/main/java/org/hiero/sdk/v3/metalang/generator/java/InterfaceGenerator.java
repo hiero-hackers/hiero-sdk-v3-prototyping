@@ -53,6 +53,7 @@ final class InterfaceGenerator {
             if (field.hasAnnotation("deprecated")) {
                 body.append(INDENT).append("@Deprecated\n");
             }
+            body.append(ThreadSafeGenerator.member(field, context.threadSafe(type.name()).isPresent(), INDENT, imports));
             body.append(INDENT).append(declaration).append(' ').append(accessor).append("();\n");
             if (!field.hasAnnotation("immutable")) {
                 body.append('\n');
@@ -63,6 +64,8 @@ final class InterfaceGenerator {
                 if (field.hasAnnotation("deprecated")) {
                     body.append(INDENT).append("@Deprecated\n");
                 }
+                body.append(ThreadSafeGenerator.member(field, context.threadSafe(type.name()).isPresent(), INDENT,
+                        imports));
                 body.append(INDENT).append(JavaMembers.selfType(type, imports)).append(' ').append(setter(field.name()))
                         .append("(final ").append(declaration).append(' ').append(accessor).append(");\n");
             }
@@ -74,6 +77,9 @@ final class InterfaceGenerator {
         final StringBuilder java = new StringBuilder(JavaGenerator.HEADER).append('\n');
         java.append("package ").append(packageName).append(";\n\n");
         final String header = header(type, context, imports);
+        // before rendering the imports: the annotation registers its import
+        final String threadSafe = context.threadSafe(type.name()).map(a -> ThreadSafeGenerator.render(a, imports) + "\n")
+                .orElse("");
         final String importBlock = imports.render();
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
@@ -83,6 +89,7 @@ final class InterfaceGenerator {
         if (type.hasAnnotation("deprecated")) {
             java.append("@Deprecated\n");
         }
+        java.append(threadSafe);
         java.append(header).append(" {\n");
         if (!body.isEmpty()) {
             java.append('\n').append(body);

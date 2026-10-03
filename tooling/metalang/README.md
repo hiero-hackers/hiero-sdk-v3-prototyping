@@ -268,6 +268,15 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   type (`onMessage` → `OnMessageFunction`), placed like the exception classes so that overriding methods in other
   packages use the same type. Function types with type variables in such an interface, unplaceable ones and name
   clashes defer the declarations that use them. The current specs use no function types.
+- **Thread safety** (`ThreadSafeGenerator`): `@@threadSafe[(group)]` becomes the SDK annotation
+  `@ThreadSafe(group = "...")` (`RetentionPolicy.CLASS`: kept in the JARs for readers, IDEs and static analysis, not
+  evaluated at runtime). The annotation is generated once, in the package `org.hiero.sdk.annotation` of the module
+  that all modules using `@@threadSafe` require, and exported. It is put on types, methods, accessors and setters;
+  members of a type that is annotated as a whole are not annotated again. Implementations carry it too: a class,
+  record or enum that implements a thread-safe type is annotated as a whole, and implementations of thread-safe
+  methods and setters are annotated. Generated state is really thread-safe: immutable attributes are `final`, mutable
+  attributes of a thread-safe class or with `@@threadSafe` are `volatile` (accessor and setter read or replace the
+  whole value, collections and arrays as copies). The behaviour of thread-safe methods is implemented by hand.
 - **Deprecation**: `@@deprecated` elements get `@Deprecated` and an `@deprecated` Javadoc tag. Its text is the
   paragraph of the documentation that mentions the deprecation (moved out of the description; repeated at the setter
   of a deprecated attribute), otherwise "Retained for compatibility; do not use it in new code."
@@ -357,6 +366,7 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `GeneratedOutputTest` | Writing into a version-controlled output directory: new files and directories, unchanged files are not rewritten, stale generated files and the directories they leave empty are deleted, hand-written and binary files and other empty directories are kept. |
 | `FunctionTypeTest` | Mapping of every function shape to `java.util.function` with wrapper types and `@Nullable` arguments, generated functional interfaces (shared per function type, varargs), placement across modules with an implementation in another package, and every deferral reason (type variables, name clashes, no home). All cases are compiled. |
 | `FactoryGeneratorTest` | Class name rule, static methods (overloads, generics with renamed type variables, varargs, `@@async @@nullable`, errors), compiled and called, and the deferral of functions (type not generated, no Java mapping, clashing class name). |
+| `ThreadSafeTest` | The `@ThreadSafe` annotation (generated once in the module all users require, exported, `RetentionPolicy.CLASS`, not visible via reflection), annotations on members, types and implementations, `volatile` for mutable thread-safe state (checked via reflection), and the error without common module. |
 | `MavenGeneratorTest` | The parent and module `pom.xml` files are well-formed XML with the generator marker, list one sub-module per Java module, depend on the required modules and jspecify, pin every plugin, attach Javadoc JARs, and use the configured groupId and version (invalid values are rejected). |
 | `ConstantsGeneratorTest` | Class name rule, basic and struct-literal constants (record, class, `null` and `@@default` filling, `@Deprecated`), loading the compiled constants, and every deferral reason (type not generated, abstraction, missing value, clashing class name). |
 | `ExceptionGeneratorTest` | Exception names, standard mapping (checked/unchecked), placement across modules (shortest namespace, transitive requires), errors without common module or with clashing names, `throws` clauses and async documentation, and the runtime behaviour of a generated exception (single constructor, message check, cause). |

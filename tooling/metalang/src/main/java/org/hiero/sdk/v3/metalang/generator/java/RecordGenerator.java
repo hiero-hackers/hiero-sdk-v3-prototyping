@@ -109,6 +109,7 @@ final class RecordGenerator {
             if (field.hasAnnotation("deprecated")) {
                 body.append(INDENT).append("@Deprecated\n");
             }
+            body.append(ThreadSafeGenerator.member(field, context.threadSafe(type.name()).isPresent(), INDENT, imports));
             body.append(INDENT).append("public ").append(declarations.get(field.name())).append(' ').append(component)
                     .append("() {\n").append(INDENT).append(INDENT).append("return ")
                     .append(bytes && field.hasAnnotation("nullable") ? component + " == null ? null : " : "")
@@ -129,6 +130,9 @@ final class RecordGenerator {
                 + context.supertypes(type, "implements", imports);
         final StringBuilder java = new StringBuilder(JavaGenerator.HEADER).append('\n');
         java.append("package ").append(packageName).append(";\n\n");
+        // before rendering the imports: the annotation registers its import
+        final String threadSafe = context.threadSafe(type.name()).map(a -> ThreadSafeGenerator.render(a, imports) + "\n")
+                .orElse("");
         final String importBlock = imports.render();
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
@@ -138,6 +142,7 @@ final class RecordGenerator {
         if (type.hasAnnotation("deprecated")) {
             java.append("@Deprecated\n");
         }
+        java.append(threadSafe);
         java.append(header).append(" {\n");
         if (!constants.isEmpty()) {
             java.append('\n');

@@ -107,6 +107,9 @@ final class EnumGenerator {
         final String supertypes = context.supertypes(enumType, "implements", imports);
         final StringBuilder java = new StringBuilder(JavaGenerator.HEADER).append('\n');
         java.append("package ").append(packageName).append(";\n\n");
+        // before rendering the imports: the annotation registers its import
+        final String threadSafe = context.threadSafe(enumType.name()).map(a -> ThreadSafeGenerator.render(a, imports) + "\n")
+                .orElse("");
         final String importBlock = imports.render();
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
@@ -116,6 +119,7 @@ final class EnumGenerator {
         if (enumType.hasAnnotation("deprecated")) {
             java.append("@Deprecated\n");
         }
+        java.append(threadSafe);
         java.append("public enum ").append(name);
         java.append(supertypes);
         java.append(" {\n\n").append(body).append("}\n");

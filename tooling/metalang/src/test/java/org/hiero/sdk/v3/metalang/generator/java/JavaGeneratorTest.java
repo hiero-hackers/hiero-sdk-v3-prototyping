@@ -334,8 +334,11 @@ class JavaGeneratorTest {
             final long classes = files.stream()
                     .filter(f -> f.content().matches("(?s).*\npublic (abstract )?(sealed |non-sealed |final )?class .*"))
                     .count();
-            // 5 module-info.java, 6 pom.xml (parent and one per module)
-            assertThat(files).hasSize(5 + 6 + (int) withDescription + (int) enumFiles + (int) records + (int) interfaces
+            // 5 module-info.java, 6 pom.xml (parent and one per module), the @ThreadSafe annotation
+            assertThat(files).filteredOn(f -> f.path().endsWith("org/hiero/sdk/annotation/ThreadSafe.java"))
+                    .extracting(GeneratedFile::path)
+                    .containsExactly("org.hiero.base/src/main/java/org/hiero/sdk/annotation/ThreadSafe.java");
+            assertThat(files).hasSize(5 + 6 + 1 + (int) withDescription + (int) enumFiles + (int) records + (int) interfaces
                     + (int) classes);
             assertThat(enumFiles).isEqualTo(enums);
             assertThat(records).isGreaterThanOrEqualTo(80);

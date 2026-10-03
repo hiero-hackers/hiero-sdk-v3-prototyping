@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 import org.hiero.http.HttpClient;
 import org.hiero.http.HttpResponse;
 import org.hiero.ledger.MirrorNode;
+import org.hiero.sdk.annotation.ThreadSafe;
 
 public abstract class MirrorNodeHttpClient {
 
@@ -39,5 +40,6 @@ public abstract class MirrorNodeHttpClient {
     /// in HttpResponse.statusCode for the caller to interpret.
     ///
     /// The returned stage completes exceptionally with `ConnectionException`, `TimeoutException` or `ClientClosedException` if the operation fails.
+    @ThreadSafe(group = "client")
     public abstract CompletionStage<HttpResponse> execute(final MirrorNodeHttpRequest request);
 }

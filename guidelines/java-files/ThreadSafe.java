@@ -67,7 +67,7 @@ import java.lang.annotation.Target;
  *     API Guideline — @@threadSafe</a>
  */
 @Documented
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface ThreadSafe {
 

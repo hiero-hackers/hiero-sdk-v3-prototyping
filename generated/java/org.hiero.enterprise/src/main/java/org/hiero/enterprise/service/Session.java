@@ -3,7 +3,9 @@
 package org.hiero.enterprise.service;
 
 import java.util.concurrent.CompletionStage;
+import org.hiero.sdk.annotation.ThreadSafe;
 
+@ThreadSafe
 public interface Session {
 
     /// Waits until the Mirror Node has caught up to the session's high-water-mark, i.e. until it reflects
