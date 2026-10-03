@@ -72,7 +72,6 @@ Container {
 ```java
 // Java implementation
 public interface Container {
-    @NonNull
     Class<?> getInnerType();
 }
 ```
@@ -91,7 +90,6 @@ abstraction Container<$$T> {
 ```java
 // Java implementation with generics
 public interface Container<T> {
-    @NonNull
     T getInnerType();
 }
 ```
@@ -108,7 +106,7 @@ Container<Transaction> txContainer = new TypedServiceContainer<>();
 Class<Transaction> txClass = txContainer.getInnerType();
 
 // Common pattern: factory with type parameter
-public <T extends Transaction> T createTransaction(@NonNull final Class<T> transactionType) {
+public <T extends Transaction> T createTransaction(final Class<T> transactionType) {
     Objects.requireNonNull(transactionType, "transactionType must not be null");
     // Create instance based on type
     return instantiate(transactionType);
@@ -137,11 +135,16 @@ For each numeric Java type a maximum numeric type is defined.
 | `int32`          | `int`, `java.lang.Integer` |
 | `int64`          | `long`, `java.lang.Long`   |
 | `int256`         | `java.math.BigInteger`     |
-| `uint8`          | `byte`, `java.lang.Byte`   |
-| `uint16`         | `short`, `java.lang.Short` |
-| `uint32`         | `int`, `java.lang.Integer` |
+| `uint8`          | `short`, `java.lang.Short` |
+| `uint16`         | `int`, `java.lang.Integer` |
+| `uint32`         | `long`, `java.lang.Long`   |
 | `uint64`         | `long`, `java.lang.Long`   |
 | `uint256`        | `java.math.BigInteger`     |
+
+Java integers are signed. An unsigned type therefore uses the next wider Java type, so that all its values fit
+(`uint8` → `short`, `uint16` → `int`, `uint32` → `long`). `uint64` is the exception: it stays `long`, the usual Java
+convention for unsigned 64-bit values; values above `Long.MAX_VALUE` appear as negative numbers and are read with
+`Long.toUnsignedString`, `Long.compareUnsigned` and `Long.divideUnsigned`.
 
 ### Function Types
 
@@ -170,7 +173,7 @@ subscribe(callback: function<void onEvent(event: Event)>)
 
 ```java
 // Java implementation using Consumer
-public void subscribe(@NonNull final Consumer<Event> callback) {
+public void subscribe(final Consumer<Event> callback) {
     Objects.requireNonNull(callback, "callback must not be null");
     // ...
 }
@@ -191,10 +194,10 @@ execute(handler: function<bool onMessage(topic: string, message: bytes, timestam
 // Java implementation with custom functional interface
 @FunctionalInterface
 public interface MessageHandler {
-    boolean onMessage(@NonNull String topic, @NonNull byte[] message, @NonNull LocalDateTime timestamp);
+    boolean onMessage(String topic, byte[] message, LocalDateTime timestamp);
 }
 
-public void execute(@NonNull final MessageHandler handler) {
+public void execute(final MessageHandler handler) {
     Objects.requireNonNull(handler, "handler must not be null");
     // ...
 }
@@ -204,8 +207,70 @@ public void execute(@NonNull final MessageHandler handler) {
 
 1. Prefer standard `java.util.function` interfaces over custom ones
 2. Always annotate custom functional interfaces with `@FunctionalInterface`
-3. Apply `@NonNull`/`@Nullable` annotations to functional interface method parameters and return types
+3. Apply `@Nullable` to functional interface method parameters and return types that are `@@nullable`; everything
+   else is non-null by default in null-marked code
 4. Function type parameters must not be `null` unless annotated with `@@nullable` in the meta-language
+
+## Accessors and Setters
+
+Every attribute is read through an **accessor with the attribute's name** — `name()`, never `getName()` — in every
+kind of Java type: records, interfaces, enums and classes. Records define their accessors this way, and an interface
+can only be implemented by records, enums and classes alike if all of them use the same names.
+
+A mutable attribute (without `@@immutable`) additionally gets a **setter `setName(value)` that returns the object
+itself**, so that calls can be chained. In an abstraction the return type is the self type parameter if the
+abstraction declares one (`$$Self extends Transaction<..., $$Self>`), otherwise the abstraction itself;
+implementations override the setter covariantly with their own type.
+
+```
+// Meta-language
+abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$Receipt, $$Self>> {
+    @@nullable memo: string
+}
+
+Person {
+    @@immutable name: string
+    age: int32
+}
+```
+
+```java
+public interface Transaction<ReceiptT extends Receipt, Self extends Transaction<ReceiptT, Self>> {
+
+    @Nullable String memo();
+
+    Self setMemo(final @Nullable String memo);
+}
+
+public final class Person {
+
+    private final String name;
+
+    private int age;
+
+    public Person(final String name) {
+        this.name = Objects.requireNonNull(name, "name must not be null");
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public int age() {
+        return age;
+    }
+
+    public Person setAge(final int age) {
+        this.age = age;
+        return this;
+    }
+}
+```
+
+An accessor cannot have the name of a method without parameters of `java.lang.Object` (`hashCode`, `toString`,
+`getClass`, `clone`, `finalize`, `notify`, `notifyAll`, `wait`) or, in an enum, of `java.lang.Enum` (`name`,
+`ordinal`, `getDeclaringClass`, `describeConstable`, `values`). Specs must not use these names for attributes; the
+generator does not generate such types.
 
 ## Immutable Objects
 
@@ -274,7 +339,7 @@ Therefore:
   This applies to every `toString` of the SDK, not only to records.
 
 ```java
-public record Hash(byte @NonNull [] value, @NonNull List<String> tags) {
+public record Hash(byte[] value, List<String> tags) {
 
     public Hash {
         Objects.requireNonNull(value, "value must not be null");
@@ -284,7 +349,7 @@ public record Hash(byte @NonNull [] value, @NonNull List<String> tags) {
     }
 
     @Override
-    public byte @NonNull [] value() {
+    public byte[] value() {
         return value.clone();                    // array: copy out
     }
 
@@ -306,8 +371,8 @@ public record Hash(byte @NonNull [] value, @NonNull List<String> tags) {
 ```
 
 If only some fields are annotated with `@@immutable`, the type should be declared as a Java `class`.
-Here all fields that are not annotated with `@@immutable` must be declared as `final`, set in the constructor and only
-accessible via getters.
+Here all fields that are annotated with `@@immutable` must be declared as `final`, set in the constructor and only
+accessible via accessors; the other fields additionally get a setter (see [Accessors and Setters](#accessors-and-setters)).
 The following example gives an example of such a type:
 
 ```
@@ -325,21 +390,21 @@ public class Person {
 
     private int age;
 
-    public Person(@NonNull final String name) {
+    public Person(final String name) {
         this.name = Objects.requireNonNull(name, "name must not be null");
     }
 
-    @NonNull
-    public String getName() {
+    public String name() {
         return name;
     }
 
-    public int getAge() {
+    public int age() {
         return age;
     }
 
-    public void setAge(final int age) {
+    public Person setAge(final int age) {
         this.age = age;
+        return this;
     }
 }
 ```
@@ -349,10 +414,8 @@ public class Person {
 The meta-language can be used to define complex types.
 Here the meta-language makes a difference between abstract types and non-abstract types.
 The meta-language does not define if anything should be an interface or abstract class since some languages do not
-support this.
-Therefore, there is no fix rule that defines if something must be created as interface or abstract class in Java.
-Especially with default methods, a lot can be done with interfaces.
-Abstract classes will make sense if constructors should be enforced or methods should be defined as final.
+support this. The Java mapping uses a deterministic rule, see
+[Abstractions: Abstract Classes or Interfaces](#abstractions-abstract-classes-or-interfaces).
 
 Types annotated with `@@finalType` in the meta-language must be declared with the `final` keyword in Java (or as a
 `record`, which is implicitly final). This prevents subclassing and ensures the type cannot be extended.
@@ -360,6 +423,108 @@ Types annotated with `@@finalType` in the meta-language must be declared with th
 Next to that records should be used wherever possible.
 If a non-abstract type in the meta-language only contains attributes annotated with `@@immutable`, the type must be
 declared as a Java `record`.
+
+### Abstractions: Abstract Classes or Interfaces
+
+An abstraction **with attributes** (own or inherited) maps to an **abstract class**: it stores its attributes once,
+implements their accessors and setters, and checks the values in its constructor and setters, so that the
+implementations do not repeat this code. An abstraction with a `@@finalMethod` is an abstract class as well (see
+[Generic Methods and `@@finalMethod`](#generic-methods-and-finalmethod)). All other abstractions map to interfaces.
+
+Java has no multiple inheritance of classes, and records and enums cannot extend classes. An abstraction with
+attributes therefore stays an **interface** if
+
+- an enum extends it (e.g. `TransactionStatus`, implemented by the enum `BasicTransactionStatus`),
+- an interface extends it (the supertypes of an interface are interfaces), or
+- a type extends it together with another class — then **none** of the involved abstractions becomes a class, so
+  that the result does not depend on the order of the `extends` clause.
+
+The Java generator applies this rule until nothing changes. Where the default is not wanted — typically to keep one of
+two abstractions of a type a class — the project configuration lists the abstractions that become interfaces
+(`java.interfaces` in `sdk-java/generator.properties`).
+
+Consequences for the other types:
+
+- A complex type whose supertypes include an abstract class cannot be a `record`; it becomes a class that passes the
+  inherited attributes to `super(...)`.
+- Classes get explicit constructors (`protected` in abstract classes), accessors named after the attribute, setters
+  that return the object (the `$$Self` type parameter if the abstraction declares one), `toString`, and — if all
+  attributes are immutable — `equals` and `hashCode` (see
+  [Implementing `equals` and `hashCode`](#implementing-equals-and-hashcode)).
+- A class is `final` if it is `@@finalType`; a subclass of a sealed type that has no subtypes is `final`, otherwise
+  `non-sealed`. `@@sealed(A, B)` maps to `sealed ... permits A, B` for interfaces and abstract classes alike.
+
+```
+// Meta-language
+abstraction Receipt {
+    @@immutable transactionId: TransactionId
+}
+
+@@finalType
+FileCreateReceipt extends Receipt {
+    @@immutable fileId: Address
+}
+```
+
+```java
+public abstract class Receipt {
+
+    private final TransactionId transactionId;
+
+    protected Receipt(final TransactionId transactionId) {
+        Objects.requireNonNull(transactionId, "transactionId must not be null");
+        this.transactionId = transactionId;
+    }
+
+    public TransactionId transactionId() {
+        return transactionId;
+    }
+}
+
+public final class FileCreateReceipt extends Receipt {
+
+    private final Address fileId;
+
+    public FileCreateReceipt(final TransactionId transactionId, final Address fileId) {
+        super(transactionId);
+        Objects.requireNonNull(fileId, "fileId must not be null");
+        this.fileId = fileId;
+    }
+
+    // fileId(), equals, hashCode, toString
+}
+```
+
+An abstraction that maps to an interface has abstract accessors for its attributes (and setters for mutable ones),
+abstract methods and static `@@static` methods; an interface that extends a sealed interface is `non-sealed` unless it
+is sealed itself. All permitted types of a sealed type must be in the same Java module.
+
+An implementation must keep the Java types of the members it implements. If an attribute or method of an
+abstraction is declared with a type variable (`$$T`) or an attribute is `@@nullable`, the implementations use the
+wrapper class even where they could use a primitive:
+
+```
+abstraction Holder<$$T> {
+    @@immutable value: $$T
+}
+
+LongHolder extends Holder<int64> {
+}
+```
+
+```java
+public interface Holder<T> {
+
+    T value();
+}
+
+public record LongHolder(Long value) implements Holder<Long> {   // Long, not long
+
+    public LongHolder {
+        Objects.requireNonNull(value, "value must not be null");
+    }
+}
+```
 
 ### Generic Type Parameters
 
@@ -378,7 +543,6 @@ abstraction Factory<$$Product> {
 ```java
 // Java implementation
 public interface Factory<Product> {
-    @NonNull
     Product create();
 }
 ```
@@ -395,7 +559,6 @@ abstraction FruitFactory<$$Product extends Fruit> {
 ```java
 // Java implementation
 public interface FruitFactory<Product extends Fruit> {
-    @NonNull
     Product create();
 }
 ```
@@ -413,7 +576,6 @@ CarFactory extends Factory<Car> {
 public final class CarFactory implements Factory<Car> {
 
     @Override
-    @NonNull
     public Car create() {
         return new Car();
     }
@@ -424,7 +586,11 @@ public final class CarFactory implements Factory<Car> {
 
 1. Drop the `$$` prefix — `$$T` becomes `T`, `$$Product` becomes `Product`
 2. Keep descriptive names where the meta-language uses them (e.g., `Product` instead of shortening to `T`)
-3. Apply `@NonNull`/`@Nullable` annotations to generic return types and parameters as usual
+3. Apply `@Nullable` to `@@nullable` generic return types and parameters as usual (non-null is the default in
+   null-marked code)
+4. If the name without `$$` is also the name of a type of the specs or of `java.lang`, append `T` until it is unique:
+   a type variable must not shadow a type. `Transaction<$$Receipt extends Receipt, ...>` becomes
+   `Transaction<ReceiptT extends Receipt, ...>`
 
 ### Generic Methods and `@@finalMethod`
 
@@ -438,8 +604,8 @@ of the return type and lose the `$$` prefix:
 ```
 
 ```java
-static <Receipt extends org.hiero.Receipt> Response<Receipt> getResponse(@NonNull TransactionId transactionId,
-        @NonNull Class<? extends Transaction<Receipt, ?>> transactionType, @NonNull HieroClient<?> client)
+static <Receipt extends org.hiero.Receipt> Response<Receipt> getResponse(TransactionId transactionId,
+        Class<? extends Transaction<Receipt, ?>> transactionType, HieroClient<?> client)
 ```
 
 `@@finalMethod` maps to a `final` method. Because the declaring type must provide the implementation and Java
@@ -451,7 +617,7 @@ different abstractions via different supertypes, so single class inheritance is 
 public abstract class Obj {
 
     // @@finalMethod $$T convert<$$T>(x: X)
-    public final <T> T convert(@NonNull final X x) {
+    public final <T> T convert(final X x) {
         // implemented in terms of the other methods of Obj
     }
 }
@@ -463,8 +629,8 @@ The meta-language allows a child type to narrow an inherited `@@nullable` field 
 non-nullable via the `@@override` annotation
 (see [Narrowing inherited nullability](api-guideline.md#narrowing-inherited-nullability) in
 the meta-language guide). The Java mapping uses **covariant return annotations** on the
-field's getter — Java tolerates a contract narrowing from `@Nullable` to `@NonNull` on an
-overridden return type, while the Java reference type itself stays identical.
+field's accessor — Java tolerates a contract narrowing from `@Nullable` to non-null (unannotated in null-marked
+code) on an overridden return type, while the Java reference type itself stays identical.
 
 ```
 // Meta-language
@@ -486,7 +652,7 @@ public abstract class Identifier {
     public abstract Long num();
 }
 
-// Java — child with narrowed @NonNull return
+// Java — child with narrowed non-null return
 public final class NumericIdentifier extends Identifier {
 
     private final long num;
@@ -496,8 +662,7 @@ public final class NumericIdentifier extends Identifier {
     }
 
     @Override
-    @NonNull
-    public Long num() {                // contract tightened from @Nullable to @NonNull
+    public Long num() {                // contract tightened from @Nullable to non-null
         return num;                    // primitive auto-boxes; never null on this type
     }
 
@@ -510,15 +675,15 @@ public final class NumericIdentifier extends Identifier {
 
 **Rules:**
 
-1. Keep the **same Java reference type** in the parent and child getter (here `Long`). Java
-   allows narrowing the `@Nullable` / `@NonNull` annotation on the overridden return, but
+1. Keep the **same Java reference type** in the parent and child accessor (here `Long`). Java
+   allows dropping the `@Nullable` annotation on the overridden return (non-null narrowing), but
    does not allow changing `Long` to `long` — primitives are not subtypes of their boxed
    counterparts.
 2. Store the value as a primitive (`long`, `int`, ...) in the child when possible —
    non-null narrowing removes any reason to box at the storage level.
 3. Optionally expose a Java-only unboxed accessor (e.g. `numValue()`) on the child for
    ergonomic primitive access. This is a Java convenience, not required by the spec.
-4. Always annotate the child's getter with `@Override` so the narrowing is explicit at the
+4. Always annotate the child's accessor with `@Override` so the narrowing is explicit at the
    override site.
 5. A record cannot extend a class. When the parent is an interface, the child may still be
    declared as a `record` if all of its fields are `@@immutable`; the narrowed accessor is then
@@ -541,14 +706,14 @@ Errors of `@@throws` are documented with `@throws` and the Java exception type t
 /// Parses an address from its textual form `shard.realm.num`.
 ///
 /// @throws IllegalArgumentException if the text is not a valid address
-public static @NonNull Address fromString(final @NonNull String address) { ... }
+public static Address fromString(final String address) { ... }
 ```
 
 ## Deprecation (`@@deprecated`)
 
 The meta-language `@@deprecated` annotation maps to Java's standard `java.lang.Deprecated` annotation. Apply
 `@Deprecated` directly to deprecated types, methods, enum constants, and constant fields. For a deprecated
-meta-language attribute, apply it to every public API element that exposes the attribute, including its getter and, when
+meta-language attribute, apply it to every public API element that exposes the attribute, including its accessor and, when
 mutable, its setter. Record-based mappings must expose the deprecation on the generated record component/accessor.
 
 ```text
@@ -634,7 +799,7 @@ public enum KeyAlgorithm {
         this.keySize = keySize;
     }
 
-    public int getKeySize() {
+    public int keySize() {
         return keySize;
     }
 }
@@ -703,17 +868,17 @@ public class Team {
     private final List<String> names = new CopyOnWriteArrayList<>();
 
     // Returning an unmodifiable list
-    public List<String> getSomeNames() {
+    public List<String> someNames() {
         return List.of("John", "Jane");
     }
 
     // Returning an unmodifiable view of the inner list
-    public List<String> getNames() {
+    public List<String> names() {
         return Collections.unmodifiableList(names);
     }
 
     //Returning an unmodifiable copy of the inner list
-    public List<String> getAllNames() {
+    public List<String> allNames() {
         return List.copyOf(names);
     }
 
@@ -734,7 +899,7 @@ public class Team {
 
     private final List<String> names;
 
-    public Team(@NonNull final List<String> names) {
+    public Team(final List<String> names) {
         Objects.requireNonNull(names, "names must not be null");
         this.names = new CopyOnWriteArrayList<>(names);
     }
@@ -761,10 +926,11 @@ public class Team {
         this.names = new CopyOnWriteArrayList<>();
     }
 
-    public void setNames(@NonNull final List<String> names) {
+    public Team setNames(final List<String> names) {
         Objects.requireNonNull(names, "names must not be null");
         this.names.clear();
         this.names.addAll(names);
+        return this;
     }
 
 }
@@ -798,23 +964,23 @@ public class Team {
         this.names = new CopyOnWriteArrayList<>();
     }
 
-    @NonNull
-    public List<String> getNames() {
+    public List<String> names() {
         return Collections.unmodifiableList(names);
     }
 
-    public void setNames(@NonNull final List<String> names) {
+    public Team setNames(final List<String> names) {
         Objects.requireNonNull(names, "names must not be null");
         this.names.clear();
         this.names.addAll(names);
+        return this;
     }
 
-    public void addName(@NonNull final String name) {
+    public void addName(final String name) {
         Objects.requireNonNull(name, "name must not be null");
         names.add(name);
     }
 
-    public void removeName(@NonNull final String name) {
+    public void removeName(final String name) {
         Objects.requireNonNull(name, "name must not be null");
         names.remove(name);
     }
@@ -825,11 +991,58 @@ public class Team {
 ## Null handling
 
 In Java we use the `org.jspecify:jspecify` library to annotate nullability of types.
-The 2 annotations `org.jspecify.annotations.NonNull` and `org.jspecify.annotations.Nullable` are used to annotate
-nullability of types.
-All non-primitive constructor parameters, method parameters and method return values of the public API must be annotated
-with one of these annotations.
-The annotations must be used consistently throughout the full implementation.
+The nullability of every non-primitive constructor parameter, method parameter and method return value of the public
+API must be declared, consistently throughout the full implementation.
+
+### Prefer `@NullMarked` and `@Nullable`
+
+In the meta-language everything is non-null unless it is annotated with `@@nullable`. Java code that is not
+annotated has *unspecified* nullness, so without further measures every non-null type would need an explicit
+`@NonNull`. jspecify's `org.jspecify.annotations.NullMarked` turns the Java default around: inside null-marked code
+unannotated types are non-null — exactly the default of the meta-language — and only `@@nullable` elements need
+`org.jspecify.annotations.Nullable`.
+
+This makes sense in most cases and is the recommended setup:
+
+- Annotate the **module** (`module-info.java`) with `@NullMarked`; it applies to all packages of the module, also to
+  packages without a `package-info.java`. If a module cannot be null-marked as a whole (e.g. while legacy code is
+  migrated), annotate the packages (`package-info.java`) that can.
+- Use `@Nullable` for every `@@nullable` element and never `@NonNull` in null-marked code (it is the default and only
+  adds noise). The generated SDK code (`tooling/metalang`) follows this rule: in the generated modules `@NullMarked`
+  replaces about 700 `@NonNull` annotations, while the about 200 `@Nullable` annotations stay. Even in packages where
+  `@Nullable` dominates no annotation is added, so null-marking never makes the code longer.
+- `@NonNull` remains useful only in code that is **not** null-marked, or to override a `@NullUnmarked` scope.
+- Type variables and type arguments are non-null as well (`List<String>` holds no `null`), which matches the
+  meta-language: collection elements and type arguments are never nullable.
+
+```java
+// module-info.java
+import org.jspecify.annotations.NullMarked;
+
+@NullMarked
+module org.hiero.base {
+    requires static transitive org.jspecify;
+
+    exports org.hiero.ledger;
+}
+```
+
+```java
+// in the null-marked module: String is non-null, only the @@nullable memo is annotated
+public interface Transaction<ReceiptT extends Receipt, Self extends Transaction<ReceiptT, Self>> {
+
+    @Nullable String memo();
+
+    Self setMemo(final @Nullable String memo);
+
+    PackedTransaction<ReceiptT, Self> sign(final Account payer, final List<AccountId> nodes);
+}
+```
+
+`@NullMarked` only declares nullness for tools and readers; it does not check anything at runtime. The runtime checks
+described below (`Objects.requireNonNull`) are still required.
+
+The examples in this guide assume null-marked code and therefore only show `@Nullable`.
 
 For the generic types `intX`, `uintX`, `double`, and `bool` wrapper classes
 (`java.lang.Byte`/`java.lang.Short`/`java.lang.Integer`/`java.lang.Long`/`java.lang.Integer`,`java.lang.Double`, and
@@ -857,20 +1070,22 @@ public class Example {
 
     private String nickName;
 
-    public void setName(@NonNull final String name) {
+    public Example setName(final String name) {
         this.name = Objects.requireNonNull(name, "name must not be null");
         this.nickName = this.name;
+        return this;
     }
 
-    public void setNickName(@NonNull final String nickName) {
+    public Example setNickName(final String nickName) {
         this.nickName = Objects.requireNonNull(nickName, "nickName must not be null");
+        return this;
     }
 
-    public int getNameLength() {
+    public int nameLength() {
         return name.length(); //Without early checks the exception will be thrown here what can be long after the creation of the object
     }
 
-    public int getNickNameLength() {
+    public int nickNameLength() {
         return nickName.length(); //Without early checks the exception will be thrown here what can be long after the creation of the object
     }
 }
@@ -878,8 +1093,9 @@ public class Example {
 
 ### Null handling of nullable fields
 
-If a field is annotated with `@@nullable` in the language agnostic specification, the Java getter and setter must be
-annotated with `org.jspecify.annotations.Nullable`.
+If a field is annotated with `@@nullable` in the language agnostic specification, the Java accessor and the setter
+parameter must be annotated with `org.jspecify.annotations.Nullable`. Everything else (e.g. the setter's return type)
+is non-null by default in null-marked code and stays unannotated.
 Let's assume we have the following language agnostic specification:
 
 ```
@@ -895,36 +1111,38 @@ public class Example {
 
     private String name;
 
-    public void setName(@Nullable final String name) {
+    public Example setName(@Nullable final String name) {
         this.name = name;
+        return this;
     }
 
     @Nullable
-    public String getName() {
+    public String name() {
         return name;
     }
 }
 ```
 
 It can make sense to add support of `Optional` in Java.
-In this case an additional getter can be added:
+In this case an additional accessor can be added. It cannot be named `name()`, since that name is taken by the
+canonical accessor:
 
 ```java
 public class Example {
 
     private String name;
 
-    public void setName(@Nullable final String name) {
+    public Example setName(@Nullable final String name) {
         this.name = name;
+        return this;
     }
 
     @Nullable
-    public String getName() {
+    public String name() {
         return name;
     }
 
-    @NonNull
-    public Optional<String> name() {
+    public Optional<String> nameOptional() {
         return Optional.ofNullable(name);
     }
 }
@@ -932,8 +1150,9 @@ public class Example {
 
 ### Null handling of not nullable fields
 
-If a field parameter is not annotated with `@@nullable` in the language agnostic specification, the Java getter and
-setter must be annotated with `org.jspecify.annotations.NonNull`.
+If a field parameter is not annotated with `@@nullable` in the language agnostic specification, the Java accessor and
+setter are non-null by default in null-marked code and are not annotated. The setter must check the value with
+`Objects.requireNonNull`.
 Next to that the field must be initialized in the constructor if it is not annotated by `@@default(value)` in the
 language agnostic specification.
 
@@ -953,16 +1172,16 @@ public class Example {
 
     private String name;
 
-    public Example(@NonNull final String name) {
+    public Example(final String name) {
         setName(name);
     }
 
-    public void setName(@NonNull final String name) {
+    public Example setName(final String name) {
         this.name = Objects.requireNonNull(name, "name must not be null");
+        return this;
     }
 
-    @NonNull
-    public String getName() {
+    public String name() {
         return name;
     }
 }
@@ -970,9 +1189,9 @@ public class Example {
 
 ### Null handling of immutable fields
 
-If a field is annotated with `@@immutable` and `@@nullable` in the language agnostic specification and the Java
-implementation is a record, the Java parameter of the `record` must be annotated with `org.jspecify.annotations.NonNull`
-and checked in the compact constructor.
+If a field is annotated with `@@immutable` but not with `@@nullable` in the language agnostic specification and the
+Java implementation is a record, the Java parameter of the `record` is non-null by default in null-marked code (no
+annotation) and must be checked in the compact constructor.
 Let's assume we have the following language agnostic specification:
 
 ```
@@ -982,10 +1201,10 @@ class Example {
 ```
 
 The given sample can be implemented as a class or record in Java.
-A class can be implemented as follows:
+A record can be implemented as follows:
 
 ```java
-public record Example(@NonNull String name) {
+public record Example(String name) {
 
     public Example {
         Objects.requireNonNull(name, "name must not be null");
@@ -994,9 +1213,9 @@ public record Example(@NonNull String name) {
 }
 ```
 
-If a field is annotated with `@@immutable` and `@@nullable` in the language agnostic specification and the Java
-implementation is a `class`, the Java parameter of the constructor must be annotated with
-`org.jspecify.annotations.NonNull` and checked in the constructor.
+If a field is annotated with `@@immutable` but not with `@@nullable` in the language agnostic specification and the
+Java implementation is a `class`, the Java parameter of the constructor is non-null by default in null-marked code (no
+annotation) and must be checked in the constructor.
 Let's assume we have the following language agnostic specification:
 
 ```
@@ -1016,23 +1235,23 @@ public class Example {
 
     //other non-final fields
 
-    public Example(@NonNull final String name) {
+    public Example(final String name) {
         this.name = Objects.requireNonNull(name, "name must not be null");
     }
 
-    @NonNull
-    public String getName() {
+    public String name() {
         return name;
     }
 
-    //other getters and setters
+    //other accessors and setters
 }
 ```
 
 ### Null handling of immutable and not nullable fields
 
 If a field parameter is annotated with `@@immutable` but not with `@@nullable` in the language agnostic specification,
-the Java parameter of the constructor must be annotated with `org.jspecify.annotations.NonNull`.
+the Java parameter of the constructor is non-null by default in null-marked code (no annotation) and must be checked
+with `Objects.requireNonNull`.
 
 Let's assume we have the following language agnostic specification:
 
@@ -1050,7 +1269,7 @@ public class Example {
 
     private final String name;
 
-    public Example(@NonNull final String name) {
+    public Example(final String name) {
         this.name = Objects.requireNonNull(name, "name must not be null");
     }
 }
@@ -1059,7 +1278,7 @@ public class Example {
 A record can be implemented as follows:
 
 ```java
-public record Example(@NonNull String name) {
+public record Example(String name) {
 
     public Example {
         Objects.requireNonNull(name, "name must not be null");
@@ -1070,12 +1289,14 @@ public record Example(@NonNull String name) {
 
 ### Null handling method parameters
 
-All public constructor and method parameters of reference types must be explicitly annotated with
-`org.jspecify.annotations.NonNull` or `org.jspecify.annotations.Nullable`.
+The nullness of all public constructor and method parameters of reference types must be declared. In null-marked
+code parameters are non-null by default; only `@@nullable` parameters are annotated with
+`org.jspecify.annotations.Nullable`.
 
 Rules:
 
-- Use `@NonNull` for all parameters that are not annotated with `@@nullable` in the meta-language.
+- Do not annotate parameters that are not annotated with `@@nullable` in the meta-language; they are non-null by
+  default in null-marked code.
 - Use `@Nullable` only if the corresponding parameter is annotated with `@@nullable` in the meta-language.
 - For numeric and boolean parameters defined as `@@nullable` use wrapper types (
   `Byte/Short/Integer/Long/Double/Boolean`) instead of primitives. Otherwise, prefer primitives.
@@ -1091,19 +1312,19 @@ Examples:
 public final class UserService {
 
     // Not nullable parameter, primitive used for non-nullable numeric types
-    public void updateAge(@NonNull final String userId, final int age) {
+    public void updateAge(final String userId, final int age) {
         final String id = Objects.requireNonNull(userId, "userId must not be null");
         // ... use id and age
     }
 
     // Nullable parameter maps to wrapper and is annotated as @Nullable
-    public void setNickname(@NonNull final String userId, @Nullable final String nickname) {
+    public void setNickname(final String userId, @Nullable final String nickname) {
         final String id = Objects.requireNonNull(userId, "userId must not be null");
         // nickname can be null; handle accordingly
     }
 
     // Collection parameter must not be null unless marked @@nullable in meta-language
-    public void replaceTags(@NonNull final String userId, @NonNull final List<String> tags) {
+    public void replaceTags(final String userId, final List<String> tags) {
         final String id = Objects.requireNonNull(userId, "userId must not be null");
         Objects.requireNonNull(tags, "tags must not be null");
         // If stored, copy into a thread-safe collection
@@ -1111,7 +1332,7 @@ public final class UserService {
     }
 
     // If a collection parameter is nullable in the meta-language
-    public void addTags(@NonNull final String userId, @Nullable final List<String> tagsOrNull) {
+    public void addTags(final String userId, @Nullable final List<String> tagsOrNull) {
         final String id = Objects.requireNonNull(userId, "userId must not be null");
         if (tagsOrNull == null) {
             return; // defined semantics for null (e.g., no-op)
@@ -1139,16 +1360,15 @@ possible. `Optional.of(value)` must only be used when the value is guaranteed to
 
 ```java
 // WRONG: Do not use Optional as a parameter
-public void setName(Optional<String> name) { ...}
+public Example setName(Optional<String> name) { ...}
 
 // WRONG: Do not use Optional as a field
 private Optional<String> name;
 
 // CORRECT: Use @Nullable for parameters that may be absent
-public void setName(@Nullable final String name) { ...}
+public Example setName(@Nullable final String name) { ...}
 
 // CORRECT: Use Optional as a return type
-@NonNull
 public Optional<String> findName() {
     return Optional.ofNullable(name);
 }
@@ -1170,13 +1390,13 @@ Optional<String> greeting = Optional.of("Hello");
 
 ### Null handling of method return value
 
-Method return types in the public API must also be annotated with `@NonNull` or `@Nullable` according to the
-meta-language.
+The nullness of method return types in the public API must also follow the meta-language: non-null by default in
+null-marked code, `@Nullable` for `@@nullable` returns.
 
 Rules:
 
-- If a method return type is not annotated with `@@nullable` in the meta-language, annotate it with `@NonNull` in Java
-  and never return `null`.
+- If a method return type is not annotated with `@@nullable` in the meta-language, leave it unannotated in Java
+  (non-null by default in null-marked code) and never return `null`.
 - If a method return type is annotated with `@@nullable` in the meta-language, annotate it with `@Nullable` in Java and
   document what `null` means.
 - Collections must never be returned as `null` (even if `@@nullable` was specified in error). Return empty immutable
@@ -1192,20 +1412,17 @@ Examples:
 public interface UserRepository {
 
     // Non-null return value
-    @NonNull
-    User getById(@NonNull String id);
+    User getById(String id);
 
     // Nullable return value when entity might not exist
     @Nullable
-    User findByEmail(@NonNull String email);
+    User findByEmail(String email);
 
     // Never return null for collections – return an immutable empty list
-    @NonNull
     List<User> listAll();
 
     // Async variant: CompletionStage itself is never null
-    @NonNull
-    CompletionStage<User> getByIdAsync(@NonNull String id);
+    CompletionStage<User> getByIdAsync(String id);
 }
 
 public final class InMemoryUserRepository implements UserRepository {
@@ -1213,7 +1430,7 @@ public final class InMemoryUserRepository implements UserRepository {
     private final Map<String, User> byId = new ConcurrentHashMap<>();
 
     @Override
-    public @NonNull User getById(@NonNull final String id) {
+    public User getById(final String id) {
         final String nonNullId = Objects.requireNonNull(id, "id must not be null");
         final User user = byId.get(nonNullId);
         if (user == null) {
@@ -1223,20 +1440,20 @@ public final class InMemoryUserRepository implements UserRepository {
     }
 
     @Override
-    public @Nullable User findByEmail(@NonNull final String email) {
+    public @Nullable User findByEmail(final String email) {
         Objects.requireNonNull(email, "email must not be null");
         // return null when not found (documented by @Nullable)
         return byId.values().stream().filter(u -> email.equals(u.email())).findFirst().orElse(null);
     }
 
     @Override
-    public @NonNull List<User> listAll() {
+    public List<User> listAll() {
         // Return an immutable view/copy, never null
         return Collections.unmodifiableList(new ArrayList<>(byId.values()));
     }
 
     @Override
-    public @NonNull CompletionStage<User> getByIdAsync(@NonNull final String id) {
+    public CompletionStage<User> getByIdAsync(final String id) {
         Objects.requireNonNull(id, "id must not be null");
         return CompletableFuture.supplyAsync(() -> getById(id));
     }
@@ -1249,10 +1466,9 @@ Optional convenience accessor for a nullable return:
 public interface ProfileService {
 
     @Nullable
-    Profile findProfile(@NonNull String userId);
+    Profile findProfile(String userId);
 
-    @NonNull
-    default Optional<Profile> findProfileOptional(@NonNull final String userId) {
+    default Optional<Profile> findProfileOptional(final String userId) {
         return Optional.ofNullable(findProfile(userId));
     }
 }
@@ -1303,13 +1519,15 @@ public class Example {
     }
 
     // attributes that are not annotated with @@immutable can be modified even if they are specified with @@default(value)
-    public void setAge(final int age) {
+    public Example setAge(final int age) {
         this.age = age;
+        return this;
     }
 
     // attributes that are not annotated with @@immutable can be modified even if they are specified with @@default(value)
-    public void setActive(final boolean active) {
+    public Example setActive(final boolean active) {
         this.active = active;
+        return this;
     }
 }
 ```
@@ -1333,24 +1551,26 @@ public class Example {
     private int age;
 
     //instead of implementing the checks 2 times the setter method can be called directly in the constructor
-    public Example(@NonNull final String name, final int age) {
+    public Example(final String name, final int age) {
         setName(name);
         setAge(age);
     }
 
-    public void setAge(final int age) {
+    public Example setAge(final int age) {
         if (age < 0) {
             throw new IllegalArgumentException("age must be minimum 0");
         }
         this.age = age;
+        return this;
     }
 
-    public void setName(@NonNull final String name) {
+    public Example setName(final String name) {
         Objects.requireNonNull(name, "name must not be null");
         if (name.length() < 1) {
             throw new IllegalArgumentException("name must be minimum 1 character long");
         }
         this.name = name;
+        return this;
     }
 }
 ```
@@ -1360,18 +1580,21 @@ regex. Delegate to `java.net.URI` and assert that the result is absolute, so the
 parsing instead of a hand-written expression:
 
 ```java
-public void setRestBaseUrl(@NonNull final String restBaseUrl) {
-    Objects.requireNonNull(restBaseUrl, "restBaseUrl must not be null");
-    final URI uri;
-    try {
-        uri = new URI(restBaseUrl);
-    } catch (final URISyntaxException e) {
-        throw new IllegalArgumentException("restBaseUrl must be a valid URL: " + restBaseUrl, e);
+// @@immutable @@urlPattern restBaseUrl: string — checked in the (compact) constructor
+public record MirrorNode(String restBaseUrl) {
+
+    public MirrorNode {
+        Objects.requireNonNull(restBaseUrl, "restBaseUrl must not be null");
+        final URI uri;
+        try {
+            uri = new URI(restBaseUrl);
+        } catch (final URISyntaxException e) {
+            throw new IllegalArgumentException("restBaseUrl must be a valid URL: " + restBaseUrl, e);
+        }
+        if (!uri.isAbsolute() || uri.getHost() == null) {
+            throw new IllegalArgumentException("restBaseUrl must be an absolute URL with a host: " + restBaseUrl);
+        }
     }
-    if (!uri.isAbsolute() || uri.getHost() == null) {
-        throw new IllegalArgumentException("restBaseUrl must be an absolute URL with a host: " + restBaseUrl);
-    }
-    this.restBaseUrl = restBaseUrl;
 }
 ```
 
@@ -1380,8 +1603,8 @@ installed handler, so `java.net.URI` is the correct parser for validation.
 
 ## Thread Safety (`@@threadSafe`)
 
-The meta-language `@@threadSafe[(groupName)]` annotation indicates that a method or attribute accessor (getter and, if
-mutable, setter) can be called concurrently by the SDK and must be implemented in a thread-safe manner. The optional
+The meta-language `@@threadSafe[(groupName)]` annotation indicates that a method or attribute (its accessor and, if
+mutable, its setter) can be called concurrently by the SDK and must be implemented in a thread-safe manner. The optional
 `groupName` groups methods and attributes whose accessors can be called concurrently with each other.
 
 See the [API guideline](api-guideline.md) for the full semantics of `@@threadSafe`.
@@ -1406,11 +1629,10 @@ public interface DataCache {
 
     // @@threadSafe(cache) — grouped with other "cache" members
     @ThreadSafe(group = "cache")
-    void updateCache(@NonNull byte[] data);
+    void updateCache(byte[] data);
 
     // @@threadSafe(cache) — same group
     @ThreadSafe(group = "cache")
-    @NonNull
     byte[] readCache();
 
     // @@threadSafe — no group, only safe for concurrent calls on its own
@@ -1419,7 +1641,7 @@ public interface DataCache {
 }
 ```
 
-When `@@threadSafe` is applied to an attribute in the meta-language, annotate both the getter and (if mutable) the
+When `@@threadSafe` is applied to an attribute in the meta-language, annotate both the accessor and (if mutable) the
 setter with `@ThreadSafe`:
 
 ```java
@@ -1428,13 +1650,14 @@ public class ConnectionManager {
     private volatile boolean connected = true;
 
     @ThreadSafe
-    public boolean isConnected() {
+    public boolean connected() {
         return connected;
     }
 
     @ThreadSafe
-    public void setConnected(final boolean connected) {
+    public ConnectionManager setConnected(final boolean connected) {
         this.connected = connected;
+        return this;
     }
 }
 ```
@@ -1481,7 +1704,7 @@ The following table lists the common strategies **in order of preference** — t
 
 ### Example: Immutable snapshots
 
-The preferred strategy is to avoid synchronization entirely by using immutable snapshots. When a getter returns a
+The preferred strategy is to avoid synchronization entirely by using immutable snapshots. When an accessor returns a
 defensive copy or an unmodifiable view, callers can read the data without any risk of seeing partial state — no locks,
 no atomics, no contention. This works especially well for attributes whose value is replaced as a whole rather than
 mutated in place.
@@ -1511,15 +1734,14 @@ public final class Configuration {
 
     // @@threadSafe(config) attribute accessor — returns an immutable snapshot
     @ThreadSafe(group = "config")
-    @NonNull
-    public Map<String, String> getProperties() {
+    public Map<String, String> properties() {
         // Map.copyOf creates an immutable copy; callers can read it freely without synchronization
         return Map.copyOf(properties);
     }
 
     // @@threadSafe(config) — replaces all properties atomically from the caller's perspective
     @ThreadSafe(group = "config")
-    public void updateProperties(@NonNull final Map<String, String> properties) {
+    public void updateProperties(final Map<String, String> properties) {
         Objects.requireNonNull(properties, "properties must not be null");
         this.properties.clear();
         this.properties.putAll(properties);
@@ -1527,7 +1749,7 @@ public final class Configuration {
 }
 ```
 
-The key insight is that the getter returns an independent, immutable copy. Even if another thread calls
+The key insight is that the accessor returns an independent, immutable copy. Even if another thread calls
 `updateProperties` concurrently, callers that already hold a snapshot are unaffected. No thread ever blocks.
 
 ### Example: Volatile field
@@ -1556,16 +1778,17 @@ public final class ConnectionManager {
     // volatile ensures that any thread reading 'connected' sees the latest write
     private volatile boolean connected = true;
 
-    // @@threadSafe attribute accessor — getter
+    // @@threadSafe attribute — accessor
     @ThreadSafe
-    public boolean isConnected() {
+    public boolean connected() {
         return connected;
     }
 
-    // @@threadSafe attribute accessor — setter
+    // @@threadSafe attribute — setter
     @ThreadSafe
-    public void setConnected(final boolean connected) {
+    public ConnectionManager setConnected(final boolean connected) {
         this.connected = connected;
+        return this;
     }
 
     // @@threadSafe — uses the volatile field directly
@@ -1650,10 +1873,9 @@ public final class DataCache {
 
     private final AtomicLong statsCounter = new AtomicLong(0);
 
-    // @@threadSafe(cache) attribute accessor — getter
+    // @@threadSafe(cache) attribute — accessor
     @ThreadSafe(group = "cache")
-    @NonNull
-    public byte[] getData() {
+    public byte[] data() {
         cacheLock.readLock().lock();
         try {
             return data.clone();
@@ -1662,9 +1884,22 @@ public final class DataCache {
         }
     }
 
-    // @@threadSafe(cache) attribute accessor — setter
+    // @@threadSafe(cache) attribute — setter
     @ThreadSafe(group = "cache")
-    public void setData(@NonNull final byte[] data) {
+    public DataCache setData(final byte[] data) {
+        Objects.requireNonNull(data, "data must not be null");
+        cacheLock.writeLock().lock();
+        try {
+            this.data = data.clone();
+        } finally {
+            cacheLock.writeLock().unlock();
+        }
+        return this;
+    }
+
+    // @@threadSafe(cache) — same group, shares the cacheLock
+    @ThreadSafe(group = "cache")
+    public void updateCache(final byte[] data) {
         Objects.requireNonNull(data, "data must not be null");
         cacheLock.writeLock().lock();
         try {
@@ -1676,19 +1911,6 @@ public final class DataCache {
 
     // @@threadSafe(cache) — same group, shares the cacheLock
     @ThreadSafe(group = "cache")
-    public void updateCache(@NonNull final byte[] data) {
-        Objects.requireNonNull(data, "data must not be null");
-        cacheLock.writeLock().lock();
-        try {
-            this.data = data.clone();
-        } finally {
-            cacheLock.writeLock().unlock();
-        }
-    }
-
-    // @@threadSafe(cache) — same group, shares the cacheLock
-    @ThreadSafe(group = "cache")
-    @NonNull
     public byte[] readCache() {
         cacheLock.readLock().lock();
         try {
@@ -1835,11 +2057,11 @@ carry a descriptive message to support debugging and logging:
 // Custom exception for an SDK-specific error (e.g., 'transaction-rejected-error')
 public final class TransactionRejectedException extends Exception {
 
-    public TransactionRejectedException(@NonNull final String message) {
+    public TransactionRejectedException(final String message) {
         super(Objects.requireNonNull(message, "message must not be null"));
     }
 
-    public TransactionRejectedException(@NonNull final String message, @Nullable final Throwable cause) {
+    public TransactionRejectedException(final String message, @Nullable final Throwable cause) {
         super(Objects.requireNonNull(message, "message must not be null"), cause);
     }
 }
@@ -1861,12 +2083,11 @@ public interface TransactionService {
 
     // Synchronous: checked exceptions declared in signature
     @Nullable
-    TransactionDetails fetchDetailsSync(@NonNull String apiKey, long timeout, @NonNull TimeUnit unit)
+    TransactionDetails fetchDetailsSync(String apiKey, long timeout, TimeUnit unit)
             throws NotFoundException;
 
     // Asynchronous: exceptions delivered through CompletionStage failure
-    @NonNull
-    CompletionStage<@Nullable TransactionDetails> fetchDetails(@NonNull String apiKey);
+    CompletionStage<@Nullable TransactionDetails> fetchDetails(String apiKey);
 }
 ```
 
@@ -1916,7 +2137,7 @@ Prefer explicit types for local variables.
 Do not use Lombok in our SDK and library code.
 With modern Java features such as records, sealed classes, and pattern matching, the boilerplate that Lombok was
 traditionally used to eliminate is no longer a significant concern.
-Records cover the most common use case (immutable data carriers) natively, and explicit constructors, getters, and
+Records cover the most common use case (immutable data carriers) natively, and explicit constructors, accessors, and
 `equals`/`hashCode` implementations keep the codebase transparent and easy to navigate without requiring an annotation
 processor.
 
@@ -1956,7 +2177,7 @@ public class Person {
 
     private final int age;
 
-    public Person(@NonNull final String name, final int age) {
+    public Person(final String name, final int age) {
         this.name = Objects.requireNonNull(name, "name must not be null");
         this.age = age;
     }
@@ -2027,7 +2248,7 @@ public class Person {
 
     private String secret;
 
-    public Person(@NonNull final String name, final int age) {
+    public Person(final String name, final int age) {
         this.name = Objects.requireNonNull(name, "name must not be null");
         this.age = age;
     }
@@ -2065,12 +2286,12 @@ public class Example {
 
     private final Address address;
 
-    public Example(final @NonNull Address address) {
+    public Example(final Address address) {
         this.address = Objects.requireNonNull(address, "address must not be null");
     }
 
     // Definition of the factory method
-    public static Example createExample(final @NonNull String name) {
+    public static Example createExample(final String name) {
         final Address address = Address.createAddress(name); // Here another factory method is called
         return new Example(address);
     }
@@ -2215,7 +2436,6 @@ import java.util.ServiceLoader;
 
 public final class ExampleProviderLoader {
 
-    @NonNull
     public static ExampleProvider load() {
         return ServiceLoader.load(ExampleProvider.class)
                 .findFirst()
@@ -2271,12 +2491,12 @@ public final class Transaction {
     private final TransactionType type;
 
     // Constructor with all parameters - allows direct instantiation without builder
-    public Transaction(@NonNull final String transactionId,
-                       @NonNull final BigDecimal amount,
-                       @NonNull final String fromAccount,
-                       @NonNull final String toAccount,
-                       @NonNull final TransactionType type,
-                       @NonNull final LocalDateTime timestamp,
+    public Transaction(final String transactionId,
+                       final BigDecimal amount,
+                       final String fromAccount,
+                       final String toAccount,
+                       final TransactionType type,
+                       final LocalDateTime timestamp,
                        @Nullable final String memo) {
         // Validate required fields
         this.transactionId = Objects.requireNonNull(transactionId, "transactionId must not be null");
@@ -2297,7 +2517,7 @@ public final class Transaction {
     }
 
     // Private constructor for builder
-    private Transaction(@NonNull final Builder builder) {
+    private Transaction(final Builder builder) {
         this(
                 builder.transactionId,
                 builder.amount,
@@ -2309,44 +2529,37 @@ public final class Transaction {
         );
     }
 
-    @NonNull
     public static Builder builder() {
         return new Builder();
     }
 
-    // Getters
-    @NonNull
-    public String getTransactionId() {
+    // Accessors
+    public String transactionId() {
         return transactionId;
     }
 
-    @NonNull
-    public BigDecimal getAmount() {
+    public BigDecimal amount() {
         return amount;
     }
 
-    @NonNull
-    public String getFromAccount() {
+    public String fromAccount() {
         return fromAccount;
     }
 
-    @NonNull
-    public String getToAccount() {
+    public String toAccount() {
         return toAccount;
     }
 
-    @NonNull
-    public LocalDateTime getTimestamp() {
+    public LocalDateTime timestamp() {
         return timestamp;
     }
 
     @Nullable
-    public String getMemo() {
+    public String memo() {
         return memo;
     }
 
-    @NonNull
-    public TransactionType getType() {
+    public TransactionType type() {
         return type;
     }
 
@@ -2364,49 +2577,41 @@ public final class Transaction {
             // Private constructor - use Transaction.builder()
         }
 
-        @NonNull
-        public Builder transactionId(@NonNull final String transactionId) {
+        public Builder transactionId(final String transactionId) {
             this.transactionId = Objects.requireNonNull(transactionId, "transactionId must not be null");
             return this;
         }
 
-        @NonNull
-        public Builder amount(@NonNull final BigDecimal amount) {
+        public Builder amount(final BigDecimal amount) {
             this.amount = Objects.requireNonNull(amount, "amount must not be null");
             return this;
         }
 
-        @NonNull
-        public Builder fromAccount(@NonNull final String fromAccount) {
+        public Builder fromAccount(final String fromAccount) {
             this.fromAccount = Objects.requireNonNull(fromAccount, "fromAccount must not be null");
             return this;
         }
 
-        @NonNull
-        public Builder toAccount(@NonNull final String toAccount) {
+        public Builder toAccount(final String toAccount) {
             this.toAccount = Objects.requireNonNull(toAccount, "toAccount must not be null");
             return this;
         }
 
-        @NonNull
-        public Builder timestamp(@NonNull final LocalDateTime timestamp) {
+        public Builder timestamp(final LocalDateTime timestamp) {
             this.timestamp = Objects.requireNonNull(timestamp, "timestamp must not be null");
             return this;
         }
 
-        @NonNull
         public Builder memo(@Nullable final String memo) {
             this.memo = memo;
             return this;
         }
 
-        @NonNull
-        public Builder type(@NonNull final TransactionType type) {
+        public Builder type(final TransactionType type) {
             this.type = Objects.requireNonNull(type, "type must not be null");
             return this;
         }
 
-        @NonNull
         public Transaction build() {
             return new Transaction(this);
         }
@@ -2454,11 +2659,11 @@ For immutable data classes (records), a builder can still be useful when there a
 
 ```java
 public record QueryOptions(
-        @NonNull String query,
+        String query,
         int limit,
         int offset,
         @Nullable String sortField,
-        @NonNull SortOrder sortOrder,
+        SortOrder sortOrder,
         boolean includeMetadata
 ) {
     // Compact constructor with validation
@@ -2485,8 +2690,7 @@ public record QueryOptions(
         );
     }
 
-    @NonNull
-    public static Builder builder(@NonNull final String query) {
+    public static Builder builder(final String query) {
         return new Builder(query);
     }
 
@@ -2498,41 +2702,35 @@ public record QueryOptions(
         private SortOrder sortOrder;
         private boolean includeMetadata = false; // default
 
-        private Builder(@NonNull final String query) {
+        private Builder(final String query) {
             this.query = Objects.requireNonNull(query, "query must not be null");
         }
 
-        @NonNull
         public Builder limit(final int limit) {
             this.limit = limit;
             return this;
         }
 
-        @NonNull
         public Builder offset(final int offset) {
             this.offset = offset;
             return this;
         }
 
-        @NonNull
         public Builder sortField(@Nullable final String sortField) {
             this.sortField = sortField;
             return this;
         }
 
-        @NonNull
-        public Builder sortOrder(@NonNull final SortOrder sortOrder) {
+        public Builder sortOrder(final SortOrder sortOrder) {
             this.sortOrder = Objects.requireNonNull(sortOrder, "sortOrder must not be null");
             return this;
         }
 
-        @NonNull
         public Builder includeMetadata(final boolean includeMetadata) {
             this.includeMetadata = includeMetadata;
             return this;
         }
 
-        @NonNull
         public QueryOptions build() {
             return new QueryOptions(this);
         }
@@ -2589,13 +2787,11 @@ factory methods instead of a full builder.
 public final class PublicKey {
 
     // Simple case - factory methods are sufficient
-    @NonNull
-    public static PublicKey create(@NonNull final KeyAlgorithm algorithm, @NonNull final byte[] rawBytes) {
+    public static PublicKey create(final KeyAlgorithm algorithm, final byte[] rawBytes) {
         return KeyFactory.createPublicKey(algorithm, rawBytes);
     }
 
-    @NonNull
-    public static PublicKey create(@NonNull final String pemEncoded) {
+    public static PublicKey create(final String pemEncoded) {
         return KeyFactory.createPublicKey(EncodedKeyContainer.SPKI_WITH_PEM, pemEncoded);
     }
 }
@@ -2607,8 +2803,8 @@ Records work perfectly with factory methods for common creation patterns:
 
 ```java
 public record KeyPair(
-        @NonNull PublicKey publicKey,
-        @NonNull PrivateKey privateKey
+        PublicKey publicKey,
+        PrivateKey privateKey
 ) {
     // Compact constructor with validation
     public KeyPair {
@@ -2617,8 +2813,7 @@ public record KeyPair(
     }
 
     // Factory method for generating a new key pair
-    @NonNull
-    public static KeyPair generate(@NonNull final KeyAlgorithm algorithm) {
+    public static KeyPair generate(final KeyAlgorithm algorithm) {
         Objects.requireNonNull(algorithm, "algorithm must not be null");
         final PrivateKey privateKey = PrivateKey.generate(algorithm);
         final PublicKey publicKey = privateKey.derivePublicKey();
@@ -2626,10 +2821,9 @@ public record KeyPair(
     }
 
     // Factory method for importing from bytes
-    @NonNull
-    public static KeyPair fromBytes(@NonNull final KeyAlgorithm algorithm,
-                                    @NonNull final byte[] publicKeyBytes,
-                                    @NonNull final byte[] privateKeyBytes) {
+    public static KeyPair fromBytes(final KeyAlgorithm algorithm,
+                                    final byte[] publicKeyBytes,
+                                    final byte[] privateKeyBytes) {
         Objects.requireNonNull(algorithm, "algorithm must not be null");
         Objects.requireNonNull(publicKeyBytes, "publicKeyBytes must not be null");
         Objects.requireNonNull(privateKeyBytes, "privateKeyBytes must not be null");
@@ -2780,6 +2974,9 @@ org.hiero.{module}/              # Public API (exported)
 ### Example module-info.java
 
 ```java
+import org.jspecify.annotations.NullMarked;
+
+@NullMarked
 module org.hiero.keys {
     // Export public API packages
     exports org.hiero.keys;
@@ -2806,7 +3003,7 @@ module org.hiero.keys {
 3. **Use `requires` for all dependencies** - make dependencies explicit
 4. **Use `requires static` for compile-time only dependencies** - annotations (like `org.jspecify`), code generators, or
    other tools that are not needed at runtime must use `requires static`. If the annotations appear in the exported
-   API — always the case for the jspecify nullness annotations `@NonNull` / `@Nullable` on public signatures — use
+   API — always the case for the jspecify annotations `@NullMarked` / `@Nullable` on the module and public signatures — use
    `requires static transitive org.jspecify;` instead, so that consumers of the module see the annotations at compile
    time (otherwise `javac -Xlint:exports` reports that the annotation types are not exported to dependent modules)
 5. **Avoid `requires transitive` whenever possible** - exposing types from dependencies in your public API should be
@@ -3125,7 +3322,6 @@ See [java-files/HieroStream.java](java-files/HieroStream.java) for the full sour
 public interface HieroStream<T> extends Iterable<T>, AutoCloseable {
 
     @Override
-    @NonNull
     Iterator<T> iterator();
 
     @Override
@@ -3160,14 +3356,14 @@ See [java-files/StreamItem.java](java-files/StreamItem.java) for the full source
 ```java
 public sealed interface StreamItem<T> permits StreamItem.Success, StreamItem.Error {
 
-    record Success<T>(@NonNull T value) implements StreamItem<T> {
+    record Success<T>(T value) implements StreamItem<T> {
 
         public Success {
             Objects.requireNonNull(value, "value must not be null");
         }
     }
 
-    record Error<T>(@NonNull Throwable error) implements StreamItem<T> {
+    record Error<T>(Throwable error) implements StreamItem<T> {
 
         public Error {
             Objects.requireNonNull(error, "error must not be null");
@@ -3210,12 +3406,12 @@ public final class HieroPublisher<T> implements Flow.Publisher<T> {
 
     private final HieroStream<T> stream;
 
-    public HieroPublisher(@NonNull final HieroStream<T> stream) {
+    public HieroPublisher(final HieroStream<T> stream) {
         this.stream = Objects.requireNonNull(stream, "stream must not be null");
     }
 
     @Override
-    public void subscribe(@NonNull final Flow.Subscriber<? super T> subscriber) {
+    public void subscribe(final Flow.Subscriber<? super T> subscriber) {
         Objects.requireNonNull(subscriber, "subscriber must not be null");
         subscriber.onSubscribe(new HieroSubscription<>(stream, subscriber));
     }
@@ -3235,8 +3431,8 @@ final class HieroSubscription<T> implements Flow.Subscription {
     private final AtomicLong requested = new AtomicLong(0);
     private final AtomicBoolean cancelled = new AtomicBoolean(false);
 
-    HieroSubscription(@NonNull final HieroStream<T> stream,
-                      @NonNull final Flow.Subscriber<? super T> subscriber) {
+    HieroSubscription(final HieroStream<T> stream,
+                      final Flow.Subscriber<? super T> subscriber) {
         this.stream = stream;
         this.subscriber = subscriber;
         Thread.ofVirtual().start(this::drainLoop);
@@ -3298,13 +3494,13 @@ publisher.subscribe(new Flow.Subscriber<>() {
     private Flow.Subscription subscription;
 
     @Override
-    public void onSubscribe(@NonNull final Flow.Subscription subscription){
+    public void onSubscribe(final Flow.Subscription subscription){
         this.subscription = subscription;
         subscription.request(1); // request first item
     }
 
     @Override
-    public void onNext(@NonNull final StreamItem<TopicMessage> item){
+    public void onNext(final StreamItem<TopicMessage> item){
         switch (item) {
             case StreamItem.Success<TopicMessage> s -> process(s.value());
             case StreamItem.Error<TopicMessage> e -> log.warn("Bad message", e.error());
@@ -3313,7 +3509,7 @@ publisher.subscribe(new Flow.Subscriber<>() {
     }
 
     @Override
-    public void onError(@NonNull final Throwable throwable){
+    public void onError(final Throwable throwable){
         log.error("Stream failed", throwable);
     }
 
@@ -3394,12 +3590,10 @@ be obtained by wrapping the pull stream. A convenience method may be provided:
 public interface TopicSubscription {
 
     // Primary: pull-based
-    @NonNull
-    HieroStream<StreamItem<TopicMessage>> subscribe(@NonNull Client client);
+    HieroStream<StreamItem<TopicMessage>> subscribe(Client client);
 
     // Convenience: push-based adapter
-    @NonNull
-    default Flow.Publisher<StreamItem<TopicMessage>> subscribePublisher(@NonNull final Client client) {
+    default Flow.Publisher<StreamItem<TopicMessage>> subscribePublisher(final Client client) {
         return new HieroPublisher<>(subscribe(client));
     }
 }

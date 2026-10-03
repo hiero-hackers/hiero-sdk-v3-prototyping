@@ -92,7 +92,7 @@ class ValidatorTest {
 
         @Test
         void shouldReportNonClassicMethodFormsInEnums() {
-            assertThat(rules("namespace a\nenum E { A\n name(): string }")).containsExactly("syntax.trailing-return-type");
+            assertThat(rules("namespace a\nenum E { A\n label(): string }")).containsExactly("syntax.trailing-return-type");
         }
 
         @Test

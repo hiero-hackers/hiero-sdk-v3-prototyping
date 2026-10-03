@@ -1,7 +1,9 @@
 package org.hiero.sdk.v3.metalang.generator.java;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
@@ -35,18 +37,26 @@ final class RecordGenerator {
     private RecordGenerator() {
     }
 
-    static GeneratedFile generate(final String module, final TypeDefinition.ComplexTypeDefinition type) {
+    static GeneratedFile generate(final String module, final TypeDefinition.ComplexTypeDefinition type,
+                                  final JavaContext context) {
         final String packageName = JavaNames.packageName(type.name().namespace());
         final String name = type.name().name();
-        final Imports imports = new Imports(packageName, name);
+        final Imports imports = context.imports(type);
         final List<FieldDefinition> fields = type.fields();
+        // the Java type of every component; accessors that implement an inherited one keep its Java type
+        final Map<String, String> declarations = new HashMap<>();
+        for (final FieldDefinition field : fields) {
+            JavaMembers.accessor(field.name(), false);
+            declarations.put(field.name(), JavaTypes.declaration(field.type(), field.hasAnnotation("nullable"),
+                    context.boxed(type.name(), field.name()), imports));
+        }
         final StringBuilder body = new StringBuilder();
         final List<String> constants = new ArrayList<>();
 
         // compact constructor
         final StringBuilder checks = new StringBuilder();
         for (final FieldDefinition field : fields) {
-            checks.append(normalization(field, imports));
+            checks.append(normalization(field, declarations.get(field.name()), imports));
             final JavaConstraints.Checks constraints = JavaConstraints.of(field, INDENT + INDENT, imports);
             checks.append(constraints.statements());
             constants.addAll(constraints.constants());
@@ -72,7 +82,7 @@ final class RecordGenerator {
                     + " of " + fields.stream().filter(f -> f.hasAnnotation("default"))
                     .map(f -> "`" + f.name() + "`").collect(Collectors.joining(", ")) + ".")));
             body.append(INDENT).append("public ").append(name)
-                    .append(parameterList(required.stream().map(f -> "final " + component(f, imports)).toList(),
+                    .append(parameterList(required.stream().map(f -> "final " + component(f, declarations)).toList(),
                             INDENT)).append(" {\n")
                     .append(INDENT).append(INDENT).append("this(").append(fields.stream()
                             .map(f -> f.hasAnnotation("default")
@@ -98,23 +108,24 @@ final class RecordGenerator {
             if (field.hasAnnotation("deprecated")) {
                 body.append(INDENT).append("@Deprecated\n");
             }
-            body.append(INDENT).append("public ").append(JavaTypes.declaration(field.type(),
-                            field.hasAnnotation("nullable"), imports)).append(' ').append(component)
+            body.append(INDENT).append("public ").append(declarations.get(field.name())).append(' ').append(component)
                     .append("() {\n").append(INDENT).append(INDENT).append("return ")
                     .append(bytes && field.hasAnnotation("nullable") ? component + " == null ? null : " : "")
                     .append(component).append(bytes ? ".clone()" : "").append(";\n").append(INDENT).append("}\n");
         }
         if (fields.stream().anyMatch(f -> JavaConstraints.isBytes(f.type()))) {
-            body.append(contentEquality(type, imports));
+            body.append(contentEquality(type, declarations, imports));
         }
 
         // methods
         for (final MethodDefinition method : type.methods()) {
-            body.append(body.isEmpty() ? "" : "\n").append(JavaMembers.method(name, method, imports));
+            body.append(body.isEmpty() ? "" : "\n").append(JavaMembers.method(type, method, context, imports, JavaMembers.Body.STUB));
         }
 
-        final String header = "public record " + name + typeParameters(type, imports)
-                + parameterList(fields.stream().map(f -> component(f, imports)).toList(), "");
+        // before rendering the imports: the header registers imports too
+        final String header = "public record " + name + JavaMembers.typeParameters(type, imports)
+                + parameterList(fields.stream().map(f -> component(f, declarations)).toList(), "")
+                + context.supertypes(type, "implements", imports);
         final StringBuilder java = new StringBuilder(JavaGenerator.HEADER).append('\n');
         java.append("package ").append(packageName).append(";\n\n");
         final String importBlock = imports.render();
@@ -125,7 +136,7 @@ final class RecordGenerator {
         if (type.hasAnnotation("deprecated")) {
             java.append("@Deprecated\n");
         }
-        java.append(header).append(JavaMembers.implementsComment(type.supertypes())).append(" {\n");
+        java.append(header).append(" {\n");
         if (!constants.isEmpty()) {
             java.append('\n');
             constants.forEach(c -> java.append(INDENT).append(c).append('\n'));
@@ -148,24 +159,14 @@ final class RecordGenerator {
                 .collect(Collectors.joining(",\n")) + ")";
     }
 
-    private static String component(final FieldDefinition field, final Imports imports) {
-        return JavaTypes.declaration(field.type(), field.hasAnnotation("nullable"), imports) + " "
-                + JavaKeywords.identifier(field.name());
+    private static String component(final FieldDefinition field, final Map<String, String> declarations) {
+        return declarations.get(field.name()) + " " + JavaKeywords.identifier(field.name());
     }
 
-    private static String typeParameters(final TypeDefinition type, final Imports imports) {
-        if (type.typeParameters().isEmpty()) {
-            return "";
-        }
-        return "<" + type.typeParameters().stream().map(p -> JavaMembers.typeParameter(p, imports))
-                .collect(Collectors.joining(", ")) + ">";
-    }
-
-    /** Null check and defensive copy of one component. */
-    private static String normalization(final FieldDefinition field, final Imports imports) {
+    /** Null check and defensive copy of one component ({@code java} is the Java type of the component). */
+    private static String normalization(final FieldDefinition field, final String java, final Imports imports) {
         final String name = JavaKeywords.identifier(field.name());
         final boolean nullable = field.hasAnnotation("nullable");
-        final String java = JavaTypes.type(field.type(), false, imports);
         final String copy = copy(field.type(), name, imports);
         final String indent = INDENT + INDENT;
         if (nullable) {
@@ -183,7 +184,7 @@ final class RecordGenerator {
     }
 
     /** The expression that copies a collection or array, {@code null} for other types. */
-    private static String copy(final Type type, final String name, final Imports imports) {
+    static String copy(final Type type, final String name, final Imports imports) {
         if (type instanceof Type.BasicType basic) {
             final BuiltinType builtin = basic.builtin();
             return switch (builtin.category()) {
@@ -215,7 +216,8 @@ final class RecordGenerator {
      * {@code equals} and {@code hashCode} that compare arrays by content, and {@code toString} that prints only the
      * length of arrays.
      */
-    private static String contentEquality(final TypeDefinition type, final Imports imports) {
+    private static String contentEquality(final TypeDefinition type, final Map<String, String> declarations,
+                                          final Imports imports) {
         final String name = type.name().name();
         final List<FieldDefinition> fields = type.fields();
         final String arrays = imports.use("java.util", "Arrays");
@@ -228,7 +230,7 @@ final class RecordGenerator {
                     .append(INDENT).append("public boolean equals(final @").append(nullable).append(" Object obj) {\n")
                     .append(INDENT).append(INDENT).append("return obj instanceof ").append(self).append(" other")
                     .append(fields.stream().map(f -> "\n" + INDENT + INDENT + INDENT + "&& "
-                            + equality(f, arrays, objects, imports)).collect(Collectors.joining())).append(";\n")
+                            + equality(f, declarations.get(f.name()), arrays, objects)).collect(Collectors.joining())).append(";\n")
                     .append(INDENT).append("}\n");
         }
         if (type.methods("hashCode").isEmpty()) {
@@ -259,13 +261,12 @@ final class RecordGenerator {
         return out.toString();
     }
 
-    private static String equality(final FieldDefinition field, final String arrays, final String objects,
-                                   final Imports imports) {
+    private static String equality(final FieldDefinition field, final String java, final String arrays,
+                                   final String objects) {
         final String name = JavaKeywords.identifier(field.name());
         if (JavaConstraints.isBytes(field.type())) {
             return arrays + ".equals(" + name + ", other." + name + ")";
         }
-        final String java = JavaTypes.type(field.type(), field.hasAnnotation("nullable"), imports);
         return switch (java) {
             case "double" -> "Double.compare(" + name + ", other." + name + ") == 0";
             case "byte", "short", "int", "long", "boolean" -> name + " == other." + name;

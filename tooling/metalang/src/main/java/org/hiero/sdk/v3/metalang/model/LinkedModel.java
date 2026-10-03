@@ -140,6 +140,18 @@ public final class LinkedModel {
                 .findFirst();
     }
 
+    /**
+     * Returns a type of a supertype's member as seen from the subtype: the supertype's type variables replaced by
+     * the type arguments in {@code supertype}.
+     *
+     * @param supertype the supertype with its type arguments (as written in {@code extends})
+     * @param type      a type used in a member of the supertype
+     * @return the substituted type
+     */
+    public Type substitute(final Type.DeclaredType supertype, final Type type) {
+        return Linker.substitute(type, substitution(supertype));
+    }
+
     private java.util.Map<Type.TypeVariable, Type> substitution(final Type.DeclaredType supertype) {
         final List<TypeParameterDefinition> parameters = definition(supertype).typeParameters();
         final java.util.Map<Type.TypeVariable, Type> map = new java.util.HashMap<>();

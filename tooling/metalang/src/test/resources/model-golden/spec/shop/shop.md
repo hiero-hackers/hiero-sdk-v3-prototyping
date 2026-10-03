@@ -25,8 +25,43 @@ Product extends Entity<int64> {
     @@async @@throws(not-found-error) list<Product> related(@@min(1) limit: int32)
 }
 
+// Something with a numeric code.
+abstraction Coded {
+    @@immutable code: int8
+}
+
+// Something with a price.
+abstraction Priced {
+    @@immutable price: Money
+
+    // Total including tax.
+    Money gross(@@min(0) taxRate: double)
+}
+
+// Something with a label that can change.
+abstraction Labelled<$$Self extends Labelled<$$Self>> {
+    @@nullable label: string   // the label, if any
+}
+
+// A shape; the set of shapes is closed.
+@@sealed(Circle, Square)
+abstraction Shape {
+    @@immutable @@nullable size: int32
+
+    @@static Shape unit()
+}
+
+// A circle always has a size.
+Circle extends Shape {
+    @@immutable @@override size: int32
+}
+
+// A square with a price.
+Square extends Shape, Priced {
+}
+
 // A product category.
-enum Category(code: int8, @@nullable label: string) {
+enum Category(code: int8, @@nullable label: string) extends Coded {
     FOOD(1, "Food") // things to eat
     OTHER(2, null)
     @@deprecated LEGACY(3, "Legacy \"old\"")

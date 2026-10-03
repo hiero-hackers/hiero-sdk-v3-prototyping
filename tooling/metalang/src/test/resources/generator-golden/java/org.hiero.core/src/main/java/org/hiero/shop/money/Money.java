@@ -5,13 +5,12 @@ package org.hiero.shop.money;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Objects;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /// An amount of money.
 ///
 /// @param cents the amount in cents
-public record Money(@NonNull BigInteger cents, @Nullable Duration timeout) {
+public record Money(BigInteger cents, @Nullable Duration timeout) {
 
     /// Creates a new `Money`.
     ///

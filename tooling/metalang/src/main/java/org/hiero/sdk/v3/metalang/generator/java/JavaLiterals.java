@@ -60,13 +60,13 @@ final class JavaLiterals {
         final String text = number.text();
         return switch (builtin.category()) {
             case INTEGER -> {
-                if (builtin.bits() <= 8) {
+                if (JavaTypes.javaBits(builtin) <= 8) {
                     yield "(byte) " + text;
-                } else if (builtin.bits() <= 16) {
+                } else if (JavaTypes.javaBits(builtin) <= 16) {
                     yield "(short) " + text;
-                } else if (builtin.bits() <= 32) {
+                } else if (JavaTypes.javaBits(builtin) <= 32) {
                     yield text;
-                } else if (builtin.bits() <= 64) {
+                } else if (JavaTypes.javaBits(builtin) <= 64) {
                     yield text + "L";
                 }
                 yield "new " + imports.use("java.math", "BigInteger") + "(\"" + text.replace("_", "") + "\")";

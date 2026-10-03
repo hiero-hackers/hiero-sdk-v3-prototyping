@@ -1,6 +1,7 @@
 package org.hiero.sdk.v3.metalang.generator.java;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -25,16 +26,30 @@ import org.jspecify.annotations.Nullable;
  * Generates the Java API from a {@link LinkedModel}.
  *
  * <p>Layout: one JPMS module per spec folder ({@link JavaNames#moduleName(String)}), containing one package per
- * namespace of that folder. Generated so far: the {@code module-info.java} of every module, the
- * {@code package-info.java} of every package, every enum ({@link EnumGenerator}) and every record
- * ({@link RecordGenerator}). Documentation is written as Markdown documentation comments ({@code ///}, Java 23+); the
- * SDK targets Java 25.
+ * namespace of that folder. Generated: the {@code module-info.java} of every module, the {@code package-info.java}
+ * of every package, enums ({@link EnumGenerator}), records ({@link RecordGenerator}), interfaces
+ * ({@link InterfaceGenerator}) and classes ({@link ClassGenerator}). Documentation is written as Markdown
+ * documentation comments ({@code ///}, Java 23+); the SDK targets Java 25.
  *
- * <p>A complex type becomes a record if it is no abstraction, has at least one attribute, all its (effective)
- * attributes are {@code @@immutable}, it extends no complex type, inherits no {@code @@finalMethod} (such a
- * supertype becomes an abstract class) and no type extends it (records are final and cannot extend classes). A record is only generated once every type it refers to (attributes, methods, bounds) is
- * generated as well — until then it is <em>deferred</em> ({@link #deferredRecords(LinkedModel)}); otherwise the
- * generated modules would not compile.
+ * <p>Which declaration becomes which Java type:
+ * <ul>
+ *   <li>an enum becomes an {@code enum};</li>
+ *   <li>an abstraction with attributes (own or inherited) or with a {@code @@finalMethod} becomes an
+ *       {@code abstract class}, the other abstractions become interfaces. An abstraction stays an interface if
+ *       the configuration lists it ({@link JavaGeneratorConfig#interfaces()}), if an enum or an interface extends it,
+ *       or if a type extends it together with another class (Java has no multiple inheritance of classes; then
+ *       <em>none</em> of the involved abstractions becomes a class). The supertypes of an interface are interfaces as
+ *       well;</li>
+ *   <li>a complex type becomes a {@code record} if it has at least one attribute, all its (effective) attributes are
+ *       {@code @@immutable}, it extends no class and no type extends it (records are final and cannot extend
+ *       classes); the other complex types become classes.</li>
+ * </ul>
+ *
+ * <p>A type is only generated once every type it refers to (attributes, methods, bounds, the supertypes of an
+ * interface or class, the permitted subtypes of a sealed type) is generated as well, and if all its types have a Java
+ * mapping — until then it is <em>deferred</em> ({@link #deferredTypes(LinkedModel)}); otherwise the generated modules
+ * would not compile. Records, enums and classes implement only the generated interfaces; the other interfaces are
+ * written as a comment.
  *
  * <p>The output is deterministic: the same model always produces byte-identical files in the same order.
  */
@@ -46,17 +61,35 @@ public final class JavaGenerator {
     /** The JPMS module of the nullness annotations used by the Java mapping. */
     static final String JSPECIFY_MODULE = "org.jspecify";
 
+    private final JavaGeneratorConfig config;
+
     /**
-     * The records to generate and the deferred record types with the reason.
+     * The types to generate and the deferred types with the reason.
      *
-     * @param records  the types generated as records
-     * @param deferred the record types that are not generated yet, with the reason
+     * @param context  the context with the generated types
+     * @param deferred the candidates that are not generated yet, with the reason
      */
-    private record Plan(Set<QualifiedName> records, SortedMap<QualifiedName, String> deferred) {
+    private record Plan(JavaContext context, SortedMap<QualifiedName, String> deferred) {
     }
 
     /** A module: its spec folder, its namespaces and the modules it requires. */
     private record Module(String name, String folder, List<NamespaceDefinition> namespaces, SortedSet<String> requires) {
+    }
+
+    /**
+     * Creates a generator without project-specific configuration.
+     */
+    public JavaGenerator() {
+        this(JavaGeneratorConfig.DEFAULT);
+    }
+
+    /**
+     * Creates a generator.
+     *
+     * @param config the project-specific configuration
+     */
+    public JavaGenerator(final JavaGeneratorConfig config) {
+        this.config = Objects.requireNonNull(config, "config must not be null");
     }
 
     /**
@@ -65,102 +98,205 @@ public final class JavaGenerator {
      * @param model the linked model (must be free of validation errors)
      * @return the generated files, sorted by path
      * @throws GenerationException if the model cannot be mapped to Java modules (namespace spread over several
-     *                             spec folders, spec file outside of a folder, dependency cycle between modules)
+     *                             spec folders, spec file outside of a folder, dependency cycle between modules) or
+     *                             the configuration does not match the model
      */
     public List<GeneratedFile> generate(final LinkedModel model) {
         Objects.requireNonNull(model, "model must not be null");
+        final List<Module> modules = modules(model);
+        final JavaContext context = plan(model, modules).context();
         final List<GeneratedFile> files = new ArrayList<>();
-        final List<String> problems = new ArrayList<>();
-        final Plan plan = plan(model);
-        for (final Module module : modules(model)) {
+        for (final Module module : modules) {
             final Set<String> packagesWithTypes = new TreeSet<>();
             for (final NamespaceDefinition namespace : module.namespaces()) {
                 packageInfo(module, namespace).ifPresent(files::add);
                 for (final TypeDefinition type : model.types(namespace.name())) {
-                    if (type instanceof TypeDefinition.EnumDefinition enumType) {
-                        try {
-                            files.add(EnumGenerator.generate(module.name(), enumType));
-                            packagesWithTypes.add(namespace.name());
-                        } catch (final JavaTypes.UnsupportedTypeException e) {
-                            problems.add(enumType.name() + ": " + e.getMessage());
-                        }
-                    } else if (type instanceof TypeDefinition.ComplexTypeDefinition complex
-                            && plan.records().contains(complex.name())) {
-                        files.add(RecordGenerator.generate(module.name(), complex));
+                    if (context.isGenerated(type.name())) {
+                        files.add(generate(module.name(), type, context));
                         packagesWithTypes.add(namespace.name());
                     }
                 }
             }
             files.add(moduleInfo(module, packagesWithTypes));
         }
-        if (!problems.isEmpty()) {
-            throw new GenerationException(problems);
-        }
         return files.stream().sorted().toList();
     }
 
     /**
-     * Returns the types that qualify as records but are not generated yet, with the reason (e.g. a referenced type
-     * that is not generated yet).
+     * Returns the types that could be generated but are not generated yet, with the reason (a referenced type that
+     * is not generated yet, or a type without Java mapping).
      *
      * @param model the linked model
-     * @return the deferred record types and the reasons, sorted by name
+     * @return the deferred types and the reasons, sorted by name
+     * @throws GenerationException if the model cannot be mapped to Java modules
      */
-    public SortedMap<QualifiedName, String> deferredRecords(final LinkedModel model) {
+    public SortedMap<QualifiedName, String> deferredTypes(final LinkedModel model) {
         Objects.requireNonNull(model, "model must not be null");
-        return plan(model).deferred();
+        return plan(model, modules(model)).deferred();
     }
 
-    private static Plan plan(final LinkedModel model) {
-        final Set<QualifiedName> extended = new HashSet<>();
-        final Set<QualifiedName> enums = new HashSet<>();
+    private static GeneratedFile generate(final String module, final TypeDefinition type, final JavaContext context) {
+        return switch (type) {
+            case TypeDefinition.EnumDefinition enumType -> EnumGenerator.generate(module, enumType, context);
+            case TypeDefinition.ComplexTypeDefinition complex when context.isClass(complex.name()) ->
+                    ClassGenerator.generate(module, complex, context);
+            case TypeDefinition.ComplexTypeDefinition complex when complex.abstraction() ->
+                    InterfaceGenerator.generate(module, complex, context);
+            case TypeDefinition.ComplexTypeDefinition complex -> RecordGenerator.generate(module, complex, context);
+        };
+    }
+
+    /**
+     * Classifies the types and then removes the candidates that cannot be generated until nothing changes (a
+     * greatest fixed point, so types that refer to each other are generated together).
+     */
+    private Plan plan(final LinkedModel model, final List<Module> modules) {
+        final Map<String, String> moduleOfNamespace = new HashMap<>();
+        modules.forEach(m -> m.namespaces().forEach(n -> moduleOfNamespace.put(n.name(), m.name())));
+        final Set<QualifiedName> abstractClasses = abstractClasses(model);
+        final Set<QualifiedName> extended = extendedTypes(model);
+        final Set<QualifiedName> classes = new HashSet<>(abstractClasses);
+        final SortedMap<QualifiedName, TypeDefinition> candidates = new TreeMap<>();
         for (final TypeDefinition type : model.types()) {
-            // only the supertype itself is extended, not its type arguments (Transaction<FreezeReceipt, ...>)
-            type.supertypes().stream().filter(Type.DeclaredType.class::isInstance)
-                    .forEach(t -> extended.add(((Type.DeclaredType) t).name()));
-            if (type instanceof TypeDefinition.EnumDefinition) {
-                enums.add(type.name());
+            if (!moduleOfNamespace.containsKey(type.name().namespace())) {
+                continue;
             }
-        }
-        final SortedMap<QualifiedName, TypeDefinition.ComplexTypeDefinition> records = new TreeMap<>();
-        for (final TypeDefinition type : model.types()) {
-            if (type instanceof TypeDefinition.ComplexTypeDefinition complex && isRecord(complex, extended, model)) {
-                records.put(complex.name(), complex);
+            if (type instanceof TypeDefinition.ComplexTypeDefinition complex && !complex.abstraction()
+                    && !isRecord(complex, extended, abstractClasses, model)) {
+                classes.add(type.name());
             }
+            candidates.put(type.name(), type);
         }
         final SortedMap<QualifiedName, String> deferred = new TreeMap<>();
         boolean changed = true;
         while (changed) {
             changed = false;
-            for (final TypeDefinition.ComplexTypeDefinition record : List.copyOf(records.values())) {
-                final Optional<String> reason = missingType(record, records.keySet(), enums, model)
-                        .or(() -> unsupported(record));
+            final JavaContext context = new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes);
+            for (final TypeDefinition type : List.copyOf(candidates.values())) {
+                final Optional<String> reason = missingType(type, context)
+                        .or(() -> unsupported(type, context));
                 if (reason.isPresent()) {
-                    records.remove(record.name());
-                    deferred.put(record.name(), reason.get());
+                    candidates.remove(type.name());
+                    deferred.put(type.name(), reason.get());
                     changed = true;
                 }
             }
         }
-        return new Plan(Set.copyOf(records.keySet()), deferred);
+        return new Plan(new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes), deferred);
+    }
+
+    /**
+     * Decides which abstractions become abstract classes: those with attributes or a {@code @@finalMethod}, except
+     * the configured interfaces, the ones an enum or an interface extends, and the ones that a type extends together
+     * with another class. An interface needs interfaces as supertypes, so the decision is propagated upwards until
+     * nothing changes.
+     */
+    private Set<QualifiedName> abstractClasses(final LinkedModel model) {
+        final List<String> problems = new ArrayList<>();
+        for (final QualifiedName name : new TreeSet<>(config.interfaces())) {
+            final Optional<TypeDefinition> type = model.type(name);
+            if (type.isEmpty()) {
+                problems.add(JavaGeneratorConfig.INTERFACES + ": unknown type " + name);
+            } else if (!(type.get() instanceof TypeDefinition.ComplexTypeDefinition c && c.abstraction())) {
+                problems.add(JavaGeneratorConfig.INTERFACES + ": " + name + " is no abstraction");
+            } else if (hasFinalMethod(type.get())) {
+                problems.add(JavaGeneratorConfig.INTERFACES + ": " + name
+                        + " has a @@finalMethod and must be an abstract class");
+            }
+        }
+        if (!problems.isEmpty()) {
+            throw new GenerationException(problems);
+        }
+        final Set<QualifiedName> classes = new HashSet<>();
+        for (final TypeDefinition type : model.types()) {
+            if (isAbstraction(type) && (!type.fields().isEmpty() || hasFinalMethod(type))
+                    && !config.interfaces().contains(type.name())) {
+                classes.add(type.name());
+            }
+        }
+        boolean changed = true;
+        while (changed) {
+            final Set<QualifiedName> interfaces = new HashSet<>();
+            for (final TypeDefinition type : model.types()) {
+                final List<QualifiedName> classSupertypes = new ArrayList<>();
+                int concreteSupertypes = 0;
+                for (final Type.DeclaredType supertype : declaredSupertypes(type)) {
+                    if (classes.contains(supertype.name())) {
+                        classSupertypes.add(supertype.name());
+                    } else if (model.type(supertype.name()).filter(t -> !isAbstraction(t)).isPresent()) {
+                        concreteSupertypes++;
+                    }
+                }
+                final boolean isInterface = isAbstraction(type) && !classes.contains(type.name());
+                if (type instanceof TypeDefinition.EnumDefinition || isInterface
+                        || classSupertypes.size() + concreteSupertypes > 1) {
+                    interfaces.addAll(classSupertypes);
+                }
+            }
+            // the supertypes of an interface are interfaces; a @@finalMethod keeps its abstraction a class
+            final List<QualifiedName> pending = new ArrayList<>(interfaces);
+            while (!pending.isEmpty()) {
+                model.type(pending.removeLast()).ifPresent(t -> declaredSupertypes(t).stream()
+                        .map(Type.DeclaredType::name)
+                        .filter(classes::contains)
+                        .filter(interfaces::add)
+                        .forEach(pending::add));
+            }
+            interfaces.removeIf(n -> model.type(n).map(JavaGenerator::hasFinalMethod).orElse(false));
+            changed = classes.removeAll(interfaces);
+        }
+        return classes;
+    }
+
+    private static boolean isAbstraction(final TypeDefinition type) {
+        return type instanceof TypeDefinition.ComplexTypeDefinition complex && complex.abstraction();
+    }
+
+    private static List<Type.DeclaredType> declaredSupertypes(final TypeDefinition type) {
+        return type.supertypes().stream().filter(Type.DeclaredType.class::isInstance)
+                .map(Type.DeclaredType.class::cast).toList();
+    }
+
+    /** The types that another type extends; only the supertype itself, not its type arguments. */
+    private static Set<QualifiedName> extendedTypes(final LinkedModel model) {
+        final Set<QualifiedName> extended = new HashSet<>();
+        for (final TypeDefinition type : model.types()) {
+            declaredSupertypes(type).forEach(t -> extended.add(t.name()));
+        }
+        return extended;
+    }
+
+    private static boolean hasFinalMethod(final TypeDefinition type) {
+        return type.methods().stream().anyMatch(m -> m.hasAnnotation("finalMethod"));
     }
 
     private static boolean isRecord(final TypeDefinition.ComplexTypeDefinition type, final Set<QualifiedName> extended,
-                                    final LinkedModel model) {
+                                    final Set<QualifiedName> abstractClasses, final LinkedModel model) {
         return !type.abstraction()
                 && !type.fields().isEmpty()
                 && type.fields().stream().allMatch(f -> f.hasAnnotation("immutable"))
                 && !extended.contains(type.name())
-                // a supertype with a @@finalMethod becomes an abstract class, which a record cannot extend
-                && type.methods().stream().noneMatch(m -> m.hasAnnotation("finalMethod")
-                && !type.name().equals(m.declaringType()))
-                && type.supertypes().stream().noneMatch(s -> s instanceof Type.DeclaredType d
-                && model.definition(d) instanceof TypeDefinition.ComplexTypeDefinition c && !c.abstraction());
+                // a record cannot extend a class (a concrete type or an abstraction that becomes an abstract class)
+                && declaredSupertypes(type).stream().noneMatch(s -> abstractClasses.contains(s.name())
+                || model.definition(s) instanceof TypeDefinition.ComplexTypeDefinition c && !c.abstraction());
     }
 
-    private static Optional<String> missingType(final TypeDefinition.ComplexTypeDefinition type,
-                                                final Set<QualifiedName> records, final Set<QualifiedName> enums,
-                                                final LinkedModel model) {
+    /** The first reason why the candidate cannot be generated with the current set of generated types. */
+    private static Optional<String> missingType(final TypeDefinition type, final JavaContext context) {
+        final List<QualifiedName> classSupertypes = declaredSupertypes(type).stream().map(Type.DeclaredType::name)
+                .filter(context::isClass).toList();
+        if (classSupertypes.size() > 1) {
+            // only possible with @@finalMethod abstractions, which cannot become interfaces
+            return Optional.of("extends the classes " + classSupertypes + "; Java has no multiple inheritance");
+        }
+        if (!classSupertypes.isEmpty() && !context.isClass(type.name())) {
+            return Optional.of((type instanceof TypeDefinition.EnumDefinition ? "an enum" : "an interface")
+                    + " cannot extend the class " + classSupertypes.getFirst());
+        }
+        final Optional<String> covariantAsync = covariantAsyncOverride(type, context.model());
+        if (covariantAsync.isPresent()) {
+            return covariantAsync;
+        }
         final Set<QualifiedName> used = new TreeSet<>();
         type.typeParameters().forEach(p -> referencedTypes(p.bound(), used));
         type.fields().forEach(f -> referencedTypes(f.type(), used));
@@ -169,27 +305,90 @@ public final class JavaGenerator {
             referencedTypes(method.returnType(), used);
             method.parameters().forEach(p -> referencedTypes(p.type(), used));
         }
-        return used.stream()
-                .filter(n -> !n.equals(type.name()) && !records.contains(n) && !enums.contains(n))
-                .findFirst()
-                .map(n -> "refers to " + n + " (" + model.type(n).map(JavaGenerator::kind).orElse("unknown")
-                        + ", not generated yet)");
-    }
-
-    private static String kind(final TypeDefinition type) {
-        if (type instanceof TypeDefinition.ComplexTypeDefinition complex) {
-            if (complex.abstraction()) {
-                return "abstraction";
-            }
-            return complex.fields().stream().allMatch(f -> f.hasAnnotation("immutable")) && !complex.fields().isEmpty()
-                    ? "record" : "class";
+        if (type instanceof TypeDefinition.EnumDefinition enumType) {
+            enumType.attributes().forEach(a -> referencedTypes(a.type(), used));
         }
-        return "enum";
+        // a class cannot leave out its superclass (constructor, inherited state)
+        declaredSupertypes(type).stream().filter(s -> context.isClass(s.name())).forEach(s -> referencedTypes(s, used));
+        if (isAbstraction(type)) {
+            if (!context.isClass(type.name())) {
+                // an interface cannot leave out its supertypes: implementations would miss their members
+                type.supertypes().forEach(s -> referencedTypes(s, used));
+                for (final Type.DeclaredType supertype : declaredSupertypes(type)) {
+                    if (context.model().type(supertype.name()).filter(t -> !isAbstraction(t)).isPresent()) {
+                        return Optional.of("extends " + supertype.name() + ", which is no abstraction");
+                    }
+                }
+            }
+            for (final QualifiedName permitted : InterfaceGenerator.permittedSubtypes(type)) {
+                if (!context.isGenerated(permitted)) {
+                    return Optional.of("permits " + permitted + " (" + kind(context, permitted)
+                            + ", not generated yet)");
+                }
+                if (!context.module(permitted.namespace()).equals(context.module(type.name().namespace()))) {
+                    return Optional.of("permits " + permitted + ", which is in another Java module");
+                }
+            }
+        }
+        return used.stream()
+                .filter(n -> !n.equals(type.name()) && !context.isGenerated(n))
+                .findFirst()
+                .map(n -> "refers to " + n + " (" + kind(context, n) + ", not generated yet)");
     }
 
-    private static Optional<String> unsupported(final TypeDefinition.ComplexTypeDefinition type) {
+    /**
+     * Finds an {@code @@async} method that overrides an inherited one with another return type. The meta-language
+     * allows a covariant return type, but {@code CompletionStage<T>} is invariant in Java, so the override does not
+     * compile ({@code CompletionStage<PaidQueryResponse<R>>} is no {@code CompletionStage<QueryResponse<R>>}).
+     */
+    private static Optional<String> covariantAsyncOverride(final TypeDefinition type, final LinkedModel model) {
+        for (final MethodDefinition method : type.declaredMethods()) {
+            if (method.isStatic() || !method.hasAnnotation("async")) {
+                continue;
+            }
+            for (final Type.DeclaredType supertype : declaredSupertypes(type)) {
+                for (final MethodDefinition inherited : model.definition(supertype).methods()) {
+                    if (inherited.name().equals(method.name()) && inherited.hasAnnotation("async")
+                            && sameParameters(method, inherited, supertype, model)) {
+                        final Type expected = model.substitute(supertype, inherited.returnType());
+                        if (!expected.text().equals(method.returnType().text())) {
+                            return Optional.of("overrides the @@async method " + supertype.name() + "."
+                                    + method.name() + " with the return type " + method.returnType().text()
+                                    + " instead of " + expected.text() + "; CompletionStage<T> is invariant in Java");
+                        }
+                    }
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static boolean sameParameters(final MethodDefinition method, final MethodDefinition inherited,
+                                          final Type.DeclaredType supertype, final LinkedModel model) {
+        if (method.parameters().size() != inherited.parameters().size()) {
+            return false;
+        }
+        for (int i = 0; i < method.parameters().size(); i++) {
+            if (!model.substitute(supertype, inherited.parameters().get(i).type()).text()
+                    .equals(method.parameters().get(i).type().text())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static String kind(final JavaContext context, final QualifiedName name) {
+        return context.model().type(name).map(type -> switch (type) {
+            case TypeDefinition.EnumDefinition ignored -> "enum";
+            case TypeDefinition.ComplexTypeDefinition complex when complex.abstraction() ->
+                    context.isClass(name) ? "abstract class" : "interface";
+            case TypeDefinition.ComplexTypeDefinition ignored -> context.isClass(name) ? "class" : "record";
+        }).orElse("unknown");
+    }
+
+    private static Optional<String> unsupported(final TypeDefinition type, final JavaContext context) {
         try {
-            RecordGenerator.generate("plan", type);
+            generate("plan", type, context);
             return Optional.empty();
         } catch (final JavaTypes.UnsupportedTypeException e) {
             return Optional.of(e.getMessage());
@@ -296,11 +495,14 @@ public final class JavaGenerator {
 
     private static GeneratedFile moduleInfo(final Module module, final Set<String> packagesWithTypes) {
         final StringBuilder java = new StringBuilder(HEADER).append('\n');
+        java.append("import org.jspecify.annotations.NullMarked;\n\n");
         java.append(MarkdownComment.render("", List.of(
                 "Module `" + module.name() + "` of the Hiero SDK.",
                 "Packages:\n" + String.join("\n", module.namespaces().stream()
                         .map(n -> "- `" + JavaNames.packageName(n.name()) + "`")
                         .toList()))));
+        // non-null by default in all packages, like the meta-language; only @@nullable needs @Nullable
+        java.append("@NullMarked\n");
         java.append("module ").append(module.name()).append(" {\n");
         for (final String required : module.requires()) {
             // transitive: specs only contain public API, so every type of a required module is part of it

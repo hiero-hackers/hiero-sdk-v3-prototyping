@@ -34,20 +34,34 @@ class RecordGeneratorTest {
 
     private static final SourceLocation AT = new SourceLocation("x.md", 1, 1);
 
+    /** Abstractions with attributes become abstract classes; tests of records implementing them configure them. */
+    private static final JavaGeneratorConfig INTERFACES = new JavaGeneratorConfig(Set.of(
+            new QualifiedName("a", "Named"), new QualifiedName("a", "Counted")));
+
     private static LinkedModel model(final String schema) {
         return LinkedModel.of(new MetaLang().validate(Map.of("f/a.md", TestSpecs.markdown(schema))).model());
     }
 
-    private static List<String> generatedTypes(final String schema) {
-        return new JavaGenerator().generate(model(schema)).stream().map(GeneratedFile::path)
-                .filter(p -> !p.endsWith("module-info.java") && !p.endsWith("package-info.java"))
+    /** The names of the generated records. */
+    private static List<String> records(final String schema, final JavaGeneratorConfig config) {
+        return new JavaGenerator(config).generate(model(schema)).stream()
+                .filter(f -> f.content().contains("\npublic record "))
+                .map(GeneratedFile::path)
                 .map(p -> p.substring(p.lastIndexOf('/') + 1, p.length() - ".java".length()))
                 .toList();
     }
 
+    private static List<String> records(final String schema) {
+        return records(schema, JavaGeneratorConfig.DEFAULT);
+    }
+
+    private static String source(final String schema, final String type, final JavaGeneratorConfig config) {
+        return new JavaGenerator(config).generate(model(schema)).stream()
+                .filter(f -> f.path().endsWith("/" + type + ".java")).findFirst().orElseThrow().content();
+    }
+
     private static String source(final String schema, final String type) {
-        return new JavaGenerator().generate(model(schema)).stream().filter(f -> f.path().endsWith("/" + type + ".java"))
-                .findFirst().orElseThrow().content();
+        return source(schema, type, JavaGeneratorConfig.DEFAULT);
     }
 
     @Nested
@@ -55,7 +69,7 @@ class RecordGeneratorTest {
 
         @Test
         void shouldOnlyGenerateRecordsForTypesWithImmutableAttributes() {
-            assertThat(generatedTypes("""
+            assertThat(records("""
                     namespace a
                     Immutable { @@immutable a: int32 }
                     Mutable { a: int32 }
@@ -80,15 +94,18 @@ class RecordGeneratorTest {
                     """;
 
             // THEN
-            assertThat(generatedTypes(schema)).containsExactlyInAnyOrder("Person", "Tag");
-            assertThat(source(schema, "Person")).contains("public record Person(@NonNull String name, int age)"
-                    + " /* implements org.hiero.a.Named (enabled as soon as abstractions are generated) */ {");
-            assertThat(new JavaGenerator().deferredRecords(model(schema))).isEmpty();
+            assertThat(records(schema, INTERFACES)).containsExactlyInAnyOrder("Person", "Tag");
+            assertThat(source(schema, "Person", INTERFACES)).contains("public record Person(String name, int age)"
+                    + " implements Named {");
+            assertThat(new JavaGenerator(INTERFACES).deferredTypes(model(schema))).isEmpty();
+            // without configuration Named is an abstract class, which a record cannot extend
+            assertThat(records(schema)).isEmpty();
+            assertThat(source(schema, "Person")).contains("public class Person extends Named {");
         }
 
         @Test
         void shouldNotUseRecordsForTypesThatExtendOrAreExtendedByComplexTypes() {
-            assertThat(generatedTypes("""
+            assertThat(records("""
                     namespace a
                     Base { @@immutable a: int32 }
                     Derived extends Base { @@immutable b: int32 }
@@ -99,7 +116,7 @@ class RecordGeneratorTest {
         @Test
         void shouldNotUseRecordsForTypesThatInheritAFinalMethod() {
             // an abstraction with a @@finalMethod becomes an abstract class, which a record cannot extend
-            assertThat(generatedTypes("""
+            assertThat(records("""
                     namespace a
                     abstraction Entity { @@immutable id: int64
                         @@finalMethod bool same(other: Entity) }
@@ -111,7 +128,7 @@ class RecordGeneratorTest {
 
         @Test
         void shouldNotTreatTypeArgumentsOfSupertypesAsExtended() {
-            assertThat(generatedTypes("""
+            assertThat(records("""
                     namespace a
                     abstraction Box<$$T> { }
                     Content { @@immutable a: int32 }
@@ -128,8 +145,10 @@ class RecordGeneratorTest {
             // GIVEN
             final LinkedModel model = model("""
                     namespace a
-                    abstraction Shape { }
-                    Mutable { a: int32 }
+                    Shape { size: int32
+                        void run(cb: function<void run()>) }
+                    Mutable { a: int32
+                        void run(cb: function<void run()>) }
                     Uses { @@immutable shape: Shape }
                     UsesUses { @@immutable uses: Uses }
                     InMethod { @@immutable a: int32
@@ -148,17 +167,18 @@ class RecordGeneratorTest {
                     """);
 
             // WHEN
-            final Map<QualifiedName, String> deferred = new JavaGenerator().deferredRecords(model);
+            final Map<QualifiedName, String> deferred = new JavaGenerator().deferredTypes(model);
             final List<String> generated = new JavaGenerator().generate(model).stream().map(GeneratedFile::path)
                     .filter(p -> p.endsWith(".java")).map(p -> p.substring(p.lastIndexOf('/') + 1)).toList();
 
             // THEN
-            assertThat(deferred).containsOnlyKeys(new QualifiedName("a", "Uses"), new QualifiedName("a", "UsesUses"),
+            assertThat(deferred).containsOnlyKeys(new QualifiedName("a", "Shape"), new QualifiedName("a", "Mutable"),
+                    new QualifiedName("a", "Uses"), new QualifiedName("a", "UsesUses"),
                     new QualifiedName("a", "InMethod"), new QualifiedName("a", "InParameter"),
                     new QualifiedName("a", "InBound"), new QualifiedName("a", "InMethodBound"),
                     new QualifiedName("a", "InTypeArgument"), new QualifiedName("a", "InWildcard"));
             assertThat(deferred.get(new QualifiedName("a", "Uses")))
-                    .isEqualTo("refers to a.Shape (abstraction, not generated yet)");
+                    .isEqualTo("refers to a.Shape (class, not generated yet)");
             assertThat(deferred.get(new QualifiedName("a", "UsesUses")))
                     .isEqualTo("refers to a.Uses (record, not generated yet)");
             assertThat(deferred.get(new QualifiedName("a", "InMethod")))
@@ -178,7 +198,7 @@ class RecordGeneratorTest {
                     """);
 
             // WHEN / THEN
-            assertThat(new JavaGenerator().deferredRecords(model)).containsExactly(
+            assertThat(new JavaGenerator().deferredTypes(model)).containsExactly(
                     Map.entry(new QualifiedName("a", "Callback"), "Type 'function<void run()>' has no Java mapping yet"),
                     Map.entry(new QualifiedName("a", "Stream"), "Type '@@streaming int8' has no Java mapping yet"),
                     Map.entry(new QualifiedName("a", "UsesCallback"),
@@ -237,7 +257,7 @@ class RecordGeneratorTest {
 
             // THEN
             assertThat(java).contains("/// A thing.\n///\n/// @param default_ the default\n/// @param old @@immutable at line start\n")
-                    .contains("@Deprecated\npublic record Thing(@NonNull String default_, byte @Nullable [] old) {")
+                    .contains("@Deprecated\npublic record Thing(String default_, byte @Nullable [] old) {")
                     .contains("        old = old == null ? null : old.clone();\n")
                     .contains("    @Override\n    @Deprecated\n    public byte @Nullable [] old() {\n"
                             + "        return old == null ? null : old.clone();\n    }")
@@ -257,11 +277,11 @@ class RecordGeneratorTest {
                         int32 hashCode()
                         @@static string toString() }
                     """, "Sample"))
-                    .contains("public record Sample<T>(byte @NonNull [] data, double ratio, boolean flag, @NonNull T value)")
+                    .contains("public record Sample<T>(byte[] data, double ratio, boolean flag, T value)")
                     .contains("    @Override\n    public boolean equals(final @Nullable Object other) {\n"
                             + "        throw new UnsupportedOperationException")
                     .contains("    @Override\n    public int hashCode() {\n        throw")
-                    .contains("    public static @NonNull String toString() {")
+                    .contains("    public static String toString() {")
                     .doesNotContain("instanceof Sample<?>")
                     .doesNotContain("Arrays.hashCode");
             assertThat(source("""
@@ -286,7 +306,7 @@ class RecordGeneratorTest {
                         @@immutable @@min(0) huge: int256
                         @@immutable @@max(1.5) ratio: double
                         @@immutable @@min(0) amount: decimal
-                        @@immutable @@max(30) wait: duration
+                        @@immutable @@max(30) delay: duration
                         @@immutable @@nullable @@maxLength(3) code: string
                         @@immutable @@maxSize(4) data: bytes }
                     """, "Limits"))
@@ -295,7 +315,7 @@ class RecordGeneratorTest {
                     .contains("if (huge.compareTo(new BigInteger(\"0\")) < 0) {")
                     .contains("if (ratio > 1.5) {")
                     .contains("if (amount.compareTo(new BigDecimal(\"0\")) < 0) {")
-                    .contains("if (wait.compareTo(Duration.ofMillis(30L)) > 0) {")
+                    .contains("if (delay.compareTo(Duration.ofMillis(30L)) > 0) {")
                     .contains("if (code != null && code.length() > 3) {")
                     .contains("if (data.length > 4) {");
         }

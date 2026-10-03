@@ -31,17 +31,68 @@ class GenerateCommandTest {
         return err.toString(StandardCharsets.UTF_8);
     }
 
+    /** A spec folder with a type that has no Java mapping yet and a type that refers to it. */
+    private Path deferringSpec() throws Exception {
+        final Path spec = temp.resolve("spec/f/a.md");
+        Files.createDirectories(spec.getParent());
+        Files.writeString(spec, TestSpecs.markdown("""
+                namespace a
+                Callback { @@immutable run: function<void run()> }
+                Uses { @@immutable callback: Callback }
+                abstraction Named { @@immutable name: string }
+                """));
+        return temp.resolve("spec");
+    }
+
     @Test
-    void shouldListTheDeferredRecordsOnRequest() throws Exception {
+    void shouldListTheDeferredTypesOnRequest() throws Exception {
         // WHEN
         final int exit = cli.run("generate", "--language=java", "--show-deferred",
-                "--output=" + temp.resolve("out"), goldenSpec().toString());
+                "--output=" + temp.resolve("out"), deferringSpec().toString());
 
         // THEN
         assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
         assertThat(out.toString(StandardCharsets.UTF_8)).endsWith(
-                "1 record type(s) deferred until the types they refer to are generated:\n"
-                        + "  shop.Listing: refers to shop.Entity (abstraction, not generated yet)\n");
+                "2 type(s) deferred until the types they refer to are generated:\n"
+                        + "  a.Callback: Type 'function<void run()>' has no Java mapping yet\n"
+                        + "  a.Uses: refers to a.Callback (record, not generated yet)\n");
+    }
+
+    @Test
+    void shouldApplyTheConfiguration() throws Exception {
+        // GIVEN a configuration that makes the abstraction an interface
+        final Path config = temp.resolve("generator.properties");
+        Files.writeString(config, "# comment\njava.interfaces = a.Named\n");
+
+        // WHEN
+        final int exit = cli.run("generate", "--language=java", "--config=" + config,
+                "--output=" + temp.resolve("out"), deferringSpec().toString());
+
+        // THEN
+        assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
+        assertThat(Files.readString(temp.resolve("out/org.hiero.f/src/main/java/org/hiero/a/Named.java")))
+                .contains("public interface Named {");
+    }
+
+    @Test
+    void shouldRejectInvalidConfigurations() throws Exception {
+        // GIVEN an unknown key, a malformed name, an unknown type and a missing file
+        final Path config = temp.resolve("generator.properties");
+        Files.writeString(config, "java.interface = a.Named\njava.interfaces = Named a.Missing a.Uses\n");
+
+        // WHEN / THEN
+        assertThat(cli.run("generate", "--language=java", "--config=" + config, "--output=" + temp.resolve("out"),
+                deferringSpec().toString())).isEqualTo(MetaLangCli.EXIT_FINDINGS);
+        assertThat(err()).contains("Cannot generate: Unknown key 'java.interface'")
+                .contains("Cannot generate: 'Named' in java.interfaces is no qualified type name (namespace.Type)");
+        Files.writeString(config, "java.interfaces = a.Missing, a.Uses\n");
+        assertThat(cli.run("generate", "--language=java", "--config=" + config, "--output=" + temp.resolve("out"),
+                deferringSpec().toString())).isEqualTo(MetaLangCli.EXIT_FINDINGS);
+        assertThat(err()).contains("Cannot generate: java.interfaces: unknown type a.Missing")
+                .contains("Cannot generate: java.interfaces: a.Uses is no abstraction");
+        assertThat(cli.run("generate", "--language=java", "--config=" + temp.resolve("missing.properties"),
+                "--output=" + temp.resolve("out"), deferringSpec().toString())).isEqualTo(MetaLangCli.EXIT_FINDINGS);
+        assertThat(err()).contains("Cannot read the configuration");
     }
 
     @Test
@@ -54,8 +105,7 @@ class GenerateCommandTest {
 
         // THEN
         assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
-        assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("11 file(s) written to " + output + "\n"
-                + "1 record type(s) deferred until the types they refer to are generated (--show-deferred lists them)\n");
+        assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("24 file(s) written to " + output + "\n");
         assertThat(output.resolve("org.hiero.shop/src/main/java/module-info.java")).exists();
         assertThat(Files.readString(output.resolve("org.hiero.shop/src/main/java/org/hiero/shop/package-info.java")))
                 .contains("package org.hiero.shop;");

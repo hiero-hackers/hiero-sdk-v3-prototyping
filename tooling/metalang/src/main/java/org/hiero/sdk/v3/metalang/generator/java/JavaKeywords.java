@@ -26,14 +26,4 @@ final class JavaKeywords {
     static String identifier(final String name) {
         return KEYWORDS.contains(name) ? name + "_" : name;
     }
-
-    /**
-     * Returns the getter name of an attribute ({@code symbol} becomes {@code getSymbol}).
-     *
-     * @param attribute the attribute name
-     * @return the getter name
-     */
-    static String getter(final String attribute) {
-        return "get" + Character.toUpperCase(attribute.charAt(0)) + attribute.substring(1);
-    }
 }

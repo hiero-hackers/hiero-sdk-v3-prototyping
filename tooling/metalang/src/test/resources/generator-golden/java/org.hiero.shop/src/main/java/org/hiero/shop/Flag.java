@@ -14,7 +14,7 @@ public enum Flag {
     }
 
     /// Returns the `default` of this value.
-    public boolean getDefault() {
+    public boolean default_() {
         return default_;
     }
 }

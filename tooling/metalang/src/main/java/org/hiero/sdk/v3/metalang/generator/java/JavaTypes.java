@@ -11,14 +11,17 @@ import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
  *
  * <ul>
  *   <li>{@code intX}/{@code uintX}: {@code byte} (X &le; 8), {@code short} (&le; 16), {@code int} (&le; 32),
- *       {@code long} (&le; 64), otherwise {@code BigInteger}; {@code double}, {@code bool} likewise. The primitive
+ *       {@code long} (&le; 64), otherwise {@code BigInteger}; {@code uint8}/{@code uint16}/{@code uint32} use the
+ *       next wider type ({@code short}/{@code int}/{@code long});
+ *       {@code double}, {@code bool} likewise. The primitive
  *       is used unless the value is nullable or a type argument; then the wrapper class is used.</li>
- *   <li>Reference types of a declaration get {@code @NonNull} or {@code @Nullable} (jspecify, type-use syntax).</li>
+ *   <li>Every module is {@code @NullMarked} (jspecify): unannotated types are non-null, exactly like the
+ *       meta-language. Only {@code @@nullable} declarations get {@code @Nullable} (type-use syntax).</li>
  * </ul>
  */
 final class JavaTypes {
 
-    /** The jspecify package of {@code @NonNull} / {@code @Nullable}. */
+    /** The jspecify package of {@code @NullMarked} / {@code @Nullable}. */
     static final String JSPECIFY = "org.jspecify.annotations";
 
     private JavaTypes() {
@@ -30,15 +33,29 @@ final class JavaTypes {
      * @param type     the meta-language type
      * @param nullable whether the declaration is {@code @@nullable}
      * @param imports  the imports of the file
-     * @return the Java type, e.g. {@code int}, {@code @Nullable Integer}, {@code @NonNull String},
-     *         {@code byte @NonNull []}
+     * @return the Java type, e.g. {@code int}, {@code @Nullable Integer}, {@code String}, {@code byte @Nullable []}
      */
     static String declaration(final Type type, final boolean nullable, final Imports imports) {
-        final String java = type(type, nullable, imports);
-        if (isPrimitive(java) || java.equals("void")) {
-            return java;
+        return declaration(type, nullable, nullable, imports);
+    }
+
+    /**
+     * Returns the Java type of a declaration including its nullness annotation, optionally with the wrapper class of
+     * a primitive even if the declaration is not nullable (an accessor must keep the Java type of the accessor it
+     * implements, e.g. {@code Long} for an inherited {@code $$T} or {@code @@nullable} attribute).
+     *
+     * @param type     the meta-language type
+     * @param nullable whether the declaration is {@code @@nullable}
+     * @param boxed    whether a primitive must be replaced by its wrapper class
+     * @param imports  the imports of the file
+     * @return the Java type
+     */
+    static String declaration(final Type type, final boolean nullable, final boolean boxed, final Imports imports) {
+        final String java = type(type, nullable || boxed, imports);
+        if (!nullable || isPrimitive(java) || java.equals("void")) {
+            return java; // non-null is the default of the @NullMarked module
         }
-        return annotate(java, imports.use(JSPECIFY, nullable ? "Nullable" : "NonNull"));
+        return annotate(java, imports.use(JSPECIFY, "Nullable"));
     }
 
     /**
@@ -56,7 +73,7 @@ final class JavaTypes {
             case Type.BasicType basic -> basic(basic, boxed, imports);
             case Type.DeclaredType declared -> imports.use(JavaNames.packageName(declared.name().namespace()),
                     declared.name().name()) + arguments(declared.arguments(), imports);
-            case Type.TypeVariable variable -> variable.name().substring(2);
+            case Type.TypeVariable variable -> imports.typeVariable(variable.name());
             case Type.WildcardType wildcard -> wildcard.upperBound() == null ? "?"
                     : "? extends " + type(wildcard.upperBound(), true, imports);
             case Type.AnyType ignored -> "Object";
@@ -74,7 +91,7 @@ final class JavaTypes {
     private static String basic(final Type.BasicType basic, final boolean boxed, final Imports imports) {
         final BuiltinType builtin = basic.builtin();
         return switch (builtin.category()) {
-            case INTEGER -> integer(builtin.bits(), boxed, imports);
+            case INTEGER -> integer(javaBits(builtin), boxed, imports);
             case FLOAT -> boxed ? "Double" : "double";
             case DECIMAL -> imports.use("java.math", "BigDecimal");
             case BOOL -> boxed ? "Boolean" : "boolean";
@@ -95,6 +112,19 @@ final class JavaTypes {
             case DURATION -> imports.use("java.time", "Duration");
             case STREAM_RESULT -> throw new UnsupportedTypeException(basic.text());
         };
+    }
+
+    /**
+     * Returns the width of the Java integer type of an {@code intX}/{@code uintX}. Java integers are signed, so
+     * {@code uint8}, {@code uint16} and {@code uint32} use the next wider type ({@code short}, {@code int},
+     * {@code long}) to hold all their values. {@code uint64} stays {@code long} (the usual Java convention for
+     * unsigned 64-bit values, see {@code Long.toUnsignedString}).
+     *
+     * @param builtin the integer type
+     * @return the width of the Java type
+     */
+    static int javaBits(final BuiltinType builtin) {
+        return builtin.name().startsWith("uint") && builtin.bits() <= 32 ? builtin.bits() * 2 : builtin.bits();
     }
 
     private static String integer(final int bits, final boolean boxed, final Imports imports) {
@@ -124,8 +154,8 @@ final class JavaTypes {
     }
 
     /**
-     * Puts a type-use annotation at the right place: in front of the simple type ({@code @NonNull String}) or in
-     * front of the array brackets ({@code byte @NonNull []}).
+     * Puts a type-use annotation at the right place: in front of the simple type ({@code @Nullable String}) or in
+     * front of the array brackets ({@code byte @Nullable []}).
      */
     static String annotate(final String java, final String annotation) {
         if (java.endsWith("[]")) {
@@ -146,6 +176,20 @@ final class JavaTypes {
 
         UnsupportedTypeException(final String type) {
             super("Type '" + type + "' has no Java mapping yet");
+        }
+
+        private UnsupportedTypeException(final String message, final boolean ignored) {
+            super(message);
+        }
+
+        /**
+         * Creates an exception with the given message.
+         *
+         * @param message the message
+         * @return the exception
+         */
+        static UnsupportedTypeException withMessage(final String message) {
+            return new UnsupportedTypeException(message, true);
         }
     }
 }

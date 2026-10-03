@@ -71,21 +71,23 @@ class JavaGeneratorTest {
             // GIVEN two namespaces in folder "my-base" and one in "client"
             final List<GeneratedFile> files = generate(Map.of(
                     "my-base/a.md", TestSpecs.markdown("namespace a\nA {}\n"),
-                    "my-base/b.md", TestSpecs.markdown("namespace b.sub\nB {}\n"),
+                    "my-base/b.md", TestSpecs.markdown("namespace b.sub\nconstant LIMIT: int32 = 1\n"),
                     "client/c.md", TestSpecs.markdown("namespace c\nrequires {A} from a\nC { @@immutable a: A }\n")));
 
             // THEN
             assertThat(files).extracting(GeneratedFile::path).containsExactly(
                     "org.hiero.client/src/main/java/module-info.java",
+                    "org.hiero.client/src/main/java/org/hiero/c/C.java",
                     "org.hiero.client/src/main/java/org/hiero/c/package-info.java",
                     "org.hiero.my.base/src/main/java/module-info.java",
+                    "org.hiero.my.base/src/main/java/org/hiero/a/A.java",
                     "org.hiero.my.base/src/main/java/org/hiero/a/package-info.java",
                     "org.hiero.my.base/src/main/java/org/hiero/b/sub/package-info.java");
             assertThat(moduleInfo(files, "org.hiero.my.base")).contains("""
                     module org.hiero.my.base {
                         requires static transitive org.jspecify;
 
-                        // exports org.hiero.a; (enabled as soon as the package contains generated types)
+                        exports org.hiero.a;
                         // exports org.hiero.b.sub; (enabled as soon as the package contains generated types)
                     }
                     """).contains("/// Module `org.hiero.my.base` of the Hiero SDK.\n///\n/// Packages:\n"
@@ -163,7 +165,8 @@ class JavaGeneratorTest {
         @Test
         void shouldNotGenerateAPackageInfoWithoutDescription() {
             final List<GeneratedFile> files = generate(Map.of("f/a.md", "## API Schema\n```\nnamespace a\nX {}\n```\n"));
-            assertThat(files).extracting(GeneratedFile::path).containsExactly("org.hiero.f/src/main/java/module-info.java");
+            assertThat(files).extracting(GeneratedFile::path).containsExactly("org.hiero.f/src/main/java/module-info.java",
+                    "org.hiero.f/src/main/java/org/hiero/a/X.java");
         }
     }
 
@@ -269,12 +272,26 @@ class JavaGeneratorTest {
             final long withDescription = model.namespaces().stream()
                     .filter(n -> n.sources().stream().anyMatch(src -> !src.description().isBlank())).count();
             final long records = files.stream().filter(f -> f.content().contains("\npublic record ")).count();
-            assertThat(files).hasSize(5 + (int) withDescription + (int) enums + (int) records);
-            assertThat(records).isGreaterThanOrEqualTo(20);
-            assertThat(generator.deferredRecords(model)).isNotEmpty()
-                    .allSatisfy((type, reason) -> assertThat(reason).startsWith("refers to "));
+            final long interfaces = files.stream()
+                    .filter(f -> f.content().matches("(?s).*\npublic (sealed |non-sealed )?interface .*")).count();
+            final long enumFiles = files.stream().filter(f -> f.content().contains("\npublic enum ")).count();
+            final long classes = files.stream()
+                    .filter(f -> f.content().matches("(?s).*\npublic (abstract )?(sealed |non-sealed |final )?class .*"))
+                    .count();
+            assertThat(files).hasSize(5 + (int) withDescription + (int) enumFiles + (int) records + (int) interfaces
+                    + (int) classes);
+            assertThat(enumFiles).isEqualTo(enums);
+            assertThat(records).isGreaterThanOrEqualTo(80);
+            assertThat(classes).isGreaterThanOrEqualTo(100);
+            assertThat(interfaces).isGreaterThanOrEqualTo(10);
+            // what is left are spec issues: covariant @@async overrides, missing Java mappings, and their dependants
+            assertThat(generator.deferredTypes(model)).hasSizeLessThanOrEqualTo(12);
             assertThat(namespaces).isGreaterThanOrEqualTo((int) withDescription);
             assertThat(files).noneMatch(f -> f.content().contains("Specified in") || f.content().contains(".md`"));
+            // non-null is the default of every module; only @@nullable declarations are annotated
+            assertThat(files).filteredOn(f -> f.path().endsWith("/module-info.java"))
+                    .allMatch(f -> f.content().contains("@NullMarked\nmodule "));
+            assertThat(files).noneMatch(f -> f.content().contains("@NonNull"));
             assertThat(enums).isEqualTo(16);
         }
 

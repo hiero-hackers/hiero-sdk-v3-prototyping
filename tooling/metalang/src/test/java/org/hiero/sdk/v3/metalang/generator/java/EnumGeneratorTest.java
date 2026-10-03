@@ -39,8 +39,8 @@ class EnumGeneratorTest {
 
         @ParameterizedTest
         @CsvSource({
-                "int8, false, byte", "int8, true, Byte", "uint8, false, byte", "int16, false, short",
-                "uint32, true, Integer", "int64, false, long", "int128, false, BigInteger", "uint256, false, BigInteger",
+                "int8, false, byte", "int8, true, Byte", "uint8, false, short", "int16, false, short", "uint16, false, int", "uint16, true, Integer", "uint64, false, long",
+                "uint32, true, Long", "uint32, false, long", "int64, false, long", "int128, false, BigInteger", "uint256, false, BigInteger",
                 "double, false, double", "double, true, Double", "bool, false, boolean", "bool, true, Boolean",
                 "decimal, false, BigDecimal", "string, false, String", "bytes, false, byte[]", "uuid, false, UUID",
                 "date, false, LocalDate", "time, false, LocalTime", "dateTime, false, LocalDateTime",
@@ -77,9 +77,11 @@ class EnumGeneratorTest {
             final Imports imports = new Imports("p");
             assertThat(JavaTypes.declaration(basic("int32"), false, imports)).isEqualTo("int");
             assertThat(JavaTypes.declaration(basic("int32"), true, imports)).isEqualTo("@Nullable Integer");
-            assertThat(JavaTypes.declaration(basic("bytes"), false, imports)).isEqualTo("byte @NonNull []");
+            assertThat(JavaTypes.declaration(basic("bytes"), false, imports)).isEqualTo("byte[]");
             assertThat(JavaTypes.declaration(new Type.VoidType(), false, imports)).isEqualTo("void");
-            assertThat(JavaTypes.annotate("java.math.BigDecimal", "NonNull")).isEqualTo("java.math.@NonNull BigDecimal");
+            assertThat(JavaTypes.declaration(basic("bytes"), true, imports)).isEqualTo("byte @Nullable []");
+            assertThat(JavaTypes.declaration(basic("string"), false, imports)).isEqualTo("String");
+            assertThat(JavaTypes.annotate("java.math.BigDecimal", "Nullable")).isEqualTo("java.math.@Nullable BigDecimal");
             assertThat(JavaTypes.annotate("a.B<c.D>", "Nullable")).isEqualTo("a.@Nullable B<c.D>");
         }
 
@@ -116,7 +118,29 @@ class EnumGeneratorTest {
         void shouldEscapeJavaKeywords() {
             assertThat(JavaKeywords.identifier("default")).isEqualTo("default_");
             assertThat(JavaKeywords.identifier("value")).isEqualTo("value");
-            assertThat(JavaKeywords.getter("default")).isEqualTo("getDefault");
+        }
+
+        @Test
+        void shouldRenameTypeVariablesThatShadowSpecOrJavaLangTypes() {
+            // GIVEN the spec types Receipt and ReceiptT
+            final Imports imports = new Imports("p", java.util.Set.of("Receipt", "ReceiptT"));
+
+            // THEN
+            assertThat(imports.typeVariable("$$Self")).isEqualTo("Self");
+            assertThat(imports.typeVariable("$$Receipt")).isEqualTo("ReceiptTT");
+            assertThat(imports.typeVariable("$$String")).isEqualTo("StringT");
+            assertThat(imports.typeVariable("T")).isEqualTo("T");
+        }
+
+        @Test
+        void shouldRejectAccessorsThatClashWithObjectOrEnumMethods() {
+            assertThat(JavaMembers.accessor("code", true)).isEqualTo("code");
+            assertThat(JavaMembers.accessor("default", false)).isEqualTo("default_");
+            assertThat(JavaMembers.accessor("name", false)).isEqualTo("name");
+            assertThatThrownBy(() -> JavaMembers.accessor("name", true))
+                    .hasMessage("Attribute 'name' clashes with Enum.name()");
+            assertThatThrownBy(() -> JavaMembers.accessor("hashCode", false))
+                    .hasMessage("Attribute 'hashCode' clashes with Object.hashCode()");
         }
     }
 
@@ -134,6 +158,11 @@ class EnumGeneratorTest {
             assertThat(literal(one, basic("int16"))).isEqualTo("(short) 1_000");
             assertThat(literal(one, basic("int32"))).isEqualTo("1_000");
             assertThat(literal(one, basic("int64"))).isEqualTo("1_000L");
+            // unsigned types use the next wider Java type
+            assertThat(literal(one, basic("uint8"))).isEqualTo("(short) 1_000");
+            assertThat(literal(one, basic("uint16"))).isEqualTo("1_000");
+            assertThat(literal(one, basic("uint32"))).isEqualTo("1_000L");
+            assertThat(literal(one, basic("uint64"))).isEqualTo("1_000L");
             assertThat(literal(one, basic("uint256"))).isEqualTo("new BigInteger(\"1000\")");
             assertThat(literal(one, basic("decimal"))).isEqualTo("new BigDecimal(\"1000\")");
             assertThat(literal(one, basic("double"))).isEqualTo("1_000.0");
@@ -176,7 +205,7 @@ class EnumGeneratorTest {
         void shouldGenerateEnumWithoutValuesAndBytesAttributeWithDefensiveCopy() {
             assertThat(enumSource("namespace a\nenum E(data: bytes) { A([1, 2]) }"))
                     .contains("A(new byte[] {(byte) 1, (byte) 2});")
-                    .contains("public byte @NonNull [] getData() {\n        return data.clone();\n    }");
+                    .contains("public byte[] data() {\n        return data.clone();\n    }");
             assertThat(enumSource("namespace a\nenum E { }")).contains("public enum E {\n\n    ;\n}");
         }
 
@@ -196,16 +225,17 @@ class EnumGeneratorTest {
 
             // THEN
             assertThat(java).contains("@Deprecated\npublic enum E {")
-                    .contains("public @NonNull CompletionStage<String> load() {")
-                    .contains("public @NonNull CompletionStage<Void> fire() {")
-                    .contains("    @Deprecated\n    public <T extends Base> @NonNull T convert(final @NonNull T value, "
-                            + "final @NonNull String... tags) {");
+                    .contains("public CompletionStage<String> load() {")
+                    .contains("public CompletionStage<Void> fire() {")
+                    .contains("    @Deprecated\n    public <T extends Base> T convert(final T value, "
+                            + "final String... tags) {");
         }
 
         @Test
-        void shouldReportEnumsThatCannotBeGeneratedYet() {
-            // GIVEN a method with a function type and a streaming method
-            final Map<String, String> documents = Map.of("f/a.md", TestSpecs.markdown("""
+        void shouldDeferEnumsThatCannotBeGeneratedYet() {
+            // GIVEN a method with a function type, a streaming method, an attribute that clashes with Enum.name()
+            // and an attribute of a type that is not generated
+            final LinkedModel model = LinkedModel.of(new MetaLang().validate(Map.of("f/a.md", TestSpecs.markdown("""
                     namespace a
                     enum E { A
                         void each(cb: function<void run()>)
@@ -213,13 +243,21 @@ class EnumGeneratorTest {
                     enum S { A
                         @@streaming int8 items()
                     }
-                    """));
+                    enum N(name: string) { A("a") }
+                    Mutable { value: int32
+                        void each(cb: function<void run()>) }
+                    enum M(value: Mutable) { }
+                    """))).model());
 
             // WHEN / THEN
-            assertThatThrownBy(() -> new JavaGenerator().generate(LinkedModel.of(new MetaLang().validate(documents)
-                    .model()))).isInstanceOfSatisfying(GenerationException.class, e -> assertThat(e.problems())
-                    .containsExactly("a.E: Type 'function<void run()>' has no Java mapping yet",
-                            "a.S: Type '@@streaming int8' has no Java mapping yet"));
+            assertThat(new JavaGenerator().deferredTypes(model)).containsExactly(
+                    Map.entry(new QualifiedName("a", "E"), "Type 'function<void run()>' has no Java mapping yet"),
+                    Map.entry(new QualifiedName("a", "M"), "refers to a.Mutable (class, not generated yet)"),
+                    Map.entry(new QualifiedName("a", "Mutable"), "Type 'function<void run()>' has no Java mapping yet"),
+                    Map.entry(new QualifiedName("a", "N"), "Attribute 'name' clashes with Enum.name()"),
+                    Map.entry(new QualifiedName("a", "S"), "Type '@@streaming int8' has no Java mapping yet"));
+            assertThat(new JavaGenerator().generate(model)).noneMatch(f -> f.path().endsWith(".java")
+                    && !f.path().endsWith("-info.java"));
         }
     }
 }

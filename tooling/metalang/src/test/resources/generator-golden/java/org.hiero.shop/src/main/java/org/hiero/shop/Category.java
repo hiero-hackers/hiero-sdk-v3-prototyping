@@ -2,11 +2,10 @@
 
 package org.hiero.shop;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /// A product category.
-public enum Category {
+public enum Category implements Coded {
 
     /// things to eat
     FOOD((byte) 1, "Food"),
@@ -23,12 +22,13 @@ public enum Category {
     }
 
     /// Returns the `code` of this value.
-    public byte getCode() {
+    @Override
+    public byte code() {
         return code;
     }
 
     /// Returns the `label` of this value.
-    public @Nullable String getLabel() {
+    public @Nullable String label() {
         return label;
     }
 
@@ -38,7 +38,7 @@ public enum Category {
     }
 
     /// @throws java.util.NoSuchElementException
-    public static @NonNull Category byCode(final byte code) {
+    public static Category byCode(final byte code) {
         throw new UnsupportedOperationException("Not implemented yet: Category.byCode");
     }
 }

@@ -1,5 +1,6 @@
 package org.hiero.sdk.v3.metalang.validation;
 
+import java.util.Optional;
 import java.util.regex.Pattern;
 import org.hiero.sdk.v3.metalang.ast.Annotation;
 import org.hiero.sdk.v3.metalang.ast.Declaration;
@@ -14,6 +15,7 @@ import org.hiero.sdk.v3.metalang.ast.TypeRef;
 import org.hiero.sdk.v3.metalang.diagnostic.DiagnosticCollector;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
 import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
+import org.hiero.sdk.v3.metalang.semantic.ReservedNames;
 import org.hiero.sdk.v3.metalang.semantic.SpecModel;
 
 /**
@@ -48,11 +50,18 @@ final class NamingCheck implements Check {
             case Declaration.TypeDeclaration type -> {
                 check(PASCAL, Rule.NAMING_TYPE, "Type", type.name(), type.location(), out);
                 type.typeParameters().forEach(p -> checkGeneric(p, out));
+                final boolean inEnum = type instanceof Declaration.EnumType;
                 type.fields().forEach(f -> checkField(f, out));
+                type.fields().forEach(f -> reserved(ReservedNames.attribute(f.name(), inEnum), "Attribute", f.name(),
+                        f.location(), out));
                 type.methods().forEach(m -> checkMethod(m, out));
+                type.methods().forEach(m -> reserved(ReservedNames.method(m.name(), inEnum), "Method", m.name(),
+                        m.location(), out));
                 if (type instanceof Declaration.EnumType enumType) {
                     for (final Parameter attribute : enumType.attributes()) {
                         check(LOWER_CAMEL, Rule.NAMING_MEMBER, "Enum attribute", attribute.name(),
+                                attribute.location(), out);
+                        reserved(ReservedNames.attribute(attribute.name(), true), "Attribute", attribute.name(),
                                 attribute.location(), out);
                     }
                     for (final EnumValue value : enumType.values()) {
@@ -106,6 +115,12 @@ final class NamingCheck implements Check {
             out.report(Rule.NAMING_GENERIC, "Generic parameter '" + parameter.name()
                     + "' should be '$$' followed by a PascalCase name", parameter.location());
         }
+    }
+
+    private static void reserved(final Optional<String> clash, final String kind, final String name,
+                                 final SourceLocation location, final DiagnosticCollector out) {
+        clash.ifPresent(member -> out.report(Rule.NAMING_RESERVED, kind + " name '" + name
+                + "' is reserved (it clashes with " + member + " in Java)", location));
     }
 
     private static void check(final Pattern pattern, final Rule rule, final String kind, final String name,

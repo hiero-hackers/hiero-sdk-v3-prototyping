@@ -82,11 +82,11 @@ model. The output is deterministic: a diff of two runs shows exactly how a spec 
 Generates the Java API into `tooling/metalang/target/generated/java` (ignored by git):
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=java --fail-on=never --output=tooling/metalang/target/generated/java spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=java --fail-on=never --config=sdk-java/generator.properties --output=tooling/metalang/target/generated/java spec
 ```
 
 Without `--fail-on=never` nothing is generated as long as the specs have validation errors. See
-[Java generator](#java-generator) for what is generated. `--show-deferred` lists the record types that are not
+[Java generator](#java-generator) for what is generated. `--show-deferred` lists the types that are not
 generated yet and why.
 
 To check the result with a JDK 25 (`javac`/`javadoc` of JDK 25 on the `PATH`; the jspecify jar is in the local Maven
@@ -156,6 +156,9 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
 - **One JPMS module per spec folder**: `spec/consensus-node-client/` becomes the module `org.hiero.consensus.node.client`
   (folder name with `-` replaced by `.`), laid out like a Maven module (`<module>/src/main/java/`).
 - **One package per namespace**: `consensusnode.transactions` becomes `org.hiero.consensusnode.transactions`.
+- **`@NullMarked` modules**: every `module-info.java` is annotated with jspecify's `@NullMarked`, so unannotated types
+  are non-null — the default of the meta-language. Only `@@nullable` declarations get `@Nullable`; `@NonNull` is never
+  generated (it would be about 700 annotations, see "Prefer `@NullMarked` and `@Nullable`" in the Java guide).
 - **`module-info.java`**: `requires transitive` for every module whose namespaces are used (specs only contain public
   API, so these types are part of the module's API); `requires static transitive org.jspecify` (the nullness
   annotations are part of the exported API, otherwise `javac -Xlint:exports` warns); one `exports` per package. As
@@ -174,15 +177,49 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
 
 - **Enums**: values with their attribute arguments as typed Java literals (`(byte) 1`, `1L`, `new BigInteger("…")`,
   `Duration.ofSeconds(…)`, `Kind.A`, `List.of(…)`), `private final` fields set by the constructor (non-nullable
-  references checked with `Objects.requireNonNull`), a getter per attribute (`getSymbol()`), Markdown Javadoc from the
-  declaration comments, `@Deprecated`. **Methods** are generated with their full signature (`@@async` →
-  `CompletionStage<T>`, generics, varargs, nullness annotations), but their behaviour is only described in the spec,
-  so the body throws `UnsupportedOperationException` for now. `implements` of an abstraction is written as a comment
-  until abstractions are generated.
+  references checked with `Objects.requireNonNull`), an accessor per attribute (`symbol()`, `@Override` if it
+  implements an interface accessor), Markdown Javadoc from the declaration comments, `@Deprecated`. **Methods** are
+  generated with their full signature (`@@async` → `CompletionStage<T>`, generics, varargs, nullness annotations), but
+  their behaviour is only described in the spec, so the body throws `UnsupportedOperationException` for now;
+  inherited methods get `@Override`.
+- **Accessors and setters** (all kinds of types): attribute `name` → accessor `name()` (no `get` prefix, so records,
+  enums and classes can implement the same interface); a mutable attribute also gets `setName(value)`, which returns
+  the object (in interfaces the `$$Self` type parameter, otherwise the interface). Attribute names that clash with
+  `Object` methods (`hashCode`, `wait`, …) or, in enums, `Enum` methods (`name`, `ordinal`, …) are reserved
+  (`naming.reserved`, see "Reserved names" in the guideline) and not generated.
+- **Abstract class or interface** (see "Abstractions: Abstract Classes or Interfaces" in the Java guide): an
+  abstraction with attributes (own or inherited) or a `@@finalMethod` becomes an abstract class, the others become
+  interfaces. An abstraction with attributes stays an interface if an enum or an interface extends it, or if a type
+  extends it together with another class — then *none* of the involved abstractions becomes a class (Java has no
+  multiple inheritance; the result does not depend on the order of `extends`). The rule is applied until nothing
+  changes; supertypes of interfaces are interfaces.
+- **Generator configuration** (`--config=<file>`, `sdk-java/generator.properties` for this repository):
+  `java.interfaces` lists abstractions that become interfaces although they have attributes — e.g. to keep one of two
+  abstractions of a type a class. Unknown keys, malformed names, unknown types, non-abstractions and abstractions with
+  a `@@finalMethod` are errors.
+- **Interfaces** (`InterfaceGenerator`): abstract accessors and setters for the declared attributes, abstract
+  methods, `@@static` methods as stubs, `extends` for supertypes (which must be abstractions), `@@sealed(A, B)` →
+  `sealed interface … permits A, B` (permitted types in the same module), `non-sealed` for sub-interfaces of a sealed
+  interface.
+- **Classes** (`ClassGenerator`), abstract and concrete: the class stores the attributes its superclass does not
+  store (`private final` for `@@immutable`), has an explicit constructor (`protected` for abstract classes) that
+  takes the attributes without other initial value, passes the superclass attributes to `super(...)`, checks
+  (`requireNonNull`, validation annotations) and copies collections/arrays; a second constructor without immutable
+  `@@default` attributes; accessors `name()`; setters `setName(value)` with the same checks that return the object
+  (`$$Self` with `@SuppressWarnings("unchecked")` cast, otherwise covariant overrides in subclasses so chains keep the
+  concrete type); abstract/`final` methods in abstract classes, stubs for everything a concrete class must implement;
+  `toString` (`Name[a=..., ...]`, arrays by length) and, for value classes (all attributes immutable), `equals` and
+  `hashCode`. `final` for `@@finalType` and for leaves of sealed hierarchies, otherwise `non-sealed` below a sealed
+  type.
+- **Implementations keep the Java types of what they implement**: an attribute or method declared with `$$T`, or an
+  attribute that is `@@nullable` in a supertype, uses the wrapper class (`Long`) in all implementations, also where a
+  primitive would be possible (`LongHolder extends Holder<int64>`, nullability narrowed with `@@override`).
+- **Type variables** drop `$$`; if the name is also a spec or `java.lang` type, `T` is appended
+  (`$$Receipt extends Receipt` → `ReceiptT extends Receipt`).
 - **Records** (`RecordGenerator`): a complex type becomes a `record` if it is no abstraction, has at least one
-  attribute, all its attributes (inherited ones included) are `@@immutable`, it extends no complex type, inherits no
-  `@@finalMethod` (that supertype becomes an abstract class) and no type extends it — records are final and cannot
-  extend classes. Types without attributes never become records. Generated:
+  attribute, all its attributes (inherited ones included) are `@@immutable`, it extends no class (neither a concrete
+  type nor an abstraction that becomes an abstract class) and no type extends it — records are final and cannot
+  extend classes; the other complex types become classes. Types without attributes never become records. Generated:
   - components = effective attributes (inherited first), documented with `@param`;
   - a compact constructor with `Objects.requireNonNull` for non-nullable references, `List/Set/Map.copyOf` for
     collections, `clone()` for `bytes`, and the checks of `@@min`/`@@max`/`@@minLength`/`@@maxLength`/`@@minSize`/
@@ -195,18 +232,24 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   - `@@deprecated` attributes: an explicit accessor with `@Deprecated` (on the component it only causes a javac
     warning);
   - methods as stubs (see Enums); `toString()`/`hashCode()`/`equals(ANY)` get `@Override`.
-
-  A record is only generated once every type it refers to (attributes, methods, bounds) is generated as well;
-  otherwise it is **deferred** (`generate --show-deferred`). Today 23 records are generated and 110 deferred — most
-  of them wait for abstractions (`Authority`, `TransactionStatus`, `NativeTokenUnit`, …) or for types that refer to
-  them (`AccountId` → `Network`).
-- **Type mapping** (`JavaTypes`): `intX`/`uintX` → `byte`/`short`/`int`/`long`/`BigInteger` by width, primitives
+- **Deferred types**: a type is only generated once every type it refers to (attributes, methods, bounds, the
+  superclass, for interfaces all supertypes, permitted subtypes) is generated as well and all its types have a Java
+  mapping — otherwise it is **deferred** (`generate --show-deferred`) instead of breaking the compilation. The plan is
+  a greatest fixed point, so types that refer to each other are generated together. Records, enums and classes
+  implement only generated interfaces; other interfaces are written as a comment. An `@@async` method that overrides
+  an inherited one with another return type is deferred too: the meta-language allows the covariant return type, but
+  `CompletionStage<T>` is invariant in Java. Today 16 enums, 84 records, 16 interfaces, 15 abstract classes and 107
+  classes are generated; 12 types are deferred: `PaidQuery` (covariant `@@async submit`, see above) and the 9 paid
+  queries extending it, `AccountCreateTransaction` (`@@default(0)` on a `NativeToken` attribute has no Java form) and
+  `TopicService` (`@@streaming` is not mapped yet).
+- **Type mapping** (`JavaTypes`): `intX`/`uintX` → `byte`/`short`/`int`/`long`/`BigInteger` by width; `uint8`/`uint16`/`uint32` use the next
+  wider type (`short`/`int`/`long`) because Java integers are signed, `uint64` stays `long`, primitives
   unless nullable or a type argument, `bytes` → `byte[]`, collections → `List`/`Set`/`Map`, time types →
   `java.time`, `seconds`/`duration` → `Duration`, `type<T>` → `Class<? extends T>`, `ANY` → `Object`. Not mapped
   yet (reported as generation problem): function types, `streamResult`, `@@streaming`. Java keywords used as names
   get a trailing `_`.
 
-Not generated yet: complex types, abstractions, constants, namespace-level functions.
+Not generated yet: constants, namespace-level functions, `@@streaming` methods, function types.
 
 ## Lenient grammar: syntax variants found in the specs
 
@@ -258,7 +301,7 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 520 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
+`mvn verify` runs about 550 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
 excluded). Besides unit tests per component, the suite contains these systematic checks:
 
 | Test | What it guarantees |
@@ -270,6 +313,8 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `RobustnessTest` | Seeded random mutations and every prefix of every real spec never crash the tool and never report a location outside the document; results do not depend on document order; AST locations point at the element; the textual form of every type and literal parses back to itself. |
 | `RepositorySpecsTest` | All specs under `spec/` are free of syntax errors and the report is deterministic. |
 | `ModelCommandTest` | `metalang model` output for the example specs in `src/test/resources/model-golden/spec` equals the golden file `model-golden/model.json` byte for byte; filters, exit codes and determinism on the real specs. After an intended change, regenerate the golden file (command in the test's Javadoc). |
+| `ClassGeneratorTest` | Which abstraction becomes an abstract class or an interface (attributes, enums, interfaces, multiple inheritance with *none* as result, upward propagation, configuration, `@@finalMethod`), configuration errors, covariant `@@async` overrides, generated classes (state, constructors with `super(...)`, `$$Self` setters, covariant setter overrides, narrowed nullability, defaults, value classes, sealed hierarchies) and their **runtime behaviour** (checks, defensive copies, chained setters, equality). |
+| `InterfaceGeneratorTest` | Generated interfaces (accessors, setters returning the self type, abstract and static methods, renamed type variables), records and enums implementing generic interfaces with wrapper types and `@Override`, nullability narrowing, `sealed`/`non-sealed`, supertypes as comment, and every deferral reason. Every case is compiled with `-Xlint:all -Werror`. |
 | `RecordGeneratorTest` | Which types become records (inherited attributes, extended types, inherited `@@finalMethod`, type arguments of supertypes), deferral (transitive, through methods, bounds, wildcards; unmapped types), generated source details, and the **runtime behaviour** of the golden records: they are compiled in-process and called (null checks, every constraint, `URI` check, defensive copies, default constructor, `bytes` equality, method stubs). |
 | `JavaGeneratorTest` | Golden files for the example specs (`generator-golden/java`), module/package rules and the three structural errors, Markdown comment escaping, and: the modules generated for **all real specs compile** with `-Xlint:all -Werror` through the module system. |
 | `LinkedRepositorySpecsTest` | Linking all real specs leaves no unresolved reference, every declared type exists, self types are substituted (`Transaction`, `NativeToken`), and linking is deterministic. |

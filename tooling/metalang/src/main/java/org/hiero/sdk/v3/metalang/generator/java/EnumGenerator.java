@@ -15,7 +15,7 @@ import org.hiero.sdk.v3.metalang.model.TypeDefinition;
  *
  * <ul>
  *   <li>Attributes of the attribute list become {@code private final} fields, set by the constructor in the order
- *       of the attribute list, with a getter each ({@code getSymbol()}). Non-nullable reference attributes are
+ *       of the attribute list, with an accessor each ({@code symbol()}). Non-nullable reference attributes are
  *       checked with {@code Objects.requireNonNull}.</li>
  *   <li>Methods are generated with their signature; their behaviour is only described in the spec, so the body
  *       throws {@link UnsupportedOperationException} until an implementation strategy exists.</li>
@@ -28,10 +28,11 @@ final class EnumGenerator {
     private EnumGenerator() {
     }
 
-    static GeneratedFile generate(final String module, final TypeDefinition.EnumDefinition enumType) {
+    static GeneratedFile generate(final String module, final TypeDefinition.EnumDefinition enumType,
+                                  final JavaContext context) {
         final String packageName = JavaNames.packageName(enumType.name().namespace());
         final String name = enumType.name().name();
-        final Imports imports = new Imports(packageName, name);
+        final Imports imports = context.imports(enumType);
         final StringBuilder body = new StringBuilder();
 
         // values
@@ -57,21 +58,23 @@ final class EnumGenerator {
             body.append("    ;\n");
         }
 
-        // fields, constructor, getters
+        // fields, constructor, accessors
         if (!enumType.attributes().isEmpty()) {
             body.append('\n');
             for (final ParameterDefinition attribute : enumType.attributes()) {
-                body.append("    private final ").append(JavaMembers.declaration(attribute.type(), attribute, imports)).append(' ')
-                        .append(JavaKeywords.identifier(attribute.name())).append(";\n");
+                body.append("    private final ").append(declaration(enumType, attribute, context, imports))
+                        .append(' ').append(JavaKeywords.identifier(attribute.name())).append(";\n");
             }
             body.append('\n');
             body.append("    ").append(name).append('(').append(enumType.attributes().stream()
-                    .map(a -> "final " + JavaMembers.declaration(a.type(), a, imports) + " " + JavaKeywords.identifier(a.name()))
+                    .map(a -> "final " + declaration(enumType, a, context, imports) + " "
+                            + JavaKeywords.identifier(a.name()))
                     .collect(Collectors.joining(", "))).append(") {\n");
             for (final ParameterDefinition attribute : enumType.attributes()) {
                 final String field = JavaKeywords.identifier(attribute.name());
                 final boolean check = !attribute.hasAnnotation("nullable")
-                        && !JavaTypes.isPrimitive(JavaTypes.type(attribute.type(), false, imports));
+                        && !JavaTypes.isPrimitive(JavaTypes.type(attribute.type(), false, imports))
+                        || context.boxed(enumType.name(), attribute.name()) && !attribute.hasAnnotation("nullable");
                 body.append("        this.").append(field).append(" = ").append(check
                         ? imports.use("java.util", "Objects") + ".requireNonNull(" + field + ", \"" + attribute.name()
                         + " must not be null\")" : field).append(";\n");
@@ -82,8 +85,11 @@ final class EnumGenerator {
                 body.append(MarkdownComment.render("    ", List.of("Returns the `" + attribute.name()
                         + "` of this value.")));
                 final String field = JavaKeywords.identifier(attribute.name());
-                body.append("    public ").append(JavaMembers.declaration(attribute.type(), attribute, imports)).append(' ')
-                        .append(JavaKeywords.getter(attribute.name())).append("() {\n")
+                if (context.overridesAccessor(enumType.name(), attribute.name())) {
+                    body.append("    @Override\n");
+                }
+                body.append("    public ").append(declaration(enumType, attribute, context, imports)).append(' ')
+                        .append(JavaMembers.accessor(attribute.name(), true)).append("() {\n")
                         .append("        return ").append(field)
                         .append(JavaTypes.type(attribute.type(), false, imports).endsWith("[]") ? ".clone()" : "")
                         .append(";\n    }\n");
@@ -92,9 +98,11 @@ final class EnumGenerator {
 
         // methods
         for (final MethodDefinition method : enumType.methods()) {
-            body.append('\n').append(JavaMembers.method(name, method, imports));
+            body.append('\n').append(JavaMembers.method(enumType, method, context, imports, JavaMembers.Body.STUB));
         }
 
+        // before rendering the imports: the clause registers imports too
+        final String supertypes = context.supertypes(enumType, "implements", imports);
         final StringBuilder java = new StringBuilder(JavaGenerator.HEADER).append('\n');
         java.append("package ").append(packageName).append(";\n\n");
         final String importBlock = imports.render();
@@ -106,9 +114,16 @@ final class EnumGenerator {
             java.append("@Deprecated\n");
         }
         java.append("public enum ").append(name);
-        java.append(JavaMembers.implementsComment(enumType.supertypes()));
+        java.append(supertypes);
         java.append(" {\n\n").append(body).append("}\n");
         return new GeneratedFile(JavaNames.packageDirectory(module, enumType.name().namespace()) + "/" + name
                 + ".java", java.toString());
+    }
+
+    private static String declaration(final TypeDefinition.EnumDefinition enumType,
+                                      final ParameterDefinition attribute, final JavaContext context,
+                                      final Imports imports) {
+        return JavaTypes.declaration(attribute.type(), attribute.hasAnnotation("nullable"),
+                context.boxed(enumType.name(), attribute.name()), imports);
     }
 }

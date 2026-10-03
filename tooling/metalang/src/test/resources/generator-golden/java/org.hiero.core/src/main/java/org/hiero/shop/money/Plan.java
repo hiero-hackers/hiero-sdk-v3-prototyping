@@ -6,35 +6,34 @@ import java.math.BigInteger;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
-import org.jspecify.annotations.NonNull;
 
 public enum Plan {
 
     BASIC(Duration.ofSeconds(30L), new BigInteger("1000"), List.of("a", "b")),
     PREMIUM(Duration.ofSeconds(3_600L), new BigInteger("100000000000000000000"), List.of());
 
-    private final @NonNull Duration timeout;
-    private final @NonNull BigInteger limit;
-    private final @NonNull List<String> tags;
+    private final Duration timeout;
+    private final BigInteger limit;
+    private final List<String> tags;
 
-    Plan(final @NonNull Duration timeout, final @NonNull BigInteger limit, final @NonNull List<String> tags) {
+    Plan(final Duration timeout, final BigInteger limit, final List<String> tags) {
         this.timeout = Objects.requireNonNull(timeout, "timeout must not be null");
         this.limit = Objects.requireNonNull(limit, "limit must not be null");
         this.tags = Objects.requireNonNull(tags, "tags must not be null");
     }
 
     /// Returns the `timeout` of this value.
-    public @NonNull Duration getTimeout() {
+    public Duration timeout() {
         return timeout;
     }
 
     /// Returns the `limit` of this value.
-    public @NonNull BigInteger getLimit() {
+    public BigInteger limit() {
         return limit;
     }
 
     /// Returns the `tags` of this value.
-    public @NonNull List<String> getTags() {
+    public List<String> tags() {
         return tags;
     }
 }

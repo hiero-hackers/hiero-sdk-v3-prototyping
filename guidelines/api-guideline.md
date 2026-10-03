@@ -1124,5 +1124,23 @@ To keep the API surface consistent and predictable, use the following naming rul
 - Error identifiers (in `@@throws`): lowercase-kebab-case (e.g., not-found-error, parse-error).
 - Constant names: UPPER_SNAKE_CASE (e.g., MAX_TRANSACTIONS).
 
+### Reserved names
+
+Some names cannot be used for attributes and methods, because they clash with members that every type inherits in a
+target language. Unlike keywords (a field called `default` simply becomes `default_` in Java), such a clash cannot be
+resolved by renaming without changing the API. The validator reports these names as `naming.reserved`.
+
+| Element | Reserved names | Reason |
+|---|---|---|
+| Attribute of any type | `clone`, `finalize`, `getClass`, `hashCode`, `notify`, `notifyAll`, `toString`, `wait` | The accessor (`name()`) would clash with a method of `java.lang.Object`. |
+| Attribute of an enum (in addition) | `describeConstable`, `getDeclaringClass`, `name`, `ordinal`, `values` | The accessor would clash with a method of `java.lang.Enum`. |
+| Method of any type | `clone`, `finalize`, `getClass`, `notify`, `notifyAll`, `wait` | Final or special methods of `java.lang.Object`. |
+| Method of an enum (in addition) | `compareTo`, `describeConstable`, `equals`, `getDeclaringClass`, `hashCode`, `name`, `ordinal`, `valueOf` | Final or generated methods of `java.lang.Enum` (`values()` must not be declared at all, see enums). |
+
+Methods named `toString()`, `hashCode()` and `equals(other: ANY)` are allowed in complex types and abstractions: they
+override the corresponding methods of the target language. The list grows when mappings for further languages are
+added; prefer a more specific name in any case (`displayName` instead of `name`, `statusCode` instead of `code` if the
+meaning is not obvious).
+
 ## Questions & Comments
 

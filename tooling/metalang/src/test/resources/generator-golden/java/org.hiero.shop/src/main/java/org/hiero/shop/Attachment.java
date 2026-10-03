@@ -4,12 +4,11 @@ package org.hiero.shop;
 
 import java.util.Arrays;
 import java.util.Objects;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /// A file attachment.
 public record Attachment(
-        byte @NonNull [] content,
+        byte[] content,
         byte @Nullable [] checksum,
         double weight,
         @Nullable Integer count) {
@@ -29,7 +28,7 @@ public record Attachment(
 
     /// Returns a copy of the `content` array.
     @Override
-    public byte @NonNull [] content() {
+    public byte[] content() {
         return content.clone();
     }
 

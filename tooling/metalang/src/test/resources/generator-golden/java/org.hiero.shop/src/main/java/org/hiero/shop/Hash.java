@@ -4,11 +4,10 @@ package org.hiero.shop;
 
 import java.util.Arrays;
 import java.util.Objects;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /// A hash; prints itself.
-public record Hash(byte @NonNull [] value) {
+public record Hash(byte[] value) {
 
     /// Creates a new `Hash`.
     ///
@@ -20,7 +19,7 @@ public record Hash(byte @NonNull [] value) {
 
     /// Returns a copy of the `value` array.
     @Override
-    public byte @NonNull [] value() {
+    public byte[] value() {
         return value.clone();
     }
 
@@ -37,7 +36,7 @@ public record Hash(byte @NonNull [] value) {
 
     /// Hex representation.
     @Override
-    public @NonNull String toString() {
+    public String toString() {
         throw new UnsupportedOperationException("Not implemented yet: Hash.toString");
     }
 }

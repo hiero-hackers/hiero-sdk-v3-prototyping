@@ -6,17 +6,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.regex.Pattern;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /// A postal address.
 ///
 /// @param street street and house number
-public record Address(
-        @NonNull String street,
-        @Nullable String zip,
-        @Nullable String website,
-        @NonNull String map) {
+public record Address(String street, @Nullable String zip, @Nullable String website, String map) {
 
     private static final Pattern ZIP_PATTERN = Pattern.compile("^[0-9]{5}$");
 

@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import org.hiero.shop.money.Money;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /// A shopping cart.
@@ -15,14 +14,14 @@ import org.jspecify.annotations.Nullable;
 /// @param items the items in the cart;
 ///   never more than 100
 public record Cart<Item>(
-        @NonNull List<Item> items,
-        @NonNull Set<String> coupons,
-        @NonNull Map<String, String> notes,
+        List<Item> items,
+        Set<String> coupons,
+        Map<String, String> notes,
         int quantity,
         @Nullable Integer discount,
         boolean legacy,
-        @NonNull Category category,
-        @NonNull Money total) {
+        Category category,
+        Money total) {
 
     /// Creates a new `Cart`.
     ///
@@ -56,12 +55,12 @@ public record Cart<Item>(
 
     /// Creates a new `Cart` with the default value of `coupons`, `quantity`.
     public Cart(
-            final @NonNull List<Item> items,
-            final @NonNull Map<String, String> notes,
+            final List<Item> items,
+            final Map<String, String> notes,
             final @Nullable Integer discount,
             final boolean legacy,
-            final @NonNull Category category,
-            final @NonNull Money total) {
+            final Category category,
+            final Money total) {
         this(items, Set.of(), notes, 1, discount, legacy, category, total);
     }
 
@@ -73,11 +72,11 @@ public record Cart<Item>(
     }
 
     /// Total price of the cart.
-    public @NonNull Money sum() {
+    public Money sum() {
         throw new UnsupportedOperationException("Not implemented yet: Cart.sum");
     }
 
-    public static @NonNull Cart<String> empty() {
+    public static Cart<String> empty() {
         throw new UnsupportedOperationException("Not implemented yet: Cart.empty");
     }
 }

@@ -73,6 +73,8 @@ public enum Rule {
             "Constant names must be UPPER_SNAKE_CASE", "api-guideline.md#naming-conventions"),
     NAMING_ERROR_ID("naming.error-id", Severity.ERROR,
             "Error identifiers in @@throws must be lowercase-kebab-case", "api-guideline.md#naming-conventions"),
+    NAMING_RESERVED("naming.reserved", Severity.ERROR,
+            "Attribute and method names must not be reserved names", "api-guideline.md#reserved-names"),
     NAMING_GENERIC("naming.generic", Severity.WARNING,
             "Generic parameter names should be PascalCase after the '$$' prefix",
             "api-guideline.md#generic-type-parameters"),

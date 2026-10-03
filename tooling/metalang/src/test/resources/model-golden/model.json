@@ -6,7 +6,7 @@
     {
       "name": "shop.Address",
       "kind": "type",
-      "location": "shop/shop.md:46:1",
+      "location": "shop/shop.md:81:1",
       "documentation": "A postal address.",
       "annotations": [],
       "typeParameters": [],
@@ -22,7 +22,7 @@
             "@@maxLength(80)"
           ],
           "documentation": "street and house number",
-          "location": "shop/shop.md:47:48"
+          "location": "shop/shop.md:82:48"
         },
         {
           "name": "zip",
@@ -34,7 +34,7 @@
             "@@pattern(\"^[0-9]{5}$\")"
           ],
           "documentation": "",
-          "location": "shop/shop.md:48:52"
+          "location": "shop/shop.md:83:52"
         },
         {
           "name": "website",
@@ -46,7 +46,7 @@
             "@@urlPattern"
           ],
           "documentation": "",
-          "location": "shop/shop.md:49:41"
+          "location": "shop/shop.md:84:41"
         },
         {
           "name": "map",
@@ -57,7 +57,7 @@
             "@@urlPattern"
           ],
           "documentation": "",
-          "location": "shop/shop.md:50:30"
+          "location": "shop/shop.md:85:30"
         }
       ],
       "methods": []
@@ -65,7 +65,7 @@
     {
       "name": "shop.Attachment",
       "kind": "type",
-      "location": "shop/shop.md:73:1",
+      "location": "shop/shop.md:108:1",
       "documentation": "A file attachment.",
       "annotations": [],
       "typeParameters": [],
@@ -80,7 +80,7 @@
             "@@minSize(1)"
           ],
           "documentation": "",
-          "location": "shop/shop.md:74:30"
+          "location": "shop/shop.md:109:30"
         },
         {
           "name": "checksum",
@@ -91,7 +91,7 @@
             "@@nullable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:75:28"
+          "location": "shop/shop.md:110:28"
         },
         {
           "name": "weight",
@@ -101,7 +101,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:76:17"
+          "location": "shop/shop.md:111:17"
         },
         {
           "name": "count",
@@ -112,7 +112,7 @@
             "@@nullable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:77:28"
+          "location": "shop/shop.md:112:28"
         }
       ],
       "methods": []
@@ -120,7 +120,7 @@
     {
       "name": "shop.Base",
       "kind": "type",
-      "location": "shop/shop.md:99:1",
+      "location": "shop/shop.md:134:1",
       "documentation": "Neither a record nor its subtype: records cannot be extended.",
       "annotations": [],
       "typeParameters": [],
@@ -134,7 +134,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:100:17"
+          "location": "shop/shop.md:135:17"
         }
       ],
       "methods": []
@@ -142,7 +142,7 @@
     {
       "name": "shop.Cart",
       "kind": "type",
-      "location": "shop/shop.md:54:1",
+      "location": "shop/shop.md:89:1",
       "documentation": "A shopping cart.",
       "annotations": [],
       "typeParameters": [
@@ -163,7 +163,7 @@
             "@@maxSize(100)"
           ],
           "documentation": "the items in the cart;\nnever more than 100",
-          "location": "shop/shop.md:57:45"
+          "location": "shop/shop.md:92:45"
         },
         {
           "name": "coupons",
@@ -174,7 +174,7 @@
             "@@default([])"
           ],
           "documentation": "",
-          "location": "shop/shop.md:58:31"
+          "location": "shop/shop.md:93:31"
         },
         {
           "name": "notes",
@@ -184,7 +184,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:59:17"
+          "location": "shop/shop.md:94:17"
         },
         {
           "name": "quantity",
@@ -197,7 +197,7 @@
             "@@max(10)"
           ],
           "documentation": "",
-          "location": "shop/shop.md:60:49"
+          "location": "shop/shop.md:95:49"
         },
         {
           "name": "discount",
@@ -209,7 +209,7 @@
             "@@min(0)"
           ],
           "documentation": "",
-          "location": "shop/shop.md:61:37"
+          "location": "shop/shop.md:96:37"
         },
         {
           "name": "legacy",
@@ -220,7 +220,7 @@
             "@@deprecated"
           ],
           "documentation": "",
-          "location": "shop/shop.md:62:30"
+          "location": "shop/shop.md:97:30"
         },
         {
           "name": "category",
@@ -230,7 +230,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:63:17"
+          "location": "shop/shop.md:98:17"
         },
         {
           "name": "total",
@@ -240,7 +240,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:64:17"
+          "location": "shop/shop.md:99:17"
         }
       ],
       "methods": [
@@ -253,7 +253,7 @@
           "declaredIn": "shop.Cart",
           "annotations": [],
           "documentation": "Total price of the cart.",
-          "location": "shop/shop.md:67:11"
+          "location": "shop/shop.md:102:11"
         },
         {
           "name": "empty",
@@ -266,18 +266,20 @@
             "@@static"
           ],
           "documentation": "",
-          "location": "shop/shop.md:69:27"
+          "location": "shop/shop.md:104:27"
         }
       ]
     },
     {
       "name": "shop.Category",
       "kind": "enum",
-      "location": "shop/shop.md:29:6",
+      "location": "shop/shop.md:64:6",
       "documentation": "A product category.",
       "annotations": [],
       "typeParameters": [],
-      "supertypes": [],
+      "supertypes": [
+        "shop.Coded"
+      ],
       "attributes": [
         {
           "name": "code",
@@ -303,7 +305,7 @@
           ],
           "annotations": [],
           "documentation": "things to eat",
-          "location": "shop/shop.md:30:5"
+          "location": "shop/shop.md:65:5"
         },
         {
           "name": "OTHER",
@@ -313,7 +315,7 @@
           ],
           "annotations": [],
           "documentation": "",
-          "location": "shop/shop.md:31:5"
+          "location": "shop/shop.md:66:5"
         },
         {
           "name": "LEGACY",
@@ -325,7 +327,7 @@
             "@@deprecated"
           ],
           "documentation": "",
-          "location": "shop/shop.md:32:18"
+          "location": "shop/shop.md:67:18"
         }
       ],
       "methods": [
@@ -338,7 +340,7 @@
           "declaredIn": "shop.Category",
           "annotations": [],
           "documentation": "Whether this category is about food.",
-          "location": "shop/shop.md:35:10"
+          "location": "shop/shop.md:70:10"
         },
         {
           "name": "byCode",
@@ -359,14 +361,61 @@
             "@@throws(not-found-error)"
           ],
           "documentation": "",
-          "location": "shop/shop.md:37:49"
+          "location": "shop/shop.md:72:49"
         }
       ]
     },
     {
+      "name": "shop.Circle",
+      "kind": "type",
+      "location": "shop/shop.md:55:1",
+      "documentation": "A circle always has a size.",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [
+        "shop.Shape"
+      ],
+      "fields": [
+        {
+          "name": "size",
+          "type": "int32",
+          "declaredIn": "shop.Circle",
+          "annotations": [
+            "@@immutable",
+            "@@override"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:56:28"
+        }
+      ],
+      "methods": []
+    },
+    {
+      "name": "shop.Coded",
+      "kind": "abstraction",
+      "location": "shop/shop.md:29:13",
+      "documentation": "Something with a numeric code.",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [],
+      "fields": [
+        {
+          "name": "code",
+          "type": "int8",
+          "declaredIn": "shop.Coded",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:30:17"
+        }
+      ],
+      "methods": []
+    },
+    {
       "name": "shop.Counter",
       "kind": "type",
-      "location": "shop/shop.md:89:1",
+      "location": "shop/shop.md:124:1",
       "documentation": "Not a record: the attribute is mutable.",
       "annotations": [],
       "typeParameters": [],
@@ -378,7 +427,7 @@
           "declaredIn": "shop.Counter",
           "annotations": [],
           "documentation": "",
-          "location": "shop/shop.md:90:5"
+          "location": "shop/shop.md:125:5"
         }
       ],
       "methods": []
@@ -386,7 +435,7 @@
     {
       "name": "shop.Derived",
       "kind": "type",
-      "location": "shop/shop.md:103:1",
+      "location": "shop/shop.md:138:1",
       "documentation": "",
       "annotations": [],
       "typeParameters": [],
@@ -402,7 +451,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:100:17"
+          "location": "shop/shop.md:135:17"
         },
         {
           "name": "b",
@@ -412,7 +461,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:104:17"
+          "location": "shop/shop.md:139:17"
         }
       ],
       "methods": []
@@ -474,7 +523,7 @@
     {
       "name": "shop.Flag",
       "kind": "enum",
-      "location": "shop/shop.md:40:6",
+      "location": "shop/shop.md:75:6",
       "documentation": "",
       "annotations": [],
       "typeParameters": [],
@@ -495,7 +544,7 @@
           ],
           "annotations": [],
           "documentation": "",
-          "location": "shop/shop.md:41:5"
+          "location": "shop/shop.md:76:5"
         },
         {
           "name": "OFF",
@@ -504,7 +553,7 @@
           ],
           "annotations": [],
           "documentation": "",
-          "location": "shop/shop.md:42:5"
+          "location": "shop/shop.md:77:5"
         }
       ],
       "methods": []
@@ -512,7 +561,7 @@
     {
       "name": "shop.Hash",
       "kind": "type",
-      "location": "shop/shop.md:81:1",
+      "location": "shop/shop.md:116:1",
       "documentation": "A hash; prints itself.",
       "annotations": [],
       "typeParameters": [],
@@ -526,7 +575,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:82:17"
+          "location": "shop/shop.md:117:17"
         }
       ],
       "methods": [
@@ -539,14 +588,41 @@
           "declaredIn": "shop.Hash",
           "annotations": [],
           "documentation": "Hex representation.",
-          "location": "shop/shop.md:85:12"
+          "location": "shop/shop.md:120:12"
         }
       ]
     },
     {
+      "name": "shop.Labelled",
+      "kind": "abstraction",
+      "location": "shop/shop.md:42:13",
+      "documentation": "Something with a label that can change.",
+      "annotations": [],
+      "typeParameters": [
+        {
+          "name": "$$Self",
+          "bound": "shop.Labelled<$$Self>"
+        }
+      ],
+      "supertypes": [],
+      "fields": [
+        {
+          "name": "label",
+          "type": "string",
+          "declaredIn": "shop.Labelled",
+          "annotations": [
+            "@@nullable"
+          ],
+          "documentation": "the label, if any",
+          "location": "shop/shop.md:43:16"
+        }
+      ],
+      "methods": []
+    },
+    {
       "name": "shop.Listing",
       "kind": "type",
-      "location": "shop/shop.md:108:1",
+      "location": "shop/shop.md:143:1",
       "documentation": "Deferred: refers to an abstraction.",
       "annotations": [],
       "typeParameters": [],
@@ -560,15 +636,58 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:109:17"
+          "location": "shop/shop.md:144:17"
         }
       ],
       "methods": []
     },
     {
+      "name": "shop.Priced",
+      "kind": "abstraction",
+      "location": "shop/shop.md:34:13",
+      "documentation": "Something with a price.",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [],
+      "fields": [
+        {
+          "name": "price",
+          "type": "shop.money.Money",
+          "declaredIn": "shop.Priced",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:35:17"
+        }
+      ],
+      "methods": [
+        {
+          "name": "gross",
+          "signature": "gross(double)",
+          "returnType": "shop.money.Money",
+          "typeParameters": [],
+          "parameters": [
+            {
+              "name": "taxRate",
+              "type": "double",
+              "varargs": false,
+              "annotations": [
+                "@@min(0)"
+              ]
+            }
+          ],
+          "declaredIn": "shop.Priced",
+          "annotations": [],
+          "documentation": "Total including tax.",
+          "location": "shop/shop.md:38:11"
+        }
+      ]
+    },
+    {
       "name": "shop.Printer",
       "kind": "type",
-      "location": "shop/shop.md:94:1",
+      "location": "shop/shop.md:129:1",
       "documentation": "Not a record: no attributes.",
       "annotations": [],
       "typeParameters": [],
@@ -584,7 +703,7 @@
           "declaredIn": "shop.Printer",
           "annotations": [],
           "documentation": "",
-          "location": "shop/shop.md:95:10"
+          "location": "shop/shop.md:130:10"
         }
       ]
     },
@@ -682,6 +801,102 @@
           ],
           "documentation": "",
           "location": "shop/shop.md:25:53"
+        }
+      ]
+    },
+    {
+      "name": "shop.Shape",
+      "kind": "abstraction",
+      "location": "shop/shop.md:48:13",
+      "documentation": "A shape; the set of shapes is closed.",
+      "annotations": [
+        "@@sealed(Circle, Square)"
+      ],
+      "typeParameters": [],
+      "supertypes": [],
+      "fields": [
+        {
+          "name": "size",
+          "type": "int32",
+          "declaredIn": "shop.Shape",
+          "annotations": [
+            "@@immutable",
+            "@@nullable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:49:28"
+        }
+      ],
+      "methods": [
+        {
+          "name": "unit",
+          "signature": "unit()",
+          "returnType": "shop.Shape",
+          "typeParameters": [],
+          "parameters": [],
+          "declaredIn": "shop.Shape",
+          "annotations": [
+            "@@static"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:51:20"
+        }
+      ]
+    },
+    {
+      "name": "shop.Square",
+      "kind": "type",
+      "location": "shop/shop.md:60:1",
+      "documentation": "A square with a price.",
+      "annotations": [],
+      "typeParameters": [],
+      "supertypes": [
+        "shop.Shape",
+        "shop.Priced"
+      ],
+      "fields": [
+        {
+          "name": "size",
+          "type": "int32",
+          "declaredIn": "shop.Shape",
+          "annotations": [
+            "@@immutable",
+            "@@nullable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:49:28"
+        },
+        {
+          "name": "price",
+          "type": "shop.money.Money",
+          "declaredIn": "shop.Priced",
+          "annotations": [
+            "@@immutable"
+          ],
+          "documentation": "",
+          "location": "shop/shop.md:35:17"
+        }
+      ],
+      "methods": [
+        {
+          "name": "gross",
+          "signature": "gross(double)",
+          "returnType": "shop.money.Money",
+          "typeParameters": [],
+          "parameters": [
+            {
+              "name": "taxRate",
+              "type": "double",
+              "varargs": false,
+              "annotations": [
+                "@@min(0)"
+              ]
+            }
+          ],
+          "declaredIn": "shop.Priced",
+          "annotations": [],
+          "documentation": "Total including tax.",
+          "location": "shop/shop.md:38:11"
         }
       ]
     },
@@ -799,7 +1014,7 @@
         "@@static"
       ],
       "documentation": "",
-      "location": "shop/shop.md:114:18"
+      "location": "shop/shop.md:149:18"
     }
   ],
   "constants": [
@@ -809,7 +1024,7 @@
       "value": "1_000",
       "annotations": [],
       "documentation": "",
-      "location": "shop/shop.md:112:1"
+      "location": "shop/shop.md:147:1"
     }
   ]
 }
