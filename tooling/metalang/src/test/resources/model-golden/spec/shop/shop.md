@@ -35,7 +35,7 @@ abstraction Priced {
     @@immutable price: Money
 
     // Total including tax.
-    Money gross(@@min(0) taxRate: double)
+    @@throws(pricing-error, timeout-error) Money gross(@@min(0) taxRate: double)
 }
 
 // Something with a label that can change.

@@ -2049,23 +2049,32 @@ When a custom exception class is needed, the meta-language kebab-case identifier
 
 ### Custom exception class structure
 
-Custom exception classes should follow this pattern. Each custom exception must provide at least two constructors
-(message only, and message with cause). Constructors without a message parameter are not allowed — every exception must
-carry a descriptive message to support debugging and logging:
+Every error identifier without a standard exception gets its own exception class. It has exactly **one constructor
+that takes the message and the cause**; the cause may be `null`. Constructors without a message are not allowed —
+every exception must carry a descriptive message to support debugging and logging — and a single constructor keeps
+the API of all exception classes identical:
 
 ```java
 // Custom exception for an SDK-specific error (e.g., 'transaction-rejected-error')
-public final class TransactionRejectedException extends Exception {
+public final class TransactionRejectedException extends RuntimeException {
 
-    public TransactionRejectedException(final String message) {
-        super(Objects.requireNonNull(message, "message must not be null"));
-    }
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    public TransactionRejectedException(final String message, @Nullable final Throwable cause) {
+    public TransactionRejectedException(final String message, final @Nullable Throwable cause) {
         super(Objects.requireNonNull(message, "message must not be null"), cause);
     }
 }
 ```
+
+The custom exceptions of the SDK are unchecked (`RuntimeException`): most methods that declare errors are `@@async`, where
+the error is delivered through the `CompletionStage`, and unchecked exceptions work in lambdas. Checked exceptions
+appear where the standard mapping uses one (`TimeoutException`, `IOException`); a synchronous method declares them with
+`throws`. The documentation of a synchronous method lists every error with `@throws`; the documentation of an `@@async`
+method states with which exceptions the returned stage completes exceptionally.
+
+An error identifier is global. Its exception class lives in the package of a namespace that uses it and that every
+other user can see (in the Java module that all other using modules require), preferring the shortest namespace name.
 
 ### Usage in synchronous and asynchronous methods
 

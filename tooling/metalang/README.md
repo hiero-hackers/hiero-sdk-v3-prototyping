@@ -242,6 +242,16 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   classes are generated; 12 types are deferred: `PaidQuery` (covariant `@@async submit`, see above) and the 9 paid
   queries extending it, `AccountCreateTransaction` (`@@default(0)` on a `NativeToken` attribute has no Java form) and
   `TopicService` (`@@streaming` is not mapped yet).
+- **Exceptions** (`ExceptionGenerator`, `JavaExceptions`): error identifiers of `@@throws` with a JDK equivalent use
+  it (`not-found-error` → `NoSuchElementException`, `illegal-format` → `IllegalArgumentException`, `timeout-error` →
+  `TimeoutException`, `io-error` → `IOException`, …); every other identifier gets a `final` unchecked exception class
+  (`client-closed-error` → `ClientClosedException`) with exactly one constructor `(String message, @Nullable Throwable
+  cause)`. The class is placed in the package of a namespace that uses the identifier and whose module all other
+  using modules require, preferring the shortest namespace (`service-error` → `org.hiero.enterprise.service`); if no
+  such module exists or the name clashes with a type, generation fails. Synchronous methods document errors with
+  `@throws` and declare checked ones with `throws`; `@@async` methods describe with which exceptions the returned stage
+  completes exceptionally. Today: `ClientClosedException`, `ConnectionException`, `MirrorNodeException`,
+  `ServiceException`.
 - **Type mapping** (`JavaTypes`): `intX`/`uintX` → `byte`/`short`/`int`/`long`/`BigInteger` by width; `uint8`/`uint16`/`uint32` use the next
   wider type (`short`/`int`/`long`) because Java integers are signed, `uint64` stays `long`, primitives
   unless nullable or a type argument, `bytes` → `byte[]`, collections → `List`/`Set`/`Map`, time types →
@@ -301,7 +311,7 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 550 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
+`mvn verify` runs about 560 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
 excluded). Besides unit tests per component, the suite contains these systematic checks:
 
 | Test | What it guarantees |
@@ -313,6 +323,7 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `RobustnessTest` | Seeded random mutations and every prefix of every real spec never crash the tool and never report a location outside the document; results do not depend on document order; AST locations point at the element; the textual form of every type and literal parses back to itself. |
 | `RepositorySpecsTest` | All specs under `spec/` are free of syntax errors and the report is deterministic. |
 | `ModelCommandTest` | `metalang model` output for the example specs in `src/test/resources/model-golden/spec` equals the golden file `model-golden/model.json` byte for byte; filters, exit codes and determinism on the real specs. After an intended change, regenerate the golden file (command in the test's Javadoc). |
+| `ExceptionGeneratorTest` | Exception names, standard mapping (checked/unchecked), placement across modules (shortest namespace, transitive requires), errors without common module or with clashing names, `throws` clauses and async documentation, and the runtime behaviour of a generated exception (single constructor, message check, cause). |
 | `ClassGeneratorTest` | Which abstraction becomes an abstract class or an interface (attributes, enums, interfaces, multiple inheritance with *none* as result, upward propagation, configuration, `@@finalMethod`), configuration errors, covariant `@@async` overrides, generated classes (state, constructors with `super(...)`, `$$Self` setters, covariant setter overrides, narrowed nullability, defaults, value classes, sealed hierarchies) and their **runtime behaviour** (checks, defensive copies, chained setters, equality). |
 | `InterfaceGeneratorTest` | Generated interfaces (accessors, setters returning the self type, abstract and static methods, renamed type variables), records and enums implementing generic interfaces with wrapper types and `@Override`, nullability narrowing, `sealed`/`non-sealed`, supertypes as comment, and every deferral reason. Every case is compiled with `-Xlint:all -Werror`. |
 | `RecordGeneratorTest` | Which types become records (inherited attributes, extended types, inherited `@@finalMethod`, type arguments of supertypes), deferral (transitive, through methods, bounds, wildcards; unmapped types), generated source details, and the **runtime behaviour** of the golden records: they are compiled in-process and called (null checks, every constraint, `URI` check, defensive copies, default constructor, `bytes` equality, method stubs). |

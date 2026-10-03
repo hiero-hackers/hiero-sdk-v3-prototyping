@@ -2,6 +2,7 @@
 
 package org.hiero.shop;
 
+import java.util.concurrent.TimeoutException;
 import org.hiero.shop.money.Money;
 
 /// Something with a price.
@@ -11,5 +12,8 @@ public interface Priced {
     Money price();
 
     /// Total including tax.
-    Money gross(final double taxRate);
+    ///
+    /// @throws PricingException if a pricing error occurs
+    /// @throws TimeoutException if a timeout error occurs
+    Money gross(final double taxRate) throws TimeoutException;
 }

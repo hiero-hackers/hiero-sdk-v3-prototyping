@@ -27,6 +27,7 @@ final class JavaContext {
     private final Set<QualifiedName> generated;
     private final Map<String, String> moduleOfNamespace;
     private final Set<QualifiedName> classes;
+    private final Map<String, QualifiedName> exceptions;
     private final Set<String> typeNames;
 
     /**
@@ -36,13 +37,16 @@ final class JavaContext {
      * @param generated         the types that are generated
      * @param moduleOfNamespace the Java module of every namespace
      * @param classes           the types that are (abstract or concrete) Java classes
+     * @param exceptions        the generated exception class of every error identifier without standard exception
      */
     JavaContext(final LinkedModel model, final Set<QualifiedName> generated,
-                final Map<String, String> moduleOfNamespace, final Set<QualifiedName> classes) {
+                final Map<String, String> moduleOfNamespace, final Set<QualifiedName> classes,
+                final Map<String, QualifiedName> exceptions) {
         this.model = Objects.requireNonNull(model, "model must not be null");
         this.generated = Set.copyOf(generated);
         this.moduleOfNamespace = Map.copyOf(moduleOfNamespace);
         this.classes = Set.copyOf(classes);
+        this.exceptions = Map.copyOf(exceptions);
         this.typeNames = model.types().stream().map(t -> t.name().name()).collect(Collectors.toUnmodifiableSet());
     }
 
@@ -50,7 +54,30 @@ final class JavaContext {
         return model;
     }
 
-    boolean isGenerated(final QualifiedName name) {
+    /**
+     * Returns the Java exception of an error identifier: the standard JDK exception or the generated class.
+     *
+     * @param errorId the error identifier of {@code @@throws}
+     * @return the exception
+     */
+    JavaExceptions.JavaException exception(final String errorId) {
+        return JavaExceptions.standard(errorId).orElseGet(() -> {
+            final QualifiedName name = Objects.requireNonNull(exceptions.get(errorId),
+                    () -> "no exception class for " + errorId);
+            return new JavaExceptions.JavaException(JavaNames.packageName(name.namespace()), name.name(), false);
+        });
+    }
+
+    /**
+     * Returns the generated exception classes by error identifier.
+     *
+     * @return the exception classes
+     */
+    Map<String, QualifiedName> exceptions() {
+        return exceptions;
+    }
+
+        boolean isGenerated(final QualifiedName name) {
         return generated.contains(name);
     }
 

@@ -12,8 +12,10 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 import org.hiero.sdk.v3.metalang.generator.GenerationException;
+import org.hiero.sdk.v3.metalang.model.FunctionDefinition;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
 import org.hiero.sdk.v3.metalang.model.MethodDefinition;
 import org.hiero.sdk.v3.metalang.model.NamespaceDefinition;
@@ -116,6 +118,12 @@ public final class JavaGenerator {
                         packagesWithTypes.add(namespace.name());
                     }
                 }
+                for (final Map.Entry<String, QualifiedName> exception : context.exceptions().entrySet()) {
+                    if (exception.getValue().namespace().equals(namespace.name())) {
+                        files.add(ExceptionGenerator.generate(module.name(), exception.getKey(), exception.getValue()));
+                        packagesWithTypes.add(namespace.name());
+                    }
+                }
             }
             files.add(moduleInfo(module, packagesWithTypes));
         }
@@ -153,6 +161,7 @@ public final class JavaGenerator {
     private Plan plan(final LinkedModel model, final List<Module> modules) {
         final Map<String, String> moduleOfNamespace = new HashMap<>();
         modules.forEach(m -> m.namespaces().forEach(n -> moduleOfNamespace.put(n.name(), m.name())));
+        final Map<String, QualifiedName> exceptions = exceptions(model, modules, moduleOfNamespace);
         final Set<QualifiedName> abstractClasses = abstractClasses(model);
         final Set<QualifiedName> extended = extendedTypes(model);
         final Set<QualifiedName> classes = new HashSet<>(abstractClasses);
@@ -171,7 +180,7 @@ public final class JavaGenerator {
         boolean changed = true;
         while (changed) {
             changed = false;
-            final JavaContext context = new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes);
+            final JavaContext context = new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes, exceptions);
             for (final TypeDefinition type : List.copyOf(candidates.values())) {
                 final Optional<String> reason = missingType(type, context)
                         .or(() -> unsupported(type, context));
@@ -182,7 +191,77 @@ public final class JavaGenerator {
                 }
             }
         }
-        return new Plan(new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes), deferred);
+        return new Plan(new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes, exceptions), deferred);
+    }
+
+    /**
+     * Places the exception class of every error identifier without standard exception: in the package of a namespace
+     * that uses the identifier and whose module all other using modules require (directly or transitively), so that
+     * every use can see it; among several such namespaces the shortest name wins ({@code enterprise.service} before
+     * {@code enterprise.service.account}).
+     */
+    private static Map<String, QualifiedName> exceptions(final LinkedModel model, final List<Module> modules,
+                                                         final Map<String, String> moduleOfNamespace) {
+        final Map<String, Set<String>> usage = new TreeMap<>();
+        for (final TypeDefinition type : model.types()) {
+            type.declaredMethods().forEach(m -> errorIds(m).forEach(id -> usage.computeIfAbsent(id,
+                    k -> new TreeSet<>()).add(type.name().namespace())));
+        }
+        for (final FunctionDefinition function : model.functions()) {
+            errorIds(function.method()).forEach(id -> usage.computeIfAbsent(id, k -> new TreeSet<>())
+                    .add(function.namespace()));
+        }
+        final Map<String, Set<String>> required = new HashMap<>();
+        modules.forEach(m -> required.put(m.name(), requiredModules(m.name(), modules)));
+        final Map<String, QualifiedName> exceptions = new TreeMap<>();
+        final List<String> problems = new ArrayList<>();
+        usage.forEach((errorId, namespaces) -> {
+            if (JavaExceptions.standard(errorId).isPresent()) {
+                return;
+            }
+            final List<String> used = namespaces.stream().filter(moduleOfNamespace::containsKey).toList();
+            final Set<String> usedModules = used.stream().map(moduleOfNamespace::get)
+                    .collect(Collectors.toCollection(TreeSet::new));
+            final Optional<String> home = used.stream()
+                    .filter(n -> usedModules.stream().allMatch(m -> m.equals(moduleOfNamespace.get(n))
+                            || required.get(m).contains(moduleOfNamespace.get(n))))
+                    .min(java.util.Comparator.comparing(String::length).thenComparing(n -> n));
+            if (home.isEmpty()) {
+                if (!used.isEmpty()) {
+                    problems.add("Error '" + errorId + "' is used in the modules " + usedModules
+                            + ", but none of them is required by all others; its exception class has no home");
+                }
+                return;
+            }
+            final QualifiedName name = new QualifiedName(home.get(), JavaExceptions.className(errorId));
+            if (model.type(name).isPresent()) {
+                problems.add("The exception class of error '" + errorId + "' clashes with the type " + name);
+            }
+            exceptions.put(errorId, name);
+        });
+        if (!problems.isEmpty()) {
+            throw new GenerationException(problems);
+        }
+        return exceptions;
+    }
+
+    private static List<String> errorIds(final MethodDefinition method) {
+        return method.annotation("throws").stream().flatMap(a -> a.arguments().stream()).map(a -> a.text()).toList();
+    }
+
+    /** The modules a module requires, directly or transitively. */
+    private static Set<String> requiredModules(final String module, final List<Module> modules) {
+        final Map<String, SortedSet<String>> edges = new HashMap<>();
+        modules.forEach(m -> edges.put(m.name(), m.requires()));
+        final Set<String> result = new TreeSet<>();
+        final List<String> pending = new ArrayList<>(edges.getOrDefault(module, new TreeSet<>()));
+        while (!pending.isEmpty()) {
+            final String next = pending.removeLast();
+            if (result.add(next)) {
+                pending.addAll(edges.getOrDefault(next, new TreeSet<>()));
+            }
+        }
+        return result;
     }
 
     /**

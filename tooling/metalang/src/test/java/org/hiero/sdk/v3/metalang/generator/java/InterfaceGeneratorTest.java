@@ -88,6 +88,7 @@ class InterfaceGeneratorTest {
 
                     package org.hiero.a;
 
+                    import java.util.NoSuchElementException;
                     import java.util.concurrent.CompletionStage;
                     import org.jspecify.annotations.Nullable;
 
@@ -110,7 +111,7 @@ class InterfaceGeneratorTest {
 
                         /// Greets someone.
                         ///
-                        /// @throws java.util.NoSuchElementException
+                        /// @throws NoSuchElementException if a not found error occurs
                         String greet(final @Nullable String to, final String... more);
 
                         CompletionStage<Void> refresh();

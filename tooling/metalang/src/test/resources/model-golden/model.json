@@ -678,9 +678,11 @@
             }
           ],
           "declaredIn": "shop.Priced",
-          "annotations": [],
+          "annotations": [
+            "@@throws(pricing-error, timeout-error)"
+          ],
           "documentation": "Total including tax.",
-          "location": "shop/shop.md:38:11"
+          "location": "shop/shop.md:38:50"
         }
       ]
     },
@@ -894,9 +896,11 @@
             }
           ],
           "declaredIn": "shop.Priced",
-          "annotations": [],
+          "annotations": [
+            "@@throws(pricing-error, timeout-error)"
+          ],
           "documentation": "Total including tax.",
-          "location": "shop/shop.md:38:11"
+          "location": "shop/shop.md:38:50"
         }
       ]
     },

@@ -3,6 +3,7 @@
 package org.hiero.shop;
 
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 import org.hiero.shop.money.Money;
 import org.jspecify.annotations.Nullable;
 
@@ -17,8 +18,11 @@ public record Square(@Nullable Integer size, Money price) implements Shape, Pric
     }
 
     /// Total including tax.
+    ///
+    /// @throws PricingException if a pricing error occurs
+    /// @throws TimeoutException if a timeout error occurs
     @Override
-    public Money gross(final double taxRate) {
+    public Money gross(final double taxRate) throws TimeoutException {
         throw new UnsupportedOperationException("Not implemented yet: Square.gross");
     }
 }

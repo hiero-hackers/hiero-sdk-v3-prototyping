@@ -2,6 +2,7 @@
 
 package org.hiero.shop;
 
+import java.util.NoSuchElementException;
 import org.jspecify.annotations.Nullable;
 
 /// A product category.
@@ -37,7 +38,7 @@ public enum Category implements Coded {
         throw new UnsupportedOperationException("Not implemented yet: Category.isFood");
     }
 
-    /// @throws java.util.NoSuchElementException
+    /// @throws NoSuchElementException if a not found error occurs
     public static Category byCode(final byte code) {
         throw new UnsupportedOperationException("Not implemented yet: Category.byCode");
     }

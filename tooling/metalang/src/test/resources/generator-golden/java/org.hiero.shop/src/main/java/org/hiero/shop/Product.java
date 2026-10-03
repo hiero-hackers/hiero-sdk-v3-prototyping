@@ -45,7 +45,7 @@ public final class Product extends Entity<Long> {
         return super.id();
     }
 
-    /// @throws java.util.NoSuchElementException
+    /// The returned stage completes exceptionally with `NoSuchElementException` if the operation fails.
     public CompletionStage<List<Product>> related(final int limit) {
         throw new UnsupportedOperationException("Not implemented yet: Product.related");
     }

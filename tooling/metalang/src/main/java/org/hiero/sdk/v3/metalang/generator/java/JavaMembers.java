@@ -43,14 +43,33 @@ final class JavaMembers {
     static String method(final TypeDefinition owner, final MethodDefinition method, final JavaContext context,
                          final Imports imports, final Body body) {
         final StringBuilder java = new StringBuilder();
-        final List<String> tags = method.annotation("throws").stream()
+        final List<String> errorIds = method.annotation("throws").stream()
                 .flatMap(t -> t.arguments().stream())
-                .map(a -> JavaExceptions.uncheckedStandardException(a.text()))
-                .flatMap(Optional::stream)
+                .map(a -> a.text())
                 .distinct()
-                .map(e -> "@throws " + e)
                 .toList();
-        java.append(MarkdownComment.render("    ", List.of(method.documentation()), tags));
+        final List<String> paragraphs = new ArrayList<>(List.of(method.documentation()));
+        final List<String> tags = new ArrayList<>();
+        final List<String> declared = new ArrayList<>();
+        if (method.hasAnnotation("async")) {
+            // nothing is thrown: the errors complete the returned stage exceptionally (text only, no import)
+            final List<String> names = errorIds.stream().map(id -> context.exception(id).simpleName()).distinct()
+                    .map(n -> "`" + n + "`").toList();
+            if (!names.isEmpty()) {
+                paragraphs.add("The returned stage completes exceptionally with " + enumeration(names)
+                        + " if the operation fails.");
+            }
+        } else {
+            for (final String errorId : errorIds) {
+                final JavaExceptions.JavaException error = context.exception(errorId);
+                final String name = imports.use(error.packageName(), error.simpleName());
+                tags.add("@throws " + name + " if " + JavaExceptions.anError(errorId) + " occurs");
+                if (error.checked() && !declared.contains(name)) {
+                    declared.add(name);
+                }
+            }
+        }
+        java.append(MarkdownComment.render("    ", paragraphs, tags));
         if (method.hasAnnotation("deprecated")) {
             java.append("    @Deprecated\n");
         }
@@ -89,6 +108,9 @@ final class JavaMembers {
         java.append(returnType(method, origin.returnType() instanceof Type.TypeVariable, imports)).append(' ')
                 .append(JavaKeywords.identifier(method.name())).append('(').append(String.join(", ", parameters))
                 .append(')');
+        if (!declared.isEmpty()) {
+            java.append(" throws ").append(String.join(", ", declared));
+        }
         if (bodiless) {
             java.append(";\n");
         } else {
@@ -148,6 +170,14 @@ final class JavaMembers {
                 .filter(p -> p.bound() instanceof Type.DeclaredType bound && bound.name().equals(type.name())
                         && bound.arguments().contains(p.variable()))
                 .findFirst();
+    }
+
+    /** {@code a}, {@code a or b}, {@code a, b or c}. */
+    private static String enumeration(final List<String> items) {
+        if (items.size() == 1) {
+            return items.getFirst();
+        }
+        return String.join(", ", items.subList(0, items.size() - 1)) + " or " + items.getLast();
     }
 
     static String typeParameter(final TypeParameterDefinition parameter, final Imports imports) {
