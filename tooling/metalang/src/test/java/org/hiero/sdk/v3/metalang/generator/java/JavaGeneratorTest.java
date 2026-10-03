@@ -383,6 +383,34 @@ class JavaGeneratorTest {
         }
 
         @Test
+        void generationShouldNotDependOnTheJvmRun() throws Exception {
+            // GIVEN the files generated in this JVM
+            final Path specs = Path.of(System.getProperty("spec.root", "../../spec"));
+            final List<GeneratedFile> expected = generator.generate(LinkedModel.of(new MetaLang().validate(specs)
+                    .model()));
+
+            // WHEN another JVM generates them, with other identity hash codes (they decide the iteration order of
+            // hash-based collections of enums and records that contain enums)
+            final Path out = output.resolve("other-jvm");
+            final Process process = new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", "java")
+                    .toString(), "-XX:+UnlockExperimentalVMOptions", "-XX:hashCode=2", "-cp",
+                    System.getProperty("java.class.path"), "org.hiero.sdk.v3.metalang.cli.MetaLangCli", "generate",
+                    "--language=java", "--fail-on=never", "--output=" + out, specs.toString())
+                    .redirectErrorStream(true).start();
+            final String log = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+            // THEN every file is byte-identical
+            assertThat(process.waitFor()).as(log).isZero();
+            for (final GeneratedFile file : expected) {
+                assertThat(Files.readString(out.resolve(file.path()), StandardCharsets.UTF_8)).as(file.path())
+                        .isEqualTo(file.content());
+            }
+            try (Stream<Path> files = Files.walk(out)) {
+                assertThat(files.filter(Files::isRegularFile).count()).isEqualTo(expected.size());
+            }
+        }
+
+        @Test
         void generationShouldBeDeterministic() {
             final Path specs = Path.of(System.getProperty("spec.root", "../../spec"));
             assertThat(generator.generate(LinkedModel.of(new MetaLang().validate(specs).model())))

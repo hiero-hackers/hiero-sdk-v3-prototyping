@@ -659,7 +659,8 @@ final class JavaSamples {
      * {@code ClientFactory.createClient(networkSettings, operatorAccount)}), from a module the test can use.
      */
     private Optional<String> factoryFunction(final Type.DeclaredType type, final Set<QualifiedName> visiting) {
-        final Map<MethodDefinition, String> owners = new HashMap<>();
+        // in the order of the model: the candidates must not depend on hash codes (enums hash by identity)
+        final Map<MethodDefinition, String> owners = new java.util.LinkedHashMap<>();
         for (final FunctionDefinition function : functions) {
             final QualifiedName factory = new QualifiedName(function.namespace(),
                     FactoryGenerator.className(function.namespace()));
@@ -669,6 +670,11 @@ final class JavaSamples {
             }
         }
         return call(type, List.copyOf(owners.keySet()), owners::get, visiting);
+    }
+
+    /** A stable tie-breaker: the declaring type of a method, the source location of a function. */
+    private static String origin(final MethodDefinition method) {
+        return method.declaringType() == null ? method.location().toString() : method.declaringType().toString();
     }
 
     /**
@@ -694,7 +700,8 @@ final class JavaSamples {
                         .noneMatch(id -> context.exception(id.text()).checked()))
                 .sorted(Comparator.comparing((MethodDefinition m) -> m.hasAnnotation("throws") ? 1 : 0)
                         .thenComparing(m -> m.parameters().size())
-                        .thenComparing(MethodDefinition::signature))
+                        .thenComparing(MethodDefinition::signature)
+                        .thenComparing(JavaSamples::origin))
                 .toList();
         for (final MethodDefinition method : methods) {
             final List<String> arguments = new ArrayList<>();
