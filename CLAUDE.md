@@ -39,7 +39,8 @@ sdk-java/openspec/             # Java-only OpenSpec root
 sdk-java/generator.properties  # Java generator configuration (e.g. java.interfaces), see tooling/metalang/README.md
 generated/java/                # Generated Java API as Maven project, one sub-module/JAR per Java module (tracked in
                                #   git; regenerate after spec or generator changes, commands in
-                               #   tooling/metalang/README.md). Never edit by hand.
+                               #   tooling/metalang/README.md). Never edit by hand. `metalang check` verifies
+                               #   that it (or an implementation based on it) provides the API of the specs.
 sdk-ts/openspec/               # TypeScript-only OpenSpec root
 
 spec/                           # The actual V3 public-API specifications, written in the meta-language

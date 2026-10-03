@@ -102,6 +102,20 @@ JAVA_HOME=~/.sdkman/candidates/java/25.0.1-tem mvn -f generated/java/pom.xml pac
 
 The JARs are then in `generated/java/<module>/target/`; the build output is ignored by git.
 
+### Check a project against the specs
+
+Checks whether a Java project provides the API that the generator derives from the specs — for the generated code
+itself (is `generated/java` up to date?) or for an implementation that started from it:
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --language=java --fail-on=never --config=sdk-java/generator.properties --project=generated/java spec
+```
+
+The command generates the expected API in memory and compares it **structurally** with the `.java` files below
+`--project` (build output in `target` directories excluded). The sources are only parsed with the JDK compiler tree
+API, not compiled, so the project's dependencies are not needed. It prints every difference with file and line and
+exits with 1 if there is one. See [Conformance check](#conformance-check) for what is compared.
+
 ### List all rules
 
 ```bash
@@ -307,6 +321,27 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
 Everything the specs declare is generated; what can still be deferred are declarations with unresolved types, function
 types that need an interface with type variables, and clashing names.
 
+## Conformance check
+
+`metalang check` (`check.java.JavaConformance`) answers: does a project still provide the API of the specs? The project
+is matched by declaration, not by text or file: types by qualified name, members by name and erased parameter types.
+Names are resolved through the package, the imports (single and on demand), `java.lang` and enclosing types, so a
+changed import style or a moved file makes no difference.
+
+| Must match exactly (for every expected declaration) | Allowed (additive or implementation detail) |
+|---|---|
+| Kind of type (class, interface, enum, record, annotation) | Additional files, types, members, constructors |
+| Modifiers (`public`, `protected`, `static`, `final`, `sealed`, `non-sealed`; `abstract` of types) | Method bodies; abstract, `default` or implemented methods |
+| Type parameters with bounds, superclass, record components | Additional implemented interfaces and permitted subtypes |
+| Member declaration: modifiers, type parameters, result and parameter types with nullness (`@Nullable`), `throws`, value of a constant | Additional enum constants, annotations, `requires` and `exports` |
+| Implemented interfaces, permitted subtypes, enum constants, annotations (`@Deprecated`, `@ThreadSafe`, `@FunctionalInterface`, `@NullMarked`) | Private members, package-private fields, imports, formatting, comments and documentation |
+| Module: `requires` with `transitive`/`static`, `exports`, annotations | `@Override`, `@SuppressWarnings`, `@Serial`, `@SafeVarargs`; implementation modifiers (`synchronized`, `volatile`, …) |
+
+The canonical and compact constructors of records and the constructors of enums are implied and not compared. Only
+`.java` files are compared; the Maven `pom.xml` files are build configuration that an implementation changes anyway.
+A test (`JavaConformanceTest`) runs the check for `generated/java`, so a spec or generator change without
+regeneration fails the build.
+
 ## Lenient grammar: syntax variants found in the specs
 
 The existing specs use a few constructs the guideline does not define. Rejecting them as syntax errors would make
@@ -357,7 +392,7 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 580 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
+`mvn verify` runs about 610 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
 excluded). Besides unit tests per component, the suite contains these systematic checks:
 
 | Test | What it guarantees |
@@ -381,6 +416,10 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `InterfaceGeneratorTest` | Generated interfaces (accessors, setters returning the self type, abstract and static methods, renamed type variables), records and enums implementing generic interfaces with wrapper types and `@Override`, nullability narrowing, `sealed`/`non-sealed`, supertypes as comment, and every deferral reason. Every case is compiled with `-Xlint:all -Werror`. |
 | `RecordGeneratorTest` | Which types become records (inherited attributes, extended types, inherited `@@finalMethod`, type arguments of supertypes), deferral (transitive, through methods, bounds, wildcards; unmapped types), generated source details, and the **runtime behaviour** of the golden records: they are compiled in-process and called (null checks, every constraint, `URI` check, defensive copies, default constructor, `bytes` equality, method stubs). |
 | `JavaGeneratorTest` | Golden files for the example specs (`generator-golden/java`), module/package rules and the three structural errors, Markdown comment escaping, and: the modules generated for **all real specs compile** with `-Xlint:all -Werror` through the module system. |
+| `JavaApiTest` | Reading the API of Java sources: name resolution (imports, wildcards, same package, `java.lang`, nested types, type variables), nullness including `String @Nullable []` vs. `@Nullable String[]`, implicit modifiers of interfaces, records, enums and nested types, ignored implementation details, module declarations, parse errors, duplicate types and skipped build output. |
+| `JavaApiComparisonTest` | Implementations and additions are accepted; every kind of difference (missing module/type/member, kind, modifiers, type parameters, superclass, interfaces, permits, record components, enum constants, annotations, member declarations, `requires`/`exports`) is reported with file and line. |
+| `JavaConformanceTest` | The generated code and an implementation of it conform, a project that was not updated after a spec change does not, and **`generated/java` provides the API of the current specs** (fails if it was not regenerated). |
+| `CheckCommandTest` | `metalang check`: success and differences with exit codes, configuration, invalid specs and configurations, usage errors. |
 | `LinkedRepositorySpecsTest` | Linking all real specs leaves no unresolved reference, every declared type exists, self types are substituted (`Transaction`, `NativeToken`), and linking is deterministic. |
 
 ## Known limitations

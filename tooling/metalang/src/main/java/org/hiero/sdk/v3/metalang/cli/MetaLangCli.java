@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.SortedMap;
 import org.hiero.sdk.v3.metalang.MetaLang;
 import org.hiero.sdk.v3.metalang.ValidationReport;
+import org.hiero.sdk.v3.metalang.check.java.ApiDifference;
+import org.hiero.sdk.v3.metalang.check.java.JavaConformance;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
 import org.hiero.sdk.v3.metalang.diagnostic.Severity;
@@ -32,10 +34,13 @@ import org.hiero.sdk.v3.metalang.model.QualifiedName;
  * metalang model [--namespace=ns] [--type=ns.Type] [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
  * metalang generate --language=java --output=dir [--fail-on=error|warning|info|never] [--show-deferred]
  *     &lt;spec-dir-or-file&gt;
+ * metalang check --language=java --project=dir [--config=file] [--fail-on=error|warning|info|never]
+ *     &lt;spec-dir-or-file&gt;
  * metalang rules
  * </pre>
  *
- * <p>Exit codes: 0 = success, 1 = findings at or above {@code --fail-on}, 2 = usage error.
+ * <p>Exit codes: 0 = success, 1 = findings at or above {@code --fail-on} (for {@code check}: or API differences),
+ * 2 = usage error.
  */
 public final class MetaLangCli {
 
@@ -51,6 +56,7 @@ public final class MetaLangCli {
               metalang validate [options] <spec-dir-or-file>
               metalang model [options] <spec-dir-or-file>
               metalang generate --language=java --output=<dir> [options] <spec-dir-or-file>
+              metalang check --language=java --project=<dir> [options] <spec-dir-or-file>
               metalang rules
 
             Options for 'validate':
@@ -73,6 +79,15 @@ public final class MetaLangCli {
               --config=<file>                     generator configuration (.properties, e.g.
                                                   sdk-java/generator.properties)
               --show-deferred                     list the types that are not generated yet and why
+
+            Options for 'check' (does a project provide the API generated from the specs? Additional files,
+            types and members and implemented methods are allowed):
+              --language=java                     target language (required; only java so far)
+              --project=<dir>                     directory of the project to check (required), e.g. the
+                                                  generated code or an implementation based on it
+              --config=<file>                     generator configuration (as for 'generate')
+              --fail-on=error|warning|info|never  do not check if a spec finding at or above this severity
+                                                  exists (default: error)
             """;
 
     private final PrintStream out;
@@ -113,6 +128,7 @@ public final class MetaLangCli {
             case "validate" -> validate(List.of(args).subList(1, args.length));
             case "model" -> model(List.of(args).subList(1, args.length));
             case "generate" -> generate(List.of(args).subList(1, args.length));
+            case "check" -> check(List.of(args).subList(1, args.length));
             case "rules" -> rules();
             case "help", "--help", "-h" -> {
                 out.print(USAGE);
@@ -318,6 +334,81 @@ public final class MetaLangCli {
             }
         }
         return EXIT_OK;
+    }
+
+    private int check(final List<String> args) {
+        Severity failOn = Severity.ERROR;
+        String language = null;
+        String project = null;
+        String config = null;
+        final List<String> paths = new ArrayList<>();
+        for (final String arg : args) {
+            if (arg.startsWith("--fail-on=")) {
+                final String value = arg.substring("--fail-on=".length());
+                failOn = value.equals("never") ? null : parseSeverity(value);
+                if (failOn == null && !value.equals("never")) {
+                    return usageError("Invalid severity in " + arg);
+                }
+            } else if (arg.startsWith("--language=")) {
+                language = arg.substring("--language=".length());
+            } else if (arg.startsWith("--project=")) {
+                project = arg.substring("--project=".length());
+            } else if (arg.startsWith("--config=")) {
+                config = arg.substring("--config=".length());
+            } else if (arg.startsWith("--")) {
+                return usageError("Unknown option " + arg);
+            } else {
+                paths.add(arg);
+            }
+        }
+        if (!"java".equals(language)) {
+            return usageError(language == null ? "Missing --language" : "Unsupported language '" + language + "'");
+        }
+        if (project == null || project.isBlank()) {
+            return usageError("Missing --project");
+        }
+        final Path projectDirectory = Path.of(project);
+        if (!Files.isDirectory(projectDirectory)) {
+            return usageError("Project directory does not exist: " + projectDirectory);
+        }
+        if (paths.size() != 1) {
+            return usageError("Expected exactly one spec directory or file");
+        }
+        final Path root = Path.of(paths.getFirst());
+        if (!Files.exists(root)) {
+            return usageError("Path does not exist: " + root);
+        }
+        final ValidationReport report = new MetaLang().validate(root);
+        final Severity failThreshold = failOn;
+        final long blocking = report.diagnostics().stream()
+                .filter(d -> failThreshold != null && d.severity().ordinal() <= failThreshold.ordinal())
+                .count();
+        if (blocking > 0) {
+            err.println("Not checking: the specs have " + blocking + " finding(s) at or above "
+                    + failThreshold.name().toLowerCase(Locale.ROOT) + " (see 'metalang validate')");
+            return EXIT_FINDINGS;
+        }
+        final JavaConformance.Result result;
+        try {
+            final JavaGenerator generator = new JavaGenerator(config == null ? JavaGeneratorConfig.DEFAULT
+                    : JavaGeneratorConfig.load(Path.of(config)));
+            result = JavaConformance.check(LinkedModel.of(report.model()), generator, projectDirectory);
+        } catch (final GenerationException e) {
+            e.problems().forEach(p -> err.println("Cannot generate: " + p));
+            return EXIT_FINDINGS;
+        } catch (final IOException e) {
+            err.println("Cannot read " + (config == null ? projectDirectory : config + " or " + projectDirectory)
+                    + ": " + e.getMessage());
+            return EXIT_FINDINGS;
+        }
+        result.differences().forEach(out::println);
+        final List<ApiDifference> differences = result.differences();
+        out.println(differences.isEmpty()
+                ? projectDirectory + " provides the API of the specs (" + result.types() + " type(s), "
+                        + result.modules() + " module(s))"
+                : differences.size() + " difference(s) between " + projectDirectory + " and the API of the specs ("
+                        + result.types() + " type(s), " + result.modules() + " module(s) expected)");
+        return differences.isEmpty() ? EXIT_OK : EXIT_FINDINGS;
     }
 
     private void printSummary(final ValidationReport report, final Severity threshold) {
