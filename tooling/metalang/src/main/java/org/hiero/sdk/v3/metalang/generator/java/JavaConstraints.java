@@ -12,8 +12,9 @@ import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
  * Renders the checks of the validation annotations of an attribute ({@code @@min}, {@code @@max},
  * {@code @@minLength}, {@code @@maxLength}, {@code @@minSize}, {@code @@maxSize}, {@code @@pattern},
  * {@code @@urlPattern}) as Java statements that throw {@link IllegalArgumentException} (see "Implementation of
- * Attribute annotations" in {@code guidelines/api-best-practices-java.md}). A {@code null} value of a nullable
- * attribute is not checked.
+ * Attribute annotations" in {@code guidelines/api-best-practices-java.md}). Integer attributes whose Java type is
+ * wider than their meta-language type are checked against the range of the type as well ({@link JavaIntegers});
+ * {@code uint64} values are compared unsigned. A {@code null} value of a nullable attribute is not checked.
  */
 final class JavaConstraints {
 
@@ -43,6 +44,29 @@ final class JavaConstraints {
         final boolean nullable = field.hasAnnotation("nullable");
         final StringBuilder out = new StringBuilder();
         final List<String> constants = new ArrayList<>();
+        JavaIntegers.integer(field.type()).filter(JavaIntegers::needsRangeCheck).ifPresent(builtin -> {
+            final JavaIntegers.Range range = JavaIntegers.range(builtin);
+            final String condition;
+            if (JavaTypes.javaBits(builtin) > 64) {
+                final String constant = constantName(field.name());
+                final String bigInteger = imports.use("java.math", "BigInteger");
+                constants.add("private static final " + bigInteger + " " + constant + "_MIN = "
+                        + JavaIntegers.literal(builtin, range.min(), imports) + ";");
+                constants.add("private static final " + bigInteger + " " + constant + "_MAX = "
+                        + JavaIntegers.literal(builtin, range.max(), imports) + ";");
+                condition = name + ".compareTo(" + constant + "_MIN) < 0 || " + name + ".compareTo(" + constant
+                        + "_MAX) > 0";
+            } else {
+                condition = name + " < " + JavaIntegers.literal(builtin, range.min(), imports) + " || " + name
+                        + " > " + JavaIntegers.literal(builtin, range.max(), imports);
+            }
+            out.append(indent).append("if (").append(nullable ? name + " != null && (" + condition + ")" : condition)
+                    .append(") {\n")
+                    .append(indent).append("    throw new IllegalArgumentException(")
+                    .append(JavaLiterals.quote(field.name() + " must be between " + range.min() + " and "
+                            + range.max())).append(");\n")
+                    .append(indent).append("}\n");
+        });
         for (final Annotation annotation : field.annotations()) {
             final String condition = switch (annotation.name()) {
                 case "min" -> compare(field, name, annotation, "<", imports);
@@ -79,11 +103,20 @@ final class JavaConstraints {
         final String bound = JavaLiterals.expression(annotation.arguments().getFirst(), field.type(), imports);
         if (field.type() instanceof Type.BasicType basic) {
             switch (basic.builtin().category()) {
-                case INTEGER, FLOAT -> {
-                    if (!JavaTypes.type(basic, false, imports).equals("BigInteger")) {
-                        return name + " " + operator + " " + bound;
+                case INTEGER -> {
+                    final java.math.BigInteger value = ((Literal.NumberLiteral) annotation.arguments().getFirst())
+                            .value().toBigIntegerExact();
+                    final String integer = JavaIntegers.literal(basic.builtin(), value, imports);
+                    if (JavaIntegers.isUnsignedLong(basic.builtin())) {
+                        return "Long.compareUnsigned(" + name + ", " + integer + ") " + operator + " 0";
                     }
-                    return name + ".compareTo(" + bound + ") " + operator + " 0";
+                    if (JavaTypes.javaBits(basic.builtin()) > 64) {
+                        return name + ".compareTo(" + integer + ") " + operator + " 0";
+                    }
+                    return name + " " + operator + " " + integer;
+                }
+                case FLOAT -> {
+                    return name + " " + operator + " " + bound;
                 }
                 case DECIMAL, DURATION -> {
                     return name + ".compareTo(" + bound + ") " + operator + " 0";

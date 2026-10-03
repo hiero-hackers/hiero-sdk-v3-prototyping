@@ -12,4 +12,13 @@ import org.jspecify.annotations.Nullable;
 /// @param domainName DNS name; absent when ipAddress is used
 /// @param port listening port (0 is invalid)
 public record ServiceEndpoint(@Nullable IpAddress ipAddress, @Nullable String domainName, int port) {
+
+    /// Creates a new `ServiceEndpoint`.
+    ///
+    /// @throws IllegalArgumentException if a value violates its constraints
+    public ServiceEndpoint {
+        if (port < 0 || port > 65535) {
+            throw new IllegalArgumentException("port must be between 0 and 65535");
+        }
+    }
 }

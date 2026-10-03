@@ -90,17 +90,26 @@ java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --lan
 
 Without `--fail-on=never` nothing is generated as long as the specs have validation errors. See
 [Java generator](#java-generator) for what is generated. `--show-deferred` lists the types that are not
-generated yet and why.
+generated yet and why; `--show-untested` lists the [generated tests](#generated-tests) that cannot be generated
+because their values cannot be built (the summary line is always printed).
 
 `generated/java` is a Maven project: a parent `pom.xml` with one sub-module per Java module, each built into its own
 JAR plus a Javadoc JAR. Build it with a JDK 25 (`-Xlint:all -Werror` for the code, doclint `all,-missing` with
 `failOnWarnings` for the Javadoc):
 
 ```bash
-JAVA_HOME=~/.sdkman/candidates/java/25.0.1-tem mvn -f generated/java/pom.xml package
+JAVA_HOME=~/.sdkman/candidates/java/25.0.1-tem mvn -f generated/java/pom.xml package -DskipTests
 ```
 
 The JARs are then in `generated/java/<module>/target/`; the build output is ignored by git.
+
+Every module also contains the [generated tests](#generated-tests) (`src/test/java`, JUnit). They fail for every method
+that is not implemented yet, so a build with tests shows the implementation status; `-Dmaven.test.failure.ignore=true`
+runs all modules even if tests fail:
+
+```bash
+JAVA_HOME=~/.sdkman/candidates/java/25.0.1-tem mvn -f generated/java/pom.xml test -Dmaven.test.failure.ignore=true
+```
 
 ### Check a project against the specs
 
@@ -126,10 +135,12 @@ java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar rules
 
 ```
 spec/*.md
-  │ source/      MarkdownSchemaExtractor  "## API Schema" code block + skeleton checks (doc.*)
+  │ source/      MarkdownSchemaExtractor  "## API Schema" and "## Default Instances" code blocks + skeleton checks
+  │                                        (doc.*)
   │ parser/      ANTLR4 grammar → parse tree → immutable AST (ast/, records + sealed interfaces)
   │ semantic/    SpecModel: namespaces, type index, name resolution (local / requires / wildcard / qualified)
-  │ model/       LinkedModel: every reference resolved, effective members with substituted type arguments
+  │ model/       LinkedModel: every reference resolved, effective members with substituted type arguments,
+  │                           default instances resolved (InstanceResolver)
   │ validation/  Validator: one Check per guideline topic, every finding refers to a stable Rule id
   ▼
 ValidationReport (sorted diagnostics) → CLI (text / JSON / summary)
@@ -171,8 +182,8 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
 - **One package per namespace**: `consensusnode.transactions` becomes `org.hiero.consensusnode.transactions`.
 - **Maven project** (`MavenGenerator`): a parent `pom.xml` (packaging `pom`, artifactId `hiero-sdk`) with one
   sub-module per Java module (artifactId `hiero-<spec folder>`, e.g. `hiero-consensus-node-client`) that depends on the
-  modules its `module-info.java` requires and on jspecify. The parent sets Java 25 and UTF-8, manages the jspecify
-  version, pins every plugin (clean, resources, compiler, surefire, jar, javadoc, install), compiles with
+  modules its `module-info.java` requires, on jspecify and (test scope) on JUnit Jupiter. The parent sets Java 25 and
+  UTF-8, manages the jspecify version and the JUnit BOM, pins every plugin (clean, resources, compiler, surefire, jar, javadoc, install), compiles with
   `-Xlint:all -Werror` and attaches a Javadoc JAR to every module (doclint `all,-missing`, warnings fail the build).
   groupId and version come from the configuration (`java.groupId`, default `org.hiero.sdk`; `java.version`, default
   `0.1.0-SNAPSHOT`).
@@ -317,9 +328,65 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   unless nullable or a type argument, `bytes` → `byte[]`, collections → `List`/`Set`/`Map`, time types →
   `java.time`, `seconds`/`duration` → `Duration`, `type<T>` → `Class<? extends T>`, `ANY` → `Object`,
   `streamResult<T>` → `StreamItem<T>`. Java keywords used as names get a trailing `_`. Function types: see above.
+- **Integer ranges** (`JavaIntegers`, `JavaConstraints`): where the Java type is wider than the meta-language type
+  (`uint8`/`uint16`/`uint32`, odd widths like `int24`, `int128`/`int256` as `BigInteger`), constructors and setters check
+  the range of the type (`port must be between 0 and 65535`). `uint64` has no range check (every `long` is a valid
+  unsigned value); its `@@min`/`@@max` are compared with `Long.compareUnsigned`.
+- **Tests**: see [Generated tests](#generated-tests).
 
 Everything the specs declare is generated; what can still be deferred are declarations with unresolved types, function
 types that need an interface with type variables, and clashing names.
+
+## Generated tests
+
+`TestGenerator` writes a JUnit test class into `src/test/java` of the module, in the package of the tested type: one
+per record, class and enum (`<Type>Test`), one per abstraction with static methods and one per factory class
+(`<Namespace>FactoryTest`). The tests check the contract of the specs, both what the generator implements and what
+humans implement later:
+
+| Area | What the tests check |
+|---|---|
+| Constructors | Valid values create an object whose accessors return them; the constructor without the `@@default` attributes sets the defaults; `null` for a non-nullable value throws `NullPointerException`. |
+| Validation | For every validation annotation the boundary values are accepted and the values just outside rejected with `IllegalArgumentException`: `@@min`/`@@max` (with `Math.nextDown`/`nextUp` for `double`, `minusNanos(1)` for durations), the range of the integer type (`int8`…`int256`, `uint8`…`uint256`; boundaries only where the Java type can hold them), `@@minLength`/`@@maxLength`, `@@minSize`/`@@maxSize`, `@@pattern` (a string the pattern rejects), `@@urlPattern`. |
+| Copies | A collection or `bytes` value passed to a constructor or setter is copied (changing it afterwards does not change the object); returned collections are unmodifiable, returned arrays are copies. |
+| Setters | Return the object, change the value, accept (`@@nullable`) or reject `null`, check the validation annotations and keep the old value when they reject one; the initial value of attributes the constructor does not take. |
+| Value semantics | Records and immutable classes whose attributes compare by value: equal values give equal objects and hash codes. |
+| Methods | Every method can be called with valid arguments, returns a value (not `null` unless `@@nullable`), and throws at most the errors of its `@@throws`. |
+| Factory methods | Return objects for valid arguments, reject `null` for non-nullable parameters, check the validation annotations and integer ranges of the parameters. |
+
+Method bodies are stubs, so the method and factory tests fail until the methods are implemented ("Not implemented
+yet: …"); everything else passes against the generated code.
+
+The values come from `JavaSamples`, deterministically. A type with a [default instance](#default-instances) always uses
+it — the specs define the values tests must use (e.g. a real key). Otherwise: literals within the range and constraints
+of the type, strings
+for a `@@pattern` from `RegexSamples` (verified with `java.util.regex`), the first non-deprecated enum constant, records
+and classes created with their constructor (`null` for nullable attributes). An abstraction is represented by a
+generated concrete subtype from a module the test's module requires (non-generic first, then enums, records, classes),
+otherwise by one of its static methods or a namespace-level function that return it (e.g.
+`TransactionId.generateTransactionId(…)`, `ClientFactory.createClient(networkSettings, operatorAccount)`; without
+`@@throws` and with fewer parameters first). A record or class whose constructor needs a value that cannot be built
+(`HieroClient` needs a `TransactionSigner`) is created with such a factory function as well. Tests that use a value
+of a factory fail until the factory is implemented. For values the object only stores (constructor and setter arguments) a test double is the last
+resort: an anonymous subclass whose methods throw. Method arguments never use test doubles, because the
+implementation may call them. A test whose values cannot be built is not generated and listed in the comment of the
+test class and by `generate` (today: two values with a generic class literal or a list of generic abstractions).
+Every test and test class has a `@DisplayName` that describes it (`port: rejects a value above the maximum (65536)`).
+
+## Default instances
+
+The optional `## Default Instances` section of a spec (see "Default instances" in `guidelines/api-guideline.md`)
+records the standard way to obtain an instance of a type through the API:
+`instance TransactionSigner = DEFAULT(HieroClient<ANY>).transactionSigner`. The section has its own start rule in the
+grammar (`instances`) and uses the namespace and imports of the file's API schema. `InstanceResolver` resolves it into
+`LinkedModel.instances()`: types, functions, static methods, methods, attributes, constants and enum constants, the
+overload of a call (by the names and types of its named arguments), and the type of every value. Rules:
+`instance.invalid` (cannot be resolved, wrong type, duplicate, type of another namespace), `instance.cycle` (default
+instances that depend on each other through `DEFAULT`), and the warning `instance.missing` for every type used by an
+attribute or parameter that cannot be obtained at all — no default instance, no concrete subtype, no factory function
+or static method (a fixed point over the model). The specs define default instances for keys (a real ED25519 key),
+accounts, addresses, the testnet configuration, the client and its signer; the remaining warnings are
+`ExchangeRate`, `MirrorNodeHttpClient` and the protocol types that are not specified yet.
 
 ## Conformance check
 
@@ -338,7 +405,7 @@ changed import style or a moved file makes no difference.
 | Module: `requires` with `transitive`/`static`, `exports`, annotations | `@Override`, `@SuppressWarnings`, `@Serial`, `@SafeVarargs`; implementation modifiers (`synchronized`, `volatile`, …) |
 
 The canonical and compact constructors of records and the constructors of enums are implied and not compared. Only
-`.java` files are compared; the Maven `pom.xml` files are build configuration that an implementation changes anyway.
+`.java` files of `src/main/java` are expected (the [generated tests](#generated-tests) are no part of the API); the Maven `pom.xml` files are build configuration that an implementation changes anyway.
 A test (`JavaConformanceTest`) runs the check for `generated/java`, so a spec or generator change without
 regeneration fails the build.
 
@@ -392,7 +459,7 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 610 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
+`mvn verify` runs about 680 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
 excluded). Besides unit tests per component, the suite contains these systematic checks:
 
 | Test | What it guarantees |
@@ -415,7 +482,10 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `ClassGeneratorTest` | Which abstraction becomes an abstract class or an interface (attributes, enums, interfaces, multiple inheritance with *none* as result, upward propagation, configuration, `@@finalMethod`), configuration errors, covariant `@@async` overrides, generated classes (state, constructors with `super(...)`, `$$Self` setters, covariant setter overrides, narrowed nullability, defaults, value classes, sealed hierarchies) and their **runtime behaviour** (checks, defensive copies, chained setters, equality). |
 | `InterfaceGeneratorTest` | Generated interfaces (accessors, setters returning the self type, abstract and static methods, renamed type variables), records and enums implementing generic interfaces with wrapper types and `@Override`, nullability narrowing, `sealed`/`non-sealed`, supertypes as comment, and every deferral reason. Every case is compiled with `-Xlint:all -Werror`. |
 | `RecordGeneratorTest` | Which types become records (inherited attributes, extended types, inherited `@@finalMethod`, type arguments of supertypes), deferral (transitive, through methods, bounds, wildcards; unmapped types), generated source details, and the **runtime behaviour** of the golden records: they are compiled in-process and called (null checks, every constraint, `URI` check, defensive copies, default constructor, `bytes` equality, method stubs). |
-| `JavaGeneratorTest` | Golden files for the example specs (`generator-golden/java`), module/package rules and the three structural errors, Markdown comment escaping, and: the modules generated for **all real specs compile** with `-Xlint:all -Werror` through the module system. |
+| `JavaGeneratorTest` | Golden files for the example specs (`generator-golden/java`), module/package rules and the three structural errors, Markdown comment escaping, and: the modules generated for **all real specs compile** with `-Xlint:all -Werror` through the module system, and their **generated tests compile and run** — every failure is a method that is not implemented yet. |
+| `TestGeneratorTest` | The generated tests of small specs: their content (test names, boundary values, null and copy tests, setters, methods, factories, values of every type, subtypes, factory methods and test doubles, only types of required modules, what cannot be tested), and their **execution**: they are compiled with `-Xlint:all -Werror` and run with the JUnit platform; all pass against the generated code, the method tests fail only because of the stubs, and they **detect mutations** of the generated code (a removed range check, copy or validation). |
+| `JavaIntegersTest`, `RegexSamplesTest` | Ranges, range checks and literals of all integer types; accepted and rejected strings for patterns, never a wrong one. |
+| `InstanceResolverTest` | Every kind of default-instance expression (construction with generic arguments, functions of other namespaces, static methods, method calls, attributes, constants, enum constants, lists, bytes), overload selection, and every error message. Rule fixtures cover `instance.invalid`, `instance.cycle` and `instance.missing`. |
 | `JavaApiTest` | Reading the API of Java sources: name resolution (imports, wildcards, same package, `java.lang`, nested types, type variables), nullness including `String @Nullable []` vs. `@Nullable String[]`, implicit modifiers of interfaces, records, enums and nested types, ignored implementation details, module declarations, parse errors, duplicate types and skipped build output. |
 | `JavaApiComparisonTest` | Implementations and additions are accepted; every kind of difference (missing module/type/member, kind, modifiers, type parameters, superclass, interfaces, permits, record components, enum constants, annotations, member declarations, `requires`/`exports`) is reported with file and line. |
 | `JavaConformanceTest` | The generated code and an implementation of it conform, a project that was not updated after a spec change does not, and **`generated/java` provides the API of the current specs** (fails if it was not regenerated). |

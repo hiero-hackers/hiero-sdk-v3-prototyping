@@ -12,12 +12,18 @@ import org.jspecify.annotations.Nullable;
 /// @param cents the amount in cents
 public record Money(BigInteger cents, @Nullable Duration timeout) {
 
+    private static final BigInteger CENTS_MIN = new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968");
+    private static final BigInteger CENTS_MAX = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
+
     /// Creates a new `Money`.
     ///
     /// @throws NullPointerException if a required value is `null`
     /// @throws IllegalArgumentException if a value violates its constraints
     public Money {
         Objects.requireNonNull(cents, "cents must not be null");
+        if (cents.compareTo(CENTS_MIN) < 0 || cents.compareTo(CENTS_MAX) > 0) {
+            throw new IllegalArgumentException("cents must be between -57896044618658097711785492504343953926634992332820282019728792003956564819968 and 57896044618658097711785492504343953926634992332820282019728792003956564819967");
+        }
         if (cents.compareTo(new BigInteger("-1000000000000000000")) < 0) {
             throw new IllegalArgumentException("cents must be at least -1000000000000000000");
         }

@@ -123,19 +123,27 @@ public final class JavaGenerator {
         final Optional<String> threadSafeModule = threadSafeModule(model, modules, context);
         final Optional<String> streamingModule = streamingModule(model, modules, plan);
         final List<GeneratedFile> files = new ArrayList<>();
+        final List<FunctionDefinition> allFunctions = plan.functions().values().stream().flatMap(List::stream).toList();
         for (final Module module : modules) {
             final Set<String> packagesWithTypes = new TreeSet<>();
+            // the tests of a module can only use the types of the modules it requires
+            final Set<String> visible = new HashSet<>(requiredModules(module.name(), modules));
+            visible.add(module.name());
             for (final NamespaceDefinition namespace : module.namespaces()) {
                 packageInfo(module, namespace).ifPresent(files::add);
                 for (final TypeDefinition type : model.types(namespace.name())) {
                     if (context.isGenerated(type.name())) {
                         files.add(generate(module.name(), type, context));
+                        TestGenerator.generate(module.name(), type, context, visible, allFunctions)
+                                .ifPresent(files::add);
                         packagesWithTypes.add(namespace.name());
                     }
                 }
                 final List<FunctionDefinition> functions = plan.functions().getOrDefault(namespace.name(), List.of());
                 if (!functions.isEmpty()) {
                     files.add(FactoryGenerator.generate(module.name(), namespace.name(), functions, context));
+                    files.add(TestGenerator.factory(module.name(), namespace.name(), functions, context, visible,
+                            allFunctions));
                     packagesWithTypes.add(namespace.name());
                 }
                 final List<ConstantDefinition> constants = plan.constants().getOrDefault(namespace.name(), List.of());

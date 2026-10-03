@@ -866,6 +866,64 @@ namespace transactions
 constant MAX_TRANSACTIONS:int32 = 100
 ```
 
+### Default instances
+
+Tests, examples and documentation need instances of the API's types. How to obtain one is often not obvious from the
+API schema alone: a `TransactionSigner` is an abstraction without implementation in the SDK, but every `HieroClient`
+provides one; a `PrivateKey` can be created from many formats, but tests must use a key whose bytes are known. The
+optional `## Default Instances` section of a spec (directly after `## API Schema`) records the **standard way to
+obtain an instance through the API** for the types the spec declares.
+
+The section contains one code block. It uses the namespace and the imports of the file's API schema (no `namespace` or
+`requires` statement); types of other namespaces are referenced like in the schema, imported or qualified. Each
+declaration names a type and the expression that creates its instance:
+
+```
+// An ED25519 key with known bytes, so that tests can check signatures against fixed values.
+instance PrivateKey = createPrivateKey(algorithm: KeyAlgorithm.ED25519, encoding: ByteImportEncoding.HEX,
+        value: "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c")
+
+// The public key of the default private key.
+instance PublicKey = DEFAULT(PrivateKey).createPublicKey()
+
+// A client for the default network with the default operator account.
+instance HieroClient<ANY> = createClient(networkSettings: DEFAULT, operatorAccount: DEFAULT)
+
+// The signer of a client.
+instance TransactionSigner = DEFAULT(HieroClient<ANY>).transactionSigner
+
+// A consensus node of the testnet.
+instance ConsensusNode = ConsensusNode{ip: IpAddress{bytes: [34, 94, 106, 61]}, port: 50211, account: DEFAULT}
+```
+
+| Expression | Meaning |
+|---|---|
+| `DEFAULT`, `DEFAULT(Type)` | The default instance of the expected type (the parameter or attribute) or of the given type. |
+| `Type{attribute: value, ...}` | Creates a complex type, like a struct literal of a constant. Nullable attributes and attributes with `@@default` may be omitted. |
+| `function(parameter: value, ...)`, `namespace.function(...)` | Calls a namespace-level function. |
+| `Type.method(parameter: value, ...)` | Calls a `@@static` method. |
+| `value.method(parameter: value, ...)` | Calls a method of a value. |
+| `value.attribute` | Reads an attribute of a value. |
+| `"text"`, `42`, `1.5`, `true`, `false`, `null` | Literals. |
+| `Enum.VALUE` (or `VALUE` where an enum is expected), `CONSTANT`, `namespace.CONSTANT` | Enum constants and constants. |
+| `[value, ...]` | The elements of a `list`, a `set` or `bytes`. |
+
+Rules:
+
+- Arguments are always named after the parameter or attribute. Nullable parameters may be omitted. The overload of a
+  call is selected by the names and the types of its arguments; exactly one overload must fit.
+- A type has at most one default instance, and it is declared in the spec of the namespace that declares the type.
+- Default instances must not depend on each other in a cycle through `DEFAULT`.
+- Use **concrete, valid values** wherever an implementation will check them: keys, addresses, network data. Tests use
+  the default instances as they are, so a key must really be a key of its algorithm.
+- Prefer the way a user of the SDK would go (a factory function, an attribute of an object the user already has) over
+  constructing internals.
+
+Tools use the default instances wherever they need an instance of a type — the generated tests, for example, take them
+for attributes and arguments before any other way. For every type that attributes or parameters use but that cannot be
+obtained through the API at all (no default instance, no concrete subtype, no factory), the validator reports the
+warning `instance.missing`: the tests that need such a value cannot be generated.
+
 ### Streaming
 
 The meta-language supports declaring methods that return an asynchronous stream of items. A stream is a pull-based async

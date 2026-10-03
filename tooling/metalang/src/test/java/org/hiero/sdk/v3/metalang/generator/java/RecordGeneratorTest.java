@@ -311,8 +311,16 @@ class RecordGeneratorTest {
                         @@immutable @@maxSize(4) data: bytes }
                     """, "Limits"))
                     .contains("if (small < (byte) 1) {")
-                    .contains("if (big > 5L) {")
+                    .contains("if (Long.compareUnsigned(big, 5L) > 0) {")
                     .contains("if (huge.compareTo(new BigInteger(\"0\")) < 0) {")
+                    // the range of the type where the Java type is wider: int256 as BigInteger
+                    .contains("private static final BigInteger HUGE_MIN = new BigInteger(\"-" + java.math.BigInteger.TWO
+                            .pow(255) + "\");")
+                    .contains("if (huge.compareTo(HUGE_MIN) < 0 || huge.compareTo(HUGE_MAX) > 0) {\n"
+                            + "            throw new IllegalArgumentException(\"huge must be between -" + java.math
+                            .BigInteger.TWO.pow(255) + " and " + java.math.BigInteger.TWO.pow(255)
+                            .subtract(java.math.BigInteger.ONE) + "\");")
+                    .doesNotContain("small < (byte) (-128)")
                     .contains("if (ratio > 1.5) {")
                     .contains("if (amount.compareTo(new BigDecimal(\"0\")) < 0) {")
                     .contains("if (delay.compareTo(Duration.ofMillis(30L)) > 0) {")

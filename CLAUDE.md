@@ -41,6 +41,8 @@ generated/java/                # Generated Java API as Maven project, one sub-mo
                                #   git; regenerate after spec or generator changes, commands in
                                #   tooling/metalang/README.md). Never edit by hand. `metalang check` verifies
                                #   that it (or an implementation based on it) provides the API of the specs.
+                               #   src/test/java holds generated JUnit tests of the spec contract; the tests of
+                               #   method stubs fail until the methods are implemented.
 sdk-ts/openspec/               # TypeScript-only OpenSpec root
 
 spec/                           # The actual V3 public-API specifications, written in the meta-language
@@ -92,7 +94,12 @@ tooling/metalang/               # Prototype: ANTLR grammar, parser, semantic mod
 points to keep specs valid and consistent:
 
 - Each spec file follows the same skeleton: `# Title` → `## Description` → optional `## Design Notes` →
-  `## API Schema` (a fenced code block) → optional `## Examples` → optional `## Testing` → `## Questions & Comments`.
+  `## API Schema` (a fenced code block) → optional `## Default Instances` → optional `## Examples` → optional
+  `## Testing` → `## Questions & Comments`.
+- `## Default Instances` records the standard way to obtain an instance of the spec's types through the API
+  (`instance PublicKey = DEFAULT(PrivateKey).createPublicKey()`), with concrete values where implementations check them
+  (keys, addresses). Generated tests use them first; the validator warns (`instance.missing`) about types that cannot
+  be obtained at all. See "Default instances" in `guidelines/api-guideline.md`.
 - `## Description` and the comments directly above declarations become the **public API documentation** (Javadoc,
   rustdoc, …): write them for SDK users. Spec-author rationale, links to other spec files, ADR references and
   meta-language details go to `## Design Notes` (resolved) or `## Questions & Comments` (open). The validator warns

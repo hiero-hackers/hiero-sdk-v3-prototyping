@@ -22,6 +22,7 @@ import org.hiero.sdk.v3.metalang.generator.GeneratedOutput;
 import org.hiero.sdk.v3.metalang.generator.GenerationException;
 import org.hiero.sdk.v3.metalang.generator.java.JavaGenerator;
 import org.hiero.sdk.v3.metalang.generator.java.JavaGeneratorConfig;
+import org.hiero.sdk.v3.metalang.generator.java.TestGenerator;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
 
@@ -33,6 +34,7 @@ import org.hiero.sdk.v3.metalang.model.QualifiedName;
  *                   [--format=text|json] [--summary] &lt;spec-dir-or-file&gt;
  * metalang model [--namespace=ns] [--type=ns.Type] [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
  * metalang generate --language=java --output=dir [--fail-on=error|warning|info|never] [--show-deferred]
+ *     [--show-untested]
  *     &lt;spec-dir-or-file&gt;
  * metalang check --language=java --project=dir [--config=file] [--fail-on=error|warning|info|never]
  *     &lt;spec-dir-or-file&gt;
@@ -79,6 +81,7 @@ public final class MetaLangCli {
               --config=<file>                     generator configuration (.properties, e.g.
                                                   sdk-java/generator.properties)
               --show-deferred                     list the types that are not generated yet and why
+              --show-untested                     list the tests that cannot be generated and why
 
             Options for 'check' (does a project provide the API generated from the specs? Additional files,
             types and members and implemented methods are allowed):
@@ -254,6 +257,7 @@ public final class MetaLangCli {
         String language = null;
         String output = null;
         boolean showDeferred = false;
+        boolean showUntested = false;
         String config = null;
         final List<String> paths = new ArrayList<>();
         for (final String arg : args) {
@@ -271,6 +275,8 @@ public final class MetaLangCli {
                 config = arg.substring("--config=".length());
             } else if (arg.equals("--show-deferred")) {
                 showDeferred = true;
+            } else if (arg.equals("--show-untested")) {
+                showUntested = true;
             } else if (arg.startsWith("--")) {
                 return usageError("Unknown option " + arg);
             } else {
@@ -331,6 +337,15 @@ public final class MetaLangCli {
                     + (showDeferred ? ":" : " (--show-deferred lists them)"));
             if (showDeferred) {
                 deferred.forEach((type, reason) -> out.println("  " + type + ": " + reason));
+            }
+        }
+        final List<String> untested = TestGenerator.untested(files);
+        if (!untested.isEmpty()) {
+            out.println(untested.size() + " test(s) not generated because their values cannot be built"
+                    + (showUntested ? ":" : " (--show-untested lists them; see the instance.missing warnings of "
+                    + "'metalang validate')"));
+            if (showUntested) {
+                untested.forEach(u -> out.println("  " + u));
             }
         }
         return EXIT_OK;

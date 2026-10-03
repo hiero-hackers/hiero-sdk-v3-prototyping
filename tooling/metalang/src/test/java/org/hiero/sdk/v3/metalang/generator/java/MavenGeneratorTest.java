@@ -97,7 +97,8 @@ class MavenGeneratorTest {
 
         // THEN
         assertThat(texts(client, "artifactId")).containsExactly("hiero-sdk", "hiero-node-client", "hiero-base",
-                "jspecify");
+                "jspecify", "junit-jupiter");
+        assertThat(texts(client, "scope")).containsExactly("test");
         assertThat(texts(client, "description")).containsExactly("Module org.hiero.node.client of the Hiero SDK.");
         assertThat(MavenGenerator.artifactId("consensus-node-client")).isEqualTo("hiero-consensus-node-client");
     }

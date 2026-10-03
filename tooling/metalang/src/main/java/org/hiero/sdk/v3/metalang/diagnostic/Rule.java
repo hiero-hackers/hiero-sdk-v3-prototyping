@@ -233,6 +233,16 @@ public enum Rule {
             "Field is mutable; prefer @@immutable unless mutability is required",
             "api-guideline.md#prefer-immutable-fields-and-objects"),
 
+    // --- default instances -----------------------------------------------------------------------
+    INSTANCE_INVALID("instance.invalid", Severity.ERROR,
+            "Default instance cannot be resolved (unknown type, function, attribute or argument, wrong type, duplicate "
+                    + "or foreign type)", "api-guideline.md#default-instances"),
+    INSTANCE_CYCLE("instance.cycle", Severity.ERROR,
+            "Default instances depend on each other in a cycle", "api-guideline.md#default-instances"),
+    INSTANCE_MISSING("instance.missing", Severity.WARNING,
+            "No way to obtain an instance of a type through the API: tests that need one cannot be generated",
+            "api-guideline.md#default-instances"),
+
     // --- enums -----------------------------------------------------------------------------------
     ENUM_BODY_ATTRIBUTE("enum.body-attribute", Severity.ERROR,
             "Enum attributes must be declared in the attribute list after the enum name, not in the body",

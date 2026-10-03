@@ -156,6 +156,18 @@ enum KeyFormat(container: KeyContainer, encoding: KeyEncoding) {
 
 ```
 
+## Default Instances
+
+```
+// An ED25519 key with known bytes (the key of the examples below), so that tests can check signatures and
+// encodings against fixed values.
+instance PrivateKey = createPrivateKey(algorithm: KeyAlgorithm.ED25519, encoding: ByteImportEncoding.HEX,
+        value: "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c")
+
+// The public key of the default private key.
+instance PublicKey = DEFAULT(PrivateKey).createPublicKey()
+```
+
 ## KeyContainer rules
 
 Not all combinations of container and encoding are valid.

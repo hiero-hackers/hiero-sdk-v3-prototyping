@@ -340,6 +340,32 @@ constant ZERO_CONTRACT_ID: ContractId = ContractId{shard: 0, realm: 0, num: 0, c
 
 ```
 
+## Default Instances
+
+```
+// The Hedera testnet with HBAR as native token.
+instance Network<ANY> = Network<hedera.HbarUnit>{id: [1], name: "testnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
+
+// An account address of the testnet.
+instance Address = Address{shard: 0, realm: 0, num: 1001, checksum: ""}
+
+// An account addressed by its number.
+instance AccountId = AccountId{shard: 0, realm: 0, num: 1001, checksum: ""}
+
+// A new transaction id of the default account.
+instance TransactionId = TransactionId.generateTransactionId(accountId: DEFAULT)
+
+// The IPv4 address of a testnet consensus node.
+instance IpAddress = IpAddress{bytes: [34, 94, 106, 61]}
+
+// A consensus node of the testnet.
+instance ConsensusNode = ConsensusNode{ip: DEFAULT, port: 50211,
+        account: AccountId{shard: 0, realm: 0, num: 3, checksum: ""}}
+
+// The mirror node of the testnet.
+instance MirrorNode = MirrorNode{restBaseUrl: "https://testnet.mirrornode.hedera.com"}
+```
+
 ## Questions & Comments
 
 - [@hendrikebbers](https://github.com/hendrikebbers): Should we rename `Ledger` to `Network`?

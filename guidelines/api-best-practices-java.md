@@ -146,6 +146,24 @@ Java integers are signed. An unsigned type therefore uses the next wider Java ty
 convention for unsigned 64-bit values; values above `Long.MAX_VALUE` appear as negative numbers and are read with
 `Long.toUnsignedString`, `Long.compareUnsigned` and `Long.divideUnsigned`.
 
+Because the Java type is often wider than the meta-language type, it accepts values the specification does not allow:
+a `short` for a `uint8` also holds `-1` and `300`, a `BigInteger` for an `int256` any number. Constructors and setters
+must therefore check the range of the type like a validation annotation and throw an `IllegalArgumentException`
+outside of it. A type whose Java type has exactly its range (`int8` to `int64`) needs no check; neither does `uint64`,
+where every `long` is a valid value. For `uint64`, `@@min` and `@@max` must be compared unsigned:
+
+```java
+// @@immutable port: uint16
+if (port < 0 || port > 65535) {
+    throw new IllegalArgumentException("port must be between 0 and 65535");
+}
+
+// @@immutable @@max(5) count: uint64
+if (Long.compareUnsigned(count, 5L) > 0) {
+    throw new IllegalArgumentException("count must be at most 5");
+}
+```
+
 ### Function Types
 
 The meta-language `function<R m(p: T, ...)>` maps to a `@FunctionalInterface` in Java. Where possible, use the

@@ -35,15 +35,17 @@ class ClassGeneratorTest {
     }
 
     private static String source(final List<GeneratedFile> files, final String type) {
-        return files.stream().filter(f -> f.path().endsWith("/" + type + ".java")).findFirst().orElseThrow()
-                .content();
+        return files.stream().filter(f -> f.path().endsWith("/src/main/java/org/hiero/a/" + type + ".java")
+                || f.path().endsWith("/" + type + ".java") && f.path().contains("/src/main/java/")).findFirst()
+                .orElseThrow().content();
     }
 
     /** The first line of the type declaration of every generated type, by name. */
     private static Map<String, String> headers(final List<GeneratedFile> files) {
         final Map<String, String> headers = new java.util.TreeMap<>();
         for (final GeneratedFile file : files) {
-            if (file.path().endsWith(".java") && !file.path().endsWith("-info.java")) {
+            if (file.path().endsWith(".java") && !file.path().endsWith("-info.java")
+                    && file.path().contains("/src/main/java/")) {
                 final String name = file.path().substring(file.path().lastIndexOf('/') + 1,
                         file.path().length() - ".java".length());
                 headers.put(name, file.content().lines().filter(l -> l.startsWith("public ")).findFirst()

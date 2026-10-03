@@ -75,7 +75,7 @@ class JavaGeneratorTest {
                     "client/c.md", TestSpecs.markdown("namespace c\nrequires {A} from a\nC { @@immutable a: A }\n")));
 
             // THEN
-            assertThat(files).extracting(GeneratedFile::path).filteredOn(p -> p.endsWith(".java")).containsExactly(
+            assertThat(files).extracting(GeneratedFile::path).filteredOn(p -> p.endsWith(".java") && p.contains("/src/main/java/")).containsExactly(
                     "org.hiero.client/src/main/java/module-info.java",
                     "org.hiero.client/src/main/java/org/hiero/c/C.java",
                     "org.hiero.client/src/main/java/org/hiero/c/package-info.java",
@@ -165,7 +165,7 @@ class JavaGeneratorTest {
         @Test
         void shouldNotGenerateAPackageInfoWithoutDescription() {
             final List<GeneratedFile> files = generate(Map.of("f/a.md", "## API Schema\n```\nnamespace a\nX {}\n```\n"));
-            assertThat(files).extracting(GeneratedFile::path).filteredOn(p -> p.endsWith(".java")).containsExactly("org.hiero.f/src/main/java/module-info.java",
+            assertThat(files).extracting(GeneratedFile::path).filteredOn(p -> p.endsWith(".java") && p.contains("/src/main/java/")).containsExactly("org.hiero.f/src/main/java/module-info.java",
                     "org.hiero.f/src/main/java/org/hiero/a/X.java");
         }
     }
@@ -344,7 +344,8 @@ class JavaGeneratorTest {
                             "org.hiero.base/src/main/java/org/hiero/sdk/common/HieroStream.java",
                             "org.hiero.base/src/main/java/org/hiero/sdk/common/HieroSubscription.java",
                             "org.hiero.base/src/main/java/org/hiero/sdk/common/StreamItem.java");
-            assertThat(files).hasSize(5 + 6 + 5 + (int) withDescription + (int) enumFiles + (int) records + (int) interfaces
+            assertThat(files).filteredOn(f -> !f.path().contains("/src/test/java/"))
+                    .hasSize(5 + 6 + 5 + (int) withDescription + (int) enumFiles + (int) records + (int) interfaces
                     + (int) classes);
             assertThat(enumFiles).isEqualTo(enums);
             assertThat(records).isGreaterThanOrEqualTo(80);
@@ -359,6 +360,26 @@ class JavaGeneratorTest {
                     .allMatch(f -> f.content().contains("@NullMarked\nmodule "));
             assertThat(files).noneMatch(f -> f.content().contains("@NonNull"));
             assertThat(enums).isEqualTo(16);
+        }
+
+        @Test
+        void generatedTestsForAllSpecsShouldCompileAndOnlyFailForMethodsThatAreNotImplemented() throws Exception {
+            // GIVEN
+            final Path specs = Path.of(System.getProperty("spec.root", "../../spec"));
+            final List<GeneratedFile> files = generator.generate(LinkedModel.of(new MetaLang().validate(specs).model()));
+            final GeneratedJava.Compilation modules = GeneratedJava.compile(files, output);
+
+            // WHEN
+            final GeneratedJava.Compilation tests = GeneratedJava.compileTests(files, modules, output);
+            final GeneratedJava.TestRun run = GeneratedJava.runTests(files, tests);
+
+            // THEN the tests compile without warnings; everything the generator implements passes (constructors,
+            // accessors, setters, checks, copies, value semantics), the method stubs fail until they are implemented
+            assertThat(tests.diagnostics()).isEmpty();
+            assertThat(run.unexpected()).isEmpty();
+            assertThat(run.tests()).isGreaterThan(2000);
+            assertThat(run.tests() - run.failures().size()).isGreaterThan(1300);
+            assertThat(run.stubs()).isNotEmpty();
         }
 
         @Test

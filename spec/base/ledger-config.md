@@ -33,6 +33,13 @@ NetworkSetting {
 @@throws(not-found-error) @@static NetworkSetting getNetworkSetting(identifier: string) 
 ```
 
+## Default Instances
+
+```
+// The configuration of the Hedera testnet.
+instance NetworkSetting = NetworkSetting{network: DEFAULT, getConsensusNodes: [DEFAULT], getMirrorNodes: [DEFAULT]}
+```
+
 ## Examples
 
 The following example shows how to load the network configuration for the Hedera testnet:

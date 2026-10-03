@@ -2,9 +2,11 @@ package org.hiero.sdk.v3.metalang.parser;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.Token;
@@ -31,7 +33,8 @@ final class SyntaxParser {
      * @param tokens      the token stream including hidden-channel comments
      * @param diagnostics syntax diagnostics
      */
-    record Result(MetaLangParser.@Nullable SchemaContext tree, CommonTokenStream tokens, List<Diagnostic> diagnostics) {
+    record Result<T extends ParserRuleContext>(@Nullable T tree, CommonTokenStream tokens,
+                                               List<Diagnostic> diagnostics) {
     }
 
     private SyntaxParser() {
@@ -77,7 +80,20 @@ final class SyntaxParser {
                 lines[lines.length - 1].length() + 1);
     }
 
-    static Result parse(final SchemaSource source) {
+    static Result<MetaLangParser.SchemaContext> parse(final SchemaSource source) {
+        return parse(source, MetaLangParser::schema);
+    }
+
+    /**
+     * Parses a source with the given start rule.
+     *
+     * @param source the source
+     * @param start  the start rule, e.g. {@code MetaLangParser::instances}
+     * @param <T>    the type of the parse tree
+     * @return the parse result
+     */
+    static <T extends ParserRuleContext> Result<T> parse(final SchemaSource source,
+                                                         final Function<MetaLangParser, T> start) {
         Objects.requireNonNull(source, "source must not be null");
         final DiagnosticCollector diagnostics = new DiagnosticCollector();
         final BaseErrorListener listener = new BaseErrorListener() {
@@ -102,13 +118,13 @@ final class SyntaxParser {
             diagnostics.report(Rule.SYNTAX_NESTING_TOO_DEEP, "Brackets are nested deeper than " + MAX_NESTING
                     + " levels; the input is not parsed", new SourceLocation(source.file(),
                     tooDeep.getLine() + source.lineOffset(), tooDeep.getCharPositionInLine() + 1));
-            return new Result(null, tokens, diagnostics.sorted());
+            return new Result<>(null, tokens, diagnostics.sorted());
         }
         final MetaLangParser parser = new MetaLangParser(tokens);
         parser.removeErrorListeners();
         parser.addErrorListener(listener);
         parser.getInterpreter().setPredictionMode(PredictionMode.LL);
-        final MetaLangParser.SchemaContext tree = parser.schema();
-        return new Result(tree, tokens, diagnostics.sorted());
+        final T tree = start.apply(parser);
+        return new Result<>(tree, tokens, diagnostics.sorted());
     }
 }

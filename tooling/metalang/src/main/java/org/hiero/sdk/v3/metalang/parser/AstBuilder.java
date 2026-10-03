@@ -11,7 +11,9 @@ import org.hiero.sdk.v3.metalang.ast.Annotation;
 import org.hiero.sdk.v3.metalang.ast.Comment;
 import org.hiero.sdk.v3.metalang.ast.Declaration;
 import org.hiero.sdk.v3.metalang.ast.EnumValue;
+import org.hiero.sdk.v3.metalang.ast.Expression;
 import org.hiero.sdk.v3.metalang.ast.Field;
+import org.hiero.sdk.v3.metalang.ast.Instance;
 import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.ast.Method;
 import org.hiero.sdk.v3.metalang.ast.MethodSyntax;
@@ -44,7 +46,50 @@ final class AstBuilder {
         final List<Requires> requires = ctx.requiresDecl().stream().map(this::requires).toList();
         final List<Declaration> declarations = ctx.topLevelDecl().stream().map(this::declaration).toList();
         return new SchemaFile(qualifiedName(ns.qualifiedName()), requires, declarations, comments(),
-                location(ns.start), source.description(), source.descriptionLine());
+                location(ns.start), source.description(), source.descriptionLine(), List.of());
+    }
+
+    /**
+     * Builds the default instances of a "## Default Instances" block.
+     *
+     * @param ctx the parse tree
+     * @return the default instances in source order
+     */
+    List<Instance> instances(final MetaLangParser.InstancesContext ctx) {
+        return ctx.instanceDecl().stream().map(d -> new Instance(typeRef(d.typeRef()), expression(d.expression()),
+                documentation(d), location(d.INSTANCE().getSymbol()))).toList();
+    }
+
+    private Expression expression(final MetaLangParser.ExpressionContext ctx) {
+        final SourceLocation location = location(ctx.start);
+        return switch (ctx) {
+            case MetaLangParser.MethodCallExpressionContext c -> new Expression.MethodCall(expression(c.expression()),
+                    identifier(c.identifier()), arguments(c.argumentList()), location(c.identifier().start));
+            case MetaLangParser.AccessExpressionContext a -> new Expression.Access(expression(a.expression()),
+                    identifier(a.identifier()), location(a.identifier().start));
+            case MetaLangParser.DefaultExpressionContext d -> new Expression.Default(
+                    d.typeRef() == null ? null : typeRef(d.typeRef()), location);
+            case MetaLangParser.ConstructExpressionContext c -> new Expression.Construct(new TypeRef.Named(
+                    qualifiedName(c.qualifiedName()), c.typeArguments() == null ? List.of()
+                    : c.typeArguments().typeArgument().stream().map(this::typeArgument).toList(), location),
+                    arguments(c.argumentList()), location);
+            case MetaLangParser.CallExpressionContext c -> new Expression.Call(qualifiedName(c.qualifiedName()),
+                    arguments(c.argumentList()), location);
+            case MetaLangParser.ListExpressionContext l -> new Expression.ListValue(
+                    l.expression().stream().map(this::expression).toList(), location);
+            case MetaLangParser.StringExpressionContext s -> new Expression.Value(
+                    new Literal.StringLiteral(unquote(s.STRING().getText()), location), location);
+            case MetaLangParser.NumberExpressionContext n -> new Expression.Value(
+                    new Literal.NumberLiteral(n.NUMBER().getText(), location), location);
+            case MetaLangParser.NameExpressionContext n -> new Expression.Value(
+                    new Literal.NameLiteral(qualifiedName(n.qualifiedName()), location), location);
+            default -> throw new IllegalStateException("Unexpected expression: " + ctx.getClass());
+        };
+    }
+
+    private List<Expression.Argument> arguments(final MetaLangParser.ArgumentListContext ctx) {
+        return ctx == null ? List.of() : ctx.argument().stream().map(a -> new Expression.Argument(
+                identifier(a.identifier()), expression(a.expression()), location(a.start))).toList();
     }
 
     // --- top level -------------------------------------------------------------------------------

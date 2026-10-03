@@ -45,6 +45,38 @@ topLevelDecl
     | functionDecl
     ;
 
+// --- default instances -------------------------------------------------------------------------
+// The content of a spec's "## Default Instances" code block: for a type, the standard way to obtain an instance
+// through the API. It uses the namespace and the imports of the file's API schema.
+
+instances
+    : instanceDecl* EOF
+    ;
+
+instanceDecl
+    : INSTANCE typeRef ASSIGN expression SEMI?
+    ;
+
+expression
+    : expression DOT identifier LPAREN argumentList? RPAREN         # methodCallExpression
+    | expression DOT identifier                                      # accessExpression
+    | DEFAULT (LPAREN typeRef RPAREN)?                               # defaultExpression
+    | qualifiedName typeArguments? LBRACE argumentList? RBRACE       # constructExpression
+    | qualifiedName LPAREN argumentList? RPAREN                      # callExpression
+    | LBRACK (expression (COMMA expression)* COMMA?)? RBRACK         # listExpression
+    | STRING                                                         # stringExpression
+    | NUMBER                                                         # numberExpression
+    | qualifiedName                                                  # nameExpression
+    ;
+
+argumentList
+    : argument (COMMA argument)* COMMA?
+    ;
+
+argument
+    : identifier COLON expression
+    ;
+
 // --- constants ---------------------------------------------------------------------------------
 
 constantDecl
@@ -197,6 +229,8 @@ identifier
     | ABSTRACTION
     | EXTENDS
     | FUNCTION
+    | INSTANCE
+    | DEFAULT
     ;
 
 // ---------------------------------------------------------------------------------------------
@@ -212,6 +246,8 @@ ABSTRACTION : 'abstraction';
 TYPE        : 'type';
 EXTENDS     : 'extends';
 FUNCTION    : 'function';
+INSTANCE    : 'instance';
+DEFAULT     : 'DEFAULT';
 ANY         : 'ANY';
 VOID        : 'void';
 

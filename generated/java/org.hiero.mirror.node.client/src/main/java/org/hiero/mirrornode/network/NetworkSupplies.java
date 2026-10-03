@@ -7,11 +7,23 @@ import java.util.Objects;
 
 public record NetworkSupplies(BigInteger releasedSupply, BigInteger totalSupply) {
 
+    private static final BigInteger RELEASED_SUPPLY_MIN = new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968");
+    private static final BigInteger RELEASED_SUPPLY_MAX = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
+    private static final BigInteger TOTAL_SUPPLY_MIN = new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968");
+    private static final BigInteger TOTAL_SUPPLY_MAX = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
+
     /// Creates a new `NetworkSupplies`.
     ///
     /// @throws NullPointerException if a required value is `null`
+    /// @throws IllegalArgumentException if a value violates its constraints
     public NetworkSupplies {
         Objects.requireNonNull(releasedSupply, "releasedSupply must not be null");
+        if (releasedSupply.compareTo(RELEASED_SUPPLY_MIN) < 0 || releasedSupply.compareTo(RELEASED_SUPPLY_MAX) > 0) {
+            throw new IllegalArgumentException("releasedSupply must be between -57896044618658097711785492504343953926634992332820282019728792003956564819968 and 57896044618658097711785492504343953926634992332820282019728792003956564819967");
+        }
         Objects.requireNonNull(totalSupply, "totalSupply must not be null");
+        if (totalSupply.compareTo(TOTAL_SUPPLY_MIN) < 0 || totalSupply.compareTo(TOTAL_SUPPLY_MAX) > 0) {
+            throw new IllegalArgumentException("totalSupply must be between -57896044618658097711785492504343953926634992332820282019728792003956564819968 and 57896044618658097711785492504343953926634992332820282019728792003956564819967");
+        }
     }
 }

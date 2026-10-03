@@ -21,6 +21,9 @@ final class MavenGenerator {
     /** The version of the jspecify annotations. */
     static final String JSPECIFY_VERSION = "1.0.0";
 
+    /** The JUnit version of the generated tests. */
+    static final String JUNIT_VERSION = "6.0.3";
+
     private static final String NAMESPACES = """
             <project xmlns="http://maven.apache.org/POM/4.0.0" \
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -70,10 +73,18 @@ final class MavenGenerator {
                 + "        <maven.compiler.release>25</maven.compiler.release>\n"
                 + "        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>\n"
                 + "        <jspecify.version>" + JSPECIFY_VERSION + "</jspecify.version>\n"
+                + "        <junit.version>" + JUNIT_VERSION + "</junit.version>\n"
                 + "    </properties>\n\n"
                 + "    <dependencyManagement>\n"
                 + "        <dependencies>\n"
                 + dependency("org.jspecify", "jspecify", "${jspecify.version}", "            ")
+                + "            <dependency>\n"
+                + "                <groupId>org.junit</groupId>\n"
+                + "                <artifactId>junit-bom</artifactId>\n"
+                + "                <version>${junit.version}</version>\n"
+                + "                <type>pom</type>\n"
+                + "                <scope>import</scope>\n"
+                + "            </dependency>\n"
                 + "        </dependencies>\n"
                 + "    </dependencyManagement>\n\n"
                 + "    <build>\n"
@@ -138,6 +149,12 @@ final class MavenGenerator {
                 .collect(Collectors.joining())
                 // the nullness annotations are part of the API (requires static transitive org.jspecify)
                 + dependency("org.jspecify", "jspecify", null, "        ")
+                // the generated tests (src/test/java)
+                + "        <dependency>\n"
+                + "            <groupId>org.junit.jupiter</groupId>\n"
+                + "            <artifactId>junit-jupiter</artifactId>\n"
+                + "            <scope>test</scope>\n"
+                + "        </dependency>\n"
                 + "    </dependencies>\n"
                 + "</project>\n";
         return new GeneratedFile(module.directory() + "/pom.xml", xml);

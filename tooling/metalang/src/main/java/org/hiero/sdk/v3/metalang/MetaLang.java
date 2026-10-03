@@ -112,7 +112,15 @@ public final class MetaLang {
             specCount++;
             final ParseResult parsed = parser.parse(extraction.source());
             diagnostics.addAll(parsed.diagnostics());
-            parsed.ast().ifPresent(schemas::add);
+            SchemaFile schema = parsed.ast().orElse(null);
+            if (extraction.instances() != null) {
+                final SchemaParser.InstancesResult instances = parser.parseInstances(extraction.instances());
+                diagnostics.addAll(instances.diagnostics());
+                schema = schema == null ? null : schema.withInstances(instances.instances());
+            }
+            if (schema != null) {
+                schemas.add(schema);
+            }
         }
         final SpecModel model = SpecModel.of(schemas);
         diagnostics.addAll(validator.validate(model));

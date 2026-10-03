@@ -20,6 +20,10 @@ class GenerateCommandTest {
     private final MetaLangCli cli = new MetaLangCli(new PrintStream(out, true, StandardCharsets.UTF_8),
             new PrintStream(err, true, StandardCharsets.UTF_8));
 
+    /** The tests of the example specs that cannot be generated. */
+    private static final String UNTESTED = "2 test(s) not generated because their values cannot be built "
+            + "(--show-untested lists them; see the instance.missing warnings of 'metalang validate')\n";
+
     @TempDir
     Path temp;
 
@@ -42,6 +46,21 @@ class GenerateCommandTest {
                 abstraction Named { @@immutable name: string }
                 """));
         return temp.resolve("spec");
+    }
+
+    @Test
+    void shouldListTheUntestedTestsOnRequest() throws Exception {
+        // WHEN
+        final int exit = cli.run("generate", "--language=java", "--show-untested",
+                "--output=" + temp.resolve("out"), goldenSpec().toString());
+
+        // THEN
+        assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
+        assertThat(out.toString(StandardCharsets.UTF_8)).endsWith(
+                "2 test(s) not generated because their values cannot be built:\n"
+                        + "  ListingTest: no valid value for `entity` of Listing: constructor, attribute and method "
+                        + "tests\n"
+                        + "  ProductTest: no valid arguments for `sameAs(shop.Entity<$$O>)`\n");
     }
 
     @Test
@@ -109,9 +128,9 @@ class GenerateCommandTest {
 
         // THEN
         assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
-        assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("30 file(s) generated in " + output
+        assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("48 file(s) generated in " + output
                 + " (0 changed, 1 stale removed)\n  removed " + Path.of("org.hiero.shop/src/main/java/org/hiero/shop/Gone.java")
-                + "\n");
+                + "\n" + UNTESTED);
         assertThat(stale).doesNotExist();
     }
 
@@ -126,7 +145,7 @@ class GenerateCommandTest {
         // THEN
         assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
         assertThat(out.toString(StandardCharsets.UTF_8))
-                .isEqualTo("30 file(s) generated in " + output + " (30 changed, 0 stale removed)\n");
+                .isEqualTo("48 file(s) generated in " + output + " (48 changed, 0 stale removed)\n" + UNTESTED);
         assertThat(output.resolve("org.hiero.shop/src/main/java/module-info.java")).exists();
         assertThat(Files.readString(output.resolve("org.hiero.shop/src/main/java/org/hiero/shop/package-info.java")))
                 .contains("package org.hiero.shop;");

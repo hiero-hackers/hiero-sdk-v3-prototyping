@@ -24,7 +24,11 @@ import org.jspecify.annotations.Nullable;
 public final class MarkdownSchemaExtractor {
 
     private static final List<String> CANONICAL_ORDER = List.of(
-            "Description", "Design Notes", "API Schema", "Examples", "Testing", "Questions & Comments");
+            "Description", "Design Notes", "API Schema", "Default Instances", "Examples", "Testing",
+            "Questions & Comments");
+
+    /** The heading of the section with the default instances. */
+    public static final String DEFAULT_INSTANCES = "Default Instances";
 
     private static final List<String> REQUIRED_SECTIONS = List.of(
             "Description", "API Schema", "Testing", "Questions & Comments");
@@ -102,10 +106,26 @@ public final class MarkdownSchemaExtractor {
         final Description description = description(scan);
         final SchemaSource source = selected == null ? null : new SchemaSource(selected.file(), selected.text(),
                 selected.lineOffset(), description.text(), description.line());
+        SchemaSource instances = null;
         if (source != null) {
             checkSkeleton(file, scan.headings(), diagnostics);
+            instances = instances(file, scan, diagnostics);
         }
-        return new ExtractionResult(source, diagnostics.sorted());
+        return new ExtractionResult(source, diagnostics.sorted(), instances);
+    }
+
+    /** The first code block of the "## Default Instances" section. */
+    private static @Nullable SchemaSource instances(final String file, final Scan scan,
+                                                    final DiagnosticCollector diagnostics) {
+        final List<CodeBlock> blocks = scan.blocks().stream()
+                .filter(b -> DEFAULT_INSTANCES.equals(b.section())).toList();
+        if (blocks.size() > 1) {
+            diagnostics.report(Rule.DOC_MULTIPLE_SCHEMA_BLOCKS, "Section '## " + DEFAULT_INSTANCES + "' contains "
+                    + blocks.size() + " code blocks; only the first one is used",
+                    new SourceLocation(file, blocks.get(1).firstContentLine() - 1, 1));
+        }
+        return blocks.isEmpty() ? null
+                : new SchemaSource(file, blocks.getFirst().content(), blocks.getFirst().firstContentLine() - 1);
     }
 
     private static Scan scan(final String markdown) {
@@ -269,7 +289,8 @@ public final class MarkdownSchemaExtractor {
             return "API Schema";
         }
         return switch (heading) {
-            case "Description", "Design Notes", "Examples", "Testing", "Questions & Comments" -> heading;
+            case "Description", "Design Notes", "Default Instances", "Examples", "Testing", "Questions & Comments" ->
+                    heading;
             case "Example" -> "Examples";
             default -> null;
         };

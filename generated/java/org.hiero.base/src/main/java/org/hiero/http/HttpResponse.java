@@ -13,7 +13,11 @@ public record HttpResponse(int statusCode, byte[] body, Map<String, String> head
     /// Creates a new `HttpResponse`.
     ///
     /// @throws NullPointerException if a required value is `null`
+    /// @throws IllegalArgumentException if a value violates its constraints
     public HttpResponse {
+        if (statusCode < 0 || statusCode > 65535) {
+            throw new IllegalArgumentException("statusCode must be between 0 and 65535");
+        }
         Objects.requireNonNull(body, "body must not be null");
         body = body.clone();
         Objects.requireNonNull(headers, "headers must not be null");

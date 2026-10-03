@@ -18,8 +18,12 @@ public record ConsensusNode(IpAddress ip, int port, AccountId account) {
     /// Creates a new `ConsensusNode`.
     ///
     /// @throws NullPointerException if a required value is `null`
+    /// @throws IllegalArgumentException if a value violates its constraints
     public ConsensusNode {
         Objects.requireNonNull(ip, "ip must not be null");
+        if (port < 0 || port > 65535) {
+            throw new IllegalArgumentException("port must be between 0 and 65535");
+        }
         Objects.requireNonNull(account, "account must not be null");
     }
 }

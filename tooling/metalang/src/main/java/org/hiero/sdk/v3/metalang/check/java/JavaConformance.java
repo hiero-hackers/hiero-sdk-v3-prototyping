@@ -58,7 +58,8 @@ public final class JavaConformance {
         Objects.requireNonNull(project, "project must not be null");
         final Map<String, String> sources = new TreeMap<>();
         for (final GeneratedFile file : generator.generate(model)) {
-            if (file.path().endsWith(".java")) {
+            // the API: the main sources; the generated tests are no part of it
+            if (file.path().endsWith(".java") && file.path().contains("/src/main/java/")) {
                 sources.put(file.path(), file.content());
             }
         }

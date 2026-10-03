@@ -23,13 +23,47 @@ public final class LinkedModel {
     private final List<FunctionDefinition> functions;
     private final List<ConstantDefinition> constants;
     private final List<NamespaceDefinition> namespaces;
+    private final List<InstanceDefinition> instances;
+    private final List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> instanceDiagnostics;
 
     LinkedModel(final Map<QualifiedName, TypeDefinition> types, final List<FunctionDefinition> functions,
-                final List<ConstantDefinition> constants, final List<NamespaceDefinition> namespaces) {
+                final List<ConstantDefinition> constants, final List<NamespaceDefinition> namespaces,
+                final List<InstanceDefinition> instances,
+                final List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> instanceDiagnostics) {
         this.types = Collections.unmodifiableSortedMap(new TreeMap<>(types));
         this.functions = List.copyOf(functions);
         this.constants = List.copyOf(constants);
         this.namespaces = List.copyOf(namespaces);
+        this.instances = List.copyOf(instances);
+        this.instanceDiagnostics = List.copyOf(instanceDiagnostics);
+    }
+
+    /**
+     * Returns the default instances of the specs ({@code ## Default Instances}) that could be resolved.
+     *
+     * @return the default instances, ordered by spec file and source order
+     */
+    public List<InstanceDefinition> instances() {
+        return instances;
+    }
+
+    /**
+     * Returns the default instance of a type.
+     *
+     * @param type the type
+     * @return the default instance, if the specs define one
+     */
+    public Optional<InstanceDefinition> instance(final QualifiedName type) {
+        return instances.stream().filter(i -> i.type().name().equals(type)).findFirst();
+    }
+
+    /**
+     * Returns the problems found while resolving the default instances (reported by the validator).
+     *
+     * @return the diagnostics
+     */
+    public List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> instanceDiagnostics() {
+        return instanceDiagnostics;
     }
 
     /**
@@ -150,6 +184,17 @@ public final class LinkedModel {
      */
     public Type substitute(final Type.DeclaredType supertype, final Type type) {
         return Linker.substitute(type, substitution(supertype));
+    }
+
+    /**
+     * Replaces type variables in a type.
+     *
+     * @param type      the type
+     * @param variables the replacements; type variables without replacement are kept
+     * @return the substituted type
+     */
+    public static Type substitute(final Type type, final java.util.Map<Type.TypeVariable, Type> variables) {
+        return Linker.substitute(type, variables);
     }
 
     private java.util.Map<Type.TypeVariable, Type> substitution(final Type.DeclaredType supertype) {

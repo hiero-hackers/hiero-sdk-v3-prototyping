@@ -19,7 +19,9 @@ class ValidatorTest {
 
     /** Rule ids that are expected for a schema that is otherwise clean (mutable fields are INFO only). */
     private static List<String> rules(final String... schemas) {
-        return ruleIds(schemas).stream().filter(r -> !r.equals("field.mutable")).toList();
+        // hints that most small schemas trigger; they have their own tests
+        return ruleIds(schemas).stream().filter(r -> !r.equals("field.mutable") && !r.equals("instance.missing"))
+                .toList();
     }
 
     @Test

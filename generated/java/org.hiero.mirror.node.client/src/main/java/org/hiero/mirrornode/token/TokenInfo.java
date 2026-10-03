@@ -31,9 +31,17 @@ public record TokenInfo(
         boolean deleted,
         CustomFee customFees) {
 
+    private static final BigInteger INITIAL_SUPPLY_MIN = new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968");
+    private static final BigInteger INITIAL_SUPPLY_MAX = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
+    private static final BigInteger TOTAL_SUPPLY_MIN = new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968");
+    private static final BigInteger TOTAL_SUPPLY_MAX = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
+    private static final BigInteger MAX_SUPPLY_MIN = new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968");
+    private static final BigInteger MAX_SUPPLY_MAX = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
+
     /// Creates a new `TokenInfo`.
     ///
     /// @throws NullPointerException if a required value is `null`
+    /// @throws IllegalArgumentException if a value violates its constraints
     public TokenInfo {
         Objects.requireNonNull(tokenId, "tokenId must not be null");
         Objects.requireNonNull(type, "type must not be null");
@@ -45,8 +53,17 @@ public record TokenInfo(
         Objects.requireNonNull(modifiedTimestamp, "modifiedTimestamp must not be null");
         Objects.requireNonNull(supplyType, "supplyType must not be null");
         Objects.requireNonNull(initialSupply, "initialSupply must not be null");
+        if (initialSupply.compareTo(INITIAL_SUPPLY_MIN) < 0 || initialSupply.compareTo(INITIAL_SUPPLY_MAX) > 0) {
+            throw new IllegalArgumentException("initialSupply must be between -57896044618658097711785492504343953926634992332820282019728792003956564819968 and 57896044618658097711785492504343953926634992332820282019728792003956564819967");
+        }
         Objects.requireNonNull(totalSupply, "totalSupply must not be null");
+        if (totalSupply.compareTo(TOTAL_SUPPLY_MIN) < 0 || totalSupply.compareTo(TOTAL_SUPPLY_MAX) > 0) {
+            throw new IllegalArgumentException("totalSupply must be between -57896044618658097711785492504343953926634992332820282019728792003956564819968 and 57896044618658097711785492504343953926634992332820282019728792003956564819967");
+        }
         Objects.requireNonNull(maxSupply, "maxSupply must not be null");
+        if (maxSupply.compareTo(MAX_SUPPLY_MIN) < 0 || maxSupply.compareTo(MAX_SUPPLY_MAX) > 0) {
+            throw new IllegalArgumentException("maxSupply must be between -57896044618658097711785492504343953926634992332820282019728792003956564819968 and 57896044618658097711785492504343953926634992332820282019728792003956564819967");
+        }
         Objects.requireNonNull(treasuryAccountId, "treasuryAccountId must not be null");
         Objects.requireNonNull(customFees, "customFees must not be null");
     }

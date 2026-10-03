@@ -66,9 +66,13 @@ class GuidelineExamplesTest {
                 "namespace", "namespace example\n" + text,
                 "type body", "namespace example\nWrapper {\n" + text + "\n}\n",
                 "type expressions", "namespace example\nWrapper {\n" + fields + "\n}\n");
-        return Stream.of("as-is", "namespace", "type body", "type expressions")
+        final Optional<String> schema = Stream.of("as-is", "namespace", "type body", "type expressions")
                 .filter(w -> parser.parse("api-guideline.md", wrappers.get(w)).diagnostics().isEmpty())
                 .findFirst();
+        // the content of a "## Default Instances" section
+        return schema.or(() -> parser.parseInstances(org.hiero.sdk.v3.metalang.source.SchemaSource.ofPlainText(
+                "api-guideline.md", text)).diagnostics().isEmpty() ? Optional.of("default instances")
+                : Optional.empty());
     }
 
     @TestFactory

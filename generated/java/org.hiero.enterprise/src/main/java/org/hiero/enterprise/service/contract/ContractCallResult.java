@@ -4,6 +4,15 @@ package org.hiero.enterprise.service.contract;
 
 public record ContractCallResult(short size) {
 
+    /// Creates a new `ContractCallResult`.
+    ///
+    /// @throws IllegalArgumentException if a value violates its constraints
+    public ContractCallResult {
+        if (size < (short) 0 || size > (short) 255) {
+            throw new IllegalArgumentException("size must be between 0 and 255");
+        }
+    }
+
     /// Runtime type of the result value at `index`; use it to check the value returned by get(index).
     public Class<?> getType(final short index) {
         throw new UnsupportedOperationException("Not implemented yet: ContractCallResult.getType");

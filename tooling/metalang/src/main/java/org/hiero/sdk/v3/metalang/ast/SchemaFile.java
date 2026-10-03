@@ -15,9 +15,11 @@ import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
  * @param location     location of the {@code namespace} statement
  * @param description  the Markdown text of the spec's {@code ## Description} section (may be empty)
  * @param descriptionLine the Markdown line of the first line of {@code description} (0 if there is none)
+ * @param instances    the default instances of the spec's {@code ## Default Instances} section
  */
 public record SchemaFile(String namespace, List<Requires> requires, List<Declaration> declarations,
-                         List<Comment> comments, SourceLocation location, String description, int descriptionLine)
+                         List<Comment> comments, SourceLocation location, String description, int descriptionLine,
+                         List<Instance> instances)
         implements Node {
 
     /**
@@ -30,8 +32,10 @@ public record SchemaFile(String namespace, List<Requires> requires, List<Declara
      * @param location     the location of the namespace statement
      * @param description  the description section (Markdown)
      * @param descriptionLine line of the first description line or 0
+     * @param instances    the default instances
      */
     public SchemaFile {
+        instances = List.copyOf(Objects.requireNonNull(instances, "instances must not be null"));
         Objects.requireNonNull(description, "description must not be null");
         Objects.requireNonNull(namespace, "namespace must not be null");
         requires = List.copyOf(Objects.requireNonNull(requires, "requires must not be null"));
@@ -58,5 +62,16 @@ public record SchemaFile(String namespace, List<Requires> requires, List<Declara
      */
     public String file() {
         return location.file();
+    }
+
+    /**
+     * Returns a copy with the given default instances.
+     *
+     * @param newInstances the default instances
+     * @return the copy
+     */
+    public SchemaFile withInstances(final List<Instance> newInstances) {
+        return new SchemaFile(namespace, requires, declarations, comments, location, description, descriptionLine,
+                newInstances);
     }
 }

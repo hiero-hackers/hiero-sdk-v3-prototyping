@@ -81,6 +81,19 @@ HieroClient<$$Unit extends NativeTokenUnit> {
 @@static HieroClient<ANY> createClient(networkSettings: NetworkSetting, operatorAccount: Account, transactionSigner: TransactionSigner)
 ```
 
+## Default Instances
+
+```
+// The operator account: the default account id with the default private key.
+instance Account = Account{accountId: DEFAULT, privateKey: DEFAULT}
+
+// A client for the default network with the default operator account.
+instance HieroClient<ANY> = createClient(networkSettings: DEFAULT, operatorAccount: DEFAULT)
+
+// The signer of a client: by default it signs with the private key of the operator account.
+instance TransactionSigner = DEFAULT(HieroClient<ANY>).transactionSigner
+```
+
 ## Examples
 
 The following example shows how to create a `HieroClient` instance:
