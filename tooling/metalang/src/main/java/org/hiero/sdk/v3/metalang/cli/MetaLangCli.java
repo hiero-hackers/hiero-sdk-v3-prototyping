@@ -301,7 +301,7 @@ public final class MetaLangCli {
         final Path outputDirectory = Path.of(output);
         final GeneratedOutput.Result result;
         try {
-            result = GeneratedOutput.write(outputDirectory, files, JavaGenerator.HEADER);
+            result = GeneratedOutput.write(outputDirectory, files, JavaGenerator.MARKER);
         } catch (final IOException e) {
             err.println("Cannot write to " + outputDirectory + ": " + e.getMessage());
             return EXIT_FINDINGS;

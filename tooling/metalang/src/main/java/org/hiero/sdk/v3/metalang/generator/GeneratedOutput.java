@@ -17,7 +17,8 @@ import java.util.stream.Stream;
  * their content changes, and generated files that the generator no longer produces are deleted, so that the
  * directory always reflects the current specs and diffs show exactly what changed. Directories that become empty
  * by these deletions are deleted as well. A file counts as generated if it
- * starts with the generator's header line; all other files (e.g. hand-written ones) are never touched.
+ * contains the generator's marker text in its first line (in any comment syntax, e.g. {@code // ...} or
+ * {@code <!-- ... -->}); all other files (e.g. hand-written ones) are never touched.
  */
 public final class GeneratedOutput {
 
@@ -48,14 +49,14 @@ public final class GeneratedOutput {
      *
      * @param directory the output directory (created if missing)
      * @param files     the generated files with paths relative to {@code directory}
-     * @param header    the first line of every generated file
+     * @param marker    the text that the first line of every generated file contains
      * @return what changed
      * @throws IOException if the directory cannot be read or written
      */
-    public static Result write(final Path directory, final List<GeneratedFile> files, final String header)
+    public static Result write(final Path directory, final List<GeneratedFile> files, final String marker)
             throws IOException {
         Objects.requireNonNull(directory, "directory must not be null");
-        Objects.requireNonNull(header, "header must not be null");
+        Objects.requireNonNull(marker, "marker must not be null");
         final Path root = directory.toAbsolutePath().normalize();
         final Set<Path> targets = files.stream().map(f -> root.resolve(f.path()).normalize())
                 .collect(Collectors.toSet());
@@ -71,7 +72,7 @@ public final class GeneratedOutput {
         final List<Path> removed = new ArrayList<>();
         try (Stream<Path> existing = Files.walk(root)) {
             for (final Path file : existing.filter(Files::isRegularFile).sorted().toList()) {
-                if (!targets.contains(file) && isGenerated(file, header)) {
+                if (!targets.contains(file) && isGenerated(file, marker)) {
                     Files.delete(file);
                     removed.add(root.relativize(file));
                 }
@@ -95,9 +96,9 @@ public final class GeneratedOutput {
         return new Result(written, removed);
     }
 
-    private static boolean isGenerated(final Path file, final String header) {
+    private static boolean isGenerated(final Path file, final String marker) {
         try (Stream<String> lines = Files.lines(file, StandardCharsets.UTF_8)) {
-            return lines.findFirst().map(l -> header.strip().equals(l.strip())).orElse(false);
+            return lines.findFirst().map(l -> l.contains(marker.strip())).orElse(false);
         } catch (final IOException | java.io.UncheckedIOException e) {
             return false; // not readable as UTF-8 text: certainly no generated source file
         }

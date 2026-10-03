@@ -43,7 +43,7 @@ class ClassGeneratorTest {
     private static Map<String, String> headers(final List<GeneratedFile> files) {
         final Map<String, String> headers = new java.util.TreeMap<>();
         for (final GeneratedFile file : files) {
-            if (!file.path().endsWith("-info.java")) {
+            if (file.path().endsWith(".java") && !file.path().endsWith("-info.java")) {
                 final String name = file.path().substring(file.path().lastIndexOf('/') + 1,
                         file.path().length() - ".java".length());
                 headers.put(name, file.content().lines().filter(l -> l.startsWith("public ")).findFirst()

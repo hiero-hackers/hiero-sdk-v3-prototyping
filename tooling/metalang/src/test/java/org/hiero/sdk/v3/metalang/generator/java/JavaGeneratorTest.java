@@ -75,7 +75,7 @@ class JavaGeneratorTest {
                     "client/c.md", TestSpecs.markdown("namespace c\nrequires {A} from a\nC { @@immutable a: A }\n")));
 
             // THEN
-            assertThat(files).extracting(GeneratedFile::path).containsExactly(
+            assertThat(files).extracting(GeneratedFile::path).filteredOn(p -> p.endsWith(".java")).containsExactly(
                     "org.hiero.client/src/main/java/module-info.java",
                     "org.hiero.client/src/main/java/org/hiero/c/C.java",
                     "org.hiero.client/src/main/java/org/hiero/c/package-info.java",
@@ -165,7 +165,7 @@ class JavaGeneratorTest {
         @Test
         void shouldNotGenerateAPackageInfoWithoutDescription() {
             final List<GeneratedFile> files = generate(Map.of("f/a.md", "## API Schema\n```\nnamespace a\nX {}\n```\n"));
-            assertThat(files).extracting(GeneratedFile::path).containsExactly("org.hiero.f/src/main/java/module-info.java",
+            assertThat(files).extracting(GeneratedFile::path).filteredOn(p -> p.endsWith(".java")).containsExactly("org.hiero.f/src/main/java/module-info.java",
                     "org.hiero.f/src/main/java/org/hiero/a/X.java");
         }
     }
@@ -278,7 +278,8 @@ class JavaGeneratorTest {
             final long classes = files.stream()
                     .filter(f -> f.content().matches("(?s).*\npublic (abstract )?(sealed |non-sealed |final )?class .*"))
                     .count();
-            assertThat(files).hasSize(5 + (int) withDescription + (int) enumFiles + (int) records + (int) interfaces
+            // 5 module-info.java, 6 pom.xml (parent and one per module)
+            assertThat(files).hasSize(5 + 6 + (int) withDescription + (int) enumFiles + (int) records + (int) interfaces
                     + (int) classes);
             assertThat(enumFiles).isEqualTo(enums);
             assertThat(records).isGreaterThanOrEqualTo(80);

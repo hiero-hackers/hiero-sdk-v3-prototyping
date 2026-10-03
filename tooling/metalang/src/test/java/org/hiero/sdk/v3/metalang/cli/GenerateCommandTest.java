@@ -109,7 +109,7 @@ class GenerateCommandTest {
 
         // THEN
         assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
-        assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("27 file(s) generated in " + output
+        assertThat(out.toString(StandardCharsets.UTF_8)).isEqualTo("30 file(s) generated in " + output
                 + " (0 changed, 1 stale removed)\n  removed " + Path.of("org.hiero.shop/src/main/java/org/hiero/shop/Gone.java")
                 + "\n");
         assertThat(stale).doesNotExist();
@@ -126,7 +126,7 @@ class GenerateCommandTest {
         // THEN
         assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
         assertThat(out.toString(StandardCharsets.UTF_8))
-                .isEqualTo("27 file(s) generated in " + output + " (27 changed, 0 stale removed)\n");
+                .isEqualTo("30 file(s) generated in " + output + " (30 changed, 0 stale removed)\n");
         assertThat(output.resolve("org.hiero.shop/src/main/java/module-info.java")).exists();
         assertThat(Files.readString(output.resolve("org.hiero.shop/src/main/java/org/hiero/shop/package-info.java")))
                 .contains("package org.hiero.shop;");

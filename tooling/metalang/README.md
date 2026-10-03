@@ -92,20 +92,15 @@ Without `--fail-on=never` nothing is generated as long as the specs have validat
 [Java generator](#java-generator) for what is generated. `--show-deferred` lists the types that are not
 generated yet and why.
 
-To check the result with a JDK 25 (`javac`/`javadoc` of JDK 25 on the `PATH`; the jspecify jar is in the local Maven
-repository after the build), compile all generated modules and render their Markdown Javadoc:
+`generated/java` is a Maven project: a parent `pom.xml` with one sub-module per Java module, each built into its own
+JAR plus a Javadoc JAR. Build it with a JDK 25 (`-Xlint:all -Werror` for the code, doclint `all,-missing` with
+`failOnWarnings` for the Javadoc):
 
 ```bash
-javac -Xlint:all -Werror --release 25 --module-source-path "generated/java/*/src/main/java" --module-path ~/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar -d tooling/metalang/target/generated/classes $(find generated/java -name '*.java')
+JAVA_HOME=~/.sdkman/candidates/java/25.0.1-tem mvn -f generated/java/pom.xml package
 ```
 
-```bash
-javadoc -Xdoclint:all,-missing -quiet --module-source-path "generated/java/*/src/main/java" --module-path ~/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar -d tooling/metalang/target/generated/apidocs --module $(ls generated/java | paste -sd, -)
-```
-
-Class files and the rendered Javadoc are build output and stay in `tooling/metalang/target`; the Javadoc is then in
-`tooling/metalang/target/generated/apidocs/index.html` (only packages that contain
-generated types are exported and therefore documented).
+The JARs are then in `generated/java/<module>/target/`; the build output is ignored by git.
 
 ### List all rules
 
@@ -160,6 +155,13 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
 - **One JPMS module per spec folder**: `spec/consensus-node-client/` becomes the module `org.hiero.consensus.node.client`
   (folder name with `-` replaced by `.`), laid out like a Maven module (`<module>/src/main/java/`).
 - **One package per namespace**: `consensusnode.transactions` becomes `org.hiero.consensusnode.transactions`.
+- **Maven project** (`MavenGenerator`): a parent `pom.xml` (packaging `pom`, artifactId `hiero-sdk`) with one
+  sub-module per Java module (artifactId `hiero-<spec folder>`, e.g. `hiero-consensus-node-client`) that depends on the
+  modules its `module-info.java` requires and on jspecify. The parent sets Java 25 and UTF-8, manages the jspecify
+  version, pins every plugin (clean, resources, compiler, surefire, jar, javadoc, install), compiles with
+  `-Xlint:all -Werror` and attaches a Javadoc JAR to every module (doclint `all,-missing`, warnings fail the build).
+  groupId and version come from the configuration (`java.groupId`, default `org.hiero.sdk`; `java.version`, default
+  `0.1.0-SNAPSHOT`).
 - **`@NullMarked` modules**: every `module-info.java` is annotated with jspecify's `@NullMarked`, so unannotated types
   are non-null — the default of the meta-language. Only `@@nullable` declarations get `@Nullable`; `@NonNull` is never
   generated (it would be about 700 annotations, see "Prefer `@NullMarked` and `@Nullable`" in the Java guide).
@@ -198,7 +200,8 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   multiple inheritance; the result does not depend on the order of `extends`). The rule is applied until nothing
   changes; supertypes of interfaces are interfaces.
 - **Generator configuration** (`--config=<file>`, `sdk-java/generator.properties` for this repository):
-  `java.interfaces` lists abstractions that become interfaces although they have attributes — e.g. to keep one of two
+  `java.groupId` and `java.version` set the Maven coordinates; `java.interfaces` lists abstractions that become
+  interfaces although they have attributes — e.g. to keep one of two
   abstractions of a type a class. Unknown keys, malformed names, unknown types, non-abstractions and abstractions with
   a `@@finalMethod` are errors.
 - **Interfaces** (`InterfaceGenerator`): abstract accessors and setters for the declared attributes, abstract
@@ -335,7 +338,7 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 575 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
+`mvn verify` runs about 580 tests; JaCoCo fails the build below 95 % line / 90 % branch coverage (generated ANTLR code
 excluded). Besides unit tests per component, the suite contains these systematic checks:
 
 | Test | What it guarantees |
@@ -350,6 +353,7 @@ excluded). Besides unit tests per component, the suite contains these systematic
 | `GeneratedOutputTest` | Writing into a version-controlled output directory: new files and directories, unchanged files are not rewritten, stale generated files and the directories they leave empty are deleted, hand-written and binary files and other empty directories are kept. |
 | `FunctionTypeTest` | Mapping of every function shape to `java.util.function` with wrapper types and `@Nullable` arguments, generated functional interfaces (shared per function type, varargs), placement across modules with an implementation in another package, and every deferral reason (type variables, name clashes, no home). All cases are compiled. |
 | `FactoryGeneratorTest` | Class name rule, static methods (overloads, generics with renamed type variables, varargs, `@@async @@nullable`, errors), compiled and called, and the deferral of functions (type not generated, no Java mapping, clashing class name). |
+| `MavenGeneratorTest` | The parent and module `pom.xml` files are well-formed XML with the generator marker, list one sub-module per Java module, depend on the required modules and jspecify, pin every plugin, attach Javadoc JARs, and use the configured groupId and version (invalid values are rejected). |
 | `ConstantsGeneratorTest` | Class name rule, basic and struct-literal constants (record, class, `null` and `@@default` filling, `@Deprecated`), loading the compiled constants, and every deferral reason (type not generated, abstraction, missing value, clashing class name). |
 | `ExceptionGeneratorTest` | Exception names, standard mapping (checked/unchecked), placement across modules (shortest namespace, transitive requires), errors without common module or with clashing names, `throws` clauses and async documentation, and the runtime behaviour of a generated exception (single constructor, message check, cause). |
 | `ClassGeneratorTest` | Which abstraction becomes an abstract class or an interface (attributes, enums, interfaces, multiple inheritance with *none* as result, upward propagation, configuration, `@@finalMethod`), configuration errors, covariant `@@async` overrides, generated classes (state, constructors with `super(...)`, `$$Self` setters, covariant setter overrides, narrowed nullability, defaults, value classes, sealed hierarchies) and their **runtime behaviour** (checks, defensive copies, chained setters, equality). |

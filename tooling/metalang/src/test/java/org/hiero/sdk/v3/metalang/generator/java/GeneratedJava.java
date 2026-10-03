@@ -67,7 +67,9 @@ final class GeneratedJava {
             final Path target = directory.resolve("src").resolve(file.path());
             Files.createDirectories(target.getParent());
             Files.writeString(target, file.content(), StandardCharsets.UTF_8);
-            sources.add(target);
+            if (file.path().endsWith(".java")) {
+                sources.add(target); // the Maven files (pom.xml) are written, but not compiled
+            }
         }
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
