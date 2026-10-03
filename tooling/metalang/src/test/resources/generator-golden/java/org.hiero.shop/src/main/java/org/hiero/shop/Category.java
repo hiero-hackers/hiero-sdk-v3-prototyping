@@ -11,8 +11,14 @@ public enum Category implements Coded {
     /// things to eat
     FOOD((byte) 1, "Food"),
     OTHER((byte) 2, null),
+    /// @deprecated Retained for compatibility; do not use it in new code.
     @Deprecated
-    LEGACY((byte) 3, "Legacy \"old\"");
+    LEGACY((byte) 3, "Legacy \"old\""),
+    /// The former catch-all category.
+    ///
+    /// @deprecated Deprecated because it was never assigned; use `OTHER` instead.
+    @Deprecated
+    MISC((byte) 4, "Misc");
 
     private final byte code;
     private final @Nullable String label;

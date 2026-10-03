@@ -99,6 +99,8 @@ class InterfaceGeneratorTest {
                         String name();
 
                         /// Returns the `note`.
+                        ///
+                        /// @deprecated Retained for compatibility; do not use it in new code.
                         @Deprecated
                         @Nullable String note();
 
@@ -106,6 +108,7 @@ class InterfaceGeneratorTest {
                         ///
                         /// @param note the new value
                         /// @return this object
+                        /// @deprecated Retained for compatibility; do not use it in new code.
                         @Deprecated
                         Named setNote(final @Nullable String note);
 

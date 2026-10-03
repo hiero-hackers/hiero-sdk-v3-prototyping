@@ -158,9 +158,10 @@ final class ClassGenerator {
             if (!field.hasAnnotation("immutable")
                     && !inheritedSetterType(superclass.orElseThrow(), superDefinition.orElseThrow(), imports)
                     .equals(self)) {
-                members.add(MarkdownComment.render(INDENT, List.of("Sets the `" + field.name() + "`."),
+                members.add(MarkdownComment.render(INDENT, List.of("Sets the `" + field.name() + "`.",
+                                MarkdownComment.deprecationReason(field.documentation())),
                         List.of("@param " + JavaKeywords.identifier(field.name()) + " the new value",
-                                "@return this object"))
+                                "@return this object"), field.hasAnnotation("deprecated"))
                         + (selfIsVariable ? INDENT + "@SuppressWarnings(\"unchecked\")\n" : "")
                         + INDENT + "@Override\n"
                         + (field.hasAnnotation("deprecated") ? INDENT + "@Deprecated\n" : "")
@@ -206,7 +207,8 @@ final class ClassGenerator {
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
         }
-        java.append(MarkdownComment.render("", List.of(type.documentation())));
+        java.append(MarkdownComment.render("", List.of(type.documentation()), List.of(),
+                type.hasAnnotation("deprecated")));
         if (type.hasAnnotation("deprecated")) {
             java.append("@Deprecated\n");
         }
@@ -300,7 +302,8 @@ final class ClassGenerator {
         final String name = JavaKeywords.identifier(field.name());
         final boolean bytes = JavaConstraints.isBytes(field.type());
         final StringBuilder java = new StringBuilder(MarkdownComment.render(INDENT, List.of(
-                field.documentation().isBlank() ? "Returns the `" + field.name() + "`." : field.documentation())));
+                field.documentation().isBlank() ? "Returns the `" + field.name() + "`." : field.documentation()),
+                List.of(), field.hasAnnotation("deprecated")));
         if (context.overridesAccessor(type.name(), field.name())) {
             java.append(INDENT).append("@Override\n");
         }
@@ -327,7 +330,8 @@ final class ClassGenerator {
             tags.add("@throws IllegalArgumentException if the value violates its constraints");
         }
         final StringBuilder java = new StringBuilder(MarkdownComment.render(INDENT,
-                List.of("Sets the `" + field.name() + "`."), tags));
+                List.of("Sets the `" + field.name() + "`.", MarkdownComment.deprecationReason(field.documentation())),
+                tags, field.hasAnnotation("deprecated")));
         if (selfIsVariable) {
             java.append(INDENT).append("@SuppressWarnings(\"unchecked\")\n");
         }

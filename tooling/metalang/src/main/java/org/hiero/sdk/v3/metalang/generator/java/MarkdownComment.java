@@ -41,6 +41,61 @@ final class MarkdownComment {
      * @param tags       block tags, one per line
      * @return the comment, each line terminated by a line break; empty if there is neither text nor a tag
      */
+    /** The explanation of a deprecated element whose documentation does not explain the deprecation. */
+    static final String DEFAULT_DEPRECATION = "Retained for compatibility; do not use it in new code.";
+
+    /**
+     * Renders a documentation comment of an element that may be deprecated. For a deprecated element the paragraph of
+     * the documentation that mentions the deprecation (contains "deprecat", ignoring case) becomes the text of the
+     * {@code @deprecated} tag instead of a paragraph of the description; if there is no such paragraph, the tag gets
+     * {@link #DEFAULT_DEPRECATION}.
+     *
+     * @param indent     the indentation of the comment
+     * @param paragraphs the paragraphs of the documentation (each may contain several Markdown paragraphs)
+     * @param tags       the block tags (e.g. {@code @param}, {@code @throws})
+     * @param deprecated whether the element is {@code @@deprecated}
+     * @return the comment, or an empty string if there is nothing to document
+     */
+    /**
+     * Returns the paragraph of a documentation that explains a deprecation (contains "deprecat", ignoring case), e.g.
+     * to repeat the explanation of a deprecated attribute at its setter.
+     *
+     * @param documentation the documentation
+     * @return the paragraph, or an empty string
+     */
+    static String deprecationReason(final String documentation) {
+        for (final String part : documentation.strip().split("\\n\\s*\\n")) {
+            if (part.toLowerCase(java.util.Locale.ROOT).contains("deprecat")) {
+                return part.strip();
+            }
+        }
+        return "";
+    }
+
+    static String render(final String indent, final List<String> paragraphs, final List<String> tags,
+                         final boolean deprecated) {
+        if (!deprecated) {
+            return render(indent, paragraphs, tags);
+        }
+        final List<String> description = new ArrayList<>();
+        String reason = null;
+        for (final String paragraph : paragraphs) {
+            for (final String part : paragraph.strip().split("\\n\\s*\\n")) {
+                if (reason == null && part.toLowerCase(java.util.Locale.ROOT).contains("deprecat")) {
+                    reason = part.strip();
+                } else {
+                    description.add(part);
+                }
+            }
+        }
+        final List<String> allTags = new ArrayList<>(tags);
+        final List<String> lines = (reason == null ? DEFAULT_DEPRECATION : reason).lines().toList();
+        allTags.add("@deprecated " + lines.getFirst().strip());
+        lines.subList(1, lines.size()).forEach(l -> allTags.add("  " + (l.stripLeading().startsWith("@")
+                ? "&#64;" + l.stripLeading().substring(1) : l.strip())));
+        return render(indent, description, allTags);
+    }
+
     static String render(final String indent, final List<String> paragraphs, final List<String> tags) {
         Objects.requireNonNull(indent, "indent must not be null");
         final List<String> lines = new ArrayList<>();

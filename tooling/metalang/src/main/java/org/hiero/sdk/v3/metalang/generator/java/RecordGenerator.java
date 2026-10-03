@@ -103,7 +103,8 @@ final class RecordGenerator {
             body.append(body.isEmpty() ? "" : "\n");
             body.append(MarkdownComment.render(INDENT, List.of(field.documentation(), bytes
                     ? "Returns a copy of the `" + field.name() + "` array."
-                    : "Returns the `" + field.name() + "` of this value.")));
+                    : "Returns the `" + field.name() + "` of this value."), List.of(),
+                    field.hasAnnotation("deprecated")));
             body.append(INDENT).append("@Override\n");
             if (field.hasAnnotation("deprecated")) {
                 body.append(INDENT).append("@Deprecated\n");
@@ -132,7 +133,8 @@ final class RecordGenerator {
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
         }
-        java.append(MarkdownComment.render("", List.of(type.documentation()), parameterTags(fields)));
+        java.append(MarkdownComment.render("", List.of(type.documentation()), parameterTags(fields),
+                type.hasAnnotation("deprecated")));
         if (type.hasAnnotation("deprecated")) {
             java.append("@Deprecated\n");
         }

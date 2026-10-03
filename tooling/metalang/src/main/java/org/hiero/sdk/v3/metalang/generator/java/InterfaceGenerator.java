@@ -45,7 +45,8 @@ final class InterfaceGenerator {
                     context.boxed(type.name(), field.name()), imports);
             body.append(body.isEmpty() ? "" : "\n");
             body.append(MarkdownComment.render(INDENT, List.of(field.documentation().isBlank()
-                    ? "Returns the `" + field.name() + "`." : field.documentation())));
+                    ? "Returns the `" + field.name() + "`." : field.documentation()), List.of(),
+                    field.hasAnnotation("deprecated")));
             if (context.overridesAccessor(type.name(), field.name())) {
                 body.append(INDENT).append("@Override\n");
             }
@@ -55,8 +56,10 @@ final class InterfaceGenerator {
             body.append(INDENT).append(declaration).append(' ').append(accessor).append("();\n");
             if (!field.hasAnnotation("immutable")) {
                 body.append('\n');
-                body.append(MarkdownComment.render(INDENT, List.of("Sets the `" + field.name() + "`."),
-                        List.of("@param " + accessor + " the new value", "@return this object")));
+                body.append(MarkdownComment.render(INDENT, List.of("Sets the `" + field.name() + "`.",
+                                MarkdownComment.deprecationReason(field.documentation())),
+                        List.of("@param " + accessor + " the new value", "@return this object"),
+                        field.hasAnnotation("deprecated")));
                 if (field.hasAnnotation("deprecated")) {
                     body.append(INDENT).append("@Deprecated\n");
                 }
@@ -75,7 +78,8 @@ final class InterfaceGenerator {
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
         }
-        java.append(MarkdownComment.render("", List.of(type.documentation())));
+        java.append(MarkdownComment.render("", List.of(type.documentation()), List.of(),
+                type.hasAnnotation("deprecated")));
         if (type.hasAnnotation("deprecated")) {
             java.append("@Deprecated\n");
         }

@@ -756,7 +756,27 @@ public final class Client {
 ```
 
 Generated Javadoc must include an `@deprecated` tag containing the explanation and replacement from the specification's
-prose. Emit plain `@Deprecated` because `@@deprecated` does not carry a shared version or removal schedule; do not invent
+prose. The generator takes the paragraph of the element's documentation that mentions the deprecation (it contains
+"deprecated") as the text of the tag and removes it from the description; a deprecated attribute repeats that
+explanation at its setter. If the documentation does not explain the deprecation, the tag says "Retained for
+compatibility; do not use it in new code." — so every deprecated element should explain why and name its
+replacement:
+
+```
+// The former catch-all category.
+//
+// Deprecated because it was never assigned; use `OTHER` instead.
+@@deprecated MISC(4, "Misc")
+```
+
+```java
+/// The former catch-all category.
+///
+/// @deprecated Deprecated because it was never assigned; use `OTHER` instead.
+@Deprecated
+MISC((byte) 4, "Misc");
+```
+ Emit plain `@Deprecated` because `@@deprecated` does not carry a shared version or removal schedule; do not invent
 values for Java's `since` or `forRemoval` elements.
 
 ## Enumerations

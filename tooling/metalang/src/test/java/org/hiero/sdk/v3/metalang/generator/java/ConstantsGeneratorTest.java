@@ -68,6 +68,7 @@ class ConstantsGeneratorTest {
                     /// the maximum
                     public static final int MAX = 1_000;
 
+                    /// @deprecated Retained for compatibility; do not use it in new code.
                     @Deprecated
                     public static final String NAME = "a \\"b\\"";
                 """)

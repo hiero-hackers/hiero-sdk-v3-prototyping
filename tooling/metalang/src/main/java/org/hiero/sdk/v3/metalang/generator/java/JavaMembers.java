@@ -70,7 +70,7 @@ final class JavaMembers {
                 }
             }
         }
-        java.append(MarkdownComment.render("    ", paragraphs, tags));
+        java.append(MarkdownComment.render("    ", paragraphs, tags, method.hasAnnotation("deprecated")));
         if (method.hasAnnotation("deprecated")) {
             java.append("    @Deprecated\n");
         }

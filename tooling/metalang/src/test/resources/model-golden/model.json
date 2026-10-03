@@ -6,7 +6,7 @@
     {
       "name": "shop.Address",
       "kind": "type",
-      "location": "shop/shop.md:81:1",
+      "location": "shop/shop.md:85:1",
       "documentation": "A postal address.",
       "annotations": [],
       "typeParameters": [],
@@ -22,7 +22,7 @@
             "@@maxLength(80)"
           ],
           "documentation": "street and house number",
-          "location": "shop/shop.md:82:48"
+          "location": "shop/shop.md:86:48"
         },
         {
           "name": "zip",
@@ -34,7 +34,7 @@
             "@@pattern(\"^[0-9]{5}$\")"
           ],
           "documentation": "",
-          "location": "shop/shop.md:83:52"
+          "location": "shop/shop.md:87:52"
         },
         {
           "name": "website",
@@ -46,7 +46,7 @@
             "@@urlPattern"
           ],
           "documentation": "",
-          "location": "shop/shop.md:84:41"
+          "location": "shop/shop.md:88:41"
         },
         {
           "name": "map",
@@ -57,7 +57,7 @@
             "@@urlPattern"
           ],
           "documentation": "",
-          "location": "shop/shop.md:85:30"
+          "location": "shop/shop.md:89:30"
         }
       ],
       "methods": []
@@ -65,7 +65,7 @@
     {
       "name": "shop.Attachment",
       "kind": "type",
-      "location": "shop/shop.md:108:1",
+      "location": "shop/shop.md:112:1",
       "documentation": "A file attachment.",
       "annotations": [],
       "typeParameters": [],
@@ -80,7 +80,7 @@
             "@@minSize(1)"
           ],
           "documentation": "",
-          "location": "shop/shop.md:109:30"
+          "location": "shop/shop.md:113:30"
         },
         {
           "name": "checksum",
@@ -91,7 +91,7 @@
             "@@nullable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:110:28"
+          "location": "shop/shop.md:114:28"
         },
         {
           "name": "weight",
@@ -101,7 +101,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:111:17"
+          "location": "shop/shop.md:115:17"
         },
         {
           "name": "count",
@@ -112,7 +112,7 @@
             "@@nullable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:112:28"
+          "location": "shop/shop.md:116:28"
         }
       ],
       "methods": []
@@ -120,7 +120,7 @@
     {
       "name": "shop.Base",
       "kind": "type",
-      "location": "shop/shop.md:134:1",
+      "location": "shop/shop.md:138:1",
       "documentation": "Neither a record nor its subtype: records cannot be extended.",
       "annotations": [],
       "typeParameters": [],
@@ -134,7 +134,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:135:17"
+          "location": "shop/shop.md:139:17"
         }
       ],
       "methods": []
@@ -142,7 +142,7 @@
     {
       "name": "shop.Cart",
       "kind": "type",
-      "location": "shop/shop.md:89:1",
+      "location": "shop/shop.md:93:1",
       "documentation": "A shopping cart.",
       "annotations": [],
       "typeParameters": [
@@ -163,7 +163,7 @@
             "@@maxSize(100)"
           ],
           "documentation": "the items in the cart;\nnever more than 100",
-          "location": "shop/shop.md:92:45"
+          "location": "shop/shop.md:96:45"
         },
         {
           "name": "coupons",
@@ -174,7 +174,7 @@
             "@@default([])"
           ],
           "documentation": "",
-          "location": "shop/shop.md:93:31"
+          "location": "shop/shop.md:97:31"
         },
         {
           "name": "notes",
@@ -184,7 +184,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:94:17"
+          "location": "shop/shop.md:98:17"
         },
         {
           "name": "quantity",
@@ -197,7 +197,7 @@
             "@@max(10)"
           ],
           "documentation": "",
-          "location": "shop/shop.md:95:49"
+          "location": "shop/shop.md:99:49"
         },
         {
           "name": "discount",
@@ -209,7 +209,7 @@
             "@@min(0)"
           ],
           "documentation": "",
-          "location": "shop/shop.md:96:37"
+          "location": "shop/shop.md:100:37"
         },
         {
           "name": "legacy",
@@ -220,7 +220,7 @@
             "@@deprecated"
           ],
           "documentation": "",
-          "location": "shop/shop.md:97:30"
+          "location": "shop/shop.md:101:30"
         },
         {
           "name": "category",
@@ -230,7 +230,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:98:17"
+          "location": "shop/shop.md:102:17"
         },
         {
           "name": "total",
@@ -240,7 +240,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:99:17"
+          "location": "shop/shop.md:103:17"
         }
       ],
       "methods": [
@@ -253,7 +253,7 @@
           "declaredIn": "shop.Cart",
           "annotations": [],
           "documentation": "Total price of the cart.",
-          "location": "shop/shop.md:102:11"
+          "location": "shop/shop.md:106:11"
         },
         {
           "name": "empty",
@@ -266,7 +266,7 @@
             "@@static"
           ],
           "documentation": "",
-          "location": "shop/shop.md:104:27"
+          "location": "shop/shop.md:108:27"
         }
       ]
     },
@@ -328,6 +328,18 @@
           ],
           "documentation": "",
           "location": "shop/shop.md:67:18"
+        },
+        {
+          "name": "MISC",
+          "arguments": [
+            "4",
+            "\"Misc\""
+          ],
+          "annotations": [
+            "@@deprecated"
+          ],
+          "documentation": "The former catch-all category.\n\nDeprecated because it was never assigned; use `OTHER` instead.",
+          "location": "shop/shop.md:71:18"
         }
       ],
       "methods": [
@@ -340,7 +352,7 @@
           "declaredIn": "shop.Category",
           "annotations": [],
           "documentation": "Whether this category is about food.",
-          "location": "shop/shop.md:70:10"
+          "location": "shop/shop.md:74:10"
         },
         {
           "name": "byCode",
@@ -361,7 +373,7 @@
             "@@throws(not-found-error)"
           ],
           "documentation": "",
-          "location": "shop/shop.md:72:49"
+          "location": "shop/shop.md:76:49"
         }
       ]
     },
@@ -415,7 +427,7 @@
     {
       "name": "shop.Counter",
       "kind": "type",
-      "location": "shop/shop.md:124:1",
+      "location": "shop/shop.md:128:1",
       "documentation": "Not a record: the attribute is mutable.",
       "annotations": [],
       "typeParameters": [],
@@ -427,7 +439,7 @@
           "declaredIn": "shop.Counter",
           "annotations": [],
           "documentation": "",
-          "location": "shop/shop.md:125:5"
+          "location": "shop/shop.md:129:5"
         }
       ],
       "methods": []
@@ -435,7 +447,7 @@
     {
       "name": "shop.Derived",
       "kind": "type",
-      "location": "shop/shop.md:138:1",
+      "location": "shop/shop.md:142:1",
       "documentation": "",
       "annotations": [],
       "typeParameters": [],
@@ -451,7 +463,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:135:17"
+          "location": "shop/shop.md:139:17"
         },
         {
           "name": "b",
@@ -461,7 +473,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:139:17"
+          "location": "shop/shop.md:143:17"
         }
       ],
       "methods": []
@@ -523,7 +535,7 @@
     {
       "name": "shop.Flag",
       "kind": "enum",
-      "location": "shop/shop.md:75:6",
+      "location": "shop/shop.md:79:6",
       "documentation": "",
       "annotations": [],
       "typeParameters": [],
@@ -544,7 +556,7 @@
           ],
           "annotations": [],
           "documentation": "",
-          "location": "shop/shop.md:76:5"
+          "location": "shop/shop.md:80:5"
         },
         {
           "name": "OFF",
@@ -553,7 +565,7 @@
           ],
           "annotations": [],
           "documentation": "",
-          "location": "shop/shop.md:77:5"
+          "location": "shop/shop.md:81:5"
         }
       ],
       "methods": []
@@ -561,7 +573,7 @@
     {
       "name": "shop.Hash",
       "kind": "type",
-      "location": "shop/shop.md:116:1",
+      "location": "shop/shop.md:120:1",
       "documentation": "A hash; prints itself.",
       "annotations": [],
       "typeParameters": [],
@@ -575,7 +587,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:117:17"
+          "location": "shop/shop.md:121:17"
         }
       ],
       "methods": [
@@ -588,7 +600,7 @@
           "declaredIn": "shop.Hash",
           "annotations": [],
           "documentation": "Hex representation.",
-          "location": "shop/shop.md:120:12"
+          "location": "shop/shop.md:124:12"
         }
       ]
     },
@@ -622,7 +634,7 @@
     {
       "name": "shop.Listing",
       "kind": "type",
-      "location": "shop/shop.md:143:1",
+      "location": "shop/shop.md:147:1",
       "documentation": "Deferred: refers to an abstraction.",
       "annotations": [],
       "typeParameters": [],
@@ -636,7 +648,7 @@
             "@@immutable"
           ],
           "documentation": "",
-          "location": "shop/shop.md:144:17"
+          "location": "shop/shop.md:148:17"
         }
       ],
       "methods": []
@@ -689,7 +701,7 @@
     {
       "name": "shop.Printer",
       "kind": "type",
-      "location": "shop/shop.md:129:1",
+      "location": "shop/shop.md:133:1",
       "documentation": "Not a record: no attributes.",
       "annotations": [],
       "typeParameters": [],
@@ -705,7 +717,7 @@
           "declaredIn": "shop.Printer",
           "annotations": [],
           "documentation": "",
-          "location": "shop/shop.md:130:10"
+          "location": "shop/shop.md:134:10"
         }
       ]
     },
@@ -1018,7 +1030,7 @@
         "@@static"
       ],
       "documentation": "",
-      "location": "shop/shop.md:149:18"
+      "location": "shop/shop.md:153:18"
     }
   ],
   "constants": [
@@ -1028,7 +1040,7 @@
       "value": "1_000",
       "annotations": [],
       "documentation": "",
-      "location": "shop/shop.md:147:1"
+      "location": "shop/shop.md:151:1"
     }
   ]
 }

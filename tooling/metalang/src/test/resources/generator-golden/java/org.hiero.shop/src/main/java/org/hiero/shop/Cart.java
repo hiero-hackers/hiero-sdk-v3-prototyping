@@ -65,6 +65,8 @@ public record Cart<Item>(
     }
 
     /// Returns the `legacy` of this value.
+    ///
+    /// @deprecated Retained for compatibility; do not use it in new code.
     @Override
     @Deprecated
     public boolean legacy() {

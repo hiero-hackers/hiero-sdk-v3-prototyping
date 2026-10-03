@@ -268,6 +268,9 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   type (`onMessage` → `OnMessageFunction`), placed like the exception classes so that overriding methods in other
   packages use the same type. Function types with type variables in such an interface, unplaceable ones and name
   clashes defer the declarations that use them. The current specs use no function types.
+- **Deprecation**: `@@deprecated` elements get `@Deprecated` and an `@deprecated` Javadoc tag. Its text is the
+  paragraph of the documentation that mentions the deprecation (moved out of the description; repeated at the setter
+  of a deprecated attribute), otherwise "Retained for compatibility; do not use it in new code."
 - **Exceptions** (`ExceptionGenerator`, `JavaExceptions`): error identifiers of `@@throws` with a JDK equivalent use
   it (`not-found-error` → `NoSuchElementException`, `illegal-format` → `IllegalArgumentException`, `timeout-error` →
   `TimeoutException`, `io-error` → `IOException`, …); every other identifier gets a `final` unchecked exception class

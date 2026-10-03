@@ -65,6 +65,10 @@ enum Category(code: int8, @@nullable label: string) extends Coded {
     FOOD(1, "Food") // things to eat
     OTHER(2, null)
     @@deprecated LEGACY(3, "Legacy \"old\"")
+    // The former catch-all category.
+    //
+    // Deprecated because it was never assigned; use `OTHER` instead.
+    @@deprecated MISC(4, "Misc")
 
     // Whether this category is about food.
     bool isFood()

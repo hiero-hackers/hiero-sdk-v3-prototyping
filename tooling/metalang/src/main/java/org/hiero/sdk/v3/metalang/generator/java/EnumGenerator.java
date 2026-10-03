@@ -39,7 +39,8 @@ final class EnumGenerator {
         final List<EnumValueDefinition> values = enumType.values();
         for (int i = 0; i < values.size(); i++) {
             final EnumValueDefinition value = values.get(i);
-            body.append(MarkdownComment.render("    ", List.of(value.documentation())));
+            body.append(MarkdownComment.render("    ", List.of(value.documentation()), List.of(),
+                    value.hasAnnotation("deprecated")));
             if (value.hasAnnotation("deprecated")) {
                 body.append("    @Deprecated\n");
             }
@@ -110,7 +111,8 @@ final class EnumGenerator {
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
         }
-        java.append(MarkdownComment.render("", List.of(enumType.documentation())));
+        java.append(MarkdownComment.render("", List.of(enumType.documentation()), List.of(),
+                enumType.hasAnnotation("deprecated")));
         if (enumType.hasAnnotation("deprecated")) {
             java.append("@Deprecated\n");
         }

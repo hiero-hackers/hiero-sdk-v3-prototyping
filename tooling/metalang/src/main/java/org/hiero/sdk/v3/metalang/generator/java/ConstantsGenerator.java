@@ -67,7 +67,8 @@ final class ConstantsGenerator {
         final String declaration = JavaTypes.declaration(constant.type(), constant.hasAnnotation("nullable"),
                 imports);
         final String value = JavaLiterals.expression(constant.value(), constant.type(), imports, context);
-        return MarkdownComment.render(INDENT, List.of(constant.documentation()))
+        return MarkdownComment.render(INDENT, List.of(constant.documentation()), List.of(),
+                constant.hasAnnotation("deprecated"))
                 + (constant.hasAnnotation("deprecated") ? INDENT + "@Deprecated\n" : "")
                 + INDENT + "public static final " + declaration + " " + constant.name().name() + " = " + value
                 + ";\n";

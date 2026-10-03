@@ -174,6 +174,62 @@ class JavaGeneratorTest {
     class Comments {
 
         @Test
+        void shouldMoveTheDeprecationParagraphIntoTheDeprecatedTag() {
+            // GIVEN a documentation whose second paragraph explains the deprecation over two lines
+            final String documentation = "The old endpoint.\n\nDeprecated: the network removed it;\n@see `uri`.";
+
+            // WHEN / THEN
+            assertThat(MarkdownComment.render("", List.of(documentation), List.of("@param x the x"), true))
+                    .isEqualTo("/// The old endpoint.\n///\n/// @param x the x\n/// @deprecated Deprecated: the network "
+                            + "removed it;\n///   &#64;see `uri`.\n");
+            assertThat(MarkdownComment.render("", List.of("Plain."), List.of(), true))
+                    .isEqualTo("/// Plain.\n///\n/// @deprecated " + MarkdownComment.DEFAULT_DEPRECATION + "\n");
+            assertThat(MarkdownComment.render("", List.of("Plain."), List.of(), false)).isEqualTo("/// Plain.\n");
+            assertThat(MarkdownComment.deprecationReason(documentation))
+                    .isEqualTo("Deprecated: the network removed it;\n@see `uri`.");
+            assertThat(MarkdownComment.deprecationReason("No reason.")).isEmpty();
+        }
+
+        @Test
+        void shouldRepeatTheReasonAtSettersAndDocumentDeprecatedMethods() {
+            // WHEN
+            final List<GeneratedFile> files = generate(Map.of("f/a.md", TestSpecs.markdown("""
+                    namespace a
+                    Client {
+                        // The endpoint.
+                        //
+                        // Deprecated, use uri instead.
+                        @@deprecated endpoint: string
+                        // Connects the old way. Deprecated since the network changed.
+                        @@deprecated void connectLegacy()
+                    }
+                    """)));
+            final String client = files.stream().filter(f -> f.path().endsWith("/Client.java")).findFirst()
+                    .orElseThrow().content();
+
+            // THEN
+            assertThat(client).contains("""
+                        /// The endpoint.
+                        ///
+                        /// @deprecated Deprecated, use uri instead.
+                        @Deprecated
+                        public String endpoint() {
+                    """).contains("""
+                        /// Sets the `endpoint`.
+                        ///
+                        /// @param endpoint the new value
+                        /// @return this object
+                        /// @throws NullPointerException if the value is `null`
+                        /// @deprecated Deprecated, use uri instead.
+                        @Deprecated
+                    """).contains("""
+                        /// @deprecated Connects the old way. Deprecated since the network changed.
+                        @Deprecated
+                        public void connectLegacy() {
+                    """);
+        }
+
+        @Test
         void shouldEscapeLeadingAtSignsOutsideOfCodeBlocks() {
             // GIVEN (fences follow CommonMark: a block is closed by a fence of the same character that is at least
             // as long as the opening fence)
