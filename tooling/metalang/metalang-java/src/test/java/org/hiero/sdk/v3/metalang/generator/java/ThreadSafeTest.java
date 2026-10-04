@@ -35,7 +35,7 @@ class ThreadSafeTest {
     }
 
     @Test
-    void shouldGenerateTheAnnotationOnceInTheModuleThatAllUsersRequire() throws Exception {
+    void theModuleThatAllUsersRequireShouldRequireTheSupportModule() throws Exception {
         // GIVEN @@threadSafe in base and in client, which requires base
         final List<GeneratedFile> files = generate(Map.of(
                 "base/b.md", "namespace b\nabstraction Cache { @@threadSafe int32 size() }\n",
@@ -44,12 +44,11 @@ class ThreadSafeTest {
                         + "Local extends Cache { @@immutable x: int32 }\n"), JavaGeneratorConfig.DEFAULT);
 
         // THEN
-        assertThat(files).extracting(GeneratedFile::path).filteredOn(p -> p.endsWith("ThreadSafe.java"))
-                .containsExactly("org.hiero.base/src/main/java/org/hiero/sdk/annotation/ThreadSafe.java");
-        assertThat(source(files, "module-info").length()).isPositive();
-        assertThat(files.stream().filter(f -> f.path().equals("org.hiero.base/src/main/java/module-info.java"))
-                .findFirst().orElseThrow().content())
-                .contains("/// - `org.hiero.sdk.annotation`").contains("    exports org.hiero.sdk.annotation;\n");
+        assertThat(files).noneMatch(f -> f.path().endsWith("ThreadSafe.java"));
+        assertThat(files).filteredOn(f -> f.content().contains("requires transitive org.hiero.sdk.support;"))
+                .extracting(GeneratedFile::path).containsExactly("org.hiero.base/src/main/java/module-info.java");
+        assertThat(files).filteredOn(f -> f.content().contains("<artifactId>hiero-sdk-support</artifactId>"))
+                .extracting(GeneratedFile::path).containsExactly("org.hiero.base/pom.xml");
         final GeneratedJava.Compilation compilation = GeneratedJava.compile(files, temp);
         assertThat(compilation.diagnostics()).isEmpty();
         final Class<?> annotation = compilation.classLoader().loadClass("org.hiero.sdk.annotation.ThreadSafe");
@@ -61,8 +60,9 @@ class ThreadSafeTest {
     @Test
     void shouldNotGenerateTheAnnotationIfNobodyUsesIt() {
         assertThat(generate(Map.of("f/a.md", "namespace a\nX { @@immutable x: int32 }\n"), JavaGeneratorConfig.DEFAULT))
-                .noneMatch(f -> f.path().endsWith("ThreadSafe.java"))
-                .noneMatch(f -> f.content().contains("org.hiero.sdk.annotation"));
+                .noneMatch(f -> f.content().contains("org.hiero.sdk.annotation"))
+                .noneMatch(f -> f.content().contains("org.hiero.sdk.support"))
+                .noneMatch(f -> f.content().contains("hiero-sdk-support"));
     }
 
     @Test

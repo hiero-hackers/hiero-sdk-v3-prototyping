@@ -4,6 +4,7 @@
     <file url="file://$PROJECT_DIR$/guidelines/java-files" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/guidelines/rust-files" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/guidelines/ts-files" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/tck/runtime/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-cli/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-cli/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-core/src/main/java" charset="UTF-8" />

@@ -160,7 +160,7 @@ final class JavaTypes {
                 default -> "ZonedDateTime";
             });
             case DURATION -> imports.use("java.time", "Duration");
-            // per-item result of a stream (guidelines/java-files/StreamItem.java)
+            // per-item result of a stream (StreamItem of sdk-java/support)
             case STREAM_RESULT -> imports.use(SupportFiles.STREAMING_PACKAGE, "StreamItem")
                     + arguments(basic.arguments(), imports);
         };

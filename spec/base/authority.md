@@ -189,3 +189,11 @@ String describe(Authority e) {
 - **Wire round-trip edge.** A redundant on-chain `ThresholdKey(n, n-children)` read back as an
   `AuthorityList` with `threshold == children.size()` canonicalises to the `KeyList` wire form on
   write-back — semantically identical, different bytes.
+
+- **No byte encoding of an `Authority`.** There is no `toBytes()` / `fromBytes(bytes)` for the HAPI
+  `Key` protobuf form, so key lists and threshold keys cannot be exchanged in serialized form; a single
+  public key round-trips through `PublicKey.toBytes(...)`, an m-of-n does not. The TCK passes and
+  expects keys as hex of the protobuf `Key` (`generateKey` with `keyList` / `thresholdKey`, the `key` of
+  `createAccount` and `getAccountInfo`, see [`tck-binding.md`](../../tck-binding.md)). Should
+  `Authority` get `toBytes()` and `@@static fromBytes(bytes)`, and how do `ContractAuthority` and the
+  delegatable contract form map to it?

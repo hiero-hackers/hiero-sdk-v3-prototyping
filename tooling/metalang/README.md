@@ -30,8 +30,8 @@ mvn -f tooling/metalang/pom.xml -q package -DskipTests
 
 | Module | Content |
 |---|---|
-| `metalang-core` | Grammar, parser, AST, semantic and linked model, default instances, validator and rule catalog, and what every generator shares (`GeneratedFile`, `GeneratedOutput`, `Constraints`, `IntegerRange`, `RegexSamples`, `SpecFolders`, `check.ApiDifference`). Its test-jar holds the shared test helpers (`TestSpecs`) and test resources (`rule-fixtures`, `model-golden`). |
-| `metalang-java` | Java generator (`generator.java`: API, Maven project, JUnit tests) and Java conformance check (`check.java`). The support files are copied from `guidelines/java-files`. |
+| `metalang-core` | Grammar, parser, AST, semantic and linked model, default instances, validator and rule catalog, and what every generator shares (`GeneratedFile`, `GeneratedOutput`, `Constraints`, `IntegerRange`, `RegexSamples`, `SpecFolders`, `check.ApiDifference`), and the TCK bindings (`tck`: parser, resolver, converter catalogue, reader of the TCK test specifications, coverage check). Its test-jar holds the shared test helpers (`TestSpecs`) and test resources (`rule-fixtures`, `model-golden`). |
+| `metalang-java` | Java generator (`generator.java`: API, Maven project, JUnit tests) and Java conformance check (`check.java`), and the Java TCK server generator (`JavaTckGenerator`). The generated modules depend on the hand-written support module `sdk-java/support`, the hand-written TCK runtime `tck/runtime/java` implements the generated TCK contract. |
 | `metalang-typescript` | TypeScript generator (`generator.ts`: npm workspace, API, `node:test` tests) and TypeScript conformance check (`check.ts`). The support files are copied from `guidelines/ts-files`. |
 | `metalang-rust` | Rust generator (`generator.rust`: Cargo workspace, API, integration tests) and Rust conformance check (`check.rust` with the `rs-api` program, a resource). The support files are copied from `guidelines/rust-files`. |
 | `metalang-cli` | The command line tool (`MetaLangCli`) on top of all modules; builds the self-contained jar `tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar`. |
@@ -109,9 +109,11 @@ because their values cannot be built (the summary line is always printed).
 
 `generated/java` is a Maven project: a parent `pom.xml` with one sub-module per Java module, each built into its own
 JAR plus a Javadoc JAR. Build it with a JDK 25 (`-Xlint:all -Werror` for the code, doclint `all,-missing` with
-`failOnWarnings` for the Javadoc):
+`failOnWarnings` for the Javadoc). The base module depends on the hand-written support types (`sdk-java/support`,
+artifact `hiero-sdk-support`), so install them first:
 
 ```bash
+JAVA_HOME=~/.sdkman/candidates/java/25.0.1-tem mvn -f sdk-java/support install
 JAVA_HOME=~/.sdkman/candidates/java/25.0.1-tem mvn -f generated/java/pom.xml package -DskipTests
 ```
 
@@ -184,6 +186,41 @@ read with `rs-api`, a small Rust program based on `syn` that the tool builds onc
 ```bash
 java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --language=rust --fail-on=never --config=sdk-rust/generator.properties --project=generated/rust spec
 ```
+
+### Generate the TCK server and check its coverage
+
+The bindings in `tck/bindings` map the methods of the [Hiero TCK](https://github.com/hiero-ledger/hiero-sdk-tck) to the
+API (see [`tck-binding.md`](../../tck-binding.md)). `tck generate` generates two Maven projects:
+
+- `<output>/contract` (`hiero-sdk-tck-contract`): the contract with the runtime — interfaces and records only. The
+  `Converters` interface is derived from the converter catalogue; `TckRuntime` declares JSON access, execution and the
+  JSON-RPC server.
+- `<output>/server` (`hiero-sdk-tck`): the server generated from the bindings. It is compiled against the generated
+  API and the contract only; the hand-written runtime `tck/runtime/java` (`hiero-sdk-tck-runtime`) implements the
+  contract, is found with the `ServiceLoader` and is only a runtime dependency.
+
+`tck check` compares the bindings with the test specifications of a TCK clone:
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck generate --language=java --fail-on=never --config=sdk-java/generator.properties --bindings=tck/bindings --output=generated/java-tck spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck check --fail-on=never --bindings=tck/bindings --tck=../hiero-sdk-tck/docs/test-specifications spec
+```
+
+Both stop at errors of the bindings (`tck.*` diagnostics). `tck check` prints every parameter or result of a bound
+method that has neither a binding nor an `unsupported` declaration, and the unbound methods; it exits with 1 if there
+is a finding. To build and start the server (JDK 25):
+
+```bash
+mvn -f sdk-java/support install
+mvn -f generated/java install -DskipTests
+mvn -f generated/java-tck/contract install
+mvn -f tck/runtime/java install
+mvn -f generated/java-tck/server package
+java -jar generated/java-tck/server/target/hiero-sdk-tck-0.1.0-SNAPSHOT.jar
+```
+
+The server listens on port 8544 (the TCK default) or on the port given as argument; its dependencies are copied to
+`target/lib` next to the jar.
 
 ### List all rules
 
@@ -351,12 +388,12 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   type (`onMessage` → `OnMessageFunction`), placed like the exception classes so that overriding methods in other
   packages use the same type. Function types with type variables in such an interface, unplaceable ones and name
   clashes defer the declarations that use them. The current specs use no function types.
-- **Support files** (`SupportFiles`): classes the generated API uses but the specs do not declare — `@ThreadSafe`
+- **Support types** (`SupportFiles`): classes the generated API uses but the specs do not declare — `@ThreadSafe`
   (`org.hiero.sdk.annotation`) and the streaming types `HieroStream`, `StreamItem`, `HieroPublisher`,
-  `HieroSubscription` (`org.hiero.sdk.common`). Their single source are the files in `guidelines/java-files`: the build
-  copies them into the tool, the generator writes them 1:1 (only preceded by the header line) when a generated
-  declaration needs them, into the base module that all other modules require, and exports their packages.
-  `SupportFilesTest` checks that the generated files are identical to the guideline files.
+  `HieroSubscription` (`org.hiero.sdk.common`). They are not generated: they are the hand-written Maven module
+  `sdk-java/support` (artifact `hiero-sdk-support`, JPMS module `org.hiero.sdk.support`). When a generated declaration
+  needs them, the base module that all other modules require declares `requires transitive org.hiero.sdk.support` and
+  the Maven dependency. Install the module before building the generated code (`mvn -f sdk-java/support install`).
 - **Streaming**: `@@streaming T m()` returns `HieroStream<T>`, `streamResult<T>` is `StreamItem<T>`; the errors of a
   streaming method are documented as "The stream ends with `X` if it fails." (they are thrown by the iterator).
 - **Thread safety** (`ThreadSafeGenerator`): `@@threadSafe[(group)]` becomes the SDK annotation
@@ -628,7 +665,7 @@ checks:
 | `GeneratedOutputTest` | Writing into a version-controlled output directory: new files and directories, unchanged files are not rewritten, stale generated files and the directories they leave empty are deleted, hand-written and binary files and other empty directories are kept. |
 | `FunctionTypeTest` | Mapping of every function shape to `java.util.function` with wrapper types and `@Nullable` arguments, generated functional interfaces (shared per function type, varargs), placement across modules with an implementation in another package, and every deferral reason (type variables, name clashes, no home). All cases are compiled. |
 | `FactoryGeneratorTest` | Class name rule, static methods (overloads, generics with renamed type variables, varargs, `@@async @@nullable`, errors), compiled and called, and the deferral of functions (type not generated, no Java mapping, clashing class name). |
-| `SupportFilesTest` | Every support file is generated 1:1 from `guidelines/java-files` (header line plus the identical content), streaming methods and `streamResult` map to `HieroStream`/`StreamItem`, support files only appear when used, and at runtime the push adapter delivers only the requested items, waits without polling, caps an overflowing demand, cancels and rejects a non-positive demand. |
+| `SupportFilesTest` | The support module provides and exports the packages the generator imports from, streaming methods and `streamResult` map to `HieroStream`/`StreamItem`, the support module is only required when used, and at runtime the push adapter delivers only the requested items, waits without polling, caps an overflowing demand, cancels and rejects a non-positive demand. |
 | `ThreadSafeTest` | The `@ThreadSafe` annotation (generated once in the module all users require, exported, `RetentionPolicy.CLASS`, not visible via reflection), annotations on members, types and implementations, `volatile` for mutable thread-safe state (checked via reflection), and the error without common module. |
 | `MavenGeneratorTest` | The parent and module `pom.xml` files are well-formed XML with the generator marker, list one sub-module per Java module, depend on the required modules and jspecify, pin every plugin, attach Javadoc JARs, and use the configured groupId and version (invalid values are rejected). |
 | `ConstantsGeneratorTest` | Class name rule, basic and struct-literal constants (record, class, `null` and `@@default` filling, `@Deprecated`), loading the compiled constants, and every deferral reason (type not generated, abstraction, missing value, clashing class name). |

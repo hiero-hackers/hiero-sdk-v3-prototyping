@@ -26,9 +26,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class SupportFilesTest {
 
-    /** The single source of the support files. */
-    private static final Path GUIDELINE = Path.of(System.getProperty("spec.root", "../../../spec"))
-            .resolveSibling("guidelines/java-files");
 
     private static final String STREAMING_SPEC = """
             namespace a
@@ -49,20 +46,18 @@ class SupportFilesTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"ThreadSafe", "HieroStream", "StreamItem", "HieroPublisher", "HieroSubscription"})
-    void shouldCopyTheGuidelineFiles1To1(final String name) throws Exception {
-        // GIVEN
-        final String guideline = Files.readString(GUIDELINE.resolve(name + ".java"), StandardCharsets.UTF_8);
-
-        // WHEN
-        final GeneratedFile file = SupportFiles.generate("m", name);
-
-        // THEN the generated file is the guideline file, only preceded by the generator's header line
-        assertThat(SupportFiles.source(name)).isEqualTo(guideline);
-        assertThat(file.content()).isEqualTo(JavaGenerator.HEADER + "\n" + guideline);
-        assertThat(file.path()).isEqualTo("m/src/main/java/" + SupportFiles.packageOf(guideline).replace('.', '/')
-                + "/" + name + ".java");
-        assertThat(SupportFiles.packageOf(guideline)).isIn(SupportFiles.STREAMING_PACKAGE, ThreadSafeGenerator.PACKAGE);
+    @ValueSource(strings = {"annotation/ThreadSafe", "common/HieroStream", "common/StreamItem", "common/HieroPublisher",
+            "common/HieroSubscription"})
+    void theSupportModuleShouldProvideTheTypesTheGeneratorUses(final String name) throws Exception {
+        // the packages the generator imports from are the packages of the support module, and it exports them
+        final String source = Files.readString(GeneratedJava.SUPPORT.resolve("org/hiero/sdk/" + name + ".java"),
+                StandardCharsets.UTF_8);
+        assertThat(source).containsAnyOf("package " + SupportFiles.STREAMING_PACKAGE + ";",
+                "package " + ThreadSafeGenerator.PACKAGE + ";");
+        assertThat(Files.readString(GeneratedJava.SUPPORT.resolve("module-info.java"), StandardCharsets.UTF_8))
+                .contains("module " + SupportFiles.MODULE + " {")
+                .contains("    exports " + SupportFiles.STREAMING_PACKAGE + ";")
+                .contains("    exports " + ThreadSafeGenerator.PACKAGE + ";");
     }
 
     @Test
@@ -81,15 +76,12 @@ class SupportFilesTest {
                             HieroStream<Message> subscribe();
                         """)
                 .contains("    HieroStream<StreamItem<Message>> subscribeSafely();");
-        assertThat(files).extracting(GeneratedFile::path).filteredOn(p -> p.contains("/org/hiero/sdk/"))
-                .containsExactly("org.hiero.f/src/main/java/org/hiero/sdk/common/HieroPublisher.java",
-                        "org.hiero.f/src/main/java/org/hiero/sdk/common/HieroStream.java",
-                        "org.hiero.f/src/main/java/org/hiero/sdk/common/HieroSubscription.java",
-                        "org.hiero.f/src/main/java/org/hiero/sdk/common/StreamItem.java");
+        assertThat(files).noneMatch(f -> f.path().contains("/org/hiero/sdk/"));
         assertThat(files.stream().filter(f -> f.path().endsWith("module-info.java")).findFirst().orElseThrow()
-                .content()).contains("    exports org.hiero.sdk.common;\n");
+                .content()).contains("    requires transitive org.hiero.sdk.support;\n")
+                .doesNotContain("exports org.hiero.sdk");
         assertThat(generate("namespace a\nX { @@immutable x: int32 }\n"))
-                .noneMatch(f -> f.path().contains("/org/hiero/sdk/"));
+                .noneMatch(f -> f.content().contains("org.hiero.sdk.support"));
     }
 
     @Test

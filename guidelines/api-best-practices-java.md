@@ -1662,7 +1662,7 @@ See the [API guideline](api-guideline.md) for the full semantics of `@@threadSaf
 ### The `@ThreadSafe` annotation
 
 In Java, the meta-language `@@threadSafe` maps to a custom `@ThreadSafe` annotation provided by the SDK. The annotation
-is defined in the `org.hiero.sdk.annotation` package (see [java-files/ThreadSafe.java](java-files/ThreadSafe.java) for
+is defined in the `org.hiero.sdk.annotation` package (see [ThreadSafe.java](../sdk-java/support/src/main/java/org/hiero/sdk/annotation/ThreadSafe.java) in the support module `sdk-java/support` for
 the full source).
 
 The annotation has `RetentionPolicy.CLASS`: it documents a contract for readers, IDEs and static analysis and is
@@ -3417,8 +3417,8 @@ The meta-language `@@streaming` annotation declares methods that return an async
 SDK must provide two consumption modes:
 
 The support types `HieroStream`, `StreamItem`, `HieroPublisher` and `HieroSubscription` live in the package
-`org.hiero.sdk.common`. The files in [java-files](java-files) are their single source: the Java generator copies them
-1:1 into the base module of the generated code (a test ensures that both stay identical), so they must always compile.
+`org.hiero.sdk.common` of the hand-written support module [`sdk-java/support`](../sdk-java/support) (artifact
+`hiero-sdk-support`, JPMS module `org.hiero.sdk.support`); the generated modules that use them depend on it.
 
 1. **Pull-based** (primary) — The canonical implementation. Returns a `HieroStream<T>` that the consumer iterates over
    using a standard `for` loop or `Iterator`. All retry, reconnect, and domain logic lives here.
@@ -3429,7 +3429,7 @@ The support types `HieroStream`, `StreamItem`, `HieroPublisher` and `HieroSubscr
 
 The primary pull-based API is a custom `HieroStream<T>` interface that extends `Iterable<T>` and `AutoCloseable`. This
 allows consumers to use try-with-resources for automatic cleanup and enhanced `for` loops for iteration.
-See [java-files/HieroStream.java](java-files/HieroStream.java) for the full source with Javadoc.
+See [HieroStream.java](../sdk-java/support/src/main/java/org/hiero/sdk/common/HieroStream.java) for the full source with Javadoc.
 
 ```java
 public interface HieroStream<T> extends Iterable<T>, AutoCloseable {
@@ -3464,7 +3464,7 @@ stream processing.
 
 The meta-language `streamResult<TYPE>` maps to a sealed interface in Java. This type represents a single item in the
 stream that is either a success value or an error. It allows per-item error handling without terminating the stream.
-See [java-files/StreamItem.java](java-files/StreamItem.java) for the full source with Javadoc.
+See [StreamItem.java](../sdk-java/support/src/main/java/org/hiero/sdk/common/StreamItem.java) for the full source with Javadoc.
 
 ```java
 public sealed interface StreamItem<T> permits StreamItem.Success, StreamItem.Error {
@@ -3504,8 +3504,8 @@ directly and all errors are terminal — they surface as exceptions from `Iterat
 The push-based API is a convenience adapter built on top of the pull-based `HieroStream<T>`. It implements
 `java.util.concurrent.Flow.Publisher<T>` (Java 9+) so that consumers can use the standard reactive streams interface.
 The adapter contains no domain logic — it drives the pull loop on a virtual thread and delivers items to the
-`Flow.Subscriber`. See [java-files/HieroPublisher.java](java-files/HieroPublisher.java) and
-[java-files/HieroSubscription.java](java-files/HieroSubscription.java) for the full source with Javadoc.
+`Flow.Subscriber`. See [HieroPublisher.java](../sdk-java/support/src/main/java/org/hiero/sdk/common/HieroPublisher.java) and
+[HieroSubscription.java](../sdk-java/support/src/main/java/org/hiero/sdk/common/HieroSubscription.java) for the full source with Javadoc.
 
 #### The `HieroPublisher<T>` adapter
 
@@ -3534,7 +3534,7 @@ public final class HieroPublisher<T> implements Flow.Publisher<T> {
 #### The `HieroSubscription<T>` implementation
 
 The subscription drives the pull-based `HieroStream` on a virtual thread and respects backpressure through the
-`Flow.Subscription.request(long)` protocol. See [java-files/HieroSubscription.java](java-files/HieroSubscription.java)
+`Flow.Subscription.request(long)` protocol. See [HieroSubscription.java](../sdk-java/support/src/main/java/org/hiero/sdk/common/HieroSubscription.java)
 for the full source. Its key properties:
 
 - Items are only delivered while there is outstanding demand. Without demand the virtual thread **parks** until

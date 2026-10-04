@@ -124,6 +124,7 @@ public final class JavaGenerator {
         final Optional<String> streamingModule = streamingModule(model, modules, plan);
         final List<GeneratedFile> files = new ArrayList<>();
         final List<FunctionDefinition> allFunctions = plan.functions().values().stream().flatMap(List::stream).toList();
+        final Set<String> supportUsers = new HashSet<>();
         for (final Module module : modules) {
             final Set<String> packagesWithTypes = new TreeSet<>();
             // the tests of a module can only use the types of the modules it requires
@@ -166,24 +167,21 @@ public final class JavaGenerator {
                     }
                 }
             }
-            // the support files of the guideline (guidelines/java-files), in the module all their users require
-            final List<String> supportPackages = new ArrayList<>();
-            if (threadSafeModule.filter(module.name()::equals).isPresent()) {
-                files.add(ThreadSafeGenerator.generate(module.name()));
-                supportPackages.add(ThreadSafeGenerator.PACKAGE);
+            // the hand-written support module (sdk-java/support), required by the module all its users require
+            if (threadSafeModule.filter(module.name()::equals).isPresent()
+                    || streamingModule.filter(module.name()::equals).isPresent()) {
+                supportUsers.add(module.name());
             }
-            if (streamingModule.filter(module.name()::equals).isPresent()) {
-                SupportFiles.STREAMING.forEach(name -> files.add(SupportFiles.generate(module.name(), name)));
-                supportPackages.add(SupportFiles.STREAMING_PACKAGE);
-            }
-            files.add(moduleInfo(module, packagesWithTypes, supportPackages.stream().sorted().toList()));
+            files.add(moduleInfo(module, packagesWithTypes, supportUsers.contains(module.name())));
         }
         // the Maven build: one sub-module (and JAR) per JPMS module
         final Map<String, String> folderOf = new HashMap<>();
         modules.forEach(m -> folderOf.put(m.name(), m.folder()));
         final List<MavenGenerator.MavenModule> mavenModules = modules.stream()
                 .map(m -> new MavenGenerator.MavenModule(m.name(), MavenGenerator.artifactId(m.folder()), m.folder(),
-                        m.requires().stream().map(r -> MavenGenerator.artifactId(folderOf.get(r))).toList()))
+                        Stream.concat(m.requires().stream().map(r -> MavenGenerator.artifactId(folderOf.get(r))),
+                                supportUsers.contains(m.name()) ? Stream.of(SupportFiles.ARTIFACT) : Stream.empty())
+                                .toList()))
                 .toList();
         files.add(MavenGenerator.parent(mavenModules, config));
         mavenModules.forEach(m -> files.add(MavenGenerator.module(m, config)));
@@ -201,6 +199,31 @@ public final class JavaGenerator {
     public SortedMap<QualifiedName, String> deferredTypes(final LinkedModel model) {
         Objects.requireNonNull(model, "model must not be null");
         return plan(model, modules(model)).deferred();
+    }
+
+    /**
+     * Returns the generation context of a model, for generators that build on the generated API (the TCK server).
+     *
+     * @param model the linked model
+     * @return the context
+     */
+    JavaContext context(final LinkedModel model) {
+        return plan(model, modules(model)).context();
+    }
+
+    /**
+     * Returns the Maven artifact IDs of the generated modules.
+     *
+     * @param model the linked model
+     * @return the artifact IDs, sorted
+     */
+    List<String> artifactIds(final LinkedModel model) {
+        return modules(model).stream().map(m -> MavenGenerator.artifactId(m.folder())).sorted().toList();
+    }
+
+    /** Returns the project-specific configuration. */
+    JavaGeneratorConfig config() {
+        return config;
     }
 
     private static GeneratedFile generate(final String module, final TypeDefinition type, final JavaContext context) {
@@ -403,7 +426,7 @@ public final class JavaGenerator {
     }
 
     /**
-     * The module that contains the {@code @ThreadSafe} annotation: see {@link #supportModule}.
+     * The module that requires the support module for the {@code @ThreadSafe} annotation: see {@link #supportModule}.
      */
     private static Optional<String> threadSafeModule(final LinkedModel model, final List<Module> modules,
                                                      final JavaContext context) {
@@ -424,8 +447,8 @@ public final class JavaGenerator {
     }
 
     /**
-     * The module that contains the streaming support ({@code HieroStream}, {@code StreamItem}, ...): see
-     * {@link #supportModule}. Used by {@code @@streaming} methods and {@code streamResult<T>} types.
+     * The module that requires the support module for the streaming types ({@code HieroStream}, {@code StreamItem},
+     * ...): see {@link #supportModule}. Used by {@code @@streaming} methods and {@code streamResult<T>} types.
      */
     private static Optional<String> streamingModule(final LinkedModel model, final List<Module> modules,
                                                     final Plan plan) {
@@ -472,9 +495,10 @@ public final class JavaGenerator {
     }
 
     /**
-     * The module that contains a group of support files (guidelines/java-files). It is the base module that all other
-     * modules require, so that the support packages never move when another module starts to use them; without such
-     * a module, one of the using modules that all other using modules require. Empty if nobody uses the support.
+     * The module that requires the support module ({@code sdk-java/support}) for a group of support types; the others
+     * get it transitively. It is the base module that all other modules require, so that the dependency never moves
+     * when another module starts to use the support; without such a module, one of the using modules that all other
+     * using modules require. Empty if nobody uses the support.
      *
      * @throws GenerationException if there is neither a base module nor a using module required by all others
      */
@@ -935,14 +959,13 @@ public final class JavaGenerator {
     }
 
     private static GeneratedFile moduleInfo(final Module module, final Set<String> packagesWithTypes,
-                                            final List<String> sdkPackages) {
+                                            final boolean support) {
         final StringBuilder java = new StringBuilder(HEADER).append('\n');
         java.append("import org.jspecify.annotations.NullMarked;\n\n");
         java.append(MarkdownComment.render("", List.of(
                 "Module `" + module.name() + "` of the Hiero SDK.",
-                "Packages:\n" + String.join("\n", Stream.concat(module.namespaces().stream()
-                        .map(n -> JavaNames.packageName(n.name())), sdkPackages.stream())
-                        .map(p -> "- `" + p + "`")
+                "Packages:\n" + String.join("\n", module.namespaces().stream()
+                        .map(n -> "- `" + JavaNames.packageName(n.name()) + "`")
                         .toList()))));
         // non-null by default in all packages, like the meta-language; only @@nullable needs @Nullable
         java.append("@NullMarked\n");
@@ -950,6 +973,10 @@ public final class JavaGenerator {
         for (final String required : module.requires()) {
             // transitive: specs only contain public API, so every type of a required module is part of it
             java.append("    requires transitive ").append(required).append(";\n");
+        }
+        if (support) {
+            // the support types (@ThreadSafe, HieroStream, ...) appear in the API of the module
+            java.append("    requires transitive ").append(SupportFiles.MODULE).append(";\n");
         }
         // static: only needed at compile time; transitive: the annotations are part of the exported API
         java.append("    requires static transitive ").append(JSPECIFY_MODULE).append(";\n");
@@ -964,8 +991,6 @@ public final class JavaGenerator {
                         .append("; (enabled as soon as the package contains generated types)\n");
             }
         }
-        // packages of the SDK itself, e.g. the @ThreadSafe annotation
-        sdkPackages.forEach(p -> java.append("    exports ").append(p).append(";\n"));
         java.append("}\n");
         return new GeneratedFile(JavaNames.sourceRoot(module.name()) + "/module-info.java", java.toString());
     }

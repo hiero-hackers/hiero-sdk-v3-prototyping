@@ -444,3 +444,13 @@ signed.submit(client);
   target nodes) and `@@throws(incomplete-signatures-error)` (signatures for a target node are
   missing) inside the comment, but the declaration does not carry these `@@throws` annotations.
   Should they be added to the schema?
+
+- **How does a caller learn the status of a rejected transaction?** Neither `submit(client)` (the node
+  rejects the transaction in precheck) nor `Response.queryReceipt()` (the transaction reached consensus
+  but failed) declares a `@@throws` with an error that carries the `TransactionStatus`. V2 throws
+  `PrecheckStatusException` / `ReceiptStatusException` with the status, and callers need it to tell e.g.
+  `INSUFFICIENT_PAYER_BALANCE` from `INVALID_SIGNATURE`; the TCK server
+  ([`tck-binding.md`](../../tck-binding.md)) must answer such requests with the status name. Does
+  `queryReceipt()` return the receipt of a failed transaction (status other than `SUCCESS`) and only
+  `submit` throw, or do both throw an error with a `status` attribute? Until `BasicTransactionStatus`
+  lists `SUCCESS`, the TCK server compares the receipt status with the HAPI code 22.

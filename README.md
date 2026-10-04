@@ -55,7 +55,8 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | [`guidelines/api-best-practices-java.md`](guidelines/api-best-practices-java.md) | How the meta-language maps to idiomatic Java |
 | [`guidelines/api-best-practices-rust.md`](guidelines/api-best-practices-rust.md) | ... Rust |
 | [`guidelines/api-best-practices-js.md`](guidelines/api-best-practices-js.md) | ... JavaScript |
-| `guidelines/java-files/`, `guidelines/js-files/` | Illustrative reference snippets (not a buildable module) |
+| `guidelines/js-files/` | Illustrative reference snippets (not a buildable module) |
+| `sdk-java/support/` | Hand-written Java support types (`@ThreadSafe`, streaming), a dependency of the generated Java API |
 | `spec/base/` | Foundational namespaces: `ledger`, `keys`, `hbar`, `common`, `proto`, `grpc` |
 | `spec/consensus-node-client/` | Low-level client: build, sign, and execute transactions (incl. an SPI for custom services) |
 | `spec/mirror-node-client/` | Querying the Hiero Mirror Node REST API |

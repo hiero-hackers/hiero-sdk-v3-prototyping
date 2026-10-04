@@ -211,3 +211,9 @@ funded operator account"* fixture referenced below.
   need a typed receipt narrow the element at the language level (e.g. a pattern match / `instanceof`).
   This is the only place in the query specs that returns the base `Record` rather than a
   query-specific result type.
+
+- **`AccountInfo` covers fewer attributes than HAPI `CryptoGetInfo`.** Not modelled (besides the
+  deprecated proxy-staking and record-threshold fields): the token relationships, the alias key, the
+  ledger ID, the hbar / token / NFT allowances and the Ethereum nonce. The TCK's `getAccountInfo`
+  returns them (see [`tck-binding.md`](../../tck-binding.md)). Are they left out on purpose (e.g. token
+  relationships and allowances are read from the mirror node), or should `AccountInfo` add them?

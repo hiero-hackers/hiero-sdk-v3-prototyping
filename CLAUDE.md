@@ -14,12 +14,13 @@ designed from scratch with **no backward-compatibility constraints** with V2.
 **This repo contains specifications, not a shippable SDK.** The specs themselves have no build system and do not
 compile; the only buildable module is the spec tooling under `tooling/metalang` (Maven, Java 21). The API is defined once in a **language-agnostic meta-language** and is meant to be translated into
 idiomatic implementations per language (Java, JavaScript/TypeScript, Go, Rust, Python, C++, Swift). The `.java`/`.js`
-files under `guidelines/` are reference snippets, not a buildable module — except `guidelines/java-files/`,
-`guidelines/ts-files/` and `guidelines/rust-files/`: these are the single source of the Java support types
-(`@ThreadSafe`, `HieroStream`, `StreamItem`, `HieroPublisher`, `HieroSubscription`), the TypeScript support types
-(`Duration`, `StreamItem`, `AbstractConstructor`) and the Rust support types (`BoxFuture`, `BoxStream`, `StreamItem`,
-`InvalidArgumentError`), which the generators copy 1:1 into `generated/java`, `generated/ts` and `generated/rust`, so
-they must always compile.
+files under `guidelines/` are reference snippets, not a buildable module — except `guidelines/ts-files/` and
+`guidelines/rust-files/`: these are the single source of the TypeScript support types (`Duration`, `StreamItem`,
+`AbstractConstructor`) and the Rust support types (`BoxFuture`, `BoxStream`, `StreamItem`, `InvalidArgumentError`),
+which the generators copy 1:1 into `generated/ts` and `generated/rust`, so they must always compile. The Java support
+types (`@ThreadSafe`, `HieroStream`, `StreamItem`, `HieroPublisher`, `HieroSubscription`) are not copied: they are the
+hand-written Maven module `sdk-java/support` (`hiero-sdk-support`, JPMS module `org.hiero.sdk.support`), on which the
+generated Java modules depend.
 
 ## Repository structure
 
@@ -30,7 +31,6 @@ guidelines/
   api-best-practices-rust.md    # ... Rust (the mapping of the Rust generator)
   api-best-practices-js.md      # ... JavaScript
   api-best-practices-ts.md      # ... TypeScript (the mapping of the TypeScript generator)
-  java-files/                   # Java support types (streaming, thread-safety); copied 1:1 into the generated code
   ts-files/                     # TypeScript support types (Duration, StreamItem, ...); copied 1:1 into generated/ts
   rust-files/                   # Rust support types (BoxFuture, InvalidArgumentError, ...); copied 1:1 into generated/rust
   js-files/                     # Illustrative JS reference snippets
@@ -43,6 +43,8 @@ openspec-common-delta-changes/  # Plain language-neutral feature proposals and s
 
 sdk-java/openspec/             # Java-only OpenSpec root
 sdk-java/generator.properties  # Java generator configuration (e.g. java.interfaces), see tooling/metalang/README.md
+sdk-java/support/              # Hand-written Java support types (streaming, thread-safety) as Maven module
+                               #   hiero-sdk-support; generated/java depends on it (install it first)
 generated/java/                # Generated Java API as Maven project, one sub-module/JAR per Java module (tracked in
                                #   git; regenerate after spec or generator changes, commands in
                                #   tooling/metalang/README.md). Never edit by hand. `metalang check` verifies
@@ -58,6 +60,14 @@ sdk-rust/generator.properties  # Rust generator configuration (crate prefix, ver
 generated/rust/                # Generated Rust API as Cargo workspace, one crate per spec folder, with a generated
                                #   integration test per crate (tracked in git; regenerate after spec or generator
                                #   changes; `cargo test` builds and tests it). Never edit by hand.
+tck/                           # TCK binding spike (see tck-binding.md):
+  bindings/                    #   bindings of TCK methods to the API (`bindings` code blocks in Markdown)
+  runtime/java/                #   hand-written runtime of the Java TCK server (JSON-RPC, converters, setup); Maven
+                               #   module hiero-sdk-tck-runtime, implements generated/java-tck/contract
+generated/java-tck/            # Generated from tck/bindings and the converter catalogue (tracked in git; `metalang
+                               #   tck generate`, see tooling/metalang/README.md). Never edit by hand.
+                               #   contract/: interfaces the runtime implements; server/: the TCK server, compiled
+                               #   against API + contract only (the runtime is a runtime dependency)
 
 spec/                           # The actual V3 public-API specifications, written in the meta-language
   base/                         # Foundational namespaces shared by everything
@@ -85,8 +95,9 @@ spec/                           # The actual V3 public-API specifications, writt
     service-contract.md (enterprise.service.contract)
 
 tooling/metalang/               # Prototype tooling, multi-module Maven build (see its README):
-  metalang-core/                #   ANTLR grammar, parser, semantic model, validator, shared generator support
-  metalang-java/                #   Java generator + Java conformance check
+  metalang-core/                #   ANTLR grammar, parser, semantic model, validator, shared generator support,
+                                #   TCK bindings (parser, resolver, coverage check)
+  metalang-java/                #   Java generator + Java conformance check + Java TCK server generator
   metalang-typescript/          #   TypeScript generator + TypeScript conformance check
   metalang-rust/                #   Rust generator + Rust conformance check (rs-api, a syn-based helper)
   metalang-cli/                 #   command line tool; builds tooling/metalang/target/metalang-*-cli.jar
@@ -176,7 +187,7 @@ When working here, these skills are particularly useful:
 
 - **`java-api-design`** and **`java-best-pratices`** — when reasoning about API surface, SPI, interfaces vs. records,
   module boundaries, breaking changes.
-- **`modern-java`** — when writing or reviewing the `guidelines/java-files/` reference snippets (use modern idioms:
+- **`modern-java`** — when writing or reviewing the Java support types in `sdk-java/support/` (use modern idioms:
   records, sealed types, pattern matching, etc.).
 - **`adr-create`** — when a genuine architectural decision is made, record it as an ADR.
 - **`hiero-info`** / **`hedera-info`** — background when writing prose about Hiero/Hedera concepts.

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The hand-written runtime of the Java TCK server (see tck-binding.md): it implements the contract generated from
+     the converter catalogue (generated/java-tck/contract): JSON-RPC server, sessions, converters, execution flow and
+     the runtime methods setup, reset and generateKey. The generated server finds it with the ServiceLoader. Build the
+     generated API and the contract first. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.hiero.sdk</groupId>
+    <artifactId>hiero-sdk-tck-runtime</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+
+    <name>Hiero SDK TCK runtime</name>
+    <description>The runtime of the JSON-RPC server of the Hiero SDK TCK for the Java API.</description>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-sdk-tck-contract</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-consensus-node-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-Xlint:all</arg>
+                        <arg>-Werror</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

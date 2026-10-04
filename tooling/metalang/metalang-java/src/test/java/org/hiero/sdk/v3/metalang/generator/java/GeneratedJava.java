@@ -58,6 +58,10 @@ final class GeneratedJava {
         }
     }
 
+    /** The sources of the hand-written support module. */
+    static final Path SUPPORT = Path.of(System.getProperty("spec.root", "../../../spec"))
+            .resolveSibling("sdk-java/support/src/main/java");
+
     private GeneratedJava() {
     }
 
@@ -77,6 +81,18 @@ final class GeneratedJava {
             Files.writeString(target, file.content(), StandardCharsets.UTF_8);
             if (file.path().endsWith(".java") && file.path().contains("/src/main/java/")) {
                 sources.add(target); // the Maven files (pom.xml) and the tests are written, but not compiled
+            }
+        }
+        // the hand-written support module (in Maven a dependency) is compiled with the modules that require it
+        if (files.stream().anyMatch(f -> f.content().contains("requires transitive " + SupportFiles.MODULE + ";"))) {
+            final Path target = directory.resolve("src").resolve(SupportFiles.MODULE).resolve("src/main/java");
+            try (Stream<Path> support = Files.walk(SUPPORT)) {
+                for (final Path source : support.filter(p -> p.toString().endsWith(".java")).sorted().toList()) {
+                    final Path copy = target.resolve(SUPPORT.relativize(source).toString());
+                    Files.createDirectories(copy.getParent());
+                    Files.copy(source, copy);
+                    sources.add(copy);
+                }
             }
         }
         final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();

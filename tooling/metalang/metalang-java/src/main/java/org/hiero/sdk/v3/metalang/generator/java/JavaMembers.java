@@ -133,7 +133,7 @@ final class JavaMembers {
 
     private static String returnType(final MethodDefinition method, final boolean boxed, final Imports imports) {
         if (method.hasAnnotation("streaming")) {
-            // a pull-based stream of items (guidelines/java-files/HieroStream.java)
+            // a pull-based stream of items (HieroStream of sdk-java/support)
             return imports.use(SupportFiles.STREAMING_PACKAGE, "HieroStream") + "<"
                     + JavaTypes.type(method.returnType(), true, imports) + ">";
         }

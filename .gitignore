@@ -4,3 +4,6 @@
 # Maven build output of the generated code
 generated/java/target/
 generated/java/*/target/
+generated/java-tck/*/target/
+tck/runtime/java/target/
+sdk-java/support/target/

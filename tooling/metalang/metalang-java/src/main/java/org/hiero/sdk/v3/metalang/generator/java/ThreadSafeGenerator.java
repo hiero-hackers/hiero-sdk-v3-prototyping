@@ -3,13 +3,11 @@ package org.hiero.sdk.v3.metalang.generator.java;
 import java.util.Optional;
 import org.hiero.sdk.v3.metalang.ast.Annotated;
 import org.hiero.sdk.v3.metalang.ast.Annotation;
-import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 
 /**
- * Generates the {@code @ThreadSafe} annotation of the SDK (see "Thread Safety" in
- * {@code guidelines/api-best-practices-java.md}; the source is {@code guidelines/java-files/ThreadSafe.java}) and renders
- * its usages. The annotation lives in the package
- * {@value #PACKAGE} of the module that all modules using {@code @@threadSafe} require.
+ * Renders the usages of the {@code @ThreadSafe} annotation of the SDK (see "Thread Safety" in
+ * {@code guidelines/api-best-practices-java.md}). The annotation lives in the package {@value #PACKAGE} of the
+ * hand-written support module ({@code sdk-java/support}).
  */
 final class ThreadSafeGenerator {
 
@@ -20,16 +18,6 @@ final class ThreadSafeGenerator {
     static final String NAME = "ThreadSafe";
 
     private ThreadSafeGenerator() {
-    }
-
-    /**
-     * Generates the annotation: the file {@code guidelines/java-files/ThreadSafe.java}, copied 1:1.
-     *
-     * @param module the Java module
-     * @return the generated file
-     */
-    static GeneratedFile generate(final String module) {
-        return SupportFiles.generate(module, NAME);
     }
 
     /**

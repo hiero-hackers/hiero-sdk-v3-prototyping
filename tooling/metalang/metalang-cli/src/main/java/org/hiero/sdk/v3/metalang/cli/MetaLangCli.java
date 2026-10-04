@@ -24,6 +24,7 @@ import org.hiero.sdk.v3.metalang.generator.GeneratedOutput;
 import org.hiero.sdk.v3.metalang.generator.GenerationException;
 import org.hiero.sdk.v3.metalang.generator.java.JavaGenerator;
 import org.hiero.sdk.v3.metalang.generator.java.JavaGeneratorConfig;
+import org.hiero.sdk.v3.metalang.generator.java.JavaTckGenerator;
 import org.hiero.sdk.v3.metalang.generator.java.TestGenerator;
 import org.hiero.sdk.v3.metalang.generator.rust.RustGenerator;
 import org.hiero.sdk.v3.metalang.generator.rust.RustGeneratorConfig;
@@ -33,6 +34,9 @@ import org.hiero.sdk.v3.metalang.generator.ts.TsGeneratorConfig;
 import org.hiero.sdk.v3.metalang.generator.ts.TsTestGenerator;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
+import org.hiero.sdk.v3.metalang.tck.TckBindings;
+import org.hiero.sdk.v3.metalang.tck.TckCoverage;
+import org.hiero.sdk.v3.metalang.tck.TckSpecifications;
 
 /**
  * Command line interface.
@@ -47,6 +51,9 @@ import org.hiero.sdk.v3.metalang.model.QualifiedName;
  * metalang check --language=java|ts|rust --project=dir [--config=file] [--typescript=dir] [--cargo=executable]
  *     [--fail-on=error|warning|info|never]
  *     &lt;spec-dir-or-file&gt;
+ * metalang tck generate --language=java --bindings=dir --output=dir [--config=file]
+ *     [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
+ * metalang tck check --bindings=dir --tck=dir [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
  * metalang rules
  * </pre>
  *
@@ -68,6 +75,8 @@ public final class MetaLangCli {
               metalang model [options] <spec-dir-or-file>
               metalang generate --language=java|ts|rust --output=<dir> [options] <spec-dir-or-file>
               metalang check --language=java|ts|rust --project=<dir> [options] <spec-dir-or-file>
+              metalang tck generate --language=java --bindings=<dir> --output=<dir> [options] <spec-dir-or-file>
+              metalang tck check --bindings=<dir> --tck=<dir> <spec-dir-or-file>
               metalang rules
 
             Options for 'validate':
@@ -102,6 +111,22 @@ public final class MetaLangCli {
                                                   sources (default: <project>/node_modules/typescript)
               --cargo=<executable>                Rust only: the Cargo that builds the program reading the
                                                   sources (default: cargo)
+              --fail-on=error|warning|info|never  do not check if a spec finding at or above this severity
+                                                  exists (default: error)
+
+            Options for 'tck generate' (generates the contract with the runtime and the TCK server from the bindings
+            into <output>/contract and <output>/server, see tck-binding.md):
+              --language=java                     target language (required)
+              --bindings=<dir>                    directory of the bindings files (required), e.g. tck/bindings
+              --output=<dir>                      output directory (required; created if missing)
+              --config=<file>                     generator configuration of the API (as for 'generate')
+              --fail-on=error|warning|info|never  do not generate if a spec finding at or above this severity
+                                                  exists (default: error)
+
+            Options for 'tck check' (compares the bindings with the TCK test specifications):
+              --bindings=<dir>                    directory of the bindings files (required)
+              --tck=<dir>                         the test specifications of the TCK (required), e.g.
+                                                  hiero-sdk-tck/docs/test-specifications
               --fail-on=error|warning|info|never  do not check if a spec finding at or above this severity
                                                   exists (default: error)
             """;
@@ -145,6 +170,7 @@ public final class MetaLangCli {
             case "model" -> model(List.of(args).subList(1, args.length));
             case "generate" -> generate(List.of(args).subList(1, args.length));
             case "check" -> check(List.of(args).subList(1, args.length));
+            case "tck" -> tck(List.of(args).subList(1, args.length));
             case "rules" -> rules();
             case "help", "--help", "-h" -> {
                 out.print(USAGE);
@@ -490,6 +516,131 @@ public final class MetaLangCli {
                 : JavaGeneratorConfig.load(Path.of(config)));
         final List<GeneratedFile> files = generator.generate(model);
         return new Generation(files, generator.deferredTypes(model), TestGenerator.untested(files));
+    }
+
+    private int tck(final List<String> args) {
+        if (args.isEmpty() || !List.of("generate", "check").contains(args.getFirst())) {
+            return usageError(args.isEmpty() ? "Missing 'tck' command" : "Unknown 'tck' command '"
+                    + args.getFirst() + "'");
+        }
+        final boolean generate = args.getFirst().equals("generate");
+        String language = null;
+        String bindingsDirectory = null;
+        String output = null;
+        String tck = null;
+        String config = null;
+        Severity failOn = Severity.ERROR;
+        final List<String> paths = new ArrayList<>();
+        for (final String arg : args.subList(1, args.size())) {
+            if (arg.startsWith("--fail-on=")) {
+                final String value = arg.substring("--fail-on=".length());
+                failOn = value.equals("never") ? null : parseSeverity(value);
+                if (failOn == null && !value.equals("never")) {
+                    return usageError("Invalid severity in " + arg);
+                }
+            } else if (generate && arg.startsWith("--language=")) {
+                language = arg.substring("--language=".length());
+            } else if (arg.startsWith("--bindings=")) {
+                bindingsDirectory = arg.substring("--bindings=".length());
+            } else if (generate && arg.startsWith("--output=")) {
+                output = arg.substring("--output=".length());
+            } else if (generate && arg.startsWith("--config=")) {
+                config = arg.substring("--config=".length());
+            } else if (!generate && arg.startsWith("--tck=")) {
+                tck = arg.substring("--tck=".length());
+            } else if (arg.startsWith("--")) {
+                return usageError("Unknown option " + arg);
+            } else {
+                paths.add(arg);
+            }
+        }
+        if (generate && !"java".equals(language)) {
+            return usageError(language == null ? "Missing --language" : "Unsupported language '" + language + "'");
+        }
+        if (bindingsDirectory == null || !Files.isDirectory(Path.of(bindingsDirectory))) {
+            return usageError(bindingsDirectory == null ? "Missing --bindings"
+                    : "Bindings directory does not exist: " + bindingsDirectory);
+        }
+        if (generate && (output == null || output.isBlank())) {
+            return usageError("Missing --output");
+        }
+        if (!generate && (tck == null || !Files.isDirectory(Path.of(tck)))) {
+            return usageError(tck == null ? "Missing --tck" : "TCK directory does not exist: " + tck);
+        }
+        if (paths.size() != 1) {
+            return usageError("Expected exactly one spec directory or file");
+        }
+        final Path root = Path.of(paths.getFirst());
+        if (!Files.exists(root)) {
+            return usageError("Path does not exist: " + root);
+        }
+        final ValidationReport report = new MetaLang().validate(root);
+        final Severity failThreshold = failOn;
+        final long blocking = report.diagnostics().stream()
+                .filter(d -> failThreshold != null && d.severity().ordinal() <= failThreshold.ordinal())
+                .count();
+        if (blocking > 0) {
+            err.println("Stopping: the specs have " + blocking + " finding(s) at or above "
+                    + failThreshold.name().toLowerCase(Locale.ROOT) + " (see 'metalang validate')");
+            return EXIT_FINDINGS;
+        }
+        final LinkedModel model = LinkedModel.of(report.model());
+        final TckBindings.Bindings bindings;
+        try {
+            bindings = TckBindings.read(Path.of(bindingsDirectory), model);
+        } catch (final IOException e) {
+            err.println("Cannot read the bindings: " + e.getMessage());
+            return EXIT_FINDINGS;
+        }
+        bindings.diagnostics().forEach(err::println);
+        if (bindings.hasErrors()) {
+            return EXIT_FINDINGS;
+        }
+        return generate ? tckGenerate(model, bindings, Path.of(output), config) : tckCheck(bindings, Path.of(tck));
+    }
+
+    private int tckGenerate(final LinkedModel model, final TckBindings.Bindings bindings, final Path output,
+                            final String config) {
+        final List<GeneratedFile> files;
+        try {
+            files = new JavaTckGenerator(config == null ? JavaGeneratorConfig.DEFAULT
+                    : JavaGeneratorConfig.load(Path.of(config))).generate(model, bindings);
+        } catch (final GenerationException e) {
+            e.problems().forEach(p -> err.println("Cannot generate: " + p));
+            return EXIT_FINDINGS;
+        } catch (final IOException e) {
+            err.println("Cannot read the configuration " + config + ": " + e.getMessage());
+            return EXIT_FINDINGS;
+        }
+        final GeneratedOutput.Result result;
+        try {
+            result = GeneratedOutput.write(output, files, JavaGenerator.MARKER);
+        } catch (final IOException e) {
+            err.println("Cannot write to " + output + ": " + e.getMessage());
+            return EXIT_FINDINGS;
+        }
+        out.println(files.size() + " file(s) of the TCK contract and server generated in " + output + " (" + result.written()
+                + " changed, " + result.removed().size() + " stale removed) for " + bindings.bindings().size()
+                + " method(s)");
+        result.removed().forEach(p -> out.println("  removed " + p));
+        return EXIT_OK;
+    }
+
+    private int tckCheck(final TckBindings.Bindings bindings, final Path tck) {
+        final TckCoverage.Report report;
+        try {
+            report = TckCoverage.check(bindings, TckSpecifications.read(tck));
+        } catch (final IOException e) {
+            err.println("Cannot read the TCK specifications: " + e.getMessage());
+            return EXIT_FINDINGS;
+        }
+        report.findings().forEach(out::println);
+        out.println(report.bound().size() + " TCK method(s) bound, " + report.unbound().size() + " unbound, "
+                + report.findings().size() + " finding(s)");
+        if (!report.unbound().isEmpty()) {
+            out.println("Unbound: " + String.join(", ", report.unbound()));
+        }
+        return report.findings().isEmpty() ? EXIT_OK : EXIT_FINDINGS;
     }
 
     private void printSummary(final ValidationReport report, final Severity threshold) {

@@ -338,15 +338,14 @@ class JavaGeneratorTest {
             final long classes = specFiles.stream()
                     .filter(f -> f.content().matches("(?s).*\npublic (abstract )?(sealed |non-sealed |final )?class .*"))
                     .count();
-            // 5 module-info.java, 6 pom.xml (parent and one per module), the support files of the guideline
-            assertThat(files).filteredOn(f -> f.path().contains("/org/hiero/sdk/")).extracting(GeneratedFile::path)
-                    .containsExactly("org.hiero.base/src/main/java/org/hiero/sdk/annotation/ThreadSafe.java",
-                            "org.hiero.base/src/main/java/org/hiero/sdk/common/HieroPublisher.java",
-                            "org.hiero.base/src/main/java/org/hiero/sdk/common/HieroStream.java",
-                            "org.hiero.base/src/main/java/org/hiero/sdk/common/HieroSubscription.java",
-                            "org.hiero.base/src/main/java/org/hiero/sdk/common/StreamItem.java");
+            // 5 module-info.java, 6 pom.xml (parent and one per module); the support types are a dependency
+            assertThat(files).noneMatch(f -> f.path().contains("/org/hiero/sdk/"));
+            assertThat(files.stream().filter(f -> f.path().equals("org.hiero.base/src/main/java/module-info.java"))
+                    .findFirst().orElseThrow().content()).contains("    requires transitive org.hiero.sdk.support;\n");
+            assertThat(files.stream().filter(f -> f.path().equals("org.hiero.base/pom.xml")).findFirst().orElseThrow()
+                    .content()).contains("<artifactId>hiero-sdk-support</artifactId>");
             assertThat(files).filteredOn(f -> !f.path().contains("/src/test/java/"))
-                    .hasSize(5 + 6 + 5 + (int) withDescription + (int) enumFiles + (int) records + (int) interfaces
+                    .hasSize(5 + 6 + (int) withDescription + (int) enumFiles + (int) records + (int) interfaces
                     + (int) classes);
             assertThat(enumFiles).isEqualTo(enums);
             assertThat(records).isGreaterThanOrEqualTo(80);
