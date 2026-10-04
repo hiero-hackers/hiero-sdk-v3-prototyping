@@ -110,6 +110,36 @@ TCK in sync deterministically.
 The bindings, the generated servers and the coverage check. The TCK runs themselves are not: they go against a real
 network (Solo, local node or testnet).
 
+## What changes when the TCK changes
+
+The test definitions of the existing TCK — the TypeScript tests in `src/tests` and the test specifications — are used
+unchanged. When the TCK gets new tests, the work depends on what they need:
+
+| A new test needs ... | Change |
+|---|---|
+| only existing JSON-RPC methods and parameters (e.g. another boundary value for `createAccount`) | **nothing** — no binding, no code in any language |
+| a new method or a new parameter with a known value form (tinybar, seconds, ID, DER key) | **the binding only** (once, language neutral), then the servers are regenerated — no hand-written code in any language |
+| a value form that the converter catalogue does not know yet (e.g. a new key encoding) | **a new converter per language** — a small, isolated function |
+
+So the only hand-written code per language is the converter catalogue (and the JSON-RPC runtime), and it only grows
+with new value forms. Three limits apply:
+
+1. **Methods that do not fit the uniform flow.** Some TCK methods do not follow "set the parameters → sign → submit →
+   receipt" (`transferCrypto` with lists of transfers, `airdropToken`, topic messages with chunks, the Mirror Node
+   queries). Either the binding format can express them, or they need a hand-written handler per language as escape
+   hatch. This is the most important question for the [spike](#spike): it decides whether "no code per language"
+   holds always or only mostly.
+2. **Functionality missing in the V3 API needs a spec change first** (e.g. the contract service, see
+   [Gaps in the V3 API](#gaps-in-the-v3-api)). The generators produce the API in all languages from it; the
+   *implementation* of the new API methods is written per language by the SDK teams — the generators produce the API
+   with stubs only. That is SDK development, not TCK binding.
+3. **What is tested is the SDK implementation.** The generated server only calls the public API; whether a test passes
+   is decided by the hand-written implementation behind that API — which is exactly what the TCK is meant to check.
+
+The [coverage check](#4-a-coverage-check-against-the-tck) makes changes of the TCK visible: a new TCK method or
+parameter without binding, or a binding for a parameter the TCK no longer has, is reported. A change of the TCK
+becomes the task "extend the binding" instead of a silent failure of a TCK run.
+
 ## Gaps in the V3 API
 
 The TCK only uses the public API, so the public API is the right — and in principle sufficient — basis. Today the
