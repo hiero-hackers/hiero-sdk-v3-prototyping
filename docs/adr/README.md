@@ -17,3 +17,4 @@ deleted — superseded ADRs link forward to the decision that replaces them.
 | [0004](0004-authority-authorization-sum-type.md) | Model HAPI authorization keys as an `Authority` sum type | Proposed |
 | [0005](0005-schedule-service-reuses-transaction-model.md) | Model the schedule service on the existing transaction model, without schedule-specific types | Accepted |
 | [0006](0006-generic-methods-final-or-static.md) | Generic methods are allowed only as `@@finalMethod` instance methods or as `@@static` methods | Proposed |
+| [0007](0007-separate-generated-and-hand-written-modules.md) | Every module is either completely generated or completely hand-written | Accepted |

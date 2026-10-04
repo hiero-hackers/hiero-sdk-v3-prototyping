@@ -170,6 +170,10 @@ points to keep specs valid and consistent:
   (`MetaLang.g4`), `KnownAnnotation`, the `Rule` catalog and the tests in `tooling/metalang` in the same change. Every
   new rule needs a fixture in `tooling/metalang/metalang-core/src/test/resources/rule-fixtures/<rule-id>/` (enforced by
   `RuleFixturesTest`).
+- **Generated vs. hand-written:** every module is either completely generated (under `generated/`, every file carries
+  the generator header, never edited by hand) or completely hand-written; generated code never contains copies of
+  hand-written code. Hand-written code that generated code needs is a support module or implements a generated
+  contract — see [ADR-0007](docs/adr/0007-separate-generated-and-hand-written-modules.md).
 - **Open design questions** belong under each file's `## Questions & Comments` (often attributed to a GitHub handle).
   Don't silently resolve them; surface them.
 - **Language best-practice docs** (`api-best-practices-*.md`) describe how a meta-language concept maps to one
