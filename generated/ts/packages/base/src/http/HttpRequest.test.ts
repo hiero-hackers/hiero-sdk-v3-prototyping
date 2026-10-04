@@ -2,9 +2,9 @@
 
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { Duration } from "../support/Duration.js";
 import { HttpMethod } from "./HttpMethod.js";
 import { HttpRequest } from "./HttpRequest.js";
+import { Duration } from "@hiero/support";
 
 describe("HttpRequest", () => {
     test("creates a HttpRequest and returns the values", () => {

@@ -2,8 +2,8 @@
 
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, Address } from "@hiero/base/ledger";
-import type { Duration } from "@hiero/base/support";
 import type { TokenSupplyType, TokenType } from "@hiero/base/token";
+import type { Duration } from "@hiero/support";
 
 /**
  * Full token metadata snapshot. Returned by `TokenInfoQuery`. Covers both fungible tokens and NFT

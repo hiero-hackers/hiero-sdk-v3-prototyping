@@ -2,8 +2,8 @@
 
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { Duration } from "../support/Duration.js";
 import { HttpConfiguration } from "./HttpConfiguration.js";
+import { Duration } from "@hiero/support";
 
 describe("HttpConfiguration", () => {
     test("creates a HttpConfiguration and returns the values", () => {

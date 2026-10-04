@@ -11,7 +11,7 @@ import type { TokenClaimAirdropReceipt } from "./TokenClaimAirdropReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * The receiver accepts pending airdrops, auto-associating and crediting the tokens. Each receiver

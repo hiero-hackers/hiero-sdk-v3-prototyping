@@ -10,7 +10,7 @@ import type { TokenWipeReceipt } from "./TokenWipeReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, Address } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Removes (burns) units of a token from a NON-treasury account. Requires the token's

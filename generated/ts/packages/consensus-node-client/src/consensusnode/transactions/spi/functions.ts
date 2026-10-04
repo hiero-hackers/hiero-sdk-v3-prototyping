@@ -2,7 +2,7 @@
 
 import type { Receipt } from "../Receipt.js";
 import type { TransactionSupport } from "./TransactionSupport.js";
-import type { AbstractConstructor } from "@hiero/base/support";
+import type { AbstractConstructor } from "@hiero/support";
 
 /**
  * returns the TransactionSupport for the given transaction type; throws if none is registered

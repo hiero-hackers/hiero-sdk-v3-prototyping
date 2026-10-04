@@ -65,26 +65,32 @@ class TsGeneratorTest {
                     "packages/base/src/b/index.ts", "packages/base/tsconfig.json",
                     "packages/client/package.json", "packages/client/src/c/sub/Line.test.ts",
                     "packages/client/src/c/sub/Line.ts", "packages/client/src/c/sub/index.ts",
-                    "packages/client/src/support/Duration.ts", "packages/client/src/support/index.ts",
                     "packages/client/tsconfig.json", "tsconfig.base.json", "tsconfig.json");
             assertThat(files).allMatch(f -> f.content().lines().findFirst().orElseThrow()
                     .contains(TsGenerator.MARKER));
             assertThat(file(files, "packages/client/package.json")).contains("\"name\": \"@acme/client\"")
                     .contains("\"version\": \"1.2.3\"")
                     .contains("\"./c/sub\": {\n      \"types\": \"./dist/c/sub/index.d.ts\"")
-                    .contains("\"dependencies\": {\n    \"@acme/base\": \"1.2.3\"\n  }");
-            // the support types are placed in the package that all their users require: here only client uses them
-            assertThat(file(files, "packages/client/package.json")).contains("\"./support\": {");
+                    .contains("\"dependencies\": {\n    \"@acme/support\": \"1.2.3\",\n    \"@acme/base\": \"1.2.3\"\n  }");
+            // the hand-written support package is a dependency of the packages that use it: here only client
             assertThat(file(files, "packages/base/package.json")).doesNotContain("dependencies")
                     .doesNotContain("support");
-            assertThat(file(files, "packages/client/tsconfig.json")).contains("{ \"path\": \"../base\" }");
+            assertThat(file(files, "packages/client/tsconfig.json"))
+                    .contains("{ \"path\": \"../../../../sdk-ts/support\" },\n    { \"path\": \"../base\" }");
+            assertThat(file(files, "packages/base/tsconfig.json")).doesNotContain("support");
             assertThat(file(files, "/c/sub/Line.ts"))
                     .contains("import type { Point } from \"@acme/base/b\";")
-                    .contains("import type { Duration } from \"../../support/Duration.js\";")
+                    .contains("import type { Duration } from \"@acme/support\";")
                     .contains("readonly #length: Duration;");
             assertThat(file(files, "/c/sub/index.ts")).contains("export * from \"./Line.js\";");
-            assertThat(file(files, "/client/src/support/Duration.ts")).isEqualTo(TsGenerator.HEADER + "\n"
-                    + TsGenerator.source("Duration"));
+            // the workspace links and builds the support package first
+            assertThat(file(files, "package.json")).contains("\"workspaces\": [\n    \"../../sdk-ts/support\",\n");
+            assertThat(files.stream().filter(f -> f.path().equals("tsconfig.json")).findFirst().orElseThrow().content())
+                    .contains("{ \"path\": \"../../sdk-ts/support\" },\n");
+            assertThat(new TsGenerator(new TsGeneratorConfig("@acme", "1.2.3", "/opt/support")).generate(model(
+                    Map.of("f/a.md", "namespace a\nX { @@immutable d: duration }\n"))))
+                    .filteredOn(f -> f.path().endsWith("tsconfig.json"))
+                    .allSatisfy(f -> assertThat(f.content()).contains("{ \"path\": \"/opt/support\" }"));
             assertThat(files.stream().filter(f -> f.path().equals("package.json")).findFirst().orElseThrow()
                     .content()).contains("\"typescript\": \"" + TsProjectGenerator
                     .TYPESCRIPT_VERSION + "\"");
@@ -97,6 +103,10 @@ class TsGeneratorTest {
             final Path config = temp.resolve("generator.properties");
             Files.writeString(config, "java.groupId = x\nts.scope = @x\nts.version = 2.0.0\n");
             assertThat(TsGeneratorConfig.load(config)).isEqualTo(new TsGeneratorConfig("@x", "2.0.0"));
+            Files.writeString(config, "ts.support = ../support\n");
+            assertThat(TsGeneratorConfig.load(config).support()).isEqualTo("../support");
+            assertThatThrownBy(() -> new TsGeneratorConfig("@x", "1.0.0", " "))
+                    .isInstanceOf(GenerationException.class);
             Files.writeString(config, "ts.unknown = 1\n");
             assertThatThrownBy(() -> TsGeneratorConfig.load(config)).isInstanceOf(GenerationException.class);
             assertThatThrownBy(() -> new TsGenerator().generate(model(Map.of(

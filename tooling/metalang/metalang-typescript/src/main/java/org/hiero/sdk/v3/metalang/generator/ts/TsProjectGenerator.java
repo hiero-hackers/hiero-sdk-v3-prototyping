@@ -23,7 +23,19 @@ final class TsProjectGenerator {
     private TsProjectGenerator() {
     }
 
-    static List<GeneratedFile> root(final List<SpecFolders.Folder> folders, final TsGeneratorConfig config) {
+    static List<GeneratedFile> root(final List<SpecFolders.Folder> folders, final TsGeneratorConfig config,
+                                    final boolean support) {
+        // the hand-written support package is linked into the workspace and built first
+        final List<String> workspaces = new java.util.ArrayList<>();
+        if (support) {
+            workspaces.add(TsNames.supportDirectory(config, ""));
+        }
+        folders.forEach(f -> workspaces.add(TsNames.packageDirectory(f.name())));
+        final List<String> references = new java.util.ArrayList<>();
+        if (support) {
+            references.add(TsNames.supportDirectory(config, ""));
+        }
+        folders.forEach(f -> references.add("./" + TsNames.packageDirectory(f.name())));
         // the marker in the first line: JSON has no comments
         final String packageJson = "{ \"//\": \"" + TsGenerator.MARKER + "\",\n"
                 + "  \"name\": \"hiero-sdk\",\n"
@@ -32,8 +44,7 @@ final class TsProjectGenerator {
                 + "  \"description\": \"The TypeScript API of the Hiero SDK.\",\n"
                 + "  \"type\": \"module\",\n"
                 + "  \"workspaces\": [\n"
-                + folders.stream().map(f -> "    \"" + TsNames.packageDirectory(f.name()) + "\"")
-                .collect(Collectors.joining(",\n")) + "\n"
+                + workspaces.stream().map(w -> "    \"" + w + "\"").collect(Collectors.joining(",\n")) + "\n"
                 + "  ],\n"
                 + "  \"scripts\": {\n"
                 + "    \"build\": \"tsc --build\",\n"
@@ -69,8 +80,8 @@ final class TsProjectGenerator {
                 + "{\n"
                 + "  \"files\": [],\n"
                 + "  \"references\": [\n"
-                + folders.stream().map(f -> "    { \"path\": \"./" + TsNames.packageDirectory(f.name()) + "\" }")
-                .collect(Collectors.joining(",\n")) + "\n"
+                + references.stream().map(r -> "    { \"path\": \"" + r + "\" }").collect(Collectors.joining(",\n"))
+                + "\n"
                 + "  ]\n"
                 + "}\n";
         final String gitignore = "# " + TsGenerator.MARKER + "\n"
@@ -85,16 +96,26 @@ final class TsProjectGenerator {
     }
 
     static List<GeneratedFile> folder(final SpecFolders.Folder folder, final List<String> subpaths,
-                                      final TsGeneratorConfig config) {
+                                      final TsGeneratorConfig config, final boolean support) {
         final String directory = TsNames.packageDirectory(folder.name());
         final String exports = subpaths.stream().sorted().map(s -> "    \"./" + s + "\": {\n"
                         + "      \"types\": \"./dist/" + s + "/index.d.ts\",\n"
                         + "      \"default\": \"./dist/" + s + "/index.js\"\n"
                         + "    }")
                 .collect(Collectors.joining(",\n"));
-        final String dependencies = folder.requires().stream()
-                .map(r -> "    \"" + TsNames.packageName(config, r) + "\": \"" + config.version() + "\"")
+        final List<String> required = new java.util.ArrayList<>();
+        if (support) {
+            required.add(TsNames.supportPackage(config));
+        }
+        folder.requires().forEach(r -> required.add(TsNames.packageName(config, r)));
+        final String dependencies = required.stream()
+                .map(r -> "    \"" + r + "\": \"" + config.version() + "\"")
                 .collect(Collectors.joining(",\n"));
+        final List<String> references = new java.util.ArrayList<>();
+        if (support) {
+            references.add(TsNames.supportDirectory(config, "../../"));
+        }
+        folder.requires().forEach(r -> references.add("../" + r));
         final String packageJson = "{ \"//\": \"" + TsGenerator.MARKER + "\",\n"
                 + "  \"name\": \"" + TsNames.packageName(config, folder.name()) + "\",\n"
                 + "  \"version\": \"" + config.version() + "\",\n"
@@ -112,8 +133,8 @@ final class TsProjectGenerator {
                 + "    \"outDir\": \"dist\"\n"
                 + "  },\n"
                 + "  \"include\": [\"src\"],\n"
-                + "  \"references\": [" + (folder.requires().isEmpty() ? "" : "\n" + folder.requires().stream()
-                .map(r -> "    { \"path\": \"../" + r + "\" }").collect(Collectors.joining(",\n")) + "\n  ")
+                + "  \"references\": [" + (references.isEmpty() ? "" : "\n" + references.stream()
+                .map(r -> "    { \"path\": \"" + r + "\" }").collect(Collectors.joining(",\n")) + "\n  ")
                 + "]\n"
                 + "}\n";
         return List.of(new GeneratedFile(directory + "/package.json", packageJson),

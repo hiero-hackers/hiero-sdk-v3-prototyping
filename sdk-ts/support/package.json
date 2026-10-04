@@ -1,0 +1,13 @@
+{
+  "name": "@hiero/support",
+  "version": "0.1.0-SNAPSHOT",
+  "description": "Hand-written support types of the Hiero SDK that the generated TypeScript API uses.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"]
+}

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { MirrorNodeHttpRequest } from "./MirrorNodeHttpRequest.js";
 import { HttpMethod } from "@hiero/base/http";
-import { Duration } from "@hiero/base/support";
+import { Duration } from "@hiero/support";
 
 describe("MirrorNodeHttpRequest", () => {
     test("creates a MirrorNodeHttpRequest and returns the values", () => {

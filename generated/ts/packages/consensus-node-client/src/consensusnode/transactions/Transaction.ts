@@ -9,7 +9,7 @@ import type { Response } from "./Response.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Base type of all transactions: a mutable builder that is packed and signed into a PackedTransaction

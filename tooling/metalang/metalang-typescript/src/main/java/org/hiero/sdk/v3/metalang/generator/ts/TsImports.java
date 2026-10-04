@@ -71,31 +71,33 @@ final class TsImports {
         return use(context.folder(error.namespace()), error.namespace(), error.name(), "errors", value);
     }
 
-    /** A support declaration ({@code Duration}, {@code StreamItem}, {@code AbstractConstructor}). */
+    /** A declaration of the hand-written support package ({@code Duration}, {@code StreamItem}, ...). */
     String support(final String name, final boolean value) {
-        return use(context.supportFolder(), null, name, name, value);
+        return add(TsNames.supportPackage(context.config()), "support", name, value);
     }
 
     private String use(final String targetFolder, final String namespace, final String name, final String stem,
                        final boolean value) {
         final String specifier;
         if (targetFolder.equals(folder)) {
-            final String target = namespace == null
-                    ? TsNames.packageDirectory(targetFolder) + "/src/" + TsNames.SUPPORT + "/" + stem
-                    : TsNames.sourceDirectory(targetFolder, namespace) + "/" + stem;
+            final String target = TsNames.sourceDirectory(targetFolder, namespace) + "/" + stem;
             if (target.equals(directory + "/" + stem) && byLocal.containsKey(name)
                     && byLocal.get(name).specifier().isEmpty()) {
                 return name; // declared in this file
             }
             specifier = TsNames.relative(directory, target);
         } else {
-            specifier = TsNames.packageName(context.config(), targetFolder) + "/"
-                    + (namespace == null ? TsNames.SUPPORT : TsNames.namespacePath(namespace));
+            specifier = TsNames.packageName(context.config(), targetFolder) + "/" + TsNames.namespacePath(namespace);
         }
+        return add(specifier, namespace.replace('.', '_'), name, value);
+    }
+
+    /** Adds an import; a name that is already imported from elsewhere gets a prefixed local name. */
+    private String add(final String specifier, final String prefix, final String name, final boolean value) {
         final Entry entry = new Entry(specifier, name);
         String local = name;
         if (byLocal.containsKey(local) && !byLocal.get(local).equals(entry)) {
-            local = (namespace == null ? TsNames.SUPPORT : namespace.replace('.', '_')) + "_" + name;
+            local = prefix + "_" + name;
         }
         byLocal.putIfAbsent(local, entry);
         final String imported = local.equals(name) ? name : name + " as " + local;

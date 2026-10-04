@@ -5,7 +5,7 @@ import { describe, test } from "node:test";
 import { Contract } from "./Contract.js";
 import { type Authority, AuthorityList, ContractAuthority } from "@hiero/base/authority";
 import { AccountId, ContractId, EvmAddress } from "@hiero/base/ledger";
-import { Duration } from "@hiero/base/support";
+import { Duration } from "@hiero/support";
 
 describe("Contract", () => {
     test("creates a Contract and returns the values", () => {

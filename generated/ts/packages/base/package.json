@@ -48,14 +48,13 @@
       "types": "./dist/solo/index.d.ts",
       "default": "./dist/solo/index.js"
     },
-    "./support": {
-      "types": "./dist/support/index.d.ts",
-      "default": "./dist/support/index.js"
-    },
     "./token": {
       "types": "./dist/token/index.d.ts",
       "default": "./dist/token/index.js"
     }
   },
-  "files": ["dist"]
+  "files": ["dist"],
+  "dependencies": {
+    "@hiero/support": "0.1.0-SNAPSHOT"
+  }
 }

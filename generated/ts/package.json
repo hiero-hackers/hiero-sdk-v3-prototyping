@@ -5,6 +5,7 @@
   "description": "The TypeScript API of the Hiero SDK.",
   "type": "module",
   "workspaces": [
+    "../../sdk-ts/support",
     "packages/base",
     "packages/consensus-node-admin-client",
     "packages/consensus-node-client",

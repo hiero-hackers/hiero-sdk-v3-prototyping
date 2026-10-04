@@ -10,7 +10,7 @@ import type { TokenMintReceipt } from "./TokenMintReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, Address } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Mints new units of a token, crediting them to the treasury account. Requires the token's

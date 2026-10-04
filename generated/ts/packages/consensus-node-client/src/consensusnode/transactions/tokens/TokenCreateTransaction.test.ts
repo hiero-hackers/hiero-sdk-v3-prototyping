@@ -13,8 +13,8 @@ import { ByteImportEncoding, KeyAlgorithm, createPrivateKey } from "@hiero/base/
 import { AccountId, ConsensusNode, ContractId, IpAddress, MirrorNode, Network } from "@hiero/base/ledger";
 import { NetworkSetting } from "@hiero/base/ledger/config";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import { Duration } from "@hiero/base/support";
 import { TokenSupplyType, TokenType } from "@hiero/base/token";
+import { Duration } from "@hiero/support";
 
 describe("TokenCreateTransaction", () => {
     test("creates a TokenCreateTransaction and returns the values", () => {

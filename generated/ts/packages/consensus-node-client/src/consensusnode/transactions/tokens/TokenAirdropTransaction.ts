@@ -12,7 +12,7 @@ import type { TokenAirdropReceipt } from "./TokenAirdropReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Transfers tokens to recipients; recipients that are not associated and have no free

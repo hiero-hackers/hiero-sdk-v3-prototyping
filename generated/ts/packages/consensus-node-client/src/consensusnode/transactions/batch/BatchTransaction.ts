@@ -11,7 +11,7 @@ import type { BatchReceipt } from "./BatchReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Submits a list of independent inner transactions as a single atomic unit (HIP-551): all inner

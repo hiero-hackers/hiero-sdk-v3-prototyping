@@ -16,7 +16,7 @@ import { ByteImportEncoding, KeyAlgorithm, createPrivateKey } from "@hiero/base/
 import { AccountId, Address, ConsensusNode, ContractId, IpAddress, MirrorNode, Network } from "@hiero/base/ledger";
 import { NetworkSetting } from "@hiero/base/ledger/config";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import { Duration } from "@hiero/base/support";
+import { Duration } from "@hiero/support";
 
 describe("AccountAllowanceApproveTransaction", () => {
     test("creates an AccountAllowanceApproveTransaction and returns the values", () => {

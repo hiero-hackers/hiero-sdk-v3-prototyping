@@ -3,7 +3,7 @@
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, EvmAddress } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Full account state snapshot. Returned by `AccountInfoQuery`.

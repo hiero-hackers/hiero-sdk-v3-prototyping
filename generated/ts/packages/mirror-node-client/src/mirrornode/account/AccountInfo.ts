@@ -2,7 +2,7 @@
 
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, EvmAddress } from "@hiero/base/ledger";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 export class AccountInfo {
 

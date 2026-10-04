@@ -7,7 +7,7 @@ import type { Transfer } from "../common/Transfer.js";
 import type { TransactionResult } from "./TransactionResult.js";
 import type { TransactionType } from "./TransactionType.js";
 import type { TransactionId } from "@hiero/base/ledger";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 export class TransactionInfo {
 

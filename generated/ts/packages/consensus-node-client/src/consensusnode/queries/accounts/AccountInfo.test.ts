@@ -7,7 +7,7 @@ import { type Authority, AuthorityList, ContractAuthority } from "@hiero/base/au
 import { Hbar, HbarUnit } from "@hiero/base/hedera";
 import { AccountId, ContractId, EvmAddress } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import { Duration } from "@hiero/base/support";
+import { Duration } from "@hiero/support";
 
 describe("AccountInfo", () => {
     test("creates an AccountInfo and returns the values", () => {

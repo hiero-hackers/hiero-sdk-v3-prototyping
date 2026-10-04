@@ -11,7 +11,7 @@ import type { ScheduleCreateReceipt } from "./ScheduleCreateReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Stores an inner transaction on the ledger for deferred execution. The inner transaction is a

@@ -19,6 +19,10 @@ import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 final class GeneratedTs {
 
     /** The installed {@code node_modules} with {@code typescript} and {@code @types/node}. */
+    /** The hand-written support package of the repository. */
+    static final Path SUPPORT = Path.of(System.getProperty("spec.root", "../../../spec")).toAbsolutePath().normalize()
+            .resolveSibling("sdk-ts/support");
+
     static final Path MODULES = Path.of(System.getProperty("spec.root", "../../../spec")).toAbsolutePath().normalize()
             .resolveSibling("generated/ts/node_modules");
 
@@ -34,6 +38,11 @@ final class GeneratedTs {
     }
 
     private GeneratedTs() {
+    }
+
+    /** The directory of the generated workspace below a test directory. */
+    static Path workspace(final Path directory) {
+        return directory.resolve("generated/ts");
     }
 
     /** Whether node and the TypeScript compiler are available. */
@@ -59,22 +68,36 @@ final class GeneratedTs {
      * @throws Exception if the build cannot run
      */
     static String build(final List<GeneratedFile> files, final Path directory, final String scope) throws Exception {
+        // the layout of the repository: the workspace in generated/ts, the hand-written support package (a copy) in
+        // sdk-ts/support, where the default configuration expects it
+        final Path workspace = workspace(directory);
         for (final GeneratedFile file : files) {
-            final Path target = directory.resolve(file.path());
+            final Path target = workspace.resolve(file.path());
             Files.createDirectories(target.getParent());
             Files.writeString(target, file.content(), StandardCharsets.UTF_8);
         }
-        final Path modules = directory.resolve("node_modules");
+        final Path support = directory.resolve("sdk-ts/support");
+        try (var sources = Files.walk(SUPPORT)) {
+            for (final Path source : sources.filter(Files::isRegularFile)
+                    .filter(p -> !SUPPORT.relativize(p).toString().matches("(dist|node_modules)/.*|.*\\.tsbuildinfo"))
+                    .toList()) {
+                final Path copy = support.resolve(SUPPORT.relativize(source).toString());
+                Files.createDirectories(copy.getParent());
+                Files.copy(source, copy);
+            }
+        }
+        final Path modules = workspace.resolve("node_modules");
         Files.createDirectories(modules.resolve(scope));
         Files.createSymbolicLink(modules.resolve("typescript"), MODULES.resolve("typescript"));
         Files.createSymbolicLink(modules.resolve("@types"), MODULES.resolve("@types"));
-        try (var packages = Files.list(directory.resolve("packages"))) {
+        Files.createSymbolicLink(modules.resolve(scope).resolve("support"), support);
+        try (var packages = Files.list(workspace.resolve("packages"))) {
             for (final Path pkg : packages.toList()) {
                 Files.createSymbolicLink(modules.resolve(scope).resolve(pkg.getFileName()), pkg);
             }
         }
         final Process process = new ProcessBuilder("node", MODULES.resolve("typescript/bin/tsc").toString(),
-                "--build").directory(directory.toFile()).redirectErrorStream(true).start();
+                "--build").directory(workspace.toFile()).redirectErrorStream(true).start();
         final String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         return process.waitFor() == 0 ? "" : output;
     }
@@ -87,10 +110,11 @@ final class GeneratedTs {
      * @throws Exception if the tests cannot run
      */
     static TestRun test(final Path directory) throws Exception {
-        final Path report = directory.resolve("junit.xml");
+        final Path workspace = workspace(directory);
+        final Path report = workspace.resolve("junit.xml");
         final Process process = new ProcessBuilder("node", "--test", "--test-reporter=junit",
-                "--test-reporter-destination=" + report, "packages/*/dist/**/*.test.js").directory(directory.toFile())
-                .redirectErrorStream(true).redirectOutput(directory.resolve("test.log").toFile()).start();
+                "--test-reporter-destination=" + report, "packages/*/dist/**/*.test.js").directory(workspace.toFile())
+                .redirectErrorStream(true).redirectOutput(workspace.resolve("test.log").toFile()).start();
         process.waitFor();
         final String xml = Files.readString(report, StandardCharsets.UTF_8);
         int passed = 0;

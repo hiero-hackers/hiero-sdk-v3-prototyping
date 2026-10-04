@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { getAllTransactionSupports, getTransactionSupport } from "./functions.js";
 import { NotFoundError } from "@hiero/base/ledger/config";
-import type { AbstractConstructor } from "@hiero/base/support";
+import type { AbstractConstructor } from "@hiero/support";
 
 describe("consensusnode.transactions.spi functions", () => {
     test("getTransactionSupport(transactionType) can be called (only NotFoundError may occur)", () => {

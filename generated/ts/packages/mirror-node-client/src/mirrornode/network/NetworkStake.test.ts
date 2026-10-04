@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { NetworkStake } from "./NetworkStake.js";
-import { Duration } from "@hiero/base/support";
+import { Duration } from "@hiero/support";
 
 describe("NetworkStake", () => {
     test("creates a NetworkStake and returns the values", () => {

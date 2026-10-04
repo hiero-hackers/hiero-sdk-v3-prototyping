@@ -11,7 +11,7 @@ import { TransactionInfo } from "./TransactionInfo.js";
 import { TransactionResult } from "./TransactionResult.js";
 import type { TransactionType } from "./TransactionType.js";
 import { AccountId, Address, TransactionId } from "@hiero/base/ledger";
-import { Duration } from "@hiero/base/support";
+import { Duration } from "@hiero/support";
 
 describe("TransactionInfo", () => {
     test("creates a TransactionInfo and returns the values", () => {

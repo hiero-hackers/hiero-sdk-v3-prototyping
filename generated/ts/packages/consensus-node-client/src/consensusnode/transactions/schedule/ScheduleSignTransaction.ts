@@ -10,7 +10,7 @@ import type { ScheduleSignReceipt } from "./ScheduleSignReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, Address } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Contributes one or more signatures toward a stored schedule. The transaction carries only the

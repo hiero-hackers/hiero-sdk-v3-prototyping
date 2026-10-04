@@ -7,6 +7,7 @@
   },
   "include": ["src"],
   "references": [
+    { "path": "../../../../sdk-ts/support" },
     { "path": "../base" },
     { "path": "../consensus-node-client" }
   ]

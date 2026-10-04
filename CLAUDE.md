@@ -14,13 +14,13 @@ designed from scratch with **no backward-compatibility constraints** with V2.
 **This repo contains specifications, not a shippable SDK.** The specs themselves have no build system and do not
 compile; the only buildable module is the spec tooling under `tooling/metalang` (Maven, Java 21). The API is defined once in a **language-agnostic meta-language** and is meant to be translated into
 idiomatic implementations per language (Java, JavaScript/TypeScript, Go, Rust, Python, C++, Swift). The `.java`/`.js`
-files under `guidelines/` are reference snippets, not a buildable module — except `guidelines/ts-files/` and
-`guidelines/rust-files/`: these are the single source of the TypeScript support types (`Duration`, `StreamItem`,
-`AbstractConstructor`) and the Rust support types (`BoxFuture`, `BoxStream`, `StreamItem`, `InvalidArgumentError`),
-which the generators copy 1:1 into `generated/ts` and `generated/rust`, so they must always compile. The Java support
-types (`@ThreadSafe`, `HieroStream`, `StreamItem`, `HieroPublisher`, `HieroSubscription`) are not copied: they are the
-hand-written Maven module `sdk-java/support` (`hiero-sdk-support`, JPMS module `org.hiero.sdk.support`), on which the
-generated Java modules depend.
+files under `guidelines/` are reference snippets, not a buildable module — except `guidelines/rust-files/`: the
+single source of the Rust support types (`BoxFuture`, `BoxStream`, `StreamItem`, `InvalidArgumentError`), which the
+generator copies 1:1 into `generated/rust`, so they must always compile. The Java and TypeScript support types are not
+copied: they are the hand-written modules `sdk-java/support` (Maven `hiero-sdk-support`, JPMS module
+`org.hiero.sdk.support`: `@ThreadSafe`, `HieroStream`, `StreamItem`, `HieroPublisher`, `HieroSubscription`) and
+`sdk-ts/support` (npm `@hiero/support`: `Duration`, `StreamItem`, `AbstractConstructor`), on which the generated
+modules depend (ADR-0007).
 
 ## Repository structure
 
@@ -31,7 +31,6 @@ guidelines/
   api-best-practices-rust.md    # ... Rust (the mapping of the Rust generator)
   api-best-practices-js.md      # ... JavaScript
   api-best-practices-ts.md      # ... TypeScript (the mapping of the TypeScript generator)
-  ts-files/                     # TypeScript support types (Duration, StreamItem, ...); copied 1:1 into generated/ts
   rust-files/                   # Rust support types (BoxFuture, InvalidArgumentError, ...); copied 1:1 into generated/rust
   js-files/                     # Illustrative JS reference snippets
 
@@ -52,7 +51,9 @@ generated/java/                # Generated Java API as Maven project, one sub-mo
                                #   src/test/java holds generated JUnit tests of the spec contract; the tests of
                                #   method stubs fail until the methods are implemented.
 sdk-ts/openspec/               # TypeScript-only OpenSpec root
-sdk-ts/generator.properties    # TypeScript generator configuration (npm scope, version)
+sdk-ts/generator.properties    # TypeScript generator configuration (npm scope, version, location of the support package)
+sdk-ts/support/                # Hand-written TypeScript support types (Duration, StreamItem, AbstractConstructor) as
+                               #   npm package @hiero/support; generated/ts links it as workspace and depends on it
 generated/ts/                  # Generated TypeScript API as npm workspace, one package per spec folder, with
                                #   generated node:test tests (tracked in git; regenerate after spec or generator
                                #   changes; `npm install && npm test` builds and tests it). Never edit by hand.

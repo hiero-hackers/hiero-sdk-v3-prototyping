@@ -158,8 +158,9 @@ JavaScript runs an object on one thread (workers do not share objects), so `@@th
 
 ## Support types
 
-`Duration`, `StreamItem` and `AbstractConstructor` have a single source, [`ts-files`](ts-files), which the generator
-copies 1:1 into the package that all packages using them require (subpath `support`).
+`Duration`, `StreamItem` and `AbstractConstructor` are hand-written in the package [`@hiero/support`](../sdk-ts/support)
+(`sdk-ts/support`). The generated code imports them from there (`import type { Duration } from "@hiero/support"`), and
+every generated package that does so declares the dependency.
 
 ## Tests
 

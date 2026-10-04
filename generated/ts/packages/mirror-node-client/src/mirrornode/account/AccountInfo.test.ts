@@ -5,7 +5,7 @@ import { describe, test } from "node:test";
 import { AccountInfo } from "./AccountInfo.js";
 import { type Authority, AuthorityList, ContractAuthority } from "@hiero/base/authority";
 import { AccountId, ContractId, EvmAddress } from "@hiero/base/ledger";
-import { Duration } from "@hiero/base/support";
+import { Duration } from "@hiero/support";
 
 describe("AccountInfo", () => {
     test("creates an AccountInfo and returns the values", () => {

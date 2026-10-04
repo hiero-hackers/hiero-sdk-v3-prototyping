@@ -4,9 +4,9 @@ import type { NodeDeleteReceipt } from "./NodeDeleteReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
 import type { Account, HieroClient, TransactionSigner } from "@hiero/consensus-node-client/consensusnode/client";
 import type { PackedTransaction, Response, Transaction } from "@hiero/consensus-node-client/consensusnode/transactions";
+import type { Duration } from "@hiero/support";
 
 /**
  * Deletes a node from the address book. The node stays in the address book as a deleted (tombstoned) entry and its

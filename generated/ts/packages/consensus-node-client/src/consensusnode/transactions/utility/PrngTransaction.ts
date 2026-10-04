@@ -10,7 +10,7 @@ import type { PrngReceipt } from "./PrngReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Requests a verifiable pseudorandom value from the network (HIP-351). The randomness is derived

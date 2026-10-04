@@ -1,9 +1,5 @@
 package org.hiero.sdk.v3.metalang.generator.ts;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -19,8 +15,9 @@ import org.hiero.sdk.v3.metalang.model.TypeDefinition;
  * Generates the TypeScript API from a {@link LinkedModel}: an npm workspace with one package per spec folder
  * ({@link TsProjectGenerator}), one directory per namespace with one file per type ({@link TsTypeGenerator}), the
  * functions, constants and error classes of the namespace and an {@code index.ts} that the package exports as subpath
- * ({@link TsNamespaceGenerator}), the support files of the TypeScript guideline ({@code guidelines/ts-files}) and the
- * tests ({@link TsTestGenerator}). See {@code guidelines/api-best-practices-ts.md} for the mapping. The output is
+ * ({@link TsNamespaceGenerator}) and the tests ({@link TsTestGenerator}). The types the API uses besides the specs
+ * ({@code Duration}, {@code StreamItem}, ...) are not generated: they are the hand-written support package
+ * ({@code sdk-ts/support}), a dependency of the packages that use them. See {@code guidelines/api-best-practices-ts.md} for the mapping. The output is
  * deterministic.
  */
 public final class TsGenerator {
@@ -58,7 +55,10 @@ public final class TsGenerator {
         Objects.requireNonNull(model, "model must not be null");
         final TsContext context = new TsContext(config, model);
         final List<GeneratedFile> files = new ArrayList<>();
+        final String supportImport = "from \"" + TsNames.supportPackage(config) + "\"";
+        boolean anySupport = false;
         for (final SpecFolders.Folder folder : context.folders()) {
+            final List<GeneratedFile> folderFiles = new ArrayList<>();
             final List<String> subpaths = new ArrayList<>();
             for (final NamespaceDefinition namespace : folder.namespaces()) {
                 final List<GeneratedFile> namespaceFiles = new ArrayList<>();
@@ -77,16 +77,16 @@ public final class TsGenerator {
                 TsNamespaceGenerator.errors(namespace.name(), context).ifPresent(namespaceFiles::add);
                 namespaceFiles.add(TsNamespaceGenerator.index(namespace, TsNamespaceGenerator.modules(namespace.name(),
                         types, namespaceFiles, context), context));
-                files.addAll(namespaceFiles);
+                folderFiles.addAll(namespaceFiles);
                 subpaths.add(TsNames.namespacePath(namespace.name()));
             }
-            if (folder.name().equals(supportFolder(context)) && !context.support().isEmpty()) {
-                files.addAll(support(folder.name(), context));
-                subpaths.add(TsNames.SUPPORT);
-            }
-            files.addAll(TsProjectGenerator.folder(folder, subpaths, config));
+            // the hand-written support package is a dependency of every package whose code imports from it
+            final boolean support = folderFiles.stream().anyMatch(f -> f.content().contains(supportImport));
+            anySupport |= support;
+            files.addAll(folderFiles);
+            files.addAll(TsProjectGenerator.folder(folder, subpaths, config, support));
         }
-        files.addAll(TsProjectGenerator.root(context.folders(), config));
+        files.addAll(TsProjectGenerator.root(context.folders(), config, anySupport));
         return files.stream().sorted().toList();
     }
 
@@ -98,45 +98,5 @@ public final class TsGenerator {
      */
     public SortedMap<QualifiedName, String> deferredTypes(final LinkedModel model) {
         return new TsContext(config, model).deferred();
-    }
-
-    private static String supportFolder(final TsContext context) {
-        try {
-            return context.supportFolder();
-        } catch (final NullPointerException e) {
-            return "";
-        }
-    }
-
-    private static List<GeneratedFile> support(final String folder, final TsContext context) {
-        final String directory = TsNames.packageDirectory(folder) + "/src/" + TsNames.SUPPORT;
-        final List<GeneratedFile> files = new ArrayList<>();
-        final StringBuilder index = new StringBuilder(HEADER).append('\n')
-                .append(TsDoc.render("", List.of("Types that the generated API uses besides the types of the specs."),
-                        List.of("@packageDocumentation"), false));
-        for (final String name : context.support()) {
-            files.add(new GeneratedFile(directory + "/" + name + ".ts", HEADER + "\n" + source(name)));
-            index.append("export * from \"./").append(name).append(".js\";\n");
-        }
-        files.add(new GeneratedFile(directory + "/index.ts", index.toString()));
-        return files;
-    }
-
-    /**
-     * Returns a support file as it is in the guideline ({@code guidelines/ts-files}).
-     *
-     * @param name the file name without extension
-     * @return the source
-     */
-    static String source(final String name) {
-        try (InputStream in = TsGenerator.class.getResourceAsStream("support/" + name + ".ts")) {
-            if (in == null) {
-                throw new IllegalStateException("Support file " + name + ".ts is missing; it is copied from "
-                        + "guidelines/ts-files by the build");
-            }
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 }

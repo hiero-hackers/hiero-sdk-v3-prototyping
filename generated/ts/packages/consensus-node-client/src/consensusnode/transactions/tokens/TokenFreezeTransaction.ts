@@ -10,7 +10,7 @@ import type { TokenFreezeReceipt } from "./TokenFreezeReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, Address } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Freezes a specific account for a token: until unfrozen it cannot send or receive the token.

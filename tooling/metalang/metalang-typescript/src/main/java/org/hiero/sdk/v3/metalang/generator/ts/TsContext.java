@@ -27,7 +27,7 @@ import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 /**
  * What the TypeScript generator generates and where: the packages (spec folders), the declarations that can be
  * generated (a declaration that refers to a type without TypeScript mapping is deferred, together with everything
- * that refers to it), the home of every error class and of the support files.
+ * that refers to it) and the home of every error class.
  */
 final class TsContext {
 
@@ -60,8 +60,6 @@ final class TsContext {
     private final Map<String, List<FunctionDefinition>> functions = new TreeMap<>();
     private final Map<String, List<ConstantDefinition>> constants = new TreeMap<>();
     private final Map<String, ErrorClass> errors = new TreeMap<>();
-    private final Set<String> support = new TreeSet<>();
-    private final String supportFolder;
     private final Set<String> typeNames;
 
     TsContext(final TsGeneratorConfig config, final LinkedModel model) {
@@ -74,7 +72,6 @@ final class TsContext {
         this.generated = plan();
         planFunctionsAndConstants();
         planErrors();
-        this.supportFolder = planSupport();
     }
 
     TsGeneratorConfig config() {
@@ -119,14 +116,6 @@ final class TsContext {
 
     ErrorClass error(final String errorId) {
         return Objects.requireNonNull(errors.get(errorId), () -> "no error class for " + errorId);
-    }
-
-    Set<String> support() {
-        return support;
-    }
-
-    String supportFolder() {
-        return Objects.requireNonNull(supportFolder, "no support folder");
     }
 
     /** Whether a type is a class: a complex type that is no abstraction (abstractions are interfaces). */
@@ -245,76 +234,6 @@ final class TsContext {
         });
         if (!problems.isEmpty()) {
             throw new GenerationException(problems);
-        }
-    }
-
-    /** The package of the support files: the one all packages that use them require. */
-    private String planSupport() {
-        final Set<String> users = new TreeSet<>();
-        for (final TypeDefinition type : model.types()) {
-            if (generated.contains(type.name())) {
-                final Set<String> used = new TreeSet<>();
-                referenced(type).forEach(t -> support(t, used));
-                if (!used.isEmpty()) {
-                    support.addAll(used);
-                    users.add(folder(type.name().namespace()));
-                }
-            }
-        }
-        for (final FunctionDefinition function : functions()) {
-            final List<Type> types = new ArrayList<>();
-            methodTypes(function.method(), types);
-            final Set<String> used = new TreeSet<>();
-            types.forEach(t -> support(t, used));
-            if (!used.isEmpty()) {
-                support.addAll(used);
-                users.add(folder(function.namespace()));
-            }
-        }
-        for (final List<ConstantDefinition> list : constants.values()) {
-            for (final ConstantDefinition constant : list) {
-                final Set<String> used = new TreeSet<>();
-                support(constant.type(), used);
-                if (!used.isEmpty()) {
-                    support.addAll(used);
-                    users.add(folder(constant.name().namespace()));
-                }
-            }
-        }
-        if (users.isEmpty()) {
-            // the tests may still need the support types: the package that all others require, if there is one
-            return SpecFolders.common(folderOf.values().stream().collect(java.util.stream.Collectors.toSet()),
-                    folders).orElse(null);
-        }
-        return SpecFolders.common(users, folders).orElseThrow(() -> new GenerationException(List.of(
-                "The support types " + support + " are used in the packages " + users + ", but none of them is "
-                        + "required by all others")));
-    }
-
-    private static void support(final Type type, final Set<String> out) {
-        switch (type) {
-            case Type.BasicType basic -> {
-                switch (basic.builtin().category()) {
-                    case DURATION -> out.add("Duration");
-                    case STREAM_RESULT -> out.add("StreamItem");
-                    case TYPE -> out.add("AbstractConstructor");
-                    default -> {
-                    }
-                }
-                basic.arguments().forEach(a -> support(a, out));
-            }
-            case Type.DeclaredType declared -> declared.arguments().forEach(a -> support(a, out));
-            case Type.WildcardType wildcard -> {
-                if (wildcard.upperBound() != null) {
-                    support(wildcard.upperBound(), out);
-                }
-            }
-            case Type.FunctionType function -> {
-                support(function.returnType(), out);
-                function.parameters().forEach(p -> support(p.type(), out));
-            }
-            default -> {
-            }
         }
     }
 

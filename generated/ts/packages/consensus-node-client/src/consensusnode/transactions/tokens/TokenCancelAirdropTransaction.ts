@@ -11,7 +11,7 @@ import type { TokenCancelAirdropReceipt } from "./TokenCancelAirdropReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * The sender withdraws its own outstanding pending airdrops before they are claimed. Each sender

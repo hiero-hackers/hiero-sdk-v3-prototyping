@@ -3,7 +3,7 @@
 import type { FixedFee } from "../common/FixedFee.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, Address } from "@hiero/base/ledger";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 export class Topic {
 

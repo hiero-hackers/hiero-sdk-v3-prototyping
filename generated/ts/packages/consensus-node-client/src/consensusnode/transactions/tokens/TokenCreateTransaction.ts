@@ -10,8 +10,8 @@ import type { TokenCreateReceipt } from "./TokenCreateReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
 import { TokenSupplyType, type TokenType } from "@hiero/base/token";
+import type { Duration } from "@hiero/support";
 
 /**
  * Creates a new token. The token is identified by the `tokenId` returned in the receipt. All

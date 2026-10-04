@@ -9,7 +9,7 @@ import type { Record } from "../Record.js";
 import type { Response } from "../Response.js";
 import type { Transaction } from "../Transaction.js";
 import type { MethodDescriptor } from "@hiero/base/grpc";
-import type { AbstractConstructor } from "@hiero/base/support";
+import type { AbstractConstructor } from "@hiero/support";
 
 /**
  * Adds support for one concrete transaction type: converts between the transaction and its result

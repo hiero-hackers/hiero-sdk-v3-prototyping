@@ -11,7 +11,7 @@ import type { TokenRejectReceipt } from "./TokenRejectReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Returns unwanted, already-held tokens to their treasury at no cost to the holder. Protocol cap

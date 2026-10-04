@@ -11,7 +11,7 @@ import type { NftAllowanceDeletion } from "./NftAllowanceDeletion.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Revokes previously granted NFT allowances. NFT-only — HBAR and fungible-token allowances are

@@ -2,9 +2,9 @@
 
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { Duration } from "../support/Duration.js";
 import { HttpConfiguration } from "./HttpConfiguration.js";
 import { createHttpClient } from "./functions.js";
+import { Duration } from "@hiero/support";
 
 describe("http functions", () => {
     test("createHttpClient(configuration) can be called", () => {

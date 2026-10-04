@@ -16,10 +16,28 @@ final class TsNames {
             "true", "try", "typeof", "var", "void", "while", "with", "yield", "let", "static", "implements",
             "interface", "package", "private", "protected", "public", "await", "arguments", "eval");
 
-    /** The directory of the support files ({@code Duration}, {@code StreamItem}, ...) in a package. */
-    static final String SUPPORT = "support";
-
     private TsNames() {
+    }
+
+    /**
+     * Returns the name of the hand-written support package ({@code Duration}, {@code StreamItem}, ...).
+     *
+     * @param config the configuration
+     * @return {@code <scope>/support}
+     */
+    static String supportPackage(final TsGeneratorConfig config) {
+        return config.scope() + "/support";
+    }
+
+    /**
+     * Returns the directory of the support package relative to a directory of the workspace.
+     *
+     * @param config the configuration
+     * @param up     the path from that directory to the workspace root ({@code ""} or {@code "../../"})
+     * @return the directory
+     */
+    static String supportDirectory(final TsGeneratorConfig config, final String up) {
+        return config.support().startsWith("/") ? config.support() : up + config.support();
     }
 
     static String packageDirectory(final String folder) {

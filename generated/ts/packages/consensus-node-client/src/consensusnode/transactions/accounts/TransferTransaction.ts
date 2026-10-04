@@ -13,7 +13,7 @@ import type { TransferReceipt } from "./TransferReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Atomic transfer of HBAR and/or fungible tokens and/or NFTs. All legs settle together: if any

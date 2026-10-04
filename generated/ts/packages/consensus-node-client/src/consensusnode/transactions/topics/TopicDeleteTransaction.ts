@@ -10,7 +10,7 @@ import type { TopicDeleteReceipt } from "./TopicDeleteReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, Address } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Deletes a topic. Only possible if the topic has an adminAuthority (an immutable topic cannot be

@@ -5,9 +5,9 @@ import type { FreezeType } from "./FreezeType.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, Address } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
 import type { Account, HieroClient, TransactionSigner } from "@hiero/consensus-node-client/consensusnode/client";
 import type { PackedTransaction, Response, Transaction } from "@hiero/consensus-node-client/consensusnode/transactions";
+import type { Duration } from "@hiero/support";
 
 /**
  * Pauses or upgrades the consensus network. Must be signed by the network's privileged freeze key.

@@ -5,9 +5,9 @@ import type { ServiceEndpoint } from "./ServiceEndpoint.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
 import type { Account, HieroClient, TransactionSigner } from "@hiero/consensus-node-client/consensusnode/client";
 import type { PackedTransaction, Response, Transaction } from "@hiero/consensus-node-client/consensusnode/transactions";
+import type { Duration } from "@hiero/support";
 
 /**
  * Updates one or more of a node's mutable fields. Fields that are not set are left unchanged. Setting an endpoint

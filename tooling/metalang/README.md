@@ -32,7 +32,7 @@ mvn -f tooling/metalang/pom.xml -q package -DskipTests
 |---|---|
 | `metalang-core` | Grammar, parser, AST, semantic and linked model, default instances, validator and rule catalog, and what every generator shares (`GeneratedFile`, `GeneratedOutput`, `Constraints`, `IntegerRange`, `RegexSamples`, `SpecFolders`, `check.ApiDifference`), and the TCK bindings (`tck`: parser, resolver, converter catalogue, reader of the TCK test specifications, coverage check). Its test-jar holds the shared test helpers (`TestSpecs`) and test resources (`rule-fixtures`, `model-golden`). |
 | `metalang-java` | Java generator (`generator.java`: API, Maven project, JUnit tests) and Java conformance check (`check.java`), and the Java TCK server generator (`JavaTckGenerator`). The generated modules depend on the hand-written support module `sdk-java/support`, the hand-written TCK runtime `tck/runtime/java` implements the generated TCK contract. |
-| `metalang-typescript` | TypeScript generator (`generator.ts`: npm workspace, API, `node:test` tests) and TypeScript conformance check (`check.ts`). The support files are copied from `guidelines/ts-files`. |
+| `metalang-typescript` | TypeScript generator (`generator.ts`: npm workspace, API, `node:test` tests) and TypeScript conformance check (`check.ts`). The generated packages depend on the hand-written support package `sdk-ts/support`. |
 | `metalang-rust` | Rust generator (`generator.rust`: Cargo workspace, API, integration tests) and Rust conformance check (`check.rust` with the `rs-api` program, a resource). The support files are copied from `guidelines/rust-files`. |
 | `metalang-cli` | The command line tool (`MetaLangCli`) on top of all modules; builds the self-contained jar `tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar`. |
 
@@ -137,7 +137,8 @@ java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --lan
 ```
 
 Build and test it with Node.js 22 (`npm install` once; `node_modules`, `dist` and `package-lock.json` are ignored by
-git). As for Java, the tests of methods that are not implemented yet fail:
+git). `npm install` links the hand-written support package `sdk-ts/support` into the workspace, and `tsc --build`
+builds it first. As for Java, the tests of methods that are not implemented yet fail:
 
 ```bash
 cd generated/ts && npm install && npm test
@@ -453,8 +454,10 @@ types that need an interface with type variables, and clashing names.
   `constants.ts`, `errors.ts` (one `Error` subclass per error id, placed like the Java exceptions), `index.ts`.
 - **Imports** (`TsImports`): relative within a package, the namespace subpath between packages, `import type` for
   names used only as types, aliases for clashing names, only names that the file uses.
-- **Support files**: `Duration`, `StreamItem`, `AbstractConstructor` from `guidelines/ts-files`, copied 1:1 into the
-  package all their users require. `type<T>` is `AbstractConstructor<T>`, any class object whose prototype is a `T`
+- **Support types**: `Duration`, `StreamItem`, `AbstractConstructor` are not generated: they are the hand-written
+  package `sdk-ts/support` (`<scope>/support`). Every generated package whose code imports from it declares the
+  dependency and a project reference; the workspace lists it as workspace and builds it first. Its location relative
+  to the workspace is `ts.support` (default `../../sdk-ts/support`). `type<T>` is `AbstractConstructor<T>`, any class object whose prototype is a `T`
   (also abstract classes and enum classes with their private constructor); a primitive is represented by its
   wrapper class (`type<string>` → `AbstractConstructor<String>`).
 - **Tests** (`TsTestGenerator`, `TsSamples`): the same contract as the Java tests for the Node.js test runner, with a
@@ -677,7 +680,7 @@ checks:
 | `TestGeneratorTest` | The generated tests of small specs: their content (test names, boundary values, null and copy tests, setters, methods, factories, values of every type, subtypes, factory methods and test doubles, only types of required modules, what cannot be tested), and their **execution**: they are compiled with `-Xlint:all -Werror` and run with the JUnit platform; all pass against the generated code, the method tests fail only because of the stubs, and they **detect mutations** of the generated code (a removed range check, copy or validation). |
 | `TestValuesTest` | Test values and generated tests for edge cases (`ANY`, wildcards, sets of enums, unreachable `@@minSize`, functions, deprecated members, nullable parameters, default instances with factory calls); the result is compiled and run. |
 | `JavaIntegersTest`, `RegexSamplesTest` | Ranges, range checks and literals of all integer types; accepted and rejected strings for patterns, never a wrong one. |
-| `TsGeneratorTest`, `TsTestGeneratorTest` | The TypeScript workspace (packages, exports, dependencies, project references, support files), every type mapping (classes, interfaces, enum classes, sealed unions, narrowing, constants, overloaded functions, errors), deferral, configuration, determinism across JVM runs, the generated tests (names, boundaries, copies, setters, methods, todo entries), and — with Node.js and TypeScript installed (`npm install` in `generated/ts`) — that **all real specs compile** with the strict configuration and their tests only fail for stubs, and that the tests **detect mutations**. |
+| `TsGeneratorTest`, `TsTestGeneratorTest` | The TypeScript workspace (packages, exports, dependencies, project references, the support package), every type mapping (classes, interfaces, enum classes, sealed unions, narrowing, constants, overloaded functions, errors), deferral, configuration, determinism across JVM runs, the generated tests (names, boundaries, copies, setters, methods, todo entries), and — with Node.js and TypeScript installed (`npm install` in `generated/ts`) — that **all real specs compile** with the strict configuration and their tests only fail for stubs, and that the tests **detect mutations**. |
 | `TsEdgeCasesTest` | Edge cases of the TypeScript generator, built and run with Node.js: every builtin type as value (`uuid`, `decimal`, `seconds`, `type<T>`, `streamResult`), sealed unions, narrowed attributes, reserved and global names, values that cannot be built (`test.todo`), subtypes, factory methods, default instances with constants, bounds of type parameters for `ANY` arguments, and string escaping. |
 | `TsConformanceTest` | Comparison of TypeScript APIs (additions allowed, every kind of difference), a missing TypeScript installation, and — with TypeScript installed — implemented and outdated projects and **`generated/ts` provides the API of the current specs**. |
 | `RustGeneratorTest` | The Cargo workspace (crates, manifests with the used libraries, module tree, re-exports, support module), configuration and structural errors, every mapping of a feature spec (enums with attributes, traits with async/streaming/errors/statics/final methods, `$$Self`, erased `ANY` parameters, sealed enums, overload names, keywords, validation, constants, error enums), and — with Cargo — that the feature spec and **all real specs compile without warnings** and their tests only fail for stubs; determinism across JVM runs. |

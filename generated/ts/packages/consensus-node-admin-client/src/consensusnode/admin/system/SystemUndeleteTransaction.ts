@@ -4,9 +4,9 @@ import type { SystemUndeleteReceipt } from "./SystemUndeleteReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, Address, ContractId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
 import type { Account, HieroClient, TransactionSigner } from "@hiero/consensus-node-client/consensusnode/client";
 import type { PackedTransaction, Response, Transaction } from "@hiero/consensus-node-client/consensusnode/transactions";
+import type { Duration } from "@hiero/support";
 
 /**
  * Reverses a prior `SystemDeleteTransaction`. Exactly one of `fileId` and `contractId` must be set, matching the

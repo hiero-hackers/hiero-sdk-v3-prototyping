@@ -6,7 +6,7 @@ import { FixedFee } from "../common/FixedFee.js";
 import { Topic } from "./Topic.js";
 import { type Authority, AuthorityList, ContractAuthority } from "@hiero/base/authority";
 import { AccountId, Address, ContractId } from "@hiero/base/ledger";
-import { Duration } from "@hiero/base/support";
+import { Duration } from "@hiero/support";
 
 describe("Topic", () => {
     test("creates a Topic and returns the values", () => {

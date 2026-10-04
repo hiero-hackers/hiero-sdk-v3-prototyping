@@ -6,7 +6,7 @@ import type { Response } from "./Response.js";
 import type { Transaction } from "./Transaction.js";
 import type { TransactionId } from "@hiero/base/ledger";
 import type { NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { AbstractConstructor } from "@hiero/base/support";
+import type { AbstractConstructor } from "@hiero/support";
 
 /**
  * Reconstructs a client-bound Response for a transaction that was submitted elsewhere — e.g. the

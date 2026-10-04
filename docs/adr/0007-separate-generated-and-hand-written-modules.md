@@ -1,6 +1,6 @@
 # ADR-0007: Every module is either completely generated or completely hand-written
 
-**Status:** Accepted (implemented for Java; TypeScript and Rust follow)
+**Status:** Accepted (implemented for Java and TypeScript; Rust follows)
 **Date:** 2026-10-04
 
 ## Context
@@ -72,10 +72,10 @@ runtime. How the implementation is found is language-specific.
 
 **4. The language mapping:**
 
-| | Java (implemented) | TypeScript (next) | Rust (next) |
+| | Java (implemented) | TypeScript (implemented) | Rust (next) |
 |---|---|---|---|
 | Module | Maven + JPMS module | npm package | crate |
-| Support module | `sdk-java/support` (`hiero-sdk-support`, `org.hiero.sdk.support`) | from `guidelines/ts-files` | from `guidelines/rust-files` |
+| Support module | `sdk-java/support` (`hiero-sdk-support`, `org.hiero.sdk.support`) | `sdk-ts/support` (`@hiero/support`), linked into the generated workspace (npm workspaces, `tsconfig` references; location from `ts.support`) | from `guidelines/rust-files` |
 | Contract form | interfaces and records | interfaces / types | traits and types |
 | Finding the implementation | `java.util.ServiceLoader`, implementation as `runtime`-scope dependency | to be decided | to be decided |
 
@@ -114,7 +114,6 @@ runtime. How the implementation is found is language-specific.
 
 ### Follow-ups
 
-- TypeScript: move `guidelines/ts-files` into a hand-written support package that the generated packages depend on.
 - Rust: move `guidelines/rust-files` into a hand-written support crate that the generated crates depend on.
 - Decide, per language, how a generated contract finds its implementation (TypeScript, Rust), when the TCK server is
   generated for them.
@@ -130,6 +129,7 @@ runtime. How the implementation is found is language-specific.
 - [`tck-binding.md`](../../tck-binding.md) — TCK bindings, contract (`generated/java-tck/contract`), runtime
   (`tck/runtime/java`) and server (`generated/java-tck/server`)
 - `sdk-java/support` — Java support module; `tooling/metalang/metalang-java/.../generator/java/SupportFiles.java`
+- `sdk-ts/support` — TypeScript support package; `ts.support` in `sdk-ts/generator.properties`
 - `tooling/metalang/metalang-java/.../generator/java/JavaTckContractGenerator.java`, `JavaTckGenerator.java`
 - `tooling/metalang/metalang-core/.../tck/Converter.java` — the converter catalogue the contract is derived from
 - `tooling/metalang/README.md` — build order and generator documentation

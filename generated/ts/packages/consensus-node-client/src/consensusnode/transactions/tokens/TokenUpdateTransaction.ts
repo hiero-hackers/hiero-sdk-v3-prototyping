@@ -10,7 +10,7 @@ import type { TokenUpdateReceipt } from "./TokenUpdateReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, Address } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Updates one or more of a token's mutable fields. Every nullable field is "leave unchanged"

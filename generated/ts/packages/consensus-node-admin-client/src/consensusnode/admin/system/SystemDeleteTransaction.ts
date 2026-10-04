@@ -4,9 +4,9 @@ import type { SystemDeleteReceipt } from "./SystemDeleteReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, Address, ContractId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
 import type { Account, HieroClient, TransactionSigner } from "@hiero/consensus-node-client/consensusnode/client";
 import type { PackedTransaction, Response, Transaction } from "@hiero/consensus-node-client/consensusnode/transactions";
+import type { Duration } from "@hiero/support";
 
 /**
  * Marks a file or contract as deleted by privileged council action. Exactly one of `fileId` and

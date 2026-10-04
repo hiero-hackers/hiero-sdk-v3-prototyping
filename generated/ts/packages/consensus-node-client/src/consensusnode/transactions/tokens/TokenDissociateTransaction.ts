@@ -10,7 +10,7 @@ import type { TokenDissociateReceipt } from "./TokenDissociateReceipt.js";
 import type { Authority } from "@hiero/base/authority";
 import type { AccountId, Address } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import type { Duration } from "@hiero/base/support";
+import type { Duration } from "@hiero/support";
 
 /**
  * Removes the association between an account and one or more tokens. The protocol requires the

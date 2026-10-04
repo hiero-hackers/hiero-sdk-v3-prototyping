@@ -9,8 +9,8 @@ import { ByteImportEncoding, KeyAlgorithm, createPrivateKey } from "@hiero/base/
 import { AccountId, Address, ConsensusNode, ContractId, IpAddress, MirrorNode, Network } from "@hiero/base/ledger";
 import { NetworkSetting } from "@hiero/base/ledger/config";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
-import { Duration } from "@hiero/base/support";
 import { Account, type HieroClient, type TransactionSigner, createClient } from "@hiero/consensus-node-client/consensusnode/client";
+import { Duration } from "@hiero/support";
 
 describe("SystemDeleteTransaction", () => {
     test("creates a SystemDeleteTransaction and returns the values", () => {

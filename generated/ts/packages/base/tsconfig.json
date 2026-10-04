@@ -6,5 +6,7 @@
     "outDir": "dist"
   },
   "include": ["src"],
-  "references": []
+  "references": [
+    { "path": "../../../../sdk-ts/support" }
+  ]
 }

@@ -18,27 +18,49 @@ import org.hiero.sdk.v3.metalang.generator.GenerationException;
  * <ul>
  *   <li>{@code ts.scope}: the npm scope of the packages, e.g. {@code @hiero} (packages {@code @hiero/base}, ...)</li>
  *   <li>{@code ts.version}: the version of all packages</li>
+ *   <li>{@code ts.support}: the directory of the hand-written support package ({@code <scope>/support}), relative to
+ *       the generated workspace (or absolute); the workspace links and builds it from there</li>
  * </ul>
  *
  * @param scope   the npm scope, starting with {@code @}
  * @param version the package version
+ * @param support the directory of the support package
  */
-public record TsGeneratorConfig(String scope, String version) {
+public record TsGeneratorConfig(String scope, String version, String support) {
+
+    /** The directory of the support package for a workspace in {@code generated/ts}. */
+    public static final String DEFAULT_SUPPORT = "../../sdk-ts/support";
 
     /** The configuration without a configuration file. */
     public static final TsGeneratorConfig DEFAULT = new TsGeneratorConfig("@hiero", "0.1.0-SNAPSHOT");
+
+    /**
+     * Creates a configuration with the default directory of the support package.
+     *
+     * @param scope   the npm scope
+     * @param version the version
+     * @throws GenerationException if a value is not valid for npm
+     */
+    public TsGeneratorConfig(final String scope, final String version) {
+        this(scope, version, DEFAULT_SUPPORT);
+    }
 
     /**
      * Creates a configuration.
      *
      * @param scope   the npm scope
      * @param version the version
+     * @param support the directory of the support package
      * @throws GenerationException if a value is not valid for npm
      */
     public TsGeneratorConfig {
         Objects.requireNonNull(scope, "scope must not be null");
         Objects.requireNonNull(version, "version must not be null");
+        Objects.requireNonNull(support, "support must not be null");
         final List<String> problems = new ArrayList<>();
+        if (support.isBlank() || support.contains("\\") || support.contains("\"")) {
+            problems.add("ts.support: '" + support + "' is no directory (use '/' as separator)");
+        }
         if (!scope.matches("@[a-z0-9][a-z0-9._-]*")) {
             problems.add("ts.scope: '" + scope + "' is no npm scope (@ followed by lowercase letters, digits, '.', "
                     + "'_' or '-')");
@@ -66,14 +88,16 @@ public record TsGeneratorConfig(String scope, String version) {
         }
         final List<String> problems = new ArrayList<>();
         for (final String key : properties.stringPropertyNames()) {
-            if (key.startsWith("ts.") && !key.equals("ts.scope") && !key.equals("ts.version")) {
-                problems.add("Unknown key '" + key + "' (known: ts.scope, ts.version)");
+            if (key.startsWith("ts.") && !key.equals("ts.scope") && !key.equals("ts.version")
+                    && !key.equals("ts.support")) {
+                problems.add("Unknown key '" + key + "' (known: ts.scope, ts.version, ts.support)");
             }
         }
         if (!problems.isEmpty()) {
             throw new GenerationException(problems);
         }
         return new TsGeneratorConfig(properties.getProperty("ts.scope", DEFAULT.scope()).strip(),
-                properties.getProperty("ts.version", DEFAULT.version()).strip());
+                properties.getProperty("ts.version", DEFAULT.version()).strip(),
+                properties.getProperty("ts.support", DEFAULT.support()).strip());
     }
 }
