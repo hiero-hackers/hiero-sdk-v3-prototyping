@@ -1,0 +1,3 @@
+/// One item of a stream whose items can fail individually (the mapping of `streamResult<T>`): the value, or the error
+/// of this item. The stream continues after a failed item.
+pub type StreamItem<T> = Result<T, Box<dyn std::error::Error + Send + Sync>>;

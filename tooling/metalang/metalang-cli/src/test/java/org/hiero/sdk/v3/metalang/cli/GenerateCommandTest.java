@@ -74,6 +74,30 @@ class GenerateCommandTest {
     }
 
     @Test
+    void shouldGenerateRust() throws Exception {
+        // GIVEN
+        final Path config = temp.resolve("generator.properties");
+        Files.writeString(config, "rust.cratePrefix = shop\n");
+
+        // WHEN
+        final int exit = cli.run("generate", "--language=rust", "--config=" + config, "--output="
+                + temp.resolve("rust"), goldenSpec().toString());
+
+        // THEN
+        assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
+        assertThat(out.toString(StandardCharsets.UTF_8)).contains(" file(s) generated in ");
+        assertThat(Files.readString(temp.resolve("rust/crates/shop/Cargo.toml"))).contains("name = \"shop-shop\"");
+
+        // WHEN the configuration is invalid
+        Files.writeString(config, "rust.version = one\n");
+
+        // THEN
+        assertThat(cli.run("generate", "--language=rust", "--config=" + config, "--output=" + temp.resolve("rust"),
+                goldenSpec().toString())).isEqualTo(MetaLangCli.EXIT_FINDINGS);
+        assertThat(err()).contains("Cannot generate: rust.version: 'one' is no semantic version");
+    }
+
+    @Test
     void shouldListTheUntestedTestsOnRequest() throws Exception {
         // WHEN
         final int exit = cli.run("generate", "--language=java", "--show-untested",
@@ -222,8 +246,8 @@ class GenerateCommandTest {
         final String spec = goldenSpec().toString();
         assertThat(cli.run("generate", "--output=x", spec)).isEqualTo(MetaLangCli.EXIT_USAGE);
         assertThat(err()).contains("Missing --language");
-        assertThat(cli.run("generate", "--language=rust", "--output=x", spec)).isEqualTo(MetaLangCli.EXIT_USAGE);
-        assertThat(err()).contains("Unsupported language 'rust'");
+        assertThat(cli.run("generate", "--language=go", "--output=x", spec)).isEqualTo(MetaLangCli.EXIT_USAGE);
+        assertThat(err()).contains("Unsupported language 'go'");
         assertThat(cli.run("generate", "--language=java", spec)).isEqualTo(MetaLangCli.EXIT_USAGE);
         assertThat(err()).contains("Missing --output");
         assertThat(cli.run("generate", "--language=java", "--output=x")).isEqualTo(MetaLangCli.EXIT_USAGE);

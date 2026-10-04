@@ -14,11 +14,12 @@ designed from scratch with **no backward-compatibility constraints** with V2.
 **This repo contains specifications, not a shippable SDK.** The specs themselves have no build system and do not
 compile; the only buildable module is the spec tooling under `tooling/metalang` (Maven, Java 21). The API is defined once in a **language-agnostic meta-language** and is meant to be translated into
 idiomatic implementations per language (Java, JavaScript/TypeScript, Go, Rust, Python, C++, Swift). The `.java`/`.js`
-files under `guidelines/` are reference snippets, not a buildable module — except `guidelines/java-files/` and
-`guidelines/ts-files/`: these are the single source of the Java support types (`@ThreadSafe`, `HieroStream`,
-`StreamItem`, `HieroPublisher`, `HieroSubscription`) and the TypeScript support types (`Duration`, `StreamItem`,
-`AbstractConstructor`), which the generators copy 1:1 into `generated/java` and `generated/ts`, so they must always
-compile.
+files under `guidelines/` are reference snippets, not a buildable module — except `guidelines/java-files/`,
+`guidelines/ts-files/` and `guidelines/rust-files/`: these are the single source of the Java support types
+(`@ThreadSafe`, `HieroStream`, `StreamItem`, `HieroPublisher`, `HieroSubscription`), the TypeScript support types
+(`Duration`, `StreamItem`, `AbstractConstructor`) and the Rust support types (`BoxFuture`, `BoxStream`, `StreamItem`,
+`InvalidArgumentError`), which the generators copy 1:1 into `generated/java`, `generated/ts` and `generated/rust`, so
+they must always compile.
 
 ## Repository structure
 
@@ -26,11 +27,12 @@ compile.
 guidelines/
   api-guideline.md              # THE meta-language: syntax + cross-cutting API best practices. Read this first.
   api-best-practices-java.md    # How meta-language concepts map to idiomatic Java
-  api-best-practices-rust.md    # ... Rust
+  api-best-practices-rust.md    # ... Rust (the mapping of the Rust generator)
   api-best-practices-js.md      # ... JavaScript
   api-best-practices-ts.md      # ... TypeScript (the mapping of the TypeScript generator)
   java-files/                   # Java support types (streaming, thread-safety); copied 1:1 into the generated code
   ts-files/                     # TypeScript support types (Duration, StreamItem, ...); copied 1:1 into generated/ts
+  rust-files/                   # Rust support types (BoxFuture, InvalidArgumentError, ...); copied 1:1 into generated/rust
   js-files/                     # Illustrative JS reference snippets
 
 openspec-common-delta-changes/  # Plain language-neutral feature proposals and specifications (not an OpenSpec root)
@@ -52,6 +54,10 @@ sdk-ts/generator.properties    # TypeScript generator configuration (npm scope, 
 generated/ts/                  # Generated TypeScript API as npm workspace, one package per spec folder, with
                                #   generated node:test tests (tracked in git; regenerate after spec or generator
                                #   changes; `npm install && npm test` builds and tests it). Never edit by hand.
+sdk-rust/generator.properties  # Rust generator configuration (crate prefix, version)
+generated/rust/                # Generated Rust API as Cargo workspace, one crate per spec folder, with a generated
+                               #   integration test per crate (tracked in git; regenerate after spec or generator
+                               #   changes; `cargo test` builds and tests it). Never edit by hand.
 
 spec/                           # The actual V3 public-API specifications, written in the meta-language
   base/                         # Foundational namespaces shared by everything
@@ -82,6 +88,7 @@ tooling/metalang/               # Prototype tooling, multi-module Maven build (s
   metalang-core/                #   ANTLR grammar, parser, semantic model, validator, shared generator support
   metalang-java/                #   Java generator + Java conformance check
   metalang-typescript/          #   TypeScript generator + TypeScript conformance check
+  metalang-rust/                #   Rust generator + Rust conformance check (rs-api, a syn-based helper)
   metalang-cli/                 #   command line tool; builds tooling/metalang/target/metalang-*-cli.jar
 ```
 
@@ -159,8 +166,9 @@ points to keep specs valid and consistent:
   guideline lists per-language mappings for varargs, wildcards, streaming cancellation, `streamResult`, etc.).
 - Note: `api-guideline.md` references a `proposals/` folder, but in this repo the specs live under `spec/`.
 - Some language guides referenced by `api-guideline.md` (cpp, python, go, swift) do not exist yet — that's
-  expected; Java, TypeScript, Rust and JS guides are present so far. The Java and TypeScript guides are implemented
-  by the generators in `tooling/metalang` (`generate --language=java|ts`, `check --language=java|ts`).
+  expected; Java, TypeScript, Rust and JS guides are present so far. The Java, TypeScript and Rust guides are
+  implemented by the generators in `tooling/metalang` (`generate --language=java|ts|rust`,
+  `check --language=java|ts|rust`).
 
 ## Relevant skills
 

@@ -91,6 +91,32 @@ class CheckCommandTest {
     }
 
     @Test
+    void shouldCheckRustProjects() throws Exception {
+        // GIVEN a generated Rust project
+        final Path spec = spec("namespace a\nabstraction Client { void close() }\n");
+        final Path project = temp.resolve("rust");
+        cli.run("generate", "--language=rust", "--output=" + project, spec.toString());
+        out.reset();
+
+        // WHEN Cargo is installed
+        org.junit.jupiter.api.Assumptions.assumeTrue(cargo());
+        final int exit = cli.run("check", "--language=rust", "--project=" + project, "--cargo=cargo",
+                spec.toString());
+
+        // THEN
+        assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
+        assertThat(out()).isEqualTo(project + " provides the API of the specs (6 declaration(s), 1 crate(s))\n");
+    }
+
+    private static boolean cargo() {
+        try {
+            return new ProcessBuilder("cargo", "--version").start().waitFor() == 0;
+        } catch (final java.io.IOException | InterruptedException e) {
+            return false;
+        }
+    }
+
+    @Test
     void shouldApplyTheConfiguration() throws Exception {
         // GIVEN a project generated without configuration: the abstraction with an attribute is a class
         final Path spec = spec("namespace a\nabstraction Named { @@immutable name: string }\n");
@@ -135,7 +161,7 @@ class CheckCommandTest {
         final Path spec = spec("namespace a\nX { @@immutable x: int32 }\n");
         final String project = "--project=" + Files.createDirectories(temp.resolve("project"));
         assertThat(cli.run("check", project, spec.toString())).isEqualTo(MetaLangCli.EXIT_USAGE);
-        assertThat(cli.run("check", "--language=rust", project, spec.toString())).isEqualTo(MetaLangCli.EXIT_USAGE);
+        assertThat(cli.run("check", "--language=go", project, spec.toString())).isEqualTo(MetaLangCli.EXIT_USAGE);
         assertThat(cli.run("check", "--language=ts", "--config=" + temp.resolve("none"), project, spec.toString()))
                 .isEqualTo(MetaLangCli.EXIT_FINDINGS);
         assertThat(cli.run("check", "--language=java", spec.toString())).isEqualTo(MetaLangCli.EXIT_USAGE);
@@ -148,9 +174,9 @@ class CheckCommandTest {
                 .isEqualTo(MetaLangCli.EXIT_USAGE);
         assertThat(cli.run("check", "--language=java", "--unknown", project, spec.toString()))
                 .isEqualTo(MetaLangCli.EXIT_USAGE);
-        assertThat(err()).contains("Missing --language", "Unsupported language 'rust'", "Missing --project",
+        assertThat(err()).contains("Missing --language", "Unsupported language 'go'", "Missing --project",
                 "Project directory does not exist: ", "Expected exactly one spec directory or file",
                 "Path does not exist: ", "Invalid severity in --fail-on=sometimes", "Unknown option --unknown",
-                "metalang check --language=java|ts --project=<dir> [options] <spec-dir-or-file>");
+                "metalang check --language=java|ts|rust --project=<dir> [options] <spec-dir-or-file>");
     }
 }

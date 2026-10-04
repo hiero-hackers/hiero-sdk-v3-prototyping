@@ -1,0 +1,13 @@
+[package]
+name = "rs-api"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Reads the public API of the crates of a Cargo workspace (used by metalang check --language=rust)."
+
+[dependencies]
+proc-macro2 = { version = "1", default-features = false, features = ["span-locations"] }
+quote = { version = "1", default-features = false }
+syn = { version = "2", default-features = false, features = ["full", "parsing", "printing", "visit-mut", "clone-impls"] }
+
+[workspace]

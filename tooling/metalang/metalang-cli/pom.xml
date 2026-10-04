@@ -32,6 +32,10 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>metalang-rust</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>metalang-core</artifactId>
             <type>test-jar</type>
             <scope>test</scope>

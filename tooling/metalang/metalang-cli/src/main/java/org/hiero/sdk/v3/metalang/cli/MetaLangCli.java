@@ -14,6 +14,7 @@ import org.hiero.sdk.v3.metalang.MetaLang;
 import org.hiero.sdk.v3.metalang.ValidationReport;
 import org.hiero.sdk.v3.metalang.check.ApiDifference;
 import org.hiero.sdk.v3.metalang.check.java.JavaConformance;
+import org.hiero.sdk.v3.metalang.check.rust.RustConformance;
 import org.hiero.sdk.v3.metalang.check.ts.TsConformance;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
@@ -24,6 +25,9 @@ import org.hiero.sdk.v3.metalang.generator.GenerationException;
 import org.hiero.sdk.v3.metalang.generator.java.JavaGenerator;
 import org.hiero.sdk.v3.metalang.generator.java.JavaGeneratorConfig;
 import org.hiero.sdk.v3.metalang.generator.java.TestGenerator;
+import org.hiero.sdk.v3.metalang.generator.rust.RustGenerator;
+import org.hiero.sdk.v3.metalang.generator.rust.RustGeneratorConfig;
+import org.hiero.sdk.v3.metalang.generator.rust.RustTestGenerator;
 import org.hiero.sdk.v3.metalang.generator.ts.TsGenerator;
 import org.hiero.sdk.v3.metalang.generator.ts.TsGeneratorConfig;
 import org.hiero.sdk.v3.metalang.generator.ts.TsTestGenerator;
@@ -37,10 +41,10 @@ import org.hiero.sdk.v3.metalang.model.QualifiedName;
  * metalang validate [--min-severity=error|warning|info] [--fail-on=error|warning|info|never]
  *                   [--format=text|json] [--summary] &lt;spec-dir-or-file&gt;
  * metalang model [--namespace=ns] [--type=ns.Type] [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
- * metalang generate --language=java|ts --output=dir [--fail-on=error|warning|info|never] [--show-deferred]
+ * metalang generate --language=java|ts|rust --output=dir [--fail-on=error|warning|info|never] [--show-deferred]
  *     [--show-untested]
  *     &lt;spec-dir-or-file&gt;
- * metalang check --language=java|ts --project=dir [--config=file] [--typescript=dir]
+ * metalang check --language=java|ts|rust --project=dir [--config=file] [--typescript=dir] [--cargo=executable]
  *     [--fail-on=error|warning|info|never]
  *     &lt;spec-dir-or-file&gt;
  * metalang rules
@@ -62,8 +66,8 @@ public final class MetaLangCli {
             Usage:
               metalang validate [options] <spec-dir-or-file>
               metalang model [options] <spec-dir-or-file>
-              metalang generate --language=java|ts --output=<dir> [options] <spec-dir-or-file>
-              metalang check --language=java|ts --project=<dir> [options] <spec-dir-or-file>
+              metalang generate --language=java|ts|rust --output=<dir> [options] <spec-dir-or-file>
+              metalang check --language=java|ts|rust --project=<dir> [options] <spec-dir-or-file>
               metalang rules
 
             Options for 'validate':
@@ -79,7 +83,7 @@ public final class MetaLangCli {
                                                   the model is printed in any case
 
             Options for 'generate':
-              --language=java|ts                  target language (required): Java or TypeScript
+              --language=java|ts|rust             target language (required): Java, TypeScript or Rust
               --output=<dir>                      output directory (required; created if missing)
               --fail-on=error|warning|info|never  do not generate if a finding at or above this severity
                                                   exists (default: error)
@@ -90,12 +94,14 @@ public final class MetaLangCli {
 
             Options for 'check' (does a project provide the API generated from the specs? Additional files,
             types and members and implemented methods are allowed):
-              --language=java|ts                  target language (required): Java or TypeScript
+              --language=java|ts|rust             target language (required): Java, TypeScript or Rust
               --project=<dir>                     directory of the project to check (required), e.g. the
                                                   generated code or an implementation based on it
               --config=<file>                     generator configuration (as for 'generate')
               --typescript=<dir>                  TypeScript only: the typescript package that reads the
                                                   sources (default: <project>/node_modules/typescript)
+              --cargo=<executable>                Rust only: the Cargo that builds the program reading the
+                                                  sources (default: cargo)
               --fail-on=error|warning|info|never  do not check if a spec finding at or above this severity
                                                   exists (default: error)
             """;
@@ -290,7 +296,7 @@ public final class MetaLangCli {
                 paths.add(arg);
             }
         }
-        if (!"java".equals(language) && !"ts".equals(language)) {
+        if (!"java".equals(language) && !"ts".equals(language) && !"rust".equals(language)) {
             return usageError(language == null ? "Missing --language" : "Unsupported language '" + language + "'");
         }
         if (output == null || output.isBlank()) {
@@ -362,6 +368,7 @@ public final class MetaLangCli {
         String project = null;
         String config = null;
         String typescript = null;
+        String cargo = null;
         final List<String> paths = new ArrayList<>();
         for (final String arg : args) {
             if (arg.startsWith("--fail-on=")) {
@@ -378,13 +385,15 @@ public final class MetaLangCli {
                 config = arg.substring("--config=".length());
             } else if (arg.startsWith("--typescript=")) {
                 typescript = arg.substring("--typescript=".length());
+            } else if (arg.startsWith("--cargo=")) {
+                cargo = arg.substring("--cargo=".length());
             } else if (arg.startsWith("--")) {
                 return usageError("Unknown option " + arg);
             } else {
                 paths.add(arg);
             }
         }
-        if (!"java".equals(language) && !"ts".equals(language)) {
+        if (!"java".equals(language) && !"ts".equals(language) && !"rust".equals(language)) {
             return usageError(language == null ? "Missing --language" : "Unsupported language '" + language + "'");
         }
         if (project == null || project.isBlank()) {
@@ -415,7 +424,14 @@ public final class MetaLangCli {
         final String expected;
         try {
             final LinkedModel model = LinkedModel.of(report.model());
-            if ("ts".equals(language)) {
+            if ("rust".equals(language)) {
+                final RustGenerator generator = new RustGenerator(config == null ? RustGeneratorConfig.DEFAULT
+                        : RustGeneratorConfig.load(Path.of(config)));
+                final RustConformance.Result result = RustConformance.check(model, generator, projectDirectory,
+                        cargo);
+                differences = result.differences();
+                expected = result.declarations() + " declaration(s), " + result.crates() + " crate(s)";
+            } else if ("ts".equals(language)) {
                 final TsGenerator generator = new TsGenerator(config == null ? TsGeneratorConfig.DEFAULT
                         : TsGeneratorConfig.load(Path.of(config)));
                 final TsConformance.Result result = TsConformance.check(model, generator, projectDirectory,
@@ -458,6 +474,12 @@ public final class MetaLangCli {
 
     private static Generation generation(final String language, final String config, final LinkedModel model)
             throws IOException {
+        if ("rust".equals(language)) {
+            final RustGenerator generator = new RustGenerator(config == null ? RustGeneratorConfig.DEFAULT
+                    : RustGeneratorConfig.load(Path.of(config)));
+            final List<GeneratedFile> files = generator.generate(model);
+            return new Generation(files, generator.deferredTypes(model), RustTestGenerator.untested(files));
+        }
         if ("ts".equals(language)) {
             final TsGenerator generator = new TsGenerator(config == null ? TsGeneratorConfig.DEFAULT
                     : TsGeneratorConfig.load(Path.of(config)));

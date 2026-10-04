@@ -5,8 +5,8 @@ This multi-module Maven build turns the language-agnostic meta-language defined 
 deterministically. It is the foundation for the planned follow-up tools (per-language code generation,
 API conformance checks of existing SDKs, per-language exceptions, generated contract tests).
 
-Status: **prototype**. The scope is grammar + parser + semantic model + validator, generators for Java and
-TypeScript (API and tests) and conformance checks of projects against the specs.
+Status: **prototype**. The scope is grammar + parser + semantic model + validator, generators for Java,
+TypeScript and Rust (API and tests) and conformance checks of projects against the specs.
 
 ## Quick start
 
@@ -33,6 +33,7 @@ mvn -f tooling/metalang/pom.xml -q package -DskipTests
 | `metalang-core` | Grammar, parser, AST, semantic and linked model, default instances, validator and rule catalog, and what every generator shares (`GeneratedFile`, `GeneratedOutput`, `Constraints`, `IntegerRange`, `RegexSamples`, `SpecFolders`, `check.ApiDifference`). Its test-jar holds the shared test helpers (`TestSpecs`) and test resources (`rule-fixtures`, `model-golden`). |
 | `metalang-java` | Java generator (`generator.java`: API, Maven project, JUnit tests) and Java conformance check (`check.java`). The support files are copied from `guidelines/java-files`. |
 | `metalang-typescript` | TypeScript generator (`generator.ts`: npm workspace, API, `node:test` tests) and TypeScript conformance check (`check.ts`). The support files are copied from `guidelines/ts-files`. |
+| `metalang-rust` | Rust generator (`generator.rust`: Cargo workspace, API, integration tests) and Rust conformance check (`check.rust` with the `rs-api` program, a resource). The support files are copied from `guidelines/rust-files`. |
 | `metalang-cli` | The command line tool (`MetaLangCli`) on top of all modules; builds the self-contained jar `tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar`. |
 
 A language generator depends only on `metalang-core`; a new language gets its own module next to them and is wired
@@ -140,6 +141,21 @@ git). As for Java, the tests of methods that are not implemented yet fail:
 cd generated/ts && npm install && npm test
 ```
 
+### Generate the Rust API
+
+One crate per spec folder in a Cargo workspace, see [Rust generator](#rust-generator):
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=rust --fail-on=never --config=sdk-rust/generator.properties --output=generated/rust spec
+```
+
+Build and test it with Cargo (Rust 1.85 or newer; `target` and `Cargo.lock` are ignored by git). As for Java and
+TypeScript, the tests of methods that are not implemented yet fail:
+
+```bash
+cd generated/rust && cargo test --no-fail-fast
+```
+
 ### Check a project against the specs
 
 Checks whether a Java project provides the API that the generator derives from the specs — for the generated code
@@ -159,6 +175,14 @@ API; it is taken from `<project>/node_modules/typescript` or from `--typescript=
 
 ```bash
 java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --language=ts --fail-on=never --config=sdk-ts/generator.properties --project=generated/ts spec
+```
+
+For Rust (`--language=rust`) the crates below `--project` (every `Cargo.toml` with a package and a `src/lib.rs`) are
+read with `rs-api`, a small Rust program based on `syn` that the tool builds once with Cargo (`cargo` on the path or
+`--cargo=<executable>`; the first build downloads `syn` from crates.io):
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --language=rust --fail-on=never --config=sdk-rust/generator.properties --project=generated/rust spec
 ```
 
 ### List all rules
@@ -400,8 +424,42 @@ types that need an interface with type variables, and clashing names.
   test name that says what is checked; values from the default instances first. Number types also get a fraction test.
   Tests whose values cannot be built become `test.todo` entries.
 
+## Rust generator
+
+`generator/rust` maps the model to Rust as described in
+[`guidelines/api-best-practices-rust.md`](../../guidelines/api-best-practices-rust.md):
+
+- **Cargo workspace** (`RustProjectGenerator`): one crate per spec folder (`crates/<folder>`, package
+  `<rust.cratePrefix>-<folder>`), path dependencies on the crates of the required folders, and only the libraries the
+  crate's code uses (`chrono`, `rust_decimal`, `uuid`, `ethnum`, `regex`, `futures-core`, versions in the workspace
+  manifest). Configuration: `sdk-rust/generator.properties` (`rust.cratePrefix`, `rust.version`).
+- **Planning** (`RustContext`): the Rust form of every type (`RustType`), the type parameters that are erased because
+  the specs use them with `ANY` (Rust has no wildcards; the parameter becomes its bound as `Arc<dyn Trait>`), the
+  `$$Self` parameters (Rust's `Self`), the names of overloads (`_with_<parameters>`), the error types and error enums,
+  and what each type can derive (`Copy`, `PartialEq`, `Eq`, `Hash`, `Clone`).
+- **Types** (`RustTypeGenerator`): structs with private fields, a checking `new`, getters, setters and inherent
+  methods, and an implementation of every trait they inherit (delegating where the signatures match, converting
+  narrowed and erased attributes); traits (statics in `impl dyn Trait`, final methods in a `<Trait>Ext` extension
+  trait); enums for sealed abstractions; enums with `const fn` attributes, `Display` and `FromStr`.
+- **Namespaces** (`RustNamespaceGenerator`): `mod.rs` with the private type modules and their re-exports, modules
+  for namespace prefixes of the crate (`consensusnode`), `functions.rs`, `constants.rs` (`const` or `LazyLock`),
+  `errors.rs` (error structs and error enums).
+- **Imports** (`RustImports`): `use` declarations for the items a file uses, aliases for clashing names (also with
+  the prelude), traits imported as `_` for their methods, full paths for library types.
+- **Support files**: `BoxFuture`/`BoxStream`, `StreamItem`, `InvalidArgumentError` and `is_absolute_url` from
+  `guidelines/rust-files`, copied 1:1 into `<crate>::support` of the crate all crates require.
+- **Tests** (`RustTestGenerator`, `RustSamples`): one integration test per crate (`tests/api`, one module per type and
+  namespace) with the contract that the Rust type system does not already guarantee (no null, copy or exact integer
+  range tests): constructor values, validation boundaries, setters, every method and function (async ones run to
+  completion with a small `block_on`), enum constants, value equality and `Send + Sync`. Values come from the default
+  instances first; a trait without implementation is represented by a test double, a struct of the test file that
+  implements the trait and its supertraits. Tests whose values cannot be built are ignored tests.
+
+The generated code compiles without warnings (also with `cargo clippy`); the tests of `metalang-rust` build every
+generated workspace with `RUSTFLAGS=-D warnings` and a shared target directory (`metalang-rust/target/cargo`).
+
 The language-neutral parts — value constraints (`Constraints`), integer ranges (`IntegerRange`), pattern samples
-(`RegexSamples`), spec folders (`SpecFolders`) — live in the `generator` package of `metalang-core` and are shared by both languages.
+(`RegexSamples`), spec folders (`SpecFolders`) — live in the `generator` package of `metalang-core` and are shared by all languages.
 
 ## Generated tests
 
@@ -487,6 +545,19 @@ method and constructor signatures, functions of a namespace) must exist with its
 declarations, members, overloads and supertypes, `#private` members and method bodies are allowed. A test runs the
 check for `generated/ts` when TypeScript is installed there.
 
+### Rust
+
+`metalang check --language=rust` (`check.rust.RustConformance`) runs `rs-api` (Rust, `syn`; the source is a resource
+of `metalang-rust`, built once per version into the temporary directory) on the generated and on the project's crates
+(parsing only). Every item is identified by its shortest public path (`hiero_base::ledger::AccountId`, through
+`pub use` re-exports and globs), and every type in a signature is resolved through the imports to that path or to the
+full path of an external item, so file layout and import style make no difference. Every expected item must exist
+with its kind (struct, enum, trait, fn, const, static, type) and type parameters (or signature/type); every expected
+implemented trait (also derived ones, `Clone`, `PartialEq`, ...) and supertrait must exist; every expected member
+(inherent method, associated function of `impl dyn Trait`, trait method, enum variant, public field) must exist with
+its signature. Additional crates, items, members, trait implementations and method bodies are allowed. A test runs the
+check for `generated/rust` when Cargo is installed.
+
 ## Lenient grammar: syntax variants found in the specs
 
 The existing specs use a few constructs the guideline does not define. Rejecting them as syntax errors would make
@@ -537,10 +608,10 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 730 tests (the TypeScript tests that need Node.js and an installed TypeScript are skipped
-without them); JaCoCo fails the build of **each module** below 95 % line / 90 % branch coverage (generated ANTLR
+`mvn verify` runs about 750 tests (the TypeScript tests that need Node.js and an installed TypeScript, and the Rust
+tests that need Cargo are skipped without them); JaCoCo fails the build of **each module** below 95 % line / 90 % branch coverage (generated ANTLR
 code excluded). The tests live in the module of the code they test: parser, model and validator tests in
-`metalang-core`, generator and check tests in `metalang-java` / `metalang-typescript`, the command tests
+`metalang-core`, generator and check tests in `metalang-java` / `metalang-typescript` / `metalang-rust`, the command tests
 (`*CommandTest`, `MetaLangCliTest`) in `metalang-cli`. The cross-JVM determinism tests start the generator of their
 module (`GenerateMain` in the test sources). Besides unit tests per component, the suite contains these systematic
 checks:
@@ -572,6 +643,10 @@ checks:
 | `TsGeneratorTest`, `TsTestGeneratorTest` | The TypeScript workspace (packages, exports, dependencies, project references, support files), every type mapping (classes, interfaces, enum classes, sealed unions, narrowing, constants, overloaded functions, errors), deferral, configuration, determinism across JVM runs, the generated tests (names, boundaries, copies, setters, methods, todo entries), and — with Node.js and TypeScript installed (`npm install` in `generated/ts`) — that **all real specs compile** with the strict configuration and their tests only fail for stubs, and that the tests **detect mutations**. |
 | `TsEdgeCasesTest` | Edge cases of the TypeScript generator, built and run with Node.js: every builtin type as value (`uuid`, `decimal`, `seconds`, `type<T>`, `streamResult`), sealed unions, narrowed attributes, reserved and global names, values that cannot be built (`test.todo`), subtypes, factory methods, default instances with constants, bounds of type parameters for `ANY` arguments, and string escaping. |
 | `TsConformanceTest` | Comparison of TypeScript APIs (additions allowed, every kind of difference), a missing TypeScript installation, and — with TypeScript installed — implemented and outdated projects and **`generated/ts` provides the API of the current specs**. |
+| `RustGeneratorTest` | The Cargo workspace (crates, manifests with the used libraries, module tree, re-exports, support module), configuration and structural errors, every mapping of a feature spec (enums with attributes, traits with async/streaming/errors/statics/final methods, `$$Self`, erased `ANY` parameters, sealed enums, overload names, keywords, validation, constants, error enums), and — with Cargo — that the feature spec and **all real specs compile without warnings** and their tests only fail for stubs; determinism across JVM runs. |
+| `RustTestGeneratorTest` | The generated tests (names, boundaries, setters, methods, enums, test doubles, ignored tests) and their execution with Cargo: they pass against the generated code, the method tests fail only because of the stubs, and they **detect mutations** (a removed range, length or setter check). |
+| `RustEdgeCasesTest` | Edge cases built and run with Cargo: values of every kind, values that cannot be built, subtypes, factories and default instances of every expression kind, conversions (`From` for subtypes, narrowed and erased attributes), visibility across crates and deferred types, name clashes with aliases, literals of every kind. |
+| `RustConformanceTest` | Comparison of Rust APIs (additions allowed, every kind of difference), and — with Cargo — implemented (with other imports), outdated and unparsable projects, a missing or failing Cargo, and **`generated/rust` provides the API of the current specs**. |
 | `InstanceResolverTest` | Every kind of default-instance expression (construction with generic arguments, functions of other namespaces, static methods, method calls, attributes, constants, enum constants, lists, bytes), overload selection, and every error message. Rule fixtures cover `instance.invalid`, `instance.cycle` and `instance.missing`. |
 | `JavaApiTest` | Reading the API of Java sources: name resolution (imports, wildcards, same package, `java.lang`, nested types, type variables), nullness including `String @Nullable []` vs. `@Nullable String[]`, implicit modifiers of interfaces, records, enums and nested types, ignored implementation details, module declarations, parse errors, duplicate types and skipped build output. |
 | `JavaApiComparisonTest` | Implementations and additions are accepted; every kind of difference (missing module/type/member, kind, modifiers, type parameters, superclass, interfaces, permits, record components, enum constants, annotations, member declarations, `requires`/`exports`) is reported with file and line. |
@@ -588,5 +663,9 @@ checks:
 - **Nesting** of brackets is limited to 100 levels (`syntax.nesting-too-deep`) to keep the recursive parser and
   validator away from stack exhaustion.
 - **Markdown:** only ATX headings (`## ...`) are recognized, not setext headings (`---` underlines).
+- **Rust:** a type parameter that the specs use with `ANY` is erased everywhere (`HieroClient`, `dyn NativeToken`):
+  concrete types keep their exact types in their inherent methods, but code that works with trait objects gets
+  erased values (`Response<Arc<dyn Receipt>>`). `type<T>` is a `TypeId`, `@@default` values are no default arguments
+  (Rust has none), and `@@oneOf` is not checked (as in Java and TypeScript).
 - **Lexical scope:** identifiers are ASCII; number literals support digits, `_`, sign and decimals, but no exponent
   or hex notation. `@@pattern` values are evaluated with Java regular expressions (`find` semantics).

@@ -364,8 +364,8 @@ Rules:
 - `ANY` and `$$T` are distinct concepts: `$$T` is a generic type parameter that the caller binds to a single concrete
   type, while `ANY` is a wildcard meaning "an unknown concrete type" that may differ across uses.
 - Languages without native wildcard support must define an idiomatic mapping in their best-practice guideline
-  (e.g., `?` / `? extends T` in Java, `any Protocol` in Swift, `Box<dyn Trait>` in Rust, a polymorphic base type or
-  `std::variant` in C++, an interface type in Go).
+  (e.g., `?` / `? extends T` in Java, `any Protocol` in Swift, the erased type parameter with `Arc<dyn Trait>` in Rust,
+  a polymorphic base type or `std::variant` in C++, an interface type in Go).
 
 `ANY` can also appear as a standalone type (e.g., a parameter or return type), in which case it acts as the
 language's top type — see [Basic data types](#basic-data-types). Standalone use is strongly discouraged; see
@@ -585,7 +585,7 @@ Rules:
 - Callers must also be able to pass an existing collection in place of individual arguments. The exact mechanism is
   language-specific (e.g., Go's `slice...` expansion, Java's array pass-through).
 - Languages without native varargs support (e.g., Rust, C++) must define an idiomatic mapping in their respective
-  best-practice guideline (e.g., `&[T]` or `impl IntoIterator<Item = T>` in Rust, `std::initializer_list<T>` or a
+  best-practice guideline (e.g., `Vec<T>` in Rust, `std::initializer_list<T>` or a
   variadic template in C++).
 
 #### Method annotations
