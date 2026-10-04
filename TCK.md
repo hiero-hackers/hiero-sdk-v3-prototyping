@@ -66,6 +66,8 @@ property is that the API is written in the meta-language under `spec/`:
   to how `mirror-node.yaml` already generates TS models in the TCK). This keeps
   the JSON-RPC surface in lock-step with the spec and gives every language the
   same set of methods for free.
+- A concrete design for generating the adapters (bindings per TCK method, converter catalogue, coverage check,
+  and the gaps in the V3 API) is in [`tck-binding.md`](tck-binding.md).
 - Contribute new spec docs under `docs/test-specifications/` for each new
   namespace (`base/`, `mirror/`, `enterprise/`), following
   `TestSpecificationsTemplate.md`.
