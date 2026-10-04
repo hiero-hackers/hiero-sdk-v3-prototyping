@@ -80,6 +80,27 @@ class TckCommandTest {
     }
 
     @Test
+    void shouldGenerateTheTypeScriptServer() {
+        // WHEN the API workspace is given explicitly
+        final int exit = cli.run("tck", "generate", "--language=ts", "--bindings=" + BINDINGS,
+                "--output=" + temp.resolve("generated/ts-tck"), "--api=" + temp.resolve("api"), NEVER,
+                SPECS.toString());
+
+        // THEN the packages reference the projects of the API relative to the output
+        assertThat(err()).isEmpty();
+        assertThat(exit).isZero();
+        assertThat(temp.resolve("generated/ts-tck/server/src/CryptoServiceBindings.ts")).exists();
+        assertThat(temp.resolve("generated/ts-tck/contract/tsconfig.json")).content()
+                .contains("\"extends\": \"../../../api/tsconfig.base.json\"");
+
+        // WHEN the default: the directory ts next to the output
+        assertThat(cli.run("tck", "generate", "--language=ts", "--bindings=" + BINDINGS,
+                "--output=" + temp.resolve("other/ts-tck"), NEVER, SPECS.toString())).isZero();
+        assertThat(temp.resolve("other/ts-tck/contract/tsconfig.json")).content()
+                .contains("\"extends\": \"../../ts/tsconfig.base.json\"");
+    }
+
+    @Test
     void shouldReportTheCoverage() throws Exception {
         // WHEN
         final int exit = cli.run("tck", "check", "--bindings=" + BINDINGS, "--tck=" + tck(), NEVER,

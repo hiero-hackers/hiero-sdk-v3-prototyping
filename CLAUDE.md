@@ -65,10 +65,16 @@ tck/                           # TCK binding spike (see tck-binding.md):
   bindings/                    #   bindings of TCK methods to the API (`bindings` code blocks in Markdown)
   runtime/java/                #   hand-written runtime of the Java TCK server (JSON-RPC, converters, setup); Maven
                                #   module hiero-sdk-tck-runtime, implements generated/java-tck/contract
+  runtime/ts/                  #   the same for TypeScript (@hiero/tck-runtime), implements generated/ts-tck/contract
+  solo.env, run-tck.sh         #   TCK configuration for a local Solo network (the default) and the script that runs
+                               #   the TCK against a generated server
 generated/java-tck/            # Generated from tck/bindings and the converter catalogue (tracked in git; `metalang
                                #   tck generate`, see tooling/metalang/README.md). Never edit by hand.
                                #   contract/: interfaces the runtime implements; server/: the TCK server, compiled
                                #   against API + contract only (the runtime is a runtime dependency)
+generated/ts-tck/              # The same for TypeScript (@hiero/tck-contract, @hiero/tck-server)
+package.json                   # npm workspace of all TypeScript modules (generated API, sdk-ts/support, TCK contract,
+                               #   server and runtime); `npm run build:tck-ts` builds the TypeScript TCK server
 
 spec/                           # The actual V3 public-API specifications, written in the meta-language
   base/                         # Foundational namespaces shared by everything

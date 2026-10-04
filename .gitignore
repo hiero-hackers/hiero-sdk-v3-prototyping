@@ -7,3 +7,9 @@ generated/java/*/target/
 generated/java-tck/*/target/
 tck/runtime/java/target/
 sdk-java/support/target/
+
+# npm workspace of the TypeScript modules (package.json at the repository root)
+/node_modules/
+/package-lock.json
+generated/ts-tck/*/dist/
+generated/ts-tck/*/*.tsbuildinfo

@@ -77,7 +77,8 @@ runtime. How the implementation is found is language-specific.
 | Module | Maven + JPMS module | npm package | crate |
 | Support module | `sdk-java/support` (`hiero-sdk-support`, `org.hiero.sdk.support`) | `sdk-ts/support` (`@hiero/support`), linked into the generated workspace (npm workspaces, `tsconfig` references; location from `ts.support`) | from `guidelines/rust-files` |
 | Contract form | interfaces and records | interfaces / types | traits and types |
-| Finding the implementation | `java.util.ServiceLoader`, implementation as `runtime`-scope dependency | to be decided | to be decided |
+| Finding the implementation | `java.util.ServiceLoader`, implementation as `runtime`-scope dependency | dynamic `import` of the implementation's package name (the contract declares the module shape); the server's `tsconfig` does not reference the implementation | to be decided |
+| Linking hand-written and generated packages | Maven repository (`install`) | npm workspace at the repository root: a package resolves its imports from its real path, so all TypeScript modules need a common parent `node_modules` | to be decided |
 
 **Rejected alternatives:**
 
@@ -115,8 +116,7 @@ runtime. How the implementation is found is language-specific.
 ### Follow-ups
 
 - Rust: move `guidelines/rust-files` into a hand-written support crate that the generated crates depend on.
-- Decide, per language, how a generated contract finds its implementation (TypeScript, Rust), when the TCK server is
-  generated for them.
+- Decide for Rust how a generated contract finds its implementation, when the TCK server is generated for it.
 - The implementations of the API itself: today the generated API contains method stubs. By this decision the real
   implementation cannot be written into `generated/`; whether it follows the contract pattern (generated API types as
   contract, hand-written implementation module) has to be decided before the first method is implemented.

@@ -191,7 +191,7 @@ java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --langua
 ### Generate the TCK server and check its coverage
 
 The bindings in `tck/bindings` map the methods of the [Hiero TCK](https://github.com/hiero-ledger/hiero-sdk-tck) to the
-API (see [`tck-binding.md`](../../tck-binding.md)). `tck generate` generates two Maven projects:
+API (see [`tck-binding.md`](../../tck-binding.md)). `tck generate --language=java` generates two Maven projects:
 
 - `<output>/contract` (`hiero-sdk-tck-contract`): the contract with the runtime — interfaces and records only. The
   `Converters` interface is derived from the converter catalogue; `TckRuntime` declares JSON access, execution and the
@@ -200,10 +200,17 @@ API (see [`tck-binding.md`](../../tck-binding.md)). `tck generate` generates two
   API and the contract only; the hand-written runtime `tck/runtime/java` (`hiero-sdk-tck-runtime`) implements the
   contract, is found with the `ServiceLoader` and is only a runtime dependency.
 
+`tck generate --language=ts` generates the same two parts as npm packages, `<output>/contract`
+(`@hiero/tck-contract`) and `<output>/server` (`@hiero/tck-server`). The server is compiled against the generated API
+and the contract only and loads the hand-written runtime `tck/runtime/ts` (`@hiero/tck-runtime`) with a dynamic
+`import`. The packages reference the projects of the generated API workspace, by default the directory `ts` next to
+the output (`--api=<dir>` selects another one).
+
 `tck check` compares the bindings with the test specifications of a TCK clone:
 
 ```bash
 java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck generate --language=java --fail-on=never --config=sdk-java/generator.properties --bindings=tck/bindings --output=generated/java-tck spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck generate --language=ts --fail-on=never --config=sdk-ts/generator.properties --bindings=tck/bindings --output=generated/ts-tck spec
 java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck check --fail-on=never --bindings=tck/bindings --tck=../hiero-sdk-tck/docs/test-specifications spec
 ```
 
@@ -222,6 +229,19 @@ java -jar generated/java-tck/server/target/hiero-sdk-tck-0.1.0-SNAPSHOT.jar
 
 The server listens on port 8544 (the TCK default) or on the port given as argument; its dependencies are copied to
 `target/lib` next to the jar.
+
+The TypeScript server is built in the npm workspace of the repository root (`package.json`), which contains all
+TypeScript modules — the generated API, the support package, the TCK contract and server, and the runtime — because a
+package outside a workspace root cannot resolve its dependencies (Node.js 22):
+
+```bash
+npm install
+npm run build:tck-ts
+node generated/ts-tck/server/dist/main.js
+```
+
+`tck/run-tck.sh java|ts` starts a server and runs the TCK against it on a local Solo network (see
+[`tck-binding.md`](../../tck-binding.md), "Running the TCK").
 
 ### List all rules
 

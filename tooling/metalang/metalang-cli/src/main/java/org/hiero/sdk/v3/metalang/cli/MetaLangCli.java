@@ -31,6 +31,7 @@ import org.hiero.sdk.v3.metalang.generator.rust.RustGeneratorConfig;
 import org.hiero.sdk.v3.metalang.generator.rust.RustTestGenerator;
 import org.hiero.sdk.v3.metalang.generator.ts.TsGenerator;
 import org.hiero.sdk.v3.metalang.generator.ts.TsGeneratorConfig;
+import org.hiero.sdk.v3.metalang.generator.ts.TsTckGenerator;
 import org.hiero.sdk.v3.metalang.generator.ts.TsTestGenerator;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
@@ -51,7 +52,7 @@ import org.hiero.sdk.v3.metalang.tck.TckSpecifications;
  * metalang check --language=java|ts|rust --project=dir [--config=file] [--typescript=dir] [--cargo=executable]
  *     [--fail-on=error|warning|info|never]
  *     &lt;spec-dir-or-file&gt;
- * metalang tck generate --language=java --bindings=dir --output=dir [--config=file]
+ * metalang tck generate --language=java|ts --bindings=dir --output=dir [--config=file] [--api=dir]
  *     [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
  * metalang tck check --bindings=dir --tck=dir [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
  * metalang rules
@@ -75,7 +76,7 @@ public final class MetaLangCli {
               metalang model [options] <spec-dir-or-file>
               metalang generate --language=java|ts|rust --output=<dir> [options] <spec-dir-or-file>
               metalang check --language=java|ts|rust --project=<dir> [options] <spec-dir-or-file>
-              metalang tck generate --language=java --bindings=<dir> --output=<dir> [options] <spec-dir-or-file>
+              metalang tck generate --language=java|ts --bindings=<dir> --output=<dir> [options] <spec-dir-or-file>
               metalang tck check --bindings=<dir> --tck=<dir> <spec-dir-or-file>
               metalang rules
 
@@ -116,10 +117,12 @@ public final class MetaLangCli {
 
             Options for 'tck generate' (generates the contract with the runtime and the TCK server from the bindings
             into <output>/contract and <output>/server, see tck-binding.md):
-              --language=java                     target language (required)
+              --language=java|ts                  target language (required)
               --bindings=<dir>                    directory of the bindings files (required), e.g. tck/bindings
               --output=<dir>                      output directory (required; created if missing)
               --config=<file>                     generator configuration of the API (as for 'generate')
+              --api=<dir>                         TypeScript only: the generated API workspace (default: the
+                                                  directory 'ts' next to <output>)
               --fail-on=error|warning|info|never  do not generate if a spec finding at or above this severity
                                                   exists (default: error)
 
@@ -529,6 +532,7 @@ public final class MetaLangCli {
         String output = null;
         String tck = null;
         String config = null;
+        String api = null;
         Severity failOn = Severity.ERROR;
         final List<String> paths = new ArrayList<>();
         for (final String arg : args.subList(1, args.size())) {
@@ -546,6 +550,8 @@ public final class MetaLangCli {
                 output = arg.substring("--output=".length());
             } else if (generate && arg.startsWith("--config=")) {
                 config = arg.substring("--config=".length());
+            } else if (generate && arg.startsWith("--api=")) {
+                api = arg.substring("--api=".length());
             } else if (!generate && arg.startsWith("--tck=")) {
                 tck = arg.substring("--tck=".length());
             } else if (arg.startsWith("--")) {
@@ -554,7 +560,7 @@ public final class MetaLangCli {
                 paths.add(arg);
             }
         }
-        if (generate && !"java".equals(language)) {
+        if (generate && !"java".equals(language) && !"ts".equals(language)) {
             return usageError(language == null ? "Missing --language" : "Unsupported language '" + language + "'");
         }
         if (bindingsDirectory == null || !Files.isDirectory(Path.of(bindingsDirectory))) {
@@ -596,15 +602,25 @@ public final class MetaLangCli {
         if (bindings.hasErrors()) {
             return EXIT_FINDINGS;
         }
-        return generate ? tckGenerate(model, bindings, Path.of(output), config) : tckCheck(bindings, Path.of(tck));
+        return generate ? tckGenerate(language, model, bindings, Path.of(output), config, api)
+                : tckCheck(bindings, Path.of(tck));
     }
 
-    private int tckGenerate(final LinkedModel model, final TckBindings.Bindings bindings, final Path output,
-                            final String config) {
+    private int tckGenerate(final String language, final LinkedModel model, final TckBindings.Bindings bindings,
+                            final Path output, final String config, final String api) {
         final List<GeneratedFile> files;
         try {
-            files = new JavaTckGenerator(config == null ? JavaGeneratorConfig.DEFAULT
-                    : JavaGeneratorConfig.load(Path.of(config))).generate(model, bindings);
+            if ("ts".equals(language)) {
+                // the API workspace relative to the output: the packages reference its projects
+                final Path apiDirectory = api == null ? output.toAbsolutePath().normalize().resolveSibling("ts")
+                        : Path.of(api).toAbsolutePath().normalize();
+                files = new TsTckGenerator(config == null ? TsGeneratorConfig.DEFAULT
+                        : TsGeneratorConfig.load(Path.of(config)), output.toAbsolutePath().normalize()
+                        .relativize(apiDirectory).toString().replace('\\', '/')).generate(model, bindings);
+            } else {
+                files = new JavaTckGenerator(config == null ? JavaGeneratorConfig.DEFAULT
+                        : JavaGeneratorConfig.load(Path.of(config))).generate(model, bindings);
+            }
         } catch (final GenerationException e) {
             e.problems().forEach(p -> err.println("Cannot generate: " + p));
             return EXIT_FINDINGS;

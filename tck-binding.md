@@ -245,7 +245,8 @@ Two real conflicts remain:
 
 The spike covers the crypto-service methods `createAccount`, `updateAccount`, `deleteAccount`, `transferCrypto` and
 `getAccountInfo`, the common transaction parameters and the runtime methods `setup`, `reset` and `generateKey`, with
-Java as target language.
+Java and TypeScript as target languages. Both follow [ADR-0007](docs/adr/0007-separate-generated-and-hand-written-modules.md):
+the contract with the runtime and the server are generated, the runtime is hand-written and implements the contract.
 
 | Part | Where |
 |---|---|
@@ -256,7 +257,13 @@ Java as target language.
 | Hand-written Java runtime, implements the contract: JSON-RPC server, sessions, converters, execution flow, `setup`/`reset`/`generateKey` | [`tck/runtime/java`](tck/runtime/java): `hiero-sdk-tck-runtime`, registered for the `ServiceLoader` |
 | Java generator of contract and server | `tooling/metalang/metalang-java`, `JavaTckContractGenerator`, `JavaTckGenerator` |
 | Generated server, compiled against the generated API and the contract only; the runtime is a runtime dependency | [`generated/java-tck/server`](generated/java-tck/server): `hiero-sdk-tck` |
-| CLI | `metalang tck generate --language=java --bindings=tck/bindings --output=generated/java-tck spec` and `metalang tck check --bindings=tck/bindings --tck=<hiero-sdk-tck>/docs/test-specifications spec` |
+| TypeScript: generated contract (`Converters` derived from the catalogue, `TckRuntime`, `Source`, `Session`, `Handler`, `TckServer`, `TckRuntimeModule`) | [`generated/ts-tck/contract`](generated/ts-tck/contract): `@hiero/tck-contract` |
+| TypeScript: hand-written runtime, implements the contract | [`tck/runtime/ts`](tck/runtime/ts): `@hiero/tck-runtime`, exports `createRuntime()` |
+| TypeScript: generated server, compiled against the generated API and the contract only; it loads the runtime with a dynamic `import` of its package name (`TCK_RUNTIME` selects another one) | [`generated/ts-tck/server`](generated/ts-tck/server): `@hiero/tck-server` |
+| TypeScript generator of contract and server | `tooling/metalang/metalang-typescript`, `TsTckGenerator` |
+| npm workspace of all TypeScript modules (API, support, contract, server, runtime): node and `tsc` resolve the imports of a package from its real path, so the hand-written runtime outside `generated/` needs a `node_modules` in a common parent directory | [`package.json`](package.json) at the repository root |
+| CLI | `metalang tck generate --language=java\|ts --bindings=tck/bindings --output=generated/java-tck\|generated/ts-tck spec` and `metalang tck check --bindings=tck/bindings --tck=<hiero-sdk-tck>/docs/test-specifications spec` |
+| Running the TCK against a server, Solo by default | [`tck/run-tck.sh`](tck/run-tck.sh), [`tck/solo.env`](tck/solo.env) (see "Running the TCK") |
 
 ### Format of the bindings
 
@@ -325,13 +332,37 @@ parameters bind to the mutable attributes of `Transaction`.
   `ServiceLoader`. Every converter has exactly one canonical type for this (`timestamp` therefore only accepts
   `zonedDateTime`).
 
+### Running the TCK
+
+The default network is a local [Solo](https://solo.hiero.org) network (Solo 0.63+):
+
+1. Start Solo: `solo one-shot single deploy`.
+2. Build the server: Java — `mvn -f generated/java-tck/server package` after the steps in `tooling/metalang/README.md`;
+   TypeScript — `npm install && npm run build:tck-ts` in the repository root.
+3. Run the TCK from a clone of `hiero-sdk-tck` (with `npm install` done there):
+   `TCK_DIR=../hiero-sdk-tck tck/run-tck.sh java|ts [test file ...]`.
+
+`tck/run-tck.sh` checks that the consensus node is reachable, starts the server, copies `tck/solo.env` as `.env` into
+the TCK clone (an existing `.env` is saved as `.env.before-v3`) and runs `npm test` or `npm run test:file`. `TCK_ENV`
+selects another configuration (e.g. the TCK's `.env.testnet`). The values of `tck/solo.env` are Solo's defaults:
+operator `0.0.2` with Solo's well-known development key, consensus node `127.0.0.1:35211` (account `0.0.3`), mirror
+node REST API `http://127.0.0.1:38081`; the mirror node gRPC and REST-Java endpoints are not verified for Solo yet.
+`setup` of both runtimes uses the same Solo values for everything the TCK does not send. The TCK sends the mirror node
+as `mirrorNetworkIp`, which is its gRPC endpoint; the V3 API reads the mirror node over REST, so the runtimes take
+`MIRROR_NODE_REST_URL` from the environment (the TCK's own variable) instead.
+
+As long as the API is not implemented, every bound method fails with `-32603` (already `setup` calls stubs), and the
+TCK skips the methods without binding (`-32601`). A run against Solo has not been done yet.
+
 ## Open questions
 
 - **Methods that do not fit the uniform flow** (`airdropToken`, `submitTopicMessage` with chunks, the Mirror Node
   queries): `each` covers lists like the transfers of `transferCrypto`; do the remaining ones need more forms, or a
   hand-written handler as escape hatch?
-- **Second language:** the runtime and the generator exist for Java only; a TypeScript or Rust server would show how
-  much of the runtime can be shared in practice.
+- **Shared runtime logic:** Java and TypeScript each have a hand-written runtime of similar size (JSON access,
+  execution flow, converters, `setup`). Rust will add a third; how much of that can be avoided (e.g. by generating the
+  JSON access from the contract) is open.
+- **Solo endpoints:** the mirror node gRPC and REST-Java endpoints of Solo in `tck/solo.env` are not verified.
 - **Error mapping:** which errors of the API are `-32001` (network rejected) and which `-32603` (SDK rejected) — to be
   derived from the `@@throws` ids once the gaps above are closed.
 - **Hedera specifics in the TCK** (status strings, HBAR as fee unit) versus V3's network-neutral API (see

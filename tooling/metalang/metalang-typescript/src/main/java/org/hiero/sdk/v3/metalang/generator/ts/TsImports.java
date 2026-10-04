@@ -71,6 +71,11 @@ final class TsImports {
         return use(context.folder(error.namespace()), error.namespace(), error.name(), "errors", value);
     }
 
+    /** A declaration of a package that is not generated from the specs (e.g. the TCK contract). */
+    String external(final String specifier, final String name, final boolean value) {
+        return add(specifier, "external", name, value);
+    }
+
     /** A declaration of the hand-written support package ({@code Duration}, {@code StreamItem}, ...). */
     String support(final String name, final boolean value) {
         return add(TsNames.supportPackage(context.config()), "support", name, value);

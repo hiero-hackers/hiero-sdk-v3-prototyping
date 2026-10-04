@@ -8,7 +8,6 @@ import java.util.Set;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.ClientFactory;
 import org.hiero.hedera.HbarUnit;
-import org.hiero.hedera.HederaConstants;
 import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeyFormat;
 import org.hiero.keys.KeysFactory;
@@ -17,7 +16,6 @@ import org.hiero.ledger.ConsensusNode;
 import org.hiero.ledger.IpAddress;
 import org.hiero.ledger.MirrorNode;
 import org.hiero.ledger.Network;
-import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.tck.contract.Session;
 import org.hiero.tck.contract.Source;
@@ -28,7 +26,14 @@ import org.hiero.tck.contract.Source;
  */
 final class Utilities {
 
-    /** The ledger ID of a local network (Hiero local node / Solo). */
+    /** The consensus node of a local Solo network (Solo 0.63+, {@code solo one-shot single deploy}). */
+    static final String SOLO_NODE_IP = "127.0.0.1:35211";
+    /** The account of the consensus node of a local Solo network. */
+    static final String SOLO_NODE_ACCOUNT_ID = "0.0.3";
+    /** The mirror node REST API of a local Solo network. */
+    static final String SOLO_MIRROR_NODE_REST_URL = "http://127.0.0.1:38081";
+
+    /** The ledger ID of a local network (Solo). */
     private static final byte[] LOCAL_LEDGER_ID = {3};
 
     private final JavaTckRuntime runtime;
@@ -46,8 +51,9 @@ final class Utilities {
     }
 
     /**
-     * Creates the client of a session: the operator plus either the custom network of the parameters
-     * ({@code nodeIp}, {@code nodeAccountId}, {@code mirrorNetworkIp}) or the Hedera testnet.
+     * Creates the client of a session: the operator plus the network of the parameters ({@code nodeIp},
+     * {@code nodeAccountId}) and the mirror node REST API of the environment variable {@code MIRROR_NODE_REST_URL}
+     * (the TCK's variable); every value that is not given is the one of a local Solo network.
      */
     Object setup(final Map<String, Object> params, final Session session) {
         final Account operator = new Account(
@@ -55,22 +61,21 @@ final class Utilities {
                         converters::accountId))), "operatorAccountId"),
                 runtime.required(runtime.value(params, List.of(new Source<>("operatorPrivateKey",
                         converters::privateKey))), "operatorPrivateKey"));
-        final NetworkSetting setting;
-        if (params.get("nodeIp") != null) {
-            final String[] node = converters.string(params.get("nodeIp")).split(":");
-            final ConsensusNode consensusNode = new ConsensusNode(IpAddress.fromString(node[0]),
-                    node.length > 1 ? Integer.parseInt(node[1]) : 50211,
-                    runtime.required(runtime.value(params, List.of(new Source<>("nodeAccountId",
-                            converters::accountId))), "nodeAccountId"));
-            final Set<MirrorNode> mirrorNodes = params.get("mirrorNetworkIp") == null ? Set.of()
-                    : Set.of(new MirrorNode("http://" + converters.string(params.get("mirrorNetworkIp"))));
-            setting = new NetworkSetting(new Network<>(LOCAL_LEDGER_ID, "local", HbarUnit.TINYBAR),
-                    Set.of(consensusNode), mirrorNodes);
-        } else {
-            setting = ConfigFactory.getNetworkSetting(HederaConstants.HEDERA_TESTNET_IDENTIFIER);
-        }
+        final String[] node = converters.string(orSolo(params.get("nodeIp"), SOLO_NODE_IP)).split(":");
+        final ConsensusNode consensusNode = new ConsensusNode(IpAddress.fromString(node[0]),
+                node.length > 1 ? Integer.parseInt(node[1]) : 50211,
+                converters.accountId(orSolo(params.get("nodeAccountId"), SOLO_NODE_ACCOUNT_ID)));
+        // mirrorNetworkIp is the gRPC endpoint of the mirror node, the API uses its REST API: MIRROR_NODE_REST_URL
+        final String mirror = (String) orSolo(System.getenv("MIRROR_NODE_REST_URL"), SOLO_MIRROR_NODE_REST_URL);
+        final NetworkSetting setting = new NetworkSetting(new Network<>(LOCAL_LEDGER_ID, "local", HbarUnit.TINYBAR),
+                Set.of(consensusNode), Set.of(new MirrorNode(mirror)));
         RuntimeSession.of(session).client(ClientFactory.createClient(setting, operator));
         return Map.of("message", "Successfully setup client", "status", "SUCCESS");
+    }
+
+    /** A parameter, or the value of a local Solo network if it is not sent. */
+    private static Object orSolo(final Object value, final String solo) {
+        return value == null ? solo : value;
     }
 
     /** Drops the client of a session. */
