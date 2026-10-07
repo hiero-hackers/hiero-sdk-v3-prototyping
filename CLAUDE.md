@@ -209,6 +209,12 @@ so all method bodies of the spike are lost. The hand-written files in the `inter
 no header and survive - orphaned, and the module no longer compiles. (`generated/ts` and
 `generated/rust` are safe: their protobuf wiring comes from the generators.)
 
+**If it is gone, rebuild it with
+[`docs/rebuilding-the-java-spike.md`](docs/rebuilding-the-java-spike.md)** - a runbook with the file
+inventory, the stubs to fill, the build order and the 14 traps that cost time the first time. Start
+there, not from scratch: the spike is in git (`3caad63 "Durchstich :)"`) and restoring beats
+retyping.
+
 To find out what implementing the V3 API actually costs, the `createAccount` path of the Hiero TCK was
 implemented end to end (keys -> protobuf -> gRPC -> signing -> receipt polling). 34 of the 42 tests of
 `test-account-create-transaction.ts` pass against a local Solo network.
