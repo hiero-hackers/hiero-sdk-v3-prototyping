@@ -11,7 +11,7 @@
 set -euo pipefail
 
 directory="$(cd "$(dirname "$0")" && pwd)"
-repository="$(cd "$directory/.." && pwd)"
+repository="$(cd "$directory/../.." && pwd)"
 version="$(jq -r '.protocVersion' "$directory/sources.json")"
 
 case "$(uname -s)-$(uname -m)" in

@@ -35,14 +35,6 @@ guidelines/
   rust-files/                   # Rust support types (BoxFuture, InvalidArgumentError, ...); copied 1:1 into sdk-rust/generated
   js-files/                     # Illustrative JS reference snippets
 
-protobuf/                       # THE source of the protobuf definitions of all three node types, vendored at
-                                #   pinned versions from their upstream repositories (see protobuf/README.md).
-                                #   consensus-node/ is the base; block-node/ and mirror-node/ import from it, so
-                                #   each directory is one include root and the latter two also need
-                                #   consensus-node/ on the path. Never edit by hand: update.sh re-fetches,
-                                #   sources.json pins versions + commits, verify.sh compiles every root with
-                                #   protoc as the language-neutral proof that the tree resolves.
-
 # One folder per target language. Each holds its generator configuration, its hand-written modules and
 # its generated modules - the per-language view (ADR-0008). A module stays either wholly generated or
 # wholly hand-written (ADR-0007); `generated/` in the path is what marks the generated ones.
@@ -52,7 +44,7 @@ sdk-java/
   support/                      # Hand-written Java support types (streaming, thread-safety) as Maven module
                                 #   hiero-sdk-support; sdk-java/generated depends on it (install it first)
   protobuf/                     # Hand-written Maven module hiero-sdk-protobuf (JPMS org.hiero.sdk.protobuf). Has no
-                                #   sources of its own: it compiles /protobuf into Java at build time. NOT public
+                                #   sources of its own: it compiles /tooling/protobuf into Java at build time. NOT public
                                 #   API - every package is exported only with `exports ... to <sdk module>`.
                                 #   No gRPC codegen; the client builds its io.grpc.MethodDescriptor by hand.
   generated/                    # Generated Java API as Maven project, one sub-module/JAR per Java module (tracked in
@@ -95,12 +87,6 @@ sdk-go/
                                 #   produces gofmt's alignment itself, nothing in the build needs a Go toolchain.
                                 #   Incomplete: types only - no methods, functions, tests, protobuf or TCK part.
 
-tck/                            # The language-NEUTRAL parts of the TCK spike (see docs/tck-binding.md); everything
-                                #   language-specific lives in sdk-<lang>/tck/
-  bindings/                     #   bindings of TCK methods to the API (`bindings` code blocks in Markdown)
-  solo.env, run-tck.sh          #   TCK configuration for a local Solo network (the default) and the script that runs
-                                #   the TCK against a generated server
-
 # There are exactly two Maven builds - sdk-java/ and tooling/metalang/ - and each carries its own
 # Maven wrapper (mvnw, mvnw.cmd, .mvn/) and its own .sdkmanrc (JDK 25). Build from inside one of
 # them (`cd sdk-java && ./mvnw -f support install`); never call a locally installed `mvn`.
@@ -131,6 +117,22 @@ spec/                           # The actual V3 public-API specifications, writt
     service.md (enterprise.service)
     service-account.md (enterprise.service.account)
     service-contract.md (enterprise.service.contract)
+
+tooling/                        # Everything that is neither a specification nor one of the language SDKs
+
+tooling/protobuf/               # THE source of the protobuf definitions of all three node types, vendored at
+                                #   pinned versions from their upstream repositories (see its README.md).
+                                #   consensus-node/ is the base; block-node/ and mirror-node/ import from it, so
+                                #   each directory is one include root and the latter two also need
+                                #   consensus-node/ on the path. Never edit by hand: update.sh re-fetches,
+                                #   sources.json pins versions + commits, verify.sh compiles every root with
+                                #   protoc as the language-neutral proof that the tree resolves.
+
+tooling/tck/                    # The language-NEUTRAL parts of the TCK spike (see docs/tck-binding.md); everything
+                                #   language-specific lives in sdk-<lang>/tck/
+  bindings/                     #   bindings of TCK methods to the API (`bindings` code blocks in Markdown)
+  solo.env, run-tck.sh          #   TCK configuration for a local Solo network (the default) and the script that runs
+                                #   the TCK against a generated server
 
 tooling/metalang/               # Prototype tooling, multi-module Maven build (see its README):
   metalang-core/                #   ANTLR grammar, parser, semantic model, validator, shared generator support,
@@ -199,7 +201,7 @@ points to keep specs valid and consistent:
 
 ## Protobuf is never public API
 
-All three languages generate protobuf code from `/protobuf` at build time, and in none of them is the
+All three languages generate protobuf code from `/tooling/protobuf` at build time, and in none of them is the
 result part of the public API - the wire format changes with every network release, so exposing it
 would make every protocol change a breaking change of the SDK. Nothing generated is committed.
 
@@ -211,7 +213,7 @@ would make every protocol change a breaking change of the SDK. Nothing generated
 
 Java is the only one that needs a separate module: JPMS forbids split packages, so the protobuf
 packages must have exactly one owner. Rust and TypeScript keep the code inside the consuming crate
-resp. package. See `protobuf/README.md`, "Language bindings".
+resp. package. See `tooling/protobuf/README.md`, "Language bindings".
 
 **The generators own this wiring**, so it survives a regeneration: `java.protobuf`, `ts.protobuf` and
 `rust.protobuf` in the three `generator.properties` list the spec folders that need it (Rust also has

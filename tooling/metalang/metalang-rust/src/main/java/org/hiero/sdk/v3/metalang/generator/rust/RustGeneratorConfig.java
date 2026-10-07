@@ -32,7 +32,7 @@ public record RustGeneratorConfig(String cratePrefix, String version, Set<String
     public static final String PROTOBUF_ROOT = "rust.protobufRoot";
 
     /** The protobuf definitions of a workspace in {@code generated/rust}, seen from {@code crates/<crate>}. */
-    public static final String DEFAULT_PROTOBUF_ROOT = "../../../../protobuf/consensus-node";
+    public static final String DEFAULT_PROTOBUF_ROOT = "../../../../tooling/protobuf/consensus-node";
 
     /** The configuration without a configuration file. */
     public static final RustGeneratorConfig DEFAULT = new RustGeneratorConfig("hiero", "0.1.0");

@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>25</maven.compiler.release>
         <protobuf.version>4.31.1</protobuf.version>
-        <protobuf.root>${project.basedir}/../../protobuf</protobuf.root>
+        <protobuf.root>${project.basedir}/../../tooling/protobuf</protobuf.root>
     </properties>
 
     <dependencies>

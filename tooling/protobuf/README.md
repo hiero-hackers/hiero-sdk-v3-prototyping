@@ -14,7 +14,7 @@ Everything here is **vendored, never edited by hand**. [`update.sh`](update.sh) 
 |---|---|---|---|---|
 | [`consensus-node/`](consensus-node) | [hiero-consensus-node](https://github.com/hiero-ledger/hiero-consensus-node) | `v0.77.2` | `hapi/hedera-protobuf-java-api/src/main/proto` | 208 |
 | [`block-node/`](block-node) | [hiero-block-node](https://github.com/hiero-ledger/hiero-block-node) | `v0.44.2` | `protobuf-sources/src/main/proto` | 18 |
-| [`mirror-node/`](mirror-node) | [hiero-mirror-node](https://github.com/hiero-ledger/hiero-mirror-node) | `v0.164.0` | `protobuf/src/main/proto` | 2 |
+| [`mirror-node/`](mirror-node) | [hiero-mirror-node](https://github.com/hiero-ledger/hiero-mirror-node) | `v0.164.0` | `tooling/protobuf/src/main/proto` | 2 |
 
 All three are Apache-2.0. The exact commit of every pin is recorded in
 [`sources.json`](sources.json); only `.proto` files are copied, the upstream build configuration is
@@ -90,7 +90,7 @@ protobuf/verify.sh
 
 Compiles every `.proto` of every root with `protoc` and writes one `FileDescriptorSet` per root.
 That is the language-neutral proof that the tree is complete and that every import resolves — any
-generator can be pointed at these roots. `--keep` leaves the descriptor sets in `protobuf/target/`.
+generator can be pointed at these roots. `--keep` leaves the descriptor sets in `tooling/protobuf/target/`.
 
 `protoc` and the well-known types (`google/protobuf/*.proto`, which ship inside `protobuf-java` and
 not inside `protoc`) are fetched through the repository's Maven wrapper, so no protobuf

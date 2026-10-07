@@ -19,7 +19,7 @@
 #   ts:   sdk-ts/tck/generated/server/dist/main.js (npm install && npm run build:tck-ts in sdk-ts)
 set -euo pipefail
 
-repository="$(cd "$(dirname "$0")/.." && pwd)"
+repository="$(cd "$(dirname "$0")/../.." && pwd)"
 language="${1:-}"
 if [[ "$language" != "java" && "$language" != "ts" ]]; then
   echo "Usage: tck/run-tck.sh java|ts [TCK test file ...]" >&2

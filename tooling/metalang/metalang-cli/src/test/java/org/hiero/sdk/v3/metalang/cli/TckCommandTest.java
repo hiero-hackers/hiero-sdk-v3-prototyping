@@ -13,7 +13,7 @@ import org.junit.jupiter.api.io.TempDir;
 class TckCommandTest {
 
     private static final Path SPECS = Path.of(System.getProperty("spec.root", "../../../spec"));
-    private static final Path BINDINGS = SPECS.resolveSibling("tck/bindings");
+    private static final Path BINDINGS = SPECS.resolveSibling("tooling/tck/bindings");
     /** The specs of the repository have open findings; the TCK commands work on the model nevertheless. */
     private static final String NEVER = "--fail-on=never";
 

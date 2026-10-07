@@ -40,7 +40,7 @@ import org.junit.jupiter.api.io.TempDir;
 class JavaTckGeneratorTest {
 
     private static final Path SPECS = Path.of(System.getProperty("spec.root", "../../../spec"));
-    private static final Path BINDINGS = SPECS.resolveSibling("tck/bindings");
+    private static final Path BINDINGS = SPECS.resolveSibling("tooling/tck/bindings");
     /** The sources of the hand-written runtime, a dependency of the generated server. */
     private static final Path RUNTIME = SPECS.resolveSibling("sdk-java/tck/runtime/src/main/java");
 

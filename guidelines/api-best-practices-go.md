@@ -363,7 +363,7 @@ a module is either generated or hand-written, never both.
 
 ## Protobuf
 
-The protobuf messages are generated from the vendored definitions in [`/protobuf`](../protobuf) with
+The protobuf messages are generated from the vendored definitions in [`/tooling/protobuf`](../tooling/protobuf) with
 `protoc-gen-go`, into **`internal/proto`**. They are not part of the public API, and in Go that is enforced by the
 toolchain rather than by convention: a package under `internal/` can only be imported from within the subtree
 rooted at its parent directory. Of the four target languages this is the strongest mechanism — Java needs a

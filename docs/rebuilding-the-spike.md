@@ -181,7 +181,7 @@ slice implements them with plain classes in `src/internal/`; nothing has to be s
 | `packages/base/src/internal/keys.ts` | Ed25519 and ECDSA secp256k1 over `@noble/curves`, PKCS#8/SPKI |
 | `packages/base/src/internal/pem.ts` | PEM envelope ↔ DER |
 | `packages/base/src/internal/ledger.ts` | `DefaultTransactionId` |
-| `packages/consensus-node-client/src/internal/protobuf.ts` | API types ↔ HAPI messages (`@bufbuild/protobuf`) |
+| `packages/consensus-node-client/src/internal/protobuf.ts` | API types ↔ HAPI messages (`@bufbuild/tooling/protobuf`) |
 | `packages/consensus-node-client/src/internal/client.ts` | `ClientRuntime`: gRPC, node selection, submit, receipt polling, the registries |
 | `packages/consensus-node-client/src/internal/packed.ts` | `DefaultPackedTransaction` |
 | `.../consensusnode/transactions/HapiTransactionStatus.ts` | one constant per `ResponseCodeEnum` value |
@@ -191,7 +191,7 @@ slice implements them with plain classes in `src/internal/`; nothing has to be s
 `Response.queryReceipt`, `AccountCreateTransaction.signWithOperator`.
 
 **Dependencies** (in the repository-root `package.json`, which is hand-written): `@noble/curves`, `@noble/hashes`
-and `@grpc/grpc-js`. The protobuf runtime `@bufbuild/protobuf` is already wired by the generator (`ts.protobuf`).
+and `@grpc/grpc-js`. The protobuf runtime `@bufbuild/tooling/protobuf` is already wired by the generator (`ts.protobuf`).
 
 **Build and verify**
 

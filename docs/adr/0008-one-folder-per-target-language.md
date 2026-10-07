@@ -8,7 +8,7 @@
 [ADR-0007](0007-separate-generated-and-hand-written-modules.md) decided that a module is either completely
 generated or completely hand-written, and made that visible by putting every generated module under a top-level
 `generated/` directory. The repository was therefore cut along the axis *generated vs. hand-written*: `sdk-<lang>/`
-held the configuration and the hand-written modules, `generated/<lang>/` the generated ones, and `tck/` the TCK
+held the configuration and the hand-written modules, `generated/<lang>/` the generated ones, and `tooling/tck/` the TCK
 parts of every language at once.
 
 That cut spread one language over several places. Java lived in five locations across three top-level directories:
@@ -19,7 +19,7 @@ That cut spread one language over several places. Java lived in five locations a
 | hand-written modules | `sdk-java/support`, `sdk-java/protobuf` |
 | generated API | `generated/java` |
 | generated TCK contract and server | `generated/java-tck` |
-| hand-written TCK runtime | `tck/runtime/java` |
+| hand-written TCK runtime | `tooling/tck/runtime/java` |
 
 The symptom that made this visible is that `sdk-rust/` and `sdk-go/` contained **one file each**
 (`generator.properties`), while everything else belonging to those languages sat under `generated/`.
@@ -27,11 +27,11 @@ The symptom that made this visible is that `sdk-rust/` and `sdk-go/` contained *
 Two further consequences:
 
 - **The npm workspace had to live at the repository root.** Its members (`sdk-ts/support`,
-  `generated/ts/packages/*`, `generated/ts-tck/*`, `tck/runtime/ts`) spanned three top-level directories, and npm
+  `generated/ts/packages/*`, `generated/ts-tck/*`, `tooling/tck/runtime/ts`) spanned three top-level directories, and npm
   requires the workspace root to be an ancestor of every member. `package.json` and `package-lock.json` were in the
   root only because the layout forced them there.
 - **Adding a language touched three places** — a new `sdk-<lang>/`, a new `generated/<lang>/`, and later a
-  `tck/runtime/<lang>/`.
+  `tooling/tck/runtime/<lang>/`.
 
 ## Decision
 
@@ -60,7 +60,7 @@ Two rules keep the distinction visible:
 1. **`generated/` always appears in the path of a generated module**, so "do not edit by hand" is readable from the
    path alone, exactly as before.
 2. **Language-neutral things stay out of `sdk-<lang>/`.** The TCK bindings are declared once and generated per
-   language, so they remain in `tck/`, together with `run-tck.sh` and the Solo configuration.
+   language, so they remain in `tooling/tck/`, together with `run-tck.sh` and the Solo configuration.
 
 The npm workspace moves to `sdk-ts/`, which is now the common ancestor of every TypeScript module.
 

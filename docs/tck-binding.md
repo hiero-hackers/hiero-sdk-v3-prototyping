@@ -56,7 +56,7 @@ every API element is named and typed in Java, TypeScript and Rust.
 
 ### 1. A binding per TCK method
 
-A language-neutral binding file (e.g. `tck/bindings/crypto-service.md`) declares each TCK method against the
+A language-neutral binding file (e.g. `tooling/tck/bindings/crypto-service.md`) declares each TCK method against the
 meta-language model. Sketch (syntax to be designed in the spike):
 
 ```
@@ -250,7 +250,7 @@ the contract with the runtime and the server are generated, the runtime is hand-
 
 | Part | Where |
 |---|---|
-| Bindings | [`tck/bindings`](../tck/bindings): `crypto-service.md`, `common.md` |
+| Bindings | [`tooling/tck/bindings`](../tooling/tck/bindings): `crypto-service.md`, `common.md` |
 | Parser, resolver against the spec model, converter catalogue | `tooling/metalang/metalang-core`, package `org.hiero.sdk.v3.metalang.tck` (`BindingParser`, `TckBindings`, `Converter`) |
 | Reader of the TCK test specifications and coverage check | same package (`TckSpecifications`, `TckCoverage`) |
 | Generated contract with the runtime: `Converters` (derived from the converter catalogue), `TckRuntime`, `Source`, `Session`, `Handler`, `TckServer` — interfaces and records only | [`sdk-java/tck/generated/contract`](../sdk-java/tck/generated/contract): `hiero-sdk-tck-contract` |
@@ -263,7 +263,7 @@ the contract with the runtime and the server are generated, the runtime is hand-
 | TypeScript generator of contract and server | `tooling/metalang/metalang-typescript`, `TsTckGenerator` |
 | npm workspace of all TypeScript modules (API, support, contract, server, runtime): node and `tsc` resolve the imports of a package from its real path, so the hand-written runtime outside `generated/` needs a `node_modules` in a common parent directory | [`sdk-ts/package.json`](../sdk-ts/package.json) — `sdk-ts/` is that common parent (ADR-0008) |
 | CLI | `metalang tck generate --language=java\|ts --bindings=tck/bindings --output=sdk-java/tck/generated\|sdk-ts/tck/generated spec` and `metalang tck check --bindings=tck/bindings --tck=<hiero-sdk-tck>/docs/test-specifications spec` |
-| Running the TCK against a server, Solo by default | [`tck/run-tck.sh`](../tck/run-tck.sh), [`tck/solo.env`](../tck/solo.env) (see "Running the TCK") |
+| Running the TCK against a server, Solo by default | [`tooling/tck/run-tck.sh`](../tooling/tck/run-tck.sh), [`tooling/tck/solo.env`](../tooling/tck/solo.env) (see "Running the TCK") |
 
 ### Format of the bindings
 
@@ -342,9 +342,9 @@ The default network is a local [Solo](https://solo.hiero.org) network (Solo 0.63
 3. Run the TCK from a clone of `hiero-sdk-tck` (with `npm install` done there):
    `TCK_DIR=../hiero-sdk-tck tck/run-tck.sh java|ts [test file ...]`.
 
-`tck/run-tck.sh` checks that the consensus node is reachable, starts the server, copies `tck/solo.env` as `.env` into
+`tooling/tck/run-tck.sh` checks that the consensus node is reachable, starts the server, copies `tooling/tck/solo.env` as `.env` into
 the TCK clone (an existing `.env` is saved as `.env.before-v3`) and runs `npm test` or `npm run test:file`. `TCK_ENV`
-selects another configuration (e.g. the TCK's `.env.testnet`). The values of `tck/solo.env` are Solo's defaults:
+selects another configuration (e.g. the TCK's `.env.testnet`). The values of `tooling/tck/solo.env` are Solo's defaults:
 operator `0.0.2` with Solo's well-known development key, consensus node `127.0.0.1:35211` (account `0.0.3`), mirror
 node REST API `http://127.0.0.1:38081`; the mirror node gRPC and REST-Java endpoints are not verified for Solo yet.
 `setup` of both runtimes uses the same Solo values for everything the TCK does not send. The TCK sends the mirror node
@@ -367,7 +367,7 @@ node, the server answers, and `setup` fails on the stub.
 - **Shared runtime logic:** Java and TypeScript each have a hand-written runtime of similar size (JSON access,
   execution flow, converters, `setup`). Rust will add a third; how much of that can be avoided (e.g. by generating the
   JSON access from the contract) is open.
-- **Solo endpoints:** the mirror node gRPC and REST-Java endpoints of Solo in `tck/solo.env` are not verified.
+- **Solo endpoints:** the mirror node gRPC and REST-Java endpoints of Solo in `tooling/tck/solo.env` are not verified.
 - **Error mapping:** which errors of the API are `-32001` (network rejected) and which `-32603` (SDK rejected) — to be
   derived from the `@@throws` ids once the gaps above are closed.
 - **Hedera specifics in the TCK** (status strings, HBAR as fee unit) versus V3's network-neutral API (see

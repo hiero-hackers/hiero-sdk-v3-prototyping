@@ -62,13 +62,14 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | `sdk-<lang>/generated/` | The generated API. Never edited by hand — except the Java and TypeScript ones, which currently carry the `AccountCreateTransaction` spike |
 | `sdk-java/support/`, `sdk-ts/support/` | Hand-written support types the generated API depends on (`@ThreadSafe`, streaming; `Duration`, `StreamItem`, `AbstractConstructor`) |
 | `sdk-<lang>/tck/` | The language-specific TCK parts: `generated/` (contract + server) and `runtime/` (hand-written) |
-| `tck/` | The language-neutral TCK parts: the bindings, the Solo configuration and `run-tck.sh` |
+| `tooling/tck/` | The language-neutral TCK parts: the bindings, the Solo configuration and `run-tck.sh` |
 | [`docs/pipeline.html`](docs/pipeline.html) | How the generator, the protobuf tree and the TCK server fit together — folder map and diagrams (open it in a browser) |
 | [`docs/missing-features.md`](docs/missing-features.md) | What the V3 specs do not cover yet, measured against the v2 SDKs — the feature backlog |
 | [`docs/TODO.md`](docs/TODO.md) | Open follow-up tasks on the guides, the meta-language and the specs |
 | [`docs/TCK.md`](docs/TCK.md), [`docs/tck-binding.md`](docs/tck-binding.md), [`docs/tck-ideas.md`](docs/tck-ideas.md) | Three approaches to testing V3 against the Hiero TCK; `tck-binding.md` is the one with a spike |
 | [`docs/adr/`](docs/adr) | Architecture decision records |
-| [`protobuf/`](protobuf) | The protobuf definitions of consensus, block and mirror node, vendored at pinned versions — one source for every generator |
+| [`tooling/metalang/`](tooling/metalang) | The spec tooling: parser, validator and the generators for Java, TypeScript, Rust and Go, plus the `metalang` CLI |
+| [`tooling/protobuf/`](tooling/protobuf) | The protobuf definitions of consensus, block and mirror node, vendored at pinned versions — one source for every generator |
 | `spec/base/` | Foundational namespaces: `ledger`, `keys`, `hbar`, `common`, `proto`, `grpc` |
 | `spec/consensus-node-client/` | Low-level client: build, sign, and execute transactions (incl. an SPI for custom services) |
 | `spec/mirror-node-client/` | Querying the Hiero Mirror Node REST API |
@@ -138,7 +139,7 @@ CLI jar the tooling produces targets `release` 21, so it runs on any JDK 21 or n
 ## Running the TCK
 
 The [Hiero TCK](https://github.com/hiero-ledger/hiero-sdk-tck) can be run against a TCK server generated from the
-bindings in [`tck/bindings`](tck/bindings) (see [`tck-binding.md`](docs/tck-binding.md)). The default network is a local
+bindings in [`tooling/tck/bindings`](tooling/tck/bindings) (see [`tck-binding.md`](docs/tck-binding.md)). The default network is a local
 [Solo](https://solo.hiero.org) network (Solo 0.63+). As long as the API is only generated stubs, every bound method
 fails with `-32603` (already `setup` calls stubs) and the TCK skips the methods without binding (`-32601`); a run
 shows whether server, network and TCK work together.
@@ -208,8 +209,8 @@ TCK_DIR=../hiero-sdk-tck tck/run-tck.sh java src/tests/crypto-service/test-accou
 TCK_DIR=../hiero-sdk-tck tck/run-tck.sh java
 ```
 
-[`tck/run-tck.sh`](tck/run-tck.sh) checks that Solo is reachable at `127.0.0.1:35211`, starts the server on port 8544,
-copies [`tck/solo.env`](tck/solo.env) as `.env` into the TCK clone (an existing `.env` is saved as `.env.before-v3`)
+[`tooling/tck/run-tck.sh`](tooling/tck/run-tck.sh) checks that Solo is reachable at `127.0.0.1:35211`, starts the server on port 8544,
+copies [`tooling/tck/solo.env`](tooling/tck/solo.env) as `.env` into the TCK clone (an existing `.env` is saved as `.env.before-v3`)
 and runs the tests. The HTML report is in `../hiero-sdk-tck/mochawesome-report`. `TCK_ENV=<file>` selects another
 configuration.
 
@@ -237,10 +238,10 @@ TCK_SERVER_LOG=debug TCK_DIR=../hiero-sdk-tck tck/run-tck.sh java
 Possible stumbling blocks:
 
 - The TCK's preflight checks that the mirror node REST API, the consensus node and the JSON-RPC server are reachable.
-  If it reports the mirror node, the port in `tck/solo.env` (`MIRROR_NODE_REST_URL`, `38081`) does not match.
-- Solo 0.62 and earlier use the ports `50211` and `8081`: adjust `tck/solo.env` or pass your own file with
+  If it reports the mirror node, the port in `tooling/tck/solo.env` (`MIRROR_NODE_REST_URL`, `38081`) does not match.
+- Solo 0.62 and earlier use the ports `50211` and `8081`: adjust `tooling/tck/solo.env` or pass your own file with
   `TCK_ENV=…`.
-- If a port is taken, Solo uses another one and logs `Using available port …`; adjust `tck/solo.env` accordingly.
+- If a port is taken, Solo uses another one and logs `Using available port …`; adjust `tooling/tck/solo.env` accordingly.
 
 ## Target languages
 

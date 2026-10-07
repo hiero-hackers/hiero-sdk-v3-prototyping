@@ -15,7 +15,7 @@ class RepositoryBindingsTest {
     @Test
     void theBindingsOfTheRepositoryShouldResolve() throws Exception {
         // WHEN
-        final TckBindings.Bindings bindings = TckBindings.read(SPECS.resolveSibling("tck/bindings"),
+        final TckBindings.Bindings bindings = TckBindings.read(SPECS.resolveSibling("tooling/tck/bindings"),
                 LinkedModel.of(new MetaLang().validate(SPECS).model()));
 
         // THEN

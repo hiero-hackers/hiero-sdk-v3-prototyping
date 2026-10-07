@@ -14,7 +14,7 @@
   "scripts": {
     "build:tck-ts": "tsc --build tck/runtime tck/generated/server",
     "tck-ts": "node tck/generated/server/dist/main.js",
-    "gen:proto-ts": "buf generate --template buf.gen.yaml --exclude-path ../protobuf/consensus-node/mirror ../protobuf/consensus-node"
+    "gen:proto-ts": "buf generate --template buf.gen.yaml --exclude-path ../tooling/protobuf/consensus-node/mirror ../tooling/protobuf/consensus-node"
   },
   "devDependencies": {
     "@bufbuild/buf": "^1.73.0",

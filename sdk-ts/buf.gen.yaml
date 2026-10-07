@@ -1,4 +1,4 @@
-# Generates the TypeScript protobuf code of the SDK from the vendored definitions in /protobuf.
+# Generates the TypeScript protobuf code of the SDK from the vendored definitions in /tooling/protobuf.
 #
 # The output is build output, not source: it is written into the consuming package under
 # src/internal/proto and is ignored by git. It is deliberately absent from the "exports" map of that

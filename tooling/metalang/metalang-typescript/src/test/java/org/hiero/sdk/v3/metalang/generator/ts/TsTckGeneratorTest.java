@@ -32,7 +32,7 @@ class TsTckGeneratorTest {
     static void generate() throws IOException {
         model = LinkedModel.of(new MetaLang().validate(SPECS).model());
         files = new TsTckGenerator(TsGeneratorConfig.DEFAULT, "../../generated")
-                .generate(model, TckBindings.read(REPOSITORY.resolve("tck/bindings"), model));
+                .generate(model, TckBindings.read(REPOSITORY.resolve("tooling/tck/bindings"), model));
     }
 
     private static String content(final String path) {

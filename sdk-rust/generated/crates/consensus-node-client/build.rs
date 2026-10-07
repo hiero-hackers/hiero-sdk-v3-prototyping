@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 
 fn main() -> Result<()> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../../../protobuf/consensus-node")
+        .join("../../../../tooling/protobuf/consensus-node")
         .canonicalize()?;
 
     let mut files: Vec<PathBuf> = Vec::new();
