@@ -45,9 +45,17 @@ sdk-java/generator.properties  # Java generator configuration (e.g. java.interfa
 sdk-java/support/              # Hand-written Java support types (streaming, thread-safety) as Maven module
                                #   hiero-sdk-support; generated/java depends on it (install it first)
 sdk-java/protobuf/             # Hand-written Maven module hiero-sdk-protobuf (JPMS org.hiero.sdk.protobuf): the
-                               #   HAPI .proto sources; the Java classes are build output. Only `option
-                               #   java_package` was changed to org.hiero.hapi.proto. No gRPC codegen - the
+                               #   HAPI .proto sources; the Java classes are build output. No gRPC codegen - the
                                #   consensus node client builds its io.grpc.MethodDescriptor by hand.
+                               #   NOTE: still carries its own older copy of the protos in the flat
+                               #   pre-`services/` layout; migrating it to protobuf/ is the next step.
+protobuf/                      # THE source of the protobuf definitions of all three node types, vendored at
+                               #   pinned versions from their upstream repositories (see protobuf/README.md).
+                               #   consensus-node/ is the base; block-node/ and mirror-node/ import from it, so
+                               #   each directory is one include root and the latter two also need
+                               #   consensus-node/ on the path. Never edit by hand: update.sh re-fetches,
+                               #   sources.json pins versions + commits, verify.sh compiles every root with
+                               #   protoc as the language-neutral proof that the tree resolves.
 generated/java/                # Generated Java API as Maven project, one sub-module/JAR per Java module (tracked in
                                #   git; regenerate after spec or generator changes, commands in
                                #   tooling/metalang/README.md). !! CURRENTLY HAND-EDITED, DO NOT REGENERATE - see

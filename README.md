@@ -58,6 +58,7 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | `guidelines/js-files/` | Illustrative reference snippets (not a buildable module) |
 | `sdk-java/support/` | Hand-written Java support types (`@ThreadSafe`, streaming), a dependency of the generated Java API |
 | `sdk-ts/support/` | Hand-written TypeScript support types (`Duration`, `StreamItem`, `AbstractConstructor`), a dependency of the generated TypeScript API |
+| [`protobuf/`](protobuf) | The protobuf definitions of consensus, block and mirror node, vendored at pinned versions — one source for every generator |
 | `spec/base/` | Foundational namespaces: `ledger`, `keys`, `hbar`, `common`, `proto`, `grpc` |
 | `spec/consensus-node-client/` | Low-level client: build, sign, and execute transactions (incl. an SPI for custom services) |
 | `spec/mirror-node-client/` | Querying the Hiero Mirror Node REST API |

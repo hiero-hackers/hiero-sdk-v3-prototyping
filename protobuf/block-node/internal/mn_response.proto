@@ -1,0 +1,45 @@
+// SPDX-License-Identifier: Apache-2.0
+syntax = "proto3";
+
+package org.hiero.block.internal;
+
+option java_package = "org.hiero.block.internal.protoc";
+// <<<pbj.java_package = "org.hiero.block.internal">>> This comment is special code for setting PBJ Compiler java package
+option java_multiple_files = true;
+
+message MirrorNodeNodesResponse {
+    repeated NodeEntry nodes = 1;
+    LinkEntry links = 2;
+}
+
+message LinkEntry {
+    string next = 1;
+}
+
+message NodeEntry {
+    int64 node_id = 1;
+    string public_key = 2;
+    TimestampRange timestamp = 3;
+}
+
+message TimestampRange {
+    string from = 1;
+    string to = 2;
+}
+
+/**
+ * Response from the Mirror Node GET /api/v1/blocks endpoint.
+ * Used to convert address-book timestamp ranges into block number ranges.
+ */
+message MirrorNodeBlocksResponse {
+    repeated BlockEntry blocks = 1;
+    LinkEntry links = 2;
+}
+
+/**
+ * A single block entry from the Mirror Node blocks response.
+ * Only the block number is used; other fields are ignored.
+ */
+message BlockEntry {
+    int64 number = 1;
+}

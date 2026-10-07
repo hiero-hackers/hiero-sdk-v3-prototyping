@@ -1,0 +1,35 @@
+{
+  "$comment": "Pinned upstream sources of the vendored protobuf definitions. 'commit', 'files' and 'updated' are written by protobuf/update.sh; everything else is edited by hand.",
+  "license": "Apache-2.0",
+  "protocVersion": "4.31.1",
+  "sources": {
+    "consensus-node": {
+      "repository": "https://github.com/hiero-ledger/hiero-consensus-node.git",
+      "tag": "v0.77.2",
+      "path": "hapi/hedera-protobuf-java-api/src/main/proto",
+      "description": "The Hiero API (HAPI). The base every other node type imports from: 'services' holds the transaction and query definitions, 'block' the block stream, 'streams' the record stream, 'platform' the consensus internals.",
+      "includeRoot": true,
+      "commit": "74a11d913a948651132c282d93aa46662751aaa9",
+      "files": 208
+    },
+    "block-node": {
+      "repository": "https://github.com/hiero-ledger/hiero-block-node.git",
+      "tag": "v0.44.2",
+      "path": "protobuf-sources/src/main/proto",
+      "description": "The block node's own service definitions ('block-node/api') and its internal state messages ('internal'). They import 'block/stream/*' from the consensus node.",
+      "includeRoot": true,
+      "commit": "99db631674ceabf9a0e36975b9790f844102e615",
+      "files": 18
+    },
+    "mirror-node": {
+      "repository": "https://github.com/hiero-ledger/hiero-mirror-node.git",
+      "tag": "v0.164.0",
+      "path": "protobuf/src/main/proto",
+      "description": "The mirror node's gRPC API (the REST API is specified in OpenAPI, not protobuf). Imports 'services/*' from the consensus node.",
+      "includeRoot": true,
+      "commit": "77e56d159f2e62050e1b510128daf9269af92624",
+      "files": 2
+    }
+  },
+  "updated": "2026-10-07T10:11:06Z"
+}
