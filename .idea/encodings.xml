@@ -9,6 +9,8 @@
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-cli/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-core/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-core/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-go/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-go/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-java/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-java/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-rust/src/main/java" charset="UTF-8" />

@@ -260,8 +260,8 @@ attributes are simply left out. There is no separate builder type.
 ### Accessors and setters
 
 An attribute is read through a **getter with the attribute's name** — `node.port`, not `node.getPort()`. The
-published package has no `getPort`, so this is the form a JavaScript caller sees as well; the
-[JavaScript guideline](api-best-practices-js.md#accessors) states the same rule.
+published package has no `getPort`, so this is the form a JavaScript caller sees as well — see
+[Reading and changing attributes](api-best-practices-js.md#reading-and-changing-attributes).
 
 A mutable attribute (one without `@@immutable`) additionally gets a **property setter** that runs the same checks as
 the constructor:
@@ -712,6 +712,13 @@ error cases next to the happy path.
   can be added, and the Java guideline maps this to `ServiceLoader` plus `provides`/`uses`. TypeScript has no
   discovery mechanism; a registry that an application fills explicitly is the likely answer, but it is not
   specified. — open
+
+- **The runtime checks do not verify the type.** A constructor rejects `null` and `undefined` and checks the
+  numeric range, but nothing checks that a value *is* a `bigint`, a `string` or a `Uint8Array`. Because a range
+  comparison coerces, `new AccountId({ … num: 1001 })` and even `num: "1001"` pass and are stored as given. The
+  compiler protects TypeScript callers; a JavaScript caller gets silent corruption, which is exactly the case
+  [Defensive implementation](#defensive-implementation) is supposed to cover. A `typeof`/`instanceof` check per
+  attribute would close it. — open
 
 - **No logging guidance.** The Java guideline prescribes `System.Logger`, so that consumers can plug in a backend.
   JavaScript has no equivalent facade. Should the SDK log at all, and if so through an injectable interface? — open
