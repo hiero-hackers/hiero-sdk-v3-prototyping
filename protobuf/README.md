@@ -123,8 +123,14 @@ mechanism:
 | Rust | `OUT_DIR` of `hiero-consensus-node-client`, included by `src/proto.rs` | `mod proto;` without `pub` in `lib.rs` | an integration test gets *module `proto` is private* |
 | TypeScript | `packages/consensus-node-client/src/internal/proto` | the subpath is absent from `exports` in `package.json` | an importer gets `ERR_PACKAGE_PATH_NOT_EXPORTED` |
 
-All three compile the same 207 files: the consensus node root without `mirror/`, which duplicates
-the mirror node's own definitions.
+All three compile the consensus node root. Java and TypeScript exclude `mirror/` (207 files), which
+duplicates the mirror node's own definitions and would collide with them in one Java package resp.
+one generated output; Rust compiles it too (208), because prost derives its module path from the
+proto package and nothing collides there.
+
+**Which modules get the protobuf code is generator configuration**, not something the specs express:
+`java.protobuf`, `ts.protobuf` and `rust.protobuf` list the spec folders, so the wiring survives a
+regeneration (see `tooling/metalang/README.md`).
 
 **Java needs a separate module, the other two do not.** JPMS forbids a package from being split
 across modules, so the protobuf packages must have exactly one owner — hence one module plus
@@ -140,7 +146,8 @@ npm run gen:proto-ts                       # TypeScript (buf + protoc-gen-es, se
 ```
 
 The TypeScript step is explicit because `tsc` cannot generate sources itself; Java and Rust run
-their generator as part of the normal build.
+their generator as part of the normal build — the Rust `build.rs` is itself emitted by the
+metalang generator.
 
 ## Not covered here
 

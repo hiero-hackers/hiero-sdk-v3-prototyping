@@ -97,6 +97,58 @@ class TsGeneratorTest {
         }
 
         @Test
+        void shouldWireTheProtobufRuntimeOnlyIntoTheConfiguredPackages() {
+            // GIVEN the client folder is configured to need the protobuf messages
+            final TsGeneratorConfig config = new TsGeneratorConfig("@acme", "1.2.3",
+                    TsGeneratorConfig.DEFAULT_SUPPORT, java.util.Set.of("client"));
+
+            // WHEN
+            final List<GeneratedFile> files = new TsGenerator(config).generate(model(
+                    Map.of("base/b.md", "namespace b\nPoint { @@immutable x: int32 }\n",
+                            "client/c.md", "namespace c\nLine { @@immutable n: int32 }\n")));
+
+            // THEN the configured package depends on the runtime, the other one does not
+            assertThat(file(files, "packages/client/package.json"))
+                    .contains("\"" + TsProjectGenerator.PROTOBUF_RUNTIME + "\": \""
+                            + TsProjectGenerator.PROTOBUF_RUNTIME_VERSION + "\"");
+            assertThat(file(files, "packages/base/package.json"))
+                    .doesNotContain(TsProjectGenerator.PROTOBUF_RUNTIME);
+
+            // AND the messages are no subpath of "exports": that is what keeps them inside the package
+            assertThat(file(files, "packages/client/package.json"))
+                    .doesNotContain(TsProjectGenerator.PROTOBUF_DIRECTORY);
+
+            // AND they are build output, like dist
+            assertThat(file(files, ".gitignore"))
+                    .contains("packages/*/" + TsProjectGenerator.PROTOBUF_DIRECTORY + "/");
+        }
+
+        @Test
+        void shouldGenerateNoProtobufWiringWithoutConfiguration() {
+            // WHEN
+            final List<GeneratedFile> files = generate("namespace a\nX { @@immutable n: int32 }\n");
+
+            // THEN
+            assertThat(file(files, "packages/f/package.json")).doesNotContain(TsProjectGenerator.PROTOBUF_RUNTIME);
+            assertThat(file(files, ".gitignore")).doesNotContain(TsProjectGenerator.PROTOBUF_DIRECTORY);
+        }
+
+        @Test
+        void shouldReadAndValidateTheProtobufFolders() throws Exception {
+            // GIVEN
+            final Path config = temp.resolve("protobuf.properties");
+
+            // WHEN / THEN
+            Files.writeString(config, "ts.protobuf = consensus-node-client, mirror-node-client\n");
+            assertThat(TsGeneratorConfig.load(config).protobuf())
+                    .containsExactlyInAnyOrder("consensus-node-client", "mirror-node-client");
+            Files.writeString(config, "ts.protobuf = Node_Client\n");
+            assertThatThrownBy(() -> TsGeneratorConfig.load(config))
+                    .isInstanceOfSatisfying(GenerationException.class, e -> assertThat(e.problems()).containsExactly(
+                            "'Node_Client' in ts.protobuf is no spec folder (lowercase, '-' separated)"));
+        }
+
+        @Test
         void shouldRejectInvalidConfigurationsAndFolders() throws Exception {
             assertThatThrownBy(() -> new TsGeneratorConfig("hiero", "x"))
                     .isInstanceOfSatisfying(GenerationException.class, e -> assertThat(e.problems()).hasSize(2));

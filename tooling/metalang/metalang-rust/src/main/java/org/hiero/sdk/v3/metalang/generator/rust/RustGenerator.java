@@ -86,6 +86,10 @@ public final class RustGenerator {
             crate.add(RustProjectGenerator.library(folder, support, context));
             crate.addAll(RustTestGenerator.testModules(folder.name(), tests, context));
             crate.addAll(tests);
+            if (context.config().protobuf().contains(folder.name())) {
+                crate.add(RustProjectGenerator.buildScript(folder, context));
+                crate.add(RustProjectGenerator.protoModule(folder));
+            }
             crate.add(RustProjectGenerator.manifest(folder, crate, context));
             files.addAll(crate);
         }

@@ -197,10 +197,17 @@ Java is the only one that needs a separate module: JPMS forbids split packages, 
 packages must have exactly one owner. Rust and TypeScript keep the code inside the consuming crate
 resp. package. See `protobuf/README.md`, "Language bindings".
 
+**The generators own this wiring**, so it survives a regeneration: `java.protobuf`, `ts.protobuf` and
+`rust.protobuf` in the three `generator.properties` list the spec folders that need it (Rust also has
+`rust.protobufRoot`). Without the key nothing protobuf-related is generated.
+
 ## The AccountCreateTransaction spike
 
 **`generated/java` is currently hand-edited and must not be regenerated.** Running
-`metalang generate --language=java` over it destroys the work described here.
+`metalang generate --language=java` over it overwrites every file that carries the generator header,
+so all method bodies of the spike are lost. The hand-written files in the `internal` packages carry
+no header and survive - orphaned, and the module no longer compiles. (`generated/ts` and
+`generated/rust` are safe: their protobuf wiring comes from the generators.)
 
 To find out what implementing the V3 API actually costs, the `createAccount` path of the Hiero TCK was
 implemented end to end (keys -> protobuf -> gRPC -> signing -> receipt polling). 34 of the 42 tests of

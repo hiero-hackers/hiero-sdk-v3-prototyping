@@ -84,9 +84,10 @@ public final class TsGenerator {
             final boolean support = folderFiles.stream().anyMatch(f -> f.content().contains(supportImport));
             anySupport |= support;
             files.addAll(folderFiles);
-            files.addAll(TsProjectGenerator.folder(folder, subpaths, config, support));
+            files.addAll(TsProjectGenerator.folder(folder, subpaths, config, support,
+                    config.protobuf().contains(folder.name())));
         }
-        files.addAll(TsProjectGenerator.root(context.folders(), config, anySupport));
+        files.addAll(TsProjectGenerator.root(context.folders(), config, anySupport, !config.protobuf().isEmpty()));
         return files.stream().sorted().toList();
     }
 

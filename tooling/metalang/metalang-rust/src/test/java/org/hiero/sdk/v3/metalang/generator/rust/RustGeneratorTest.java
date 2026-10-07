@@ -249,6 +249,70 @@ class RustGeneratorTest {
         }
 
         @Test
+        void shouldCompileProtobufOnlyInTheConfiguredCrates() {
+            // GIVEN the client folder is configured to need the protobuf messages
+            final RustGeneratorConfig config = new RustGeneratorConfig("acme", "1.2.3",
+                    java.util.Set.of("client"), "../../../protos");
+            final LinkedModel model = model(Map.of(
+                    "base/a.md", "namespace a\nX { @@immutable x: int32 }\n",
+                    "client/c.md", "namespace c\nrequires {X} from a\nZ { @@immutable x: X }\n"));
+
+            // WHEN
+            final List<GeneratedFile> files = new RustGenerator(config).generate(model);
+
+            // THEN the configured crate gets a build script that reads the configured directory
+            assertThat(file(files, "crates/client/build.rs"))
+                    .contains(".join(\"../../../protos\")")
+                    .contains("protoc_bin_vendored::protoc_bin_path()")
+                    .contains(".include_file(\"" + RustProjectGenerator.PROTOBUF_INCLUDE + "\")");
+            assertThat(files).extracting(GeneratedFile::path).contains("crates/client/src/proto.rs")
+                    .doesNotContain("crates/base/build.rs", "crates/base/src/proto.rs");
+
+            // AND lib.rs declares the module WITHOUT `pub`: the wire format is no part of the API
+            assertThat(file(files, "crates/client/src/lib.rs"))
+                    .contains("\nmod " + RustProjectGenerator.PROTOBUF_MODULE + ";\n")
+                    .doesNotContain("pub mod " + RustProjectGenerator.PROTOBUF_MODULE + ";");
+            assertThat(file(files, "crates/base/src/lib.rs"))
+                    .doesNotContain(RustProjectGenerator.PROTOBUF_MODULE + ";");
+
+            // AND the dependencies are declared: prost for the crate, the generator for the build script
+            assertThat(file(files, "crates/client/Cargo.toml"))
+                    .contains("prost.workspace = true")
+                    .contains("[build-dependencies]\nprost-build.workspace = true\n"
+                            + "protoc-bin-vendored.workspace = true");
+            assertThat(file(files, "crates/base/Cargo.toml")).doesNotContain("prost");
+            assertThat(file(files, "Cargo.toml")).contains("prost = ").contains("protoc-bin-vendored = ");
+        }
+
+        @Test
+        void shouldGenerateNoProtobufWiringWithoutConfiguration() {
+            // WHEN
+            final List<GeneratedFile> files = generate("namespace a\nX { @@immutable x: int32 }\n");
+
+            // THEN
+            assertThat(files).extracting(GeneratedFile::path)
+                    .noneMatch(path -> path.endsWith("build.rs") || path.endsWith("/proto.rs"));
+            assertThat(file(files, "Cargo.toml")).doesNotContain("prost");
+        }
+
+        @Test
+        void shouldReadAndValidateTheProtobufConfiguration() throws Exception {
+            // GIVEN
+            final Path file = temp.resolve("protobuf.properties");
+
+            // WHEN / THEN
+            Files.writeString(file, "rust.protobuf = consensus-node-client\nrust.protobufRoot = ../p\n");
+            assertThat(RustGeneratorConfig.load(file).protobuf()).containsExactly("consensus-node-client");
+            assertThat(RustGeneratorConfig.load(file).protobufRoot()).isEqualTo("../p");
+            Files.writeString(file, "rust.protobuf = Node_Client\n");
+            assertThatThrownBy(() -> RustGeneratorConfig.load(file)).isInstanceOfSatisfying(
+                    GenerationException.class, e -> assertThat(e.problems()).containsExactly(
+                            "'Node_Client' in rust.protobuf is no spec folder (lowercase, '-' separated)"));
+            assertThatThrownBy(() -> new RustGeneratorConfig("acme", "1.0.0", java.util.Set.of(), " "))
+                    .isInstanceOf(GenerationException.class);
+        }
+
+        @Test
         void shouldReadAndValidateTheConfiguration() throws Exception {
             // GIVEN
             final Path file = temp.resolve("generator.properties");
@@ -261,7 +325,7 @@ class RustGeneratorTest {
             Files.writeString(file, "rust.other = 1\n");
             assertThatThrownBy(() -> RustGeneratorConfig.load(file)).isInstanceOfSatisfying(
                     GenerationException.class, e -> assertThat(e.problems()).containsExactly(
-                            "Unknown key 'rust.other' (known: rust.cratePrefix, rust.version)"));
+                            "Unknown key 'rust.other' (known: rust.cratePrefix, rust.version, rust.protobuf, rust.protobufRoot)"));
             assertThatThrownBy(() -> new RustGeneratorConfig("Acme!", "x")).isInstanceOfSatisfying(
                     GenerationException.class, e -> assertThat(e.problems()).hasSize(2));
         }

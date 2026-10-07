@@ -4,6 +4,4 @@
 
 pub mod consensusnode;
 
-// The protobuf messages of the Hiero API. Deliberately not `pub`: how the SDK talks to a node is an
-// implementation detail, see the module documentation in src/proto.rs.
 mod proto;

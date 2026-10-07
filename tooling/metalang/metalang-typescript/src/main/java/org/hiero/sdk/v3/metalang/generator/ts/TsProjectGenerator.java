@@ -25,6 +25,11 @@ final class TsProjectGenerator {
 
     static List<GeneratedFile> root(final List<SpecFolders.Folder> folders, final TsGeneratorConfig config,
                                     final boolean support) {
+        return root(folders, config, support, false);
+    }
+
+    static List<GeneratedFile> root(final List<SpecFolders.Folder> folders, final TsGeneratorConfig config,
+                                    final boolean support, final boolean protobuf) {
         // the hand-written support package is linked into the workspace and built first
         final List<String> workspaces = new java.util.ArrayList<>();
         if (support) {
@@ -88,15 +93,31 @@ final class TsProjectGenerator {
                 + "node_modules/\n"
                 + "dist/\n"
                 + "*.tsbuildinfo\n"
-                + "package-lock.json\n";
+                + "package-lock.json\n"
+                // the protobuf messages are build output, like dist
+                + (protobuf ? "packages/*/" + PROTOBUF_DIRECTORY + "/\n" : "");
         return List.of(new GeneratedFile("package.json", packageJson),
                 new GeneratedFile("tsconfig.base.json", base),
                 new GeneratedFile("tsconfig.json", tsconfig),
                 new GeneratedFile(".gitignore", gitignore));
     }
 
+    /** The npm package with the runtime of the generated protobuf messages. */
+    static final String PROTOBUF_RUNTIME = "@bufbuild/protobuf";
+
+    /** The version range of the protobuf runtime. */
+    static final String PROTOBUF_RUNTIME_VERSION = "^2";
+
+    /**
+     * Where the protobuf messages are generated inside a package. The path is deliberately absent from the
+     * {@code exports} map of the package, so Node refuses an import of it from outside the package - that is what
+     * makes the wire format an implementation detail in TypeScript.
+     */
+    static final String PROTOBUF_DIRECTORY = "src/internal/proto";
+
     static List<GeneratedFile> folder(final SpecFolders.Folder folder, final List<String> subpaths,
-                                      final TsGeneratorConfig config, final boolean support) {
+                                      final TsGeneratorConfig config, final boolean support,
+                                      final boolean protobuf) {
         final String directory = TsNames.packageDirectory(folder.name());
         final String exports = subpaths.stream().sorted().map(s -> "    \"./" + s + "\": {\n"
                         + "      \"types\": \"./dist/" + s + "/index.d.ts\",\n"
@@ -108,9 +129,13 @@ final class TsProjectGenerator {
             required.add(TsNames.supportPackage(config));
         }
         folder.requires().forEach(r -> required.add(TsNames.packageName(config, r)));
-        final String dependencies = required.stream()
-                .map(r -> "    \"" + r + "\": \"" + config.version() + "\"")
-                .collect(Collectors.joining(",\n"));
+        final List<String> dependencies = new java.util.ArrayList<>(required.stream()
+                .map(r -> "    \"" + r + "\": \"" + config.version() + "\"").toList());
+        if (protobuf) {
+            // the runtime of the generated messages; the messages themselves are build output
+            dependencies.add("    \"" + PROTOBUF_RUNTIME + "\": \"" + PROTOBUF_RUNTIME_VERSION + "\"");
+        }
+        final String dependencyEntries = String.join(",\n", dependencies);
         final List<String> references = new java.util.ArrayList<>();
         if (support) {
             references.add(TsNames.supportDirectory(config, "../../"));
@@ -123,7 +148,7 @@ final class TsProjectGenerator {
                 + "  \"type\": \"module\",\n"
                 + "  \"exports\": {\n" + exports + "\n  },\n"
                 + "  \"files\": [\"dist\"]" + (dependencies.isEmpty() ? "\n" : ",\n  \"dependencies\": {\n"
-                + dependencies + "\n  }\n")
+                + dependencyEntries + "\n  }\n")
                 + "}\n";
         final String tsconfig = "// " + TsGenerator.MARKER + "\n"
                 + "{\n"

@@ -134,9 +134,64 @@ class MavenGeneratorTest {
         // WHEN / THEN
         assertThatThrownBy(() -> JavaGeneratorConfig.load(file)).isInstanceOfSatisfying(GenerationException.class,
                 e -> assertThat(e.problems()).containsExactly(
-                        "Unknown key 'other' in " + file + " (known: java.interfaces, java.groupId, java.version)",
+                        "Unknown key 'other' in " + file + " (known: java.interfaces, java.groupId, java.version, java.protobuf)",
                         "'Plain' in java.interfaces is no qualified type name (namespace.Type)",
                         "'.Leading' in java.interfaces is no qualified type name (namespace.Type)",
                         "'trailing.' in java.interfaces is no qualified type name (namespace.Type)"));
+    }
+
+    @Test
+    void shouldDependOnTheProtobufModuleOnlyWhereItIsConfigured() throws Exception {
+        // GIVEN the node-client folder is configured to need the protobuf messages
+        final JavaGeneratorConfig config = new JavaGeneratorConfig(Set.of(),
+                JavaGeneratorConfig.DEFAULT_GROUP_ID, JavaGeneratorConfig.DEFAULT_VERSION, Set.of("node-client"));
+
+        // WHEN
+        final List<GeneratedFile> files = generate(config);
+
+        // THEN the configured module depends on it, the other one does not
+        assertThat(texts(pom(files, "org.hiero.node.client/pom.xml"), "artifactId"))
+                .contains("hiero-sdk-protobuf");
+        assertThat(texts(pom(files, "org.hiero.base/pom.xml"), "artifactId"))
+                .doesNotContain("hiero-sdk-protobuf");
+
+        // AND it requires the module without `transitive`: the wire format is no part of the API
+        assertThat(content(files, "org.hiero.node.client/src/main/java/module-info.java"))
+                .contains("    requires org.hiero.sdk.protobuf;")
+                .doesNotContain("requires transitive org.hiero.sdk.protobuf");
+        assertThat(content(files, "org.hiero.base/src/main/java/module-info.java"))
+                .doesNotContain("org.hiero.sdk.protobuf");
+    }
+
+    @Test
+    void shouldGenerateNoProtobufWiringWithoutConfiguration() throws Exception {
+        // WHEN
+        final List<GeneratedFile> files = generate(JavaGeneratorConfig.DEFAULT);
+
+        // THEN
+        assertThat(texts(pom(files, "org.hiero.node.client/pom.xml"), "artifactId"))
+                .doesNotContain("hiero-sdk-protobuf");
+        assertThat(content(files, "org.hiero.node.client/src/main/java/module-info.java"))
+                .doesNotContain("org.hiero.sdk.protobuf");
+    }
+
+    @Test
+    void shouldReadAndValidateTheProtobufFolders() throws Exception {
+        // GIVEN
+        final Path valid = temp.resolve("valid.properties");
+        Files.writeString(valid, "java.protobuf = consensus-node-client, mirror-node-client\n");
+        final Path invalid = temp.resolve("invalid.properties");
+        Files.writeString(invalid, "java.protobuf = Node_Client\n");
+
+        // WHEN / THEN
+        assertThat(JavaGeneratorConfig.load(valid).protobuf())
+                .containsExactlyInAnyOrder("consensus-node-client", "mirror-node-client");
+        assertThatThrownBy(() -> JavaGeneratorConfig.load(invalid))
+                .isInstanceOfSatisfying(GenerationException.class, e -> assertThat(e.problems()).containsExactly(
+                        "'Node_Client' in java.protobuf is no spec folder (lowercase, '-' separated)"));
+    }
+
+    private static String content(final List<GeneratedFile> files, final String path) {
+        return files.stream().filter(f -> f.path().equals(path)).findFirst().orElseThrow().content();
     }
 }

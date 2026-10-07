@@ -172,16 +172,20 @@ public final class JavaGenerator {
                     || streamingModule.filter(module.name()::equals).isPresent()) {
                 supportUsers.add(module.name());
             }
-            files.add(moduleInfo(module, packagesWithTypes, supportUsers.contains(module.name())));
+            files.add(moduleInfo(module, packagesWithTypes, supportUsers.contains(module.name()),
+                    config.protobuf().contains(module.folder())));
         }
         // the Maven build: one sub-module (and JAR) per JPMS module
         final Map<String, String> folderOf = new HashMap<>();
         modules.forEach(m -> folderOf.put(m.name(), m.folder()));
         final List<MavenGenerator.MavenModule> mavenModules = modules.stream()
                 .map(m -> new MavenGenerator.MavenModule(m.name(), MavenGenerator.artifactId(m.folder()), m.folder(),
-                        Stream.concat(m.requires().stream().map(r -> MavenGenerator.artifactId(folderOf.get(r))),
-                                supportUsers.contains(m.name()) ? Stream.of(SupportFiles.ARTIFACT) : Stream.empty())
-                                .toList()))
+                        Stream.of(m.requires().stream().map(r -> MavenGenerator.artifactId(folderOf.get(r))),
+                                        supportUsers.contains(m.name())
+                                                ? Stream.of(SupportFiles.ARTIFACT) : Stream.<String>empty(),
+                                        config.protobuf().contains(m.folder())
+                                                ? Stream.of(ProtobufFiles.ARTIFACT) : Stream.<String>empty())
+                                .flatMap(stream -> stream).toList()))
                 .toList();
         files.add(MavenGenerator.parent(mavenModules, config));
         mavenModules.forEach(m -> files.add(MavenGenerator.module(m, config)));
@@ -959,7 +963,7 @@ public final class JavaGenerator {
     }
 
     private static GeneratedFile moduleInfo(final Module module, final Set<String> packagesWithTypes,
-                                            final boolean support) {
+                                            final boolean support, final boolean protobuf) {
         final StringBuilder java = new StringBuilder(HEADER).append('\n');
         java.append("import org.jspecify.annotations.NullMarked;\n\n");
         java.append(MarkdownComment.render("", List.of(
@@ -977,6 +981,10 @@ public final class JavaGenerator {
         if (support) {
             // the support types (@ThreadSafe, HieroStream, ...) appear in the API of the module
             java.append("    requires transitive ").append(SupportFiles.MODULE).append(";\n");
+        }
+        if (protobuf) {
+            // not transitive: the wire format is an implementation detail and no part of the API (ProtobufFiles)
+            java.append("    requires ").append(ProtobufFiles.MODULE).append(";\n");
         }
         // static: only needed at compile time; transitive: the annotations are part of the exported API
         java.append("    requires static transitive ").append(JSPECIFY_MODULE).append(";\n");

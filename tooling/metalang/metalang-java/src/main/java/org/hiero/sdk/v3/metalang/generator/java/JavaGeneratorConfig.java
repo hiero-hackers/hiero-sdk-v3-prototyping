@@ -25,13 +25,17 @@ import org.hiero.sdk.v3.metalang.model.QualifiedName;
  * # Maven coordinates of the generated project
  * java.groupId = org.hiero.sdk
  * java.version = 0.1.0-SNAPSHOT
+ * # spec folders whose module needs the protobuf messages (comma or whitespace separated)
+ * java.protobuf = consensus-node-client
  * </pre>
  *
  * @param interfaces abstractions that are generated as interfaces instead of abstract classes
  * @param groupId    the Maven groupId of the generated project and its modules
  * @param version    the Maven version of the generated project and its modules
+ * @param protobuf   the spec folders whose module depends on the protobuf module
  */
-public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId, String version) {
+public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId, String version,
+                                  Set<String> protobuf) {
 
     /** The key that lists the abstractions that become interfaces. */
     public static final String INTERFACES = "java.interfaces";
@@ -41,6 +45,12 @@ public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId,
 
     /** The key of the Maven version. */
     public static final String VERSION = "java.version";
+
+    /**
+     * The key that lists the spec folders whose module needs the protobuf messages. The module then depends on
+     * {@code hiero-sdk-protobuf} and requires it (not {@code transitive}: see {@link ProtobufFiles}).
+     */
+    public static final String PROTOBUF = "java.protobuf";
 
     /** The default Maven groupId. */
     public static final String DEFAULT_GROUP_ID = "org.hiero.sdk";
@@ -62,6 +72,7 @@ public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId,
         interfaces = Set.copyOf(Objects.requireNonNull(interfaces, "interfaces must not be null"));
         Objects.requireNonNull(groupId, "groupId must not be null");
         Objects.requireNonNull(version, "version must not be null");
+        protobuf = Set.copyOf(Objects.requireNonNull(protobuf, "protobuf must not be null"));
     }
 
     /**
@@ -70,7 +81,18 @@ public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId,
      * @param interfaces abstractions that are generated as interfaces
      */
     public JavaGeneratorConfig(final Set<QualifiedName> interfaces) {
-        this(interfaces, DEFAULT_GROUP_ID, DEFAULT_VERSION);
+        this(interfaces, DEFAULT_GROUP_ID, DEFAULT_VERSION, Set.of());
+    }
+
+    /**
+     * Creates a configuration without protobuf modules.
+     *
+     * @param interfaces abstractions that are generated as interfaces
+     * @param groupId    the Maven groupId
+     * @param version    the Maven version
+     */
+    public JavaGeneratorConfig(final Set<QualifiedName> interfaces, final String groupId, final String version) {
+        this(interfaces, groupId, version, Set.of());
     }
 
     /**
@@ -88,10 +110,10 @@ public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId,
         }
         final List<String> problems = new ArrayList<>();
         final SortedSet<String> keys = new TreeSet<>(properties.stringPropertyNames());
-        final Set<String> known = Set.of(INTERFACES, GROUP_ID, VERSION);
+        final Set<String> known = Set.of(INTERFACES, GROUP_ID, VERSION, PROTOBUF);
         keys.stream().filter(k -> !known.contains(k))
                 .forEach(k -> problems.add("Unknown key '" + k + "' in " + file + " (known: " + INTERFACES + ", "
-                        + GROUP_ID + ", " + VERSION + ")"));
+                        + GROUP_ID + ", " + VERSION + ", " + PROTOBUF + ")"));
         final String groupId = properties.getProperty(GROUP_ID, DEFAULT_GROUP_ID).strip();
         final String version = properties.getProperty(VERSION, DEFAULT_VERSION).strip();
         if (!groupId.matches("[A-Za-z0-9_.-]+")) {
@@ -112,9 +134,20 @@ public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId,
                 interfaces.add(new QualifiedName(name.substring(0, dot), name.substring(dot + 1)));
             }
         }
+        final Set<String> protobuf = new TreeSet<>();
+        for (final String folder : properties.getProperty(PROTOBUF, "").split("[,\\s]+")) {
+            if (folder.isEmpty()) {
+                continue;
+            }
+            if (!folder.matches("[a-z0-9]+(-[a-z0-9]+)*")) {
+                problems.add("'" + folder + "' in " + PROTOBUF + " is no spec folder (lowercase, '-' separated)");
+            } else {
+                protobuf.add(folder);
+            }
+        }
         if (!problems.isEmpty()) {
             throw new GenerationException(problems);
         }
-        return new JavaGeneratorConfig(interfaces, groupId, version);
+        return new JavaGeneratorConfig(interfaces, groupId, version, protobuf);
     }
 }
