@@ -54,6 +54,7 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | [`guidelines/api-guideline.md`](guidelines/api-guideline.md) | The meta-language: syntax + cross-cutting API best practices. **Start here.** |
 | [`guidelines/api-best-practices-java.md`](guidelines/api-best-practices-java.md) | How the meta-language maps to idiomatic Java |
 | [`guidelines/api-best-practices-rust.md`](guidelines/api-best-practices-rust.md) | ... Rust |
+| [`guidelines/api-best-practices-go.md`](guidelines/api-best-practices-go.md) | ... Go (the mapping, written ahead of its generator) |
 | [`guidelines/api-best-practices-js.md`](guidelines/api-best-practices-js.md) | ... JavaScript |
 | `guidelines/js-files/` | Illustrative reference snippets (not a buildable module) |
 | `sdk-java/support/` | Hand-written Java support types (`@ThreadSafe`, streaming), a dependency of the generated Java API |

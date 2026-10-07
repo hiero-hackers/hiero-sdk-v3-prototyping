@@ -29,6 +29,7 @@ guidelines/
   api-guideline.md              # THE meta-language: syntax + cross-cutting API best practices. Read this first.
   api-best-practices-java.md    # How meta-language concepts map to idiomatic Java
   api-best-practices-rust.md    # ... Rust (the mapping of the Rust generator)
+  api-best-practices-go.md      # ... Go (written ahead of the generator; see "How to make changes")
   api-best-practices-js.md      # ... JavaScript
   api-best-practices-ts.md      # ... TypeScript (the mapping of the TypeScript generator)
   rust-files/                   # Rust support types (BoxFuture, InvalidArgumentError, ...); copied 1:1 into generated/rust
@@ -271,10 +272,15 @@ Comments` of the respective spec files and are the real output of the spike:
   language — when you add a new meta-language feature, consider whether each language guide needs a mapping (the
   guideline lists per-language mappings for varargs, wildcards, streaming cancellation, `streamResult`, etc.).
 - Note: `api-guideline.md` references a `proposals/` folder, but in this repo the specs live under `spec/`.
-- Some language guides referenced by `api-guideline.md` (cpp, python, go, swift) do not exist yet — that's
-  expected; Java, TypeScript, Rust and JS guides are present so far. The Java, TypeScript and Rust guides are
+- Some language guides referenced by `api-guideline.md` (cpp, python, swift) do not exist yet — that's
+  expected; Java, TypeScript, Rust, JS and Go guides are present so far. The Java, TypeScript and Rust guides are
   implemented by the generators in `tooling/metalang` (`generate --language=java|ts|rust`,
   `check --language=java|ts|rust`).
+- **`api-best-practices-go.md` is the exception: a guide without a generator.** It was written first, as the
+  specification a future `metalang generate --language=go` has to follow. Go reshapes the API surface rather than
+  only its spelling - no exceptions, no overloading, no inheritance, no self types - so the mapping had to be
+  decided before any code. Its `## Questions & Comments` holds what is still open, including that Go has no
+  generic methods today. The CLI currently rejects `--language=go`, asserted by three tests in `metalang-cli`.
 
 ## Relevant skills
 
