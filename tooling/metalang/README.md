@@ -10,20 +10,22 @@ TypeScript and Rust (API and tests) and conformance checks of projects against t
 
 ## Quick start
 
-Requires Java 21+ and Maven. All commands are meant to be run from the **repository root**
-(`hiero-sdk-v3-prototyping/`) and can be copied 1:1.
+Requires the JDK pinned in [`.sdkmanrc`](../../.sdkmanrc) (`sdk env`, see the
+[toolchain section of the main README](../../README.md#toolchain)); Maven comes from the wrapper `./mvnw` at the
+repository root. All commands are meant to be run from the **repository root** (`hiero-sdk-v3-prototyping/`) and can
+be copied 1:1.
 
 ### Build
 
 ```bash
-mvn -f tooling/metalang/pom.xml verify
+./mvnw -f tooling/metalang/pom.xml verify
 ```
 
 This runs all tests and creates the self-contained CLI jar `tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar`.
 For a quick build without tests:
 
 ```bash
-mvn -f tooling/metalang/pom.xml -q package -DskipTests
+./mvnw -f tooling/metalang/pom.xml -q package -DskipTests
 ```
 
 ### Modules
@@ -108,13 +110,13 @@ generated yet and why; `--show-untested` lists the [generated tests](#generated-
 because their values cannot be built (the summary line is always printed).
 
 `generated/java` is a Maven project: a parent `pom.xml` with one sub-module per Java module, each built into its own
-JAR plus a Javadoc JAR. Build it with a JDK 25 (`-Xlint:all -Werror` for the code, doclint `all,-missing` with
-`failOnWarnings` for the Javadoc). The base module depends on the hand-written support types (`sdk-java/support`,
-artifact `hiero-sdk-support`), so install them first:
+JAR plus a Javadoc JAR. It needs JDK 25 (`sdk env`, see [`.sdkmanrc`](../../.sdkmanrc)) and is built with
+`-Xlint:all -Werror` for the code and doclint `all,-missing` with `failOnWarnings` for the Javadoc. The base module
+depends on the hand-written support types (`sdk-java/support`, artifact `hiero-sdk-support`), so install them first:
 
 ```bash
-JAVA_HOME=~/.sdkman/candidates/java/25.0.1-tem mvn -f sdk-java/support install
-JAVA_HOME=~/.sdkman/candidates/java/25.0.1-tem mvn -f generated/java/pom.xml package -DskipTests
+./mvnw -f sdk-java/support install
+./mvnw -f generated/java/pom.xml package -DskipTests
 ```
 
 The JARs are then in `generated/java/<module>/target/`; the build output is ignored by git.
@@ -124,7 +126,7 @@ that is not implemented yet, so a build with tests shows the implementation stat
 runs all modules even if tests fail:
 
 ```bash
-JAVA_HOME=~/.sdkman/candidates/java/25.0.1-tem mvn -f generated/java/pom.xml test -Dmaven.test.failure.ignore=true
+./mvnw -f generated/java/pom.xml test -Dmaven.test.failure.ignore=true
 ```
 
 ### Generate the TypeScript API
@@ -216,14 +218,14 @@ java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck check --fa
 
 Both stop at errors of the bindings (`tck.*` diagnostics). `tck check` prints every parameter or result of a bound
 method that has neither a binding nor an `unsupported` declaration, and the unbound methods; it exits with 1 if there
-is a finding. To build and start the server (JDK 25):
+is a finding. To build and start the server (JDK 25, `sdk env`):
 
 ```bash
-mvn -f sdk-java/support install
-mvn -f generated/java install -DskipTests
-mvn -f generated/java-tck/contract install
-mvn -f tck/runtime/java install
-mvn -f generated/java-tck/server package
+./mvnw -f sdk-java/support install
+./mvnw -f generated/java install -DskipTests
+./mvnw -f generated/java-tck/contract install
+./mvnw -f tck/runtime/java install
+./mvnw -f generated/java-tck/server package
 java -jar generated/java-tck/server/target/hiero-sdk-tck-0.1.0-SNAPSHOT.jar
 ```
 
@@ -414,7 +416,7 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   `HieroSubscription` (`org.hiero.sdk.common`). They are not generated: they are the hand-written Maven module
   `sdk-java/support` (artifact `hiero-sdk-support`, JPMS module `org.hiero.sdk.support`). When a generated declaration
   needs them, the base module that all other modules require declares `requires transitive org.hiero.sdk.support` and
-  the Maven dependency. Install the module before building the generated code (`mvn -f sdk-java/support install`).
+  the Maven dependency. Install the module before building the generated code (`./mvnw -f sdk-java/support install`).
 - **Streaming**: `@@streaming T m()` returns `HieroStream<T>`, `streamResult<T>` is `StreamItem<T>`; the errors of a
   streaming method are documented as "The stream ends with `X` if it fails." (they are thrown by the iterator).
 - **Thread safety** (`ThreadSafeGenerator`): `@@threadSafe[(group)]` becomes the SDK annotation
@@ -668,9 +670,9 @@ the guideline rule "never define nullable collections" and needs a design decisi
 
 ## Tests
 
-`mvn verify` runs about 750 tests (the TypeScript tests that need Node.js and an installed TypeScript, and the Rust
-tests that need Cargo are skipped without them); JaCoCo fails the build of **each module** below 95 % line / 90 % branch coverage (generated ANTLR
-code excluded). The tests live in the module of the code they test: parser, model and validator tests in
+`./mvnw -f tooling/metalang/pom.xml verify` runs about 750 tests (the TypeScript tests that need Node.js and an
+installed TypeScript, and the Rust tests that need Cargo are skipped without them); JaCoCo fails the build of **each
+module** below 95 % line / 90 % branch coverage (generated ANTLR code excluded). The tests live in the module of the code they test: parser, model and validator tests in
 `metalang-core`, generator and check tests in `metalang-java` / `metalang-typescript` / `metalang-rust`, the command tests
 (`*CommandTest`, `MetaLangCliTest`) in `metalang-cli`. The cross-JVM determinism tests start the generator of their
 module (`GenerateMain` in the test sources). Besides unit tests per component, the suite contains these systematic

@@ -75,6 +75,9 @@ generated/java-tck/            # Generated from tck/bindings and the converter c
 generated/ts-tck/              # The same for TypeScript (@hiero/tck-contract, @hiero/tck-server)
 package.json                   # npm workspace of all TypeScript modules (generated API, sdk-ts/support, TCK contract,
                                #   server and runtime); `npm run build:tck-ts` builds the TypeScript TCK server
+.sdkmanrc                      # SDKMAN! toolchain pin (JDK 25); `sdk env` activates it, no manual JAVA_HOME
+mvnw, mvnw.cmd, .mvn/          # Maven wrapper (pinned Maven version) — use `./mvnw -f <module>` for every Maven
+                               #   build, run from the repository root; never call a locally installed `mvn`
 
 spec/                           # The actual V3 public-API specifications, written in the meta-language
   base/                         # Foundational namespaces shared by everything
@@ -170,7 +173,7 @@ points to keep specs valid and consistent:
 - **Editing/adding a spec:** keep the section skeleton, declare the `namespace` and import external types with
   `requires {Type} from ns`, reference them by simple name, and follow the naming + annotation rules above. Match the
   style of neighboring spec files. Validate the result with the spec tooling (see `tooling/metalang/README.md`):
-  `mvn -f tooling/metalang/pom.xml -q package -DskipTests` then
+  `./mvnw -f tooling/metalang/pom.xml -q package -DskipTests` then
   `java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar validate spec`. A change must not introduce
   new `syntax.error` or ERROR findings.
 - **Changing the meta-language itself** (guideline syntax, new annotation): update the grammar

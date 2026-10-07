@@ -337,7 +337,7 @@ parameters bind to the mutable attributes of `Transaction`.
 The default network is a local [Solo](https://solo.hiero.org) network (Solo 0.63+):
 
 1. Start Solo: `solo one-shot single deploy`.
-2. Build the server: Java — `mvn -f generated/java-tck/server package` after the steps in `tooling/metalang/README.md`;
+2. Build the server: Java — `./mvnw -f generated/java-tck/server package` after the steps in `tooling/metalang/README.md`;
    TypeScript — `npm install && npm run build:tck-ts` in the repository root.
 3. Run the TCK from a clone of `hiero-sdk-tck` (with `npm install` done there):
    `TCK_DIR=../hiero-sdk-tck tck/run-tck.sh java|ts [test file ...]`.
