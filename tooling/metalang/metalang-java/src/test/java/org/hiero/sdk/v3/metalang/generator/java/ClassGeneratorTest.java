@@ -292,6 +292,39 @@ class ClassGeneratorTest {
         }
 
         @Test
+        void shouldCompareEveryFieldWithTheOperatorItsJavaTypeNeeds() throws IOException {
+            // GIVEN one field per Java type that `equals` has to treat differently
+            // (an abstraction as superclass: a type with only immutable fields would become a record)
+            final List<GeneratedFile> files = compiled("""
+                    namespace a
+                    abstraction Value { @@immutable tiny: int8 }
+                    Primitives extends Value {
+                        @@immutable small: int16
+                        @@immutable medium: int32
+                        @@immutable big: int64
+                        @@immutable ratio: double
+                        @@immutable flag: bool
+                        @@immutable label: string
+                        @@immutable payload: bytes
+                        @@immutable huge: int128
+                    }
+                    """, JavaGeneratorConfig.DEFAULT);
+
+            // THEN primitives are compared with ==, double with Double.compare (NaN and -0.0),
+            // arrays with Arrays.equals and everything else with Objects.equals
+            assertThat(source(files, "Primitives"))
+                    .contains("            && tiny() == other.tiny()\n")
+                    .contains("            && small() == other.small()\n")
+                    .contains("            && medium() == other.medium()\n")
+                    .contains("            && big() == other.big()\n")
+                    .contains("            && Double.compare(ratio(), other.ratio()) == 0\n")
+                    .contains("            && flag() == other.flag()\n")
+                    .contains("            && Objects.equals(label(), other.label())\n")
+                    .contains("            && Arrays.equals(payload(), other.payload())\n")
+                    .contains("            && Objects.equals(huge(), other.huge())");
+        }
+
+        @Test
         void shouldUseNonSealedForExtensibleSubclassesOfSealedTypes() throws IOException {
             assertThat(headers(compiled("""
                     namespace a
