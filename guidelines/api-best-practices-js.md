@@ -450,8 +450,9 @@ use(transaction.maxTransactionFee);     // read again, not `fee`
 - **Most types have no `toString()`.** Enums have one and some spec types declare one; everything else prints as
   `[object Object]`, which makes logging and debugging harder than it should be. — open
 
-- **Cancelling an asynchronous call is not possible.** `AbortSignal` is the platform answer, but the specs do not
-  model it. Streaming already has an answer (leaving the loop). — open
+- **Cancellation exists for HTTP only.** `HttpClient.execute(request, cancellation)` takes one — in JavaScript an
+  `AbortSignal`, created from an `AbortController` — but no other asynchronous call does, so submitting a
+  transaction or querying a receipt still cannot be cancelled. Streaming has its own answer (leaving the loop). — open
 
 - **`guidelines/js-files/lang-base.js`** was written for a plain-JavaScript implementation of the SDK. Now that
   none is planned, it has no consumer: it should either be removed or re-purposed. — open

@@ -668,10 +668,16 @@ await transaction.submit(client, { abortSignal: controller.signal });
 - An implementation checks `signal.aborted` before starting work and registers an `abort` listener for work already
   in flight; it must not leave the listener attached afterwards.
 
-> **Generator gap — no cancellation at all.** No generated signature takes an `AbortSignal`, because the
-> meta-definition does not model one. `@@async` would have to imply an options parameter carrying the signal, which
-> is a specification change affecting every language — but TypeScript should not be the one to invent a private
-> solution in the meantime.
+**The specs now declare a cancellation type**, and TypeScript binds it to the platform mechanism rather than
+mirroring it: `http.Cancellation` is an `AbortSignal`, `CancellationSource` an `AbortController`, and
+`CancellationRegistration` the `removeEventListener` closure. The one place that takes it today is
+`HttpClient.execute(request, cancellation)`; `Cancellation.none()` is the value for a call nobody intends to
+cancel.
+
+> **Generator gap — cancellation reaches only the HTTP layer, and not as an options bag.** It is a positional
+> parameter on one method, because the meta-definition has no options parameter and no way to say "every `@@async`
+> method is cancellable". Every other asynchronous call — submitting a transaction, querying a receipt, every mirror
+> node query — still cannot be cancelled. Extending it is a specification change affecting all four languages.
 
 ## Streaming
 
@@ -899,9 +905,11 @@ three need a decision in the meta-definition first, because they affect every la
   constructor), which would move to a factory function per type. Worth doing before there are consumers; expensive
   afterwards. — open
 
-- **Does the meta-definition get an options parameter for `@@async`?** Without one there is no place for an
-  `AbortSignal`, and TypeScript either has no cancellation or invents a private mechanism. It affects Java, Rust
-  and Go as well, so it is a meta-definition question, not a TypeScript one. — open
+- **Does cancellation reach beyond HTTP, and as what?** `spec/base/http.md` now declares `Cancellation` and
+  `HttpClient.execute` takes one, so TypeScript has something to bind `AbortSignal` to. Every other `@@async`
+  method still has none. Two open parts: whether the meta-definition grows an options parameter so the signal can
+  travel idiomatically rather than positionally, and whether `Cancellation` belongs in `common` rather than `http`
+  once a second namespace needs it. Both affect all four languages. — open
 
 - **Does the meta-definition get a `@@sensitive` annotation?** Without it a generated `toString()` cannot know
   which attribute must not be printed, and the conservative rule (never print the content of a `bytes` attribute)

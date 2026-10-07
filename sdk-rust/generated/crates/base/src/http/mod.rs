@@ -20,10 +20,17 @@
 //! created, so a malformed URL is reported where the mistake is made and not later in `execute`. No
 //! base-URL resolution happens at this level.
 //!
-//! `execute` fails only when no response can be produced at all, in one of three ways: the connection
+//! Every exchange takes a `Cancellation`: the caller's ability to end it early. A `Cancellation` is
+//! only ever *observed* — a client can ask whether it has fired and register a callback for when it
+//! does, but it cannot fire one. Firing is the job of a `CancellationSource`, which the caller owns and
+//! never hands out. `Cancellation.none()` is the value for a call nobody intends to cancel; it is never
+//! absent.
+//!
+//! `execute` fails only when no response can be produced at all, in one of four ways: the connection
 //! could not be established or was broken (DNS, connection refused, TLS handshake, reset or truncated
-//! exchange; possibly transient), a connect or request timeout elapsed (possibly transient), or the
-//! client was closed before or while the request was submitted (permanent; never retry).
+//! exchange; possibly transient), a connect or request timeout elapsed (possibly transient), the
+//! cancellation fired (permanent for that call; never retry), or the client was closed before or while
+//! the request was submitted (permanent; never retry).
 //!
 //! A client owns resources (sockets, pools, worker threads) and must be closed. All methods of
 //! `HttpClient` may be called concurrently, including `execute` while a `close` is in progress.
@@ -31,6 +38,9 @@
 //! bounds that wait and aborts whatever is left — aborted exchanges fail with the "client closed"
 //! error. `close` itself never fails and is idempotent.
 
+mod cancellation;
+mod cancellation_registration;
+mod cancellation_source;
 mod errors;
 mod functions;
 mod http_client;
@@ -39,7 +49,10 @@ mod http_method;
 mod http_request;
 mod http_response;
 
-pub use errors::{ClientClosedError, ConnectionError, TimeoutError, HttpClientExecuteError};
+pub use cancellation::Cancellation;
+pub use cancellation_registration::CancellationRegistration;
+pub use cancellation_source::CancellationSource;
+pub use errors::{CancelledError, ClientClosedError, ConnectionError, TimeoutError, HttpClientExecuteError};
 pub use functions::create_http_client;
 pub use http_client::HttpClient;
 pub use http_configuration::HttpConfiguration;

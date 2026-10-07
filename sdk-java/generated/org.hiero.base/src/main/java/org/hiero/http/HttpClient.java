@@ -35,12 +35,14 @@ public abstract class HttpClient {
     /// timeout-error       — configuration.connectTimeout, or the effective request timeout
     /// (request.timeout ?? configuration.defaultRequestTimeout), elapsed.
     /// Possibly transient.
+    /// cancelled-error     — the cancellation fired before the response was complete. Permanent
+    /// for this call; never retry.
     /// client-closed-error — the client was closed before or while the request was submitted.
     /// Permanent for this client instance; never retry.
     ///
-    /// The returned stage completes exceptionally with `ConnectionException`, `TimeoutException` or `ClientClosedException` if the operation fails.
+    /// The returned stage completes exceptionally with `ConnectionException`, `TimeoutException`, `CancelledException` or `ClientClosedException` if the operation fails.
     @ThreadSafe(group = "client")
-    public abstract CompletionStage<HttpResponse> execute(final HttpRequest request);
+    public abstract CompletionStage<HttpResponse> execute(final HttpRequest request, final Cancellation cancellation);
 
     /// Closes the client and releases its resources. Idempotent: closing an already-closed
     /// client completes normally. Waits for in-flight exchanges to finish — they are bounded

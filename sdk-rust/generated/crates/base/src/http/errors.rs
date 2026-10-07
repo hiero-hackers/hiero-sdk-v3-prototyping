@@ -3,6 +3,42 @@
 use std::error::Error;
 use std::fmt::Display;
 
+/// The error `cancelled-error`.
+#[derive(Debug)]
+pub struct CancelledError {
+    message: String,
+    source: Option<Box<dyn Error + Send + Sync>>,
+}
+
+impl CancelledError {
+    /// Creates a new `CancelledError`.
+    pub fn new(message: impl Into<String>) -> Self {
+        Self { message: message.into(), source: None }
+    }
+
+    /// Creates a new `CancelledError` caused by another error.
+    pub fn with_source(message: impl Into<String>, source: impl Into<Box<dyn Error + Send + Sync>>) -> Self {
+        Self { message: message.into(), source: Some(source.into()) }
+    }
+
+    /// Returns the description of the problem.
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+}
+
+impl Display for CancelledError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.message)
+    }
+}
+
+impl Error for CancelledError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        self.source.as_deref().map(|e| e as &(dyn Error + 'static))
+    }
+}
+
 /// The error `client-closed-error`.
 #[derive(Debug)]
 pub struct ClientClosedError {
@@ -118,6 +154,8 @@ pub enum HttpClientExecuteError {
     Connection(ConnectionError),
     /// The error `timeout-error`.
     Timeout(TimeoutError),
+    /// The error `cancelled-error`.
+    Cancelled(CancelledError),
     /// The error `client-closed-error`.
     ClientClosed(ClientClosedError),
 }
@@ -125,6 +163,7 @@ pub enum HttpClientExecuteError {
 impl Display for HttpClientExecuteError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            HttpClientExecuteError::Cancelled(error) => std::fmt::Display::fmt(error, f),
             HttpClientExecuteError::ClientClosed(error) => std::fmt::Display::fmt(error, f),
             HttpClientExecuteError::Connection(error) => std::fmt::Display::fmt(error, f),
             HttpClientExecuteError::Timeout(error) => std::fmt::Display::fmt(error, f),
@@ -135,10 +174,17 @@ impl Display for HttpClientExecuteError {
 impl Error for HttpClientExecuteError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
+            HttpClientExecuteError::Cancelled(error) => Some(error),
             HttpClientExecuteError::ClientClosed(error) => Some(error),
             HttpClientExecuteError::Connection(error) => Some(error),
             HttpClientExecuteError::Timeout(error) => Some(error),
         }
+    }
+}
+
+impl From<CancelledError> for HttpClientExecuteError {
+    fn from(error: CancelledError) -> Self {
+        HttpClientExecuteError::Cancelled(error)
     }
 }
 

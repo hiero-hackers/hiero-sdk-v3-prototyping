@@ -322,6 +322,25 @@ func (p *PackedTransaction) Submit(ctx context.Context, client Client) (Response
 The caller decides on concurrency with a goroutine, and cancellation and deadlines travel in the context. This is
 the idiom; returning a channel would be an unidiomatic imitation of a future and is not generated.
 
+### The declared `Cancellation` and `context.Context`
+
+`spec/base/http.md` declares a `Cancellation` type — a parameter rather than an ambient value, so that the HTTP
+abstraction has one signature in every language. Go has the mechanism already, so the binding wraps rather than
+replaces it:
+
+| Spec type | Go |
+|---|---|
+| `Cancellation` | wraps a `context.Context`; `IsCancelled()` is `ctx.Err() != nil` |
+| `CancellationSource` | `context.WithCancel` — the returned `CancelFunc` **is** the source; do not introduce a type |
+| `CancellationRegistration` | a `func()` that stops the observing goroutine, since `Context` offers only `Done()` |
+
+A Go signature may **additionally** take `ctx context.Context` as its first parameter and derive the `Cancellation`
+from it — that keeps the idiom intact while a transport written against the declared signature still works.
+
+> **Generator gap — the struct is empty.** `Cancellation` is generated as a struct with no fields and stub methods,
+> because the generator emits no method bodies and the meta-definition cannot say "wrap the platform's own type".
+> Binding it to `context.Context` is implementation work, not generation.
+
 ## Streaming
 
 `@@streaming` returns `iter.Seq2[T, error]`, as the meta-definition records. The range-over-func form gives the
