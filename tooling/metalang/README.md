@@ -38,6 +38,7 @@ For a quick build without tests:
 | `metalang-java` | Java generator (`generator.java`: API, Maven project, JUnit tests) and Java conformance check (`check.java`), and the Java TCK server generator (`JavaTckGenerator`). The generated modules depend on the hand-written support module `sdk-java/support`, the hand-written TCK runtime `tck/runtime/java` implements the generated TCK contract. |
 | `metalang-typescript` | TypeScript generator (`generator.ts`: npm workspace, API, `node:test` tests) and TypeScript conformance check (`check.ts`). The generated packages depend on the hand-written support package `sdk-ts/support`. |
 | `metalang-rust` | Rust generator (`generator.rust`: Cargo workspace, API, integration tests) and Rust conformance check (`check.rust` with the `rs-api` program, a resource). The support files are copied from `guidelines/rust-files`. |
+| `metalang-go` | Go generator (`generator.go`: Go module, API). It is the newest generator and still incomplete: it emits the module, one package per namespace and the declared types; namespace functions, methods and generated tests are still missing, and there is no Go conformance check yet. |
 | `metalang-cli` | The command line tool (`MetaLangCli`) on top of all modules; builds the self-contained jar `tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar`. |
 
 A language generator depends only on `metalang-core`; a new language gets its own module next to them and is wired
@@ -148,6 +149,27 @@ builds it first. As for Java, the tests of methods that are not implemented yet 
 ```bash
 npm --prefix generated/ts install && npm --prefix generated/ts test
 ```
+
+### Generate the Go API
+
+One Go module for everything, one package per namespace, see [Go generator](#go-generator):
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=go --fail-on=never --config=sdk-go/generator.properties --output=generated/go spec
+```
+
+Check it with the Go toolchain (Go 1.27 or newer). The generator emits no method bodies yet, so there is nothing
+to run; what has to hold is that the module builds, vets clean and is already formatted:
+
+```bash
+cd generated/go && go build ./... && go vet ./... && gofmt -l .
+```
+
+`gofmt -l` has to print nothing: the generator produces the alignment `gofmt` would, because nothing in the build
+may depend on the Go toolchain being installed.
+
+Declarations the generator cannot express in Go yet are left out instead of emitted as code that does not
+compile, and `--show-deferred` lists them with the reason. On the current specs nothing is deferred.
 
 ### Generate the Rust API
 
@@ -546,6 +568,38 @@ generated workspace with `RUSTFLAGS=-D warnings` and a shared target directory (
 The language-neutral parts — value constraints (`Constraints`), integer ranges (`IntegerRange`), pattern samples
 (`RegexSamples`), spec folders (`SpecFolders`) — live in the `generator` package of `metalang-core` and are shared by all languages.
 
+## Go generator
+
+`generate --language=go` (`generator.go.GoGenerator`) writes **one Go module** for all specs. Unlike the Java,
+TypeScript and Rust generators, a spec folder is not an artifact boundary: Go has no per-folder unit, so the
+module holds one package per namespace, in a directory per namespace segment
+(`consensusnode.transactions.accounts` → `consensusnode/transactions/accounts`).
+
+| Spec | Go |
+|---|---|
+| namespace | package, with its `## Description` as the package doc in `doc.go` |
+| complex type | struct with unexported fields, `New<Type>` constructor and value-receiver getters |
+| abstraction | interface with a getter per attribute; supertypes are embedded |
+| `@@sealed` abstraction | interface with an unexported marker method the subtypes implement |
+| enum without attributes | defined `int` type, typed constants, `String`, `<T>Values`, `<T>ValueOf` |
+| enum with attributes | struct with package-level `var` values, because Go has no constant struct |
+
+Configured by `sdk-go/generator.properties` (`go.module`, `go.version`). The mapping follows
+[`guidelines/api-best-practices-go.md`](../../guidelines/api-best-practices-go.md); what the Go type system
+cannot express is written down in its "Generics, self types and `ANY`" section.
+
+Two properties are checked by the generated module itself, and nothing in the build depends on a Go toolchain
+being installed:
+
+- `go build ./...` and `go vet ./...` are clean. A declaration the generator cannot express is **left out** and
+  reported by `--show-deferred`, rather than emitted as code that does not compile.
+- `gofmt -l` prints nothing: `GoFormat` produces the column alignment `gofmt` would, at the places where the
+  generator knows it is emitting a declaration list.
+
+Still missing: namespace functions, methods on types, setters, errors, `@@async`/`@@streaming` signatures,
+generated tests, the protobuf wiring (`internal/proto`), the Go conformance check (`check --language=go` is
+rejected) and the Go TCK part.
+
 ## Generated tests
 
 `TestGenerator` writes a JUnit test class into `src/test/java` of the module, in the package of the tested type: one
@@ -684,6 +738,20 @@ validator):
   `annotation.redundant-thread-safe`.
 - `@@minSize`/`@@maxSize` constrain `list`, `set`, `map`, `bytes` and varargs; `@@minLength`/`@@maxLength` are for
   `string` only. Wrong usage is reported as `annotation.value-type` with a hint to the matching annotation.
+
+Writing the Go generator corrected four decisions in `guidelines/api-best-practices-go.md`, each forced by the Go
+compiler rather than by taste:
+
+- **No inherited state.** The guideline had an abstraction's attributes live in an unexported base struct that
+  subtypes embed. An unexported type cannot be embedded from another package, and the specs inherit across
+  namespaces, so a concrete struct now carries all its effective attributes itself.
+- **A self type is dropped.** `$$Self extends Transaction<$$Self, ...>` has no Go form, and substituting its bound
+  for a wildcard would expand forever. Dropping it is also what makes a field of type `Transaction<ANY, ANY>`
+  nameable at all — without it, 67 of the declarations could not be generated.
+- **A concrete type parameter bound is widened to `any`.** Go has no subtyping for structs, so a type set of one
+  struct admits that struct only; the lost constraint is named in the generated doc comment.
+- **Maps are copied like slices.** The guideline copied `bytes` and slices in and out; a map is a reference type
+  too, and without the copy an `@@immutable` map attribute is immutable in name only.
 
 ## Current findings on `spec/`
 

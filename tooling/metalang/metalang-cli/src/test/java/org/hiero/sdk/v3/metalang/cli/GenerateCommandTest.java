@@ -246,8 +246,9 @@ class GenerateCommandTest {
         final String spec = goldenSpec().toString();
         assertThat(cli.run("generate", "--output=x", spec)).isEqualTo(MetaLangCli.EXIT_USAGE);
         assertThat(err()).contains("Missing --language");
-        assertThat(cli.run("generate", "--language=go", "--output=x", spec)).isEqualTo(MetaLangCli.EXIT_USAGE);
-        assertThat(err()).contains("Unsupported language 'go'");
+        // go is supported by `generate`; only `check` still rejects it (no Go conformance check yet)
+        assertThat(cli.run("generate", "--language=cobol", "--output=x", spec)).isEqualTo(MetaLangCli.EXIT_USAGE);
+        assertThat(err()).contains("Unsupported language 'cobol'");
         assertThat(cli.run("generate", "--language=java", spec)).isEqualTo(MetaLangCli.EXIT_USAGE);
         assertThat(err()).contains("Missing --output");
         assertThat(cli.run("generate", "--language=java", "--output=x")).isEqualTo(MetaLangCli.EXIT_USAGE);

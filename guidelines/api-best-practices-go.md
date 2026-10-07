@@ -12,8 +12,8 @@ with its consequence stated, not a translation.
 
 ## Module and packages
 
-- Go 1.23 or newer (`iter.Seq2` for streaming). The API uses the standard library and, where a spec type has no
-  standard equivalent, one small widely used module per concern — `github.com/google/uuid` (`uuid`) and
+- Go 1.27 or newer: `iter.Seq2` for streaming (1.23) and generic methods on concrete types (1.27). The API uses
+  the standard library and, where a spec type has no standard equivalent, one small widely used module per concern — `github.com/google/uuid` (`uuid`) and
   `github.com/shopspring/decimal` (`decimal`).
 - One Go module for the generated API; its path comes from the generator configuration (`go.module` in
   `sdk-go/generator.properties`), because a module path is a repository URL and the specs cannot know it.
@@ -33,8 +33,9 @@ import (
 ## Names
 
 Go's convention is not a mechanical case conversion: initialisms stay fully capitalised. The generator therefore
-needs the standard initialism list (`ID`, `URL`, `API`, `HTTP`, `JSON`, `IP`, `EVM`, `RPC`, `DER`, `PEM`, …), and a
-name is built by splitting the meta-language identifier into words and capitalising each.
+needs the standard initialism list (`ID`, `URL`, `API`, `HTTP`, `JSON`, `IP`, `EVM`, `RPC`, `DER`, `PEM`,
+`ECDSA`, `PKCS8`, `SPKI`, …), and a name is built by splitting the meta-language identifier into words and
+capitalising each: a word in that list stays upper case, every other word is capitalised.
 
 | Meta-language | Go |
 |---|---|
@@ -44,7 +45,8 @@ name is built by splitting the meta-language identifier into words and capitalis
 | `restBaseUrl` | `RESTBaseURL` |
 | `type` (a Go keyword) | `type_`; the same for `func`, `range`, `select`, `chan`, `go`, `map` |
 | `nativeToken` (namespace) | `nativetoken` (package) |
-| `ED25519` (enum value) | `KeyAlgorithmED25519` — a constant carries its type's name |
+| `ED25519` (enum value) | `KeyAlgorithmEd25519` — a constant carries its type's name; `Ed25519` follows the
+  standard library's `crypto/ed25519`, while a true initialism stays upper case (`KeyAlgorithmECDSA`) |
 | `ZERO_ADDRESS` (constant) | `ZeroAddress` — Go has no SCREAMING_CASE |
 | `not-found-error` (error) | `ErrNotFound` (sentinel) or `NotFoundError` (type) |
 | `$$Receipt` (type parameter) | `Receipt`, or `ReceiptT` if a type has that name |
@@ -60,17 +62,17 @@ Everything the specs declare is exported; everything the generator adds for stat
 | other widths (`int24`) | the next wider type (`int32`) | constructors and setters check the range |
 | `int128`, `int256`, `uint128`, `uint256` | `*big.Int` | Go has no wider fixed integer |
 | `double` | `float64` | |
-| `decimal` | `decimal.Decimal` | |
+| `decimal` | `decimal.Decimal` | third-party; deferred until `go.mod` carries requirements |
 | `bool` | `bool` | |
 | `bytes` | `[]byte` | copied in and out, see [Structs](#structs) |
 | `list<T>` | `[]T` | |
 | `set<T>` | `map[T]struct{}` | `[]T` when `T` is not comparable |
-| `map<K, V>` | `map[K]V` | `[]Pair[K, V]` when `K` is not comparable |
+| `map<K, V>` | `map[K]V` | Go has no map with an incomparable key; such a declaration is deferred |
 | `date`, `time`, `dateTime`, `zonedDateTime` | `time.Time` | the four differ only in documentation |
 | `duration`, `seconds` | `time.Duration` | |
-| `uuid` | `uuid.UUID` | |
+| `uuid` | `uuid.UUID` | third-party; deferred until `go.mod` carries requirements |
 | `type<T>` | `reflect.Type` | |
-| `ANY` | `any` | |
+| `ANY` | `any` | as a type *argument* it resolves to the bound, see [Generics](#generics-self-types-and-any) |
 | abstraction `T` | `T` (an interface) | |
 | sealed abstraction `T` | `T` (an interface with an unexported method) | see [Sealed abstractions](#sealed-abstractions) |
 | `function<R name(p: T)>` | `func(T) R` | |
@@ -102,7 +104,9 @@ func (a AccountID) Num() *uint64 { return a.num }
 - The constructor is `New<Type>` and returns `(T, error)` when the type has validation annotations
   (`@@min`, `@@pattern`, a non-null requirement), otherwise plain `T`.
 - Getters are value receivers with the attribute's name; there is no `Get` prefix in Go.
-- `bytes` and slices are copied in the constructor and in the getter, so a caller cannot reach the state.
+- `bytes`, slices and maps are copied in the constructor and in the getter, so a caller cannot reach the
+  state. All three are reference types in Go; without the copy an `@@immutable` attribute of such a type
+  would be immutable in name only.
 - A mutable attribute gets `Set<Name>` on a pointer receiver; see [Setters and chaining](#setters-and-chaining).
 
 ## Interfaces
@@ -121,23 +125,35 @@ type BaseAddress interface {
 }
 ```
 
-`extends` is interface embedding, and the state is inherited by embedding the generated base struct:
+`extends` is interface embedding:
 
 ```go
 type EvmCapableAddress interface {
     BaseAddress
     EVMAddress() *EVMAddress
 }
+```
 
+**The state is not inherited.** An earlier version of this guideline gave an abstraction with attributes an
+unexported base struct that every subtype embeds. That does not work: an unexported type cannot be embedded from
+another package, and the specs inherit across namespaces throughout (`consensusnode.transactions.accounts`
+extends `consensusnode.transactions`). Exporting the base struct instead would put a type into the public API
+that no spec declares, only to carry fields that have to stay unexported.
+
+Decision: a concrete struct carries **all** its effective attributes — its own and the inherited ones — as its
+own unexported fields, with its own constructor and getters:
+
+```go
 type ContractID struct {
-    baseAddress            // embedded struct: the shared state and its getters
+    shard      uint64        // inherited from BaseAddress
+    realm      uint64        // inherited from BaseAddress
     evmAddress *EVMAddress
 }
 ```
 
-Go has no abstract method: an interface declares, a struct implements. A spec type that is an abstraction *with*
-attributes therefore produces two artefacts — the interface and an unexported struct carrying its fields — and the
-generator embeds the struct into every subtype.
+Go has no abstract method and no struct inheritance: an interface declares, a struct implements, and structural
+typing makes the struct satisfy the interface without saying so. The cost is that the field list of a subtype
+repeats its supertype's — which is invisible to callers and costs a generator nothing.
 
 ## Setters and chaining
 
@@ -155,6 +171,35 @@ Consequence, stated plainly: chaining works on a concrete type, which is the com
 through a value of the interface type. A caller holding a `Transaction` has to type-assert before chaining. The
 alternative — a type parameter `[S any]` threaded through every abstraction — infects every signature in the API
 for a gain only the chaining syntax sees, and was rejected for that reason.
+
+## Generics, self types and `ANY`
+
+Go has type parameters but neither wildcards, nor variance, nor subtyping for structs. Three rules follow, and
+together they are what makes the generic types of the specs expressible in Go at all.
+
+**A self type is dropped.** `$$Self extends Transaction<$$Self, $$Receipt>` is F-bounded: its bound mentions the
+parameter itself. It exists so that a setter can return the concrete type, and [Setters and
+chaining](#setters-and-chaining) already decided that a Go setter returns the concrete pointer type instead. The
+parameter therefore carries nothing a Go signature could use, and the generated declaration does not have it:
+
+| Meta-language | Go |
+|---|---|
+| `abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$Self, $$Receipt>>` | `type Transaction[ReceiptT Receipt] interface` |
+| a field of type `Transaction<ANY, ANY>` | `Transaction[Receipt]` |
+
+**A wildcard argument becomes the bound of the parameter it fills.** Go has to name a type: `Page<ANY>` is
+`Page[any]` when the parameter is unbounded, and `Holder<ANY>` is `Holder[Unit]` when the parameter is bounded by
+`Unit`. Without the rule above this would not terminate — substituting a self type's own bound expands forever —
+which is the second reason the self type goes.
+
+**A concrete bound is widened to `any`.** `$$B extends Base`, where `Base` is a struct rather than an
+abstraction, has no Go constraint: a type set of one struct admits exactly that struct, because Go has no
+subtyping for structs. The parameter is generated as `any` and the declaration's doc comment says which
+constraint was lost, so it is visible in the API and not only in the specs.
+
+**A type parameter never shadows a declared type.** `$$Receipt` would render as `Receipt`, and
+`type Response[Receipt Receipt]` is rejected with *cannot use a type parameter as constraint*; such a name gets a
+`T` suffix (`Response[ReceiptT Receipt]`).
 
 ## Sealed abstractions
 
@@ -231,10 +276,16 @@ For `KeysFactory`, whose five `createPrivateKey` overloads are the worst case in
 Namespace-level functions are package-level functions. Factory types (`KeysFactory`, `ClientFactory`) have no Go
 equivalent and disappear: their methods become package-level functions in the namespace's package.
 
-**Generic methods.** Go methods cannot declare their own type parameters. The meta-definition already records the
-mapping for a `@@finalMethod` generic method: on a concrete type a generic method, and on an abstraction a
-package-level generic function named `<TypeName><MethodName>` taking the instance first —
-`func ObjConvert[T any](o Obj, x X) T`. See [Questions & Comments](#questions--comments).
+**Generic methods.** Go 1.27 allows a method of a concrete type to declare its own type parameters; an interface
+method still may not (`interface method must have no type parameters`). The meta-definition records exactly this
+split, and it is what the generator follows:
+
+| A `@@finalMethod` generic method `$$T convert<$$T>(x: X)` on | Go |
+|---|---|
+| a concrete type `Obj` | a generic method: `func (o Obj) Convert[T any](x X) T` |
+| an abstraction `Obj` | a package-level generic function named `<TypeName><MethodName>`, instance first: `func ObjConvert[T any](o Obj, x X) T` |
+
+Both forms were verified against Go 1.27.1.
 
 ## Errors
 
@@ -327,11 +378,11 @@ yet.
 
 ## Questions & Comments
 
-- **Generic methods depend on an unreleased language change.** The meta-definition records "generic method
-  (Go 1.27+)" for a `@@finalMethod` generic method on a concrete type. Go does not have generic methods today, and
-  the proposal is not accepted. Until it is, the package-level-function form specified for abstractions is the only
-  one that compiles, and the generator should use it for concrete types as well. — open
-
+- **`decimal` and `uuid` need a third-party module.** The mapping table names `decimal.Decimal` and `uuid.UUID`,
+  but the generator writes no `require` into `go.mod` and pins no versions, so a declaration using either is
+  deferred rather than generated into a module that would not build. No spec uses them today. Should the
+  generator manage module requirements, or should the support package wrap both so the generated API depends only
+  on it? — open
 - **The module path is not knowable from the specs.** `go.module` has to be configured, and it changes when the
   generated code moves repository. Should the generated module carry a `/v3` major-version suffix from the start,
   given that this is the third generation of the SDKs? — open
