@@ -78,19 +78,16 @@ new ConsensusNode({ ip, port: 50211, account });                     // number: 
 A value that arrives as JSON is never a `bigint` — `JSON.parse` has no notion of one — so convert explicitly
 (`BigInt(json.num)`) before handing it to the SDK.
 
-**Be careful here: the SDK does not check the type.** Only `null`/`undefined` and the numeric range are verified,
-and a range comparison coerces, so a `number` or even a string slips into a `bigint` attribute and is stored as it
-was passed:
+Passing a `number` or a string where a `bigint` is expected is rejected with a `TypeError`:
 
 ```javascript
-const a = new AccountId({ shard: 0, realm: 0, checksum: "", num: 1001 });
-typeof a.num;   // "number" — not the bigint the API documents
+new AccountId({ shard: 0n, realm: 0n, checksum: "", num: 1001 });
+// TypeError: num must be a bigint
 ```
 
-TypeScript callers are protected by the compiler; JavaScript callers are not. Running a type-checker over your
-JavaScript (see [Type information](#type-information-in-javascript)) closes this gap, and is the main reason to do
-it. It is recorded as an open point in the
-[TypeScript guideline](api-best-practices-ts.md#questions--comments).
+The SDK checks the runtime type of every built-in value at the API boundary, which is what protects a JavaScript
+caller where TypeScript callers are protected by the compiler. Declared types are not checked this way — a value
+of the right shape is accepted whoever built it.
 
 ### Support types
 

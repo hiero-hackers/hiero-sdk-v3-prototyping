@@ -198,11 +198,22 @@ What is checked there:
 | the integer range of the declared type, and `Number.isInteger` for a `number` | `RangeError` |
 | the validation annotations (`@@min`, `@@pattern`, …) | `RangeError` |
 
-> **Generator gap — the type is not checked.** The generated code verifies presence and range, but nothing verifies
-> that a value *is* a `bigint`, a `string` or a `Uint8Array`. Because a range comparison coerces, both
-> `{ num: 1001 }` and `{ num: "1001" }` pass for a `uint64` attribute and are stored as given. TypeScript callers
-> are covered by the compiler; JavaScript callers get silent corruption. A `typeof`/`instanceof` check per attribute
-> closes it.
+The type is checked **before** the range, because a range comparison coerces: without it the string `"1001"`
+passes as a `uint64` and is stored as a string.
+
+```ts
+if (typeof num !== "bigint") {
+    throw new TypeError("num must be a bigint");
+}
+if (num < 0n || num > 18446744073709551615n) {
+    throw new RangeError("num must be an integer between 0 and 18446744073709551615");
+}
+```
+
+Only the **built-in** carrier types are checked this way (`string`, `number`, `bigint`, `boolean`, `Uint8Array`,
+`Array`, `Set`, `Map`, `Date`, `Duration`, function). A declared type is deliberately *not* checked with
+`instanceof`: TypeScript is structurally typed and this guideline asks for interface types, so rejecting a value
+that satisfies the type but was not built by this SDK would contradict both.
 
 What validation must **not** become: re-checking inside the implementation where the invariant already holds, or
 catching and swallowing errors. An error from the SDK is a bug in the calling code and has to reach it.
@@ -868,7 +879,6 @@ The generator does not implement this guideline yet. Ordered by what it costs to
 
 | Gap | Where | Scope |
 |---|---|---|
-| runtime checks do not verify the **type** of a value | [Validation](#validation-at-the-boundary) | `TsConstraints` only — small, and it closes a silent-corruption bug |
 | error classes carry no stable **`code`** | [Errors](#errors) | generator only; the error identifiers already exist |
 | no **root export**, no `"sideEffects": false` | [What is public API](#what-is-public-api) | generator only |
 | no **`toString()`** on classes | [Debug representation](#debug-representation) | generator only, if the conservative bytes rule is accepted |
@@ -878,7 +888,7 @@ The generator does not implement this guideline yet. Ordered by what it costs to
 | no **`AbortSignal`** on asynchronous calls | [Cancellation](#cancellation-is-abortsignal) | needs the meta-definition to model an options parameter |
 | overloads instead of an **options bag** | [Methods](#methods-and-functions) | needs the meta-definition to model one |
 
-The first four are generator-local and do not change the API shape. The rest change what callers see, and the last
+The first three are generator-local and do not change the API shape. The rest change what callers see, and the last
 three need a decision in the meta-definition first, because they affect every language.
 
 ## Questions & Comments

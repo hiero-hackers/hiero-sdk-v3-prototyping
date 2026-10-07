@@ -80,7 +80,8 @@ class TsGeneratorTest {
             assertThat(file(files, "packages/base/tsconfig.json")).doesNotContain("support");
             assertThat(file(files, "/c/sub/Line.ts"))
                     .contains("import type { Point } from \"@acme/base/b\";")
-                    .contains("import type { Duration } from \"@acme/support\";")
+                    // a value import, not `import type`: the constructor checks `length instanceof Duration`
+                    .contains("import { Duration } from \"@acme/support\";")
                     .contains("readonly #length: Duration;");
             assertThat(file(files, "/c/sub/index.ts")).contains("export * from \"./Line.js\";");
             // the workspace links and builds the support package first
@@ -315,6 +316,120 @@ class TsGeneratorTest {
                     new org.hiero.sdk.v3.metalang.model.QualifiedName("a", "Broken"),
                     new org.hiero.sdk.v3.metalang.model.QualifiedName("a", "User"));
             assertThat(new TsGenerator().generate(model)).noneMatch(f -> f.path().contains("Broken"));
+        }
+    }
+
+    @Nested
+    class TypeChecks {
+
+        /**
+         * A range comparison coerces, so without a type check the string "1001" passes as a uint64. The
+         * constructor is the API boundary and the only place a JavaScript caller can be stopped.
+         */
+        @Test
+        void shouldCheckTheRuntimeTypeBeforeTheRange() {
+            // WHEN
+            final String ts = file(generate("""
+                    namespace a
+                    X { @@immutable count: uint64 }
+                    """), "/a/X.ts");
+
+            // THEN
+            assertThat(ts).contains("typeof count !== \"bigint\"")
+                    .contains("throw new TypeError(\"count must be a bigint\")")
+                    .contains("count < 0n || count > 18446744073709551615n");
+            // and the type is rejected before the range is compared
+            assertThat(ts.indexOf("typeof count !== \"bigint\""))
+                    .isLessThan(ts.indexOf("count < 0n"));
+        }
+
+        @Test
+        void shouldCheckEveryBuiltinCarrierType() {
+            // GIVEN one attribute per built-in carrier type
+            final String ts = file(generate("""
+                    namespace a
+                    X {
+                        @@immutable small: int32
+                        @@immutable big: int64
+                        @@immutable ratio: double
+                        @@immutable text: string
+                        @@immutable flag: bool
+                        @@immutable data: bytes
+                        @@immutable tags: list<string>
+                        @@immutable labels: set<string>
+                        @@immutable sizes: map<string, int32>
+                        @@immutable when: zonedDateTime
+                        @@immutable delay: seconds
+                        @@immutable handler: function<void run(x: int32)>
+                    }
+                    """), "/a/X.ts");
+
+            // THEN
+            assertThat(ts)
+                    .contains("typeof small !== \"number\"").contains("\"small must be a number\"")
+                    .contains("typeof big !== \"bigint\"").contains("\"big must be a bigint\"")
+                    .contains("typeof ratio !== \"number\"")
+                    .contains("typeof text !== \"string\"").contains("\"text must be a string\"")
+                    .contains("typeof flag !== \"boolean\"")
+                    .contains("!(data instanceof Uint8Array)").contains("\"data must be a Uint8Array\"")
+                    .contains("!Array.isArray(tags)").contains("\"tags must be an array\"")
+                    .contains("!(labels instanceof Set)")
+                    .contains("!(sizes instanceof Map)")
+                    .contains("!(when instanceof Date)")
+                    .contains("!(delay instanceof Duration)")
+                    .contains("typeof handler !== \"function\"");
+        }
+
+        @Test
+        void shouldImportDurationAsAValueWhenItIsCheckedAgainst() {
+            // an `import type` is erased, and `instanceof` needs the class at runtime
+            final String ts = file(generate("""
+                    namespace a
+                    X { @@immutable delay: seconds }
+                    """), "/a/X.ts");
+
+            assertThat(ts).contains("import { Duration } from")
+                    .doesNotContain("import type { Duration }");
+        }
+
+        @Test
+        void shouldGuardTheCheckOfANullableAttribute() {
+            final String ts = file(generate("""
+                    namespace a
+                    X { @@immutable @@nullable text: string }
+                    """), "/a/X.ts");
+
+            // the whole check block sits inside the null guard
+            assertThat(ts).contains("if (text !== null) {");
+            assertThat(ts.indexOf("if (text !== null) {"))
+                    .isLessThan(ts.indexOf("typeof text !== \"string\""));
+        }
+
+        @Test
+        void shouldCheckTheTypeInASetterAsWell() {
+            // a setter is an API boundary like the constructor
+            final String ts = file(generate("""
+                    namespace a
+                    X { @@nullable memo: string }
+                    """), "/a/X.ts");
+
+            assertThat(ts).contains("set memo(value: string | null) {")
+                    .contains("typeof value !== \"string\"")
+                    .contains("throw new TypeError(\"memo must be a string\")");
+        }
+
+        @Test
+        void shouldNotCheckADeclaredTypeAgainstItsClass() {
+            // TypeScript is structurally typed and the guideline asks for interface types, so an instanceof
+            // against the generated class would reject a value that satisfies the type but is not ours
+            final String ts = file(generate("""
+                    namespace a
+                    Unit { @@immutable symbol: string }
+                    X { @@immutable unit: Unit }
+                    """), "/a/X.ts");
+
+            assertThat(ts).contains("if (unit === null || unit === undefined) {")
+                    .doesNotContain("instanceof Unit");
         }
     }
 

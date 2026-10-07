@@ -211,11 +211,19 @@ resp. package. See `protobuf/README.md`, "Language bindings".
 
 ## The AccountCreateTransaction spike
 
-**`generated/java` is currently hand-edited and must not be regenerated.** Running
-`metalang generate --language=java` over it overwrites every file that carries the generator header,
-so all method bodies of the spike are lost. The hand-written files in the `internal` packages carry
-no header and survive - orphaned, and the module no longer compiles. (`generated/ts` and
-`generated/rust` are safe: their protobuf wiring comes from the generators.)
+**`generated/java` AND `generated/ts` are hand-edited and must not be regenerated.** Running
+`metalang generate` over either overwrites every file that carries the generator header, so all method
+bodies of the spike are lost. The hand-written files in the `internal` packages carry no header and
+survive - orphaned, and the module no longer compiles.
+
+`generated/ts` is affected exactly like `generated/java`: the TypeScript spike filled method bodies in
+generated files (e.g. `packages/base/src/keys/functions.ts`) and added
+`consensusnode/transactions/HapiTransactionStatus.ts` **with the generator header**, which makes the
+generator delete it as stale. A regeneration reintroduces ~36 `Not implemented yet` stubs. Only
+`generated/rust` and `generated/go` are safe.
+
+To verify a generator change, generate into a throwaway directory
+(`--output=/tmp/ts-out`) and inspect that, instead of regenerating in place.
 
 **If it is gone, rebuild it with
 [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md)** - a runbook with the file

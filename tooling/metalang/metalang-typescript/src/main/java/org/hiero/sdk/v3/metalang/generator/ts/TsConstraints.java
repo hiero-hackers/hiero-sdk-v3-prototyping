@@ -1,6 +1,7 @@
 package org.hiero.sdk.v3.metalang.generator.ts;
 
 import java.math.BigInteger;
+import java.util.Optional;
 import org.hiero.sdk.v3.metalang.ast.Annotation;
 import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.generator.IntegerRange;
@@ -9,9 +10,10 @@ import org.hiero.sdk.v3.metalang.model.Type;
 import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 
 /**
- * Renders the checks of an attribute as TypeScript statements: {@code null} for a non-nullable attribute throws a
- * {@code TypeError}; the range of an integer type (JavaScript numbers and {@code bigint} accept any value, so every
- * integer attribute is checked, a {@code number} also to be an integer) and the validation annotations
+ * Renders the checks of an attribute as TypeScript statements: {@code null} for a non-nullable attribute and a
+ * value of the wrong runtime type throw a {@code TypeError}; the range of an integer type (JavaScript numbers and
+ * {@code bigint} accept any value, so every integer attribute is checked, a {@code number} also to be an integer)
+ * and the validation annotations
  * ({@code @@min}, {@code @@max}, {@code @@minLength}, {@code @@maxLength}, {@code @@minSize}, {@code @@maxSize},
  * {@code @@pattern}, {@code @@urlPattern}) throw a {@code RangeError}. A {@code null} value of a nullable attribute is
  * not checked.
@@ -40,6 +42,9 @@ final class TsConstraints {
                     .append(" must not be null\");\n").append(indent).append("}\n");
         }
         final StringBuilder checks = new StringBuilder();
+        // the type first: a range comparison coerces, so "1001" would pass the check below as a uint64
+        typeCheck(field.type(), value, imports).ifPresent(check ->
+                check(checks, check.condition(), field.name() + " must be " + check.description(), "TypeError"));
         IntegerRange.integer(field.type()).ifPresent(builtin -> {
             final IntegerRange range = IntegerRange.of(builtin);
             final String condition = TsTypes.isBigInt(builtin)
@@ -102,8 +107,66 @@ final class TsConstraints {
     }
 
     private static void check(final StringBuilder out, final String condition, final String message) {
-        out.append("if (").append(condition).append(") {\n").append("    throw new RangeError(")
+        check(out, condition, message, "RangeError");
+    }
+
+    private static void check(final StringBuilder out, final String condition, final String message,
+                              final String errorType) {
+        out.append("if (").append(condition).append(") {\n").append("    throw new ").append(errorType).append('(')
                 .append(TsLiterals.quote(message)).append(");\n").append("}\n");
+    }
+
+    /**
+     * A runtime type check: the condition that is true for a wrong value, and how the type reads in the message.
+     *
+     * @param condition   the condition
+     * @param description the description, e.g. {@code a bigint}
+     */
+    private record TypeCheck(String condition, String description) {
+    }
+
+    /**
+     * The runtime type check of an attribute, if its type has one.
+     *
+     * <p>Only the built-in types are checked. A declared type is deliberately left out: TypeScript is structurally
+     * typed and the guideline asks for interface types, so an {@code instanceof} against the generated class would
+     * reject a value that satisfies the type but was not built by this SDK.
+     *
+     * @param type    the attribute type
+     * @param value   the expression of the value
+     * @param imports the imports of the file
+     * @return the check, or empty if the type has none
+     */
+    private static Optional<TypeCheck> typeCheck(final Type type, final String value, final TsImports imports) {
+        if (type instanceof Type.FunctionType) {
+            return Optional.of(new TypeCheck("typeof " + value + " !== \"function\"", "a function"));
+        }
+        if (!(type instanceof Type.BasicType basic)) {
+            return Optional.empty();
+        }
+        final BuiltinType builtin = basic.builtin();
+        return switch (builtin.category()) {
+            case INTEGER -> Optional.of(TsTypes.isBigInt(builtin)
+                    ? new TypeCheck("typeof " + value + " !== \"bigint\"", "a bigint")
+                    : new TypeCheck("typeof " + value + " !== \"number\"", "a number"));
+            case FLOAT -> Optional.of(new TypeCheck("typeof " + value + " !== \"number\"", "a number"));
+            case DECIMAL, STRING, UUID ->
+                    Optional.of(new TypeCheck("typeof " + value + " !== \"string\"", "a string"));
+            case BOOL -> Optional.of(new TypeCheck("typeof " + value + " !== \"boolean\"", "a boolean"));
+            case BYTES -> Optional.of(instanceCheck(value, "Uint8Array"));
+            case COLLECTION -> Optional.of(builtin.name().equals("set") ? instanceCheck(value, "Set")
+                    : new TypeCheck("!Array.isArray(" + value + ")", "an array"));
+            case MAP -> Optional.of(instanceCheck(value, "Map"));
+            case TEMPORAL -> Optional.of(instanceCheck(value, "Date"));
+            case DURATION -> Optional.of(instanceCheck(value, imports.support("Duration", true)));
+            case TYPE -> Optional.of(new TypeCheck("typeof " + value + " !== \"function\"", "a class"));
+            // a StreamItem is a plain object; there is nothing to check it against
+            case STREAM_RESULT -> Optional.empty();
+        };
+    }
+
+    private static TypeCheck instanceCheck(final String value, final String className) {
+        return new TypeCheck("!(" + value + " instanceof " + className + ")", "a " + className);
     }
 
     private static String compare(final Type type, final String value, final Annotation annotation,
