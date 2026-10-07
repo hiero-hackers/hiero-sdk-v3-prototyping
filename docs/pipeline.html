@@ -1,0 +1,1087 @@
+<!doctype html>
+<!--
+  Documentation of the metalang generator, the vendored protobuf tree and the generated TCK server.
+  Standalone page: open it directly in a browser, no build step and no network access except the
+  Google Fonts stylesheet (it degrades to the system font stack without it).
+
+  Also published as an Artifact at https://claude.ai/artifact/6w84sGRLMsqTxj5XjNXLPb — that copy and
+  this file are maintained together; changing one means re-exporting the other.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Spec to Network</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground:        #F7F8F7;
+    --surface:       #FFFFFF;
+    --surface-sunk:  #EEF1F0;
+    --ink:           #16201E;
+    --ink-dim:       #5C6B68;
+    --line:          #D4DBD9;
+    --line-strong:   #8D9A97;
+    --machine:       #0F766E;
+    --machine-soft:  #E0F0EE;
+    --hand:          #B45309;
+    --hand-soft:     #F7EAD9;
+    --accent:        #3730A3;
+    --pass:          #15803D;
+    --fail:          #B91C1C;
+
+    --sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    --cond: "IBM Plex Sans Condensed", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:       #0E1413;
+      --surface:      #161F1D;
+      --surface-sunk: #1C2725;
+      --ink:          #E6EDEA;
+      --ink-dim:      #96A5A1;
+      --line:         #2C3836;
+      --line-strong:  #6B7C78;
+      --machine:      #45BDB0;
+      --machine-soft: #10302C;
+      --hand:         #E3A24A;
+      --hand-soft:    #30220F;
+      --accent:       #A5A0F0;
+      --pass:         #4ADE80;
+      --fail:         #F87171;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:       #0E1413;
+    --surface:      #161F1D;
+    --surface-sunk: #1C2725;
+    --ink:          #E6EDEA;
+    --ink-dim:      #96A5A1;
+    --line:         #2C3836;
+    --line-strong:  #6B7C78;
+    --machine:      #45BDB0;
+    --machine-soft: #10302C;
+    --hand:         #E3A24A;
+    --hand-soft:    #30220F;
+    --accent:       #A5A0F0;
+    --pass:         #4ADE80;
+    --fail:         #F87171;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 48px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 40px 96px;
+  }
+  @media (min-width: 1000px) {
+    .shell { grid-template-columns: 196px minmax(0, 1fr); gap: 56px; align-items: start; }
+  }
+
+  /* ---------- rail ---------- */
+  .rail { display: none; }
+  @media (min-width: 1000px) {
+    .rail {
+      display: block;
+      position: sticky;
+      top: calc(env(safe-area-inset-top, 0px) + 40px);
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+  }
+  .rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .rail a {
+    display: grid; grid-template-columns: 22px 1fr; gap: 6px;
+    color: var(--ink-dim); text-decoration: none;
+    padding: 5px 7px; border-radius: 3px; border-left: 2px solid transparent;
+  }
+  .rail a:hover { color: var(--ink); background: var(--surface-sunk); border-left-color: var(--machine); }
+  .rail a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .rail .n { color: var(--line-strong); }
+
+  /* ---------- masthead ---------- */
+  .masthead { border-bottom: 2px solid var(--ink); padding-bottom: 22px; margin-bottom: 40px; }
+  .kicker {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-dim); margin: 0 0 12px;
+  }
+  h1 {
+    font-family: var(--cond); font-weight: 700; font-size: clamp(40px, 8.5vw, 66px);
+    line-height: 1.02; letter-spacing: -0.015em; margin: 0 0 14px; text-wrap: balance;
+  }
+  .standfirst { font-size: 17.5px; color: var(--ink-dim); max-width: 60ch; margin: 0; }
+
+  /* ---------- metrics ---------- */
+  .metrics {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+    gap: 1px; background: var(--line); border: 1px solid var(--line);
+    margin: 0 0 56px;
+  }
+  .metric { background: var(--surface); padding: 14px 16px; }
+  .metric dt {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-dim); margin: 0 0 4px;
+  }
+  .metric dd {
+    margin: 0; font-family: var(--cond); font-weight: 700; font-size: 27px; line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+  .metric dd small { font-family: var(--mono); font-weight: 400; font-size: 12px; color: var(--ink-dim); }
+
+  /* ---------- sections ---------- */
+  section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  h2 {
+    font-family: var(--cond); font-weight: 700; font-size: 30px; line-height: 1.12;
+    letter-spacing: -0.01em; margin: 0 0 6px; text-wrap: balance;
+    display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: baseline;
+  }
+  h2 .n { font-family: var(--mono); font-weight: 400; font-size: 13px; color: var(--machine); }
+  h3 {
+    font-family: var(--cond); font-weight: 600; font-size: 19px; margin: 36px 0 8px;
+    letter-spacing: 0; text-wrap: balance;
+  }
+  p { margin: 0 0 16px; max-width: 68ch; }
+  .lede { color: var(--ink-dim); margin-bottom: 28px; max-width: 66ch; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+
+  code {
+    font-family: var(--mono); font-size: 0.875em;
+    background: var(--surface-sunk); padding: 1px 4px; border-radius: 2px;
+  }
+
+  .scroller { overflow-x: auto; margin: 0 0 10px; }
+
+  /* ---------- figures ---------- */
+  figure { margin: 32px 0 40px; }
+  figure svg { display: block; max-width: 100%; height: auto; min-width: 560px; }
+  figcaption {
+    font-size: 14px; color: var(--ink-dim); max-width: 68ch;
+    border-left: 2px solid var(--line); padding-left: 12px; margin-top: 4px;
+  }
+
+  .d-box      { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1.5; }
+  .d-box--gen { fill: var(--machine-soft); stroke: var(--machine); }
+  .d-box--hand{ fill: var(--hand-soft);    stroke: var(--hand); }
+  .d-box--sunk{ fill: var(--surface-sunk); stroke: var(--line-strong); stroke-dasharray: 4 3; }
+  .d-t    { fill: var(--ink); font-family: var(--mono); font-size: 13px; }
+  .d-sub  { fill: var(--ink-dim); font-family: var(--mono); font-size: 11px; }
+  .d-lbl  { fill: var(--ink-dim); font-family: var(--mono); font-size: 11.5px; }
+  .d-num  { fill: var(--machine); font-family: var(--mono); font-size: 12px; }
+  .d-line { stroke: var(--line-strong); stroke-width: 1.6; fill: none; }
+  .d-dash { stroke-dasharray: 5 4; }
+  .d-head { fill: var(--line-strong); }
+  .d-rule { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 4; }
+
+  /* ---------- the reading key ---------- */
+  .key { border: 1px solid var(--line); background: var(--surface); padding: 22px 20px; margin: 0 0 56px; }
+  .key > p { margin: 0; max-width: 62ch; }
+  .key-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(212px, 1fr));
+    gap: 26px 28px; margin-top: 22px;
+  }
+  .key-item svg { display: block; width: 100%; max-width: 132px; height: auto; }
+  .key-item h3 {
+    font-family: var(--cond); font-weight: 600; font-size: 17px;
+    margin: 12px 0 5px; letter-spacing: 0;
+  }
+  .key-item p { font-size: 14px; line-height: 1.55; color: var(--ink-dim); margin: 0; max-width: none; }
+
+  /* ---------- tables ---------- */
+  table { border-collapse: collapse; width: 100%; min-width: 580px; font-size: 14.5px; }
+  th, td { text-align: left; padding: 9px 14px 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-dim); font-weight: 500; border-bottom-color: var(--line-strong); white-space: nowrap;
+  }
+  td.path { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+  td.origin { white-space: nowrap; }
+
+  .chip {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 2px 7px; border: 1px solid; display: inline-block; line-height: 1.5;
+  }
+  .chip--gen  { color: var(--machine); border-color: var(--machine); background: var(--machine-soft); }
+  .chip--hand { color: var(--hand);    border-color: var(--hand);    background: var(--hand-soft); }
+  .chip--vend { color: var(--ink-dim); border-color: var(--line-strong); background: var(--surface-sunk); }
+
+  /* ---------- command block ---------- */
+  pre {
+    font-family: var(--mono); font-size: 13px; line-height: 1.75;
+    background: var(--surface-sunk); border: 1px solid var(--line);
+    padding: 14px 16px; margin: 0 0 10px; overflow-x: auto;
+  }
+  pre .c { color: var(--ink-dim); }
+  pre b { color: var(--machine); font-weight: 500; }
+
+  /* ---------- callout ---------- */
+  .note {
+    border-left: 3px solid var(--hand); background: var(--hand-soft);
+    padding: 14px 16px; margin: 24px 0; font-size: 15px;
+  }
+  .note p:last-child { margin-bottom: 0; }
+  .note strong { font-weight: 600; }
+
+  .result {
+    display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: baseline;
+    border: 1px solid var(--line); background: var(--surface);
+    padding: 14px 16px; margin: 20px 0; font-family: var(--mono); font-size: 14px;
+  }
+  .result b { font-family: var(--cond); font-size: 22px; font-variant-numeric: tabular-nums; }
+  .ok   { color: var(--pass); }
+  .gap  { color: var(--fail); }
+
+  ul.tight { margin: 0 0 16px; padding-left: 20px; max-width: 68ch; }
+  ul.tight li { margin-bottom: 6px; }
+
+  footer {
+    border-top: 1px solid var(--line); padding-top: 18px; margin-top: 8px;
+    font-family: var(--mono); font-size: 12px; color: var(--ink-dim);
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <nav class="rail" aria-label="Sections">
+    <ol>
+      <li><a href="#pipeline"><span class="n">01</span><span>Pipeline</span></a></li>
+      <li><a href="#rule"><span class="n">02</span><span>Module rule</span></a></li>
+      <li><a href="#protobuf"><span class="n">03</span><span>Protobuf</span></a></li>
+      <li><a href="#tck"><span class="n">04</span><span>TCK wiring</span></a></li>
+      <li><a href="#request"><span class="n">05</span><span>One request</span></a></li>
+      <li><a href="#folders"><span class="n">06</span><span>Folders</span></a></li>
+      <li><a href="#commands"><span class="n">07</span><span>Commands</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="masthead">
+      <p class="kicker">hiero-sdk-v3-prototyping · branch deterministic-generator</p>
+      <h1>Spec to Network</h1>
+      <p class="standfirst">One language-neutral specification becomes three SDKs, a protobuf base and a TCK
+        server — and ends as a real account on a consensus node. This is how the parts fit.</p>
+    </header>
+
+    <dl class="metrics">
+      <div class="metric"><dt>Specs</dt><dd>55 <small>.md</small></dd></div>
+      <div class="metric"><dt>Generator</dt><dd>154 <small>.java</small></dd></div>
+      <div class="metric"><dt>Generated</dt><dd>2437 <small>files</small></dd></div>
+      <div class="metric"><dt>Vendored</dt><dd>228 <small>.proto</small></dd></div>
+      <div class="metric"><dt>TCK, Java</dt><dd>34<small>/42</small></dd></div>
+      <div class="metric"><dt>TCK, TypeScript</dt><dd>34<small>/42</small></dd></div>
+    </dl>
+
+    <div class="key">
+      <p class="kicker">How to read every diagram on this page</p>
+      <p>This repository has three kinds of part, and the difference decides whether you may edit a file.
+        Each diagram draws them the same way: <strong>colour says who owns it</strong>, a
+        <strong>dashed outline says it is not ours at all</strong>.</p>
+
+      <div class="key-grid">
+        <div class="key-item">
+          <svg viewBox="0 0 132 42" role="img" aria-label="A box with a solid teal outline marks generated code.">
+            <rect class="d-box d-box--gen" x="1.5" y="1.5" width="129" height="39" rx="2"/>
+          </svg>
+          <h3>generated</h3>
+          <p>Written by <code>metalang</code> from the specs and the TCK bindings. Every file carries a
+            header line, none is edited by hand, and files the generator stops producing it deletes.</p>
+        </div>
+
+        <div class="key-item">
+          <svg viewBox="0 0 132 42" role="img" aria-label="A box with a solid amber outline marks hand-written code.">
+            <rect class="d-box d-box--hand" x="1.5" y="1.5" width="129" height="39" rx="2"/>
+          </svg>
+          <h3>hand-written</h3>
+          <p>Maintained by people and holding no generated file: the specs themselves, the generator, the
+            support types, the TCK bindings and the TCK runtimes.</p>
+        </div>
+
+        <div class="key-item">
+          <svg viewBox="0 0 132 42" role="img" aria-label="A box with a dashed grey outline marks something outside this repository.">
+            <rect class="d-box d-box--sunk" x="1.5" y="1.5" width="129" height="39" rx="2"/>
+          </svg>
+          <h3>outside this repository</h3>
+          <p>The cloned TCK and the network under test. We never change these — we satisfy them, and a
+            dashed edge marks every crossing into them.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <section id="pipeline">
+      <h2><span class="n">01</span><span>The generation pipeline</span></h2>
+      <p class="lede">The specs in <code>spec/</code> are written in a meta-language, not in any target
+        language. One parser builds one model; three generators turn that model into three idiomatic
+        projects.</p>
+
+      <p>Everything downstream hangs off <code>metalang-core</code>: it parses the fenced
+        <code>## API Schema</code> blocks, validates them against the rule catalogue, and links the result
+        into a model where every type reference is resolved. The per-language modules never see Markdown —
+        they see that model, plus the one file that holds the decisions a language-neutral spec cannot
+        express.</p>
+
+      <figure>
+        <div class="scroller">
+          <svg viewBox="0 0 800 312" role="img" aria-label="Specs flow into metalang-core, which feeds three language generators, each producing a generated project; a dashed check arrow runs back from each project to its generator.">
+            <defs>
+              <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <polygon class="d-head" points="0,1 10,5 0,9"/>
+              </marker>
+            </defs>
+
+            <rect class="d-box d-box--hand" x="16" y="40" width="104" height="230" rx="2"/>
+            <text class="d-t"   x="68" y="146" text-anchor="middle">spec/</text>
+            <text class="d-sub" x="68" y="164" text-anchor="middle">55 .md</text>
+
+            <line class="d-line" x1="122" y1="155" x2="146" y2="155" marker-end="url(#a1)"/>
+
+            <rect class="d-box d-box--hand" x="152" y="115" width="140" height="80" rx="2"/>
+            <text class="d-t"   x="222" y="148" text-anchor="middle">metalang-core</text>
+            <text class="d-sub" x="222" y="168" text-anchor="middle">parse · validate</text>
+            <text class="d-sub" x="222" y="183" text-anchor="middle">link</text>
+
+            <line class="d-line" x1="294" y1="150" x2="326" y2="72"  marker-end="url(#a1)"/>
+            <line class="d-line" x1="294" y1="155" x2="326" y2="155" marker-end="url(#a1)"/>
+            <line class="d-line" x1="294" y1="160" x2="326" y2="238" marker-end="url(#a1)"/>
+
+            <rect class="d-box d-box--hand" x="330" y="43" width="150" height="58" rx="2"/>
+            <text class="d-t"   x="405" y="67" text-anchor="middle">metalang-java</text>
+            <text class="d-sub" x="405" y="85" text-anchor="middle">java.* properties</text>
+
+            <rect class="d-box d-box--hand" x="330" y="126" width="150" height="58" rx="2"/>
+            <text class="d-t"   x="405" y="150" text-anchor="middle">metalang-typescript</text>
+            <text class="d-sub" x="405" y="168" text-anchor="middle">ts.* properties</text>
+
+            <rect class="d-box d-box--hand" x="330" y="209" width="150" height="58" rx="2"/>
+            <text class="d-t"   x="405" y="233" text-anchor="middle">metalang-rust</text>
+            <text class="d-sub" x="405" y="251" text-anchor="middle">rust.* properties</text>
+
+            <line class="d-line" x1="482" y1="60"  x2="556" y2="60"  marker-end="url(#a1)"/>
+            <line class="d-line" x1="482" y1="143" x2="556" y2="143" marker-end="url(#a1)"/>
+            <line class="d-line" x1="482" y1="226" x2="556" y2="226" marker-end="url(#a1)"/>
+            <text class="d-lbl" x="519" y="138" text-anchor="middle">generate</text>
+
+            <line class="d-line d-dash" x1="556" y1="168" x2="484" y2="168" marker-end="url(#a1)"/>
+            <text class="d-lbl" x="519" y="184" text-anchor="middle">check</text>
+            <line class="d-line d-dash" x1="556" y1="85"  x2="484" y2="85"  marker-end="url(#a1)"/>
+            <line class="d-line d-dash" x1="556" y1="251" x2="484" y2="251" marker-end="url(#a1)"/>
+
+            <rect class="d-box d-box--gen" x="560" y="43" width="180" height="58" rx="2"/>
+            <text class="d-t"   x="650" y="67" text-anchor="middle">generated/java</text>
+            <text class="d-sub" x="650" y="85" text-anchor="middle">586 .java</text>
+
+            <rect class="d-box d-box--gen" x="560" y="126" width="180" height="58" rx="2"/>
+            <text class="d-t"   x="650" y="150" text-anchor="middle">generated/ts</text>
+            <text class="d-sub" x="650" y="168" text-anchor="middle">1169 .ts</text>
+
+            <rect class="d-box d-box--gen" x="560" y="209" width="180" height="58" rx="2"/>
+            <text class="d-t"   x="650" y="233" text-anchor="middle">generated/rust</text>
+            <text class="d-sub" x="650" y="251" text-anchor="middle">682 .rs</text>
+
+            <text class="d-lbl" x="16" y="294">one model · three idiomatic projects</text>
+          </svg>
+        </div>
+        <figcaption>Each generator owns the whole project, not only the sources: Maven poms and
+          <code>module-info.java</code>, the npm workspace and its <code>exports</code> maps, the Cargo
+          manifests and <code>lib.rs</code>. The dashed arrow is <code>metalang check</code>, which compares a
+          project on disk against the API generated in memory — so a spec change that was never regenerated
+          fails the build.</figcaption>
+      </figure>
+
+      <h3>What the configuration decides</h3>
+      <p>A spec says <em>what</em> the API is, never how a language should package it. That lives in one
+        <code>generator.properties</code> per language: Maven coordinates and which abstractions become
+        interfaces, the npm scope, the crate prefix — and, added in this branch, which spec folders need the
+        protobuf messages.</p>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="rule">
+      <h2><span class="n">02</span><span>Generated or hand-written, never both</span></h2>
+      <p class="lede">ADR-0007 is the spine of the repository: a module is produced entirely by a generator or
+        maintained entirely by hand. The colours on this page are that rule.</p>
+
+      <p>The point is ownership. A generated module is reproducible from versioned inputs, carries a header
+        line on every file and is never edited; files the generator stops producing are deleted by it.
+        Everything else is maintained by hand. When generated code needs something hand-written, the
+        interface between them is explicit — and it comes in exactly three shapes.</p>
+
+      <figure>
+        <div class="scroller">
+          <svg viewBox="0 0 760 292" role="img" aria-label="Three allowed dependency arrows: generated code compiles against a hand-written support module; a hand-written runtime implements a generated contract; generated server code reaches its hand-written runtime only at run time.">
+            <defs>
+              <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <polygon class="d-head" points="0,1 10,5 0,9"/>
+              </marker>
+            </defs>
+
+            <rect class="d-box d-box--gen" x="20" y="40" width="240" height="56" rx="2"/>
+            <text class="d-t" x="140" y="74" text-anchor="middle">generated/java</text>
+            <line class="d-line" x1="264" y1="68" x2="496" y2="68" marker-end="url(#a2)"/>
+            <text class="d-lbl" x="380" y="60" text-anchor="middle">compile time</text>
+            <rect class="d-box d-box--hand" x="500" y="40" width="240" height="56" rx="2"/>
+            <text class="d-t" x="620" y="74" text-anchor="middle">sdk-java/support</text>
+
+            <rect class="d-box d-box--hand" x="20" y="130" width="240" height="56" rx="2"/>
+            <text class="d-t" x="140" y="164" text-anchor="middle">tck/runtime/java</text>
+            <line class="d-line" x1="264" y1="158" x2="496" y2="158" marker-end="url(#a2)"/>
+            <text class="d-lbl" x="380" y="150" text-anchor="middle">implements</text>
+            <rect class="d-box d-box--gen" x="500" y="130" width="240" height="56" rx="2"/>
+            <text class="d-t" x="620" y="158" text-anchor="middle">generated/java-tck/</text>
+            <text class="d-t" x="620" y="176" text-anchor="middle">contract</text>
+
+            <rect class="d-box d-box--gen" x="20" y="220" width="240" height="56" rx="2"/>
+            <text class="d-t" x="140" y="248" text-anchor="middle">generated/java-tck/</text>
+            <text class="d-t" x="140" y="266" text-anchor="middle">server</text>
+            <line class="d-line d-dash" x1="264" y1="248" x2="496" y2="248" marker-end="url(#a2)"/>
+            <text class="d-lbl" x="380" y="240" text-anchor="middle">run time only</text>
+            <rect class="d-box d-box--hand" x="500" y="220" width="240" height="56" rx="2"/>
+            <text class="d-t" x="620" y="254" text-anchor="middle">tck/runtime/java</text>
+          </svg>
+        </div>
+        <figcaption>The same hand-written runtime appears twice on purpose: it <em>implements</em> the
+          generated contract at compile time, and the generated server receives it through
+          <code>ServiceLoader</code> at run time — the server is compiled against the contract alone, so it
+          cannot reach runtime internals. A converter added to the catalogue changes the contract and breaks
+          every runtime that has not followed.</figcaption>
+      </figure>
+
+      <div class="note">
+        <p><strong>The one deliberate exception.</strong> The <code>createAccount</code> spike edits
+          <code>generated/java</code> and <code>generated/ts</code> in place, because the generated shapes
+          leave no other option — <code>AccountCreateTransaction</code> is <code>final</code> with stubbed
+          overrides, the factories are <code>final</code> with private constructors. Regenerating destroys it;
+          <code>docs/rebuilding-the-spike.md</code> is the runbook.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="protobuf">
+      <h2><span class="n">03</span><span>One protobuf source</span></h2>
+      <p class="lede">Hiero has three node types with a protobuf interface, and their definitions live in
+        three repositories. <code>protobuf/</code> vendors all three at pinned versions so every generator
+        works from one tree.</p>
+
+      <p>They are not independent. The consensus node is the base: <code>services/basic_types.proto</code>
+        declares the shared types, the mirror node imports it directly, the block node reaches it through
+        <code>block/stream/</code>. Import paths are root-relative, so each directory is one include root and
+        the two dependants additionally need the consensus-node root on the path.</p>
+
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Directory</th><th>Upstream</th><th>Pin</th><th>Files</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="path">consensus-node/</td><td>hiero-consensus-node</td><td class="path">v0.77.2</td><td class="path">208</td></tr>
+            <tr><td class="path">block-node/</td><td>hiero-block-node</td><td class="path">v0.44.2</td><td class="path">18</td></tr>
+            <tr><td class="path">mirror-node/</td><td>hiero-mirror-node</td><td class="path">v0.164.0</td><td class="path">2</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><code>update.sh</code> re-fetches from the pins and records the resolved commit;
+        <code>verify.sh</code> compiles every root with <code>protoc</code> into a descriptor set — the
+        language-neutral proof that every import resolves. Both <code>protoc</code> and the well-known types
+        come through the repository's Maven wrapper, so no protobuf installation is needed.</p>
+
+      <h3>Generated, and never public</h3>
+      <p>All three languages generate from that tree at build time, and in none of them is the result part of
+        the public API: the wire format changes with every network release, so exposing it would make every
+        protocol change a breaking change of the SDK. Each language expresses that with its own mechanism.</p>
+
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Language</th><th>Kept internal by</th><th>A foreign importer gets</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Java</td>
+              <td><code>exports … to …</code> naming only the SDK modules</td>
+              <td class="path">package … is not visible</td>
+            </tr>
+            <tr>
+              <td>Rust</td>
+              <td><code>mod proto;</code> without <code>pub</code></td>
+              <td class="path">module `proto` is private</td>
+            </tr>
+            <tr>
+              <td>TypeScript</td>
+              <td>subpath absent from <code>exports</code></td>
+              <td class="path">ERR_PACKAGE_PATH_NOT_EXPORTED</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Java is the only one that needs a separate module for it: JPMS forbids a package from being split
+        across modules, so the protobuf packages must have exactly one owner. Rust and TypeScript keep the
+        code inside the crate resp. package that uses it. The generators own this wiring — one key per
+        language names the spec folders that need it — so it survives a regeneration.</p>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="tck">
+      <h2><span class="n">04</span><span>How the TCK server is built</span></h2>
+      <p class="lede">The Hiero TCK drives any SDK through a JSON-RPC server. Here that server is generated
+        from two Markdown files.</p>
+
+      <p><code>tck/bindings/*.md</code> declares, in fenced <code>bindings</code> blocks, how each TCK method
+        maps onto the API: which parameter becomes which attribute, through which converter, and which
+        results are read back. <code>metalang tck generate</code> turns that — together with the converter
+        catalogue in the core — into a contract and a server. The parts that cannot be derived from the
+        bindings are hand-written once per language.</p>
+
+      <figure>
+        <div class="scroller">
+          <svg viewBox="0 0 840 430" role="img" aria-label="At build time, bindings and the converter catalogue generate a TCK contract and server, which a hand-written runtime implements. At run time, the TCK driver calls the server over JSON-RPC, the server finds the runtime through ServiceLoader, and the runtime reaches a Solo node over gRPC.">
+            <defs>
+              <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <polygon class="d-head" points="0,1 10,5 0,9"/>
+              </marker>
+            </defs>
+
+            <text class="d-lbl" x="16" y="26">build time</text>
+
+            <rect class="d-box d-box--hand" x="16" y="40" width="176" height="54" rx="2"/>
+            <text class="d-t"   x="104" y="64" text-anchor="middle">tck/bindings/</text>
+            <text class="d-sub" x="104" y="82" text-anchor="middle">common · crypto-service</text>
+
+            <line class="d-line" x1="196" y1="67" x2="232" y2="67" marker-end="url(#a3)"/>
+
+            <rect class="d-box d-box--hand" x="236" y="40" width="186" height="54" rx="2"/>
+            <text class="d-t"   x="329" y="64" text-anchor="middle">metalang tck generate</text>
+            <text class="d-sub" x="329" y="82" text-anchor="middle">+ converter catalogue</text>
+
+            <line class="d-line" x1="426" y1="62" x2="460" y2="42" marker-end="url(#a3)"/>
+            <line class="d-line" x1="426" y1="74" x2="460" y2="104" marker-end="url(#a3)"/>
+
+            <rect class="d-box d-box--gen" x="464" y="18" width="190" height="48" rx="2"/>
+            <text class="d-t" x="559" y="47" text-anchor="middle">java-tck/contract</text>
+
+            <rect class="d-box d-box--gen" x="464" y="86" width="190" height="48" rx="2"/>
+            <text class="d-t" x="559" y="115" text-anchor="middle">java-tck/server</text>
+
+            <rect class="d-box d-box--hand" x="690" y="52" width="134" height="48" rx="2"/>
+            <text class="d-t" x="757" y="81" text-anchor="middle">tck/runtime</text>
+
+            <line class="d-line" x1="686" y1="66" x2="660" y2="50" marker-end="url(#a3)"/>
+            <text class="d-lbl" x="700" y="36" text-anchor="middle">implements</text>
+
+            <line class="d-rule" x1="16" y1="176" x2="824" y2="176"/>
+            <text class="d-lbl" x="16" y="202">run time</text>
+
+            <rect class="d-box d-box--sunk" x="6" y="226" width="196" height="100" rx="3" fill="none"/>
+            <text class="d-lbl" x="12" y="242">../hiero-sdk-tck</text>
+            <rect class="d-box" x="16" y="252" width="176" height="56" rx="2"/>
+            <text class="d-t"   x="104" y="276" text-anchor="middle">hiero-sdk-tck</text>
+            <text class="d-sub" x="104" y="294" text-anchor="middle">mocha driver</text>
+
+            <line class="d-line" x1="196" y1="278" x2="226" y2="278" marker-end="url(#a3)"/>
+            <text class="d-lbl" x="211" y="268" text-anchor="middle">JSON-RPC</text>
+            <text class="d-lbl" x="211" y="330" text-anchor="middle">:8544</text>
+
+            <rect class="d-box d-box--gen" x="230" y="250" width="176" height="56" rx="2"/>
+            <text class="d-t"   x="318" y="274" text-anchor="middle">TCK server</text>
+            <text class="d-sub" x="318" y="292" text-anchor="middle">generated bindings</text>
+
+            <line class="d-line d-dash" x1="410" y1="278" x2="440" y2="278" marker-end="url(#a3)"/>
+            <text class="d-lbl" x="425" y="268" text-anchor="middle">ServiceLoader</text>
+
+            <rect class="d-box d-box--hand" x="444" y="250" width="176" height="56" rx="2"/>
+            <text class="d-t"   x="532" y="274" text-anchor="middle">tck/runtime</text>
+            <text class="d-sub" x="532" y="292" text-anchor="middle">converters · setup</text>
+
+            <line class="d-line" x1="624" y1="278" x2="654" y2="278" marker-end="url(#a3)"/>
+            <text class="d-lbl" x="639" y="268" text-anchor="middle">gRPC</text>
+            <text class="d-lbl" x="639" y="330" text-anchor="middle">via SDK API</text>
+
+            <rect class="d-box d-box--sunk" x="658" y="250" width="166" height="56" rx="2"/>
+            <text class="d-t"   x="741" y="274" text-anchor="middle">Solo node</text>
+            <text class="d-sub" x="741" y="292" text-anchor="middle">127.0.0.1:35211</text>
+
+            <text class="d-lbl" x="16" y="400">the same runtime appears in both bands: it implements the contract, and it answers at run time</text>
+          </svg>
+        </div>
+        <figcaption>Two languages have a server today — Java and TypeScript. Rust has none:
+          <code>metalang tck generate</code> accepts only <code>--language=java|ts</code> and there is no Rust
+          TCK runtime, so a Rust slice has nothing to be measured against yet.</figcaption>
+      </figure>
+
+      <h3>Contract and server: why two generated modules</h3>
+      <p>Both come out of the same <code>metalang tck generate</code>, and they have opposite jobs. The
+        contract is <em>declarations only</em>; the server is the code that answers TCK methods. What makes
+        the split work is that the server is never compiled against the thing that implements the
+        contract.</p>
+
+      <figure>
+        <div class="scroller">
+          <svg viewBox="0 0 700 300" role="img" aria-label="The generated server compiles against the generated contract; the hand-written runtime implements the same contract; the server reaches the runtime only at run time, through ServiceLoader.">
+            <defs>
+              <marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <polygon class="d-head" points="0,1 10,5 0,9"/>
+              </marker>
+            </defs>
+
+            <rect class="d-box d-box--gen" x="40" y="40" width="220" height="60" rx="2"/>
+            <text class="d-t"   x="150" y="66" text-anchor="middle">java-tck/server</text>
+            <text class="d-sub" x="150" y="84" text-anchor="middle">3 classes &#183; the TCK methods</text>
+
+            <rect class="d-box d-box--gen" x="440" y="40" width="220" height="60" rx="2"/>
+            <text class="d-t"   x="550" y="66" text-anchor="middle">java-tck/contract</text>
+            <text class="d-sub" x="550" y="84" text-anchor="middle">6 interfaces &#183; no bodies</text>
+
+            <rect class="d-box d-box--hand" x="240" y="200" width="220" height="60" rx="2"/>
+            <text class="d-t"   x="350" y="226" text-anchor="middle">tck/runtime/java</text>
+            <text class="d-sub" x="350" y="244" text-anchor="middle">converters &#183; setup &#183; JSON-RPC</text>
+
+            <line class="d-line" x1="264" y1="70" x2="436" y2="70" marker-end="url(#a6)"/>
+            <text class="d-lbl" x="350" y="60" text-anchor="middle">compile</text>
+
+            <line class="d-line" x1="400" y1="196" x2="548" y2="106" marker-end="url(#a6)"/>
+            <text class="d-lbl" x="656" y="166" text-anchor="end">implements &#183; compile</text>
+
+            <line class="d-line d-dash" x1="150" y1="104" x2="298" y2="196" marker-end="url(#a6)"/>
+            <text class="d-lbl" x="44" y="168">run time only</text>
+            <text class="d-lbl" x="44" y="184">ServiceLoader</text>
+
+            <text class="d-lbl" x="44" y="286">the dashed edge is the only one that is not on a compile path</text>
+          </svg>
+        </div>
+        <figcaption>The server is compiled against the contract and the SDK API, never against the runtime —
+          it cannot name a single class of it. The runtime arrives at start-up through
+          <code>ServiceLoader</code>, declared in the server&#8217;s build as a <code>runtime</code>-scope
+          dependency.</figcaption>
+      </figure>
+
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th></th><th>java-tck/contract</th><th>java-tck/server</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Holds</td><td>6 interfaces, 342 lines, no method body</td><td>3 classes, 283 lines, the bound TCK methods</td></tr>
+            <tr><td>Derived from</td><td>the converter catalogue and the binding flow</td><td><code>tck/bindings/*.md</code></td></tr>
+            <tr><td>Compiled against</td><td>the SDK API</td><td>the contract and the SDK API</td></tr>
+            <tr><td>Implemented by</td><td><code>tck/runtime/java</code>, by hand</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><code>Converters</code> is the clearest case: it declares exactly 20 methods, one per entry of the
+        converter catalogue in <code>metalang-core</code> — <code>string</code>/<code>stringJson</code>,
+        <code>tinybar</code>/<code>tinybarJson</code>, <code>accountId</code>/<code>accountIdJson</code> and so
+        on. <code>TckRuntime</code> declares the binding flow itself: <code>required</code>, <code>or</code>,
+        <code>unsupported</code>, <code>transaction</code>, <code>query</code>, <code>put</code>.</p>
+
+      <pre><span class="c"># generated/java-tck/server/pom.xml</span>
+hiero-sdk-tck-contract      compile
+hiero-base &#183; …-client &#183; …     compile
+hiero-sdk-tck-<b>runtime</b>       <b>runtime</b>   <span class="c">&#8592; the whole point</span></pre>
+
+      <div class="note">
+        <p><strong>Why not let the server call the runtime directly?</strong> It did, before ADR-0007 — by
+          name, <code>Converters::accountId</code> and <code>Params.value(…)</code>. The contract existed only
+          in the generator&#8217;s string templates, so a renamed method or a missing converter surfaced during
+          a TCK run at the earliest, and only for the parts the current bindings happened to use. Now a new
+          entry in the converter catalogue changes <code>Converters</code>, and every runtime that has not
+          followed stops compiling. The drift is found by the compiler, not by a test run.</p>
+      </div>
+
+      <p>TypeScript has the same pair — <code>@hiero/tck-contract</code> and <code>@hiero/tck-server</code> —
+        with a dynamic <code>import</code> in place of <code>ServiceLoader</code>, and a server
+        <code>tsconfig</code> that deliberately does not reference the runtime.</p>
+
+      <h3>What comes from the TCK repository</h3>
+      <p>The TCK is a separate project, cloned next to this one and pointed at through
+        <code>TCK_DIR</code>. It is not a library this repository depends on — it is a driver that this
+        repository has to satisfy. Four things cross that boundary, and one of them is easy to miss.</p>
+
+      <figure>
+        <div class="scroller">
+          <svg viewBox="0 0 840 452" role="img" aria-label="Four contact surfaces with the cloned TCK repository: its 80 test specifications feed metalang tck check, our solo.env is copied in as .env, the driver calls our server over JSON-RPC, and the TCK's own clients reach the Solo node directly, independently of our server.">
+            <defs>
+              <marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <polygon class="d-head" points="0,1 10,5 0,9"/>
+              </marker>
+            </defs>
+
+            <rect class="d-box d-box--sunk" x="470" y="20" width="354" height="316" rx="3" fill="none"/>
+            <text class="d-lbl" x="486" y="38">../hiero-sdk-tck &#183; cloned, npm install done</text>
+
+            <text class="d-lbl" x="20" y="38">this repository</text>
+
+            <rect class="d-box d-box--hand" x="20" y="46" width="234" height="54" rx="2"/>
+            <text class="d-t"   x="36" y="70">metalang tck check</text>
+            <text class="d-sub" x="36" y="88">coverage of tck/bindings</text>
+
+            <rect class="d-box d-box--hand" x="20" y="120" width="234" height="40" rx="2"/>
+            <text class="d-t"   x="36" y="145">tck/solo.env</text>
+
+            <rect class="d-box d-box--gen" x="20" y="194" width="234" height="54" rx="2"/>
+            <text class="d-t"   x="36" y="218">TCK server</text>
+            <text class="d-sub" x="36" y="236">generated bindings + runtime</text>
+
+            <rect class="d-box" x="486" y="46" width="322" height="54" rx="2"/>
+            <text class="d-t"   x="502" y="70">docs/test-specifications/</text>
+            <text class="d-sub" x="502" y="88">80 .md &#183; the normative method list</text>
+
+            <rect class="d-box" x="486" y="120" width="322" height="40" rx="2"/>
+            <text class="d-t"   x="502" y="145">.env</text>
+
+            <rect class="d-box" x="486" y="180" width="322" height="60" rx="2"/>
+            <text class="d-t"   x="502" y="204">src/tests/ &#183; src/services/Client.ts</text>
+            <text class="d-sub" x="502" y="222">64 test files &#183; the JSON-RPC client</text>
+            <text class="d-sub" x="502" y="236">mocha driver, mochawesome report</text>
+
+            <rect class="d-box" x="486" y="258" width="322" height="60" rx="2"/>
+            <text class="d-t"   x="502" y="282">ConsensusInfoClient &#183; MirrorNodeClient</text>
+            <text class="d-sub" x="502" y="300">the TCK&#8217;s own v2 SDK and REST clients</text>
+
+            <line class="d-line d-dash" x1="482" y1="73" x2="258" y2="73" marker-end="url(#a5)"/>
+            <text class="d-lbl" x="370" y="64" text-anchor="middle">reads: which methods</text>
+            <text class="d-lbl" x="370" y="92" text-anchor="middle">have no binding?</text>
+
+            <line class="d-line" x1="258" y1="140" x2="482" y2="140" marker-end="url(#a5)"/>
+            <text class="d-lbl" x="370" y="132" text-anchor="middle">copied in as .env</text>
+
+            <line class="d-line" x1="482" y1="212" x2="258" y2="212" marker-end="url(#a5)"/>
+            <text class="d-lbl" x="370" y="204" text-anchor="middle">JSON-RPC :8544</text>
+            <text class="d-lbl" x="370" y="230" text-anchor="middle">it calls, we answer</text>
+
+            <polyline class="d-line" points="80,250 80,402 296,402" marker-end="url(#a5)"/>
+            <text class="d-lbl" x="92" y="300">gRPC,</text>
+            <text class="d-lbl" x="92" y="316">via the SDK API</text>
+
+            <polyline class="d-line" points="647,320 647,402 544,402" marker-end="url(#a5)"/>
+            <text class="d-lbl" x="637" y="348" text-anchor="end">gRPC + REST,</text>
+            <text class="d-lbl" x="637" y="364" text-anchor="end">never through our server</text>
+
+            <rect class="d-box d-box--sunk" x="300" y="376" width="244" height="52" rx="2"/>
+            <text class="d-t"   x="422" y="400" text-anchor="middle">Solo node</text>
+            <text class="d-sub" x="422" y="418" text-anchor="middle">127.0.0.1:35211 &#183; :38081</text>
+          </svg>
+        </div>
+        <figcaption>The fourth crossing is what makes a green test mean anything: after our server reports an
+          account id, the TCK asks the node and the mirror node itself, with its own v2 SDK — so the suite
+          never takes our server&#8217;s word for the result.</figcaption>
+      </figure>
+
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Crossing</th><th>When</th><th>Direction</th><th>What it fixes</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="path">docs/test-specifications/</td>
+              <td>build</td><td>in</td>
+              <td>The method names, parameters and results every binding must cover. <code>metalang tck check</code> reports each unbound method and each parameter without a binding or an explicit <code>unsupported</code>.</td>
+            </tr>
+            <tr>
+              <td class="path">.env</td>
+              <td>run</td><td>out</td>
+              <td>Operator, node address, mirror node URL, server port. We write <code>tck/solo.env</code> into the clone; an existing file is kept as <code>.env.before-v3</code>.</td>
+            </tr>
+            <tr>
+              <td class="path">JSON-RPC :8544</td>
+              <td>run</td><td>in</td>
+              <td>The driver calls <code>setup</code>, the bound methods, <code>generateKey</code> and <code>reset</code>. It only ever sends; our server only ever answers.</td>
+            </tr>
+            <tr>
+              <td class="path">ConsensusInfoClient<br>MirrorNodeClient</td>
+              <td>run</td><td>—</td>
+              <td>Independent verification against the node, bypassing our server entirely. This is the part that cannot be faked.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Everything else in the clone — the mocha runner, the 64 test files, the preflight reachability
+        check, the HTML report — is the TCK&#8217;s own business. Nothing in this repository imports from it,
+        and the only file we write into it is <code>.env</code>.</p>
+
+      <h3>Which endpoints the server must have</h3>
+      <p>The same 80 files that feed <code>tck check</code> are the contract. Every request type gets one
+        Markdown file in a service folder, written from <code>TestSpecificationsTemplate.md</code>, and each
+        one carries a section that is the endpoint definition — not prose about it:</p>
+
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>In the spec file</th><th>Defines</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="path">### Method Name</td><td>The exact JSON-RPC method, e.g. <code>createAccount</code>.</td></tr>
+            <tr><td class="path">### Input Parameters</td><td>A table of name, type, required or optional, and notes — <code>key</code> is a DER-encoded hex string, <code>initialBalance</code> is tinybars.</td></tr>
+            <tr><td class="path">### Output Parameters</td><td>A table of name, type and meaning: for <code>createAccount</code>, <code>accountId</code> and <code>status</code>.</td></tr>
+            <tr><td class="path">## Property Tests</td><td>Numbered tables of test, input and expected response, with an <em>Implemented (Y/N)</em> column — the tests in <code>src/tests/</code> are the executable form of these rows.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Three things live in <code>common/</code> because they are not tied to one request type.
+        <code>Utility.md</code> specifies the methods every server must answer regardless of which
+        transactions it supports — <code>setup</code>, <code>reset</code> and <code>generateKey</code>, each
+        with its input and output parameters. <code>CommonTransactionParameters.md</code> specifies the
+        <code>commonTransactionParams</code> object every transaction method accepts, including the
+        <code>signers</code> list. <code>ErrorCodes.md</code> defines exactly one custom error code:</p>
+
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Code</th><th>Meaning</th><th>Where it comes from</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="path">-32001</td><td>Hiero error: the network rejected the request at precheck or at consensus. <code>data</code> carries <code>status</code> and a <code>message</code>.</td><td>The TCK&#8217;s own <code>ErrorCodes.md</code></td></tr>
+            <tr><td class="path">-32601</td><td>Method not found — the honest way to say &#8220;this server does not implement that&#8221;. The suite skips those tests instead of failing them.</td><td>JSON-RPC 2.0</td></tr>
+            <tr><td class="path">-32603</td><td>Internal error: the SDK rejected the request before it reached the network, or could not build it.</td><td>JSON-RPC 2.0</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>That <code>-32601</code> is what makes partial implementations useful: a server declares its surface
+        by which methods it answers, and the suite adapts. Governance is in
+        <code>DevelopmentProcess.md</code> — documentation first, a named lead per SDK, and the TCK change and
+        the SDK changes merged in step.</p>
+
+      <h3>In CI the clone disappears</h3>
+      <p><a href="https://github.com/hiero-hackers/hiero-tck-action">hiero-tck-action</a> is a composite
+        GitHub Action that checks out <code>hiero-ledger/hiero-sdk-tck</code> itself, pinned by a
+        <code>tckTag</code> input, installs it, waits for the server and runs the suite. Three of the four
+        crossings above become inputs: no <code>TCK_DIR</code>, no <code>.env</code> copying, no
+        <code>npm&nbsp;install</code> in a sibling directory.</p>
+
+      <pre><span class="c"># Solo first — the action runs the suite, it does not start a network</span>
+- uses: hiero-hackers/hiero-tck-action@&lt;commit sha&gt;
+  with:
+    <b>startServer</b>: false            <span class="c"># the workflow builds and backgrounds our server</span>
+    <b>rpcServerPort</b>: 8544
+    <b>tckTag</b>: v0.13.0             <span class="c"># the action still defaults to v0.12.4</span>
+    <b>mirrornodeRestJavaUrl</b>: http://127.0.0.1:38081
+    <b>testMatrix</b>: src/tests/crypto-service/test-account-create-transaction.ts</pre>
+
+      <p>Its outputs are a better fit for this project than a plain exit code: it separates
+        <code>genuineFailures</code> from <code>infraFailures</code> and lists
+        <code>unimplementedMethods</code> — which is exactly the shape of our eight failures, where an API gap
+        and a broken server would otherwise look the same.</p>
+
+      <div class="note">
+        <p><strong>What it does not do.</strong> It is a GitHub Action, so it replaces nothing locally —
+          <code>tck/run-tck.sh</code> and the manual clone stay for development. It does not start a network;
+          Solo remains the caller&#8217;s job. Its bundled server presets cover the seven v2 SDKs, not this
+          prototype, so the server comes from <code>startServer: false</code> or a
+          <code>dockerfilePath</code>. And it carries no tags or releases yet — pin a commit SHA.</p>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="request">
+      <h2><span class="n">05</span><span>One <code>createAccount</code>, end to end</span></h2>
+      <p class="lede">The seven hops a single TCK method takes — the path the spike had to make work before
+        any test could turn green.</p>
+
+      <figure>
+        <div class="scroller">
+          <svg viewBox="0 0 700 590" role="img" aria-label="Seven steps: the TCK sends createAccount over JSON-RPC, the generated binding converts parameters through the hand-written runtime into API types, the API builds and signs a transaction body, submits it over gRPC to the Solo node, polls for the receipt, and the result returns as JSON-RPC.">
+            <defs>
+              <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <polygon class="d-head" points="0,1 10,5 0,9"/>
+              </marker>
+            </defs>
+
+            <text class="d-num" x="20" y="42">1</text>
+            <rect class="d-box d-box--sunk" x="44" y="20" width="400" height="48" rx="2"/>
+            <text class="d-lbl" x="456" y="44">../hiero-sdk-tck</text>
+            <text class="d-t"   x="60" y="40">hiero-sdk-tck</text>
+            <text class="d-sub" x="60" y="58">createAccount { key: &lt;DER hex&gt; }</text>
+            <line class="d-line" x1="244" y1="70" x2="244" y2="92" marker-end="url(#a4)"/>
+            <text class="d-lbl" x="256" y="86">JSON-RPC :8544</text>
+
+            <text class="d-num" x="20" y="118">2</text>
+            <rect class="d-box d-box--gen" x="44" y="96" width="400" height="48" rx="2"/>
+            <text class="d-t"   x="60" y="116">CryptoServiceBindings.createAccount</text>
+            <text class="d-sub" x="60" y="134">generated from tck/bindings/crypto-service.md</text>
+            <line class="d-line" x1="244" y1="146" x2="244" y2="168" marker-end="url(#a4)"/>
+            <text class="d-lbl" x="256" y="162">one converter per parameter</text>
+
+            <text class="d-num" x="20" y="194">3</text>
+            <rect class="d-box d-box--hand" x="44" y="172" width="400" height="48" rx="2"/>
+            <text class="d-t"   x="60" y="192">JavaConverters · TsConverters</text>
+            <text class="d-sub" x="60" y="210">hex → PublicKey → Authority, tinybar → Hbar</text>
+            <line class="d-line" x1="244" y1="222" x2="244" y2="244" marker-end="url(#a4)"/>
+            <text class="d-lbl" x="256" y="238">SDK API types</text>
+
+            <text class="d-num" x="20" y="270">4</text>
+            <rect class="d-box d-box--gen" x="44" y="248" width="400" height="48" rx="2"/>
+            <text class="d-t"   x="60" y="268">AccountCreateTransaction.signWithOperator</text>
+            <text class="d-sub" x="60" y="286">TransactionBody · operator signature</text>
+            <line class="d-line" x1="244" y1="298" x2="244" y2="320" marker-end="url(#a4)"/>
+            <text class="d-lbl" x="256" y="314">SignedTransaction bytes</text>
+
+            <text class="d-num" x="20" y="346">5</text>
+            <rect class="d-box d-box--gen" x="44" y="324" width="400" height="48" rx="2"/>
+            <text class="d-t"   x="60" y="344">PackedTransaction.submit</text>
+            <text class="d-sub" x="60" y="362">CryptoService/createAccount · precheck</text>
+
+            <text class="d-num" x="20" y="422">6</text>
+            <rect class="d-box d-box--gen" x="44" y="400" width="400" height="48" rx="2"/>
+            <text class="d-t"   x="60" y="420">Response.queryReceipt</text>
+            <text class="d-sub" x="60" y="438">CryptoService/getTransactionReceipts</text>
+
+            <rect class="d-box d-box--sunk" x="520" y="324" width="160" height="124" rx="2"/>
+            <text class="d-t"   x="600" y="378" text-anchor="middle">Solo node</text>
+            <text class="d-sub" x="600" y="396" text-anchor="middle">:35211</text>
+
+            <line class="d-line" x1="448" y1="348" x2="516" y2="348" marker-end="url(#a4)"/>
+            <line class="d-line" x1="448" y1="418" x2="516" y2="418" marker-end="url(#a4)"/>
+            <line class="d-line" x1="516" y1="434" x2="448" y2="434" marker-end="url(#a4)"/>
+
+            <path class="d-line d-dash" d="M 444 441 C 486 460 486 470 444 470" marker-end="url(#a4)"/>
+            <text class="d-lbl" x="456" y="487">poll every 500 ms, up to 30 s</text>
+            <text class="d-lbl" x="456" y="503">while UNKNOWN · BUSY · RECEIPT_NOT_FOUND</text>
+
+            <line class="d-line" x1="244" y1="450" x2="244" y2="520" marker-end="url(#a4)"/>
+
+            <text class="d-num" x="20" y="546">7</text>
+            <rect class="d-box d-box--sunk" x="44" y="524" width="400" height="48" rx="2"/>
+            <text class="d-lbl" x="456" y="548">../hiero-sdk-tck</text>
+            <text class="d-t"   x="60" y="544">{ accountId: "0.0.1234", status: "SUCCESS" }</text>
+            <text class="d-sub" x="60" y="562">back to the driver as JSON-RPC</text>
+          </svg>
+        </div>
+        <figcaption>Steps 2 and 4–6 are generated code with hand-filled bodies; step 3 is the hand-written
+          runtime. The polling loop in step 6 is the hop that is easiest to get wrong — a single receipt query
+          almost always arrives before consensus.</figcaption>
+      </figure>
+
+      <div class="result">
+        <span><b class="ok">34</b> / 42 passing · Java</span>
+        <span><b class="ok">34</b> / 42 passing · TypeScript</span>
+        <span class="gap">8 failures, the same set in both</span>
+      </div>
+
+      <p>The eight failures are API gaps, not defects: <code>Authority</code> has no
+        <code>toBytes</code>/<code>fromBytes</code>, so key lists and threshold keys cannot be read or written;
+        <code>PublicKey</code> has no EVM address; and a precheck rejection surfaces as an internal error
+        instead of a status. Four problems the spike had to work around are recorded in the
+        <code>## Questions &amp; Comments</code> of the specs they belong to — a client that cannot reach its
+        own network, a response that cannot query anything, a factory that takes the wrong address type, and a
+        status enum without <code>SUCCESS</code>.</p>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="folders">
+      <h2><span class="n">06</span><span>Where everything lives</span></h2>
+      <p class="lede">Read the origin column first: it tells you whether a file may be edited.</p>
+
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>Path</th><th>Origin</th><th>What it holds</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="path">spec/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>The V3 API in the meta-language, 55 files across base, consensus node, mirror node and enterprise.</td></tr>
+            <tr><td class="path">guidelines/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>The meta-language itself plus one mapping document per target language.</td></tr>
+            <tr><td class="path">tooling/metalang/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>The generator: grammar, model, validator, three language modules, CLI. 154 sources, ~750 tests.</td></tr>
+            <tr><td class="path">protobuf/</td><td class="origin"><span class="chip chip--vend">vendored</span></td><td>The protobuf definitions of all three node types, pinned; <code>update.sh</code>, <code>verify.sh</code>, <code>sources.json</code>.</td></tr>
+            <tr><td class="path">sdk-java/support/<br>sdk-ts/support/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Types the generated API uses but no spec declares — thread-safety, streaming, <code>Duration</code>.</td></tr>
+            <tr><td class="path">sdk-java/protobuf/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>No sources of its own: compiles <code>protobuf/</code> into Java and exports it only to the SDK modules.</td></tr>
+            <tr><td class="path">generated/java/<br>generated/ts/<br>generated/rust/</td><td class="origin"><span class="chip chip--gen">generated</span></td><td>The API per language, with its build files and contract tests. Never edited — except by the spike.</td></tr>
+            <tr><td class="path">tck/bindings/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Markdown with <code>bindings</code> blocks: TCK method → API type, parameter by parameter.</td></tr>
+            <tr><td class="path">generated/java-tck/<br>generated/ts-tck/</td><td class="origin"><span class="chip chip--gen">generated</span></td><td><code>contract/</code> — declarations the runtime implements; <code>server/</code> — the JSON-RPC server.</td></tr>
+            <tr><td class="path">tck/runtime/java/<br>tck/runtime/ts/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>What bindings cannot express: the JSON-RPC server, the value converters, <code>setup</code>, error logging.</td></tr>
+            <tr><td class="path">tck/run-tck.sh</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Checks Solo, starts the server, copies <code>solo.env</code> into the TCK clone, runs the suite.</td></tr>
+            <tr><td class="path">docs/adr/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Seven decisions. ADR-0007 is the one this page is organised around.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <section id="commands">
+      <h2><span class="n">07</span><span>Running it</span></h2>
+      <p class="lede">JDK 25 comes from <code>.sdkmanrc</code>, Maven from the wrapper — <code>sdk env</code>
+        once per shell, then everything from the repository root.</p>
+
+      <h3>The generator</h3>
+      <pre><span class="c"># build the CLI</span>
+./mvnw -f tooling/metalang/pom.xml <b>verify</b>
+
+<span class="c"># the specs themselves</span>
+metalang <b>validate</b> spec
+
+<span class="c"># one language</span>
+metalang <b>generate</b> --language=java --config=sdk-java/generator.properties \
+         --output=generated/java spec
+
+<span class="c"># does a project still provide the API of the specs?</span>
+metalang <b>check</b> --language=java --fail-on=never \
+         --config=sdk-java/generator.properties --project=generated/java spec</pre>
+
+      <h3>Protobuf</h3>
+      <pre>protobuf/<b>update.sh</b>                  <span class="c"># re-fetch from the pins in sources.json</span>
+protobuf/<b>verify.sh</b>                  <span class="c"># compile every root with protoc</span>
+npm run <b>gen:proto-ts</b>                <span class="c"># TypeScript messages (buf + protoc-gen-es)</span></pre>
+
+      <h3>The TCK</h3>
+      <pre>solo one-shot single deploy         <span class="c"># a local network</span>
+
+./mvnw -f sdk-java/support install
+./mvnw -f sdk-java/protobuf install
+./mvnw -f generated/java install -DskipTests
+./mvnw -f generated/java-tck/contract install
+./mvnw -f tck/runtime/java install
+./mvnw -f generated/java-tck/server <b>clean</b> package
+
+TCK_DIR=../hiero-sdk-tck tck/<b>run-tck.sh</b> java \
+    src/tests/crypto-service/test-account-create-transaction.ts</pre>
+
+      <p>And the build-time crossing — how much of the TCK&#8217;s own method list the bindings already
+        cover:</p>
+
+      <pre>metalang <b>tck check</b> --bindings=tck/bindings \
+         --tck=../hiero-sdk-tck/docs/test-specifications spec</pre>
+
+      <div class="note">
+        <p><strong>Two things that cost an hour each.</strong> The server needs <code>clean package</code> —
+          an incremental build keeps the previous manifest, so a newly added dependency lands in
+          <code>target/lib</code> but not on the class path. And <code>metalang check</code> needs
+          <code>--fail-on=never</code>, because six pre-existing <code>collection.nullable</code> findings in
+          the specs otherwise stop it before it checks anything.</p>
+      </div>
+
+      <p><code>TCK_SERVER_LOG=debug</code> prints the stack trace of every failed call; at the end of a run
+        the server lists the distinct causes with counts — during the stub phase that list is effectively the
+        backlog of API methods to implement next.</p>
+    </section>
+
+    <footer>
+      Figures are hand-authored SVG · colours encode origin, not decoration · numbers measured against a local
+      Solo network
+    </footer>
+  </main>
+</div>
+
+</body>
+</html>
