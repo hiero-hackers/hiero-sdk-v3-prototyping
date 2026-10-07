@@ -89,19 +89,26 @@ The repository pins its build tools so that every contributor builds with the sa
 | Maven | 3.9.11 | [`.mvn/wrapper/maven-wrapper.properties`](.mvn/wrapper/maven-wrapper.properties) |
 | Node.js | 22 | — |
 
-**Java** — install [SDKMAN!](https://sdkman.io) and let it select the JDK:
+**Java** — install [SDKMAN!](https://sdkman.io), then once per machine:
 
 ```bash
-sdk env install   # once: installs the JDK listed in .sdkmanrc
+sdk env install   # installs the JDK listed in .sdkmanrc
 ```
+
+and set `sdkman_auto_env=true` in `~/.sdkman/etc/config` (the file `sdk config` opens):
 
 ```bash
-sdk env           # activates it for the current shell
+sed -i.bak 's/^sdkman_auto_env=false/sdkman_auto_env=true/' ~/.sdkman/etc/config
 ```
 
-With `sdkman_auto_env=true` in `~/.sdkman/etc/config`, SDKMAN! switches to that JDK automatically when you `cd` into
-the repository, so no `JAVA_HOME` needs to be set by hand. JDK 25 builds every Maven module — the generated Java API,
-the support types and the TCK modules (all `release` 25) as well as the spec tooling (`release` 21).
+With `sdkman_auto_env=true`, SDKMAN! switches to the pinned JDK automatically whenever you `cd` into the repository —
+that is what makes `.sdkmanrc` take effect without setting `JAVA_HOME` by hand. **Without it, `.sdkmanrc` is inert**
+and you have to run `sdk env` in every new shell before building.
+
+JDK 25 is required, not just recommended: it builds every Maven module — the generated Java API, the support types
+and the TCK modules (all `release` 25) as well as the spec tooling (`release` 21). Building on an older JDK fails in
+the compiler plugin, typically with `Unsupported major.minor version 69.0` — that message means the active JDK is not
+25, so run `sdk env` and build again.
 
 **Maven** — use the Maven wrapper at the repository root for *all* builds; it downloads the pinned Maven version on
 first use, so a locally installed `mvn` is not needed:
@@ -134,10 +141,16 @@ git clone https://github.com/hiero-ledger/hiero-sdk-tck.git ../hiero-sdk-tck
 ```
 
 ```bash
-cd ../hiero-sdk-tck && npm install
+npm --prefix ../hiero-sdk-tck install
 ```
 
-**3. Build the server.** Java (JDK 25 via [`.sdkmanrc`](.sdkmanrc), from the repository root, in this order):
+**3. Build the server.** Java, from the repository root, in this order — the first command activates the JDK 25
+pinned in [`.sdkmanrc`](.sdkmanrc) and can be skipped if you set `sdkman_auto_env=true` (see
+[Toolchain](#toolchain)):
+
+```bash
+sdk env
+```
 
 ```bash
 ./mvnw -f sdk-java/support install
@@ -180,7 +193,28 @@ copies [`tck/solo.env`](tck/solo.env) as `.env` into the TCK clone (an existing 
 and runs the tests. The HTML report is in `../hiero-sdk-tck/mochawesome-report`. `TCK_ENV=<file>` selects another
 configuration.
 
-Possible stumbling blocks — the setup has not been run against a real Solo network yet:
+### Why a test fails
+
+The TCK only prints the `message` of a JSON-RPC error — a bound method that fails always reads `Internal error`,
+never the exception behind it. The server therefore logs the cause itself: the first call of each distinct failure
+plus a summary of all of them when it stops, which during the stub phase is the list of API methods to implement
+next.
+
+```
+[tck-server] setup -> -32603 UnsupportedOperationException: Not implemented yet: AccountId.fromString
+[tck-server] failed calls by cause (2 distinct):
+[tck-server]   1x setup -> -32603 UnsupportedOperationException: Not implemented yet: AccountId.fromString
+[tck-server]   1x version -> -32601 no binding for this TCK method
+```
+
+`TCK_SERVER_LOG` selects the detail — `debug` logs every call with the stack trace of its exception, `off` is
+silent:
+
+```bash
+TCK_SERVER_LOG=debug TCK_DIR=../hiero-sdk-tck tck/run-tck.sh java
+```
+
+Possible stumbling blocks:
 
 - The TCK's preflight checks that the mirror node REST API, the consensus node and the JSON-RPC server are reachable.
   If it reports the mirror node, the port in `tck/solo.env` (`MIRROR_NODE_REST_URL`, `38081`) does not match.

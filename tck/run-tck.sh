@@ -10,6 +10,9 @@
 #   TCK_ENV   the TCK configuration (default: tck/solo.env); it is copied to $TCK_DIR/.env, an existing .env is
 #             saved as .env.before-v3
 #   JAVA_HOME a JDK 25 (Java server only; `sdk env` sets it from .sdkmanrc)
+#   TCK_SERVER_LOG  how much the server logs about failed calls: 'error' (default) logs the first call of each
+#             distinct failure and a summary at the end, 'debug' adds the stack trace of every call, 'off' is silent.
+#             The TCK itself only shows "Internal error", never the exception behind it.
 #
 # The server must be built before (see tooling/metalang/README.md, "Generate the TCK server"):
 #   java: generated/java-tck/server/target/hiero-sdk-tck-0.1.0-SNAPSHOT.jar

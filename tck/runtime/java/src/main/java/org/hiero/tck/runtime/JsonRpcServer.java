@@ -23,6 +23,7 @@ final class JsonRpcServer implements TckServer {
 
     private final Map<String, Handler> handlers;
     private final Map<String, RuntimeSession> sessions = new ConcurrentHashMap<>();
+    private final ServerLog log = new ServerLog();
     private @Nullable HttpServer server;
 
     /**
@@ -37,14 +38,17 @@ final class JsonRpcServer implements TckServer {
     @Override
     public String handle(final String request) {
         Object id = null;
+        String name = null;
         try {
             if (!(Json.read(request) instanceof Map<?, ?> message)) {
                 return error(null, RpcError.INVALID_REQUEST, "Invalid Request", Map.of());
             }
             id = message.get("id");
             final Object method = message.get("method");
-            final Handler handler = method instanceof String name ? handlers.get(name) : null;
+            name = method instanceof String text ? text : null;
+            final Handler handler = name != null ? handlers.get(name) : null;
             if (handler == null) {
+                log.failed(name, RpcError.METHOD_NOT_FOUND, "no binding for this TCK method", null);
                 return error(id, RpcError.METHOD_NOT_FOUND, "Method not found",
                         Map.of("method", String.valueOf(method)));
             }
@@ -64,10 +68,12 @@ final class JsonRpcServer implements TckServer {
                 cause = cause.getCause();
             }
             if (cause instanceof RpcError error) {
+                log.failed(name, error.code(), String.valueOf(error.data().get("message")), error);
                 return error(id, error.code(), error.getMessage(), error.data());
             }
-            return error(id, RpcError.INTERNAL_ERROR, "Internal error", Map.of("message",
-                    cause.getClass().getSimpleName() + ": " + cause.getMessage()));
+            final String detail = cause.getClass().getSimpleName() + ": " + cause.getMessage();
+            log.failed(name, RpcError.INTERNAL_ERROR, detail, cause);
+            return error(id, RpcError.INTERNAL_ERROR, "Internal error", Map.of("message", detail));
         }
     }
 
@@ -91,6 +97,8 @@ final class JsonRpcServer implements TckServer {
         http.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         http.start();
         server = http;
+        // the generated TckMain never calls stop(): the server runs until it is killed
+        Runtime.getRuntime().addShutdownHook(new Thread(log::summary, "tck-server-summary"));
         return http.getAddress().getPort();
     }
 
@@ -100,6 +108,7 @@ final class JsonRpcServer implements TckServer {
         if (http != null) {
             http.stop(0);
         }
+        log.summary();
     }
 
     private void exchange(final HttpExchange exchange) throws IOException {

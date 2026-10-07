@@ -2,6 +2,7 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import type { Handler, JsonObject, TckServer } from "@hiero/tck-contract";
 import { RpcError } from "./RpcError.js";
+import { ServerLog } from "./ServerLog.js";
 import { RuntimeSession } from "./RuntimeSession.js";
 
 /**
@@ -12,6 +13,7 @@ export class JsonRpcServer implements TckServer {
 
     readonly #handlers: ReadonlyMap<string, Handler>;
     readonly #sessions = new Map<string, RuntimeSession>();
+    readonly #log = new ServerLog();
     #server: Server | null = null;
 
     constructor(handlers: ReadonlyMap<string, Handler>) {
@@ -20,6 +22,7 @@ export class JsonRpcServer implements TckServer {
 
     async handle(request: string): Promise<string> {
         let id: unknown = null;
+        let name: string | null = null;
         try {
             let message: unknown;
             try {
@@ -33,8 +36,10 @@ export class JsonRpcServer implements TckServer {
             const call = message as Record<string, unknown>;
             id = call["id"] ?? null;
             const method = call["method"];
-            const handler = typeof method === "string" ? this.#handlers.get(method) : undefined;
+            name = typeof method === "string" ? method : null;
+            const handler = name !== null ? this.#handlers.get(name) : undefined;
             if (handler === undefined) {
+                this.#log.failed(name, RpcError.METHOD_NOT_FOUND, "no binding for this TCK method", null);
                 return error(id, RpcError.METHOD_NOT_FOUND, "Method not found", { method: String(method) });
             }
             const params: JsonObject = call["params"] !== null && typeof call["params"] === "object"
@@ -49,9 +54,11 @@ export class JsonRpcServer implements TckServer {
             return JSON.stringify({ jsonrpc: "2.0", id, result });
         } catch (e) {
             if (e instanceof RpcError) {
+                this.#log.failed(name, e.code, String(e.data["message"]), e);
                 return error(id, e.code, e.message, e.data);
             }
             const cause = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+            this.#log.failed(name, RpcError.INTERNAL_ERROR, cause, e);
             return error(id, RpcError.INTERNAL_ERROR, "Internal error", { message: cause });
         }
     }
@@ -68,6 +75,14 @@ export class JsonRpcServer implements TckServer {
             });
         });
         this.#server = server;
+        // the generated main never calls stop(): the server runs until it is killed. A listener replaces Node's
+        // default handler, so the process has to exit itself.
+        for (const signal of ["SIGTERM", "SIGINT"] as const) {
+            process.once(signal, () => {
+                this.#log.summary();
+                process.exit(signal === "SIGTERM" ? 143 : 130);
+            });
+        }
         return new Promise((resolve) => {
             server.listen(port, () => resolve((server.address() as AddressInfo).port));
         });
@@ -75,6 +90,7 @@ export class JsonRpcServer implements TckServer {
 
     stop(): Promise<void> {
         const server = this.#server;
+        this.#log.summary();
         return new Promise((resolve) => {
             if (server === null) {
                 resolve();

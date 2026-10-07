@@ -10,10 +10,12 @@ TypeScript and Rust (API and tests) and conformance checks of projects against t
 
 ## Quick start
 
-Requires the JDK pinned in [`.sdkmanrc`](../../.sdkmanrc) (`sdk env`, see the
-[toolchain section of the main README](../../README.md#toolchain)); Maven comes from the wrapper `./mvnw` at the
-repository root. All commands are meant to be run from the **repository root** (`hiero-sdk-v3-prototyping/`) and can
-be copied 1:1.
+Requires the JDK pinned in [`.sdkmanrc`](../../.sdkmanrc); Maven comes from the wrapper `./mvnw` at the repository
+root. Activate the JDK once per shell with `sdk env` (not needed with `sdkman_auto_env=true`) — on an older JDK the
+build fails with `Unsupported major.minor version 69.0`. See the
+[toolchain section of the main README](../../README.md#toolchain).
+
+All commands are meant to be run from the **repository root** (`hiero-sdk-v3-prototyping/`) and can be copied 1:1.
 
 ### Build
 
@@ -143,7 +145,7 @@ git). `npm install` links the hand-written support package `sdk-ts/support` into
 builds it first. As for Java, the tests of methods that are not implemented yet fail:
 
 ```bash
-cd generated/ts && npm install && npm test
+npm --prefix generated/ts install && npm --prefix generated/ts test
 ```
 
 ### Generate the Rust API
@@ -158,7 +160,7 @@ Build and test it with Cargo (Rust 1.85 or newer; `target` and `Cargo.lock` are 
 TypeScript, the tests of methods that are not implemented yet fail:
 
 ```bash
-cd generated/rust && cargo test --no-fail-fast
+cargo test --manifest-path generated/rust/Cargo.toml --no-fail-fast
 ```
 
 ### Check a project against the specs

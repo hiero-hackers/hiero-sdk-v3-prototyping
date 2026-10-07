@@ -351,8 +351,13 @@ node REST API `http://127.0.0.1:38081`; the mirror node gRPC and REST-Java endpo
 as `mirrorNetworkIp`, which is its gRPC endpoint; the V3 API reads the mirror node over REST, so the runtimes take
 `MIRROR_NODE_REST_URL` from the environment (the TCK's own variable) instead.
 
-As long as the API is not implemented, every bound method fails with `-32603` (already `setup` calls stubs), and the
-TCK skips the methods without binding (`-32601`). A run against Solo has not been done yet.
+As long as the API is not implemented, every bound method fails with `-32603` (already `setup` calls stubs — the
+first one reached is `AccountId.fromString`), and the TCK skips the methods without binding (`-32601`). The TCK only
+shows `Internal error` for those, so the server logs the exception behind each distinct failure itself and a summary
+of all of them when it stops; `TCK_SERVER_LOG=debug` adds the stack traces (see the README).
+
+A first run against a local Solo network confirms the wiring: the TCK's preflight reaches consensus node and mirror
+node, the server answers, and `setup` fails on the stub.
 
 ## Open questions
 
