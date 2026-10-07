@@ -330,7 +330,7 @@
     <section id="pipeline">
       <h2><span class="n">01</span><span>The generation pipeline</span></h2>
       <p class="lede">The specs in <code>spec/</code> are written in a meta-language, not in any target
-        language. One parser builds one model; three generators turn that model into three idiomatic
+        language. One parser builds one model; four generators turn that model into four idiomatic
         projects.</p>
 
       <p>Everything downstream hangs off <code>metalang-core</code>: it parses the fenced
@@ -341,27 +341,28 @@
 
       <figure>
         <div class="scroller">
-          <svg viewBox="0 0 800 312" role="img" aria-label="Specs flow into metalang-core, which feeds three language generators, each producing a generated project; a dashed check arrow runs back from each project to its generator.">
+          <svg viewBox="0 0 800 395" role="img" aria-label="Specs flow into metalang-core, which feeds four language generators, each producing a generated project; a dashed check arrow runs back from each project to its generator, except for Go, which has no conformance check yet.">
             <defs>
               <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                 <polygon class="d-head" points="0,1 10,5 0,9"/>
               </marker>
             </defs>
 
-            <rect class="d-box d-box--hand" x="16" y="40" width="104" height="230" rx="2"/>
-            <text class="d-t"   x="68" y="146" text-anchor="middle">spec/</text>
-            <text class="d-sub" x="68" y="164" text-anchor="middle">55 .md</text>
+            <rect class="d-box d-box--hand" x="16" y="40" width="104" height="310" rx="2"/>
+            <text class="d-t"   x="68" y="190" text-anchor="middle">spec/</text>
+            <text class="d-sub" x="68" y="208" text-anchor="middle">55 .md</text>
 
-            <line class="d-line" x1="122" y1="155" x2="146" y2="155" marker-end="url(#a1)"/>
+            <line class="d-line" x1="122" y1="197" x2="146" y2="197" marker-end="url(#a1)"/>
 
-            <rect class="d-box d-box--hand" x="152" y="115" width="140" height="80" rx="2"/>
-            <text class="d-t"   x="222" y="148" text-anchor="middle">metalang-core</text>
-            <text class="d-sub" x="222" y="168" text-anchor="middle">parse · validate</text>
-            <text class="d-sub" x="222" y="183" text-anchor="middle">link</text>
+            <rect class="d-box d-box--hand" x="152" y="157" width="140" height="80" rx="2"/>
+            <text class="d-t"   x="222" y="190" text-anchor="middle">metalang-core</text>
+            <text class="d-sub" x="222" y="210" text-anchor="middle">parse · validate</text>
+            <text class="d-sub" x="222" y="225" text-anchor="middle">link</text>
 
-            <line class="d-line" x1="294" y1="150" x2="326" y2="72"  marker-end="url(#a1)"/>
-            <line class="d-line" x1="294" y1="155" x2="326" y2="155" marker-end="url(#a1)"/>
-            <line class="d-line" x1="294" y1="160" x2="326" y2="238" marker-end="url(#a1)"/>
+            <line class="d-line" x1="294" y1="190" x2="326" y2="72"  marker-end="url(#a1)"/>
+            <line class="d-line" x1="294" y1="195" x2="326" y2="155" marker-end="url(#a1)"/>
+            <line class="d-line" x1="294" y1="200" x2="326" y2="238" marker-end="url(#a1)"/>
+            <line class="d-line" x1="294" y1="205" x2="326" y2="321" marker-end="url(#a1)"/>
 
             <rect class="d-box d-box--hand" x="330" y="43" width="150" height="58" rx="2"/>
             <text class="d-t"   x="405" y="67" text-anchor="middle">metalang-java</text>
@@ -375,9 +376,14 @@
             <text class="d-t"   x="405" y="233" text-anchor="middle">metalang-rust</text>
             <text class="d-sub" x="405" y="251" text-anchor="middle">rust.* properties</text>
 
+            <rect class="d-box d-box--hand" x="330" y="292" width="150" height="58" rx="2"/>
+            <text class="d-t"   x="405" y="316" text-anchor="middle">metalang-go</text>
+            <text class="d-sub" x="405" y="334" text-anchor="middle">go.* properties</text>
+
             <line class="d-line" x1="482" y1="60"  x2="556" y2="60"  marker-end="url(#a1)"/>
             <line class="d-line" x1="482" y1="143" x2="556" y2="143" marker-end="url(#a1)"/>
             <line class="d-line" x1="482" y1="226" x2="556" y2="226" marker-end="url(#a1)"/>
+            <line class="d-line" x1="482" y1="309" x2="556" y2="309" marker-end="url(#a1)"/>
             <text class="d-lbl" x="519" y="138" text-anchor="middle">generate</text>
 
             <line class="d-line d-dash" x1="556" y1="168" x2="484" y2="168" marker-end="url(#a1)"/>
@@ -391,20 +397,25 @@
 
             <rect class="d-box d-box--gen" x="560" y="126" width="180" height="58" rx="2"/>
             <text class="d-t"   x="650" y="150" text-anchor="middle">sdk-ts/generated</text>
-            <text class="d-sub" x="650" y="168" text-anchor="middle">1169 .ts</text>
+            <text class="d-sub" x="650" y="168" text-anchor="middle">583 .ts</text>
 
             <rect class="d-box d-box--gen" x="560" y="209" width="180" height="58" rx="2"/>
             <text class="d-t"   x="650" y="233" text-anchor="middle">sdk-rust/generated</text>
             <text class="d-sub" x="650" y="251" text-anchor="middle">682 .rs</text>
 
-            <text class="d-lbl" x="16" y="294">one model · three idiomatic projects</text>
+            <rect class="d-box d-box--gen" x="560" y="292" width="180" height="58" rx="2"/>
+            <text class="d-t"   x="650" y="316" text-anchor="middle">sdk-go/generated</text>
+            <text class="d-sub" x="650" y="334" text-anchor="middle">303 .go · no check yet</text>
+
+            <text class="d-lbl" x="16" y="377">one model · four idiomatic projects</text>
           </svg>
         </div>
         <figcaption>Each generator owns the whole project, not only the sources: Maven poms and
           <code>module-info.java</code>, the npm workspace and its <code>exports</code> maps, the Cargo
           manifests and <code>lib.rs</code>. The dashed arrow is <code>metalang check</code>, which compares a
           project on disk against the API generated in memory — so a spec change that was never regenerated
-          fails the build.</figcaption>
+          fails the build. Go has no such check yet: <code>metalang check</code> accepts
+          <code>java|ts|rust</code> only, and the Go generator still emits types without methods.</figcaption>
       </figure>
 
       <h3>What the configuration decides</h3>
@@ -478,7 +489,7 @@
     <section id="protobuf">
       <h2><span class="n">03</span><span>One protobuf source</span></h2>
       <p class="lede">Hiero has three node types with a protobuf interface, and their definitions live in
-        three repositories. <code>protobuf/</code> vendors all three at pinned versions so every generator
+        three repositories. <code>tooling/protobuf/</code> vendors all three at pinned versions so every generator
         works from one tree.</p>
 
       <p>They are not independent. The consensus node is the base: <code>services/basic_types.proto</code>
@@ -505,7 +516,8 @@
         come through the repository's Maven wrapper, so no protobuf installation is needed.</p>
 
       <h3>Generated, and never public</h3>
-      <p>All three languages generate from that tree at build time, and in none of them is the result part of
+      <p>Three of the four languages generate from that tree at build time — Go does not yet — and in none of them
+        is the result part of
         the public API: the wire format changes with every network release, so exposing it would make every
         protocol change a breaking change of the SDK. Each language expresses that with its own mechanism.</p>
 
@@ -546,7 +558,7 @@
       <p class="lede">The Hiero TCK drives any SDK through a JSON-RPC server. Here that server is generated
         from two Markdown files.</p>
 
-      <p><code>tck/bindings/*.md</code> declares, in fenced <code>bindings</code> blocks, how each TCK method
+      <p><code>tooling/tck/bindings/*.md</code> declares, in fenced <code>bindings</code> blocks, how each TCK method
         maps onto the API: which parameter becomes which attribute, through which converter, and which
         results are read back. <code>metalang tck generate</code> turns that — together with the converter
         catalogue in the core — into a contract and a server. The parts that cannot be derived from the
@@ -564,7 +576,7 @@
             <text class="d-lbl" x="16" y="26">build time</text>
 
             <rect class="d-box d-box--hand" x="16" y="40" width="176" height="54" rx="2"/>
-            <text class="d-t"   x="104" y="64" text-anchor="middle">tck/bindings/</text>
+            <text class="d-t"   x="104" y="64" text-anchor="middle">tooling/tck/bindings/</text>
             <text class="d-sub" x="104" y="82" text-anchor="middle">common · crypto-service</text>
 
             <line class="d-line" x1="196" y1="67" x2="232" y2="67" marker-end="url(#a3)"/>
@@ -681,7 +693,7 @@
           </thead>
           <tbody>
             <tr><td>Holds</td><td>6 interfaces, 342 lines, no method body</td><td>3 classes, 283 lines, the bound TCK methods</td></tr>
-            <tr><td>Derived from</td><td>the converter catalogue and the binding flow</td><td><code>tck/bindings/*.md</code></td></tr>
+            <tr><td>Derived from</td><td>the converter catalogue and the binding flow</td><td><code>tooling/tck/bindings/*.md</code></td></tr>
             <tr><td>Compiled against</td><td>the SDK API</td><td>the contract and the SDK API</td></tr>
             <tr><td>Implemented by</td><td><code>sdk-java/tck/runtime</code>, by hand</td><td>—</td></tr>
           </tbody>
@@ -733,10 +745,10 @@ hiero-sdk-tck-<b>runtime</b>       <b>runtime</b>   <span class="c">&#8592; the 
 
             <rect class="d-box d-box--hand" x="20" y="46" width="234" height="54" rx="2"/>
             <text class="d-t"   x="36" y="70">metalang tck check</text>
-            <text class="d-sub" x="36" y="88">coverage of tck/bindings</text>
+            <text class="d-sub" x="36" y="88">coverage of tooling/tck/bindings</text>
 
             <rect class="d-box d-box--hand" x="20" y="120" width="234" height="40" rx="2"/>
-            <text class="d-t"   x="36" y="145">tck/solo.env</text>
+            <text class="d-t"   x="36" y="145">tooling/tck/solo.env</text>
 
             <rect class="d-box d-box--gen" x="20" y="194" width="234" height="54" rx="2"/>
             <text class="d-t"   x="36" y="218">TCK server</text>
@@ -801,7 +813,7 @@ hiero-sdk-tck-<b>runtime</b>       <b>runtime</b>   <span class="c">&#8592; the 
             <tr>
               <td class="path">.env</td>
               <td>run</td><td>out</td>
-              <td>Operator, node address, mirror node URL, server port. We write <code>tck/solo.env</code> into the clone; an existing file is kept as <code>.env.before-v3</code>.</td>
+              <td>Operator, node address, mirror node URL, server port. We write <code>tooling/tck/solo.env</code> into the clone; an existing file is kept as <code>.env.before-v3</code>.</td>
             </tr>
             <tr>
               <td class="path">JSON-RPC :8544</td>
@@ -888,7 +900,7 @@ hiero-sdk-tck-<b>runtime</b>       <b>runtime</b>   <span class="c">&#8592; the 
 
       <div class="note">
         <p><strong>What it does not do.</strong> It is a GitHub Action, so it replaces nothing locally —
-          <code>tck/run-tck.sh</code> and the manual clone stay for development. It does not start a network;
+          <code>tooling/tck/run-tck.sh</code> and the manual clone stay for development. It does not start a network;
           Solo remains the caller&#8217;s job. Its bundled server presets cover the seven v2 SDKs, not this
           prototype, so the server comes from <code>startServer: false</code> or a
           <code>dockerfilePath</code>. And it carries no tags or releases yet — pin a commit SHA.</p>
@@ -921,7 +933,7 @@ hiero-sdk-tck-<b>runtime</b>       <b>runtime</b>   <span class="c">&#8592; the 
             <text class="d-num" x="20" y="118">2</text>
             <rect class="d-box d-box--gen" x="44" y="96" width="400" height="48" rx="2"/>
             <text class="d-t"   x="60" y="116">CryptoServiceBindings.createAccount</text>
-            <text class="d-sub" x="60" y="134">generated from tck/bindings/crypto-service.md</text>
+            <text class="d-sub" x="60" y="134">generated from tooling/tck/bindings/crypto-service.md</text>
             <line class="d-line" x1="244" y1="146" x2="244" y2="168" marker-end="url(#a4)"/>
             <text class="d-lbl" x="256" y="162">one converter per parameter</text>
 
@@ -1003,16 +1015,16 @@ hiero-sdk-tck-<b>runtime</b>       <b>runtime</b>   <span class="c">&#8592; the 
           <tbody>
             <tr><td class="path">spec/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>The V3 API in the meta-language, 55 files across base, consensus node, mirror node and enterprise.</td></tr>
             <tr><td class="path">guidelines/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>The meta-language itself plus one mapping document per target language.</td></tr>
-            <tr><td class="path">tooling/metalang/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>The generator: grammar, model, validator, three language modules, CLI. 154 sources, ~750 tests.</td></tr>
-            <tr><td class="path">protobuf/</td><td class="origin"><span class="chip chip--vend">vendored</span></td><td>The protobuf definitions of all three node types, pinned; <code>update.sh</code>, <code>verify.sh</code>, <code>sources.json</code>.</td></tr>
+            <tr><td class="path">tooling/metalang/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>The generator: grammar, model, validator, four language modules, CLI. 166 sources, 927 tests.</td></tr>
+            <tr><td class="path">tooling/protobuf/</td><td class="origin"><span class="chip chip--vend">vendored</span></td><td>The protobuf definitions of all three node types, pinned; <code>update.sh</code>, <code>verify.sh</code>, <code>sources.json</code>.</td></tr>
             <tr><td class="path">sdk-java/support/<br>sdk-ts/support/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Types the generated API uses but no spec declares — thread-safety, streaming, <code>Duration</code>.</td></tr>
-            <tr><td class="path">sdk-java/protobuf/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>No sources of its own: compiles <code>protobuf/</code> into Java and exports it only to the SDK modules.</td></tr>
-            <tr><td class="path">sdk-java/generated/<br>sdk-ts/generated/<br>sdk-rust/generated/</td><td class="origin"><span class="chip chip--gen">generated</span></td><td>The API per language, with its build files and contract tests. Never edited — except by the spike.</td></tr>
-            <tr><td class="path">tck/bindings/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Markdown with <code>bindings</code> blocks: TCK method → API type, parameter by parameter.</td></tr>
+            <tr><td class="path">sdk-java/protobuf/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>No sources of its own: compiles <code>tooling/protobuf/</code> into Java and exports it only to the SDK modules.</td></tr>
+            <tr><td class="path">sdk-java/generated/<br>sdk-ts/generated/<br>sdk-rust/generated/<br>sdk-go/generated/</td><td class="origin"><span class="chip chip--gen">generated</span></td><td>The API per language, with its build files and contract tests. Never edited — except by the spike.</td></tr>
+            <tr><td class="path">tooling/tck/bindings/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Markdown with <code>bindings</code> blocks: TCK method → API type, parameter by parameter.</td></tr>
             <tr><td class="path">sdk-java/tck/generated/<br>sdk-ts/tck/generated/</td><td class="origin"><span class="chip chip--gen">generated</span></td><td><code>contract/</code> — declarations the runtime implements; <code>server/</code> — the JSON-RPC server.</td></tr>
             <tr><td class="path">sdk-java/tck/runtime/<br>sdk-ts/tck/runtime/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>What bindings cannot express: the JSON-RPC server, the value converters, <code>setup</code>, error logging.</td></tr>
-            <tr><td class="path">tck/run-tck.sh</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Checks Solo, starts the server, copies <code>solo.env</code> into the TCK clone, runs the suite.</td></tr>
-            <tr><td class="path">docs/adr/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Seven decisions. ADR-0007 is the one this page is organised around.</td></tr>
+            <tr><td class="path">tooling/tck/run-tck.sh</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Checks Solo, starts the server, copies <code>solo.env</code> into the TCK clone, runs the suite.</td></tr>
+            <tr><td class="path">docs/adr/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Eight decisions. ADR-0007 is the one this page is organised around; ADR-0008 is why every language has one folder.</td></tr>
           </tbody>
         </table>
       </div>
@@ -1021,12 +1033,12 @@ hiero-sdk-tck-<b>runtime</b>       <b>runtime</b>   <span class="c">&#8592; the 
     <!-- ============================================================ -->
     <section id="commands">
       <h2><span class="n">07</span><span>Running it</span></h2>
-      <p class="lede">JDK 25 comes from <code>.sdkmanrc</code>, Maven from the wrapper — <code>sdk env</code>
-        once per shell, then everything from the repository root.</p>
+      <p class="lede">JDK 25 comes from the <code>.sdkmanrc</code> of the build you are in, Maven from the wrapper next to it — <code>sdk env</code>
+        activates it (automatic on <code>cd</code> with <code>sdkman_auto_env=true</code>). The two Maven builds — <code>tooling/metalang/</code> and <code>sdk-java/</code> — each carry their own wrapper and pin; the repository root carries none, because nothing is built there.</p>
 
       <h3>The generator</h3>
       <pre><span class="c"># build the CLI</span>
-./mvnw -f tooling/metalang/pom.xml <b>verify</b>
+cd tooling/metalang &amp;&amp; ./mvnw <b>verify</b>
 
 <span class="c"># the specs themselves</span>
 metalang <b>validate</b> spec
@@ -1040,19 +1052,20 @@ metalang <b>check</b> --language=java --fail-on=never \
          --config=sdk-java/generator.properties --project=sdk-java/generated spec</pre>
 
       <h3>Protobuf</h3>
-      <pre>protobuf/<b>update.sh</b>                  <span class="c"># re-fetch from the pins in sources.json</span>
-protobuf/<b>verify.sh</b>                  <span class="c"># compile every root with protoc</span>
+      <pre>tooling/protobuf/<b>update.sh</b>                  <span class="c"># re-fetch from the pins in sources.json</span>
+tooling/protobuf/<b>verify.sh</b>                  <span class="c"># compile every root with protoc</span>
 npm run <b>gen:proto-ts</b>                <span class="c"># TypeScript messages (buf + protoc-gen-es)</span></pre>
 
       <h3>The TCK</h3>
       <pre>solo one-shot single deploy         <span class="c"># a local network</span>
 
-./mvnw -f sdk-java/support install
-./mvnw -f sdk-java/protobuf install
-./mvnw -f sdk-java/generated install -DskipTests
-./mvnw -f sdk-java/tck/generated/contract install
-./mvnw -f sdk-java/tck/runtime install
-./mvnw -f sdk-java/tck/generated/server <b>clean</b> package
+cd sdk-java
+./mvnw -f support install
+./mvnw -f protobuf install
+./mvnw -f generated install -DskipTests
+./mvnw -f tck/generated/contract install
+./mvnw -f tck/runtime install
+./mvnw -f tck/generated/server <b>clean</b> package
 
 TCK_DIR=../hiero-sdk-tck tck/<b>run-tck.sh</b> java \
     src/tests/crypto-service/test-account-create-transaction.ts</pre>
@@ -1060,7 +1073,7 @@ TCK_DIR=../hiero-sdk-tck tck/<b>run-tck.sh</b> java \
       <p>And the build-time crossing — how much of the TCK&#8217;s own method list the bindings already
         cover:</p>
 
-      <pre>metalang <b>tck check</b> --bindings=tck/bindings \
+      <pre>metalang <b>tck check</b> --bindings=tooling/tck/bindings \
          --tck=../hiero-sdk-tck/docs/test-specifications spec</pre>
 
       <div class="note">
