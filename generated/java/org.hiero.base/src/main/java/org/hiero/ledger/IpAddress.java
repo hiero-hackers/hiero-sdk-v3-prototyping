@@ -53,7 +53,7 @@ public record IpAddress(byte[] bytes) {
     /// canonical form for 16-byte values.
     @Override
     public String toString() {
-        throw new UnsupportedOperationException("Not implemented yet: IpAddress.toString");
+        return (bytes[0] & 0xFF) + "." + (bytes[1] & 0xFF) + "." + (bytes[2] & 0xFF) + "." + (bytes[3] & 0xFF);
     }
 
     /// Parses an IpAddress from its textual form. Today only dotted-quad IPv4 ("10.0.0.7") is
@@ -61,7 +61,25 @@ public record IpAddress(byte[] bytes) {
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static IpAddress fromString(final String value) {
-        throw new UnsupportedOperationException("Not implemented yet: IpAddress.fromString");
+        Objects.requireNonNull(value, "value must not be null");
+        final String[] parts = value.split("\\.", -1);
+        if (parts.length != 4) {
+            throw new IllegalArgumentException("An IPv4 address reads 'a.b.c.d', not '" + value + "'");
+        }
+        final byte[] bytes = new byte[4];
+        for (int i = 0; i < 4; i++) {
+            final int octet;
+            try {
+                octet = Integer.parseInt(parts[i]);
+            } catch (final NumberFormatException e) {
+                throw new IllegalArgumentException("'" + parts[i] + "' is no octet of an IPv4 address", e);
+            }
+            if (octet < 0 || octet > 255) {
+                throw new IllegalArgumentException("The octet " + octet + " is not between 0 and 255");
+            }
+            bytes[i] = (byte) octet;
+        }
+        return new IpAddress(bytes);
     }
 
     /// Wraps raw network-order bytes. `value.length` must equal 4; otherwise throws.
@@ -69,6 +87,6 @@ public record IpAddress(byte[] bytes) {
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static IpAddress fromBytes(final byte[] value) {
-        throw new UnsupportedOperationException("Not implemented yet: IpAddress.fromBytes");
+        return new IpAddress(value);
     }
 }

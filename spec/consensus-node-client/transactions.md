@@ -395,6 +395,27 @@ signed.submit(client);
 
 ## Questions & Comments
 
+- **`Response` cannot query anything.** `Response<$$Receipt>` holds nothing but a `TransactionId`, yet
+  `queryReceipt()` and `queryRecord()` have to reach the consensus node. The type carries neither the
+  client it was created from nor the node the transaction went to, so an implementation cannot answer
+  these calls from the object alone.
+
+  Found while implementing `createAccount` against the TCK; the spike works around it with a
+  process-wide registry from `TransactionId` to the submitting client, which also means a `Response`
+  cannot be deserialized in another process. Options: give `Response` a reference to its client, or move
+  the queries to the client (`client.queryReceipt(transactionId)`).
+
+- **`TransactionId.generateTransactionId(payer: Address)` takes the wrong type.** A `TransactionId`
+  holds an `AccountId` and the payer of a transaction is an account, but the factory takes an `Address`.
+  `Address` is the numeric-only form, so an account addressed by EVM address or key alias cannot be a
+  payer through this method, and an implementation has to convert.
+
+- **`BasicTransactionStatus` has no `SUCCESS`.** The enum defines `OK(0)`, `INVALID_TRANSACTION(1)`,
+  `PAYER_ACCOUNT_NOT_FOUND(2)` and `GRPC_WEB_PROXY_NOT_SUPPORTED(399)`, but the status a successful
+  transaction reports in HAPI is `SUCCESS` with code 22. Every caller that wants to know whether a
+  transaction succeeded has to compare against a hard-coded 22 — the TCK runtime does exactly that.
+  `TransactionStatus` is deliberately open (an `int32` code, for custom services), so the question is
+  which statuses the spec itself should name.
 - **`setRegenerateTransactionId(boolean)` is intentionally NOT part of V3.** In v2 the SDK
   silently regenerates a `TransactionId` (and retries) when the network rejects a transaction
   with `TRANSACTION_EXPIRED` or `INVALID_TRANSACTION_DURATION`. This is **incompatible with the

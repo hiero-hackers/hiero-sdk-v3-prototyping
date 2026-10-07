@@ -24,9 +24,14 @@ import org.jspecify.annotations.NullMarked;
 /// - `org.hiero.consensusnode.transactions.topics`
 /// - `org.hiero.consensusnode.transactions.utility`
 @NullMarked
+// gRPC ships no module descriptor; io.grpc and io.grpc.protobuf.lite are automatic modules
+@SuppressWarnings("requires-automatic")
 module org.hiero.consensus.node.client {
     requires transitive org.hiero.base;
     requires static transitive org.jspecify;
+    requires org.hiero.sdk.protobuf;
+    requires io.grpc;
+    requires io.grpc.protobuf.lite;
 
     exports org.hiero.consensusnode.client;
     exports org.hiero.consensusnode.proto;

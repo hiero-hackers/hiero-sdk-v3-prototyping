@@ -4,6 +4,7 @@ package org.hiero.ledger;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import org.hiero.ledger.internal.DefaultTransactionId;
 import org.jspecify.annotations.Nullable;
 
 /// Id of a transaction
@@ -51,7 +52,9 @@ public abstract class TransactionId {
 
     /// Generates a new TransactionId for the given payer account.
     public static TransactionId generateTransactionId(final Address accountId) {
-        throw new UnsupportedOperationException("Not implemented yet: TransactionId.generateTransactionId");
+        Objects.requireNonNull(accountId, "accountId must not be null");
+        return DefaultTransactionId.generate(new AccountId(accountId.shard(), accountId.realm(),
+                accountId.checksum(), accountId.num(), null, null));
     }
 
     /// Parses a TransactionId from its string form. Throws if the format is invalid.

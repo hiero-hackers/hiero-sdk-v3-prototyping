@@ -4,6 +4,7 @@ package org.hiero.consensusnode.transactions;
 
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
+import org.hiero.consensusnode.client.internal.ClientRuntime;
 import org.hiero.ledger.TransactionId;
 
 /// @param transactionId the id of the transaction
@@ -17,8 +18,9 @@ public record Response<ReceiptT extends Receipt>(TransactionId transactionId) {
     }
 
     /// query for the receipt of the transaction
+    @SuppressWarnings("unchecked")
     public CompletionStage<ReceiptT> queryReceipt() {
-        throw new UnsupportedOperationException("Not implemented yet: Response.queryReceipt");
+        return ClientRuntime.queryReceipt(transactionId).thenApply(receipt -> (ReceiptT) receipt);
     }
 
     /// query for the record of the transaction

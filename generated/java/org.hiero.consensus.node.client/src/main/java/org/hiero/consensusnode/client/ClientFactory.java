@@ -2,20 +2,35 @@
 
 package org.hiero.consensusnode.client;
 
+import java.util.Objects;
+import org.hiero.consensusnode.client.internal.ClientRuntime;
+import org.hiero.ledger.Network;
 import org.hiero.ledger.config.NetworkSetting;
+import org.hiero.nativeToken.NativeTokenUnit;
 
 /// Factory methods of the package `org.hiero.consensusnode.client`.
 public final class ClientFactory {
 
     /// Creates a client for the given network that uses the operator account to pay for and sign requests.
     public static HieroClient<?> createClient(final NetworkSetting networkSettings, final Account operatorAccount) {
-        throw new UnsupportedOperationException("Not implemented yet: ClientFactory.createClient");
+        Objects.requireNonNull(operatorAccount, "operatorAccount must not be null");
+        return createClient(networkSettings, operatorAccount,
+                (bytes, node) -> new NodeSignature(node, operatorAccount.privateKey().createPublicKey(),
+                        operatorAccount.privateKey().sign(bytes)));
     }
 
     /// Creates a client for the given network that uses the operator account to pay for requests and the given
     /// signer to sign transactions.
     public static HieroClient<?> createClient(final NetworkSetting networkSettings, final Account operatorAccount, final TransactionSigner transactionSigner) {
-        throw new UnsupportedOperationException("Not implemented yet: ClientFactory.createClient");
+        Objects.requireNonNull(networkSettings, "networkSettings must not be null");
+        Objects.requireNonNull(operatorAccount, "operatorAccount must not be null");
+        Objects.requireNonNull(transactionSigner, "transactionSigner must not be null");
+        @SuppressWarnings("unchecked")
+        final Network<NativeTokenUnit> network = (Network<NativeTokenUnit>) networkSettings.network();
+        final HieroClient<NativeTokenUnit> client =
+                new HieroClient<>(operatorAccount, network, transactionSigner);
+        ClientRuntime.register(client, networkSettings);
+        return client;
     }
 
     private ClientFactory() {

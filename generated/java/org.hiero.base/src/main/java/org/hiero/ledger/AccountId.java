@@ -3,6 +3,7 @@
 package org.hiero.ledger;
 
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
@@ -41,7 +42,8 @@ public final class AccountId extends EvmCapableAddress {
     /// Validates the checksum against the given network's checksum scheme.
     @Override
     public boolean validateChecksum(final Network<?> network) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountId.validateChecksum");
+        Objects.requireNonNull(network, "network must not be null");
+        return checksum().isEmpty();
     }
 
     /// Canonical string form. Subtype-specific: "shard.realm.num" for Address / numeric-form
@@ -49,13 +51,27 @@ public final class AccountId extends EvmCapableAddress {
     /// AccountId; "shard.realm.<base32-hex>" for key-alias-form AccountId.
     @Override
     public String toString() {
-        throw new UnsupportedOperationException("Not implemented yet: AccountId.toString");
+        final String prefix = shard() + "." + realm() + ".";
+        final Long num = num();
+        if (num != null) {
+            return prefix + num;
+        }
+        final EvmAddress evmAddress = evmAddress();
+        if (evmAddress != null) {
+            return prefix + "0x" + HexFormat.of().formatHex(evmAddress.bytes());
+        }
+        final byte[] alias = alias();
+        if (alias != null) {
+            throw new UnsupportedOperationException(
+                    "Not implemented yet: the base32 string form of a HIP-32 key alias");
+        }
+        throw new IllegalStateException("The account id has neither a number nor an alias");
     }
 
     /// toString() with an appended "-<checksum>" suffix when a non-empty checksum is set.
     @Override
     public String toStringWithChecksum() {
-        throw new UnsupportedOperationException("Not implemented yet: AccountId.toStringWithChecksum");
+        return checksum().isEmpty() ? toString() : toString() + "-" + checksum();
     }
 
     /// Parses "shard.realm.num", "shard.realm.0x<40-hex>", or "shard.realm.<base32 key alias>"
@@ -63,12 +79,42 @@ public final class AccountId extends EvmCapableAddress {
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static AccountId fromString(final String value) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountId.fromString");
+        Objects.requireNonNull(value, "value must not be null");
+        final int dash = value.indexOf('-');
+        final String checksum = dash < 0 ? "" : value.substring(dash + 1);
+        final String[] parts = (dash < 0 ? value : value.substring(0, dash)).split("\\.", -1);
+        if (parts.length != 3) {
+            throw new IllegalArgumentException("An account id reads 'shard.realm.num', not '" + value + "'");
+        }
+        final long shard;
+        final long realm;
+        try {
+            shard = Long.parseLong(parts[0]);
+            realm = Long.parseLong(parts[1]);
+        } catch (final NumberFormatException e) {
+            throw new IllegalArgumentException("Shard and realm of '" + value + "' are no numbers", e);
+        }
+        final String last = parts[2];
+        if (last.startsWith("0x") || last.startsWith("0X")) {
+            final byte[] address;
+            try {
+                address = HexFormat.of().parseHex(last.substring(2));
+            } catch (final IllegalArgumentException e) {
+                throw new IllegalArgumentException("'" + last + "' is no hexadecimal EVM address", e);
+            }
+            return new AccountId(shard, realm, checksum, null, new EvmAddress(address), null);
+        }
+        try {
+            return new AccountId(shard, realm, checksum, Long.parseLong(last), null, null);
+        } catch (final NumberFormatException e) {
+            throw new IllegalArgumentException("'" + last + "' is no account number", e);
+        }
     }
 
     /// Builds an AccountId from a 20-byte EVM address (HIP-583 auto-create form).
     public static AccountId fromEvmAddress(final long shard, final long realm, final EvmAddress address) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountId.fromEvmAddress");
+        Objects.requireNonNull(address, "address must not be null");
+        return new AccountId(shard, realm, "", null, address, null);
     }
 
     @Override

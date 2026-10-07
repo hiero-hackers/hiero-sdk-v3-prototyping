@@ -110,3 +110,16 @@ HieroClient client = HieroClient.createClient(networkSettings, operatorAccount);
 
 ## Questions & Comments
 
+- **A `HieroClient` cannot reach its network.** `HieroClient` is immutable and holds operator, `Network`
+  and `TransactionSigner`; `Network` carries the ledger id, a name and the native token unit, but no
+  `ConsensusNode`. The nodes are only in the `NetworkSetting` that `createClient(...)` receives, and that
+  object is not reachable from the client afterwards. An implementation therefore has nowhere to take the
+  target node from when a transaction is signed or submitted, and nowhere to keep a connection to it.
+
+  Found while implementing `createAccount` against the TCK; the spike works around it with a
+  process-wide registry keyed by the client instance, which is a workaround, not a design. Options:
+  carry the nodes (or the whole `NetworkSetting`) in `HieroClient`, or make `HieroClient` an abstraction
+  whose implementation holds the connection state.
+
+- **`ClientFactory.createClient` returns `HieroClient<?>`**, so the caller loses the native-token unit
+  and every later use needs a wildcard. Should the factory be generic in the unit of the `NetworkSetting`?

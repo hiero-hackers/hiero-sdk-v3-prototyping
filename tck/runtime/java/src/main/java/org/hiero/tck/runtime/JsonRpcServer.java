@@ -62,19 +62,27 @@ final class JsonRpcServer implements TckServer {
             response.put("id", id);
             response.put("result", handler.handle(params, session));
             return Json.write(response);
-        } catch (final Exception e) {
+        } catch (final Throwable e) {
+            // also Error: a NoClassDefFoundError must become a JSON-RPC error, not a request that never answers
             Throwable cause = e;
             while (cause instanceof CompletionException && cause.getCause() != null) {
                 cause = cause.getCause();
             }
             if (cause instanceof RpcError error) {
-                log.failed(name, error.code(), String.valueOf(error.data().get("message")), error);
+                log.failed(name, error.code(), detail(error), error);
                 return error(id, error.code(), error.getMessage(), error.data());
             }
             final String detail = cause.getClass().getSimpleName() + ": " + cause.getMessage();
             log.failed(name, RpcError.INTERNAL_ERROR, detail, cause);
             return error(id, RpcError.INTERNAL_ERROR, "Internal error", Map.of("message", detail));
         }
+    }
+
+    /// The `data.message` of an error, or its whole data object when it carries no message (a Hiero
+    /// error reports `data.status` instead).
+    private static String detail(final RpcError error) {
+        final Object message = error.data().get("message");
+        return message != null ? String.valueOf(message) : String.valueOf(error.data());
     }
 
     private static String error(final @Nullable Object id, final int code, final String message,

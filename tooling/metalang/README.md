@@ -118,6 +118,7 @@ depends on the hand-written support types (`sdk-java/support`, artifact `hiero-s
 
 ```bash
 ./mvnw -f sdk-java/support install
+./mvnw -f sdk-java/protobuf install
 ./mvnw -f generated/java/pom.xml package -DskipTests
 ```
 
@@ -224,12 +225,16 @@ is a finding. To build and start the server (JDK 25, `sdk env`):
 
 ```bash
 ./mvnw -f sdk-java/support install
+./mvnw -f sdk-java/protobuf install
 ./mvnw -f generated/java install -DskipTests
 ./mvnw -f generated/java-tck/contract install
 ./mvnw -f tck/runtime/java install
-./mvnw -f generated/java-tck/server package
+./mvnw -f generated/java-tck/server clean package
 java -jar generated/java-tck/server/target/hiero-sdk-tck-0.1.0-SNAPSHOT.jar
 ```
+
+`clean` matters for the server: an incremental `package` keeps the `Class-Path` of the previous
+manifest, so a newly added dependency lands in `target/lib` but not on the class path.
 
 The server listens on port 8544 (the TCK default) or on the port given as argument; its dependencies are copied to
 `target/lib` next to the jar.

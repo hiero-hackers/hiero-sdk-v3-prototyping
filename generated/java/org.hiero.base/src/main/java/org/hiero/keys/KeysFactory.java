@@ -2,16 +2,27 @@
 
 package org.hiero.keys;
 
+import java.util.Objects;
+import org.hiero.keys.internal.EcdsaPrivateKey;
+import org.hiero.keys.internal.EcdsaPublicKey;
+import org.hiero.keys.internal.Ed25519PrivateKey;
+import org.hiero.keys.internal.Ed25519PublicKey;
+import org.hiero.keys.internal.KeyCodec;
+
 /// Factory methods of the package `org.hiero.keys`.
 public final class KeysFactory {
 
     /// Generate a new key based on a specific algorithm
     public static PrivateKey generatePrivateKey(final KeyAlgorithm algorithm) {
-        throw new UnsupportedOperationException("Not implemented yet: KeysFactory.generatePrivateKey");
+        Objects.requireNonNull(algorithm, "algorithm must not be null");
+        return switch (algorithm) {
+            case ED25519 -> Ed25519PrivateKey.generate();
+            case ECDSA -> EcdsaPrivateKey.generate();
+        };
     }
 
     public static PublicKey generatePublicKey(final KeyAlgorithm algorithm) {
-        throw new UnsupportedOperationException("Not implemented yet: KeysFactory.generatePublicKey");
+        return generatePrivateKey(algorithm).createPublicKey();
     }
 
     /// Read a key based on a specific algorithm from a string
@@ -19,14 +30,18 @@ public final class KeysFactory {
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static PrivateKey createPrivateKey(final KeyAlgorithm algorithm, final ByteImportEncoding encoding, final String value) {
-        throw new UnsupportedOperationException("Not implemented yet: KeysFactory.createPrivateKey");
+        Objects.requireNonNull(encoding, "encoding must not be null");
+        Objects.requireNonNull(value, "value must not be null");
+        return createPrivateKey(algorithm, encoding.decode(value));
     }
 
     /// calls createPublicKey(algorithm: KeyAlgorithm, rawBytes: bytes)
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static PublicKey createPublicKey(final KeyAlgorithm algorithm, final ByteImportEncoding encoding, final String value) {
-        throw new UnsupportedOperationException("Not implemented yet: KeysFactory.createPublicKey");
+        Objects.requireNonNull(encoding, "encoding must not be null");
+        Objects.requireNonNull(value, "value must not be null");
+        return createPublicKey(algorithm, encoding.decode(value));
     }
 
     /// Read a key based on a specific algorithm from a byte array
@@ -34,14 +49,24 @@ public final class KeysFactory {
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static PrivateKey createPrivateKey(final KeyAlgorithm algorithm, final byte[] rawBytes) {
-        throw new UnsupportedOperationException("Not implemented yet: KeysFactory.createPrivateKey");
+        Objects.requireNonNull(algorithm, "algorithm must not be null");
+        Objects.requireNonNull(rawBytes, "rawBytes must not be null");
+        return switch (algorithm) {
+            case ED25519 -> new Ed25519PrivateKey(rawBytes);
+            case ECDSA -> new EcdsaPrivateKey(rawBytes);
+        };
     }
 
     /// reads bytes as raw bytes for the given algorithm
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static PublicKey createPublicKey(final KeyAlgorithm algorithm, final byte[] rawBytes) {
-        throw new UnsupportedOperationException("Not implemented yet: KeysFactory.createPublicKey");
+        Objects.requireNonNull(algorithm, "algorithm must not be null");
+        Objects.requireNonNull(rawBytes, "rawBytes must not be null");
+        return switch (algorithm) {
+            case ED25519 -> new Ed25519PublicKey(rawBytes);
+            case ECDSA -> new EcdsaPublicKey(rawBytes);
+        };
     }
 
     /// Read a key based on a specific format (container & encoding) from a string
@@ -49,14 +74,24 @@ public final class KeysFactory {
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static PrivateKey createPrivateKey(final KeyFormat container, final String value) {
-        throw new UnsupportedOperationException("Not implemented yet: KeysFactory.createPrivateKey");
+        Objects.requireNonNull(container, "container must not be null");
+        Objects.requireNonNull(value, "value must not be null");
+        if (container.encoding().rawFormat() != RawFormat.STRING) {
+            throw new IllegalArgumentException("Format " + container + " is binary, pass the bytes instead");
+        }
+        return createPrivateKey(container, container.decode(KeyType.PRIVATE, value));
     }
 
     /// if container.format is not STRING an illegal format error is thrown
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static PublicKey createPublicKey(final KeyFormat container, final String value) {
-        throw new UnsupportedOperationException("Not implemented yet: KeysFactory.createPublicKey");
+        Objects.requireNonNull(container, "container must not be null");
+        Objects.requireNonNull(value, "value must not be null");
+        if (container.encoding().rawFormat() != RawFormat.STRING) {
+            throw new IllegalArgumentException("Format " + container + " is binary, pass the bytes instead");
+        }
+        return createPublicKey(container, container.decode(KeyType.PUBLIC, value));
     }
 
     /// Read a key based on a specific format (container & encoding) from a byte array
@@ -64,14 +99,24 @@ public final class KeysFactory {
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static PrivateKey createPrivateKey(final KeyFormat container, final byte[] value) {
-        throw new UnsupportedOperationException("Not implemented yet: KeysFactory.createPrivateKey");
+        Objects.requireNonNull(container, "container must not be null");
+        Objects.requireNonNull(value, "value must not be null");
+        if (!container.supportsType(KeyType.PRIVATE)) {
+            throw new IllegalArgumentException("Format " + container + " does not hold a private key");
+        }
+        return KeyCodec.fromPkcs8(value);
     }
 
     /// if container.format is not BYTES an illegal format error is thrown
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static PublicKey createPublicKey(final KeyFormat container, final byte[] value) {
-        throw new UnsupportedOperationException("Not implemented yet: KeysFactory.createPublicKey");
+        Objects.requireNonNull(container, "container must not be null");
+        Objects.requireNonNull(value, "value must not be null");
+        if (!container.supportsType(KeyType.PUBLIC)) {
+            throw new IllegalArgumentException("Format " + container + " does not hold a public key");
+        }
+        return KeyCodec.fromSpki(value);
     }
 
     /// Read a key based on our preferred format (container & encoding) from a string
@@ -79,14 +124,14 @@ public final class KeysFactory {
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static PrivateKey createPrivateKey(final String value) {
-        throw new UnsupportedOperationException("Not implemented yet: KeysFactory.createPrivateKey");
+        return createPrivateKey(KeyFormat.PKCS8_WITH_PEM, value);
     }
 
     /// reads string as SPKI PEM
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static PublicKey createPublicKey(final String value) {
-        throw new UnsupportedOperationException("Not implemented yet: KeysFactory.createPublicKey");
+        return createPublicKey(KeyFormat.SPKI_WITH_PEM, value);
     }
 
     private KeysFactory() {

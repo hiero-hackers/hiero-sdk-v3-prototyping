@@ -157,6 +157,10 @@ sdk env
 ```
 
 ```bash
+./mvnw -f sdk-java/protobuf install
+```
+
+```bash
 ./mvnw -f generated/java install -DskipTests
 ```
 

@@ -12,6 +12,9 @@ public enum KeyContainer {
 
     /// returns true if the container format supports the given key type
     public boolean supportsType(final KeyType type) {
-        throw new UnsupportedOperationException("Not implemented yet: KeyContainer.supportsType");
+        return switch (this) {
+            case PKCS8 -> type == KeyType.PRIVATE;
+            case SPKI -> type == KeyType.PUBLIC;
+        };
     }
 }

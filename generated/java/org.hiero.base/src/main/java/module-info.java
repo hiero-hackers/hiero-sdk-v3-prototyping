@@ -21,6 +21,7 @@ import org.jspecify.annotations.NullMarked;
 module org.hiero.base {
     requires transitive org.hiero.sdk.support;
     requires static transitive org.jspecify;
+    requires org.bouncycastle.provider;
 
     exports org.hiero.authority;
     exports org.hiero.common;
@@ -33,5 +34,8 @@ module org.hiero.base {
     exports org.hiero.nativeToken;
     // exports org.hiero.proto; (enabled as soon as the package contains generated types)
     exports org.hiero.solo;
+    // the implementation types the consensus node client needs; not part of the public API
+    exports org.hiero.ledger.internal;
+    exports org.hiero.nativeToken.internal;
     exports org.hiero.token;
 }

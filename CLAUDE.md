@@ -44,9 +44,14 @@ sdk-java/openspec/             # Java-only OpenSpec root
 sdk-java/generator.properties  # Java generator configuration (e.g. java.interfaces), see tooling/metalang/README.md
 sdk-java/support/              # Hand-written Java support types (streaming, thread-safety) as Maven module
                                #   hiero-sdk-support; generated/java depends on it (install it first)
+sdk-java/protobuf/             # Hand-written Maven module hiero-sdk-protobuf (JPMS org.hiero.sdk.protobuf): the
+                               #   HAPI .proto sources; the Java classes are build output. Only `option
+                               #   java_package` was changed to org.hiero.hapi.proto. No gRPC codegen - the
+                               #   consensus node client builds its io.grpc.MethodDescriptor by hand.
 generated/java/                # Generated Java API as Maven project, one sub-module/JAR per Java module (tracked in
                                #   git; regenerate after spec or generator changes, commands in
-                               #   tooling/metalang/README.md). Never edit by hand. `metalang check` verifies
+                               #   tooling/metalang/README.md). !! CURRENTLY HAND-EDITED, DO NOT REGENERATE - see
+                               #   "The AccountCreateTransaction spike" below. `metalang check` verifies
                                #   that it (or an implementation based on it) provides the API of the specs.
                                #   src/test/java holds generated JUnit tests of the spec contract; the tests of
                                #   method stubs fail until the methods are implemented.
@@ -167,6 +172,43 @@ points to keep specs valid and consistent:
   with a documented schema. (`ANY` as a *wildcard type argument* like `ContractParam<ANY>` is fine.)
 - `@@async` returns a future/promise; `@@streaming` returns a pull-based async stream of items (`streamResult<TYPE>`
   for per-item errors). They are mutually exclusive.
+
+## The AccountCreateTransaction spike
+
+**`generated/java` is currently hand-edited and must not be regenerated.** Running
+`metalang generate --language=java` over it destroys the work described here.
+
+To find out what implementing the V3 API actually costs, the `createAccount` path of the Hiero TCK was
+implemented end to end (keys -> protobuf -> gRPC -> signing -> receipt polling). 34 of the 42 tests of
+`test-account-create-transaction.ts` pass against a local Solo network.
+
+ADR-0007 leaves open where an implementation of the API may live, and the generated shapes rule out
+every option except editing in place: `AccountCreateTransaction` is `final` with stubbed `pack`/`sign`
+overrides, `ClientFactory`/`KeysFactory`/`AuthorityFactory` are `final` with private constructors and
+static stubs. The decision for this spike was therefore to edit the generated classes directly and to
+settle the architecture afterwards, informed by what the spike found.
+
+The conformance check stays green throughout: `metalang check` allows method bodies, additional types
+and additional `requires`/`exports`, so only bodies were filled and types were added, never changed.
+
+What the spike added inside `generated/java` (everything else is untouched):
+
+- `org.hiero.keys.internal` - Ed25519 and ECDSA secp256k1 over BouncyCastle, PKCS#8/SPKI DER by OID
+- `org.hiero.ledger.internal.DefaultTransactionId`, `org.hiero.nativeToken.internal.DefaultExchangeRate`
+- `org.hiero.consensusnode.client.internal` - `ClientRuntime` (gRPC channels, node selection, receipt
+  polling), `Protobuf`, `Grpc`, `DefaultPackedTransaction`
+- `org.hiero.consensusnode.transactions.HapiTransactionStatus` - 350 constants from `response_code.proto`
+
+Four spec problems made this harder than it should be; they are recorded in the `## Questions &
+Comments` of the respective spec files and are the real output of the spike:
+
+1. `HieroClient` is a record and `Network` carries no consensus nodes, so a client cannot reach its
+   network - the `NetworkSetting` passed to `ClientFactory` is dropped.
+2. `Response` is a record holding only a `TransactionId`, yet `queryReceipt()` has to reach the network.
+3. `TransactionId.generateTransactionId` takes an `Address`, but `TransactionId` holds an `AccountId`.
+4. `BasicTransactionStatus` has no `SUCCESS`; the protocol value is 22.
+
+(1) and (2) are bridged by a process-wide registry in `ClientRuntime` - a workaround, not a design.
 
 ## How to make changes
 

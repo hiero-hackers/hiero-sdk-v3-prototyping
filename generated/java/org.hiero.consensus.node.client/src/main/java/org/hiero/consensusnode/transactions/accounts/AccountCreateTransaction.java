@@ -15,6 +15,19 @@ import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
 import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
+import org.hiero.consensusnode.client.NodeSignature;
+import org.hiero.consensusnode.client.internal.ClientRuntime;
+import org.hiero.consensusnode.client.internal.DefaultPackedTransaction;
+import org.hiero.consensusnode.client.internal.Protobuf;
+import org.hiero.consensusnode.transactions.HapiTransactionStatus;
+import org.hiero.consensusnode.transactions.NodeBody;
+import org.hiero.hapi.proto.CryptoCreateTransactionBody;
+import org.hiero.hapi.proto.TransactionBody;
+import org.hiero.hedera.Hbar;
+import org.hiero.hedera.HbarUnit;
+import org.hiero.ledger.ConsensusNode;
+import org.hiero.ledger.TransactionId;
+import org.hiero.ledger.internal.DefaultTransactionId;
 import org.jspecify.annotations.Nullable;
 
 public final class AccountCreateTransaction extends Transaction<AccountCreateReceipt, AccountCreateTransaction> {
@@ -129,7 +142,77 @@ public final class AccountCreateTransaction extends Transaction<AccountCreateRec
 
     @Override
     public PackedTransaction<AccountCreateReceipt, AccountCreateTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountCreateTransaction.signWithOperator");
+        Objects.requireNonNull(client, "client must not be null");
+        final ClientRuntime runtime = ClientRuntime.of(client);
+        final ConsensusNode node = runtime.selectNode();
+        final AccountId payer = client.operatorAccount().accountId();
+        final TransactionId transactionId = DefaultTransactionId.generate(payer);
+        final byte[] body = body(transactionId, node.account()).toByteArray();
+        final NodeBody nodeBody = new NodeBody(node.account(), body);
+        final NodeSignature signature = client.transactionSigner().signTransaction(body, node.account());
+        return new DefaultPackedTransaction<>(transactionId, List.of(signature), List.of(nodeBody), node,
+                "proto.CryptoService", "createAccount", AccountCreateTransaction::receipt);
+    }
+
+    /// The transaction fee used when the caller set no maximum.
+    private static final Hbar DEFAULT_MAX_TRANSACTION_FEE = new Hbar(2L, HbarUnit.HBAR);
+
+    /// The auto-renew period used when the caller set none; the consensus node requires one.
+    private static final Duration DEFAULT_AUTO_RENEW_PERIOD = Duration.ofDays(90L);
+
+    /// The validity used when the caller set none.
+    private static final Duration DEFAULT_VALID_DURATION = Duration.ofSeconds(120L);
+
+    private TransactionBody body(final TransactionId transactionId, final AccountId node) {
+        final CryptoCreateTransactionBody.Builder create = CryptoCreateTransactionBody.newBuilder()
+                .setKey(Protobuf.toProto(authority))
+                .setReceiverSigRequired(receiverSignatureRequired)
+                .setDeclineReward(declineStakingReward)
+                .setAutoRenewPeriod(Protobuf.toProto(
+                        autoRenewPeriod == null ? DEFAULT_AUTO_RENEW_PERIOD : autoRenewPeriod));
+        if (initialBalance != null) {
+            create.setInitialBalance(initialBalance.toBaseUnits());
+        }
+        if (accountMemo != null) {
+            create.setMemo(accountMemo);
+        }
+        if (maxAutomaticTokenAssociations != null) {
+            create.setMaxAutomaticTokenAssociations(maxAutomaticTokenAssociations);
+        }
+        if (stakedAccountId != null) {
+            create.setStakedAccountId(Protobuf.toProto(stakedAccountId));
+        }
+        if (stakedNodeId != null) {
+            create.setStakedNodeId(stakedNodeId);
+        }
+        if (alias != null) {
+            create.setAlias(com.google.protobuf.ByteString.copyFrom(alias));
+        }
+        final NativeToken<?, ?> fee = maxTransactionFee();
+        final TransactionBody.Builder body = TransactionBody.newBuilder()
+                .setTransactionID(Protobuf.toProto(transactionId))
+                .setNodeAccountID(Protobuf.toProto(node))
+                .setTransactionFee(fee == null ? DEFAULT_MAX_TRANSACTION_FEE.toBaseUnits() : fee.toBaseUnits())
+                .setTransactionValidDuration(Protobuf.toProto(
+                        validDuration() == null ? DEFAULT_VALID_DURATION : validDuration()))
+                .setCryptoCreateAccount(create);
+        final String memo = memo();
+        if (memo != null) {
+            body.setMemo(memo);
+        }
+        return body.build();
+    }
+
+    private static AccountCreateReceipt receipt(
+            final TransactionId transactionId,
+            final org.hiero.consensusnode.transactions.TransactionStatus status,
+            final org.hiero.nativeToken.ExchangeRate exchangeRate,
+            final org.hiero.nativeToken.ExchangeRate nextExchangeRate,
+            final org.hiero.hapi.proto.TransactionReceipt receipt) {
+        final AccountId created = status == HapiTransactionStatus.SUCCESS
+                ? Protobuf.fromProto(receipt.getAccountID())
+                : new AccountId(0L, 0L, "", 0L, null, null);
+        return new AccountCreateReceipt(transactionId, status, exchangeRate, nextExchangeRate, created);
     }
 
     @Override

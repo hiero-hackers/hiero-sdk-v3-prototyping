@@ -33,11 +33,14 @@ public enum KeyFormat {
 
     /// returns true if the internal container format supports the given key type
     public boolean supportsType(final KeyType type) {
-        throw new UnsupportedOperationException("Not implemented yet: KeyFormat.supportsType");
+        return container.supportsType(type);
     }
 
     /// decodes the given string value into raw bytes for the given key type
     public byte[] decode(final KeyType keyType, final String value) {
-        throw new UnsupportedOperationException("Not implemented yet: KeyFormat.decode");
+        if (!supportsType(keyType)) {
+            throw new IllegalArgumentException("Format " + this + " does not hold a " + keyType + " key");
+        }
+        return encoding.decode(keyType, value);
     }
 }

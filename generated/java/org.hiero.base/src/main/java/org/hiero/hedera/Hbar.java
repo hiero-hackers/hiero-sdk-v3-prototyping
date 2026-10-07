@@ -18,18 +18,24 @@ public class Hbar extends NativeToken<Hbar, HbarUnit> {
     /// Convert this amount to a different unit of the same token
     @Override
     public Hbar to(final HbarUnit targetUnit) {
-        throw new UnsupportedOperationException("Not implemented yet: Hbar.to");
+        Objects.requireNonNull(targetUnit, "targetUnit must not be null");
+        final long tinybars = toTinybars();
+        if (tinybars % targetUnit.baseUnitFactor() != 0) {
+            throw new IllegalArgumentException(
+                    tinybars + " tinybar is not a whole number of " + targetUnit.symbol());
+        }
+        return new Hbar(tinybars / targetUnit.baseUnitFactor(), targetUnit);
     }
 
     /// Total amount expressed in base (smallest) units
     @Override
     public long toBaseUnits() {
-        throw new UnsupportedOperationException("Not implemented yet: Hbar.toBaseUnits");
+        return Math.multiplyExact(amount(), unit().baseUnitFactor());
     }
 
     /// Total amount in tinybars (the base unit of HBAR); equivalent to toBaseUnits().
     public long toTinybars() {
-        throw new UnsupportedOperationException("Not implemented yet: Hbar.toTinybars");
+        return toBaseUnits();
     }
 
     @Override

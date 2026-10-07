@@ -2,6 +2,8 @@
 
 package org.hiero.authority;
 
+import java.util.List;
+import java.util.Objects;
 import org.hiero.keys.PublicKey;
 import org.hiero.ledger.ContractId;
 
@@ -10,27 +12,28 @@ public final class AuthorityFactory {
 
     /// n-of-n composition ("all must sign"): threshold is set to children.size().
     public static Authority of(final Authority... children) {
-        throw new UnsupportedOperationException("Not implemented yet: AuthorityFactory.of");
+        return of(children.length, children);
     }
 
     /// m-of-n composition (multi-signature): at least `threshold` of `children` must be satisfied.
     public static Authority of(final int threshold, final Authority... children) {
-        throw new UnsupportedOperationException("Not implemented yet: AuthorityFactory.of");
+        Objects.requireNonNull(children, "children must not be null");
+        return new AuthorityList(List.of(children), threshold);
     }
 
     /// Single-key leaf.
     public static Authority of(final PublicKey publicKey) {
-        throw new UnsupportedOperationException("Not implemented yet: AuthorityFactory.of");
+        return new PublicKeyAuthority(publicKey);
     }
 
     /// Plain contract leaf (HAPI ContractID).
     public static Authority ofContract(final ContractId contractId) {
-        throw new UnsupportedOperationException("Not implemented yet: AuthorityFactory.ofContract");
+        return new ContractAuthority(contractId, false);
     }
 
     /// Delegatable contract leaf (HAPI DelegatableContractID): authority usable via delegatecall.
     public static Authority ofDelegatable(final ContractId contractId) {
-        throw new UnsupportedOperationException("Not implemented yet: AuthorityFactory.ofDelegatable");
+        return new ContractAuthority(contractId, true);
     }
 
     private AuthorityFactory() {

@@ -3,6 +3,7 @@
 package org.hiero.keys;
 
 import java.util.Objects;
+import org.hiero.keys.internal.Pem;
 
 /// all supported encodings that can be used to import/export a container format
 /// rawFormat: the raw format of the import / export
@@ -25,6 +26,11 @@ public enum KeyEncoding {
     }
 
     public byte[] decode(final KeyType keyType, final String value) {
-        throw new UnsupportedOperationException("Not implemented yet: KeyEncoding.decode");
+        Objects.requireNonNull(keyType, "keyType must not be null");
+        Objects.requireNonNull(value, "value must not be null");
+        return switch (this) {
+            case DER -> ByteImportEncoding.HEX.decode(value);
+            case PEM -> Pem.fromPem(keyType, value);
+        };
     }
 }

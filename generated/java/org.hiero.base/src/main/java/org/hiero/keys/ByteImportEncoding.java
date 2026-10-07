@@ -2,6 +2,9 @@
 
 package org.hiero.keys;
 
+import java.util.Base64;
+import java.util.HexFormat;
+
 /// encoding information for import / export
 public enum ByteImportEncoding {
 
@@ -11,6 +14,15 @@ public enum ByteImportEncoding {
     BASE64;
 
     public byte[] decode(final String value) {
-        throw new UnsupportedOperationException("Not implemented yet: ByteImportEncoding.decode");
+        final String trimmed = value.strip();
+        try {
+            return switch (this) {
+                case HEX -> HexFormat.of().parseHex(
+                        trimmed.startsWith("0x") || trimmed.startsWith("0X") ? trimmed.substring(2) : trimmed);
+                case BASE64 -> Base64.getDecoder().decode(trimmed);
+            };
+        } catch (final IllegalArgumentException invalid) {
+            throw new IllegalArgumentException("The value is not " + this + "-encoded", invalid);
+        }
     }
 }
