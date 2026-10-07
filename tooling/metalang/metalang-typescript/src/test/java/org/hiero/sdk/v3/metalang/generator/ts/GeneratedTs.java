@@ -12,7 +12,7 @@ import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 
 /**
  * Builds and runs generated TypeScript code with the TypeScript compiler and the Node.js test runner. The tools come
- * from the npm installation of the generated workspace ({@code generated/ts/node_modules}, created with
+ * from the npm installation of the generated workspace ({@code sdk-ts/node_modules}, created with
  * {@code npm install}); without them (or without {@code node}) {@link #available()} is false and the tests that need
  * them are skipped.
  */
@@ -24,7 +24,7 @@ final class GeneratedTs {
             .resolveSibling("sdk-ts/support");
 
     static final Path MODULES = Path.of(System.getProperty("spec.root", "../../../spec")).toAbsolutePath().normalize()
-            .resolveSibling("generated/ts/node_modules");
+            .resolveSibling("sdk-ts/node_modules");
 
     /**
      * The result of a test run.
@@ -42,7 +42,7 @@ final class GeneratedTs {
 
     /** The directory of the generated workspace below a test directory. */
     static Path workspace(final Path directory) {
-        return directory.resolve("generated/ts");
+        return directory.resolve("sdk-ts/generated");
     }
 
     /** Whether node and the TypeScript compiler are available. */

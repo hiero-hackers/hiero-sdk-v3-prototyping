@@ -221,5 +221,5 @@ tmIywvmyCdn6Jb2nuM=
   key is derived from the public key (the last 20 bytes of the Keccak-256 hash of the uncompressed
   key), e.g. to create an account by its EVM-address alias. The API has no such derivation, so the
   TCK's `generateKey` with type `evmAddress` cannot be answered (see
-  [`tck-binding.md`](../../tck-binding.md)). Should `PublicKey` get an `EvmAddress toEvmAddress()`
+  [`tck-binding.md`](../../docs/tck-binding.md)). Should `PublicKey` get an `EvmAddress toEvmAddress()`
   that throws for ED25519 keys, or should it live on `EvmAddress`?

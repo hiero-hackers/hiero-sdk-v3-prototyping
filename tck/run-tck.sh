@@ -15,8 +15,8 @@
 #             The TCK itself only shows "Internal error", never the exception behind it.
 #
 # The server must be built before (see tooling/metalang/README.md, "Generate the TCK server"):
-#   java: generated/java-tck/server/target/hiero-sdk-tck-0.1.0-SNAPSHOT.jar
-#   ts:   generated/ts-tck/server/dist/main.js (npm install && npm run build:tck-ts in the repository root)
+#   java: sdk-java/tck/generated/server/target/hiero-sdk-tck-0.1.0-SNAPSHOT.jar
+#   ts:   sdk-ts/tck/generated/server/dist/main.js (npm install && npm run build:tck-ts in sdk-ts)
 set -euo pipefail
 
 repository="$(cd "$(dirname "$0")/.." && pwd)"
@@ -49,11 +49,11 @@ fi
 # the server
 port="$(echo "$JSON_RPC_SERVER_URL" | sed -E 's#.*:([0-9]+)/?$#\1#')"
 if [[ "$language" == "java" ]]; then
-  jar="$repository/generated/java-tck/server/target/hiero-sdk-tck-0.1.0-SNAPSHOT.jar"
+  jar="$repository/sdk-java/tck/generated/server/target/hiero-sdk-tck-0.1.0-SNAPSHOT.jar"
   [[ -f "$jar" ]] || { echo "Build the Java TCK server first: $jar is missing" >&2; exit 1; }
   "${JAVA_HOME:+$JAVA_HOME/bin/}java" -jar "$jar" "$port" &
 else
-  main="$repository/generated/ts-tck/server/dist/main.js"
+  main="$repository/sdk-ts/tck/generated/server/dist/main.js"
   [[ -f "$main" ]] || { echo "Build the TypeScript TCK server first: $main is missing" >&2; exit 1; }
   node "$main" "$port" &
 fi

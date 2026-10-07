@@ -45,7 +45,7 @@ fungible airdrop and set for a specific NFT.
   [`transactions-accounts.md`](transactions-accounts.md) (HAPI reuses `TokenTransferList`).
 - HAPI types the pending-airdrop identity as `PendingAirdropId`; V3 does not yet have that typed
   identifier (nor `NftId`), so it is modelled here as the `PendingAirdrop` shape with a
-  `@@nullable serial`. Both are tracked in [`missing-features.md`](../../missing-features.md) §3.1.
+  `@@nullable serial`. Both are tracked in [`missing-features.md`](../../docs/missing-features.md) §3.1.
 
 ## API Schema
 
@@ -169,7 +169,7 @@ new TokenRejectTransaction()
   pending airdrops in `TransactionRecord.new_pending_airdrops`, not the receipt. V3 does not yet
   type the record per transaction, so `TokenAirdropReceipt` is empty and the pending-airdrop result
   is part of the open base-`Record` design decision tracked in
-  [`missing-features.md`](../../missing-features.md) §3.5. Add a `pendingAirdrops` field to a typed
+  [`missing-features.md`](../../docs/missing-features.md) §3.5. Add a `pendingAirdrops` field to a typed
   `TokenAirdropRecord` once that lands.
 
 - **`PendingAirdrop` / `TokenReference` are placeholders for typed identifiers.** They stand in for

@@ -55,11 +55,19 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | [`guidelines/api-best-practices-java.md`](guidelines/api-best-practices-java.md) | How the meta-language maps to idiomatic Java |
 | [`guidelines/api-best-practices-rust.md`](guidelines/api-best-practices-rust.md) | ... Rust |
 | [`guidelines/api-best-practices-go.md`](guidelines/api-best-practices-go.md) | ... Go (the mapping, written ahead of its generator) |
-| [`guidelines/api-best-practices-js.md`](guidelines/api-best-practices-js.md) | ... JavaScript |
+| [`guidelines/api-best-practices-ts.md`](guidelines/api-best-practices-ts.md) | ... TypeScript (the mapping of the TypeScript generator) |
+| [`guidelines/api-best-practices-js.md`](guidelines/api-best-practices-js.md) | ... using the resulting API from JavaScript |
 | `guidelines/js-files/` | Illustrative reference snippets (not a buildable module) |
-| `sdk-java/support/` | Hand-written Java support types (`@ThreadSafe`, streaming), a dependency of the generated Java API |
-| `sdk-ts/support/` | Hand-written TypeScript support types (`Duration`, `StreamItem`, `AbstractConstructor`), a dependency of the generated TypeScript API |
+| `sdk-java/`, `sdk-ts/`, `sdk-rust/`, `sdk-go/` | One folder per target language: its generator configuration, its hand-written modules and its generated ones (see [ADR-0008](docs/adr/0008-one-folder-per-target-language.md)) |
+| `sdk-<lang>/generated/` | The generated API. Never edited by hand — except the Java and TypeScript ones, which currently carry the `AccountCreateTransaction` spike |
+| `sdk-java/support/`, `sdk-ts/support/` | Hand-written support types the generated API depends on (`@ThreadSafe`, streaming; `Duration`, `StreamItem`, `AbstractConstructor`) |
+| `sdk-<lang>/tck/` | The language-specific TCK parts: `generated/` (contract + server) and `runtime/` (hand-written) |
+| `tck/` | The language-neutral TCK parts: the bindings, the Solo configuration and `run-tck.sh` |
 | [`docs/pipeline.html`](docs/pipeline.html) | How the generator, the protobuf tree and the TCK server fit together — folder map and diagrams (open it in a browser) |
+| [`docs/missing-features.md`](docs/missing-features.md) | What the V3 specs do not cover yet, measured against the v2 SDKs — the feature backlog |
+| [`docs/TODO.md`](docs/TODO.md) | Open follow-up tasks on the guides, the meta-language and the specs |
+| [`docs/TCK.md`](docs/TCK.md), [`docs/tck-binding.md`](docs/tck-binding.md), [`docs/tck-ideas.md`](docs/tck-ideas.md) | Three approaches to testing V3 against the Hiero TCK; `tck-binding.md` is the one with a spike |
+| [`docs/adr/`](docs/adr) | Architecture decision records |
 | [`protobuf/`](protobuf) | The protobuf definitions of consensus, block and mirror node, vendored at pinned versions — one source for every generator |
 | `spec/base/` | Foundational namespaces: `ledger`, `keys`, `hbar`, `common`, `proto`, `grpc` |
 | `spec/consensus-node-client/` | Low-level client: build, sign, and execute transactions (incl. an SPI for custom services) |
@@ -88,14 +96,14 @@ The repository pins its build tools so that every contributor builds with the sa
 
 | Tool | Version | Pinned in |
 |------|---------|-----------|
-| JDK | 25 (Temurin) | [`.sdkmanrc`](.sdkmanrc) |
-| Maven | 3.9.11 | [`.mvn/wrapper/maven-wrapper.properties`](.mvn/wrapper/maven-wrapper.properties) |
+| JDK | 25 (Temurin) | [`sdk-java/.sdkmanrc`](sdk-java/.sdkmanrc), [`tooling/metalang/.sdkmanrc`](tooling/metalang/.sdkmanrc) |
+| Maven | 3.9.11 | `sdk-java/.mvn/wrapper/maven-wrapper.properties`, `tooling/metalang/.mvn/wrapper/maven-wrapper.properties` |
 | Node.js | 22 | — |
 
 **Java** — install [SDKMAN!](https://sdkman.io), then once per machine:
 
 ```bash
-sdk env install   # installs the JDK listed in .sdkmanrc
+cd sdk-java && sdk env install   # installs the JDK listed in that directory's .sdkmanrc
 ```
 
 and set `sdkman_auto_env=true` in `~/.sdkman/etc/config` (the file `sdk config` opens):
@@ -104,28 +112,33 @@ and set `sdkman_auto_env=true` in `~/.sdkman/etc/config` (the file `sdk config` 
 sed -i.bak 's/^sdkman_auto_env=false/sdkman_auto_env=true/' ~/.sdkman/etc/config
 ```
 
-With `sdkman_auto_env=true`, SDKMAN! switches to the pinned JDK automatically whenever you `cd` into the repository —
-that is what makes `.sdkmanrc` take effect without setting `JAVA_HOME` by hand. **Without it, `.sdkmanrc` is inert**
-and you have to run `sdk env` in every new shell before building.
+With `sdkman_auto_env=true`, SDKMAN! switches to the pinned JDK automatically whenever you `cd` into a build
+directory — that is what makes `.sdkmanrc` take effect without setting `JAVA_HOME` by hand. **Without it,
+`.sdkmanrc` is inert** and you have to run `sdk env` there before building. `sdk env` does *not* search parent
+directories, which is why each of the two Maven builds carries its own `.sdkmanrc`.
 
 JDK 25 is required, not just recommended: it builds every Maven module — the generated Java API, the support types
 and the TCK modules (all `release` 25) as well as the spec tooling (`release` 21). Building on an older JDK fails in
 the compiler plugin, typically with `Unsupported major.minor version 69.0` — that message means the active JDK is not
 25, so run `sdk env` and build again.
 
-**Maven** — use the Maven wrapper at the repository root for *all* builds; it downloads the pinned Maven version on
-first use, so a locally installed `mvn` is not needed:
+**Maven** — there are two Maven builds, and each carries its own wrapper and its own `.sdkmanrc`:
+`tooling/metalang/` (the spec tooling) and `sdk-java/` (the Java SDK). Build from inside one of them; the wrapper
+downloads the pinned Maven version on first use, so a locally installed `mvn` is not needed:
 
 ```bash
-./mvnw -f tooling/metalang/pom.xml verify
+cd tooling/metalang
+sdk env            # not needed with sdkman_auto_env=true, which switches on cd
+./mvnw verify
 ```
 
-All Maven modules are built from the repository root with `./mvnw -f <module>` (on Windows: `mvnw.cmd`).
+On Windows use `mvnw.cmd`. The repository root carries no toolchain pin on purpose: nothing is built there, and the
+CLI jar the tooling produces targets `release` 21, so it runs on any JDK 21 or newer.
 
 ## Running the TCK
 
 The [Hiero TCK](https://github.com/hiero-ledger/hiero-sdk-tck) can be run against a TCK server generated from the
-bindings in [`tck/bindings`](tck/bindings) (see [`tck-binding.md`](tck-binding.md)). The default network is a local
+bindings in [`tck/bindings`](tck/bindings) (see [`tck-binding.md`](docs/tck-binding.md)). The default network is a local
 [Solo](https://solo.hiero.org) network (Solo 0.63+). As long as the API is only generated stubs, every bound method
 fails with `-32603` (already `setup` calls stubs) and the TCK skips the methods without binding (`-32601`); a run
 shows whether server, network and TCK work together.
@@ -147,42 +160,42 @@ git clone https://github.com/hiero-ledger/hiero-sdk-tck.git ../hiero-sdk-tck
 npm --prefix ../hiero-sdk-tck install
 ```
 
-**3. Build the server.** Java, from the repository root, in this order — the first command activates the JDK 25
-pinned in [`.sdkmanrc`](.sdkmanrc) and can be skipped if you set `sdkman_auto_env=true` (see
+**3. Build the server.** Java, from `sdk-java`, in this order — the `sdk env` activates the JDK 25 pinned in
+[`sdk-java/.sdkmanrc`](sdk-java/.sdkmanrc) and can be skipped if you set `sdkman_auto_env=true` (see
 [Toolchain](#toolchain)):
 
 ```bash
-sdk env
+cd sdk-java && sdk env
 ```
 
 ```bash
-./mvnw -f sdk-java/support install
+./mvnw -f support install
 ```
 
 ```bash
-./mvnw -f sdk-java/protobuf install
+./mvnw -f protobuf install
 ```
 
 ```bash
-./mvnw -f generated/java install -DskipTests
+./mvnw -f generated install -DskipTests
 ```
 
 ```bash
-./mvnw -f generated/java-tck/contract install
+./mvnw -f tck/generated/contract install
 ```
 
 ```bash
-./mvnw -f tck/runtime/java install
+./mvnw -f tck/runtime install
 ```
 
 ```bash
-./mvnw -f generated/java-tck/server package
+./mvnw -f tck/generated/server package
 ```
 
 TypeScript (Node.js 22, from the repository root):
 
 ```bash
-npm install && npm run build:tck-ts
+npm --prefix sdk-ts install && npm --prefix sdk-ts run build:tck-ts
 ```
 
 **4. Run the TCK** — one test file first, then the complete suite (`ts` instead of `java` for the TypeScript server):

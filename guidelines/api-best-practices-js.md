@@ -1,6 +1,6 @@
 # Using the SDK from JavaScript
 
-The Hiero SDK V3 for JavaScript and TypeScript is **one SDK**: the generated workspace `generated/ts` is written in
+The Hiero SDK V3 for JavaScript and TypeScript is **one SDK**: the generated workspace `sdk-ts/generated` is written in
 TypeScript and published as JavaScript (`dist/*.js`) with type declarations beside it (`dist/*.d.ts`). There is no
 separate plain-JavaScript implementation and none is planned.
 

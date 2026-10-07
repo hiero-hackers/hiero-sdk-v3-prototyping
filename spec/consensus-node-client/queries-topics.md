@@ -134,7 +134,7 @@ combine it with `maxQueryPayment` for a hard ceiling. See
   for revenue-generating topics. These are deliberately omitted here for the same reason
   they are absent on `TopicCreate` / `TopicUpdate` — see
   [`transactions-topics.md`](transactions-topics.md) *Questions & Comments* and
-  [`missing-features.md`](../../missing-features.md) sections 1.5 and 3.3. Adding them here
+  [`missing-features.md`](../../docs/missing-features.md) sections 1.5 and 3.3. Adding them here
   is additive once the write-side custom-fee model lands.
 
 - **`TopicInfo` here is distinct from `mirrornode.topic.Topic`.** Same conceptual data but

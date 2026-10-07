@@ -24,7 +24,7 @@ read side ([`mirrornode.token`](../mirror-node-client/mirror-node-token.md)) nee
 value set, so the enums live here to avoid duplication and to keep the two surfaces in lock-step.
 
 This namespace is also the natural future home for the typed identifier types tracked in
-[`missing-features.md`](../../missing-features.md) section 3.1 — `TokenId`, `NftId` (token id +
+[`missing-features.md`](../../docs/missing-features.md) section 3.1 — `TokenId`, `NftId` (token id +
 serial), and `PendingAirdropId` — once those are promoted from the generic `Address` placeholder.
 
 ## API Schema
@@ -53,5 +53,5 @@ enum TokenSupplyType {
 - **`TokenId` / `NftId` / `PendingAirdropId` are not yet defined here.** Today both the write side
   and the read side reference token / NFT ids as the generic `Address` from `ledger`. Promoting
   them to typed identifiers is tracked in
-  [`missing-features.md`](../../missing-features.md) section 3.1; this namespace is the
+  [`missing-features.md`](../../docs/missing-features.md) section 3.1; this namespace is the
   intended landing place.

@@ -16,7 +16,7 @@ compile; the only buildable module is the spec tooling under `tooling/metalang` 
 idiomatic implementations per language (Java, JavaScript/TypeScript, Go, Rust, Python, C++, Swift). The `.java`/`.js`
 files under `guidelines/` are reference snippets, not a buildable module — except `guidelines/rust-files/`: the
 single source of the Rust support types (`BoxFuture`, `BoxStream`, `StreamItem`, `InvalidArgumentError`), which the
-generator copies 1:1 into `generated/rust`, so they must always compile. The Java and TypeScript support types are not
+generator copies 1:1 into `sdk-rust/generated`, so they must always compile. The Java and TypeScript support types are not
 copied: they are the hand-written modules `sdk-java/support` (Maven `hiero-sdk-support`, JPMS module
 `org.hiero.sdk.support`: `@ThreadSafe`, `HieroStream`, `StreamItem`, `HieroPublisher`, `HieroSubscription`) and
 `sdk-ts/support` (npm `@hiero/support`: `Duration`, `StreamItem`, `AbstractConstructor`), on which the generated
@@ -32,72 +32,80 @@ guidelines/
   api-best-practices-go.md      # ... Go (the mapping of the Go generator)
   api-best-practices-js.md      # ... JavaScript
   api-best-practices-ts.md      # ... TypeScript (the mapping of the TypeScript generator)
-  rust-files/                   # Rust support types (BoxFuture, InvalidArgumentError, ...); copied 1:1 into generated/rust
+  rust-files/                   # Rust support types (BoxFuture, InvalidArgumentError, ...); copied 1:1 into sdk-rust/generated
   js-files/                     # Illustrative JS reference snippets
 
-openspec-common-delta-changes/  # Plain language-neutral feature proposals and specifications (not an OpenSpec root)
-  changes/
-    add-common-pagination-public-api/
-      proposal.md              # Shared motivation and scope used by every SDK
-      spec.md                  # Authoritative Page<$$T> behavior copied into SDK-specific OpenSpec changes
+protobuf/                       # THE source of the protobuf definitions of all three node types, vendored at
+                                #   pinned versions from their upstream repositories (see protobuf/README.md).
+                                #   consensus-node/ is the base; block-node/ and mirror-node/ import from it, so
+                                #   each directory is one include root and the latter two also need
+                                #   consensus-node/ on the path. Never edit by hand: update.sh re-fetches,
+                                #   sources.json pins versions + commits, verify.sh compiles every root with
+                                #   protoc as the language-neutral proof that the tree resolves.
 
-sdk-java/openspec/             # Java-only OpenSpec root
-sdk-java/generator.properties  # Java generator configuration (e.g. java.interfaces), see tooling/metalang/README.md
-sdk-java/support/              # Hand-written Java support types (streaming, thread-safety) as Maven module
-                               #   hiero-sdk-support; generated/java depends on it (install it first)
-sdk-java/protobuf/             # Hand-written Maven module hiero-sdk-protobuf (JPMS org.hiero.sdk.protobuf). Has no
-                               #   sources of its own: it compiles /protobuf into Java at build time. NOT public
-                               #   API - every package is exported only with `exports ... to <sdk module>`.
-                               #   No gRPC codegen; the client builds its io.grpc.MethodDescriptor by hand.
-buf.gen.yaml                   # TypeScript protobuf codegen (buf + protoc-gen-es); `npm run gen:proto-ts`
-protobuf/                      # THE source of the protobuf definitions of all three node types, vendored at
-                               #   pinned versions from their upstream repositories (see protobuf/README.md).
-                               #   consensus-node/ is the base; block-node/ and mirror-node/ import from it, so
-                               #   each directory is one include root and the latter two also need
-                               #   consensus-node/ on the path. Never edit by hand: update.sh re-fetches,
-                               #   sources.json pins versions + commits, verify.sh compiles every root with
-                               #   protoc as the language-neutral proof that the tree resolves.
-generated/java/                # Generated Java API as Maven project, one sub-module/JAR per Java module (tracked in
-                               #   git; regenerate after spec or generator changes, commands in
-                               #   tooling/metalang/README.md). !! CURRENTLY HAND-EDITED, DO NOT REGENERATE - see
-                               #   "The AccountCreateTransaction spike" below. `metalang check` verifies
-                               #   that it (or an implementation based on it) provides the API of the specs.
-                               #   src/test/java holds generated JUnit tests of the spec contract; the tests of
-                               #   method stubs fail until the methods are implemented.
-sdk-ts/openspec/               # TypeScript-only OpenSpec root
-sdk-ts/generator.properties    # TypeScript generator configuration (npm scope, version, location of the support package)
-sdk-ts/support/                # Hand-written TypeScript support types (Duration, StreamItem, AbstractConstructor) as
-                               #   npm package @hiero/support; generated/ts links it as workspace and depends on it
-generated/ts/                  # Generated TypeScript API as npm workspace, one package per spec folder, with
-                               #   generated node:test tests (tracked in git; regenerate after spec or generator
-                               #   changes; `npm install && npm test` builds and tests it). Never edit by hand.
-sdk-rust/generator.properties  # Rust generator configuration (crate prefix, version)
-generated/rust/                # Generated Rust API as Cargo workspace, one crate per spec folder, with a generated
-                               #   integration test per crate (tracked in git; regenerate after spec or generator
-                               #   changes; `cargo test` builds and tests it). Never edit by hand.
-sdk-go/generator.properties    # Go generator configuration (go.module, go.version)
-generated/go/                  # Generated Go API as ONE Go module (a spec folder is no artifact boundary in Go),
-                               #   one package per namespace in a directory per segment. Never edit by hand.
-                               #   `go build ./... && go vet ./... && gofmt -l .` must be clean; the generator
-                               #   produces gofmt's alignment itself, nothing in the build needs a Go toolchain.
-                               #   Incomplete: types only - no methods, functions, tests, protobuf or TCK part.
-tck/                           # TCK binding spike (see tck-binding.md):
-  bindings/                    #   bindings of TCK methods to the API (`bindings` code blocks in Markdown)
-  runtime/java/                #   hand-written runtime of the Java TCK server (JSON-RPC, converters, setup); Maven
-                               #   module hiero-sdk-tck-runtime, implements generated/java-tck/contract
-  runtime/ts/                  #   the same for TypeScript (@hiero/tck-runtime), implements generated/ts-tck/contract
-  solo.env, run-tck.sh         #   TCK configuration for a local Solo network (the default) and the script that runs
-                               #   the TCK against a generated server
-generated/java-tck/            # Generated from tck/bindings and the converter catalogue (tracked in git; `metalang
-                               #   tck generate`, see tooling/metalang/README.md). Never edit by hand.
-                               #   contract/: interfaces the runtime implements; server/: the TCK server, compiled
-                               #   against API + contract only (the runtime is a runtime dependency)
-generated/ts-tck/              # The same for TypeScript (@hiero/tck-contract, @hiero/tck-server)
-package.json                   # npm workspace of all TypeScript modules (generated API, sdk-ts/support, TCK contract,
-                               #   server and runtime); `npm run build:tck-ts` builds the TypeScript TCK server
-.sdkmanrc                      # SDKMAN! toolchain pin (JDK 25); `sdk env` activates it, no manual JAVA_HOME
-mvnw, mvnw.cmd, .mvn/          # Maven wrapper (pinned Maven version) — use `./mvnw -f <module>` for every Maven
-                               #   build, run from the repository root; never call a locally installed `mvn`
+# One folder per target language. Each holds its generator configuration, its hand-written modules and
+# its generated modules - the per-language view (ADR-0008). A module stays either wholly generated or
+# wholly hand-written (ADR-0007); `generated/` in the path is what marks the generated ones.
+
+sdk-java/
+  generator.properties          # Java generator configuration (e.g. java.interfaces), see tooling/metalang/README.md
+  support/                      # Hand-written Java support types (streaming, thread-safety) as Maven module
+                                #   hiero-sdk-support; sdk-java/generated depends on it (install it first)
+  protobuf/                     # Hand-written Maven module hiero-sdk-protobuf (JPMS org.hiero.sdk.protobuf). Has no
+                                #   sources of its own: it compiles /protobuf into Java at build time. NOT public
+                                #   API - every package is exported only with `exports ... to <sdk module>`.
+                                #   No gRPC codegen; the client builds its io.grpc.MethodDescriptor by hand.
+  generated/                    # Generated Java API as Maven project, one sub-module/JAR per Java module (tracked in
+                                #   git; regenerate after spec or generator changes, commands in
+                                #   tooling/metalang/README.md). !! CURRENTLY HAND-EDITED, DO NOT REGENERATE - see
+                                #   "The AccountCreateTransaction spike" below. `metalang check` verifies
+                                #   that it (or an implementation based on it) provides the API of the specs.
+                                #   src/test/java holds generated JUnit tests of the spec contract; the tests of
+                                #   method stubs fail until the methods are implemented.
+  tck/generated/                # Generated from tck/bindings and the converter catalogue (tracked in git; `metalang
+                                #   tck generate`). Never edit by hand. contract/: interfaces the runtime
+                                #   implements; server/: the TCK server, compiled against API + contract only.
+  tck/runtime/                  # Hand-written runtime of the Java TCK server (JSON-RPC, converters, setup); Maven
+                                #   module hiero-sdk-tck-runtime, implements sdk-java/tck/generated/contract
+
+sdk-ts/
+  generator.properties          # TypeScript generator configuration (npm scope, version, support package location)
+  buf.gen.yaml                  # TypeScript protobuf codegen (buf + protoc-gen-es); `npm run gen:proto-ts`
+  package.json                  # THE npm workspace of every TypeScript module below it - a package resolves its
+                                #   imports from its real path, so they need a common parent node_modules
+  openspec/                     # TypeScript-only OpenSpec root
+  support/                      # Hand-written TypeScript support types (Duration, StreamItem, AbstractConstructor)
+                                #   as npm package @hiero/support
+  generated/                    # Generated TypeScript API, one package per spec folder, with generated node:test
+                                #   tests (tracked in git). !! ALSO HAND-EDITED by the spike, DO NOT REGENERATE.
+  tck/generated/                # Generated TCK contract and server (@hiero/tck-contract, @hiero/tck-server)
+  tck/runtime/                  # Hand-written TypeScript runtime (@hiero/tck-runtime), implements the contract
+
+sdk-rust/
+  generator.properties          # Rust generator configuration (crate prefix, version)
+  generated/                    # Generated Rust API as Cargo workspace, one crate per spec folder, with a generated
+                                #   integration test per crate (tracked in git; `cargo test` builds and tests it).
+                                #   Never edit by hand. Support types are copied from guidelines/rust-files.
+
+sdk-go/
+  generator.properties          # Go generator configuration (go.module, go.version)
+  generated/                    # Generated Go API as ONE Go module (a spec folder is no artifact boundary in Go),
+                                #   one package per namespace in a directory per segment. Never edit by hand.
+                                #   `go build ./... && go vet ./... && gofmt -l .` must be clean; the generator
+                                #   produces gofmt's alignment itself, nothing in the build needs a Go toolchain.
+                                #   Incomplete: types only - no methods, functions, tests, protobuf or TCK part.
+
+tck/                            # The language-NEUTRAL parts of the TCK spike (see docs/tck-binding.md); everything
+                                #   language-specific lives in sdk-<lang>/tck/
+  bindings/                     #   bindings of TCK methods to the API (`bindings` code blocks in Markdown)
+  solo.env, run-tck.sh          #   TCK configuration for a local Solo network (the default) and the script that runs
+                                #   the TCK against a generated server
+
+# There are exactly two Maven builds - sdk-java/ and tooling/metalang/ - and each carries its own
+# Maven wrapper (mvnw, mvnw.cmd, .mvn/) and its own .sdkmanrc (JDK 25). Build from inside one of
+# them (`cd sdk-java && ./mvnw -f support install`); never call a locally installed `mvn`.
+# `sdk env` does not search parent directories, which is why the pin is per build and not at the
+# root. The root needs none: nothing is built there, and the CLI jar targets release 21.
 
 spec/                           # The actual V3 public-API specifications, written in the meta-language
   base/                         # Foundational namespaces shared by everything
@@ -211,16 +219,16 @@ resp. package. See `protobuf/README.md`, "Language bindings".
 
 ## The AccountCreateTransaction spike
 
-**`generated/java` AND `generated/ts` are hand-edited and must not be regenerated.** Running
+**`sdk-java/generated` AND `sdk-ts/generated` are hand-edited and must not be regenerated.** Running
 `metalang generate` over either overwrites every file that carries the generator header, so all method
 bodies of the spike are lost. The hand-written files in the `internal` packages carry no header and
 survive - orphaned, and the module no longer compiles.
 
-`generated/ts` is affected exactly like `generated/java`: the TypeScript spike filled method bodies in
+`sdk-ts/generated` is affected exactly like `sdk-java/generated`: the TypeScript spike filled method bodies in
 generated files (e.g. `packages/base/src/keys/functions.ts`) and added
 `consensusnode/transactions/HapiTransactionStatus.ts` **with the generator header**, which makes the
 generator delete it as stale. A regeneration reintroduces ~36 `Not implemented yet` stubs. Only
-`generated/rust` and `generated/go` are safe.
+`sdk-rust/generated` and `sdk-go/generated` are safe.
 
 To verify a generator change, generate into a throwaway directory
 (`--output=/tmp/ts-out`) and inspect that, instead of regenerating in place.
@@ -246,7 +254,7 @@ settle the architecture afterwards, informed by what the spike found.
 The conformance check stays green throughout: `metalang check` allows method bodies, additional types
 and additional `requires`/`exports`, so only bodies were filled and types were added, never changed.
 
-What the spike added inside `generated/java` (everything else is untouched):
+What the spike added inside `sdk-java/generated` (everything else is untouched):
 
 - `org.hiero.keys.internal` - Ed25519 and ECDSA secp256k1 over BouncyCastle, PKCS#8/SPKI DER by OID
 - `org.hiero.ledger.internal.DefaultTransactionId`, `org.hiero.nativeToken.internal.DefaultExchangeRate`
@@ -270,14 +278,14 @@ Comments` of the respective spec files and are the real output of the spike:
 - **Editing/adding a spec:** keep the section skeleton, declare the `namespace` and import external types with
   `requires {Type} from ns`, reference them by simple name, and follow the naming + annotation rules above. Match the
   style of neighboring spec files. Validate the result with the spec tooling (see `tooling/metalang/README.md`):
-  `./mvnw -f tooling/metalang/pom.xml -q package -DskipTests` then
+  `./mvnw -q package -DskipTests` then
   `java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar validate spec`. A change must not introduce
   new `syntax.error` or ERROR findings.
 - **Changing the meta-language itself** (guideline syntax, new annotation): update the grammar
   (`MetaLang.g4`), `KnownAnnotation`, the `Rule` catalog and the tests in `tooling/metalang` in the same change. Every
   new rule needs a fixture in `tooling/metalang/metalang-core/src/test/resources/rule-fixtures/<rule-id>/` (enforced by
   `RuleFixturesTest`).
-- **Generated vs. hand-written:** every module is either completely generated (under `generated/`, every file carries
+- **Generated vs. hand-written:** every module is either completely generated (under `sdk-<lang>/generated/`, every file carries
   the generator header, never edited by hand) or completely hand-written; generated code never contains copies of
   hand-written code. Hand-written code that generated code needs is a support module or implements a generated
   contract — see [ADR-0007](docs/adr/0007-separate-generated-and-hand-written-modules.md).
@@ -294,7 +302,7 @@ Comments` of the respective spec files and are the real output of the spike:
 - **The Go generator is the youngest and is incomplete.** It emits the module, one package per namespace and the
   declared types (structs with constructor and getters, interfaces for abstractions, both enum shapes); methods,
   namespace functions, generated tests, the protobuf wiring and the TCK part are still missing. A declaration it
-  cannot express is **left out** and reported by `--show-deferred`, so `generated/go` always compiles; on the
+  cannot express is **left out** and reported by `--show-deferred`, so `sdk-go/generated` always compiles; on the
   current specs nothing is deferred. Writing it corrected four decisions in `api-best-practices-go.md` that the
   Go compiler rejected (no inherited state via an embedded base struct, self types dropped, concrete type
   parameter bounds widened to `any`, maps copied like slices) — see "Guideline decisions driven by the tooling"

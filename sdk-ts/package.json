@@ -1,0 +1,30 @@
+{
+  "name": "hiero-sdk-v3-typescript",
+  "version": "0.1.0-SNAPSHOT",
+  "private": true,
+  "description": "The npm workspace of all TypeScript modules of the SDK: generated API, hand-written support package, generated TCK contract and server, hand-written TCK runtime (see ADR-0007).",
+  "type": "module",
+  "workspaces": [
+    "support",
+    "generated/packages/*",
+    "tck/generated/contract",
+    "tck/generated/server",
+    "tck/runtime"
+  ],
+  "scripts": {
+    "build:tck-ts": "tsc --build tck/runtime tck/generated/server",
+    "tck-ts": "node tck/generated/server/dist/main.js",
+    "gen:proto-ts": "buf generate --template buf.gen.yaml --exclude-path ../protobuf/consensus-node/mirror ../protobuf/consensus-node"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "^1.73.0",
+    "@bufbuild/protoc-gen-es": "^2.16.0",
+    "@types/node": "22.20.5",
+    "typescript": "6.0.3"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.5",
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0"
+  }
+}

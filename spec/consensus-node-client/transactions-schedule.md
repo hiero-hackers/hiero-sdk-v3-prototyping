@@ -197,7 +197,7 @@ new ScheduleDeleteTransaction()
 
 - **`customFeeLimits` (HIP-991) is intentionally absent.** It bounds the custom fees the payer is
   willing to pay for the inner transaction, and its payload depends on the **write-side custom-fee
-  model, which is not yet specified in V3** (§3.3 in [`missing-features.md`](../../missing-features.md)).
+  model, which is not yet specified in V3** (§3.3 in [`missing-features.md`](../../docs/missing-features.md)).
   This is the same reason `TokenFeeScheduleUpdate` is deferred (see
   [`transactions-tokens-management.md`](transactions-tokens-management.md)). It will be added once
   the write-side `CustomFee` hierarchy exists.

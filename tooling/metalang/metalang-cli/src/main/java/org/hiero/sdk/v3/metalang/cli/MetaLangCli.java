@@ -119,13 +119,13 @@ public final class MetaLangCli {
                                                   exists (default: error)
 
             Options for 'tck generate' (generates the contract with the runtime and the TCK server from the bindings
-            into <output>/contract and <output>/server, see tck-binding.md):
+            into <output>/contract and <output>/server, see docs/tck-binding.md):
               --language=java|ts                  target language (required)
               --bindings=<dir>                    directory of the bindings files (required), e.g. tck/bindings
               --output=<dir>                      output directory (required; created if missing)
               --config=<file>                     generator configuration of the API (as for 'generate')
-              --api=<dir>                         TypeScript only: the generated API workspace (default: the
-                                                  directory 'ts' next to <output>)
+              --api=<dir>                         TypeScript only: the generated API workspace (default:
+                                                  <output>/../../generated, the layout of ADR-0008)
               --fail-on=error|warning|info|never  do not generate if a spec finding at or above this severity
                                                   exists (default: error)
 
@@ -621,8 +621,10 @@ public final class MetaLangCli {
         final List<GeneratedFile> files;
         try {
             if ("ts".equals(language)) {
-                // the API workspace relative to the output: the packages reference its projects
-                final Path apiDirectory = api == null ? output.toAbsolutePath().normalize().resolveSibling("ts")
+                // the API workspace relative to the output: the packages reference its projects. The default
+                // follows the layout of ADR-0008: the output is sdk-<lang>/tck/generated, the API two levels up.
+                final Path normalized = output.toAbsolutePath().normalize();
+                final Path apiDirectory = api == null ? normalized.getParent().getParent().resolve("generated")
                         : Path.of(api).toAbsolutePath().normalize();
                 files = new TsTckGenerator(config == null ? TsGeneratorConfig.DEFAULT
                         : TsGeneratorConfig.load(Path.of(config)), output.toAbsolutePath().normalize()

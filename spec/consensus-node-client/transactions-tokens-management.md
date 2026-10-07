@@ -45,7 +45,7 @@ Updating a token's custom-fee schedule (gated by `feeScheduleAuthority`) is not 
 - `TokenFeeScheduleUpdate` belongs to this group conceptually (gated by `feeScheduleAuthority`) but
   is **not specified here** — its sole payload is the custom-fee schedule, which depends on the
   write-side `CustomFee` hierarchy that does not yet exist (tracked in
-  [`missing-features.md`](../../missing-features.md) §3.3). It lands once that hierarchy does.
+  [`missing-features.md`](../../docs/missing-features.md) §3.3). It lands once that hierarchy does.
 - The token key type `Authority` is specified in [`authority.md`](../base/authority.md).
 - `TokenWipe` mixing fungible and NFT payloads is rejected by the network; the `@@oneOf` makes it
   statically checkable.
@@ -207,7 +207,7 @@ new TokenUpdateNftsTransaction()
 - **`TokenFeeScheduleUpdate` is intentionally absent.** Its only payload is the custom-fee
   schedule, and the write-side `CustomFee` hierarchy is not yet specified (read-side models exist
   on the mirror node — see [`mirror-node-token.md`](../mirror-node-client/mirror-node-token.md)).
-  Tracked in [`missing-features.md`](../../missing-features.md) §3.3; it lands in this same
+  Tracked in [`missing-features.md`](../../docs/missing-features.md) §3.3; it lands in this same
   namespace once the `CustomFee` builder does.
 
 - **No `KeyUpdate` / key-clearing here.** These transactions consume the token keys but do not

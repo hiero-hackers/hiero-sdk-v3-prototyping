@@ -1,0 +1,10 @@
+# SDKMAN! environment for the spec tooling — https://sdkman.io
+# Install once with `sdk env install`, then activate with `sdk env` (automatic on `cd` with
+# `sdkman_auto_env=true` in ~/.sdkman/etc/config).
+#
+# JDK 25 builds the tooling; the modules themselves target release 21, so the CLI jar it produces
+# runs on any JDK 21 or newer — which is why the repository root needs no toolchain pin.
+# Maven itself is not listed — use the Maven wrapper (`./mvnw`) next to this file.
+#
+# Keep in sync with sdk-java/.sdkmanrc.
+java=25.0.1-tem

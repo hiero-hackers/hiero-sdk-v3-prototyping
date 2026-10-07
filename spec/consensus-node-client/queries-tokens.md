@@ -184,7 +184,7 @@ combine it with `maxQueryPayment` for a hard ceiling. See
 
 - **`tokenId` / `nftId` are the generic `Address` placeholder.** Token / NFT ids are not yet
   promoted to typed `TokenId` / `NftId` (token id + serial) identifiers — tracked in
-  [`missing-features.md`](../../missing-features.md) section 3.1, with
+  [`missing-features.md`](../../docs/missing-features.md) section 3.1, with
   [`token.md`](../base/token.md) the intended landing place. `TokenNftInfoQuery` therefore takes
   `tokenId` + `serial` as two fields rather than a single `NftId`; once `NftId` lands, the input
   should collapse to one field (breaking change for the query input, additive for the result).
@@ -199,7 +199,7 @@ combine it with `maxQueryPayment` for a hard ceiling. See
 - **No `customFees` on `TokenInfo`.** HAPI's `TokenGetInfo` carries the token's custom-fee
   schedule (`list<CustomFee>`), but the write-side `CustomFee` hierarchy is not yet specified for
   the consensus-node layer (see [`transactions-tokens.md`](transactions-tokens.md) *Questions &
-  Comments* and [`missing-features.md`](../../missing-features.md) section 3.3). Read-side
+  Comments* and [`missing-features.md`](../../docs/missing-features.md) section 3.3). Read-side
   custom-fee shapes already exist on the mirror-node side
   ([`mirror-node-token.md`](../mirror-node-client/mirror-node-token.md)). Adding
   `customFees: list<CustomFee>` here once the write-side model lands is additive.

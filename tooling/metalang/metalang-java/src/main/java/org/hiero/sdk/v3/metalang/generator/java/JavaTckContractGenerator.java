@@ -10,7 +10,7 @@ import org.hiero.sdk.v3.metalang.tck.Converter;
 
 /**
  * Generates the contract between the generated TCK server and the hand-written runtime of a language (see
- * {@code tck-binding.md}): interfaces and records only, no implementation. {@code Converters} is derived from the
+ * {@code docs/tck-binding.md}): interfaces and records only, no implementation. {@code Converters} is derived from the
  * converter catalogue ({@link Converter}): one method per direction of every converter, typed with the Java type of
  * its canonical meta-language type. The other declarations describe what the binding flow needs (JSON access,
  * execution of transactions and queries, the JSON-RPC server); they change only with the binding language.

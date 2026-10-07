@@ -35,7 +35,7 @@ shards/realms), which is a paid `FileService` query. `NodeAddressBookQuery` is a
 file mechanism but **not** the cost: the underlying file read is still billed by the
 network, so the query honestly extends `PaidQuery` with full cost-discovery behaviour. A
 caller that wants a free node list today uses the mirror node (`GET /network/nodes` —
-tracked in [`missing-features.md`](../../missing-features.md) §4.2) instead.
+tracked in [`missing-features.md`](../../docs/missing-features.md) §4.2) instead.
 
 ### Reusing `ServiceEndpoint` from `consensusnode.admin.nodes`
 
@@ -163,7 +163,7 @@ if (info.servicesVersion.major >= 0 && info.servicesVersion.minor >= 50) {
 - **`SemanticVersion` is defined inline.** The same type appears in v2 SDKs across several
   service boundaries (network version, services version, future HIP-feature checks) and
   belongs in `base/common`. It is defined locally here so this file is self-contained, but
-  once [`missing-features.md`](../../missing-features.md) §3.1 lands a base `SemanticVersion`
+  once [`missing-features.md`](../../docs/missing-features.md) §3.1 lands a base `SemanticVersion`
   this local definition should be removed and the base type imported.
 
 - **`NodeAddressBookQuery` is paid because it goes through the file service.** The

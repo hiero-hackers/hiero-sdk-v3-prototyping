@@ -161,7 +161,7 @@ abstraction AccountRepository {
 - **Allowance `timestamp` is a single value, not a range.** The Mirror Node REST returns a
   `timestamp` *range* (from/to) on allowances; V3 surfaces the grant / last-modified instant as a
   single `zonedDateTime`, consistent with the other mirror-node types. A typed `TimestampRange`
-  (for the generic range-filter model) is tracked in [`missing-features.md`](../../missing-features.md) §4.3.
+  (for the generic range-filter model) is tracked in [`missing-features.md`](../../docs/missing-features.md) §4.3.
 - **`getNftAllowances` returns approved-for-all grants only.** `GET /allowances/nfts` exposes
   collection-wide (`approvedForAll`) NFT allowances; per-serial NFT approvals are read via the NFT
   endpoints, not here.

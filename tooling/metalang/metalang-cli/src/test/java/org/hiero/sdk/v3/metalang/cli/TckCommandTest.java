@@ -93,11 +93,11 @@ class TckCommandTest {
         assertThat(temp.resolve("generated/ts-tck/contract/tsconfig.json")).content()
                 .contains("\"extends\": \"../../../api/tsconfig.base.json\"");
 
-        // WHEN the default: the directory ts next to the output
+        // WHEN the default: <output>/../../generated, the layout of ADR-0008 (sdk-<lang>/tck/generated)
         assertThat(cli.run("tck", "generate", "--language=ts", "--bindings=" + BINDINGS,
-                "--output=" + temp.resolve("other/ts-tck"), NEVER, SPECS.toString())).isZero();
-        assertThat(temp.resolve("other/ts-tck/contract/tsconfig.json")).content()
-                .contains("\"extends\": \"../../ts/tsconfig.base.json\"");
+                "--output=" + temp.resolve("sdk-ts/tck/generated"), NEVER, SPECS.toString())).isZero();
+        assertThat(temp.resolve("sdk-ts/tck/generated/contract/tsconfig.json")).content()
+                .contains("\"extends\": \"../../../generated/tsconfig.base.json\"");
     }
 
     @Test

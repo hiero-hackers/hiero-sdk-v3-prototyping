@@ -9,7 +9,7 @@ The schedule service ([HIP-423 long-term scheduled transactions](https://hips.he
 lets a caller store a transaction on the ledger that executes later, once the
 signatures its own authorization requires have been collected. V3 must expose
 `ScheduleCreate`, `ScheduleSign`, and `ScheduleDelete`
-([`missing-features.md`](../../missing-features.md) §1.6).
+([`missing-features.md`](../missing-features.md) §1.6).
 
 The challenge is that a scheduled transaction is structurally unlike every other
 transaction the V3 API already models:
@@ -152,10 +152,10 @@ out-of-process/HSM signing surface (`signableBodies()`, `sign(list<NodeSignature
 - `customFeeLimits` ([HIP-991](https://hips.hedera.com/hip/hip-991)) is
   intentionally deferred — its payload depends on the write-side custom-fee model
   that is not yet specified
-  ([`missing-features.md`](../../missing-features.md) §3.3), the same blocker as
+  ([`missing-features.md`](../missing-features.md) §3.3), the same blocker as
   `TokenFeeScheduleUpdate`. Revisit when the write-side `CustomFee` hierarchy lands.
 - `ScheduleInfoQuery` (read-side schedule state) remains unspecified
-  ([`missing-features.md`](../../missing-features.md) §1.8).
+  ([`missing-features.md`](../missing-features.md) §1.8).
 - Revisit this decision if a future protocol change makes schedule signatures
   diverge from ordinary transaction signatures, or introduces a schedulability
   signal the SDK could check locally.
@@ -169,7 +169,7 @@ out-of-process/HSM signing surface (`signableBodies()`, `sign(list<NodeSignature
 - Open SPI service model keyed by transaction type: [`spec/consensus-node-client/transactions-spi.md`](../../spec/consensus-node-client/transactions-spi.md)
 - Duplication cost reference (per-operation service fields): [`spec/consensus-node-client/transactions-accounts.md`](../../spec/consensus-node-client/transactions-accounts.md):147-152
 - Two-type lifecycle rationale: [ADR-0001](0001-transaction-and-packed-transaction-split.md)
-- Feature tracking: [`missing-features.md`](../../missing-features.md) §1.6, §1.8, §1.9, §3.3
+- Feature tracking: [`missing-features.md`](../missing-features.md) §1.6, §1.8, §1.9, §3.3
 - HIP-423 Long Term Scheduled Transactions (`wait_for_expiry`, `expiration_time`, 2-month window): [hips.hedera.com/HIP/hip-423.html](https://hips.hedera.com/HIP/hip-423.html) (accessed 2026-06-24)
 - HIP-991 max_custom_fees / `CustomFeeLimit`: [hips.hedera.com/hip/hip-991](https://hips.hedera.com/hip/hip-991) (accessed 2026-06-24)
 - V2 schedule signing & deletion semantics (sign normally; execute on sufficient signatures; admin-key-gated deletion): [Hedera scheduled-transaction docs](https://docs.hedera.com/hedera/core-concepts/scheduled-transaction) (accessed 2026-06-24)

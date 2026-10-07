@@ -76,7 +76,7 @@ class TsGeneratorTest {
             assertThat(file(files, "packages/base/package.json")).doesNotContain("dependencies")
                     .doesNotContain("support");
             assertThat(file(files, "packages/client/tsconfig.json"))
-                    .contains("{ \"path\": \"../../../../sdk-ts/support\" },\n    { \"path\": \"../base\" }");
+                    .contains("{ \"path\": \"../../../support\" },\n    { \"path\": \"../base\" }");
             assertThat(file(files, "packages/base/tsconfig.json")).doesNotContain("support");
             assertThat(file(files, "/c/sub/Line.ts"))
                     .contains("import type { Point } from \"@acme/base/b\";")
@@ -85,9 +85,9 @@ class TsGeneratorTest {
                     .contains("readonly #length: Duration;");
             assertThat(file(files, "/c/sub/index.ts")).contains("export * from \"./Line.js\";");
             // the workspace links and builds the support package first
-            assertThat(file(files, "package.json")).contains("\"workspaces\": [\n    \"../../sdk-ts/support\",\n");
+            assertThat(file(files, "package.json")).contains("\"workspaces\": [\n    \"../support\",\n");
             assertThat(files.stream().filter(f -> f.path().equals("tsconfig.json")).findFirst().orElseThrow().content())
-                    .contains("{ \"path\": \"../../sdk-ts/support\" },\n");
+                    .contains("{ \"path\": \"../support\" },\n");
             assertThat(new TsGenerator(new TsGeneratorConfig("@acme", "1.2.3", "/opt/support")).generate(model(
                     Map.of("f/a.md", "namespace a\nX { @@immutable d: duration }\n"))))
                     .filteredOn(f -> f.path().endsWith("tsconfig.json"))

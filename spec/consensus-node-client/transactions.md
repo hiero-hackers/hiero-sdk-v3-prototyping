@@ -443,7 +443,7 @@ signed.submit(client);
   on TRANSACTION_EXPIRED repeat the whole pack+sign cycle" for the single-signer case where
   the loss-of-signatures problem is moot — but that lives above this layer, not as a flag on
   `Transaction`. Tracked in
-  [`missing-features.md`](../../missing-features.md) section 1.9.
+  [`missing-features.md`](../../docs/missing-features.md) section 1.9.
 
 - **`packForBatch(...)` and the `signForBatch(...)` tiers live on the base `Transaction` abstraction
   (not on a `BatchTransaction` subtype) because *any* transaction may be an inner member of a batch
@@ -471,7 +471,7 @@ signed.submit(client);
   but failed) declares a `@@throws` with an error that carries the `TransactionStatus`. V2 throws
   `PrecheckStatusException` / `ReceiptStatusException` with the status, and callers need it to tell e.g.
   `INSUFFICIENT_PAYER_BALANCE` from `INVALID_SIGNATURE`; the TCK server
-  ([`tck-binding.md`](../../tck-binding.md)) must answer such requests with the status name. Does
+  ([`tck-binding.md`](../../docs/tck-binding.md)) must answer such requests with the status name. Does
   `queryReceipt()` return the receipt of a failed transaction (status other than `SUCCESS`) and only
   `submit` throw, or do both throw an error with a `status` attribute? Until `BasicTransactionStatus`
   lists `SUCCESS`, the TCK server compares the receipt status with the HAPI code 22.

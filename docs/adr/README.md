@@ -18,3 +18,4 @@ deleted — superseded ADRs link forward to the decision that replaces them.
 | [0005](0005-schedule-service-reuses-transaction-model.md) | Model the schedule service on the existing transaction model, without schedule-specific types | Accepted |
 | [0006](0006-generic-methods-final-or-static.md) | Generic methods are allowed only as `@@finalMethod` instance methods or as `@@static` methods | Proposed |
 | [0007](0007-separate-generated-and-hand-written-modules.md) | Every module is either completely generated or completely hand-written | Accepted |
+| [0008](0008-one-folder-per-target-language.md) | One folder per target language: configuration, hand-written and generated modules together | Accepted |

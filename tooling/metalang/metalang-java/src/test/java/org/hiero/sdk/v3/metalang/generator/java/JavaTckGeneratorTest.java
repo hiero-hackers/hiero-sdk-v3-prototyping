@@ -42,7 +42,7 @@ class JavaTckGeneratorTest {
     private static final Path SPECS = Path.of(System.getProperty("spec.root", "../../../spec"));
     private static final Path BINDINGS = SPECS.resolveSibling("tck/bindings");
     /** The sources of the hand-written runtime, a dependency of the generated server. */
-    private static final Path RUNTIME = SPECS.resolveSibling("tck/runtime/java/src/main/java");
+    private static final Path RUNTIME = SPECS.resolveSibling("sdk-java/tck/runtime/src/main/java");
 
     private final JavaTckGenerator generator = new JavaTckGenerator(JavaGeneratorConfig.DEFAULT);
 

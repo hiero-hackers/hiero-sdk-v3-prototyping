@@ -194,6 +194,6 @@ String describe(Authority e) {
   `Key` protobuf form, so key lists and threshold keys cannot be exchanged in serialized form; a single
   public key round-trips through `PublicKey.toBytes(...)`, an m-of-n does not. The TCK passes and
   expects keys as hex of the protobuf `Key` (`generateKey` with `keyList` / `thresholdKey`, the `key` of
-  `createAccount` and `getAccountInfo`, see [`tck-binding.md`](../../tck-binding.md)). Should
+  `createAccount` and `getAccountInfo`, see [`tck-binding.md`](../../docs/tck-binding.md)). Should
   `Authority` get `toBytes()` and `@@static fromBytes(bytes)`, and how do `ContractAuthority` and the
   delegatable contract form map to it?

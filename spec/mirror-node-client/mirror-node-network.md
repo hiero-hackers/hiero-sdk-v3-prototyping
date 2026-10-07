@@ -125,7 +125,7 @@ NetworkRepository {
 - **`FeeEstimate` is provisional.** The OpenAPI references `FeeEstimateResponse` but does not expose
   its field set, and the full HIP-1313 fee-estimation model (node / network / service breakdown
   plus the high-volume congestion multiplier) is tracked in
-  [`missing-features.md`](../../missing-features.md) §3.4. Only `estimatedFee` is modelled here;
+  [`missing-features.md`](../../docs/missing-features.md) §3.4. Only `estimatedFee` is modelled here;
   expand once §3.4 lands the authoritative shape.
 - **`estimateFees(transaction: bytes)` takes encoded bytes, not a typed transaction.** The
   mirror-node layer is independent of `consensus-node-client`, so it cannot reference

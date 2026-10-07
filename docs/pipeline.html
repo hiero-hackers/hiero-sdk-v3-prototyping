@@ -386,15 +386,15 @@
             <line class="d-line d-dash" x1="556" y1="251" x2="484" y2="251" marker-end="url(#a1)"/>
 
             <rect class="d-box d-box--gen" x="560" y="43" width="180" height="58" rx="2"/>
-            <text class="d-t"   x="650" y="67" text-anchor="middle">generated/java</text>
+            <text class="d-t"   x="650" y="67" text-anchor="middle">sdk-java/generated</text>
             <text class="d-sub" x="650" y="85" text-anchor="middle">586 .java</text>
 
             <rect class="d-box d-box--gen" x="560" y="126" width="180" height="58" rx="2"/>
-            <text class="d-t"   x="650" y="150" text-anchor="middle">generated/ts</text>
+            <text class="d-t"   x="650" y="150" text-anchor="middle">sdk-ts/generated</text>
             <text class="d-sub" x="650" y="168" text-anchor="middle">1169 .ts</text>
 
             <rect class="d-box d-box--gen" x="560" y="209" width="180" height="58" rx="2"/>
-            <text class="d-t"   x="650" y="233" text-anchor="middle">generated/rust</text>
+            <text class="d-t"   x="650" y="233" text-anchor="middle">sdk-rust/generated</text>
             <text class="d-sub" x="650" y="251" text-anchor="middle">682 .rs</text>
 
             <text class="d-lbl" x="16" y="294">one model · three idiomatic projects</text>
@@ -435,27 +435,27 @@
             </defs>
 
             <rect class="d-box d-box--gen" x="20" y="40" width="240" height="56" rx="2"/>
-            <text class="d-t" x="140" y="74" text-anchor="middle">generated/java</text>
+            <text class="d-t" x="140" y="74" text-anchor="middle">sdk-java/generated</text>
             <line class="d-line" x1="264" y1="68" x2="496" y2="68" marker-end="url(#a2)"/>
             <text class="d-lbl" x="380" y="60" text-anchor="middle">compile time</text>
             <rect class="d-box d-box--hand" x="500" y="40" width="240" height="56" rx="2"/>
             <text class="d-t" x="620" y="74" text-anchor="middle">sdk-java/support</text>
 
             <rect class="d-box d-box--hand" x="20" y="130" width="240" height="56" rx="2"/>
-            <text class="d-t" x="140" y="164" text-anchor="middle">tck/runtime/java</text>
+            <text class="d-t" x="140" y="164" text-anchor="middle">sdk-java/tck/runtime</text>
             <line class="d-line" x1="264" y1="158" x2="496" y2="158" marker-end="url(#a2)"/>
             <text class="d-lbl" x="380" y="150" text-anchor="middle">implements</text>
             <rect class="d-box d-box--gen" x="500" y="130" width="240" height="56" rx="2"/>
-            <text class="d-t" x="620" y="158" text-anchor="middle">generated/java-tck/</text>
+            <text class="d-t" x="620" y="158" text-anchor="middle">sdk-java/tck/generated/</text>
             <text class="d-t" x="620" y="176" text-anchor="middle">contract</text>
 
             <rect class="d-box d-box--gen" x="20" y="220" width="240" height="56" rx="2"/>
-            <text class="d-t" x="140" y="248" text-anchor="middle">generated/java-tck/</text>
+            <text class="d-t" x="140" y="248" text-anchor="middle">sdk-java/tck/generated/</text>
             <text class="d-t" x="140" y="266" text-anchor="middle">server</text>
             <line class="d-line d-dash" x1="264" y1="248" x2="496" y2="248" marker-end="url(#a2)"/>
             <text class="d-lbl" x="380" y="240" text-anchor="middle">run time only</text>
             <rect class="d-box d-box--hand" x="500" y="220" width="240" height="56" rx="2"/>
-            <text class="d-t" x="620" y="254" text-anchor="middle">tck/runtime/java</text>
+            <text class="d-t" x="620" y="254" text-anchor="middle">sdk-java/tck/runtime</text>
           </svg>
         </div>
         <figcaption>The same hand-written runtime appears twice on purpose: it <em>implements</em> the
@@ -467,7 +467,7 @@
 
       <div class="note">
         <p><strong>The one deliberate exception.</strong> The <code>createAccount</code> spike edits
-          <code>generated/java</code> and <code>generated/ts</code> in place, because the generated shapes
+          <code>sdk-java/generated</code> and <code>sdk-ts/generated</code> in place, because the generated shapes
           leave no other option — <code>AccountCreateTransaction</code> is <code>final</code> with stubbed
           overrides, the factories are <code>final</code> with private constructors. Regenerating destroys it;
           <code>docs/rebuilding-the-spike.md</code> is the runbook.</p>
@@ -652,7 +652,7 @@
             <text class="d-sub" x="550" y="84" text-anchor="middle">6 interfaces &#183; no bodies</text>
 
             <rect class="d-box d-box--hand" x="240" y="200" width="220" height="60" rx="2"/>
-            <text class="d-t"   x="350" y="226" text-anchor="middle">tck/runtime/java</text>
+            <text class="d-t"   x="350" y="226" text-anchor="middle">sdk-java/tck/runtime</text>
             <text class="d-sub" x="350" y="244" text-anchor="middle">converters &#183; setup &#183; JSON-RPC</text>
 
             <line class="d-line" x1="264" y1="70" x2="436" y2="70" marker-end="url(#a6)"/>
@@ -683,7 +683,7 @@
             <tr><td>Holds</td><td>6 interfaces, 342 lines, no method body</td><td>3 classes, 283 lines, the bound TCK methods</td></tr>
             <tr><td>Derived from</td><td>the converter catalogue and the binding flow</td><td><code>tck/bindings/*.md</code></td></tr>
             <tr><td>Compiled against</td><td>the SDK API</td><td>the contract and the SDK API</td></tr>
-            <tr><td>Implemented by</td><td><code>tck/runtime/java</code>, by hand</td><td>—</td></tr>
+            <tr><td>Implemented by</td><td><code>sdk-java/tck/runtime</code>, by hand</td><td>—</td></tr>
           </tbody>
         </table>
       </div>
@@ -694,7 +694,7 @@
         on. <code>TckRuntime</code> declares the binding flow itself: <code>required</code>, <code>or</code>,
         <code>unsupported</code>, <code>transaction</code>, <code>query</code>, <code>put</code>.</p>
 
-      <pre><span class="c"># generated/java-tck/server/pom.xml</span>
+      <pre><span class="c"># sdk-java/tck/generated/server/pom.xml</span>
 hiero-sdk-tck-contract      compile
 hiero-base &#183; …-client &#183; …     compile
 hiero-sdk-tck-<b>runtime</b>       <b>runtime</b>   <span class="c">&#8592; the whole point</span></pre>
@@ -1007,10 +1007,10 @@ hiero-sdk-tck-<b>runtime</b>       <b>runtime</b>   <span class="c">&#8592; the 
             <tr><td class="path">protobuf/</td><td class="origin"><span class="chip chip--vend">vendored</span></td><td>The protobuf definitions of all three node types, pinned; <code>update.sh</code>, <code>verify.sh</code>, <code>sources.json</code>.</td></tr>
             <tr><td class="path">sdk-java/support/<br>sdk-ts/support/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Types the generated API uses but no spec declares — thread-safety, streaming, <code>Duration</code>.</td></tr>
             <tr><td class="path">sdk-java/protobuf/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>No sources of its own: compiles <code>protobuf/</code> into Java and exports it only to the SDK modules.</td></tr>
-            <tr><td class="path">generated/java/<br>generated/ts/<br>generated/rust/</td><td class="origin"><span class="chip chip--gen">generated</span></td><td>The API per language, with its build files and contract tests. Never edited — except by the spike.</td></tr>
+            <tr><td class="path">sdk-java/generated/<br>sdk-ts/generated/<br>sdk-rust/generated/</td><td class="origin"><span class="chip chip--gen">generated</span></td><td>The API per language, with its build files and contract tests. Never edited — except by the spike.</td></tr>
             <tr><td class="path">tck/bindings/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Markdown with <code>bindings</code> blocks: TCK method → API type, parameter by parameter.</td></tr>
-            <tr><td class="path">generated/java-tck/<br>generated/ts-tck/</td><td class="origin"><span class="chip chip--gen">generated</span></td><td><code>contract/</code> — declarations the runtime implements; <code>server/</code> — the JSON-RPC server.</td></tr>
-            <tr><td class="path">tck/runtime/java/<br>tck/runtime/ts/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>What bindings cannot express: the JSON-RPC server, the value converters, <code>setup</code>, error logging.</td></tr>
+            <tr><td class="path">sdk-java/tck/generated/<br>sdk-ts/tck/generated/</td><td class="origin"><span class="chip chip--gen">generated</span></td><td><code>contract/</code> — declarations the runtime implements; <code>server/</code> — the JSON-RPC server.</td></tr>
+            <tr><td class="path">sdk-java/tck/runtime/<br>sdk-ts/tck/runtime/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>What bindings cannot express: the JSON-RPC server, the value converters, <code>setup</code>, error logging.</td></tr>
             <tr><td class="path">tck/run-tck.sh</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Checks Solo, starts the server, copies <code>solo.env</code> into the TCK clone, runs the suite.</td></tr>
             <tr><td class="path">docs/adr/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Seven decisions. ADR-0007 is the one this page is organised around.</td></tr>
           </tbody>
@@ -1033,11 +1033,11 @@ metalang <b>validate</b> spec
 
 <span class="c"># one language</span>
 metalang <b>generate</b> --language=java --config=sdk-java/generator.properties \
-         --output=generated/java spec
+         --output=sdk-java/generated spec
 
 <span class="c"># does a project still provide the API of the specs?</span>
 metalang <b>check</b> --language=java --fail-on=never \
-         --config=sdk-java/generator.properties --project=generated/java spec</pre>
+         --config=sdk-java/generator.properties --project=sdk-java/generated spec</pre>
 
       <h3>Protobuf</h3>
       <pre>protobuf/<b>update.sh</b>                  <span class="c"># re-fetch from the pins in sources.json</span>
@@ -1049,10 +1049,10 @@ npm run <b>gen:proto-ts</b>                <span class="c"># TypeScript messages
 
 ./mvnw -f sdk-java/support install
 ./mvnw -f sdk-java/protobuf install
-./mvnw -f generated/java install -DskipTests
-./mvnw -f generated/java-tck/contract install
-./mvnw -f tck/runtime/java install
-./mvnw -f generated/java-tck/server <b>clean</b> package
+./mvnw -f sdk-java/generated install -DskipTests
+./mvnw -f sdk-java/tck/generated/contract install
+./mvnw -f sdk-java/tck/runtime install
+./mvnw -f sdk-java/tck/generated/server <b>clean</b> package
 
 TCK_DIR=../hiero-sdk-tck tck/<b>run-tck.sh</b> java \
     src/tests/crypto-service/test-account-create-transaction.ts</pre>

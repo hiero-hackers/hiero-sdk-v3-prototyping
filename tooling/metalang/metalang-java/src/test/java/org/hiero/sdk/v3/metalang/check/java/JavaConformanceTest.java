@@ -76,7 +76,7 @@ class JavaConformanceTest {
 
         // WHEN
         final JavaConformance.Result result = JavaConformance.check(LinkedModel.of(new MetaLang().validate(specs)
-                .model()), generator, repository.resolve("generated/java"));
+                .model()), generator, repository.resolve("sdk-java/generated"));
 
         // THEN generated/java is up to date (otherwise: regenerate it, see tooling/metalang/README.md)
         assertThat(result.differences()).isEmpty();

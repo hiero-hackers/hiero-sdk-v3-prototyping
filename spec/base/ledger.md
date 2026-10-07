@@ -372,5 +372,5 @@ instance MirrorNode = MirrorNode{restBaseUrl: "https://testnet.mirrornode.hedera
   > [@oGranny](https://github.com/oGranny): In `ledger.config` we have `NetworkSetting` which does not match with `Ledger`, I think either we should rename `Ledger` to `Network` or `NetworkSetting` to `LedgerSetting`
 - [@oGranny](https://github.com/oGranny): what are the rules for assigning and creating `Ledger.id` bytes?
 - `ConsensusNode` does not carry the stable DAB `nodeId` (HIP-869) yet. Adding it is deferred until the
-  typed-identifier roll-out (see `missing-features.md` §3.1); see also the *Questions & Comments* in
+  typed-identifier roll-out (see `docs/missing-features.md` §3.1); see also the *Questions & Comments* in
   `consensus-node-admin-client/transactions-nodes.md`.

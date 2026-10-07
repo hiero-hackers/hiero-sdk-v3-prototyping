@@ -25,7 +25,7 @@ import org.hiero.sdk.v3.metalang.tck.TckSpecifications;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Generates the TypeScript TCK server (see {@code tck-binding.md} and ADR-0007) as two npm packages:
+ * Generates the TypeScript TCK server (see {@code docs/tck-binding.md} and ADR-0007) as two npm packages:
  * <ul>
  *   <li>{@code contract} ({@code <scope>/tck-contract}): the contract with the hand-written runtime — interfaces and
  *       types only. {@code Converters} is derived from the converter catalogue;</li>
@@ -693,7 +693,7 @@ public final class TsTckGenerator {
         return api.startsWith("/") ? api : "../" + api;
     }
 
-    /** A normalized path ({@code ../../ts/../../sdk-ts/support} becomes {@code ../../../sdk-ts/support}). */
+    /** A normalized path ({@code ../../generated/../support} becomes {@code ../../support}). */
     private static String path(final String path) {
         return Path.of(path).normalize().toString().replace('\\', '/');
     }

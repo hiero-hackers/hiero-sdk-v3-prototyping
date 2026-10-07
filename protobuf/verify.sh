@@ -29,18 +29,18 @@ if [[ "${1:-}" != "--keep" ]]; then
 fi
 mkdir -p "$out"
 
-local_repository="$("$repository/mvnw" -q help:evaluate -Dexpression=settings.localRepository -DforceStdout 2>/dev/null | tail -1)"
+local_repository="$("$repository/sdk-java/mvnw" -q help:evaluate -Dexpression=settings.localRepository -DforceStdout 2>/dev/null | tail -1)"
 protoc="$local_repository/com/google/protobuf/protoc/$version/protoc-$version-$classifier.exe"
 runtime="$local_repository/com/google/protobuf/protobuf-java/$version/protobuf-java-$version.jar"
 
 if [[ ! -f "$protoc" ]]; then
   echo "==> fetching protoc $version ($classifier)"
-  "$repository/mvnw" -q dependency:get \
+  "$repository/sdk-java/mvnw" -q dependency:get \
       -Dartifact="com.google.protobuf:protoc:$version:exe:$classifier" >/dev/null
 fi
 if [[ ! -f "$runtime" ]]; then
   echo "==> fetching protobuf-java $version"
-  "$repository/mvnw" -q dependency:get \
+  "$repository/sdk-java/mvnw" -q dependency:get \
       -Dartifact="com.google.protobuf:protobuf-java:$version" >/dev/null
 fi
 chmod +x "$protoc"

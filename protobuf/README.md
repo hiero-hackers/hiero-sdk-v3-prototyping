@@ -140,9 +140,9 @@ the crate resp. package that uses it and never becomes visible at all.
 None of the generated code is committed; it is build output in all three languages:
 
 ```bash
-./mvnw -f sdk-java/protobuf install        # Java    (protobuf-maven-plugin)
+./mvnw -f protobuf install        # Java    (protobuf-maven-plugin)
 cargo build -p hiero-consensus-node-client # Rust    (prost-build in build.rs, vendored protoc)
-npm run gen:proto-ts                       # TypeScript (buf + protoc-gen-es, see buf.gen.yaml)
+npm run gen:proto-ts                       # TypeScript (buf + protoc-gen-es, see sdk-ts/buf.gen.yaml)
 ```
 
 The TypeScript step is explicit because `tsc` cannot generate sources itself; Java and Rust run

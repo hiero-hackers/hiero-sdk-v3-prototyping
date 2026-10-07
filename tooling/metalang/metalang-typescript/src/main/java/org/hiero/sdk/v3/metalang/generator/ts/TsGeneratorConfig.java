@@ -35,7 +35,7 @@ import org.hiero.sdk.v3.metalang.generator.GenerationException;
 public record TsGeneratorConfig(String scope, String version, String support, Set<String> protobuf) {
 
     /** The directory of the support package for a workspace in {@code generated/ts}. */
-    public static final String DEFAULT_SUPPORT = "../../sdk-ts/support";
+    public static final String DEFAULT_SUPPORT = "../support";
 
     /** The key that lists the spec folders whose package needs the protobuf messages. */
     public static final String PROTOBUF = "ts.protobuf";

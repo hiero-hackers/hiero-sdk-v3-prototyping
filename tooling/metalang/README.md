@@ -10,24 +10,27 @@ TypeScript and Rust (API and tests) and conformance checks of projects against t
 
 ## Quick start
 
-Requires the JDK pinned in [`.sdkmanrc`](../../.sdkmanrc); Maven comes from the wrapper `./mvnw` at the repository
-root. Activate the JDK once per shell with `sdk env` (not needed with `sdkman_auto_env=true`) — on an older JDK the
+Requires the JDK pinned in [`.sdkmanrc`](.sdkmanrc) next to this file; Maven comes from the wrapper `./mvnw` in
+this directory. Activate the JDK with `sdk env` here (not needed with `sdkman_auto_env=true`) — on an older JDK the
 build fails with `Unsupported major.minor version 69.0`. See the
 [toolchain section of the main README](../../README.md#toolchain).
 
-All commands are meant to be run from the **repository root** (`hiero-sdk-v3-prototyping/`) and can be copied 1:1.
+All commands are meant to be run from the **repository root** (`hiero-sdk-v3-prototyping/`) and can be copied
+1:1 — except the Maven ones: `./mvnw` refers to the wrapper of the build it belongs to, so run it from
+`tooling/metalang/` (the spec tooling) or from `sdk-java/` (the Java SDK). Each of the two carries its own
+wrapper and its own `.sdkmanrc`.
 
 ### Build
 
 ```bash
-./mvnw -f tooling/metalang/pom.xml verify
+./mvnw verify
 ```
 
 This runs all tests and creates the self-contained CLI jar `tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar`.
 For a quick build without tests:
 
 ```bash
-./mvnw -f tooling/metalang/pom.xml -q package -DskipTests
+./mvnw -q package -DskipTests
 ```
 
 ### Modules
@@ -35,7 +38,7 @@ For a quick build without tests:
 | Module | Content |
 |---|---|
 | `metalang-core` | Grammar, parser, AST, semantic and linked model, default instances, validator and rule catalog, and what every generator shares (`GeneratedFile`, `GeneratedOutput`, `Constraints`, `IntegerRange`, `RegexSamples`, `SpecFolders`, `check.ApiDifference`), and the TCK bindings (`tck`: parser, resolver, converter catalogue, reader of the TCK test specifications, coverage check). Its test-jar holds the shared test helpers (`TestSpecs`) and test resources (`rule-fixtures`, `model-golden`). |
-| `metalang-java` | Java generator (`generator.java`: API, Maven project, JUnit tests) and Java conformance check (`check.java`), and the Java TCK server generator (`JavaTckGenerator`). The generated modules depend on the hand-written support module `sdk-java/support`, the hand-written TCK runtime `tck/runtime/java` implements the generated TCK contract. |
+| `metalang-java` | Java generator (`generator.java`: API, Maven project, JUnit tests) and Java conformance check (`check.java`), and the Java TCK server generator (`JavaTckGenerator`). The generated modules depend on the hand-written support module `sdk-java/support`, the hand-written TCK runtime `sdk-java/tck/runtime` implements the generated TCK contract. |
 | `metalang-typescript` | TypeScript generator (`generator.ts`: npm workspace, API, `node:test` tests) and TypeScript conformance check (`check.ts`). The generated packages depend on the hand-written support package `sdk-ts/support`. |
 | `metalang-rust` | Rust generator (`generator.rust`: Cargo workspace, API, integration tests) and Rust conformance check (`check.rust` with the `rs-api` program, a resource). The support files are copied from `guidelines/rust-files`. |
 | `metalang-go` | Go generator (`generator.go`: Go module, API). It is the newest generator and still incomplete: it emits the module, one package per namespace and the declared types; namespace functions, methods and generated tests are still missing, and there is no Go conformance check yet. |
@@ -98,13 +101,13 @@ model. The output is deterministic: a diff of two runs shows exactly how a spec 
 
 ### Generate the Java API
 
-Generates the Java API into `generated/java` at the repository root. The directory is under version control, so that
+Generates the Java API into `sdk-java/generated`. The directory is under version control, so that
 every change of the specs or the generator shows up as a diff of the generated code. Files are only rewritten if their
 content changes, and generated files that are no longer produced (e.g. of a removed or deferred type) are deleted;
 files without the generator's header line are never touched. `--output` takes any directory.
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=java --fail-on=never --config=sdk-java/generator.properties --output=generated/java spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=java --fail-on=never --config=sdk-java/generator.properties --output=sdk-java/generated spec
 ```
 
 Without `--fail-on=never` nothing is generated as long as the specs have validation errors. See
@@ -112,42 +115,43 @@ Without `--fail-on=never` nothing is generated as long as the specs have validat
 generated yet and why; `--show-untested` lists the [generated tests](#generated-tests) that cannot be generated
 because their values cannot be built (the summary line is always printed).
 
-`generated/java` is a Maven project: a parent `pom.xml` with one sub-module per Java module, each built into its own
-JAR plus a Javadoc JAR. It needs JDK 25 (`sdk env`, see [`.sdkmanrc`](../../.sdkmanrc)) and is built with
+`sdk-java/generated` is a Maven project: a parent `pom.xml` with one sub-module per Java module, each built into its own
+JAR plus a Javadoc JAR. It needs JDK 25 (`sdk env` in `sdk-java`, see
+[`sdk-java/.sdkmanrc`](../../sdk-java/.sdkmanrc)) and is built with
 `-Xlint:all -Werror` for the code and doclint `all,-missing` with `failOnWarnings` for the Javadoc. The base module
 depends on the hand-written support types (`sdk-java/support`, artifact `hiero-sdk-support`), so install them first:
 
 ```bash
-./mvnw -f sdk-java/support install
-./mvnw -f sdk-java/protobuf install
-./mvnw -f generated/java/pom.xml package -DskipTests
+./mvnw -f support install
+./mvnw -f protobuf install
+./mvnw -f generated/pom.xml package -DskipTests
 ```
 
-The JARs are then in `generated/java/<module>/target/`; the build output is ignored by git.
+The JARs are then in `sdk-java/generated/<module>/target/`; the build output is ignored by git.
 
 Every module also contains the [generated tests](#generated-tests) (`src/test/java`, JUnit). They fail for every method
 that is not implemented yet, so a build with tests shows the implementation status; `-Dmaven.test.failure.ignore=true`
 runs all modules even if tests fail:
 
 ```bash
-./mvnw -f generated/java/pom.xml test -Dmaven.test.failure.ignore=true
+./mvnw -f generated/pom.xml test -Dmaven.test.failure.ignore=true
 ```
 
 ### Generate the TypeScript API
 
-Generates the TypeScript API into `generated/ts` (an npm workspace, also under version control); see
+Generates the TypeScript API into `sdk-ts/generated` (an npm workspace, also under version control); see
 [TypeScript generator](#typescript-generator):
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=ts --fail-on=never --config=sdk-ts/generator.properties --output=generated/ts spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=ts --fail-on=never --config=sdk-ts/generator.properties --output=sdk-ts/generated spec
 ```
 
 Build and test it with Node.js 22 (`npm install` once; `node_modules`, `dist` and `package-lock.json` are ignored by
-git). `npm install` links the hand-written support package `sdk-ts/support` into the workspace, and `tsc --build`
+git). `npm install` in `sdk-ts` links the hand-written support package `sdk-ts/support` into the workspace, and `tsc --build`
 builds it first. As for Java, the tests of methods that are not implemented yet fail:
 
 ```bash
-npm --prefix generated/ts install && npm --prefix generated/ts test
+npm --prefix sdk-ts install && npm --prefix sdk-ts test --workspaces
 ```
 
 ### Generate the Go API
@@ -155,14 +159,14 @@ npm --prefix generated/ts install && npm --prefix generated/ts test
 One Go module for everything, one package per namespace, see [Go generator](#go-generator):
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=go --fail-on=never --config=sdk-go/generator.properties --output=generated/go spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=go --fail-on=never --config=sdk-go/generator.properties --output=sdk-go/generated spec
 ```
 
 Check it with the Go toolchain (Go 1.27 or newer). The generator emits no method bodies yet, so there is nothing
 to run; what has to hold is that the module builds, vets clean and is already formatted:
 
 ```bash
-cd generated/go && go build ./... && go vet ./... && gofmt -l .
+cd sdk-go/generated && go build ./... && go vet ./... && gofmt -l .
 ```
 
 `gofmt -l` has to print nothing: the generator produces the alignment `gofmt` would, because nothing in the build
@@ -176,23 +180,23 @@ compile, and `--show-deferred` lists them with the reason. On the current specs 
 One crate per spec folder in a Cargo workspace, see [Rust generator](#rust-generator):
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=rust --fail-on=never --config=sdk-rust/generator.properties --output=generated/rust spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=rust --fail-on=never --config=sdk-rust/generator.properties --output=sdk-rust/generated spec
 ```
 
 Build and test it with Cargo (Rust 1.85 or newer; `target` and `Cargo.lock` are ignored by git). As for Java and
 TypeScript, the tests of methods that are not implemented yet fail:
 
 ```bash
-cargo test --manifest-path generated/rust/Cargo.toml --no-fail-fast
+cargo test --manifest-path sdk-rust/generated/Cargo.toml --no-fail-fast
 ```
 
 ### Check a project against the specs
 
 Checks whether a Java project provides the API that the generator derives from the specs — for the generated code
-itself (is `generated/java` up to date?) or for an implementation that started from it:
+itself (is `sdk-java/generated` up to date?) or for an implementation that started from it:
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --language=java --fail-on=never --config=sdk-java/generator.properties --project=generated/java spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --language=java --fail-on=never --config=sdk-java/generator.properties --project=sdk-java/generated spec
 ```
 
 The command generates the expected API in memory and compares it **structurally** with the `.java` files below
@@ -204,7 +208,7 @@ For TypeScript (`--language=ts`) the sources below `<project>/packages/*/src` ar
 API; it is taken from `<project>/node_modules/typescript` or from `--typescript=<dir>`, and `node` must be on the path:
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --language=ts --fail-on=never --config=sdk-ts/generator.properties --project=generated/ts spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --language=ts --fail-on=never --config=sdk-ts/generator.properties --project=sdk-ts/generated spec
 ```
 
 For Rust (`--language=rust`) the crates below `--project` (every `Cargo.toml` with a package and a `src/lib.rs`) are
@@ -212,32 +216,32 @@ read with `rs-api`, a small Rust program based on `syn` that the tool builds onc
 `--cargo=<executable>`; the first build downloads `syn` from crates.io):
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --language=rust --fail-on=never --config=sdk-rust/generator.properties --project=generated/rust spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --language=rust --fail-on=never --config=sdk-rust/generator.properties --project=sdk-rust/generated spec
 ```
 
 ### Generate the TCK server and check its coverage
 
 The bindings in `tck/bindings` map the methods of the [Hiero TCK](https://github.com/hiero-ledger/hiero-sdk-tck) to the
-API (see [`tck-binding.md`](../../tck-binding.md)). `tck generate --language=java` generates two Maven projects:
+API (see [`tck-binding.md`](../../docs/tck-binding.md)). `tck generate --language=java` generates two Maven projects:
 
 - `<output>/contract` (`hiero-sdk-tck-contract`): the contract with the runtime — interfaces and records only. The
   `Converters` interface is derived from the converter catalogue; `TckRuntime` declares JSON access, execution and the
   JSON-RPC server.
 - `<output>/server` (`hiero-sdk-tck`): the server generated from the bindings. It is compiled against the generated
-  API and the contract only; the hand-written runtime `tck/runtime/java` (`hiero-sdk-tck-runtime`) implements the
+  API and the contract only; the hand-written runtime `sdk-java/tck/runtime` (`hiero-sdk-tck-runtime`) implements the
   contract, is found with the `ServiceLoader` and is only a runtime dependency.
 
 `tck generate --language=ts` generates the same two parts as npm packages, `<output>/contract`
 (`@hiero/tck-contract`) and `<output>/server` (`@hiero/tck-server`). The server is compiled against the generated API
-and the contract only and loads the hand-written runtime `tck/runtime/ts` (`@hiero/tck-runtime`) with a dynamic
+and the contract only and loads the hand-written runtime `sdk-ts/tck/runtime` (`@hiero/tck-runtime`) with a dynamic
 `import`. The packages reference the projects of the generated API workspace, by default the directory `ts` next to
 the output (`--api=<dir>` selects another one).
 
 `tck check` compares the bindings with the test specifications of a TCK clone:
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck generate --language=java --fail-on=never --config=sdk-java/generator.properties --bindings=tck/bindings --output=generated/java-tck spec
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck generate --language=ts --fail-on=never --config=sdk-ts/generator.properties --bindings=tck/bindings --output=generated/ts-tck spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck generate --language=java --fail-on=never --config=sdk-java/generator.properties --bindings=tck/bindings --output=sdk-java/tck/generated spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck generate --language=ts --fail-on=never --config=sdk-ts/generator.properties --bindings=tck/bindings --output=sdk-ts/tck/generated spec
 java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck check --fail-on=never --bindings=tck/bindings --tck=../hiero-sdk-tck/docs/test-specifications spec
 ```
 
@@ -246,13 +250,13 @@ method that has neither a binding nor an `unsupported` declaration, and the unbo
 is a finding. To build and start the server (JDK 25, `sdk env`):
 
 ```bash
-./mvnw -f sdk-java/support install
-./mvnw -f sdk-java/protobuf install
-./mvnw -f generated/java install -DskipTests
-./mvnw -f generated/java-tck/contract install
-./mvnw -f tck/runtime/java install
-./mvnw -f generated/java-tck/server clean package
-java -jar generated/java-tck/server/target/hiero-sdk-tck-0.1.0-SNAPSHOT.jar
+./mvnw -f support install
+./mvnw -f protobuf install
+./mvnw -f generated install -DskipTests
+./mvnw -f tck/generated/contract install
+./mvnw -f tck/runtime install
+./mvnw -f tck/generated/server clean package
+java -jar sdk-java/tck/generated/server/target/hiero-sdk-tck-0.1.0-SNAPSHOT.jar
 ```
 
 `clean` matters for the server: an incremental `package` keeps the `Class-Path` of the previous
@@ -261,18 +265,19 @@ manifest, so a newly added dependency lands in `target/lib` but not on the class
 The server listens on port 8544 (the TCK default) or on the port given as argument; its dependencies are copied to
 `target/lib` next to the jar.
 
-The TypeScript server is built in the npm workspace of the repository root (`package.json`), which contains all
-TypeScript modules — the generated API, the support package, the TCK contract and server, and the runtime — because a
-package outside a workspace root cannot resolve its dependencies (Node.js 22):
+The TypeScript server is built in the npm workspace `sdk-ts` (`sdk-ts/package.json`), which contains all TypeScript
+modules — the generated API, the support package, the TCK contract and server, and the runtime — because a package
+outside a workspace root cannot resolve its dependencies (Node.js 22):
 
 ```bash
+cd sdk-ts
 npm install
 npm run build:tck-ts
-node generated/ts-tck/server/dist/main.js
+node tck/generated/server/dist/main.js
 ```
 
 `tck/run-tck.sh java|ts` starts a server and runs the TCK against it on a local Solo network (see
-[`tck-binding.md`](../../tck-binding.md), "Running the TCK").
+[`tck-binding.md`](../../docs/tck-binding.md), "Running the TCK").
 
 ### List all rules
 
@@ -450,7 +455,7 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   `HieroSubscription` (`org.hiero.sdk.common`). They are not generated: they are the hand-written Maven module
   `sdk-java/support` (artifact `hiero-sdk-support`, JPMS module `org.hiero.sdk.support`). When a generated declaration
   needs them, the base module that all other modules require declares `requires transitive org.hiero.sdk.support` and
-  the Maven dependency. Install the module before building the generated code (`./mvnw -f sdk-java/support install`).
+  the Maven dependency. Install the module before building the generated code (`./mvnw -f support install`).
 - **Streaming**: `@@streaming T m()` returns `HieroStream<T>`, `streamResult<T>` is `StreamItem<T>`; the errors of a
   streaming method are documented as "The stream ends with `X` if it fails." (they are thrown by the iterator).
 - **Thread safety** (`ThreadSafeGenerator`): `@@threadSafe[(group)]` becomes the SDK annotation
@@ -669,7 +674,7 @@ changed import style or a moved file makes no difference.
 
 The canonical and compact constructors of records and the constructors of enums are implied and not compared. Only
 `.java` files of `src/main/java` are expected (the [generated tests](#generated-tests) are no part of the API); the Maven `pom.xml` files are build configuration that an implementation changes anyway.
-A test (`JavaConformanceTest`) runs the check for `generated/java`, so a spec or generator change without
+A test (`JavaConformanceTest`) runs the check for `sdk-java/generated`, so a spec or generator change without
 regeneration fails the build.
 
 ### TypeScript
@@ -682,7 +687,7 @@ are compared without order. Every expected declaration must exist with its kind 
 function, const), type parameters and supertypes; every expected member (property with `readonly`, optional and type,
 method and constructor signatures, functions of a namespace) must exist with its signature. Additional files,
 declarations, members, overloads and supertypes, `#private` members and method bodies are allowed. A test runs the
-check for `generated/ts` when TypeScript is installed there.
+check for `sdk-ts/generated` when TypeScript is installed there.
 
 ### Rust
 
@@ -695,7 +700,7 @@ with its kind (struct, enum, trait, fn, const, static, type) and type parameters
 implemented trait (also derived ones, `Clone`, `PartialEq`, ...) and supertrait must exist; every expected member
 (inherent method, associated function of `impl dyn Trait`, trait method, enum variant, public field) must exist with
 its signature. Additional crates, items, members, trait implementations and method bodies are allowed. A test runs the
-check for `generated/rust` when Cargo is installed.
+check for `sdk-rust/generated` when Cargo is installed.
 
 ## Lenient grammar: syntax variants found in the specs
 
@@ -757,11 +762,11 @@ compiler rather than by taste:
 
 `validate --summary --min-severity=warning spec` reports 6 errors (no syntax errors), all `collection.nullable` on
 update transactions and `@@oneOf` payloads, where `null` currently means "not set" — this conflicts with
-the guideline rule "never define nullable collections" and needs a design decision (tracked in `TODO.md` → Meta-language).
+the guideline rule "never define nullable collections" and needs a design decision (tracked in `docs/TODO.md` → Meta-language).
 
 ## Tests
 
-`./mvnw -f tooling/metalang/pom.xml verify` runs about 750 tests (the TypeScript tests that need Node.js and an
+`./mvnw verify` runs about 750 tests (the TypeScript tests that need Node.js and an
 installed TypeScript, and the Rust tests that need Cargo are skipped without them); JaCoCo fails the build of **each
 module** below 95 % line / 90 % branch coverage (generated ANTLR code excluded). The tests live in the module of the code they test: parser, model and validator tests in
 `metalang-core`, generator and check tests in `metalang-java` / `metalang-typescript` / `metalang-rust`, the command tests
@@ -793,17 +798,17 @@ checks:
 | `TestGeneratorTest` | The generated tests of small specs: their content (test names, boundary values, null and copy tests, setters, methods, factories, values of every type, subtypes, factory methods and test doubles, only types of required modules, what cannot be tested), and their **execution**: they are compiled with `-Xlint:all -Werror` and run with the JUnit platform; all pass against the generated code, the method tests fail only because of the stubs, and they **detect mutations** of the generated code (a removed range check, copy or validation). |
 | `TestValuesTest` | Test values and generated tests for edge cases (`ANY`, wildcards, sets of enums, unreachable `@@minSize`, functions, deprecated members, nullable parameters, default instances with factory calls); the result is compiled and run. |
 | `JavaIntegersTest`, `RegexSamplesTest` | Ranges, range checks and literals of all integer types; accepted and rejected strings for patterns, never a wrong one. |
-| `TsGeneratorTest`, `TsTestGeneratorTest` | The TypeScript workspace (packages, exports, dependencies, project references, the support package), every type mapping (classes, interfaces, enum classes, sealed unions, narrowing, constants, overloaded functions, errors), deferral, configuration, determinism across JVM runs, the generated tests (names, boundaries, copies, setters, methods, todo entries), and — with Node.js and TypeScript installed (`npm install` in `generated/ts`) — that **all real specs compile** with the strict configuration and their tests only fail for stubs, and that the tests **detect mutations**. |
+| `TsGeneratorTest`, `TsTestGeneratorTest` | The TypeScript workspace (packages, exports, dependencies, project references, the support package), every type mapping (classes, interfaces, enum classes, sealed unions, narrowing, constants, overloaded functions, errors), deferral, configuration, determinism across JVM runs, the generated tests (names, boundaries, copies, setters, methods, todo entries), and — with Node.js and TypeScript installed (`npm install` in `sdk-ts`) — that **all real specs compile** with the strict configuration and their tests only fail for stubs, and that the tests **detect mutations**. |
 | `TsEdgeCasesTest` | Edge cases of the TypeScript generator, built and run with Node.js: every builtin type as value (`uuid`, `decimal`, `seconds`, `type<T>`, `streamResult`), sealed unions, narrowed attributes, reserved and global names, values that cannot be built (`test.todo`), subtypes, factory methods, default instances with constants, bounds of type parameters for `ANY` arguments, and string escaping. |
-| `TsConformanceTest` | Comparison of TypeScript APIs (additions allowed, every kind of difference), a missing TypeScript installation, and — with TypeScript installed — implemented and outdated projects and **`generated/ts` provides the API of the current specs**. |
+| `TsConformanceTest` | Comparison of TypeScript APIs (additions allowed, every kind of difference), a missing TypeScript installation, and — with TypeScript installed — implemented and outdated projects and **`sdk-ts/generated` provides the API of the current specs**. |
 | `RustGeneratorTest` | The Cargo workspace (crates, manifests with the used libraries, module tree, re-exports, support module), configuration and structural errors, every mapping of a feature spec (enums with attributes, traits with async/streaming/errors/statics/final methods, `$$Self`, erased `ANY` parameters, sealed enums, overload names, keywords, validation, constants, error enums), and — with Cargo — that the feature spec and **all real specs compile without warnings** and their tests only fail for stubs; determinism across JVM runs. |
 | `RustTestGeneratorTest` | The generated tests (names, boundaries, setters, methods, enums, test doubles, ignored tests) and their execution with Cargo: they pass against the generated code, the method tests fail only because of the stubs, and they **detect mutations** (a removed range, length or setter check). |
 | `RustEdgeCasesTest` | Edge cases built and run with Cargo: values of every kind, values that cannot be built, subtypes, factories and default instances of every expression kind, conversions (`From` for subtypes, narrowed and erased attributes), visibility across crates and deferred types, name clashes with aliases, literals of every kind. |
-| `RustConformanceTest` | Comparison of Rust APIs (additions allowed, every kind of difference), and — with Cargo — implemented (with other imports), outdated and unparsable projects, a missing or failing Cargo, and **`generated/rust` provides the API of the current specs**. |
+| `RustConformanceTest` | Comparison of Rust APIs (additions allowed, every kind of difference), and — with Cargo — implemented (with other imports), outdated and unparsable projects, a missing or failing Cargo, and **`sdk-rust/generated` provides the API of the current specs**. |
 | `InstanceResolverTest` | Every kind of default-instance expression (construction with generic arguments, functions of other namespaces, static methods, method calls, attributes, constants, enum constants, lists, bytes), overload selection, and every error message. Rule fixtures cover `instance.invalid`, `instance.cycle` and `instance.missing`. |
 | `JavaApiTest` | Reading the API of Java sources: name resolution (imports, wildcards, same package, `java.lang`, nested types, type variables), nullness including `String @Nullable []` vs. `@Nullable String[]`, implicit modifiers of interfaces, records, enums and nested types, ignored implementation details, module declarations, parse errors, duplicate types and skipped build output. |
 | `JavaApiComparisonTest` | Implementations and additions are accepted; every kind of difference (missing module/type/member, kind, modifiers, type parameters, superclass, interfaces, permits, record components, enum constants, annotations, member declarations, `requires`/`exports`) is reported with file and line. |
-| `JavaConformanceTest` | The generated code and an implementation of it conform, a project that was not updated after a spec change does not, and **`generated/java` provides the API of the current specs** (fails if it was not regenerated). |
+| `JavaConformanceTest` | The generated code and an implementation of it conform, a project that was not updated after a spec change does not, and **`sdk-java/generated` provides the API of the current specs** (fails if it was not regenerated). |
 | `CheckCommandTest` | `metalang check`: success and differences with exit codes, configuration, invalid specs and configurations, usage errors. |
 | `LinkedRepositorySpecsTest` | Linking all real specs leaves no unresolved reference, every declared type exists, self types are substituted (`Transaction`, `NativeToken`), and linking is deterministic. |
 

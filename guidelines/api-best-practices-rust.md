@@ -2,7 +2,7 @@
 
 This document translates the [language-agnostic API meta-definition](api-guideline.md) into Rust. The generator of
 the spec tooling (`tooling/metalang`, `metalang generate --language=rust`) implements exactly these rules; the
-generated workspace `generated/rust` is the reference.
+generated workspace `sdk-rust/generated` is the reference.
 
 ## Crates and modules
 

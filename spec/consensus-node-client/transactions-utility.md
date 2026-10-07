@@ -104,5 +104,5 @@ bytes seed = receipt.prngBytes;   // 48 bytes
 - **Why a transaction and not a query.** The value is produced *during* consensus handling and
   recorded on the receipt; it cannot be read back without changing the network's running-hash state.
   Modelling it as a `Transaction<PrngReceipt, PrngTransaction>` keeps it on the existing receipt-per-transaction
-  pattern (see [`missing-features.md`](../../missing-features.md) §3.5) rather than inventing a
+  pattern (see [`missing-features.md`](../../docs/missing-features.md) §3.5) rather than inventing a
   side-effecting query.

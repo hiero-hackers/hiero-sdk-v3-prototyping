@@ -32,7 +32,7 @@ this ADR sets out to avoid). V3's specs have so far declined to commit and stand
 placeholder: roughly 57 key fields are typed as `PublicKey` or
 `list<PublicKey>` (`transactions-tokens.md` 8 keys, account `key`,
 file `keys`, topic `adminAuthority`/`submitAuthority`, and their read-side mirrors in `queries-*` and
-`mirror-node-*`). `missing-features.md` §3.2 records `Key` / `KeyList` / `ThresholdKey` as
+`mirror-node-*`). `docs/missing-features.md` §3.2 records `Key` / `KeyList` / `ThresholdKey` as
 missing and the prerequisite for the rest. The placeholder loses three real capabilities:
 contract-controlled authority (`contractID` keys — e.g. a token whose `supplyAuthority` is a smart
 contract), m-of-n custody (`thresholdKey`), and nesting. A flat `set<PublicKey>` cannot express
@@ -206,7 +206,7 @@ Concretely we will:
   record — currently underspecified, and it determines whether factory-only construction can be
   enforced.
 - Retype the placeholder fields across `transactions-*`, `queries-*`, and `mirror-node-*` and
-  update `missing-features.md` §3.2 once `@@sealed` lands. **Revisit this decision** — falling back
+  update `docs/missing-features.md` §3.2 once `@@sealed` lands. **Revisit this decision** — falling back
   to the inheritance variant (`PublicKey`/`ContractId extends Authority`, runtime-only sealing) —
   if compile-time `@@sealed` proves unworkable in the meta-language, or if profiling shows the
   bare-type/indirection cost is unacceptable in practice.

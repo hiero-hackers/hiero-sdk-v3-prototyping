@@ -153,4 +153,4 @@ if (info.executionTime != null) {
 
 - **`customFeeLimits` (HIP-991) is absent**, consistent with its absence on
   `ScheduleCreateTransaction` — it depends on the write-side custom-fee model not yet specified in
-  V3 (§3.3 in [`missing-features.md`](../../missing-features.md)). Additive once that lands.
+  V3 (§3.3 in [`missing-features.md`](../../docs/missing-features.md)). Additive once that lands.

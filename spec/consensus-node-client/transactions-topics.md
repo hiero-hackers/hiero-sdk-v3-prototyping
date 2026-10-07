@@ -200,12 +200,12 @@ new TopicDeleteTransaction()
   question raised in [`transactions-files.md`](transactions-files.md) (`FileAppend` chunked
   appends) and additionally interacts with HIP-991 custom-fee limits; it deserves its own
   spec rather than being smuggled into the lifecycle file. Tracked in
-  [`missing-features.md`](../../missing-features.md) section 1.5.
+  [`missing-features.md`](../../docs/missing-features.md) section 1.5.
 
 - **HIP-991 custom-fee fields are out of scope.** `TopicCreate` / `TopicUpdate` in HAPI
   carry `customFees: list<FixedCustomFee>`, `feeScheduleAuthority: Key`, and
   `feeExemptAuthorities: list<Key>` for revenue-generating topics. These are tracked in
-  [`missing-features.md`](../../missing-features.md) sections 1.5 and 2.3 and depend on a
+  [`missing-features.md`](../../docs/missing-features.md) sections 1.5 and 2.3 and depend on a
   write-side custom-fee model that does not yet exist in the spec. Adding them here is
   additive and breaks nothing.
 

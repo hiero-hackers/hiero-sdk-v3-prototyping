@@ -10,7 +10,7 @@ The V3 API is specified once in the meta-language (`spec/`) and translated into 
 
 - **Support types** that appear in the generated API but that no spec declares — e.g. the thread-safety annotation,
   the streaming types (`HieroStream`, `StreamItem`, …), `Duration` in TypeScript, `BoxFuture` in Rust.
-- **Runtimes** that generated code calls but cannot derive — e.g. the TCK server ([`tck-binding.md`](../../tck-binding.md)),
+- **Runtimes** that generated code calls but cannot derive — e.g. the TCK server ([`tck-binding.md`](../tck-binding.md)),
   whose request handlers are generated from bindings, while the JSON-RPC server, the value converters and `setup`
   are written per language.
 
@@ -45,7 +45,9 @@ builds and publishes: a Maven module / JPMS module in Java, an npm package in Ty
 - A **generated module** consists only of files written by a generator. Every file carries the generator's header
   line, it is reproducible from versioned inputs (specs, generator configuration, TCK bindings, the generator itself),
   it is never edited by hand, and files the generator no longer produces are deleted by it. Generated modules live
-  under `generated/`.
+  under a `generated/` directory, so the path itself says "do not edit" — since
+  [ADR-0008](0008-one-folder-per-target-language.md) that directory is `sdk-<lang>/generated/` rather than a single
+  top-level `generated/`.
 - A **hand-written module** contains no generated files in version control. Code that a build tool derives from a
   hand-written source of the same module (e.g. the ANTLR parser of `MetaLang.g4`) is build output and never
   committed.
@@ -78,7 +80,7 @@ runtime. How the implementation is found is language-specific.
 | Support module | `sdk-java/support` (`hiero-sdk-support`, `org.hiero.sdk.support`) | `sdk-ts/support` (`@hiero/support`), linked into the generated workspace (npm workspaces, `tsconfig` references; location from `ts.support`) | from `guidelines/rust-files` |
 | Contract form | interfaces and records | interfaces / types | traits and types |
 | Finding the implementation | `java.util.ServiceLoader`, implementation as `runtime`-scope dependency | dynamic `import` of the implementation's package name (the contract declares the module shape); the server's `tsconfig` does not reference the implementation | to be decided |
-| Linking hand-written and generated packages | Maven repository (`install`) | npm workspace at the repository root: a package resolves its imports from its real path, so all TypeScript modules need a common parent `node_modules` | to be decided |
+| Linking hand-written and generated packages | Maven repository (`install`) | npm workspace at `sdk-ts/`: a package resolves its imports from its real path, so all TypeScript modules need a common parent `node_modules` (ADR-0008 made `sdk-ts/` that common parent; before it, it had to be the repository root) | to be decided |
 
 **Rejected alternatives:**
 
@@ -126,8 +128,8 @@ runtime. How the implementation is found is language-specific.
 
 **References:**
 
-- [`tck-binding.md`](../../tck-binding.md) — TCK bindings, contract (`generated/java-tck/contract`), runtime
-  (`tck/runtime/java`) and server (`generated/java-tck/server`)
+- [`tck-binding.md`](../tck-binding.md) — TCK bindings, contract (`sdk-java/tck/generated/contract`), runtime
+  (`sdk-java/tck/runtime`) and server (`sdk-java/tck/generated/server`)
 - `sdk-java/support` — Java support module; `tooling/metalang/metalang-java/.../generator/java/SupportFiles.java`
 - `sdk-ts/support` — TypeScript support package; `ts.support` in `sdk-ts/generator.properties`
 - `tooling/metalang/metalang-java/.../generator/java/JavaTckContractGenerator.java`, `JavaTckGenerator.java`

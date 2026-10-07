@@ -78,9 +78,9 @@ class CheckCommandTest {
                 .isEqualTo(MetaLangCli.EXIT_FINDINGS);
         assertThat(err()).contains("TypeScript not found in " + project.resolve("node_modules/typescript"));
 
-        // WHEN TypeScript is installed (npm install in generated/ts)
+        // WHEN TypeScript is installed (npm install in sdk-ts)
         final Path typescript = Path.of(System.getProperty("spec.root", "../../../spec")).toAbsolutePath().normalize()
-                .resolveSibling("generated/ts/node_modules/typescript");
+                .resolveSibling("sdk-ts/node_modules/typescript");
         org.junit.jupiter.api.Assumptions.assumeTrue(Files.isRegularFile(typescript.resolve("lib/typescript.js")));
         final int exit = cli.run("check", "--language=ts", "--project=" + project, "--typescript=" + typescript,
                 spec.toString());

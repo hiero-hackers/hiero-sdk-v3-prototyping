@@ -31,7 +31,7 @@ class TsTckGeneratorTest {
     @BeforeAll
     static void generate() throws IOException {
         model = LinkedModel.of(new MetaLang().validate(SPECS).model());
-        files = new TsTckGenerator(TsGeneratorConfig.DEFAULT, "../ts")
+        files = new TsTckGenerator(TsGeneratorConfig.DEFAULT, "../../generated")
                 .generate(model, TckBindings.read(REPOSITORY.resolve("tck/bindings"), model));
     }
 
@@ -72,9 +72,9 @@ class TsTckGeneratorTest {
                 .contains("import type { Duration } from \"@hiero/support\";");
         assertThat(content("contract/package.json")).contains("\"@hiero/support\": \"0.1.0-SNAPSHOT\"")
                 .contains("\"name\": \"@hiero/tck-contract\"").doesNotContain("tck-runtime");
-        assertThat(content("contract/tsconfig.json")).contains("\"extends\": \"../../ts/tsconfig.base.json\"")
-                .contains("{ \"path\": \"../../../sdk-ts/support\" }")
-                .contains("{ \"path\": \"../../ts/packages/base\" }");
+        assertThat(content("contract/tsconfig.json")).contains("\"extends\": \"../../../generated/tsconfig.base.json\"")
+                .contains("{ \"path\": \"../../../support\" }")
+                .contains("{ \"path\": \"../../../generated/packages/base\" }");
     }
 
     @Test
@@ -115,7 +115,7 @@ class TsTckGeneratorTest {
     void bindingsWithErrorsShouldBeRejected() {
         final TckBindings.Bindings broken = TckBindings.resolve(Map.of("broken.md",
                 "```bindings\nbinding foo -> UnknownType {\n}\n```\n"), model);
-        assertThatThrownBy(() -> new TsTckGenerator(TsGeneratorConfig.DEFAULT, "../ts").generate(model, broken))
+        assertThatThrownBy(() -> new TsTckGenerator(TsGeneratorConfig.DEFAULT, "../../generated").generate(model, broken))
                 .isInstanceOf(GenerationException.class).hasMessageContaining("UnknownType");
         assertThat(new TsTckGenerator(new TsGeneratorConfig("@hiero", "0.1.0-SNAPSHOT", "/opt/support"),
                 "/work/ts").generate(model, TckBindings.resolve(Map.of(), model)))
@@ -181,7 +181,7 @@ class TsTckGeneratorTest {
         final LinkedModel shop = shop();
 
         // WHEN
-        final List<GeneratedFile> generated = new TsTckGenerator(TsGeneratorConfig.DEFAULT, "../ts").generate(shop,
+        final List<GeneratedFile> generated = new TsTckGenerator(TsGeneratorConfig.DEFAULT, "../../generated").generate(shop,
                 shopBindings(shop, """
                         binding createOrder -> OrderTransaction {
                             customer = customer : string | name : string
@@ -223,18 +223,18 @@ class TsTckGeneratorTest {
     @Test
     void requestsThatCannotBeBuiltShouldBeRejected() {
         final LinkedModel shop = shop();
-        assertThatThrownBy(() -> new TsTckGenerator(TsGeneratorConfig.DEFAULT, "../ts").generate(shop,
+        assertThatThrownBy(() -> new TsTckGenerator(TsGeneratorConfig.DEFAULT, "../../generated").generate(shop,
                 shopBindings(shop, "binding broken -> Broken {\n}\nbinding strict -> Strict {\n}\n")))
                 .isInstanceOfSatisfying(GenerationException.class, e -> assertThat(e.problems()).containsExactly(
                         "shop--orders.md: Type 'shop.Broken' is not a class of the generated API"));
-        assertThatThrownBy(() -> new TsTckGenerator(TsGeneratorConfig.DEFAULT, "../ts").generate(shop,
+        assertThatThrownBy(() -> new TsTckGenerator(TsGeneratorConfig.DEFAULT, "../../generated").generate(shop,
                 shopBindings(shop, "binding strict -> Strict {\n}\n")))
                 .isInstanceOfSatisfying(GenerationException.class, e -> assertThat(e.problems()).containsExactly(
                         "shop--orders.md: Required attribute 'count' of 'shop.Strict' is not bound"));
         // a model without the transaction types of the contract
         final LinkedModel bare = LinkedModel.of(new MetaLang().validate(Map.of("f/a.md",
                 org.hiero.sdk.v3.metalang.TestSpecs.markdown("namespace a\nX { @@immutable x: int32 }\n"))).model());
-        assertThatThrownBy(() -> new TsTckGenerator(TsGeneratorConfig.DEFAULT, "../ts").generate(bare,
+        assertThatThrownBy(() -> new TsTckGenerator(TsGeneratorConfig.DEFAULT, "../../generated").generate(bare,
                 TckBindings.resolve(Map.of(), bare)))
                 .isInstanceOfSatisfying(GenerationException.class, e -> assertThat(e.problems())
                         .anySatisfy(p -> assertThat(p).startsWith("contract: "))
@@ -248,31 +248,31 @@ class TsTckGeneratorTest {
      */
     @Test
     void theServerShouldBuildAndAnswerRequests(@TempDir final Path temp) throws Exception {
-        assumeThat(GeneratedTs.available()).as("Node.js and TypeScript in generated/ts/node_modules").isTrue();
+        assumeThat(GeneratedTs.available()).as("Node.js and TypeScript in sdk-ts/node_modules").isTrue();
         // GIVEN
-        write(new TsGenerator().generate(model), temp.resolve("generated/ts"));
-        write(files, temp.resolve("generated/ts-tck"));
+        write(new TsGenerator().generate(model), temp.resolve("sdk-ts/generated"));
+        write(files, temp.resolve("sdk-ts/tck/generated"));
         copy(GeneratedTs.SUPPORT, temp.resolve("sdk-ts/support"));
-        copy(REPOSITORY.resolve("tck/runtime/ts"), temp.resolve("tck/runtime/ts"));
+        copy(REPOSITORY.resolve("sdk-ts/tck/runtime"), temp.resolve("sdk-ts/tck/runtime"));
         final Path modules = temp.resolve("node_modules");
         Files.createDirectories(modules.resolve("@hiero"));
         Files.createSymbolicLink(modules.resolve("typescript"), GeneratedTs.MODULES.resolve("typescript"));
         Files.createSymbolicLink(modules.resolve("@types"), GeneratedTs.MODULES.resolve("@types"));
-        try (var packages = Files.list(temp.resolve("generated/ts/packages"))) {
+        try (var packages = Files.list(temp.resolve("sdk-ts/generated/packages"))) {
             for (final Path pkg : packages.toList()) {
                 Files.createSymbolicLink(modules.resolve("@hiero").resolve(pkg.getFileName()), pkg);
             }
         }
         Files.createSymbolicLink(modules.resolve("@hiero/support"), temp.resolve("sdk-ts/support"));
-        Files.createSymbolicLink(modules.resolve("@hiero/tck-contract"), temp.resolve("generated/ts-tck/contract"));
-        Files.createSymbolicLink(modules.resolve("@hiero/tck-server"), temp.resolve("generated/ts-tck/server"));
+        Files.createSymbolicLink(modules.resolve("@hiero/tck-contract"), temp.resolve("sdk-ts/tck/generated/contract"));
+        Files.createSymbolicLink(modules.resolve("@hiero/tck-server"), temp.resolve("sdk-ts/tck/generated/server"));
 
         // WHEN the server is compiled while the runtime is not even installed
         assertThat(run(temp, "node", GeneratedTs.MODULES.resolve("typescript/bin/tsc").toString(), "--build",
-                "generated/ts-tck/server")).isEmpty();
-        Files.createSymbolicLink(modules.resolve("@hiero/tck-runtime"), temp.resolve("tck/runtime/ts"));
+                "sdk-ts/tck/generated/server")).isEmpty();
+        Files.createSymbolicLink(modules.resolve("@hiero/tck-runtime"), temp.resolve("sdk-ts/tck/runtime"));
         assertThat(run(temp, "node", GeneratedTs.MODULES.resolve("typescript/bin/tsc").toString(), "--build",
-                "tck/runtime/ts")).isEmpty();
+                "sdk-ts/tck/runtime")).isEmpty();
         final String output = run(temp, "node", "--input-type=module", "-e", """
                 import { createServer } from "@hiero/tck-server";
                 const server = await createServer();

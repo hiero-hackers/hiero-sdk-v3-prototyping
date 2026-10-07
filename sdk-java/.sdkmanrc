@@ -1,0 +1,10 @@
+# SDKMAN! environment for the Java SDK — https://sdkman.io
+# Install once with `sdk env install`, then activate with `sdk env` (automatic on `cd` with
+# `sdkman_auto_env=true` in ~/.sdkman/etc/config).
+#
+# JDK 25 builds every Maven module below this directory: support, protobuf, the generated API and
+# the TCK contract, runtime and server (all release 25).
+# Maven itself is not listed — use the Maven wrapper (`./mvnw`) next to this file.
+#
+# Keep in sync with tooling/metalang/.sdkmanrc.
+java=25.0.1-tem

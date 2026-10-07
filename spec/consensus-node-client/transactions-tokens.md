@@ -109,7 +109,7 @@ right now (`supplyAuthority`, `kycAuthority`, `freezeAuthority`, `wipeAuthority`
 ## Design Notes
 
 - The remaining HTS transactions were originally tracked in
-  [`missing-features.md`](../../missing-features.md) section 1.2; the management transactions are
+  [`missing-features.md`](../../docs/missing-features.md) section 1.2; the management transactions are
   specified in [`transactions-tokens-management.md`](transactions-tokens-management.md) and the
   HIP-904 airdrops in [`transactions-tokens-airdrops.md`](transactions-tokens-airdrops.md), all in
   the same `consensusnode.transactions.tokens` namespace. `TokenFeeScheduleUpdate` is still missing.
@@ -487,7 +487,7 @@ new TokenDeleteTransaction()
   write-side `CustomFee` hierarchy needed by `TokenCreate.customFees` and by
   `TokenFeeScheduleUpdate` is **not** specified here. Read-side custom-fee shapes live in
   [`mirror-node-token.md`](../mirror-node-client/mirror-node-token.md); the write-side builder is
-  tracked in [`missing-features.md`](../../missing-features.md) section 3.3 and depends on the
+  tracked in [`missing-features.md`](../../docs/missing-features.md) section 3.3 and depends on the
   same `Key` sum type. Adding `customFees: list<CustomFee>` here once the write-side model lands
   is additive and breaks nothing.
 
@@ -495,13 +495,13 @@ new TokenDeleteTransaction()
   `FeeScheduleUpdate`, `UpdateNfts` are deliberately out of scope of this file.** They live in
   the same namespace and follow the same lifecycle / signing model as the seven transactions
   here — splitting the file keeps the core lifecycle readable. Each gets its own file as it
-  lands. Tracked in [`missing-features.md`](../../missing-features.md) section 1.2.
+  lands. Tracked in [`missing-features.md`](../../docs/missing-features.md) section 1.2.
 
 - **HIP-904 airdrop transactions are deliberately out of scope of this file.**
   `TokenAirdrop` / `TokenClaimAirdrop` / `TokenCancelAirdrop` / `TokenReject` reuse the
   association rules described here but interact with `PendingAirdropId` and the new
   `pendingAirdrops` mirror-node domain; they deserve their own spec rather than being smuggled
-  into the lifecycle file. Tracked in [`missing-features.md`](../../missing-features.md) section
+  into the lifecycle file. Tracked in [`missing-features.md`](../../docs/missing-features.md) section
   1.2.
 
 - **`TokenMint` / `TokenBurn` cap at 10 NFTs per transaction.** That is the current HAPI limit

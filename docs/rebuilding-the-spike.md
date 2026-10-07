@@ -19,9 +19,9 @@ that proves the V3 API can actually reach a network, so it has to come back.
 The spike is in git. Recreating it from scratch is the last resort.
 
 ```bash
-git log --oneline --diff-filter=A -- 'generated/java/*/ClientRuntime.java'   # 3caad63 "Durchstich :)"
-git checkout <commit> -- generated/java/org.hiero.base generated/java/org.hiero.consensus.node.client
-git checkout <commit> -- generated/ts/packages                               # for the TypeScript slice
+git log --oneline --diff-filter=A -- 'sdk-java/generated/*/ClientRuntime.java'   # 3caad63 "Durchstich :)"
+git checkout <commit> -- sdk-java/generated/org.hiero.base sdk-java/generated/org.hiero.consensus.node.client
+git checkout <commit> -- sdk-ts/generated/packages                               # for the TypeScript slice
 ```
 
 Then jump to step 4 and build. If the specs or the generator changed in between, the restored
@@ -102,12 +102,12 @@ and `grpc-protobuf-lite` (compile) plus `grpc-netty-shaded` (runtime), each with
 `com.google.android:annotations`, `animal-sniffer-annotations`) — without them JPMS breaks.
 
 ```bash
-./mvnw -f sdk-java/support install
-./mvnw -f sdk-java/protobuf install
-./mvnw -f generated/java install -DskipTests
-./mvnw -f generated/java-tck/contract install
-./mvnw -f tck/runtime/java install
-./mvnw -f generated/java-tck/server clean package          # clean: see trap 11
+./mvnw -f support install
+./mvnw -f protobuf install
+./mvnw -f generated install -DskipTests
+./mvnw -f tck/generated/contract install
+./mvnw -f tck/runtime install
+./mvnw -f tck/generated/server clean package          # clean: see trap 11
 TCK_DIR=../hiero-sdk-tck tck/run-tck.sh java src/tests/crypto-service/test-account-create-transaction.ts
 ```
 
@@ -116,7 +116,7 @@ specs*:
 
 ```bash
 java -jar tooling/metalang/target/metalang-*-cli.jar check --language=java --fail-on=never \
-     --config=sdk-java/generator.properties --project=generated/java spec
+     --config=sdk-java/generator.properties --project=sdk-java/generated spec
 ```
 
 `--fail-on=never` is required: the specs carry 6 pre-existing `collection.nullable` errors, and
@@ -155,11 +155,11 @@ These cost time the first time. Each is a real failure that was observed, not a 
 10. **Poll the receipt.** One query is almost always too early. Retry on `UNKNOWN`,
     `RECEIPT_NOT_FOUND`, `BUSY`, `PLATFORM_NOT_ACTIVE` until a timeout, and check the precheck code of
     the `TransactionResponse` before polling at all.
-11. **`generated/java-tck/server` needs `clean package`.** An incremental `package` keeps the
+11. **`sdk-java/tck/generated/server` needs `clean package`.** An incremental `package` keeps the
     `Class-Path` of the previous manifest: a newly added dependency lands in `target/lib` but not on
     the class path, and the server dies with `NoClassDefFoundError`.
 12. **`exports …internal;` must be unqualified.** A qualified `exports … to <module>` warns that the
-    target module is not in the graph, and `generated/java` compiles with `-Werror`.
+    target module is not in the graph, and `sdk-java/generated` compiles with `-Werror`.
 13. **gRPC is an automatic module.** `module-info.java` of the client module needs
     `@SuppressWarnings("requires-automatic")`, again because of `-Werror`.
 14. **Javadoc is checked.** `-Xlint:all -Werror` plus doclint `all,-missing` with `failOnWarnings`:
@@ -196,7 +196,7 @@ and `@grpc/grpc-js`. The protobuf runtime `@bufbuild/protobuf` is already wired 
 **Build and verify**
 
 ```bash
-npm install && npm run gen:proto-ts
+npm --prefix sdk-ts install && npm --prefix sdk-ts run gen:proto-ts
 npm run build:tck-ts
 TCK_DIR=../hiero-sdk-tck tck/run-tck.sh ts src/tests/crypto-service/test-account-create-transaction.ts
 ```
@@ -232,7 +232,7 @@ These replace or add to section 5; the numbers are independent.
 It is a measurement, not a design. The registries in trap 4 and 5 are workarounds for spec problems
 recorded in the `## Questions & Comments` of `spec/consensus-node-client/client.md` and
 `transactions.md`. ADR-0007 still leaves open where an implementation of the API may live; until that
-is decided, editing `generated/java` in place is a deliberate, temporary exception — see
+is decided, editing `sdk-java/generated` in place is a deliberate, temporary exception — see
 "The AccountCreateTransaction spike" in `CLAUDE.md`.
 
 The 8 failing tests are API gaps, not bugs: `Authority` has no `toBytes`/`fromBytes` (key lists,

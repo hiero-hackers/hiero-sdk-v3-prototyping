@@ -186,7 +186,7 @@ new FileDeleteTransaction()
   `Response<FileAppendReceipt>` — there is no first-class way for advanced callers to inspect
   per-chunk receipts, control chunk size, or recover from a partially-applied append (where
   chunk K succeeded but chunk K+1 timed out). Once HIP-1300 (jumbo transactions, section
-  1.11 of `missing-features.md`) is specified, the choice between "explicit chunk control"
+  1.11 of `docs/missing-features.md`) is specified, the choice between "explicit chunk control"
   and "always pretend it's one transaction" needs a decision; the same question applies to
   `TopicMessageSubmit`.
 
@@ -198,7 +198,7 @@ new FileDeleteTransaction()
 
 - **`FileCreate` does not set `shard` / `realm`.** They are inherited from the
   client's configured network. Once persistent shard / realm
-  (HIP-1299, section 5.2 in `missing-features.md`) is added to the client, no per-transaction
+  (HIP-1299, section 5.2 in `docs/missing-features.md`) is added to the client, no per-transaction
   shard / realm fields are needed here either.
 
 - **No `autoRenewPeriod` field.** Unlike accounts, files in HAPI do not currently carry an

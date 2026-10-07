@@ -16,7 +16,7 @@ import org.hiero.sdk.v3.metalang.tck.TckSpecifications;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Generates the Java TCK server (see {@code tck-binding.md}) as two Maven projects:
+ * Generates the Java TCK server (see {@code docs/tck-binding.md}) as two Maven projects:
  * <ul>
  *   <li>{@code contract}: the contract with the hand-written runtime ({@link JavaTckContractGenerator}), derived from
  *       the converter catalogue;</li>

@@ -178,9 +178,9 @@ class RustConformanceTest {
         assumeTrue(available(), "cargo is needed");
         final RustConformance.Result result = RustConformance.check(LinkedModel.of(new MetaLang().validate(
                         REPOSITORY.resolve("spec")).model()), new RustGenerator(RustGeneratorConfig.load(
-                        REPOSITORY.resolve("sdk-rust/generator.properties"))), REPOSITORY.resolve("generated/rust"),
+                        REPOSITORY.resolve("sdk-rust/generator.properties"))), REPOSITORY.resolve("sdk-rust/generated"),
                 null);
-        // generated/rust is up to date (otherwise: regenerate it, see tooling/metalang/README.md)
+        // sdk-rust/generated is up to date (otherwise: regenerate it, see tooling/metalang/README.md)
         assertThat(result.differences()).isEmpty();
         assertThat(result.declarations()).isGreaterThan(300);
     }

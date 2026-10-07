@@ -32,8 +32,8 @@ four pure-`shard.realm.num` kinds but loses information for `AccountID` / `Contr
 `EvmAddress` (which is not a `shard.realm.num` triple at all).
 
 The first concrete consumers for typed account / contract identifiers will be smart
-contract transactions ([`missing-features.md`](../../missing-features.md) §1.4), the
-`Key` sum type ([§3.2](../../missing-features.md#32-keys)), and HIP-583 / HIP-1027
+contract transactions ([`missing-features.md`](../missing-features.md) §1.4), the
+`Key` sum type ([§3.2](../missing-features.md#32-keys)), and HIP-583 / HIP-1027
 EVM-address-related APIs. Settling the address shape **before** those land avoids a
 double migration through every spec file that today references an account or contract
 by `Address`.
@@ -170,7 +170,7 @@ meta-language that also targets dynamically-typed bindings (JS, Python), the
 marginal type-safety gain does not justify the surface area. The field name
 (`tokenId`, `topicId`, …) carries the semantic; `Address` carries the structure.
 Recorded as a deliberate non-feature in
-[`missing-features.md`](../../missing-features.md) §3.1.
+[`missing-features.md`](../missing-features.md) §3.1.
 
 ### F. Extend the meta-language to allow `@@oneOf` widening
 
@@ -239,7 +239,7 @@ field duplication (alternative D above). It is part of *this* decision because:
   inheritance to map onto); Go is similar.
 - Existing call sites still pass `Address` for account / contract references.
   The migration to typed `AccountId` / `ContractId` is queued in
-  [`missing-features.md`](../../missing-features.md) §3.1 as a mechanical
+  [`missing-features.md`](../missing-features.md) §3.1 as a mechanical
   sweep — a non-zero amount of churn across every spec file that touches
   accounts or contracts.
 - The hierarchy adds two abstract types (`BaseAddress`, `EvmCapableAddress`) on
@@ -270,7 +270,7 @@ surfaces.
   [`api-best-practices-java.md`](../../guidelines/api-best-practices-java.md),
   [`api-best-practices-rust.md`](../../guidelines/api-best-practices-rust.md),
   [`api-best-practices-js.md`](../../guidelines/api-best-practices-js.md).
-- Tracking entry: [`missing-features.md`](../../missing-features.md) §3.1.
+- Tracking entry: [`missing-features.md`](../missing-features.md) §3.1.
 - Existing call sites (28 files importing `Address` from `ledger`): enumerated
   via `grep -rn 'requires {Address} from ledger' spec --include='*.md'`.
 - Ad-hoc EVM-address fields in current spec, used as one motivating data point

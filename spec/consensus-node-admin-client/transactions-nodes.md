@@ -229,7 +229,7 @@ new NodeDeleteTransaction()
   (`ConsensusNode { nodeId, ip, port, account }`) is an additive change deliberately
   deferred: existing `ConsensusNode` consumers are not broken by leaving the field out, and
   the right time to introduce it is together with the `NodeId` type from §3.1 of
-  `missing-features.md` — adding an untyped `int64` first and then retyping later would
+  `docs/missing-features.md` — adding an untyped `int64` first and then retyping later would
   churn every call site twice. Until then, callers that need to bridge the two worlds
   remember the `nodeId` returned by `NodeCreateReceipt` alongside the `Address` they obtain
   from the address-book lookup.
