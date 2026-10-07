@@ -8,18 +8,22 @@
     <artifactId>hiero-sdk-protobuf</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 
-    <name>Hiero SDK: HAPI protobuf</name>
+    <name>Hiero SDK: protobuf (internal)</name>
     <description>
-        The Hiero API (HAPI) protobuf messages, compiled into the JPMS module org.hiero.sdk.protobuf.
-        Hand-written module: only the .proto sources are under version control, the Java classes are
-        build output. The .proto files are taken from the Hiero consensus node; only `option
-        java_package` was changed to org.hiero.hapi.proto.
+        The protobuf messages of the Hiero node types, compiled from the vendored definitions in
+        /protobuf into the JPMS module org.hiero.sdk.protobuf.
+
+        This module is an implementation detail of the SDK, not part of its public API: every package
+        is exported only to the SDK modules that need it (see src/main/java/module-info.java). The
+        module has no sources of its own - the .proto files live in /protobuf and the Java classes
+        are build output.
     </description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>25</maven.compiler.release>
         <protobuf.version>4.31.1</protobuf.version>
+        <protobuf.root>${project.basedir}/../../protobuf</protobuf.root>
     </properties>
 
     <dependencies>
@@ -38,6 +42,21 @@
                 <version>3.6.0</version>
                 <configuration>
                     <protocVersion>${protobuf.version}</protocVersion>
+                    <sourceDirectories>
+                        <!-- the base: every other node type imports from it -->
+                        <sourceDirectory>${protobuf.root}/consensus-node</sourceDirectory>
+                        <!-- the mirror node's gRPC API -->
+                        <sourceDirectory>${protobuf.root}/mirror-node</sourceDirectory>
+                    </sourceDirectories>
+                    <excludes>
+                        <!--
+                            consensus-node/mirror/mirror_network_service.proto declares the same Java
+                            package, message and service as mirror-node/.../network_service.proto (see
+                            protobuf/README.md, "Findings"). Compiling both would produce duplicate
+                            classes; the mirror node's own copy wins. Nothing imports consensus-node/mirror.
+                        -->
+                        <exclude>mirror/**</exclude>
+                    </excludes>
                 </configuration>
                 <executions>
                     <execution>

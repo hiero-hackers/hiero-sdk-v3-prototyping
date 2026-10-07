@@ -14,8 +14,8 @@ import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
-import org.hiero.hapi.proto.SignatureMap;
-import org.hiero.hapi.proto.SignedTransaction;
+import com.hederahashgraph.api.proto.java.SignatureMap;
+import com.hederahashgraph.api.proto.java.SignedTransaction;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.ConsensusNode;
 import org.hiero.ledger.TransactionId;
@@ -99,7 +99,7 @@ public final class DefaultPackedTransaction<ReceiptT extends Receipt,
                 .thenApply(accepted -> new Response<ReceiptT>(id));
     }
 
-    private org.hiero.hapi.proto.Transaction protoTransaction(final AccountId target) {
+    private com.hederahashgraph.api.proto.java.Transaction protoTransaction(final AccountId target) {
         final NodeBody body = bodies.stream()
                 .filter(candidate -> candidate.node().equals(target))
                 .findFirst()
@@ -113,7 +113,7 @@ public final class DefaultPackedTransaction<ReceiptT extends Receipt,
                 .setBodyBytes(ByteString.copyFrom(body.bytes()))
                 .setSigMap(signatures)
                 .build();
-        return org.hiero.hapi.proto.Transaction.newBuilder()
+        return com.hederahashgraph.api.proto.java.Transaction.newBuilder()
                 .setSignedTransactionBytes(signed.toByteString())
                 .build();
     }

@@ -80,6 +80,7 @@
   "files": ["dist"],
   "dependencies": {
     "@hiero/support": "0.1.0-SNAPSHOT",
-    "@hiero/base": "0.1.0-SNAPSHOT"
+    "@hiero/base": "0.1.0-SNAPSHOT",
+    "@bufbuild/protobuf": "^2"
   }
 }

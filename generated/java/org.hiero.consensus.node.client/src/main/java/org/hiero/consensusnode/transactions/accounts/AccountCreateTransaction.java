@@ -21,8 +21,8 @@ import org.hiero.consensusnode.client.internal.DefaultPackedTransaction;
 import org.hiero.consensusnode.client.internal.Protobuf;
 import org.hiero.consensusnode.transactions.HapiTransactionStatus;
 import org.hiero.consensusnode.transactions.NodeBody;
-import org.hiero.hapi.proto.CryptoCreateTransactionBody;
-import org.hiero.hapi.proto.TransactionBody;
+import com.hederahashgraph.api.proto.java.CryptoCreateTransactionBody;
+import com.hederahashgraph.api.proto.java.TransactionBody;
 import org.hiero.hedera.Hbar;
 import org.hiero.hedera.HbarUnit;
 import org.hiero.ledger.ConsensusNode;
@@ -208,7 +208,7 @@ public final class AccountCreateTransaction extends Transaction<AccountCreateRec
             final org.hiero.consensusnode.transactions.TransactionStatus status,
             final org.hiero.nativeToken.ExchangeRate exchangeRate,
             final org.hiero.nativeToken.ExchangeRate nextExchangeRate,
-            final org.hiero.hapi.proto.TransactionReceipt receipt) {
+            final com.hederahashgraph.api.proto.java.TransactionReceipt receipt) {
         final AccountId created = status == HapiTransactionStatus.SUCCESS
                 ? Protobuf.fromProto(receipt.getAccountID())
                 : new AccountId(0L, 0L, "", 0L, null, null);

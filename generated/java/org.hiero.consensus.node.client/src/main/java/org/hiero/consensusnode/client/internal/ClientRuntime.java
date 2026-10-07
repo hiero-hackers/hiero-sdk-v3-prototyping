@@ -15,14 +15,14 @@ import java.util.concurrent.Executors;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.transactions.HapiTransactionStatus;
 import org.hiero.consensusnode.transactions.Receipt;
-import org.hiero.hapi.proto.Query;
-import org.hiero.hapi.proto.QueryHeader;
-import org.hiero.hapi.proto.Response;
-import org.hiero.hapi.proto.ResponseType;
-import org.hiero.hapi.proto.Transaction;
-import org.hiero.hapi.proto.TransactionGetReceiptQuery;
-import org.hiero.hapi.proto.TransactionGetReceiptResponse;
-import org.hiero.hapi.proto.TransactionResponse;
+import com.hederahashgraph.api.proto.java.Query;
+import com.hederahashgraph.api.proto.java.QueryHeader;
+import com.hederahashgraph.api.proto.java.Response;
+import com.hederahashgraph.api.proto.java.ResponseType;
+import com.hederahashgraph.api.proto.java.Transaction;
+import com.hederahashgraph.api.proto.java.TransactionGetReceiptQuery;
+import com.hederahashgraph.api.proto.java.TransactionGetReceiptResponse;
+import com.hederahashgraph.api.proto.java.TransactionResponse;
 import org.hiero.ledger.ConsensusNode;
 import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.NetworkSetting;
@@ -214,7 +214,7 @@ public final class ClientRuntime {
         Receipt create(TransactionId id, org.hiero.consensusnode.transactions.TransactionStatus status,
                        org.hiero.nativeToken.ExchangeRate exchangeRate,
                        org.hiero.nativeToken.ExchangeRate nextExchangeRate,
-                       org.hiero.hapi.proto.TransactionReceipt receipt);
+                       com.hederahashgraph.api.proto.java.TransactionReceipt receipt);
     }
 
     private record Pending(ClientRuntime runtime, ConsensusNode node, ReceiptFactory receipts) {

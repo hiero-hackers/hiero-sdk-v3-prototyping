@@ -13,9 +13,12 @@
   ],
   "scripts": {
     "build:tck-ts": "tsc --build tck/runtime/ts generated/ts-tck/server",
-    "tck-ts": "node generated/ts-tck/server/dist/main.js"
+    "tck-ts": "node generated/ts-tck/server/dist/main.js",
+    "gen:proto-ts": "buf generate --template buf.gen.yaml --exclude-path protobuf/consensus-node/mirror protobuf/consensus-node"
   },
   "devDependencies": {
+    "@bufbuild/buf": "^1.73.0",
+    "@bufbuild/protoc-gen-es": "^2.16.0",
     "@types/node": "22.20.5",
     "typescript": "6.0.3"
   }

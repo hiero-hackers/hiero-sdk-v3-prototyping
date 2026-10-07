@@ -24,6 +24,9 @@ futures-core = { version = "0.3", default-features = false, features = ["std"] }
 regex = { version = "1", default-features = false, features = ["std", "unicode"] }
 rust_decimal = { version = "1", default-features = false, features = ["std"] }
 uuid = { version = "1", default-features = false, features = ["std"] }
+prost = "0.14"
+prost-build = "0.14"
+protoc-bin-vendored = "3"
 hiero-base = { path = "crates/base", version = "0.1.0" }
 hiero-consensus-node-admin-client = { path = "crates/consensus-node-admin-client", version = "0.1.0" }
 hiero-consensus-node-client = { path = "crates/consensus-node-client", version = "0.1.0" }

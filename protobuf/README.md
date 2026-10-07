@@ -110,9 +110,43 @@ Change the `tag` in [`sources.json`](sources.json) first; the script rewrites th
 records the resolved commit and file count. Afterwards run `verify.sh` — a newer release can add
 imports that do not resolve. It needs `git` and `jq`.
 
+## Language bindings
+
+The three target languages generate from this tree at build time. **In none of them is the result
+part of the public API** — protobuf is how the SDK talks to a node, and exposing it would turn every
+protocol change into a breaking change of the SDK. Each language expresses that with its own
+mechanism:
+
+| | Generated into | Kept internal by | Proven by |
+|---|---|---|---|
+| Java | `sdk-java/protobuf` (module `org.hiero.sdk.protobuf`) | `exports … to …` in `module-info.java` naming only the SDK modules | a foreign module gets *package … is not visible* |
+| Rust | `OUT_DIR` of `hiero-consensus-node-client`, included by `src/proto.rs` | `mod proto;` without `pub` in `lib.rs` | an integration test gets *module `proto` is private* |
+| TypeScript | `packages/consensus-node-client/src/internal/proto` | the subpath is absent from `exports` in `package.json` | an importer gets `ERR_PACKAGE_PATH_NOT_EXPORTED` |
+
+All three compile the same 207 files: the consensus node root without `mirror/`, which duplicates
+the mirror node's own definitions.
+
+**Java needs a separate module, the other two do not.** JPMS forbids a package from being split
+across modules, so the protobuf packages must have exactly one owner — hence one module plus
+qualified exports. Rust and TypeScript have no such constraint, so the generated code lives inside
+the crate resp. package that uses it and never becomes visible at all.
+
+None of the generated code is committed; it is build output in all three languages:
+
+```bash
+./mvnw -f sdk-java/protobuf install        # Java    (protobuf-maven-plugin)
+cargo build -p hiero-consensus-node-client # Rust    (prost-build in build.rs, vendored protoc)
+npm run gen:proto-ts                       # TypeScript (buf + protoc-gen-es, see buf.gen.yaml)
+```
+
+The TypeScript step is explicit because `tsc` cannot generate sources itself; Java and Rust run
+their generator as part of the normal build.
+
 ## Not covered here
 
 - **The mirror node REST API** is specified in OpenAPI, not protobuf, and is not part of this tree.
-- **Generated code.** This directory holds definitions only. How each language generates from them
-  is the next step; today `sdk-java/protobuf` still carries its own older copy in the flat
-  pre-`services/` layout and does not use this tree yet.
+- **gRPC service stubs.** Only messages are generated, in every language. The Java client builds its
+  `io.grpc.MethodDescriptor` from the service and method name by hand; when the Rust and TypeScript
+  clients are implemented they will need the equivalent decision (`tonic` resp. `@grpc/grpc-js`).
+- **The block node definitions.** Vendored in `block-node/`, but no language generates from them
+  yet — there is no block node client in the specs.

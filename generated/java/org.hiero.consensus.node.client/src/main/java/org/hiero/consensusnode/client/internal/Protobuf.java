@@ -9,16 +9,16 @@ import org.hiero.authority.AuthorityList;
 import org.hiero.authority.ContractAuthority;
 import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.consensusnode.transactions.HapiTransactionStatus;
-import org.hiero.hapi.proto.AccountID;
-import org.hiero.hapi.proto.Duration;
-import org.hiero.hapi.proto.ExchangeRateSet;
-import org.hiero.hapi.proto.Key;
-import org.hiero.hapi.proto.KeyList;
-import org.hiero.hapi.proto.ResponseCodeEnum;
-import org.hiero.hapi.proto.SignaturePair;
-import org.hiero.hapi.proto.ThresholdKey;
-import org.hiero.hapi.proto.Timestamp;
-import org.hiero.hapi.proto.TransactionID;
+import com.hederahashgraph.api.proto.java.AccountID;
+import com.hederahashgraph.api.proto.java.Duration;
+import com.hederahashgraph.api.proto.java.ExchangeRateSet;
+import com.hederahashgraph.api.proto.java.Key;
+import com.hederahashgraph.api.proto.java.KeyList;
+import com.hederahashgraph.api.proto.java.ResponseCodeEnum;
+import com.hederahashgraph.api.proto.java.SignaturePair;
+import com.hederahashgraph.api.proto.java.ThresholdKey;
+import com.hederahashgraph.api.proto.java.Timestamp;
+import com.hederahashgraph.api.proto.java.TransactionID;
 import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
@@ -181,7 +181,7 @@ public final class Protobuf {
         return toExchangeRate(rates.getNextRate());
     }
 
-    private static ExchangeRate toExchangeRate(final org.hiero.hapi.proto.ExchangeRate rate) {
+    private static ExchangeRate toExchangeRate(final com.hederahashgraph.api.proto.java.ExchangeRate rate) {
         final ZonedDateTime expiration = ZonedDateTime.ofInstant(
                 Instant.ofEpochSecond(rate.getExpirationTime().getSeconds()), ZoneOffset.UTC);
         final int hbarEquiv = rate.getHbarEquiv();

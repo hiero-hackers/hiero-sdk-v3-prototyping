@@ -44,11 +44,11 @@ sdk-java/openspec/             # Java-only OpenSpec root
 sdk-java/generator.properties  # Java generator configuration (e.g. java.interfaces), see tooling/metalang/README.md
 sdk-java/support/              # Hand-written Java support types (streaming, thread-safety) as Maven module
                                #   hiero-sdk-support; generated/java depends on it (install it first)
-sdk-java/protobuf/             # Hand-written Maven module hiero-sdk-protobuf (JPMS org.hiero.sdk.protobuf): the
-                               #   HAPI .proto sources; the Java classes are build output. No gRPC codegen - the
-                               #   consensus node client builds its io.grpc.MethodDescriptor by hand.
-                               #   NOTE: still carries its own older copy of the protos in the flat
-                               #   pre-`services/` layout; migrating it to protobuf/ is the next step.
+sdk-java/protobuf/             # Hand-written Maven module hiero-sdk-protobuf (JPMS org.hiero.sdk.protobuf). Has no
+                               #   sources of its own: it compiles /protobuf into Java at build time. NOT public
+                               #   API - every package is exported only with `exports ... to <sdk module>`.
+                               #   No gRPC codegen; the client builds its io.grpc.MethodDescriptor by hand.
+buf.gen.yaml                   # TypeScript protobuf codegen (buf + protoc-gen-es); `npm run gen:proto-ts`
 protobuf/                      # THE source of the protobuf definitions of all three node types, vendored at
                                #   pinned versions from their upstream repositories (see protobuf/README.md).
                                #   consensus-node/ is the base; block-node/ and mirror-node/ import from it, so
@@ -180,6 +180,22 @@ points to keep specs valid and consistent:
   with a documented schema. (`ANY` as a *wildcard type argument* like `ContractParam<ANY>` is fine.)
 - `@@async` returns a future/promise; `@@streaming` returns a pull-based async stream of items (`streamResult<TYPE>`
   for per-item errors). They are mutually exclusive.
+
+## Protobuf is never public API
+
+All three languages generate protobuf code from `/protobuf` at build time, and in none of them is the
+result part of the public API - the wire format changes with every network release, so exposing it
+would make every protocol change a breaking change of the SDK. Nothing generated is committed.
+
+| | Generated into | Kept internal by |
+|---|---|---|
+| Java | `sdk-java/protobuf` | `exports ... to ...` in `module-info.java`, naming only the SDK modules |
+| Rust | `OUT_DIR`, included by `crates/consensus-node-client/src/proto.rs` | `mod proto;` without `pub` |
+| TypeScript | `packages/consensus-node-client/src/internal/proto` | subpath absent from `exports` in `package.json` |
+
+Java is the only one that needs a separate module: JPMS forbids split packages, so the protobuf
+packages must have exactly one owner. Rust and TypeScript keep the code inside the consuming crate
+resp. package. See `protobuf/README.md`, "Language bindings".
 
 ## The AccountCreateTransaction spike
 
