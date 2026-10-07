@@ -47,7 +47,7 @@ export class IpAddress {
      * canonical form for 16-byte values.
      */
     toString(): string {
-        throw new Error("Not implemented yet: IpAddress.toString");
+        return Array.from(this.#bytes).join(".");
     }
 
     /**
@@ -57,7 +57,17 @@ export class IpAddress {
      * @throws RangeError if an illegal format error occurs
      */
     static fromString(value: string): IpAddress {
-        throw new Error("Not implemented yet: IpAddress.fromString");
+        const parts = value.split(".");
+        if (parts.length !== 4) {
+            throw new RangeError(`An IPv4 address reads 'a.b.c.d', not '${value}'`);
+        }
+        const bytes = parts.map(part => {
+            if (!/^\d+$/.test(part) || Number(part) > 255) {
+                throw new RangeError(`'${part}' is no octet of an IPv4 address`);
+            }
+            return Number(part);
+        });
+        return new IpAddress({ bytes: Uint8Array.from(bytes) });
     }
 
     /**
@@ -67,6 +77,6 @@ export class IpAddress {
      * @throws RangeError if an illegal format error occurs
      */
     static fromBytes(value: Uint8Array): IpAddress {
-        throw new Error("Not implemented yet: IpAddress.fromBytes");
+        return new IpAddress({ bytes: value });
     }
 }

@@ -57,20 +57,24 @@ export class Hbar implements NativeToken<Hbar, HbarUnit> {
      * Convert this amount to a different unit of the same token
      */
     to(targetUnit: HbarUnit): Hbar {
-        throw new Error("Not implemented yet: Hbar.to");
+        const tinybars = this.toBaseUnits();
+        if (tinybars % targetUnit.baseUnitFactor !== 0n) {
+            throw new RangeError(`${tinybars} tinybar is not a whole number of ${targetUnit.symbol}`);
+        }
+        return new Hbar({ amount: tinybars / targetUnit.baseUnitFactor, unit: targetUnit });
     }
 
     /**
      * Total amount expressed in base (smallest) units
      */
     toBaseUnits(): bigint {
-        throw new Error("Not implemented yet: Hbar.toBaseUnits");
+        return this.#amount * this.#unit.baseUnitFactor;
     }
 
     /**
      * Total amount in tinybars (the base unit of HBAR); equivalent to toBaseUnits().
      */
     toTinybars(): bigint {
-        throw new Error("Not implemented yet: Hbar.toTinybars");
+        return this.toBaseUnits();
     }
 }

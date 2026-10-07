@@ -1,8 +1,13 @@
-# Rebuilding the Java spike
+# Rebuilding the spike
 
-A runbook for recreating the `createAccount` vertical slice in `generated/java` after a regeneration
-destroyed it. Written to be executed by an agent; every claim here was verified against a running
-Solo network.
+A runbook for recreating the `createAccount` vertical slice after a regeneration destroyed it.
+It exists for **Java and TypeScript**; both reach 34 of the 42 tests of the TCK's
+`test-account-create-transaction.ts` against a local Solo network, with the same eight failures.
+Written to be executed by an agent; every claim here was verified against a running Solo network.
+
+Sections 1–5 are Java, section 6 is what differs in TypeScript. Rust has no slice: `metalang tck
+generate` supports only `--language=java|ts` and there is no Rust TCK runtime, so there is nothing to
+measure a Rust slice against yet.
 
 **Why this exists:** `metalang generate --language=java` overwrites every file carrying the generator
 header, so all hand-filled method bodies are gone. The hand-written files in the `internal` packages
@@ -16,6 +21,7 @@ The spike is in git. Recreating it from scratch is the last resort.
 ```bash
 git log --oneline --diff-filter=A -- 'generated/java/*/ClientRuntime.java'   # 3caad63 "Durchstich :)"
 git checkout <commit> -- generated/java/org.hiero.base generated/java/org.hiero.consensus.node.client
+git checkout <commit> -- generated/ts/packages                               # for the TypeScript slice
 ```
 
 Then jump to step 4 and build. If the specs or the generator changed in between, the restored
@@ -159,7 +165,69 @@ These cost time the first time. Each is a real failure that was observed, not a 
 14. **Javadoc is checked.** `-Xlint:all -Werror` plus doclint `all,-missing` with `failOnWarnings`:
     every new type and method needs well-formed documentation, including in non-exported packages.
 
-## 6. What the spike is not
+## 6. TypeScript
+
+The same slice, the same result (34 of 42), and the same eight failures. What differs:
+
+**It is easier.** The abstractions the Java generator turns into `final` classes with static factories are
+**interfaces** in TypeScript — `Transaction`, `PackedTransaction`, `TransactionId`, `ExchangeRate`, `Receipt`. The
+slice implements them with plain classes in `src/internal/`; nothing has to be squeezed into a generated class.
+
+**The hand-written files**
+
+| File | Responsibility |
+|---|---|
+| `packages/base/src/internal/der.ts` | the small part of DER the key formats need, plus the three OIDs |
+| `packages/base/src/internal/keys.ts` | Ed25519 and ECDSA secp256k1 over `@noble/curves`, PKCS#8/SPKI |
+| `packages/base/src/internal/pem.ts` | PEM envelope ↔ DER |
+| `packages/base/src/internal/ledger.ts` | `DefaultTransactionId` |
+| `packages/consensus-node-client/src/internal/protobuf.ts` | API types ↔ HAPI messages (`@bufbuild/protobuf`) |
+| `packages/consensus-node-client/src/internal/client.ts` | `ClientRuntime`: gRPC, node selection, submit, receipt polling, the registries |
+| `packages/consensus-node-client/src/internal/packed.ts` | `DefaultPackedTransaction` |
+| `.../consensusnode/transactions/HapiTransactionStatus.ts` | one constant per `ResponseCodeEnum` value |
+
+**The filled stubs** are the same set as in Java: the key enums and factory functions, `PrivateKey`/`PublicKey`,
+`AccountId`, `IpAddress`, `Hbar`, `TransactionId.generateTransactionId`, `authority.of*`, `createClient`,
+`Response.queryReceipt`, `AccountCreateTransaction.signWithOperator`.
+
+**Dependencies** (in the repository-root `package.json`, which is hand-written): `@noble/curves`, `@noble/hashes`
+and `@grpc/grpc-js`. The protobuf runtime `@bufbuild/protobuf` is already wired by the generator (`ts.protobuf`).
+
+**Build and verify**
+
+```bash
+npm install && npm run gen:proto-ts
+npm run build:tck-ts
+TCK_DIR=../hiero-sdk-tck tck/run-tck.sh ts src/tests/crypto-service/test-account-create-transaction.ts
+```
+
+### TypeScript traps
+
+These replace or add to section 5; the numbers are independent.
+
+1. **The fallback catches `RangeError`, not `Error`.** `TsConverters.key()` of the TCK runtime falls back from
+   private to public key on `RangeError` — so every failure in the key code must be a `RangeError`. This is the
+   TypeScript counterpart of Java's `IllegalArgumentException` and the single most important rule here.
+2. **`statusJson` reads `value.name`.** The status has to be a generated-style enum class with a `name` getter, not
+   a plain object — hence `HapiTransactionStatus` as a class with static instances.
+3. **Generated constructors call `Object.freeze(this)`.** A subclass of `PrivateKey` or `PublicKey` cannot add
+   instance fields. The slice therefore implements the bodies *in* those classes, switching on `algorithm`, instead
+   of subclassing as the Java slice does.
+4. **`TransactionSigner` is an interface with `signTransaction(bytes, node)`**, not a function type. Pass an object,
+   and call `client.transactionSigner.signTransaction(...)`.
+5. **The client package cannot import `@hiero/base/internal/…`.** That is the point of the `exports` map — and it
+   holds inside the repository too. The client gets its `TransactionId` from the public
+   `TransactionId.generateTransactionId(new Address({...}))` and defines its own `ExchangeRate` value, because
+   `ExchangeRate` is an interface.
+6. **Strict compiler options bite.** `noUncheckedIndexedAccess` makes every array access `T | undefined`, and
+   `noUnusedLocals` rejects an import that a file does not use. Both are errors, not warnings.
+7. **protobuf-es rejects out-of-range values before the network does.** A negative `initialBalance` fails with
+   `invalid uint64: -1` instead of reaching the node — where Java gets `INVALID_INITIAL_BALANCE` back. Both fail
+   that test, for different reasons.
+8. **`@noble/curves` v2 needs the `.js` subpath** (`@noble/curves/secp256k1.js`) and returns the ECDSA signature
+   already as the 64 bytes `r‖s`.
+
+## 7. What the spike is not
 
 It is a measurement, not a design. The registries in trap 4 and 5 are workarounds for spec problems
 recorded in the `## Questions & Comments` of `spec/consensus-node-client/client.md` and

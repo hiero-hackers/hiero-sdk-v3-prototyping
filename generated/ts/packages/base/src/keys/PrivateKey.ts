@@ -2,9 +2,12 @@
 
 import type { Key } from "./Key.js";
 import type { KeyAlgorithm } from "./KeyAlgorithm.js";
-import type { KeyFormat } from "./KeyFormat.js";
-import type { KeyType } from "./KeyType.js";
-import type { PublicKey } from "./PublicKey.js";
+import { publicOf, sign as signRaw, toPkcs8 } from "../internal/keys.js";
+import { toPem } from "../internal/pem.js";
+import { KeyFormat } from "./KeyFormat.js";
+import { KeyType } from "./KeyType.js";
+import { RawFormat } from "./RawFormat.js";
+import { PublicKey } from "./PublicKey.js";
 
 /**
  * private key definition
@@ -69,7 +72,7 @@ export class PrivateKey implements Key {
      * returns the key in the RAW encoding
      */
     toRawBytes(): Uint8Array {
-        throw new Error("Not implemented yet: PrivateKey.toRawBytes");
+        return this.#bytes.slice();
     }
 
     /**
@@ -79,7 +82,13 @@ export class PrivateKey implements Key {
      * @throws RangeError if an illegal format error occurs
      */
     toBytes(container: KeyFormat): Uint8Array {
-        throw new Error("Not implemented yet: PrivateKey.toBytes");
+        if (!container.supportsType(KeyType.PRIVATE)) {
+            throw new RangeError(`Format ${container.name} does not hold a private key`);
+        }
+        if (container.encoding.rawFormat !== RawFormat.BYTES) {
+            throw new RangeError(`Format ${container.name} is text, use toString(KeyFormat)`);
+        }
+        return toPkcs8(this.#algorithm, this.#bytes);
     }
 
     /**
@@ -89,7 +98,13 @@ export class PrivateKey implements Key {
      * @throws RangeError if an illegal format error occurs
      */
     toString(container: KeyFormat): string {
-        throw new Error("Not implemented yet: PrivateKey.toString");
+        if (!container.supportsType(KeyType.PRIVATE)) {
+            throw new RangeError(`Format ${container.name} does not hold a private key`);
+        }
+        if (container.encoding.rawFormat !== RawFormat.STRING) {
+            throw new RangeError(`Format ${container.name} is binary, use toBytes(KeyFormat)`);
+        }
+        return toPem(KeyType.PRIVATE, this.toBytes(KeyFormat.PKCS8_WITH_DER));
     }
 
     /**
@@ -97,7 +112,7 @@ export class PrivateKey implements Key {
      * returns the signature for the message
      */
     sign(message: Uint8Array): Uint8Array {
-        throw new Error("Not implemented yet: PrivateKey.sign");
+        return signRaw(this.#algorithm, this.#bytes, message);
     }
 
     /**
@@ -105,6 +120,10 @@ export class PrivateKey implements Key {
      * always returns a new PublicKey instance
      */
     createPublicKey(): PublicKey {
-        throw new Error("Not implemented yet: PrivateKey.createPublicKey");
+        return new PublicKey({
+            bytes: publicOf(this.#algorithm, this.#bytes),
+            algorithm: this.#algorithm,
+            type: KeyType.PUBLIC,
+        });
     }
 }

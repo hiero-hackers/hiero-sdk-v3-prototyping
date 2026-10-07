@@ -79,13 +79,16 @@ export class KeyFormat {
      * returns true if the internal container format supports the given key type
      */
     supportsType(type: KeyType): boolean {
-        throw new Error("Not implemented yet: KeyFormat.supportsType");
+        return this.#container.supportsType(type);
     }
 
     /**
      * decodes the given string value into raw bytes for the given key type
      */
     decode(keyType: KeyType, value: string): Uint8Array {
-        throw new Error("Not implemented yet: KeyFormat.decode");
+        if (!this.supportsType(keyType)) {
+            throw new RangeError(`Format ${this.#name} does not hold a ${keyType.name} key`);
+        }
+        return this.#encoding.decode(keyType, value);
     }
 }

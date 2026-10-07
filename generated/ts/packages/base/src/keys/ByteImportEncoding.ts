@@ -57,6 +57,14 @@ export class ByteImportEncoding {
     }
 
     decode(value: string): Uint8Array {
-        throw new Error("Not implemented yet: ByteImportEncoding.decode");
+        const text = value.trim();
+        if (this === ByteImportEncoding.HEX) {
+            const hex = text.startsWith("0x") || text.startsWith("0X") ? text.substring(2) : text;
+            if (hex.length % 2 !== 0 || !/^[0-9a-fA-F]*$/.test(hex)) {
+                throw new RangeError("The value is not HEX-encoded");
+            }
+            return Uint8Array.from(Buffer.from(hex, "hex"));
+        }
+        return Uint8Array.from(Buffer.from(text, "base64"));
     }
 }

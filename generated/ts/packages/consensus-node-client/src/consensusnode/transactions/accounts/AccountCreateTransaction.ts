@@ -6,11 +6,21 @@ import type { TransactionSigner } from "../../client/TransactionSigner.js";
 import type { PackedTransaction } from "../PackedTransaction.js";
 import type { Response } from "../Response.js";
 import type { Transaction } from "../Transaction.js";
-import type { AccountCreateReceipt } from "./AccountCreateReceipt.js";
 import type { Authority } from "@hiero/base/authority";
-import type { AccountId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
 import type { Duration } from "@hiero/support";
+import { create, toBinary } from "@bufbuild/protobuf";
+import { Address, AccountId, TransactionId } from "@hiero/base/ledger";
+import { Hbar, HbarUnit } from "@hiero/base/hedera";
+import { ClientRuntime } from "../../../internal/client.js";
+import { DefaultPackedTransaction } from "../../../internal/packed.js";
+import { accountIdFromProto, accountIdToProto, authorityToProto, durationToProto, exchangeRates,
+    transactionIdToProto } from "../../../internal/protobuf.js";
+import { CryptoCreateTransactionBodySchema } from "../../../internal/proto/services/crypto_create_pb.js";
+import { TransactionBodySchema } from "../../../internal/proto/services/transaction_pb.js";
+import { HapiTransactionStatus } from "../HapiTransactionStatus.js";
+import { NodeBody } from "../NodeBody.js";
+import { AccountCreateReceipt } from "./AccountCreateReceipt.js";
 
 export class AccountCreateTransaction implements Transaction<AccountCreateReceipt, AccountCreateTransaction> {
 
@@ -216,7 +226,74 @@ export class AccountCreateTransaction implements Transaction<AccountCreateReceip
     }
 
     signWithOperator(client: HieroClient<NativeTokenUnit>): PackedTransaction<AccountCreateReceipt, AccountCreateTransaction> {
-        throw new Error("Not implemented yet: AccountCreateTransaction.signWithOperator");
+        const runtime = ClientRuntime.of(client);
+        const node = runtime.selectNode();
+        const payer = client.operatorAccount.accountId;
+        const transactionId = TransactionId.generateTransactionId(new Address({
+            shard: payer.shard, realm: payer.realm, checksum: payer.checksum, num: payer.num ?? 0n,
+        }));
+        const bytes = toBinary(TransactionBodySchema, this.#body(transactionId, node.account));
+        const signature = client.transactionSigner.signTransaction(bytes, node.account);
+        return new DefaultPackedTransaction<AccountCreateReceipt, AccountCreateTransaction>(
+            transactionId, [signature], [new NodeBody({ node: node.account, bytes })], node, "createAccount",
+            (id, status, receipt) => new AccountCreateReceipt({
+                transactionId: id,
+                status,
+                exchangeRate: exchangeRates(receipt.exchangeRate)[0],
+                nextExchangeRate: exchangeRates(receipt.exchangeRate)[1],
+                accountId: status === HapiTransactionStatus.SUCCESS && receipt.accountID !== undefined
+                    ? accountIdFromProto(receipt.accountID)
+                    : new AccountId({ shard: 0n, realm: 0n, checksum: "", num: 0n }),
+            }));
+    }
+
+    /** The transaction fee used when the caller set no maximum. */
+    static readonly #DEFAULT_MAX_TRANSACTION_FEE = new Hbar({ amount: 2n, unit: HbarUnit.HBAR });
+
+    /** The auto-renew period the consensus node requires when the caller set none, in seconds. */
+    static readonly #DEFAULT_AUTO_RENEW_SECONDS = 90 * 24 * 60 * 60;
+
+    /** The validity used when the caller set none, in seconds. */
+    static readonly #DEFAULT_VALID_SECONDS = 120;
+
+    #body(transactionId: TransactionId, node: AccountId) {
+        const createBody = create(CryptoCreateTransactionBodySchema, {
+            key: authorityToProto(this.#authority),
+            receiverSigRequired: this.#receiverSignatureRequired,
+            declineReward: this.#declineStakingReward,
+            autoRenewPeriod: durationToProto(this.#autoRenewPeriod === null
+                ? AccountCreateTransaction.#DEFAULT_AUTO_RENEW_SECONDS
+                : this.#autoRenewPeriod.toSeconds()),
+        });
+        if (this.#initialBalance !== null) {
+            createBody.initialBalance = this.#initialBalance.toBaseUnits();
+        }
+        if (this.#accountMemo !== null) {
+            createBody.memo = this.#accountMemo;
+        }
+        if (this.#maxAutomaticTokenAssociations !== null) {
+            createBody.maxAutomaticTokenAssociations = this.#maxAutomaticTokenAssociations;
+        }
+        if (this.#stakedAccountId !== null) {
+            createBody.stakedId = { case: "stakedAccountId", value: accountIdToProto(this.#stakedAccountId) };
+        }
+        if (this.#stakedNodeId !== null) {
+            createBody.stakedId = { case: "stakedNodeId", value: this.#stakedNodeId };
+        }
+        if (this.#alias !== null) {
+            createBody.alias = this.#alias;
+        }
+        const fee = this.#maxTransactionFee ?? AccountCreateTransaction.#DEFAULT_MAX_TRANSACTION_FEE;
+        return create(TransactionBodySchema, {
+            transactionID: transactionIdToProto(transactionId),
+            nodeAccountID: accountIdToProto(node),
+            transactionFee: fee.toBaseUnits(),
+            transactionValidDuration: durationToProto(this.#validDuration === null
+                ? AccountCreateTransaction.#DEFAULT_VALID_SECONDS
+                : this.#validDuration.toSeconds()),
+            memo: this.#memo ?? "",
+            data: { case: "cryptoCreateAccount", value: createBody },
+        });
     }
 
     sign(payer: Account, nodes: ReadonlyArray<AccountId>): PackedTransaction<AccountCreateReceipt, AccountCreateTransaction>;

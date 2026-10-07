@@ -3,6 +3,7 @@
 import type { Receipt } from "./Receipt.js";
 import type { Record } from "./Record.js";
 import type { TransactionId } from "@hiero/base/ledger";
+import { ClientRuntime } from "../../internal/client.js";
 
 export class Response<ReceiptT extends Receipt> {
 
@@ -36,7 +37,7 @@ export class Response<ReceiptT extends Receipt> {
      * query for the receipt of the transaction
      */
     queryReceipt(): Promise<ReceiptT> {
-        throw new Error("Not implemented yet: Response.queryReceipt");
+        return ClientRuntime.queryReceipt(this.#transactionId) as Promise<ReceiptT>;
     }
 
     /**

@@ -2,8 +2,12 @@
 
 import type { Key } from "./Key.js";
 import type { KeyAlgorithm } from "./KeyAlgorithm.js";
-import type { KeyFormat } from "./KeyFormat.js";
-import type { KeyType } from "./KeyType.js";
+import { toSpki, verify as verifyRaw } from "../internal/keys.js";
+import { toPem } from "../internal/pem.js";
+import { KeyFormat } from "./KeyFormat.js";
+import { KeyType } from "./KeyType.js";
+import { RawFormat } from "./RawFormat.js";
+
 
 /**
  * public key definition
@@ -68,7 +72,7 @@ export class PublicKey implements Key {
      * returns the key in the RAW encoding
      */
     toRawBytes(): Uint8Array {
-        throw new Error("Not implemented yet: PublicKey.toRawBytes");
+        return this.#bytes.slice();
     }
 
     /**
@@ -78,7 +82,13 @@ export class PublicKey implements Key {
      * @throws RangeError if an illegal format error occurs
      */
     toBytes(container: KeyFormat): Uint8Array {
-        throw new Error("Not implemented yet: PublicKey.toBytes");
+        if (!container.supportsType(KeyType.PUBLIC)) {
+            throw new RangeError(`Format ${container.name} does not hold a public key`);
+        }
+        if (container.encoding.rawFormat !== RawFormat.BYTES) {
+            throw new RangeError(`Format ${container.name} is text, use toString(KeyFormat)`);
+        }
+        return toSpki(this.#algorithm, this.#bytes);
     }
 
     /**
@@ -88,7 +98,13 @@ export class PublicKey implements Key {
      * @throws RangeError if an illegal format error occurs
      */
     toString(container: KeyFormat): string {
-        throw new Error("Not implemented yet: PublicKey.toString");
+        if (!container.supportsType(KeyType.PUBLIC)) {
+            throw new RangeError(`Format ${container.name} does not hold a public key`);
+        }
+        if (container.encoding.rawFormat !== RawFormat.STRING) {
+            throw new RangeError(`Format ${container.name} is binary, use toBytes(KeyFormat)`);
+        }
+        return toPem(KeyType.PUBLIC, this.toBytes(KeyFormat.SPKI_WITH_DER));
     }
 
     /**
@@ -96,6 +112,6 @@ export class PublicKey implements Key {
      * returns true if the signature is valid for the message and the public key
      */
     verify(message: Uint8Array, signature: Uint8Array): boolean {
-        throw new Error("Not implemented yet: PublicKey.verify");
+        return verifyRaw(this.#algorithm, this.#bytes, message, signature);
     }
 }
