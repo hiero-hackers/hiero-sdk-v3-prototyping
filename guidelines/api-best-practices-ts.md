@@ -1,13 +1,30 @@
 # TypeScript API Implementation Guideline
 
-This document translates the [language-agnostic API meta-definition](api-guideline.md) into TypeScript. The
-generator of the spec tooling (`tooling/metalang`, `metalang generate --language=ts`) implements exactly these rules;
-the generated workspace `generated/ts` is the reference. For plain JavaScript see the
-[JavaScript guideline](api-best-practices-js.md).
+This document translates the [language-agnostic API meta-definition](api-guideline.md) into TypeScript. For using
+the resulting API from JavaScript see the [JavaScript guideline](api-best-practices-js.md).
 
-Every rule below describes what the generator produces today and can be checked against `generated/ts`. Where a
-question is still open, it is listed under [Questions & Comments](#questions--comments) rather than answered by
-invention.
+**This guideline is normative, and it is derived from mainstream TypeScript practice — not from what the generator
+currently emits.** The generator (`tooling/metalang`, `metalang generate --language=ts`) is expected to follow it;
+where it does not yet, the section says so in a **Generator gap** note and
+[Generator gaps](#generator-gaps-summary) lists them all.
+
+## Where these rules come from
+
+The rules below are grounded in the published guidance the TypeScript ecosystem actually follows, not in taste:
+
+- the [Azure SDK for JavaScript/TypeScript Design Guidelines](https://azure.github.io/azure-sdk/typescript_design.html) —
+  the closest published analogue to this project: a generated, multi-package, strongly typed SDK;
+- the [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html);
+- the TypeScript community consensus on enumerations, discriminated unions and tree-shaking, and the platform
+  standards for cancellation (`AbortSignal`) and iteration (`AsyncIterable`).
+
+Where this project deviates from that guidance on purpose, the section states the reason. Three deviations are
+forced by the meta-definition rather than chosen:
+
+1. The API is consumed from plain JavaScript as well, so values are validated at the API boundary instead of being
+   trusted the way an internal TypeScript module could be.
+2. The meta-definition declares attributes, constraints and errors; the TypeScript shape has to carry all of them.
+3. The same API exists in Java, Rust and Go, so a name or a concept cannot be renamed for TypeScript taste alone.
 
 ## Runtime and tooling
 
@@ -65,12 +82,20 @@ file exists in `dist`:
 }
 ```
 
-Two consequences the SDK relies on:
+Three consequences:
 
 - `src/internal/…` is **deliberately absent** from the map. This is how the generated protobuf code is kept out of
   the public API (see the "Protobuf is never public API" table in [CLAUDE.md](../CLAUDE.md)) — the wire format
   changes with every network release, and exposing it would make every protocol change a breaking change.
 - Adding a namespace means adding a subpath; removing one is a breaking change of the package.
+- **There should also be a root export.** Azure's guidelines ask that the types a consumer most likely needs are a
+  top-level export, and that is what a reader expects from `@hiero/base`. Subpaths stay, for the consumers who want
+  to import narrowly; the root is the entry point for everyone else. Because the packages are ESM and side-effect
+  free, a root barrel does not defeat tree-shaking — mark it with `"sideEffects": false` so bundlers can prove it.
+
+> **Generator gap — no root export.** `import … from "@hiero/base"` fails with `ERR_PACKAGE_PATH_NOT_EXPORTED`;
+> only namespace subpaths resolve. A generated root `index.ts` re-exporting every namespace, plus
+> `"sideEffects": false`, would close it.
 
 ## Type mapping
 
@@ -155,154 +180,190 @@ export function getResponse<ReceiptT extends Receipt>(transactionId: Transaction
 For the primitive types the constructor of the wrapper object is used (`type<string>` → `String`), because that is
 the only value JavaScript has for them.
 
-## Defensive implementation
+## Validation at the boundary
 
-The API is called from TypeScript **and** from plain JavaScript, where none of the static types exist. Every value
-that crosses the public API boundary is therefore checked at runtime, not only in the type system:
+The mainstream TypeScript rule is **"parse, don't validate" at trust boundaries, and trust the types everywhere
+else**: validate what enters the program from outside, never re-check an internal call. A published SDK has an
+unusually wide boundary — every public entry point is one, because the caller may be plain JavaScript where none of
+the static types exist.
 
-- **Null and `undefined`** are rejected for every non-nullable value, with a `TypeError`.
-- **Integer ranges and validation annotations** are checked in constructors, setters and functions, with a
-  `RangeError`.
-- **`bytes`, sets, maps and dates are copied** on the way in and on the way out; arrays are frozen. A caller must
-  not be able to reach the state of a value object through a reference it kept or received.
-- **Instances are frozen** (`Object.freeze(this)`) so that a caller cannot add or replace properties.
+So: **validate once, at the public entry point; never again inside.**
 
-What defensive implementation does *not* mean: validating again in internal code where the invariant is already
-established, or catching and swallowing errors. An error from the SDK is a programming error of the caller and must
-reach them.
+What is checked there:
 
-## Null handling
+| Check | Error |
+|---|---|
+| the value is present (not `undefined`, not `null` where a value is required) | `TypeError` |
+| the value has the right **type** (`typeof`, `instanceof`) | `TypeError` |
+| the integer range of the declared type, and `Number.isInteger` for a `number` | `RangeError` |
+| the validation annotations (`@@min`, `@@pattern`, …) | `RangeError` |
 
-- `@@nullable` is `T | null`.
-- **`undefined` is never part of the API.** A method never returns it, and a `null` in the API always means `null`.
-- An **omitted optional property** and an explicit `undefined` are both normalised to `null`. This is what makes the
-  init object (see [Complex types](#complex-types)) usable: `new AccountId({ shard, realm, checksum, num })` leaves
-  `evmAddress` and `alias` absent, and they become `null`.
-- A **non-nullable value that is `null` or `undefined`** is rejected with a `TypeError`, including when a JavaScript
-  caller passes it where the type system would have caught it.
-- **Collections are never `null`** because of the annotation alone — an empty array, set or map is returned instead.
-  (The specs currently contain six attributes that are both a collection and `@@nullable`; the validator reports
-  them as `collection.nullable` errors and they are expected to go away.)
+> **Generator gap — the type is not checked.** The generated code verifies presence and range, but nothing verifies
+> that a value *is* a `bigint`, a `string` or a `Uint8Array`. Because a range comparison coerces, both
+> `{ num: 1001 }` and `{ num: "1001" }` pass for a `uint64` attribute and are stored as given. TypeScript callers
+> are covered by the compiler; JavaScript callers get silent corruption. A `typeof`/`instanceof` check per attribute
+> closes it.
+
+What validation must **not** become: re-checking inside the implementation where the invariant already holds, or
+catching and swallowing errors. An error from the SDK is a bug in the calling code and has to reach it.
+
+Hand-written checks are used rather than a schema library (`zod` and friends): a published SDK should not force a
+validation dependency on every consumer, and the constraints come from the meta-definition, which is already the
+single source the generator reads.
+
+## Absent values: `undefined` and `null`
+
+TypeScript has two absent values, and the ecosystem does not mandate one —
+[Google's style guide](https://google.github.io/styleguide/tsguide.html) says plainly that "there is no general
+guidance to prefer one over the other", while recommending **optional fields and parameters (`?`) over an explicit
+`| undefined`**. The meta-definition has exactly one absent value (`@@nullable`), so the mapping has to choose.
+
+The rule that follows from both:
+
+- **`undefined` means "not provided".** An optional attribute or parameter is declared with `?`, which is the
+  idiomatic TypeScript form and is what a caller gets when they omit it.
+- **`null` means "explicitly absent"**, and is used where the API has to tell "not provided" from "deliberately
+  cleared". The specs rely on exactly this distinction — an update transaction leaves a field untouched when it is
+  not provided, and clears it with a sentinel — so `null` earns its place here instead of being an accident of
+  history.
+- A `@@nullable` attribute is therefore `T | null`, declared optional (`?`) in the position where it may be
+  omitted. Reading it back always yields `T | null`, never `undefined`: a read is unambiguous even though a write
+  has two ways to say "absent".
+- **Collections are never absent because they are empty** — an empty array, set or map is returned instead.
+- **Never put `| null` or `| undefined` into a type alias.** Nullability belongs at the place the type is used, not
+  in the name — the one hard rule Google's guide states on the subject.
 
 ```ts
-const num = init.num === undefined ? null : init.num;     // nullable: undefined becomes null
-if (num !== null) { /* range and annotation checks */ }
+interface AccountIdInit {
+    readonly shard: bigint;
+    readonly realm: bigint;
+    readonly checksum: string;
+    readonly num?: bigint | null;          // may be omitted, may be explicitly null
+}
 
-const port = init.port;                                   // not nullable: both are rejected
-if (port === null || port === undefined) {
-    throw new TypeError("port must not be null");
+accountId.num;   // bigint | null — never undefined
+```
+
+`exactOptionalPropertyTypes` is on, so TypeScript distinguishes "omitted" from "explicitly `undefined`". The
+runtime normalises both to `null`, because a JavaScript caller has no such distinction.
+
+## Data types and behavioural types
+
+This is the one place where the published guidance is unambiguous and this project's generated code currently is
+not. Both of the style guides that matter here say the same thing:
+
+- Azure's SDK guidelines: *"Prefer interface types to class types. JavaScript is fundamentally a duck-typed
+  language"*, and *"Declare parameters as interface types over class types whenever possible."*
+- Google's style guide: *"Use interfaces to define structural types, not classes."*
+
+The reasons are concrete, not stylistic: a class emits runtime code that a bundler cannot tree-shake away, it
+forces one nominal implementation on a structurally typed language, and — decisively for an SDK — a class with
+`#private` fields is **opaque**. Structural equality, `JSON.stringify`, deep-equality assertions and
+`console.log` all stop working on it, because the state is not in own properties.
+
+The specs split cleanly along this line. Of 235 non-enum types, **137 (58 %) declare no instance method at all** —
+receipts, addresses, authorities, node and network descriptions. The remaining 98 (transactions, queries, clients,
+`Page`) carry behaviour.
+
+### Data types → readonly interfaces, built by a factory function
+
+A type with attributes and no behaviour is a `readonly` interface, created by an exported factory function that
+validates and freezes:
+
+```ts
+export interface ConsensusNode {
+    readonly ip: IpAddress;
+    readonly port: number;
+    readonly account: AccountId;
+}
+
+/**
+ * Creates a `ConsensusNode`.
+ *
+ * @throws TypeError if a required attribute is missing or of the wrong type
+ * @throws RangeError if an attribute violates its constraints
+ */
+export function consensusNode(init: ConsensusNode): ConsensusNode {
+    requirePort(init.port);
+    // ... the remaining checks
+    return Object.freeze({ ...init });
 }
 ```
 
-`exactOptionalPropertyTypes` is on, so in TypeScript a caller may **omit** an optional property but may not pass
-`undefined` for it explicitly. The runtime check for `undefined` is there for JavaScript callers, for whom the
-compiler flag does nothing.
+What this buys, all of it for free and none of it available with a class:
 
-## Complex types
+| | readonly interface | class with `#private` |
+|---|---|---|
+| structural equality (`deepStrictEqual`, test assertions) | works | **broken** — compares two empty objects |
+| `JSON.stringify` | works | `{}` |
+| `console.log` / `util.inspect` | shows the values | `ConsensusNode {}` |
+| spread to derive a changed copy (`{ ...node, port: 1 }`) | works | not possible |
+| tree-shaking | type is erased, factory is a plain function | class survives bundling |
+| duck typing by the caller | works | requires the SDK's own instance |
 
-A complex type is a `class`:
+> **Generator gap — every type is a class.** The generator emits a `class` with `#private` fields, pass-through
+> getters and `Object.freeze(this)` for *all* 235 types. For the 137 pure-data ones this is the wrong shape, and it
+> is the single cause of four problems recorded elsewhere in this guide: no value equality, no useful debug output,
+> no JSON form, and broken deep-equality in tests. Changing it is a breaking API change and the largest open item
+> for the TypeScript generator.
 
-- every attribute is a `#private` field with a getter; a mutable attribute also has a setter, in property syntax
-  (`transaction.memo = "x"`);
-- the constructor takes **one object with all attributes** — the TypeScript form of a struct literal. Nullable
-  attributes and attributes with `@@default` are optional properties;
-- constructor and setters check `null`, the integer ranges and the validation annotations, and copy the values that
-  need copying;
-- a concrete supertype is the superclass (`extends`), abstractions are implemented (`implements`).
+### Behavioural types → classes
+
+A type that has methods is a `class`. That is what classes are for, and the guidance against them is about data
+carriers, not behaviour:
 
 ```ts
-export class ConsensusNode {
+export class AccountCreateTransaction implements Transaction<AccountCreateReceipt> {
 
-    readonly #ip: IpAddress;
-    readonly #port: number;
-    readonly #account: AccountId;
+    readonly #key: Authority;
+    #memo: string | null;
 
-    /**
-     * Creates a new `ConsensusNode`.
-     *
-     * @param init - the attributes
-     * @throws TypeError if a required attribute is `null`
-     * @throws RangeError if an attribute violates its constraints
-     */
-    constructor(init: {
-        readonly ip: IpAddress;
-        readonly port: number;
-        readonly account: AccountId;
-    }) {
-        const ip = init.ip;
-        if (ip === null || ip === undefined) {
-            throw new TypeError("ip must not be null");
-        }
-        this.#ip = ip;
-        const port = init.port;
-        if (port === null || port === undefined) {
-            throw new TypeError("port must not be null");
-        }
-        if (!Number.isInteger(port) || port < 0 || port > 65535) {
-            throw new RangeError("port must be an integer between 0 and 65535");
-        }
-        this.#port = port;
-        // ...
-        Object.freeze(this);
-    }
+    constructor(init: AccountCreateTransactionInit) { /* validate */ }
 
-    get port(): number {
-        return this.#port;
-    }
+    get memo(): string | null { return this.#memo; }
+    set memo(value: string | null) { this.#memo = requireMemo(value); }
+
+    pack(payer: Account, nodes: readonly AccountId[]): PackedTransaction<AccountCreateReceipt> { /* ... */ }
 }
-
-const node = new ConsensusNode({ ip, port: 50211, account });
 ```
 
-The init object replaces the builder pattern that Java needs: it is named, order-independent, and optional
-attributes are simply left out. There is no separate builder type.
+- The constructor takes **one init object**, not a positional list. It is named, order-independent and allows
+  omissions, which is why TypeScript needs no builder pattern.
+- `#private` fields for state, `readonly` for what never changes.
+- A pure accessor over a `#private` field is acceptable here because the field has to be private; for a data type
+  it is not, because the field should not have been private in the first place. Google's guide allows accessors but
+  warns that trivial pass-through accessors are not worth their cost.
 
-### Accessors and setters
+### Properties, not `getX()`
 
-An attribute is read through a **getter with the attribute's name** — `node.port`, not `node.getPort()`. The
-published package has no `getPort`, so this is the form a JavaScript caller sees as well — see
+An attribute is read as a **property** — `node.port`, never `node.getPort()`. The published package has no
+`getPort`, and a JavaScript caller sees the same shape; see
 [Reading and changing attributes](api-best-practices-js.md#reading-and-changing-attributes).
 
-A mutable attribute (one without `@@immutable`) additionally gets a **property setter** that runs the same checks as
-the constructor:
+A mutable attribute is a property **setter** that runs the same checks as the constructor. A setter returns
+nothing: an assignment is not an expression, so there is no chaining, and the self type of the meta-definition
+(`$$Self`), which exists so Java setters can chain, has no role in TypeScript.
 
-```ts
-get maxAttempts(): number | null {
-    return this.#maxAttempts;
-}
+### Immutability
 
-set maxAttempts(value: number | null) {
-    if (value !== null) {
-        if (!Number.isInteger(value) || value < -2147483648 || value > 2147483647) {
-            throw new RangeError("maxAttempts must be an integer between -2147483648 and 2147483647");
-        }
-    }
-    this.#maxAttempts = value;
-}
-```
+`readonly` is the primary mechanism and costs nothing at runtime. `Object.freeze` is the runtime backstop for
+JavaScript callers, for whom `readonly` does not exist.
 
-Unlike Java, a setter does **not** return the object: assignment is not an expression that can be chained. The
-meta-language's self type (`$$Self extends Transaction<…, $$Self>`), which exists so that Java setters can chain
-across an inheritance chain, therefore carries no weight in TypeScript.
+Freeze **once, when the value is complete**: in the factory function of a data type, or at the end of the
+constructor of a class that has no subtypes. A class that is extended must not freeze — only the most derived
+constructor knows when the instance is done.
 
-### Freezing and immutability
+Be precise about what freezing buys, because it is easy to over-read:
 
-`Object.freeze(this)` is called at the end of the constructor of a class that **has no subtypes**. A class that is
-extended does not freeze: freezing happens once, when the instance is complete, and only the most derived
-constructor knows when that is.
-
-What freezing does and does not do is worth being precise about, because it is easy to over-read:
-
-| | frozen instance |
+| | frozen value |
 |---|---|
-| adding a property (`obj.extra = 1`) | `TypeError` |
-| replacing a public own property | `TypeError` |
+| adding a property, replacing a public own property | `TypeError` |
 | writing a `#private` field from inside the class | **works** — `Object.freeze` does not cover private fields |
 | mutating an object a field points to | works — `freeze` is shallow |
+| a `Set` or `Map` held in a field | **not frozen** — freezing does nothing to their contents |
 
-So freezing is **tamper resistance against callers**, not the mechanism that implements `@@immutable`. Immutability
-of attributes comes from the fields being `#private` with no setter, and from the copying rules below. That is also
-why a class with mutable attributes is still frozen: its setters keep working.
+So freezing is tamper resistance against callers, not what makes `@@immutable` true. That comes from `readonly`,
+from the absence of a setter, and from copying.
 
 ### Copying
 
@@ -332,9 +393,8 @@ export interface BaseAddress {
     readonly num: bigint | null;    // optional on the abstraction
 }
 
-export class Address implements BaseAddress {
-    readonly #num: bigint;          // always set on Address
-    get num(): bigint { return this.#num; }
+export interface Address extends BaseAddress {
+    readonly num: bigint;           // always set on Address
 }
 ```
 
@@ -388,7 +448,9 @@ function isAbsoluteUrl(value: string): boolean {
 
 ## Collections
 
-- The public API uses `ReadonlyArray<T>`, `ReadonlySet<T>` and `ReadonlyMap<K, V>` and never the mutable interfaces.
+- The public API uses `readonly T[]`, `ReadonlySet<T>` and `ReadonlyMap<K, V>` and never the mutable interfaces.
+  `readonly T[]` and `ReadonlyArray<T>` mean the same thing; the shorthand is the more common form in current
+  TypeScript and reads better in a signature.
 - **`Readonly*` is a compile-time type only.** It erases at runtime, and a JavaScript caller gets a plain `Array`.
   The runtime guarantee for a list is `Object.freeze`; for a set and a map it is the copy on the way out.
 - A collection is **never `null`** because it is empty — an empty collection is returned instead.
@@ -402,9 +464,10 @@ is no `CopyOnWriteArrayList` counterpart and no `ConcurrentModificationException
 ## Abstractions
 
 - An abstraction is an `interface`: attributes are `readonly` properties (mutable ones without `readonly`), methods
-  are signatures.
-- A concrete type states the relationship with `implements`; TypeScript checks it structurally, so a type satisfies
-  an abstraction as soon as it has the right members.
+  are signatures. This is the idiomatic form — Azure's guidelines ask for interface types precisely so that any
+  object of the right shape is accepted.
+- A concrete type states the relationship with `implements`; TypeScript checks it structurally, so a value
+  satisfies an abstraction as soon as it has the right members, whether or not it says so.
 - `@@static` methods of an abstraction become functions in an `export namespace` of the **same name as the
   interface**. TypeScript merges the two declarations, so the call reads like a static method and the name stays a
   type at the same time:
@@ -420,17 +483,46 @@ export namespace TransactionId {
 const id: TransactionId = TransactionId.generateTransactionId(payer);
 ```
 
-  This is the one place where the generated code uses `namespace`, a construct otherwise avoided in ESM TypeScript;
-  declaration merging with an interface is the only way to hang a function off a type name.
-- A **sealed abstraction** (`@@sealed(A, B)`) is the union of its permitted types, and the variants are
-  distinguished with `instanceof`:
+  This is the one place where `namespace` is used, a construct otherwise avoided in ESM TypeScript; declaration
+  merging with an interface is the only way to hang a function off a type name.
+
+### Sealed abstractions are discriminated unions
+
+A `@@sealed` abstraction is a **union with a literal discriminant**, which is the TypeScript idiom for a closed set
+of variants and the only form that gives compile-time exhaustiveness:
 
 ```ts
-export type Authority = PublicKeyAuthority | ContractAuthority | AuthorityList;
+export type Authority =
+    | ({ readonly kind: "publicKey" } & PublicKeyAuthority)
+    | ({ readonly kind: "contract" } & ContractAuthority)
+    | ({ readonly kind: "list" } & AuthorityList);
+
+function describe(authority: Authority): string {
+    switch (authority.kind) {
+        case "publicKey": return "key";
+        case "contract":  return "contract";
+        case "list":      return "threshold list";
+        default:          return assertNever(authority);
+    }
+}
+
+function assertNever(value: never): never {
+    throw new TypeError(`Unhandled Authority: ${JSON.stringify(value)}`);
+}
 ```
 
-A union is exhaustively checkable: a `switch` over `instanceof` with a `never`-typed default makes the compiler
-reject a missing variant. This is the closest TypeScript equivalent of Java's `sealed … permits`.
+The discriminant is what makes `assertNever` work: adding a variant turns the `default` branch into a compile
+error at every switch, instead of a silent fallthrough found in production.
+
+A union of classes narrowed with `instanceof` also type-checks, but it is weaker: `instanceof` fails across
+realms and across two copies of the package in one bundle, it forces every variant to be a class, and it is
+unavailable to a plain-data variant.
+
+> **Generator gap — no discriminant.** The generator emits `export type Authority = PublicKeyAuthority |
+> ContractAuthority | AuthorityList` and the variants are classes, so callers have to use `instanceof`. Adding a
+> literal discriminant to each variant would make the union exhaustively checkable and work for plain-data types.
+> The discriminant has to come from the meta-definition, so this is a specification change, not only a generator
+> change.
 
 ## Generics
 
@@ -456,71 +548,119 @@ reject a missing variant. This is the closest TypeScript equivalent of Java's `s
 
 ## Enumerations
 
-An enum is a class with one `static readonly` instance per value, so that values can carry attributes and methods
-and the enum can implement interfaces. TypeScript's own `enum` is not used: it cannot do either, and
-`isolatedModules` restricts it further.
+**Do not use TypeScript's `enum`.** The consensus across the ecosystem — and Azure's guidelines for `const enum`
+specifically — is that it compiles to surprising JavaScript, creates a nominal value space where a plain string is
+rejected, and resists tree-shaking. The modern replacements are a **union of string literals** when only the type
+is needed, and an **`as const` object** when the values are also needed at runtime.
+
+The specs split by what the enum carries. Of 16 enums, **9 carry neither attributes nor methods**, 5 carry
+attributes and 4 carry methods.
+
+**Plain enum (9 of 16)** — an `as const` object plus the union derived from it. Zero runtime machinery beyond a
+frozen record, and a plain string is assignable:
 
 ```ts
-export class KeyFormat {
+export const TokenType = {
+    FUNGIBLE_COMMON: "FUNGIBLE_COMMON",
+    NON_FUNGIBLE_UNIQUE: "NON_FUNGIBLE_UNIQUE",
+} as const;
 
-    static readonly PKCS8_WITH_DER: KeyFormat = new KeyFormat("PKCS8_WITH_DER", KeyContainer.PKCS8, KeyEncoding.DER);
-    static readonly SPKI_WITH_DER: KeyFormat = new KeyFormat("SPKI_WITH_DER", KeyContainer.SPKI, KeyEncoding.DER);
+export type TokenType = (typeof TokenType)[keyof typeof TokenType];
 
-    readonly #name: string;
-
-    private constructor(name: string, /* attributes */) {
-        this.#name = name;
-        Object.freeze(this);
-    }
-
-    /** Returns the name of the constant. */
-    get name(): string { return this.#name; }
-
-    get container(): KeyContainer { /* ... */ }
-
-    /** Returns all constants in declaration order. */
-    static values(): ReadonlyArray<KeyFormat> {
-        return Object.freeze([KeyFormat.PKCS8_WITH_DER, KeyFormat.SPKI_WITH_DER]);
-    }
-
-    /** Returns the constant with the given name. @throws RangeError if there is none */
-    static valueOf(name: string): KeyFormat { /* ... */ }
-
-    toString(): string { return this.#name; }
-}
+export const tokenTypeValues: readonly TokenType[] = Object.freeze(Object.values(TokenType));
 ```
 
-- The constructor is `private`, so the set of values is closed.
-- Every value is frozen, and `values()` returns a frozen array.
-- `name` is the identifier as the spec writes it (`PKCS8_WITH_DER`), and `toString()` returns it — an enum value is
-  therefore readable in a template string and in `console.log`, which a complex type is not (see
-  [Debug representation](#debug-representation)).
-- Because the values are objects, comparison is by identity (`format === KeyFormat.SPKI_WITH_DER`), which is correct
-  here: there is exactly one instance per value.
+A value is its own name, so `String(tokenType)`, `JSON.stringify`, equality and `switch` all work with no help, and
+`valueOf` collapses into a membership test.
+
+**Enum with attributes (5 of 16)** — the same shape, with a frozen record per value:
+
+```ts
+export const KeyFormat = {
+    PKCS8_WITH_DER: { name: "PKCS8_WITH_DER", container: "PKCS8", encoding: "DER" },
+    SPKI_WITH_DER:  { name: "SPKI_WITH_DER",  container: "SPKI",  encoding: "DER" },
+} as const;
+
+export type KeyFormat = (typeof KeyFormat)[keyof typeof KeyFormat];
+```
+
+**Enum with methods (4 of 16)** — the methods become functions of the namespace that take the value
+(`decode(format, value)`), rather than methods on a class. This keeps the values plain data and the behaviour
+tree-shakeable.
+
+In all three forms, values are compared with `===`, `Object.values` enumerates them in declaration order, and a
+`switch` over the union is exhaustively checkable with `assertNever`.
+
+> **Generator gap — enums are classes.** The generator emits a class with a `private constructor`, one
+> `static readonly` instance per value, and `name`/`values()`/`valueOf()`/`toString()`. It works, but it is the
+> shape the ecosystem moved away from: the values are opaque objects, a plain string is not assignable, and nothing
+> tree-shakes. The 9 plain enums could move to `as const` with no loss of expressiveness.
 
 ## Methods and functions
 
-- Methods with the same name are **overloads**: one signature per overload and one implementation signature.
-  TypeScript has no overloading by dispatch, so the implementation must accept the union of the parameter types.
-- Namespace-level functions are exported functions of the namespace module, in `functions.ts`. There is no factory
-  class as in Java — a module is already the namespace.
-- `@@async` returns `Promise<T>`, `@@streaming` returns `AsyncIterable<T>`; see the two sections below.
+- Namespace-level functions are exported functions of the namespace module. There is no factory class — a module is
+  already the namespace, and standalone functions are what tree-shakes.
+- **An options bag carries the optional parameters.** The idiom across the ecosystem, and a rule in Azure's
+  guidelines, is: required parameters positionally, everything else in one options object as the last parameter,
+  named `<MethodName>Options`:
+
+```ts
+export interface SubmitOptions {
+    readonly abortSignal?: AbortSignal;
+    readonly maxAttempts?: number;
+}
+
+submit(client: HieroClient, options?: SubmitOptions): Promise<Response>;
+```
+
+  This keeps a call site readable, lets options be added without a breaking change, and gives cancellation one
+  consistent place to live.
+- **Overloads are a last resort.** TypeScript allows several signatures over one implementation, and the generator
+  uses them where the specs declare overloads, but an options bag or a differently named function is usually the
+  better API: an overload set has to be disambiguated at runtime, and JavaScript callers get no help from the
+  compiler.
+
+> **Generator gap — no options bag.** The generator maps a spec overload set to TypeScript overload signatures,
+> because the meta-definition models overloads and has no notion of an options parameter. Introducing one is a
+> specification-level change.
 
 ## Asynchronous methods
 
-An `@@async` method returns `Promise<T>` (`Promise<T | null>` for a `@@nullable` result). Errors reject the promise;
-they are not returned.
+An `@@async` method returns `Promise<T>` (`Promise<T | null>` for a `@@nullable` result). Errors reject the
+promise; they are not returned.
 
 ```ts
-execute(request: HttpRequest): Promise<HttpResponse>;
+execute(request: HttpRequest, options?: ExecuteOptions): Promise<HttpResponse>;
 ```
 
 There is **no synchronous alternative**. Java offers one (`CompletionStage` plus a blocking `…Sync` method) because
-a thread can block; JavaScript has no blocking wait on the event loop, so an asynchronous operation is asynchronous
-for every caller.
+a thread can block; JavaScript has no blocking wait on the event loop, so an asynchronous operation is
+asynchronous for every caller.
 
-A `Promise` also has no cancellation. How a long-running call is aborted is an open question — see
-[Questions & Comments](#questions--comments).
+### Cancellation is `AbortSignal`
+
+A `Promise` cannot be cancelled, and the platform answered this years ago: **`AbortController` / `AbortSignal` is
+the standard cancellation mechanism**, used by `fetch`, by `addEventListener`, throughout the Node.js core API, and
+required by Azure's SDK guidelines on *every* asynchronous call. There is no reason for this SDK to invent
+anything:
+
+```ts
+const controller = new AbortController();
+setTimeout(() => controller.abort(), 5_000);
+
+await transaction.submit(client, { abortSignal: controller.signal });
+```
+
+- The signal is a property of the options bag, never a positional parameter.
+- An aborted operation rejects with the signal's reason, which is an `AbortError` (a `DOMException` with
+  `name === "AbortError"`) unless the caller gave `abort()` a reason of its own.
+- An implementation checks `signal.aborted` before starting work and registers an `abort` listener for work already
+  in flight; it must not leave the listener attached afterwards.
+
+> **Generator gap — no cancellation at all.** No generated signature takes an `AbortSignal`, because the
+> meta-definition does not model one. `@@async` would have to imply an options parameter carrying the signal, which
+> is a specification change affecting every language — but TypeScript should not be the one to invent a private
+> solution in the meantime.
 
 ## Streaming
 
@@ -549,27 +689,41 @@ for await (const item of client.subscribeTopic(topicId)) {
 
 ## Errors
 
-- `@@throws(illegal-format)` and `invalid-argument-error` map to `RangeError`, the built-in error for a value
-  outside its domain. The runtime checks of the attribute annotations use the same type.
-- A `null` where a value is required is a `TypeError`, not a `RangeError`.
-- Every other error identifier becomes an `Error` subclass in the `errors.ts` of the namespace that declares it —
-  `not-found-error` → `NotFoundError` — with the constructor `(message: string, options?: ErrorOptions)` and
-  `this.name` set:
+The ecosystem agrees on a small, concrete pattern for library errors: subclass `Error`, set `name`, chain with
+`cause`, put domain data in `readonly` fields rather than in the message, and keep the hierarchy shallow — one base
+error plus a handful of specific ones.
+
+- A value outside its domain is a **`RangeError`**; a missing or wrongly typed value is a **`TypeError`**. Reusing
+  the built-ins for these two cases is deliberate: every JavaScript developer already knows them, and Google's style
+  guide asks that only subclasses of `Error` are ever thrown.
+- Every other error identifier of the specs becomes an `Error` subclass in the `errors.ts` of the namespace that
+  declares it — `not-found-error` → `NotFoundError`:
 
 ```ts
-export class PaginationError extends Error {
+export class NotFoundError extends Error {
+
+    /** A stable identifier for this kind of failure. */
+    readonly code = "NOT_FOUND";
 
     constructor(message: string, options?: ErrorOptions) {
         super(message, options);
-        this.name = "PaginationError";
+        this.name = "NotFoundError";
     }
 }
 ```
 
-  `options` carries the `cause`, which is how an error chain is built in JavaScript. Setting `name` matters because
-  it is what appears in a stack trace and in `console.log`.
-- Synchronous methods document their errors with `@throws`; asynchronous ones describe with which error the promise
-  rejects.
+- **Set `name`.** It is what appears in a stack trace and in `console.log`.
+- **Use `cause`.** `new ConnectionError("submit failed", { cause: ioError })` keeps the original error instead of
+  flattening it into a string.
+- **Carry a stable `code`.** `instanceof` is the natural check, but it fails across realms and when two copies of
+  the package end up in one bundle; a string `code` always works and is what service SDKs expose for exactly this
+  reason. The message is for humans and is not part of the API contract — the class and the `code` are.
+- **Domain data goes in `readonly` fields**, not in the message text.
+- Document errors with `@throws`; for an async method, say with which error the promise rejects.
+
+> **Generator gap — no `code`.** Generated error classes set `name` and accept `cause`, but carry no `code` and no
+> domain fields. The error identifiers of the meta-definition are already stable strings, so the `code` is
+> available without any specification change.
 
 ## Constants
 
@@ -588,48 +742,65 @@ The constant is not frozen separately: the value object freezes itself.
 
 ## Identity and equality
 
-**Value objects of the SDK currently have no value equality.** Two instances built from the same attributes are
-different objects, and JavaScript compares objects by identity:
+The specs require value semantics in at least one place — `spec/base/authority.md` calls `Authority` a "value type
+with structural equality … two Authorities are equal iff their trees match" — and today the TypeScript SDK does not
+provide it:
 
 ```ts
 const a = new AccountId({ shard: 0n, realm: 0n, checksum: "", num: 1001n });
 const b = new AccountId({ shard: 0n, realm: 0n, checksum: "", num: 1001n });
 
-a === b                      // false
-new Set([a, b]).size         // 2
-new Map([[a, "x"]]).get(b)   // undefined
+a === b;                      // false
+new Set([a, b]).size;         // 2
+new Map([[a, "x"]]).get(b);   // undefined
 ```
 
-Three consequences that users of the API have to know about:
+**The fix is not an `equals` method; it is the shape.** A value whose state lives in `#private` fields is opaque to
+everything JavaScript offers — structural comparison, `JSON.stringify`, deep-equality assertions, debug output. A
+value that is a plain frozen object is transparent to all of them:
 
-- A `map<K, V>` and a `set<T>` over a value type are **keyed by identity**. `ReadonlyMap<Address, bigint>` does not
-  behave like a Java `Map<Address, Long>`: a lookup only finds the entry if the caller passes the very object that
-  was put in. The meta-language says nothing about this, and the mapping inherits the JavaScript semantics.
-- `assert.deepStrictEqual` is **not** a substitute. `#private` fields are not own properties, so deep equality sees
-  an empty object and two instances with *different* values compare as equal. The generated tests therefore use a
-  helper that prefers an `equals` method and otherwise falls back to identity.
-- The spec of [`authority.md`](../spec/base/authority.md) requires an `Authority` to be a "value type with
-  structural equality … two Authorities are equal iff their trees match". **TypeScript does not provide that
-  today.**
+| | `readonly` interface | class with `#private` |
+|---|---|---|
+| `assert.deepStrictEqual(a, b)` | correct | **passes for different values** |
+| `JSON.stringify` | the attributes | `{}` |
+| `structuredClone` | works | throws |
+| equality by hand | `deepStrictEqual`, or compare fields | needs an `equals` the SDK must write |
 
-How to close this is an open design question, not a documentation gap — see
-[Questions & Comments](#questions--comments).
+So [Data types and behavioural types](#data-types-and-behavioural-types) is the answer to this section as well: the
+137 pure-data types become readonly interfaces and get value semantics for free; the behavioural types keep their
+classes, where identity is the right semantics anyway.
+
+Two things remain true in either shape, and have to be documented for callers:
+
+- **`Map` and `Set` always key by identity.** JavaScript has no value-keyed collection, so a `map<Address, int64>`
+  behaves differently from a Java `Map<Address, Long>` whatever the value shape is. Callers key by a string form
+  instead.
+- **An `equals` method is still worth having** on the few types a caller naturally compares, and the generated
+  tests already prefer one when it exists. `Duration` in `@hiero/support` shows the shape.
+
+> **Generator gap.** No generated type has structural equality, and the `Authority` contract of the specs is
+> therefore unmet in TypeScript. See the gap in
+> [Data types and behavioural types](#data-types--readonly-interfaces-built-by-a-factory-function).
 
 ## Debug representation
 
-Enums have a `toString()` that returns the name of the value. **Complex types have none**, and the JavaScript
-defaults are of no use for them, because the state lives in `#private` fields:
+A plain frozen object prints itself: `console.log`, `util.inspect` and `JSON.stringify` all show the attributes
+with no work from the SDK. That is the main everyday benefit of the data-type shape above, and the reason this
+section is short.
 
-```ts
-String(accountId)          // "[object Object]"
-JSON.stringify(accountId)  // "{}"
-util.inspect(accountId)    // "AccountId {}"
-```
+Where a type is a class — the behavioural ones — add a `toString()`:
 
-Where a spec declares a `toString()` (as `BaseAddress` and `TransactionId` do), the SDK has a readable form; where it
-does not, printing an SDK object in a log yields nothing. Whether the generator should add one — and with it the
-rules the Java guideline states, above all **never print key material or other sensitive data, and print only the
-length of a byte array** — is open, see [Questions & Comments](#questions--comments).
+- a stable, readable form (`AccountCreateTransaction[memo=…, maxFee=…]`);
+- **never key material or other sensitive data**, because a string representation ends up in log files;
+- for a byte array only its length (`signature=byte[64]`), never the content.
+
+> **Generator gap — nothing prints.** Only enums get a `toString()`; every other generated class shows as
+> `ConsensusNode {}`. The "never print sensitive data" rule additionally cannot be generated today: the
+> meta-definition has no annotation marking an attribute as sensitive (the known ones are `async`, `default`,
+> `deprecated`, `finalMethod`, `finalType`, `immutable`, `max`, `maxLength`, `maxSize`, `min`, `minLength`,
+> `minSize`, `nullable`, `oneOf`, `oneOrNoneOf`, `override`, `pattern`, `sealed`, `static`, `streaming`,
+> `threadSafe`, `throws`, `urlPattern`). Either a `@@sensitive` annotation is added, or the conservative rule
+> applies: a `bytes` attribute is always printed as its length only.
 
 ## Documentation and deprecation
 
@@ -656,8 +827,8 @@ worth more than leaving them out silently:
 | Java | TypeScript |
 |---|---|
 | the `final` keyword | `readonly` for properties, `#private` for fields, `Object.freeze` for instances |
-| `equals`/`hashCode` | no language-level equality to implement — see [Identity and equality](#identity-and-equality) |
-| the builder pattern | the init object of the constructor is named, order-independent and allows omissions |
+| `equals`/`hashCode` | structural comparison of plain data objects — see [Identity and equality](#identity-and-equality) |
+| the builder pattern | an init object or an options bag: named, order-independent, allows omissions |
 | factory classes per namespace | a module is the namespace; functions are exported from it |
 | avoid Lombok | nothing comparable exists |
 | avoid `var` | `const` by default, `let` where a rebinding is needed; `var` is not used |
@@ -691,35 +862,48 @@ function assertValue(expected: unknown, actual: unknown): void { /* ... */ }
 Hand-written tests follow the same structure as the Java ones — one behaviour per test, given/when/then, and the
 error cases next to the happy path.
 
+## Generator gaps (summary)
+
+The generator does not implement this guideline yet. Ordered by what it costs to close:
+
+| Gap | Where | Scope |
+|---|---|---|
+| runtime checks do not verify the **type** of a value | [Validation](#validation-at-the-boundary) | `TsConstraints` only — small, and it closes a silent-corruption bug |
+| error classes carry no stable **`code`** | [Errors](#errors) | generator only; the error identifiers already exist |
+| no **root export**, no `"sideEffects": false` | [What is public API](#what-is-public-api) | generator only |
+| no **`toString()`** on classes | [Debug representation](#debug-representation) | generator only, if the conservative bytes rule is accepted |
+| plain **enums are classes** rather than `as const` objects | [Enumerations](#enumerations) | generator only for the 9 plain enums; breaking for callers |
+| **data types are classes** rather than readonly interfaces | [Data types](#data-types-and-behavioural-types) | large, breaking — but it is what gives value equality, JSON, `structuredClone` and useful logging at once |
+| sealed unions have **no discriminant** | [Sealed abstractions](#sealed-abstractions-are-discriminated-unions) | needs the meta-definition to carry one |
+| no **`AbortSignal`** on asynchronous calls | [Cancellation](#cancellation-is-abortsignal) | needs the meta-definition to model an options parameter |
+| overloads instead of an **options bag** | [Methods](#methods-and-functions) | needs the meta-definition to model one |
+
+The first four are generator-local and do not change the API shape. The rest change what callers see, and the last
+three need a decision in the meta-definition first, because they affect every language.
+
 ## Questions & Comments
 
-- **Value equality is unresolved, and one spec already requires it.** `spec/base/authority.md` specifies structural
-  equality for `Authority`, and the generated test helper already looks for an `equals` method, but nothing provides
-  one. Options: generate `equals(other: unknown): boolean` on every value type; put an `Equatable` interface into
-  `@hiero/support` and generate the implementation; or declare `equals` in the specs so that every language gets it
-  from the same source. Until this is decided, `map<K, V>` and `set<T>` over a value type behave differently in
-  TypeScript than in Java and Rust. — open
+- **How far should the data-type change go?** Turning the 137 pure-data types into readonly interfaces fixes value
+  equality, JSON, `structuredClone`, deep-equality in tests and logging in one step, and is what the published
+  guidance recommends. It is also a breaking change and removes the one place where validation currently lives (the
+  constructor), which would move to a factory function per type. Worth doing before there are consumers; expensive
+  afterwards. — open
 
-- **No `toString()` on complex types.** Enums have one, classes do not, and `#private` fields make the JavaScript
-  defaults useless. If one is generated, the rules of the Java guideline should apply unchanged: a stable
-  `ClassName[a=1, b=2]` form, never sensitive data, only the length of a byte array. — open
+- **Does the meta-definition get an options parameter for `@@async`?** Without one there is no place for an
+  `AbortSignal`, and TypeScript either has no cancellation or invents a private mechanism. It affects Java, Rust
+  and Go as well, so it is a meta-definition question, not a TypeScript one. — open
 
-- **Cancellation of an `@@async` method.** A `Promise` cannot be cancelled. Should asynchronous methods take an
-  `AbortSignal`, should the SDK expose its own cancellation handle, or is cancellation out of scope for the
-  request/response calls? Streaming already has an answer (`break` and the iterator's `return()`). — open
+- **Does the meta-definition get a `@@sensitive` annotation?** Without it a generated `toString()` cannot know
+  which attribute must not be printed, and the conservative rule (never print the content of a `bytes` attribute)
+  is the only safe option. — open
 
 - **No SPI mapping.** The specs have `consensusnode.transactions.spi` so that custom services and transaction types
-  can be added, and the Java guideline maps this to `ServiceLoader` plus `provides`/`uses`. TypeScript has no
-  discovery mechanism; a registry that an application fills explicitly is the likely answer, but it is not
-  specified. — open
+  can be added, and the Java guideline maps this to `ServiceLoader`. TypeScript has no discovery mechanism; an
+  explicit registry that the application fills is the likely answer, but it is not specified. — open
 
-- **The runtime checks do not verify the type.** A constructor rejects `null` and `undefined` and checks the
-  numeric range, but nothing checks that a value *is* a `bigint`, a `string` or a `Uint8Array`. Because a range
-  comparison coerces, `new AccountId({ … num: 1001 })` and even `num: "1001"` pass and are stored as given. The
-  compiler protects TypeScript callers; a JavaScript caller gets silent corruption, which is exactly the case
-  [Defensive implementation](#defensive-implementation) is supposed to cover. A `typeof`/`instanceof` check per
-  attribute would close it. — open
-
-- **No logging guidance.** The Java guideline prescribes `System.Logger`, so that consumers can plug in a backend.
+- **No logging guidance.** The Java guideline prescribes `System.Logger` so consumers can plug in a backend.
   JavaScript has no equivalent facade. Should the SDK log at all, and if so through an injectable interface? — open
 
+- **Pagination does not follow the ecosystem shape.** The specs model `Page<$$T>` with `next()`/`first()`. The
+  established form for a JavaScript SDK is an async iterable with a `byPage()` view and a continuation token, so
+  that `for await (const item of client.list())` just works. Changing it is a specification question. — open

@@ -438,6 +438,13 @@ use(transaction.maxTransactionFee);     // read again, not `fee`
 
 ## Questions & Comments
 
+- **This guide describes the shape the SDK has today.** The
+  [TypeScript guideline](api-best-practices-ts.md#generator-gaps-summary) now specifies a different one for pure
+  data types — plain frozen objects instead of classes with private fields — which would make structural equality,
+  `JSON.stringify`, `structuredClone` and readable `console.log` work. When that lands, the sections on
+  [identity](#identity-and-equality) and [printing](#printing-and-debugging) here get simpler, and importing from
+  the package root will work. — open
+
 - **Value equality is unresolved.** `spec/base/authority.md` requires `Authority` to be a value type with
   structural equality, and nothing in the JavaScript/TypeScript SDK provides it, so `Map`, `Set` and equality
   assertions behave differently here than in Java and Rust. Whatever is decided for
