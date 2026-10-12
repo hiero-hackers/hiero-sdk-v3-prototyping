@@ -18,7 +18,19 @@ A token's supply policy is independent of its kind:
 - **`INFINITE`** — no protocol-enforced ceiling on `totalSupply`. The supply key may keep minting
   forever (modulo `int64` overflow).
 - **`FINITE`** — the protocol enforces `totalSupply ≤ maxSupply` at every mint. A mint that would
-  exceed `maxSupply` fails atomically.
+  exceed `maxSupply` fails atomically (HAPI: `TOKEN_MAX_SUPPLY_REACHED`).
+
+`maxSupply` applies to both token kinds: for `FUNGIBLE_COMMON` it caps the number of smallest
+indivisible units, for `NON_FUNGIBLE_UNIQUE` it caps the number of serials (each serial counts as
+one unit, since `decimals` is 0).
+
+Note that the ceiling is checked against the *current* `totalSupply`, not against the number of
+units ever issued. A `TokenBurn` (or `TokenWipe`) lowers `totalSupply` and thereby frees room for
+another mint. For NFTs this is visible in the serial numbers: they increase monotonically and are
+never reused, so a `FINITE` collection with `maxSupply = 10_000` can end up holding a serial number
+far above 10,000 while never exceeding 10,000 *existing* NFTs at any point in time. `maxSupply`
+therefore bounds how many units exist simultaneously — a "only ever N in total" guarantee
+additionally requires the `supplyAuthority` to be unset (or given up) once the last mint happened.
 
 This file covers the **core lifecycle and supply** transactions: `TokenCreate`, `TokenUpdate`,
 `TokenDelete`, `TokenAssociate`, `TokenDissociate`, `TokenMint`, `TokenBurn`. The remaining
