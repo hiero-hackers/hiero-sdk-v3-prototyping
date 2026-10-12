@@ -133,10 +133,23 @@ Open follow-up tasks for the V3 SDK prototyping effort. See [`CLAUDE.md`](../CLA
     originals?
 
   **When it lands here:** set the option in
-  [`sdk-java/protobuf/pom.xml`](../sdk-java/protobuf/pom.xml), update the five qualified `exports … to …` in its
-  `module-info.java`, and rewrite the imports in the four spike files that use protobuf classes
-  (`AccountCreateTransaction`, `ClientRuntime`, `DefaultPackedTransaction`, `Protobuf` — all of them import from
-  `com.hederahashgraph.api.proto.java` only, so it is one prefix).
+  [`sdk-java/protobuf/pom.xml`](../sdk-java/protobuf/pom.xml), update the three `exports` of its `module-info.java`,
+  rewrite the imports in the four spike files that use protobuf classes (`AccountCreateTransaction`,
+  `ClientRuntime`, `DefaultPackedTransaction`, `Protobuf` — all of them import from
+  `com.hederahashgraph.api.proto.java` only, so it is one prefix) and change the value of
+  `java.externalNamespace.consensusnode.proto` in [`sdk-java/generator.properties`](../sdk-java/generator.properties)
+  to the new package.
+
+- **`externalNamespace` for TypeScript, Rust and Go.** [ADR-0009](adr/0009-protobuf-messages-in-the-spi.md) maps the
+  namespace `consensusnode.proto` to the generated protobuf code instead of generating empty placeholders beside it.
+  Only the Java generator implements the key; the other three still generate the placeholders, which makes their
+  `TransactionSupport` as unimplementable as the Java one was.
+
+  Rust is straightforward (`rust.externalNamespace.consensusnode.proto = crate::proto`, plus `pub mod proto` instead
+  of `mod proto`). **TypeScript needs one more step:** the four messages live in four different modules
+  (`transaction_pb.ts`, `transaction_response_pb.ts`, `transaction_receipt_pb.ts`, `transaction_record_pb.ts`) and
+  the module is not derivable from the message name, so the key has to point at a small hand-written re-export
+  module and `internal/proto` has to appear in the package's `exports` map. Go has no protobuf wiring at all yet.
 
 ## Spec follow-ups
 

@@ -7,10 +7,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import org.hiero.sdk.v3.metalang.generator.GenerationException;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
@@ -27,15 +29,18 @@ import org.hiero.sdk.v3.metalang.model.QualifiedName;
  * java.version = 0.1.0-SNAPSHOT
  * # spec folders whose module needs the protobuf messages (comma or whitespace separated)
  * java.protobuf = consensus-node-client
+ * # a namespace that is not generated but provided by an existing Java package (one key per namespace)
+ * java.externalNamespace.consensusnode.proto = com.hederahashgraph.api.proto.java
  * </pre>
  *
- * @param interfaces abstractions that are generated as interfaces instead of abstract classes
- * @param groupId    the Maven groupId of the generated project and its modules
- * @param version    the Maven version of the generated project and its modules
- * @param protobuf   the spec folders whose module depends on the protobuf module
+ * @param interfaces         abstractions that are generated as interfaces instead of abstract classes
+ * @param groupId            the Maven groupId of the generated project and its modules
+ * @param version            the Maven version of the generated project and its modules
+ * @param protobuf           the spec folders whose module depends on the protobuf module
+ * @param externalNamespaces the Java package of every namespace that is not generated, by namespace
  */
 public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId, String version,
-                                  Set<String> protobuf) {
+                                  Set<String> protobuf, Map<String, String> externalNamespaces) {
 
     /** The key that lists the abstractions that become interfaces. */
     public static final String INTERFACES = "java.interfaces";
@@ -51,6 +56,14 @@ public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId,
      * {@code hiero-sdk-protobuf} and requires it (not {@code transitive}: see {@link ProtobufFiles}).
      */
     public static final String PROTOBUF = "java.protobuf";
+
+    /**
+     * The prefix of the keys that map a namespace to an existing Java package:
+     * {@code java.externalNamespace.<namespace> = <java package>}. The types of such a namespace are not generated;
+     * every reference to them resolves to the configured package, which must be on the module path of the generated
+     * module. This is how the specs refer to types that another build step provides - the protobuf messages.
+     */
+    public static final String EXTERNAL_NAMESPACE_PREFIX = "java.externalNamespace.";
 
     /** The default Maven groupId. */
     public static final String DEFAULT_GROUP_ID = "org.hiero.sdk";
@@ -73,6 +86,8 @@ public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId,
         Objects.requireNonNull(groupId, "groupId must not be null");
         Objects.requireNonNull(version, "version must not be null");
         protobuf = Set.copyOf(Objects.requireNonNull(protobuf, "protobuf must not be null"));
+        externalNamespaces = Map.copyOf(Objects.requireNonNull(externalNamespaces,
+                "externalNamespaces must not be null"));
     }
 
     /**
@@ -81,7 +96,7 @@ public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId,
      * @param interfaces abstractions that are generated as interfaces
      */
     public JavaGeneratorConfig(final Set<QualifiedName> interfaces) {
-        this(interfaces, DEFAULT_GROUP_ID, DEFAULT_VERSION, Set.of());
+        this(interfaces, DEFAULT_GROUP_ID, DEFAULT_VERSION, Set.of(), Map.of());
     }
 
     /**
@@ -92,7 +107,7 @@ public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId,
      * @param version    the Maven version
      */
     public JavaGeneratorConfig(final Set<QualifiedName> interfaces, final String groupId, final String version) {
-        this(interfaces, groupId, version, Set.of());
+        this(interfaces, groupId, version, Set.of(), Map.of());
     }
 
     /**
@@ -111,9 +126,9 @@ public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId,
         final List<String> problems = new ArrayList<>();
         final SortedSet<String> keys = new TreeSet<>(properties.stringPropertyNames());
         final Set<String> known = Set.of(INTERFACES, GROUP_ID, VERSION, PROTOBUF);
-        keys.stream().filter(k -> !known.contains(k))
+        keys.stream().filter(k -> !known.contains(k) && !k.startsWith(EXTERNAL_NAMESPACE_PREFIX))
                 .forEach(k -> problems.add("Unknown key '" + k + "' in " + file + " (known: " + INTERFACES + ", "
-                        + GROUP_ID + ", " + VERSION + ", " + PROTOBUF + ")"));
+                        + GROUP_ID + ", " + VERSION + ", " + PROTOBUF + ", " + EXTERNAL_NAMESPACE_PREFIX + "*)"));
         final String groupId = properties.getProperty(GROUP_ID, DEFAULT_GROUP_ID).strip();
         final String version = properties.getProperty(VERSION, DEFAULT_VERSION).strip();
         if (!groupId.matches("[A-Za-z0-9_.-]+")) {
@@ -145,9 +160,24 @@ public record JavaGeneratorConfig(Set<QualifiedName> interfaces, String groupId,
                 protobuf.add(folder);
             }
         }
+        final Map<String, String> externalNamespaces = new TreeMap<>();
+        for (final String key : keys) {
+            if (!key.startsWith(EXTERNAL_NAMESPACE_PREFIX)) {
+                continue;
+            }
+            final String namespace = key.substring(EXTERNAL_NAMESPACE_PREFIX.length());
+            final String javaPackage = properties.getProperty(key).strip();
+            if (!namespace.matches("[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*")) {
+                problems.add("'" + namespace + "' in '" + key + "' is no namespace name");
+            } else if (!javaPackage.matches("[a-zA-Z0-9_]+(\\.[a-zA-Z0-9_]+)*")) {
+                problems.add("'" + javaPackage + "' of key '" + key + "' is no Java package name");
+            } else {
+                externalNamespaces.put(namespace, javaPackage);
+            }
+        }
         if (!problems.isEmpty()) {
             throw new GenerationException(problems);
         }
-        return new JavaGeneratorConfig(interfaces, groupId, version, protobuf);
+        return new JavaGeneratorConfig(interfaces, groupId, version, protobuf, externalNamespaces);
     }
 }

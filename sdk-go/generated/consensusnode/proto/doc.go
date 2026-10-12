@@ -2,8 +2,12 @@
 
 // proto holds the API of the meta-language namespace consensusnode.proto.
 //
-// SDKs communicate with the network nodes via gRPC using the Hiero Protobuf messages. This package contains
-// the protocol-level types the SDK API refers to, such as the raw transaction body, response, receipt and
-// record. Most applications never use these types directly; they work with the typed transaction and query
-// API instead.
+// SDKs communicate with the network nodes via gRPC using the Hiero Protobuf messages. This namespace names
+// the protocol-level messages the SDK API refers to: the raw transaction body, response, receipt and record.
+// Most applications never use them; they work with the typed transaction and query API instead. They are part
+// of the API only for the SPI that adds support for custom services and transaction types, which has to build
+// and read the wire format itself.
+//
+// Each type here is the protobuf message of the same name, as the protobuf compiler of the language produces
+// it. An SDK does not define these types; it reuses the generated ones.
 package proto

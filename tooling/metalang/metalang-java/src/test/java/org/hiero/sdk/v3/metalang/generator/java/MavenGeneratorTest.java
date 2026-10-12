@@ -126,6 +126,38 @@ class MavenGeneratorTest {
     }
 
     @Test
+    void shouldMapAnExternalNamespaceToAnExistingJavaPackageInsteadOfGeneratingIt() throws Exception {
+        // GIVEN a namespace that an existing Java package provides
+        final Path file = temp.resolve("generator.properties");
+        Files.writeString(file, "java.externalNamespace.a.b = com.example.proto\n");
+        final JavaGeneratorConfig config = JavaGeneratorConfig.load(file);
+        assertThat(config.externalNamespaces()).containsExactly(Map.entry("a.b", "com.example.proto"));
+
+        // WHEN a type of another namespace refers to one of its types
+        final List<GeneratedFile> files = new JavaGenerator(config).generate(LinkedModel.of(new MetaLang().validate(
+                Map.of("f/a.md", TestSpecs.markdown("""
+                        namespace a.b
+                        abstraction Message {}
+                        """), "f/b.md", TestSpecs.markdown("""
+                        namespace a.c
+                        requires {Message} from a.b
+                        abstraction Sender {
+                            void send(message: Message)
+                        }
+                        """))).model()));
+
+        // THEN nothing is generated for it and every reference resolves to the configured package
+        assertThat(files).extracting(GeneratedFile::path).noneMatch(p -> p.contains("/a/b/"));
+        assertThat(content(files, "org.hiero.f/src/main/java/org/hiero/a/c/Sender.java"))
+                .contains("import com.example.proto.Message;")
+                .doesNotContain("org.hiero.a.b");
+        // the package is neither exported nor listed as a package of the module
+        assertThat(content(files, "org.hiero.f/src/main/java/module-info.java"))
+                .doesNotContain("org.hiero.a.b")
+                .contains("exports org.hiero.a.c;");
+    }
+
+    @Test
     void shouldReportUnknownKeysAndMalformedInterfaceNames() throws Exception {
         // GIVEN
         final Path file = temp.resolve("generator.properties");
@@ -134,7 +166,9 @@ class MavenGeneratorTest {
         // WHEN / THEN
         assertThatThrownBy(() -> JavaGeneratorConfig.load(file)).isInstanceOfSatisfying(GenerationException.class,
                 e -> assertThat(e.problems()).containsExactly(
-                        "Unknown key 'other' in " + file + " (known: java.interfaces, java.groupId, java.version, java.protobuf)",
+                        "Unknown key 'other' in " + file
+                                + " (known: java.interfaces, java.groupId, java.version, java.protobuf,"
+                                + " java.externalNamespace.*)",
                         "'Plain' in java.interfaces is no qualified type name (namespace.Type)",
                         "'.Leading' in java.interfaces is no qualified type name (namespace.Type)",
                         "'trailing.' in java.interfaces is no qualified type name (namespace.Type)"));
@@ -144,7 +178,7 @@ class MavenGeneratorTest {
     void shouldDependOnTheProtobufModuleOnlyWhereItIsConfigured() throws Exception {
         // GIVEN the node-client folder is configured to need the protobuf messages
         final JavaGeneratorConfig config = new JavaGeneratorConfig(Set.of(),
-                JavaGeneratorConfig.DEFAULT_GROUP_ID, JavaGeneratorConfig.DEFAULT_VERSION, Set.of("node-client"));
+                JavaGeneratorConfig.DEFAULT_GROUP_ID, JavaGeneratorConfig.DEFAULT_VERSION, Set.of("node-client"), java.util.Map.of());
 
         // WHEN
         final List<GeneratedFile> files = generate(config);

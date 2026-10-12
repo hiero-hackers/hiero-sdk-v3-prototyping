@@ -2,10 +2,10 @@
 
 package org.hiero.consensusnode.transactions.spi;
 
-import org.hiero.consensusnode.proto.TransactionBody;
-import org.hiero.consensusnode.proto.TransactionReceipt;
-import org.hiero.consensusnode.proto.TransactionRecord;
-import org.hiero.consensusnode.proto.TransactionResponse;
+import com.hederahashgraph.api.proto.java.TransactionBody;
+import com.hederahashgraph.api.proto.java.TransactionReceipt;
+import com.hederahashgraph.api.proto.java.TransactionRecord;
+import com.hederahashgraph.api.proto.java.TransactionResponse;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Record;
 import org.hiero.consensusnode.transactions.Response;

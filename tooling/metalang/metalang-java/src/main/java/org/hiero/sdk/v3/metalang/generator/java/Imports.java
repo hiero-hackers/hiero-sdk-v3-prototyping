@@ -20,6 +20,7 @@ final class Imports {
     private final String ownPackage;
     private final Set<String> typeNames;
     private final FunctionInterfaces functionInterfaces;
+    private final Map<String, String> externalPackages;
     private final Map<String, String> bySimpleName = new HashMap<>();
     private final SortedSet<String> imports = new TreeSet<>();
 
@@ -34,31 +35,51 @@ final class Imports {
     }
 
     /**
-     * Creates the imports of a file.
+     * Creates the imports of a file without external namespaces.
      *
-     * @param ownPackage      the package of the file
+     * @param ownPackage         the package of the file
      * @param typeNames          the simple names of all spec types (type variables must not shadow them)
      * @param functionInterfaces the custom functional interfaces of function types
      * @param reservedNames      simple names that are already taken in the file (e.g. the declared type itself)
      */
     Imports(final String ownPackage, final Set<String> typeNames, final FunctionInterfaces functionInterfaces,
             final String... reservedNames) {
+        this(ownPackage, typeNames, functionInterfaces, Map.of(), reservedNames);
+    }
+
+    /**
+     * Creates the imports of a file.
+     *
+     * @param ownPackage      the package of the file
+     * @param typeNames          the simple names of all spec types (type variables must not shadow them)
+     * @param functionInterfaces the custom functional interfaces of function types
+     * @param externalPackages   the real Java package of every package that is not generated, by the package name
+     *                           the namespace would have ({@link JavaGeneratorConfig#EXTERNAL_NAMESPACE_PREFIX})
+     * @param reservedNames      simple names that are already taken in the file (e.g. the declared type itself)
+     */
+    Imports(final String ownPackage, final Set<String> typeNames, final FunctionInterfaces functionInterfaces,
+            final Map<String, String> externalPackages, final String... reservedNames) {
         this.ownPackage = Objects.requireNonNull(ownPackage, "ownPackage must not be null");
         this.typeNames = Set.copyOf(Objects.requireNonNull(typeNames, "typeNames must not be null"));
         this.functionInterfaces = Objects.requireNonNull(functionInterfaces, "functionInterfaces must not be null");
+        this.externalPackages = Map.copyOf(Objects.requireNonNull(externalPackages,
+                "externalPackages must not be null"));
         for (final String reserved : reservedNames) {
             bySimpleName.put(reserved, ownPackage + "." + reserved);
         }
     }
 
     /**
-     * Returns the name to use for a type and registers an import if needed.
+     * Returns the name to use for a type and registers an import if needed. A package of an external namespace is
+     * replaced by the Java package that really provides the type, so the rest of the generator can keep computing
+     * package names from namespaces.
      *
-     * @param packageName the package of the type
-     * @param simpleName  the simple name (for nested types: {@code Outer.Inner})
+     * @param generatedPackage the package the namespace of the type maps to
+     * @param simpleName       the simple name (for nested types: {@code Outer.Inner})
      * @return the name to write in the code
      */
-    String use(final String packageName, final String simpleName) {
+    String use(final String generatedPackage, final String simpleName) {
+        final String packageName = externalPackages.getOrDefault(generatedPackage, generatedPackage);
         final String topLevel = simpleName.contains(".") ? simpleName.substring(0, simpleName.indexOf('.'))
                 : simpleName;
         final String qualified = packageName + "." + topLevel;

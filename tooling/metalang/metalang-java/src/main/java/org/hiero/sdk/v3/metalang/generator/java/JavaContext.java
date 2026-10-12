@@ -30,6 +30,8 @@ final class JavaContext {
     private final Map<String, QualifiedName> exceptions;
     private final FunctionInterfaces functionInterfaces;
     private final Set<String> typeNames;
+    private final Map<String, String> externalNamespaces;
+    private final Map<String, String> externalPackages;
 
     /**
      * Creates a context.
@@ -40,10 +42,12 @@ final class JavaContext {
      * @param classes           the types that are (abstract or concrete) Java classes
      * @param exceptions        the generated exception class of every error identifier without standard exception
      * @param functionInterfaces the custom functional interfaces of function types
+     * @param externalNamespaces the Java package of every namespace that is not generated, by namespace
      */
     JavaContext(final LinkedModel model, final Set<QualifiedName> generated,
                 final Map<String, String> moduleOfNamespace, final Set<QualifiedName> classes,
-                final Map<String, QualifiedName> exceptions, final FunctionInterfaces functionInterfaces) {
+                final Map<String, QualifiedName> exceptions, final FunctionInterfaces functionInterfaces,
+                final Map<String, String> externalNamespaces) {
         this.model = Objects.requireNonNull(model, "model must not be null");
         this.generated = Set.copyOf(generated);
         this.moduleOfNamespace = Map.copyOf(moduleOfNamespace);
@@ -51,6 +55,21 @@ final class JavaContext {
         this.exceptions = Map.copyOf(exceptions);
         this.functionInterfaces = Objects.requireNonNull(functionInterfaces, "functionInterfaces must not be null");
         this.typeNames = model.types().stream().map(t -> t.name().name()).collect(Collectors.toUnmodifiableSet());
+        this.externalNamespaces = Map.copyOf(Objects.requireNonNull(externalNamespaces,
+                "externalNamespaces must not be null"));
+        this.externalPackages = externalNamespaces.entrySet().stream().collect(Collectors.toUnmodifiableMap(
+                e -> JavaNames.packageName(e.getKey()), Map.Entry::getValue));
+    }
+
+    /**
+     * Whether the types of a namespace are provided by an existing Java package instead of being generated
+     * ({@link JavaGeneratorConfig#EXTERNAL_NAMESPACE_PREFIX}).
+     *
+     * @param namespace the namespace
+     * @return {@code true} if the namespace is external
+     */
+    boolean isExternal(final String namespace) {
+        return externalNamespaces.containsKey(namespace);
     }
 
     LinkedModel model() {
@@ -117,8 +136,16 @@ final class JavaContext {
                 .map(s -> threadSafe(s.name(), visited)).flatMap(Optional::stream).findFirst();
     }
 
+    /**
+     * Whether a type can be referenced by generated code: it is generated, or an existing Java package provides it
+     * ({@link #isExternal(String)}). External types are never supertypes of generated types, so the places that ask
+     * for a supertype use {@code generated} directly.
+     *
+     * @param name the type
+     * @return {@code true} if the type can be referenced
+     */
     boolean isGenerated(final QualifiedName name) {
-        return generated.contains(name);
+        return generated.contains(name) || isExternal(name.namespace());
     }
 
     /**
@@ -169,7 +196,7 @@ final class JavaContext {
      * @return the imports
      */
     Imports imports(final String packageName, final String className) {
-        return new Imports(packageName, typeNames, functionInterfaces, className);
+        return new Imports(packageName, typeNames, functionInterfaces, externalPackages, className);
     }
 
     /**

@@ -131,6 +131,9 @@ public final class JavaGenerator {
             final Set<String> visible = new HashSet<>(requiredModules(module.name(), modules));
             visible.add(module.name());
             for (final NamespaceDefinition namespace : module.namespaces()) {
+                if (context.isExternal(namespace.name())) {
+                    continue;
+                }
                 packageInfo(module, namespace).ifPresent(files::add);
                 for (final TypeDefinition type : model.types(namespace.name())) {
                     if (context.isGenerated(type.name())) {
@@ -173,7 +176,7 @@ public final class JavaGenerator {
                 supportUsers.add(module.name());
             }
             files.add(moduleInfo(module, packagesWithTypes, supportUsers.contains(module.name()),
-                    config.protobuf().contains(module.folder())));
+                    config.protobuf().contains(module.folder()), context));
         }
         // the Maven build: one sub-module (and JAR) per JPMS module
         final Map<String, String> folderOf = new HashMap<>();
@@ -256,8 +259,9 @@ public final class JavaGenerator {
         final Set<QualifiedName> classes = new HashSet<>(abstractClasses);
         final SortedMap<QualifiedName, TypeDefinition> candidates = new TreeMap<>();
         for (final TypeDefinition type : model.types()) {
-            if (!moduleOfNamespace.containsKey(type.name().namespace())) {
-                continue;
+            if (!moduleOfNamespace.containsKey(type.name().namespace())
+                    || config.externalNamespaces().containsKey(type.name().namespace())) {
+                continue; // an external namespace is provided by an existing Java package, not generated
             }
             if (type instanceof TypeDefinition.ComplexTypeDefinition complex && !complex.abstraction()
                     && !isRecord(complex, extended, abstractClasses, model)) {
@@ -270,7 +274,7 @@ public final class JavaGenerator {
         while (changed) {
             changed = false;
             final JavaContext context = new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes,
-                    exceptions, functionInterfaces);
+                    exceptions, functionInterfaces, config.externalNamespaces());
             for (final TypeDefinition type : List.copyOf(candidates.values())) {
                 final Optional<String> reason = missingType(type, context)
                         .or(() -> unsupported(type, context));
@@ -282,7 +286,7 @@ public final class JavaGenerator {
             }
         }
         final JavaContext context = new JavaContext(model, candidates.keySet(), moduleOfNamespace, classes,
-                exceptions, functionInterfaces);
+                exceptions, functionInterfaces, config.externalNamespaces());
         return new Plan(context, deferred, constants(model, moduleOfNamespace, context, deferred),
                 functions(model, moduleOfNamespace, context, deferred));
     }
@@ -963,12 +967,17 @@ public final class JavaGenerator {
     }
 
     private static GeneratedFile moduleInfo(final Module module, final Set<String> packagesWithTypes,
-                                            final boolean support, final boolean protobuf) {
+                                            final boolean support, final boolean protobuf,
+                                            final JavaContext context) {
+        final List<NamespaceDefinition> namespaces = module.namespaces().stream()
+                .filter(n -> !context.isExternal(n.name())).toList();
+        // an external namespace is part of the API of the module, so its provider must be readable by every user
+        final boolean externalProtobuf = module.namespaces().size() != namespaces.size();
         final StringBuilder java = new StringBuilder(HEADER).append('\n');
         java.append("import org.jspecify.annotations.NullMarked;\n\n");
         java.append(MarkdownComment.render("", List.of(
                 "Module `" + module.name() + "` of the Hiero SDK.",
-                "Packages:\n" + String.join("\n", module.namespaces().stream()
+                "Packages:\n" + String.join("\n", namespaces.stream()
                         .map(n -> "- `" + JavaNames.packageName(n.name()) + "`")
                         .toList()))));
         // non-null by default in all packages, like the meta-language; only @@nullable needs @Nullable
@@ -983,13 +992,15 @@ public final class JavaGenerator {
             java.append("    requires transitive ").append(SupportFiles.MODULE).append(";\n");
         }
         if (protobuf) {
-            // not transitive: the wire format is an implementation detail and no part of the API (ProtobufFiles)
-            java.append("    requires ").append(ProtobufFiles.MODULE).append(";\n");
+            // transitive only where the API itself exposes protobuf messages (an external namespace); otherwise the
+            // wire format stays an implementation detail and no part of the API (ProtobufFiles)
+            java.append(externalProtobuf ? "    requires transitive " : "    requires ")
+                    .append(ProtobufFiles.MODULE).append(";\n");
         }
         // static: only needed at compile time; transitive: the annotations are part of the exported API
         java.append("    requires static transitive ").append(JSPECIFY_MODULE).append(";\n");
         java.append('\n');
-        for (final NamespaceDefinition namespace : module.namespaces()) {
+        for (final NamespaceDefinition namespace : namespaces) {
             if (packagesWithTypes.contains(namespace.name())) {
                 java.append("    exports ").append(JavaNames.packageName(namespace.name())).append(";\n");
             } else {

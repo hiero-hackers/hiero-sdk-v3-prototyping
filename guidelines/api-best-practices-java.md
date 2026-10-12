@@ -3273,6 +3273,13 @@ module org.hiero.transactions {
 | `namespace common`       | `org.hiero.common`       |
 | `namespace client`       | `org.hiero.client`       |
 
+**Exception — a namespace an existing package already provides.** Some namespaces only *name* types that another
+build step produces; `consensusnode.proto` names the protobuf messages. Generating `org.hiero.consensusnode.proto`
+for it would create a second, empty type beside the real one. Such a namespace is therefore configured as external
+(`java.externalNamespace.consensusnode.proto = com.hederahashgraph.api.proto.java`): nothing is generated for it,
+and every reference resolves to the configured package. The namespace stays declared in the specs — only the
+location is a Java decision. See [ADR-0009](../docs/adr/0009-protobuf-messages-in-the-spi.md).
+
 ### Namespace Dependencies
 
 Namespace dependencies in the meta-language map directly to JPMS module dependencies:

@@ -6,7 +6,6 @@ import org.jspecify.annotations.NullMarked;
 ///
 /// Packages:
 /// - `org.hiero.consensusnode.client`
-/// - `org.hiero.consensusnode.proto`
 /// - `org.hiero.consensusnode.proto.account`
 /// - `org.hiero.consensusnode.queries`
 /// - `org.hiero.consensusnode.queries.accounts`
@@ -29,12 +28,11 @@ import org.jspecify.annotations.NullMarked;
 module org.hiero.consensus.node.client {
     requires transitive org.hiero.base;
     requires static transitive org.jspecify;
-    requires org.hiero.sdk.protobuf;
+    requires transitive org.hiero.sdk.protobuf;
     requires io.grpc;
     requires io.grpc.protobuf.lite;
 
     exports org.hiero.consensusnode.client;
-    exports org.hiero.consensusnode.proto;
     // exports org.hiero.consensusnode.proto.account; (enabled as soon as the package contains generated types)
     exports org.hiero.consensusnode.queries;
     exports org.hiero.consensusnode.queries.accounts;

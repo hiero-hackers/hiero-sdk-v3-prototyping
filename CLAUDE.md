@@ -199,10 +199,10 @@ points to keep specs valid and consistent:
 - `@@async` returns a future/promise; `@@streaming` returns a pull-based async stream of items (`streamResult<TYPE>`
   for per-item errors). They are mutually exclusive.
 
-## Protobuf is never public API
+## Protobuf is public API only where the SPI exposes it
 
-All three languages generate protobuf code from `/tooling/protobuf` at build time, and in none of them is the
-result part of the public API - the wire format changes with every network release, so exposing it
+All three languages generate protobuf code from `tooling/protobuf` at build time, and almost none of
+it is part of the public API - the wire format changes with every network release, so exposing it
 would make every protocol change a breaking change of the SDK. Nothing generated is committed.
 
 | | Generated into | Kept internal by |
@@ -215,7 +215,17 @@ Java is the only one that needs a separate module: JPMS forbids split packages, 
 packages must have exactly one owner. Rust and TypeScript keep the code inside the consuming crate
 resp. package. See `tooling/protobuf/README.md`, "Language bindings".
 
-**The generators own this wiring**, so it survives a regeneration: `java.protobuf`, `ts.protobuf` and
+**The exception is the SPI** (`consensusnode.transactions.spi`): `TransactionSupport` hands the raw
+transaction body, response, receipt and record to whoever adds a custom service, so those four
+messages *are* API. The specs name them in the namespace `consensusnode.proto`; a generator that
+supports it maps that namespace to the generated protobuf code instead of generating placeholders
+beside it - `java.externalNamespace.consensusnode.proto = com.hederahashgraph.api.proto.java`. In
+Java this makes `com.hederahashgraph.api.proto.java` an unqualified export and the
+`requires org.hiero.sdk.protobuf` of the client module `transitive`; the generator derives both from
+the configuration, so a regeneration preserves it. TypeScript, Rust and Go have no key yet and still
+generate the placeholders. See [ADR-0009](docs/adr/0009-protobuf-messages-in-the-spi.md).
+
+**The generators own the rest of this wiring** too: `java.protobuf`, `ts.protobuf` and
 `rust.protobuf` in the three `generator.properties` list the spec folders that need it (Rust also has
 `rust.protobufRoot`). Without the key nothing protobuf-related is generated.
 

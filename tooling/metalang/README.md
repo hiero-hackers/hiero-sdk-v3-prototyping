@@ -385,9 +385,17 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   a `@@finalMethod` are errors.
 - **Protobuf** (`ProtobufFiles`): `java.protobuf` lists the spec folders whose module needs the protobuf messages.
   Such a module gets a dependency on `hiero-sdk-protobuf` (the hand-written module `sdk-java/protobuf`, which
-  compiles the vendored definitions in `/tooling/protobuf`) and a plain `requires org.hiero.sdk.protobuf` — deliberately
-  **not** `requires transitive`: the wire format is an implementation detail, and the protobuf module exports its
-  packages only to the modules named here. See `tooling/protobuf/README.md`.
+  compiles the vendored definitions in `/tooling/protobuf`) and a plain `requires org.hiero.sdk.protobuf` —
+  **not** `requires transitive`, because the wire format is an implementation detail and the protobuf module
+  exports its packages only to the modules named here. See `tooling/protobuf/README.md`.
+- **External namespaces**: `java.externalNamespace.<namespace> = <java package>` says that an existing Java package
+  already provides the types of a namespace. Nothing is generated for it — no type, no `package-info.java`, no
+  `exports` — and every reference to one of its types resolves to the configured package instead. The types stay
+  *declared* in the specs, so the specs remain language neutral; only the location is per language. This is how
+  `consensusnode.proto` resolves to the protobuf messages of `sdk-java/protobuf` rather than to empty placeholders
+  beside them ([ADR-0009](../../docs/adr/0009-protobuf-messages-in-the-spi.md)); where a module contains such a
+  namespace, its `requires org.hiero.sdk.protobuf` becomes `transitive`, because the types are then part of its API.
+  Only the Java generator supports this key so far.
 - **Interfaces** (`InterfaceGenerator`): abstract accessors and setters for the declared attributes, abstract
   methods, `@@static` methods as stubs, `extends` for supertypes (which must be abstractions), `@@sealed(A, B)` →
   `sealed interface … permits A, B` (permitted types in the same module), `non-sealed` for sub-interfaces of a sealed

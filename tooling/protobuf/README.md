@@ -112,14 +112,14 @@ imports that do not resolve. It needs `git` and `jq`.
 
 ## Language bindings
 
-The three target languages generate from this tree at build time. **In none of them is the result
+The three target languages generate from this tree at build time. **Almost none of the result is
 part of the public API** — protobuf is how the SDK talks to a node, and exposing it would turn every
 protocol change into a breaking change of the SDK. Each language expresses that with its own
 mechanism:
 
 | | Generated into | Kept internal by | Proven by |
 |---|---|---|---|
-| Java | `sdk-java/protobuf` (module `org.hiero.sdk.protobuf`) | `exports … to …` in `module-info.java` naming only the SDK modules | a foreign module gets *package … is not visible* |
+| Java | `sdk-java/protobuf` (module `org.hiero.sdk.protobuf`) | `exports … to …` in `module-info.java` naming only the SDK modules (except the SPI messages, see below) | a foreign module gets *package … is not visible* |
 | Rust | `OUT_DIR` of `hiero-consensus-node-client`, included by `src/proto.rs` | `mod proto;` without `pub` in `lib.rs` | an integration test gets *module `proto` is private* |
 | TypeScript | `packages/consensus-node-client/src/internal/proto` | the subpath is absent from `exports` in `package.json` | an importer gets `ERR_PACKAGE_PATH_NOT_EXPORTED` |
 
@@ -127,6 +127,16 @@ All three compile the consensus node root. Java and TypeScript exclude `mirror/`
 duplicates the mirror node's own definitions and would collide with them in one Java package resp.
 one generated output; Rust compiles it too (208), because prost derives its module path from the
 proto package and nothing collides there.
+
+**The one exception is the SPI.** `consensusnode.transactions.spi.TransactionSupport` hands the raw
+transaction body, response, receipt and record to whoever adds a custom service or transaction type,
+so those four messages are API. The specs name them in the namespace `consensusnode.proto`, and a
+generator that supports `externalNamespace` maps that namespace to the generated protobuf code
+instead of generating empty placeholders beside it. In Java that makes
+`com.hederahashgraph.api.proto.java` an unqualified export and the client module's
+`requires org.hiero.sdk.protobuf` `transitive`; the rest of the module keeps its qualified exports.
+TypeScript, Rust and Go have no such key yet. See
+[ADR-0009](../../docs/adr/0009-protobuf-messages-in-the-spi.md).
 
 **Which modules get the protobuf code is generator configuration**, not something the specs express:
 `java.protobuf`, `ts.protobuf` and `rust.protobuf` list the spec folders, so the wiring survives a
