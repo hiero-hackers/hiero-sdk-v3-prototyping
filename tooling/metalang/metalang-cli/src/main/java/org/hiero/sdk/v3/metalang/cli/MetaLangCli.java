@@ -28,6 +28,8 @@ import org.hiero.sdk.v3.metalang.generator.java.JavaTckGenerator;
 import org.hiero.sdk.v3.metalang.generator.java.TestGenerator;
 import org.hiero.sdk.v3.metalang.generator.go.GoGenerator;
 import org.hiero.sdk.v3.metalang.generator.go.GoGeneratorConfig;
+import org.hiero.sdk.v3.metalang.generator.python.PythonGenerator;
+import org.hiero.sdk.v3.metalang.generator.python.PythonGeneratorConfig;
 import org.hiero.sdk.v3.metalang.generator.rust.RustGenerator;
 import org.hiero.sdk.v3.metalang.generator.rust.RustGeneratorConfig;
 import org.hiero.sdk.v3.metalang.generator.rust.RustTestGenerator;
@@ -48,7 +50,7 @@ import org.hiero.sdk.v3.metalang.tck.TckSpecifications;
  * metalang validate [--min-severity=error|warning|info] [--fail-on=error|warning|info|never]
  *                   [--format=text|json] [--summary] &lt;spec-dir-or-file&gt;
  * metalang model [--namespace=ns] [--type=ns.Type] [--fail-on=error|warning|info|never] &lt;spec-dir-or-file&gt;
- * metalang generate --language=java|ts|rust|go --output=dir [--fail-on=error|warning|info|never] [--show-deferred]
+ * metalang generate --language=java|ts|rust|go|python --output=dir [--fail-on=error|warning|info|never] [--show-deferred]
  *     [--show-untested]
  *     &lt;spec-dir-or-file&gt;
  * metalang check --language=java|ts|rust --project=dir [--config=file] [--typescript=dir] [--cargo=executable]
@@ -76,7 +78,7 @@ public final class MetaLangCli {
             Usage:
               metalang validate [options] <spec-dir-or-file>
               metalang model [options] <spec-dir-or-file>
-              metalang generate --language=java|ts|rust|go --output=<dir> [options] <spec-dir-or-file>
+              metalang generate --language=java|ts|rust|go|python --output=<dir> [options] <spec-dir-or-file>
               metalang check --language=java|ts|rust --project=<dir> [options] <spec-dir-or-file>
               metalang tck generate --language=java|ts --bindings=<dir> --output=<dir> [options] <spec-dir-or-file>
               metalang tck check --bindings=<dir> --tck=<dir> <spec-dir-or-file>
@@ -95,7 +97,8 @@ public final class MetaLangCli {
                                                   the model is printed in any case
 
             Options for 'generate':
-              --language=java|ts|rust|go          target language (required): Java, TypeScript, Rust or Go
+              --language=java|ts|rust|go|python   target language (required): Java, TypeScript, Rust, Go or
+                                                  Python
               --output=<dir>                      output directory (required; created if missing)
               --fail-on=error|warning|info|never  do not generate if a finding at or above this severity
                                                   exists (default: error)
@@ -107,7 +110,8 @@ public final class MetaLangCli {
             Options for 'check' (does a project provide the API generated from the specs? Additional files,
             types and members and implemented methods are allowed):
               --language=java|ts|rust            target language (required): Java, TypeScript or Rust
-                                                  (Go can be generated, but has no conformance check yet)
+                                                  (Go and Python can be generated, but have no conformance
+                                                  check yet)
               --project=<dir>                     directory of the project to check (required), e.g. the
                                                   generated code or an implementation based on it
               --config=<file>                     generator configuration (as for 'generate')
@@ -329,7 +333,7 @@ public final class MetaLangCli {
             }
         }
         if (!"java".equals(language) && !"ts".equals(language) && !"rust".equals(language)
-                && !"go".equals(language)) {
+                && !"go".equals(language) && !"python".equals(language)) {
             return usageError(language == null ? "Missing --language" : "Unsupported language '" + language + "'");
         }
         if (output == null || output.isBlank()) {
@@ -507,6 +511,12 @@ public final class MetaLangCli {
 
     private static Generation generation(final String language, final String config, final LinkedModel model)
             throws IOException {
+        if ("python".equals(language)) {
+            final PythonGenerator generator = new PythonGenerator(config == null ? PythonGeneratorConfig.DEFAULT
+                    : PythonGeneratorConfig.load(Path.of(config)));
+            final List<GeneratedFile> files = generator.generate(model);
+            return new Generation(files, generator.deferred(), List.of());
+        }
         if ("go".equals(language)) {
             final GoGenerator generator = new GoGenerator(config == null ? GoGeneratorConfig.DEFAULT
                     : GoGeneratorConfig.load(Path.of(config)));

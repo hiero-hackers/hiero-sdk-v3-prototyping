@@ -13,6 +13,8 @@
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-go/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-java/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-java/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-python/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-python/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-rust/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-rust/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-typescript/src/main/java" charset="UTF-8" />

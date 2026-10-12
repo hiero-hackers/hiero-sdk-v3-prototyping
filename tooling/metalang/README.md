@@ -42,6 +42,7 @@ For a quick build without tests:
 | `metalang-typescript` | TypeScript generator (`generator.ts`: npm workspace, API, `node:test` tests) and TypeScript conformance check (`check.ts`). The generated packages depend on the hand-written support package `sdk-ts/support`. |
 | `metalang-rust` | Rust generator (`generator.rust`: Cargo workspace, API, integration tests) and Rust conformance check (`check.rust` with the `rs-api` program, a resource). The support files are copied from `guidelines/rust-files`. |
 | `metalang-go` | Go generator (`generator.go`: Go module, API). It is the newest generator and still incomplete: it emits the module, one package per namespace and the declared types; namespace functions, methods and generated tests are still missing, and there is no Go conformance check yet. |
+| `metalang-python` | Python generator (`generator.python`: distribution with `pyproject.toml`, API). Like Go it emits only the declared types so far; methods, functions, tests and a conformance check are still missing. |
 | `metalang-cli` | The command line tool (`MetaLangCli`) on top of all modules; builds the self-contained jar `tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar`. |
 
 A language generator depends only on `metalang-core`; a new language gets its own module next to them and is wired
@@ -174,6 +175,21 @@ may depend on the Go toolchain being installed.
 
 Declarations the generator cannot express in Go yet are left out instead of emitted as code that does not
 compile, and `--show-deferred` lists them with the reason. On the current specs nothing is deferred.
+
+### Generate the Python API
+
+One distribution (`hiero-sdk`, import package `hiero_sdk`), one package per namespace, see
+[Python generator](#python-generator):
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=python --fail-on=never --config=sdk-python/generator.properties --output=sdk-python/generated spec
+```
+
+Check it with Python 3.12 or newer and mypy: every package has to import, and the strict type check has to be clean.
+
+```bash
+cd sdk-python/generated && python3 -m mypy --strict src
+```
 
 ### Generate the Rust API
 
@@ -613,6 +629,31 @@ Still missing: namespace functions, methods on types, setters, errors, `@@async`
 generated tests, the protobuf wiring (`internal/proto`), the Go conformance check (`check --language=go` is
 rejected) and the Go TCK part.
 
+## Python generator
+
+`PythonGenerator` follows [`guidelines/api-best-practices-python.md`](../../guidelines/api-best-practices-python.md)
+and is configured by `sdk-python/generator.properties` (`python.distribution`, `python.package`, `python.version`; the
+distribution name must carry the `hiero-` prefix the Hiero namespace guidelines require).
+
+| Meta-language | Python |
+|---|---|
+| concrete type | `@dataclass(frozen=True, slots=True, kw_only=True)`; not frozen when a type of its inheritance tree has a mutable attribute |
+| abstraction | `typing.Protocol` with a read-only property per immutable attribute; implemented structurally |
+| `@@sealed(A, B)` abstraction | `type T = A \| B` |
+| enum without attributes | `Enum` whose values are the names |
+| enum with attributes | `Enum` whose values are `(name, attributes...)`, unpacked by `__init__`, read by properties |
+| generic type | PEP 695 (`class Page[T]:`); the self type is dropped, a wildcard argument is `Any`, a bound mentioning another type parameter is widened |
+
+`PyContext.gaps()` probes every declaration by generating it once and propagates a gap to everything that references
+the declaration, so the generated package never imports a module that does not exist. Types used only in annotations
+are imported under `TYPE_CHECKING`; a base class (with its type arguments), an enum value and a default value are
+imported at runtime. `PythonGeneratorTest` imports every package of the real specs with `python3` (skipped below 3.12)
+and runs `mypy --strict` when the interpreter has mypy (`-Dpython.executable=...`).
+
+Still missing: methods, namespace functions, constants, errors, `@@async`/`@@streaming` signatures, runtime checks of
+the constraints (`__post_init__`), generated tests, the support package, the protobuf wiring, the Python conformance
+check (`check --language=python` is rejected) and the Python TCK part.
+
 ## Generated tests
 
 `TestGenerator` writes a JUnit test class into `src/test/java` of the module, in the package of the tested type: one
@@ -765,6 +806,15 @@ compiler rather than by taste:
   struct admits that struct only; the lost constraint is named in the generated doc comment.
 - **Maps are copied like slices.** The guideline copied `bytes` and slices in and out; a map is a reference type
   too, and without the copy an `@@immutable` map attribute is immutable in name only.
+
+Writing the Python generator added one rule to `guidelines/api-best-practices-python.md` and sharpened another, both
+forced by the interpreter or by mypy:
+
+- **A bound cannot mention another type parameter.** `[Result, ResponseT: QueryResponse[Result]]` is rejected by
+  mypy; the variables in such a bound are widened to `Any`, and the docstring names the lost constraint.
+- **The type arguments of a base class are evaluated at runtime.** `class FreeQuery[Result](Query[Result,
+  QueryResponse[Result]], Protocol)` failed with `NameError` while `QueryResponse` was imported for the type checker
+  only; every name in a base class expression is now a runtime import.
 
 ## Current findings on `spec/`
 

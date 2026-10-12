@@ -162,6 +162,7 @@ class CheckCommandTest {
         final String project = "--project=" + Files.createDirectories(temp.resolve("project"));
         assertThat(cli.run("check", project, spec.toString())).isEqualTo(MetaLangCli.EXIT_USAGE);
         assertThat(cli.run("check", "--language=go", project, spec.toString())).isEqualTo(MetaLangCli.EXIT_USAGE);
+        assertThat(cli.run("check", "--language=python", project, spec.toString())).isEqualTo(MetaLangCli.EXIT_USAGE);
         assertThat(cli.run("check", "--language=ts", "--config=" + temp.resolve("none"), project, spec.toString()))
                 .isEqualTo(MetaLangCli.EXIT_FINDINGS);
         assertThat(cli.run("check", "--language=java", spec.toString())).isEqualTo(MetaLangCli.EXIT_USAGE);
@@ -174,7 +175,8 @@ class CheckCommandTest {
                 .isEqualTo(MetaLangCli.EXIT_USAGE);
         assertThat(cli.run("check", "--language=java", "--unknown", project, spec.toString()))
                 .isEqualTo(MetaLangCli.EXIT_USAGE);
-        assertThat(err()).contains("Missing --language", "Unsupported language 'go'", "Missing --project",
+        assertThat(err()).contains("Missing --language", "Unsupported language 'go'", "Unsupported language 'python'",
+                "Missing --project",
                 "Project directory does not exist: ", "Expected exactly one spec directory or file",
                 "Path does not exist: ", "Invalid severity in --fail-on=sometimes", "Unknown option --unknown",
                 "metalang check --language=java|ts|rust --project=<dir> [options] <spec-dir-or-file>");

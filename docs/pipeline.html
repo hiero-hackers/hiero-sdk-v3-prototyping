@@ -341,16 +341,16 @@
 
       <figure>
         <div class="scroller">
-          <svg viewBox="0 0 800 395" role="img" aria-label="Specs flow into metalang-core, which feeds four language generators, each producing a generated project; a dashed check arrow runs back from each project to its generator, except for Go, which has no conformance check yet.">
+          <svg viewBox="0 0 800 478" role="img" aria-label="Specs flow into metalang-core, which feeds five language generators, each producing a generated project; a dashed check arrow runs back from each project to its generator, except for Go and Python, which have no conformance check yet.">
             <defs>
               <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                 <polygon class="d-head" points="0,1 10,5 0,9"/>
               </marker>
             </defs>
 
-            <rect class="d-box d-box--hand" x="16" y="40" width="104" height="310" rx="2"/>
-            <text class="d-t"   x="68" y="190" text-anchor="middle">spec/</text>
-            <text class="d-sub" x="68" y="208" text-anchor="middle">55 .md</text>
+            <rect class="d-box d-box--hand" x="16" y="40" width="104" height="393" rx="2"/>
+            <text class="d-t"   x="68" y="230" text-anchor="middle">spec/</text>
+            <text class="d-sub" x="68" y="248" text-anchor="middle">55 .md</text>
 
             <line class="d-line" x1="122" y1="197" x2="146" y2="197" marker-end="url(#a1)"/>
 
@@ -363,6 +363,7 @@
             <line class="d-line" x1="294" y1="195" x2="326" y2="155" marker-end="url(#a1)"/>
             <line class="d-line" x1="294" y1="200" x2="326" y2="238" marker-end="url(#a1)"/>
             <line class="d-line" x1="294" y1="205" x2="326" y2="321" marker-end="url(#a1)"/>
+            <line class="d-line" x1="294" y1="210" x2="326" y2="404" marker-end="url(#a1)"/>
 
             <rect class="d-box d-box--hand" x="330" y="43" width="150" height="58" rx="2"/>
             <text class="d-t"   x="405" y="67" text-anchor="middle">metalang-java</text>
@@ -380,10 +381,15 @@
             <text class="d-t"   x="405" y="316" text-anchor="middle">metalang-go</text>
             <text class="d-sub" x="405" y="334" text-anchor="middle">go.* properties</text>
 
+            <rect class="d-box d-box--hand" x="330" y="375" width="150" height="58" rx="2"/>
+            <text class="d-t"   x="405" y="399" text-anchor="middle">metalang-python</text>
+            <text class="d-sub" x="405" y="417" text-anchor="middle">python.* properties</text>
+
             <line class="d-line" x1="482" y1="60"  x2="556" y2="60"  marker-end="url(#a1)"/>
             <line class="d-line" x1="482" y1="143" x2="556" y2="143" marker-end="url(#a1)"/>
             <line class="d-line" x1="482" y1="226" x2="556" y2="226" marker-end="url(#a1)"/>
             <line class="d-line" x1="482" y1="309" x2="556" y2="309" marker-end="url(#a1)"/>
+            <line class="d-line" x1="482" y1="392" x2="556" y2="392" marker-end="url(#a1)"/>
             <text class="d-lbl" x="519" y="138" text-anchor="middle">generate</text>
 
             <line class="d-line d-dash" x1="556" y1="168" x2="484" y2="168" marker-end="url(#a1)"/>
@@ -407,15 +413,19 @@
             <text class="d-t"   x="650" y="316" text-anchor="middle">sdk-go/generated</text>
             <text class="d-sub" x="650" y="334" text-anchor="middle">303 .go · no check yet</text>
 
-            <text class="d-lbl" x="16" y="377">one model · four idiomatic projects</text>
+            <rect class="d-box d-box--gen" x="560" y="375" width="180" height="58" rx="2"/>
+            <text class="d-t"   x="650" y="399" text-anchor="middle">sdk-python/generated</text>
+            <text class="d-sub" x="650" y="417" text-anchor="middle">310 .py · no check yet</text>
+
+            <text class="d-lbl" x="16" y="460">one model · five idiomatic projects</text>
           </svg>
         </div>
         <figcaption>Each generator owns the whole project, not only the sources: Maven poms and
           <code>module-info.java</code>, the npm workspace and its <code>exports</code> maps, the Cargo
-          manifests and <code>lib.rs</code>. The dashed arrow is <code>metalang check</code>, which compares a
+          manifests and <code>lib.rs</code>, the Go module, the Python <code>pyproject.toml</code>. The dashed arrow is <code>metalang check</code>, which compares a
           project on disk against the API generated in memory — so a spec change that was never regenerated
-          fails the build. Go has no such check yet: <code>metalang check</code> accepts
-          <code>java|ts|rust</code> only, and the Go generator still emits types without methods.</figcaption>
+          fails the build. Go and Python have no such check yet: <code>metalang check</code> accepts
+          <code>java|ts|rust</code> only, and both generators still emit types without methods.</figcaption>
       </figure>
 
       <h3>What the configuration decides</h3>
@@ -1019,7 +1029,7 @@ hiero-sdk-tck-<b>runtime</b>       <b>runtime</b>   <span class="c">&#8592; the 
             <tr><td class="path">tooling/protobuf/</td><td class="origin"><span class="chip chip--vend">vendored</span></td><td>The protobuf definitions of all three node types, pinned; <code>update.sh</code>, <code>verify.sh</code>, <code>sources.json</code>.</td></tr>
             <tr><td class="path">sdk-java/support/<br>sdk-ts/support/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Types the generated API uses but no spec declares — thread-safety, streaming, <code>Duration</code>.</td></tr>
             <tr><td class="path">sdk-java/protobuf/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>No sources of its own: compiles <code>tooling/protobuf/</code> into Java and exports it only to the SDK modules.</td></tr>
-            <tr><td class="path">sdk-java/generated/<br>sdk-ts/generated/<br>sdk-rust/generated/<br>sdk-go/generated/</td><td class="origin"><span class="chip chip--gen">generated</span></td><td>The API per language, with its build files and contract tests. Never edited — except by the spike.</td></tr>
+            <tr><td class="path">sdk-java/generated/<br>sdk-ts/generated/<br>sdk-rust/generated/<br>sdk-go/generated/<br>sdk-python/generated/</td><td class="origin"><span class="chip chip--gen">generated</span></td><td>The API per language, with its build files and contract tests. Never edited — except by the spike.</td></tr>
             <tr><td class="path">tooling/tck/bindings/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>Markdown with <code>bindings</code> blocks: TCK method → API type, parameter by parameter.</td></tr>
             <tr><td class="path">sdk-java/tck/generated/<br>sdk-ts/tck/generated/</td><td class="origin"><span class="chip chip--gen">generated</span></td><td><code>contract/</code> — declarations the runtime implements; <code>server/</code> — the JSON-RPC server.</td></tr>
             <tr><td class="path">sdk-java/tck/runtime/<br>sdk-ts/tck/runtime/</td><td class="origin"><span class="chip chip--hand">hand</span></td><td>What bindings cannot express: the JSON-RPC server, the value converters, <code>setup</code>, error logging.</td></tr>

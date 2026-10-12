@@ -6,11 +6,12 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="metalang-rust" />
         <module name="metalang-go" />
         <module name="metalang-cli" />
+        <module name="metalang-python" />
         <module name="metalang-typescript" />
         <module name="metalang-core" />
+        <module name="metalang-rust" />
         <module name="metalang-java" />
       </profile>
     </annotationProcessing>

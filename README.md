@@ -55,10 +55,11 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | [`guidelines/api-best-practices-java.md`](guidelines/api-best-practices-java.md) | How the meta-language maps to idiomatic Java |
 | [`guidelines/api-best-practices-rust.md`](guidelines/api-best-practices-rust.md) | ... Rust |
 | [`guidelines/api-best-practices-go.md`](guidelines/api-best-practices-go.md) | ... Go (the mapping, written ahead of its generator) |
+| [`guidelines/api-best-practices-python.md`](guidelines/api-best-practices-python.md) | ... Python (the mapping of the Python generator) |
 | [`guidelines/api-best-practices-ts.md`](guidelines/api-best-practices-ts.md) | ... TypeScript (the mapping of the TypeScript generator) |
 | [`guidelines/api-best-practices-js.md`](guidelines/api-best-practices-js.md) | ... using the resulting API from JavaScript |
 | `guidelines/js-files/` | Illustrative reference snippets (not a buildable module) |
-| `sdk-java/`, `sdk-ts/`, `sdk-rust/`, `sdk-go/` | One folder per target language: its generator configuration, its hand-written modules and its generated ones (see [ADR-0008](docs/adr/0008-one-folder-per-target-language.md)) |
+| `sdk-java/`, `sdk-ts/`, `sdk-rust/`, `sdk-go/`, `sdk-python/` | One folder per target language: its generator configuration, its hand-written modules and its generated ones (see [ADR-0008](docs/adr/0008-one-folder-per-target-language.md)) |
 | `sdk-<lang>/generated/` | The generated API. Never edited by hand — except the Java and TypeScript ones, which currently carry the `AccountCreateTransaction` spike |
 | `sdk-java/support/`, `sdk-ts/support/` | Hand-written support types the generated API depends on (`@ThreadSafe`, streaming; `Duration`, `StreamItem`, `AbstractConstructor`) |
 | `sdk-<lang>/tck/` | The language-specific TCK parts: `generated/` (contract + server) and `runtime/` (hand-written) |
@@ -68,7 +69,7 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | [`docs/TODO.md`](docs/TODO.md) | Open follow-up tasks on the guides, the meta-language and the specs |
 | [`docs/TCK.md`](docs/TCK.md), [`docs/tck-binding.md`](docs/tck-binding.md), [`docs/tck-ideas.md`](docs/tck-ideas.md) | Three approaches to testing V3 against the Hiero TCK; `tck-binding.md` is the one with a spike |
 | [`docs/adr/`](docs/adr) | Architecture decision records |
-| [`tooling/metalang/`](tooling/metalang) | The spec tooling: parser, validator and the generators for Java, TypeScript, Rust and Go, plus the `metalang` CLI |
+| [`tooling/metalang/`](tooling/metalang) | The spec tooling: parser, validator and the generators for Java, TypeScript, Rust, Go and Python, plus the `metalang` CLI |
 | [`tooling/protobuf/`](tooling/protobuf) | The protobuf definitions of consensus, block and mirror node, vendored at pinned versions — one source for every generator |
 | `spec/base/` | Foundational namespaces: `ledger`, `keys`, `hbar`, `common`, `proto`, `grpc` |
 | `spec/consensus-node-client/` | Low-level client: build, sign, and execute transactions (incl. an SPI for custom services) |

@@ -74,6 +74,31 @@ class GenerateCommandTest {
     }
 
     @Test
+    void shouldGeneratePython() throws Exception {
+        // GIVEN
+        final Path config = temp.resolve("generator.properties");
+        Files.writeString(config, "python.distribution = hiero-shop\npython.package = shop\n");
+
+        // WHEN
+        final int exit = cli.run("generate", "--language=python", "--config=" + config, "--output="
+                + temp.resolve("python"), goldenSpec().toString());
+
+        // THEN
+        assertThat(exit).isEqualTo(MetaLangCli.EXIT_OK);
+        assertThat(out.toString(StandardCharsets.UTF_8)).contains(" file(s) generated in ");
+        assertThat(Files.readString(temp.resolve("python/pyproject.toml"))).contains("name = \"hiero-shop\"");
+        assertThat(temp.resolve("python/src/shop/py.typed")).exists();
+
+        // WHEN the configuration is invalid
+        Files.writeString(config, "python.version = one\n");
+
+        // THEN
+        assertThat(cli.run("generate", "--language=python", "--config=" + config, "--output="
+                + temp.resolve("python"), goldenSpec().toString())).isEqualTo(MetaLangCli.EXIT_FINDINGS);
+        assertThat(err()).contains("Cannot generate: python.version: 'one' is no PEP 440 version");
+    }
+
+    @Test
     void shouldGenerateRust() throws Exception {
         // GIVEN
         final Path config = temp.resolve("generator.properties");

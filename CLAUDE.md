@@ -30,6 +30,7 @@ guidelines/
   api-best-practices-java.md    # How meta-language concepts map to idiomatic Java
   api-best-practices-rust.md    # ... Rust (the mapping of the Rust generator)
   api-best-practices-go.md      # ... Go (the mapping of the Go generator)
+  api-best-practices-python.md  # ... Python (the mapping of the Python generator)
   api-best-practices-js.md      # ... JavaScript
   api-best-practices-ts.md      # ... TypeScript (the mapping of the TypeScript generator)
   rust-files/                   # Rust support types (BoxFuture, InvalidArgumentError, ...); copied 1:1 into sdk-rust/generated
@@ -87,6 +88,14 @@ sdk-go/
                                 #   produces gofmt's alignment itself, nothing in the build needs a Go toolchain.
                                 #   Incomplete: types only - no methods, functions, tests, protobuf or TCK part.
 
+sdk-python/
+  generator.properties          # Python generator configuration (python.distribution, python.package, python.version)
+  generated/                    # Generated Python API as ONE distribution (hiero-sdk, import package hiero_sdk), one
+                                #   package per namespace re-exporting its types, one private module per type.
+                                #   Never edit by hand. Every package must import and `mypy --strict src` must be
+                                #   clean (Python 3.12+). Incomplete like Go: types only - no methods, functions,
+                                #   tests, protobuf or TCK part.
+
 # There are exactly two Maven builds - sdk-java/ and tooling/metalang/ - and each carries its own
 # Maven wrapper (mvnw, mvnw.cmd, .mvn/) and its own .sdkmanrc (JDK 25). Build from inside one of
 # them (`cd sdk-java && ./mvnw -f support install`); never call a locally installed `mvn`.
@@ -141,6 +150,7 @@ tooling/metalang/               # Prototype tooling, multi-module Maven build (s
   metalang-typescript/          #   TypeScript generator + TypeScript conformance check
   metalang-rust/                #   Rust generator + Rust conformance check (rs-api, a syn-based helper)
   metalang-go/                  #   Go generator (types only so far; no conformance check yet)
+  metalang-python/              #   Python generator (types only so far; no conformance check yet)
   metalang-cli/                 #   command line tool; builds tooling/metalang/target/metalang-*-cli.jar
 ```
 
@@ -307,10 +317,10 @@ Comments` of the respective spec files and are the real output of the spike:
   language — when you add a new meta-language feature, consider whether each language guide needs a mapping (the
   guideline lists per-language mappings for varargs, wildcards, streaming cancellation, `streamResult`, etc.).
 - Note: `api-guideline.md` references a `proposals/` folder, but in this repo the specs live under `spec/`.
-- Some language guides referenced by `api-guideline.md` (cpp, python, swift) do not exist yet — that's
-  expected; Java, TypeScript, Rust, JS and Go guides are present so far. Four of them are implemented by a
-  generator in `tooling/metalang`: `generate --language=java|ts|rust|go`, and `check --language=java|ts|rust`
-  (there is no Go conformance check yet, so `check` rejects `go` — asserted by tests in `metalang-cli`).
+- Some language guides referenced by `api-guideline.md` (cpp, swift) do not exist yet — that's
+  expected; Java, TypeScript, Rust, JS, Go and Python guides are present so far. Five of them are implemented by a
+  generator in `tooling/metalang`: `generate --language=java|ts|rust|go|python`, and `check --language=java|ts|rust`
+  (there is no Go or Python conformance check yet, so `check` rejects both — asserted by tests in `metalang-cli`).
 - **The Go generator is the youngest and is incomplete.** It emits the module, one package per namespace and the
   declared types (structs with constructor and getters, interfaces for abstractions, both enum shapes); methods,
   namespace functions, generated tests, the protobuf wiring and the TCK part are still missing. A declaration it
@@ -319,6 +329,12 @@ Comments` of the respective spec files and are the real output of the spike:
   Go compiler rejected (no inherited state via an embedded base struct, self types dropped, concrete type
   parameter bounds widened to `any`, maps copied like slices) — see "Guideline decisions driven by the tooling"
   in `tooling/metalang/README.md`.
+- **The Python generator is as young and as incomplete as the Go one**, with the same scope: the distribution, one
+  package per namespace and the declared types (frozen dataclasses, `typing.Protocol` for abstractions, union aliases
+  for `@@sealed`, both enum shapes). It follows `api-best-practices-python.md` (Python 3.12, PEP 695 generics,
+  `kw_only` dataclasses, `async def` only). Abstractions are protocols because a dataclass cannot inherit a property
+  of the same name as one of its attributes. Verify a change with `mypy --strict src` in `sdk-python/generated` — the
+  generator tests run it when `-Dpython.executable=<python with mypy>` is given, and always import every package.
 - **`api-best-practices-js.md` and `api-best-practices-ts.md` describe the same runtime** and must not
   contradict each other: TypeScript output is consumed by JavaScript callers. Where they disagree today, the
   `## Questions & Comments` of the TypeScript guide records it.

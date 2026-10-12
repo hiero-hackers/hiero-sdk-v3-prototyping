@@ -26,6 +26,8 @@
         <module>metalang-rust</module>
         <!-- Go: API generator, following guidelines/api-best-practices-go.md -->
         <module>metalang-go</module>
+        <!-- Python: API generator, following guidelines/api-best-practices-python.md -->
+        <module>metalang-python</module>
         <!-- the command line tool (target/metalang-<version>-cli.jar of this directory) -->
         <module>metalang-cli</module>
     </modules>
@@ -99,6 +101,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>metalang-go</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>metalang-python</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
