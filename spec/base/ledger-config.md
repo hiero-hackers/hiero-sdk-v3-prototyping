@@ -4,7 +4,9 @@ This section defines the API for configuration.
 
 ## Description
 
-The config API provides functions to define and retrieve the configuration of a specific network.
+The config API provides functions to define and retrieve the configuration of a specific network. A
+`NetworkSetting` is an immutable snapshot of the network and the consensus-node and mirror-node addresses needed to
+connect to it. Retrieving a setting must not perform network access.
 
 ## API Schema
 
@@ -17,9 +19,11 @@ NetworkSetting {
  
     @@immutable network: Network<ANY>
    
-    @@immutable  getConsensusNodes: set<ConsensusNode>
+    // Consensus-node address snapshot used to submit requests
+    @@immutable getConsensusNodes: set<ConsensusNode>
 
-    @@immutable  getMirrorNodes: set<MirrorNode>
+    // Fixed mirror-node address snapshot used for mirror queries and consensus-node discovery
+    @@immutable getMirrorNodes: set<MirrorNode>
 
 }
 
@@ -40,5 +44,32 @@ The following example shows how to load the network configuration for the Hedera
 ```
 NetworkSetting setting = NetworkSetting.getNetworkSetting(HEDERA_TESTNET_IDENTIFIER)
 ```
+
+## Node Address Snapshots
+
+Built-in public-network settings must contain enough bootstrap addresses to establish initial connectivity. Consensus
+nodes come from an address-book snapshot packaged with the SDK release. Mirror nodes come from fixed public endpoints
+maintained by the network. Custom settings use the addresses supplied when they are registered.
+
+The returned collections are immutable snapshots. A caller that already holds a `NetworkSetting` must not observe later
+registry or client updates through that instance. Registering a newer setting under an existing identifier affects
+subsequent calls to `getNetworkSetting`, but it must not mutate settings that were previously returned.
+
+Runtime consensus-address refresh is performed periodically by the underlying process defined in the
+[client API](../consensus-node-client/client.md#node-address-management).
+
+## Testing
+
+### `ledger.config/node-address-snapshots-are-immutable`
+
+ - **Given** a registered network setting.
+ - **When** its consensus and mirror nodes are retrieved.
+ - **Then** both results are immutable snapshots and attempts to modify caller-owned copies do not affect the setting.
+
+### `ledger.config/re-registration-does-not-mutate-previous-setting`
+
+ - **Given** a setting previously retrieved from an identifier.
+ - **When** a newer setting is registered under the same identifier.
+ - **Then** subsequent retrieval returns the newer snapshot and the previous setting remains unchanged.
 
 ## Questions & Comments
