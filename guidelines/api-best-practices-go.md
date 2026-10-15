@@ -276,6 +276,13 @@ For `KeysFactory`, whose five `createPrivateKey` overloads are the worst case in
 Namespace-level functions are package-level functions. Factory types (`KeysFactory`, `ClientFactory`) have no Go
 equivalent and disappear: their methods become package-level functions in the namespace's package.
 
+> **What the generator produces.** The table above is the hand-picked form; a generator cannot know which overload
+> the specs prefer, so it keeps the **first declaration**'s name and suffixes every other one with its parameter
+> names — `CreatePrivateKeyFromContainerValue` rather than `CreatePrivateKeyFromFormattedString`. The names are
+> deterministic and unique; where the specs want the form above, the overloads have to be named apart in the spec.
+> A `@@static` method becomes `<Type><Method>`, and a method body is `panic("Not implemented yet: Type.Method")`,
+> the Go counterpart of the stubs the other generators emit.
+
 **Generic methods.** Go 1.27 allows a method of a concrete type to declare its own type parameters; an interface
 method still may not (`interface method must have no type parameters`). The meta-definition records exactly this
 split, and it is what the generator follows:

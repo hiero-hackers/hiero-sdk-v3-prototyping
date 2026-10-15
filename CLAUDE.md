@@ -86,15 +86,15 @@ sdk-go/
                                 #   one package per namespace in a directory per segment. Never edit by hand.
                                 #   `go build ./... && go vet ./... && gofmt -l .` must be clean; the generator
                                 #   produces gofmt's alignment itself, nothing in the build needs a Go toolchain.
-                                #   Incomplete: types only - no methods, functions, tests, protobuf or TCK part.
+                                #   Incomplete: no setters, error types, constants, tests, protobuf or TCK part.
 
 sdk-python/
   generator.properties          # Python generator configuration (python.distribution, python.package, python.version)
   generated/                    # Generated Python API as ONE distribution (hiero-sdk, import package hiero_sdk), one
                                 #   package per namespace re-exporting its types, one private module per type.
                                 #   Never edit by hand. Every package must import and `mypy --strict src` must be
-                                #   clean (Python 3.12+). Incomplete like Go: types only - no methods, functions,
-                                #   tests, protobuf or TCK part.
+                                #   clean (Python 3.12+). Incomplete: types only - no methods, functions, tests,
+                                #   protobuf or TCK part (Go has methods and functions, Python does not yet).
 
 # There are exactly two Maven builds - sdk-java/ and tooling/metalang/ - and each carries its own
 # Maven wrapper (mvnw, mvnw.cmd, .mvn/) and its own .sdkmanrc (JDK 25). Build from inside one of
@@ -321,9 +321,12 @@ Comments` of the respective spec files and are the real output of the spike:
   expected; Java, TypeScript, Rust, JS, Go and Python guides are present so far. Five of them are implemented by a
   generator in `tooling/metalang`: `generate --language=java|ts|rust|go|python`, and `check --language=java|ts|rust`
   (there is no Go or Python conformance check yet, so `check` rejects both — asserted by tests in `metalang-cli`).
-- **The Go generator is the youngest and is incomplete.** It emits the module, one package per namespace and the
-  declared types (structs with constructor and getters, interfaces for abstractions, both enum shapes); methods,
-  namespace functions, generated tests, the protobuf wiring and the TCK part are still missing. A declaration it
+- **The Go generator is the youngest and is incomplete.** It emits the module, one package per namespace, the
+  declared types (structs with constructor and getters, interfaces for abstractions, both enum shapes) and their
+  methods and functions (value receiver, `panic("Not implemented yet: …")` body, `(T, error)` for `@@throws`,
+  `ctx context.Context` for `@@async`, `iter.Seq2` for `@@streaming`, package-level functions for `@@static` and
+  for a namespace); setters, the declared error identifiers, namespace constants, generated tests, the protobuf
+  wiring and the TCK part are still missing. A declaration it
   cannot express is **left out** and reported by `--show-deferred`, so `sdk-go/generated` always compiles; on the
   current specs nothing is deferred. Writing it corrected four decisions in `api-best-practices-go.md` that the
   Go compiler rejected (no inherited state via an embedded base struct, self types dropped, concrete type

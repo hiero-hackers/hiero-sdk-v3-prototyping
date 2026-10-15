@@ -625,9 +625,18 @@ being installed:
 - `gofmt -l` prints nothing: `GoFormat` produces the column alignment `gofmt` would, at the places where the
   generator knows it is emitting a declaration list.
 
-Still missing: namespace functions, methods on types, setters, errors, `@@async`/`@@streaming` signatures,
-generated tests, the protobuf wiring (`internal/proto`), the Go conformance check (`check --language=go` is
-rejected) and the Go TCK part.
+Methods and functions are generated: a method of a struct takes a value receiver and panics with "Not implemented
+yet", the Go counterpart of the stubs the other generators emit; a method that declares `@@throws` returns
+`(T, error)`, an `@@async` one blocks and takes `ctx context.Context` first, and an `@@streaming` one returns
+`iter.Seq2[T, error]`. An overload set is disambiguated by suffixing every declaration after the first with its
+parameter names (`CreateFromRaw`), because Go has no overloading. A `@@static` method and a namespace function both
+become package-level functions, the latter in `functions.go` of the package. A generic method of an abstraction
+becomes a package-level function that takes the instance first, since Go forbids type parameters on an interface
+method.
+
+Still missing: setters, the declared error identifiers (a fallible method returns `error`, but there is no sentinel
+or typed error for the ids the specs name), namespace constants, generated tests, the protobuf wiring
+(`internal/proto`), the Go conformance check (`check --language=go` is rejected) and the Go TCK part.
 
 ## Python generator
 

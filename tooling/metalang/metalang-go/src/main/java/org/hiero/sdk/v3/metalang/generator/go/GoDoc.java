@@ -27,7 +27,7 @@ final class GoDoc {
         final String text = documentation == null ? "" : documentation.strip();
         final StringBuilder go = new StringBuilder();
         if (!text.isEmpty()) {
-            go.append(comment(text.startsWith(name) ? text : name + " " + lowerFirst(text)));
+            go.append(comment(startsWith(text, name) ? text : name + " " + lowerFirst(text)));
         }
         final String deprecation = deprecation(annotated);
         if (deprecation != null) {
@@ -38,6 +38,15 @@ final class GoDoc {
             go.append(comment("Deprecated: " + deprecation));
         }
         return go.toString();
+    }
+
+    /**
+     * Whether the text already opens with the identifier as a word. A prefix is not enough: a comment on
+     * {@code Rename} that opens with "Renames the account" does not name the identifier, it only looks like it.
+     */
+    private static boolean startsWith(final String text, final String name) {
+        return text.startsWith(name)
+                && (text.length() == name.length() || !Character.isLetterOrDigit(text.charAt(name.length())));
     }
 
     /**

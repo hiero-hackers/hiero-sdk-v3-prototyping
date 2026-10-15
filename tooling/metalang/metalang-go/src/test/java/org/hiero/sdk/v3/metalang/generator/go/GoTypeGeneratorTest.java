@@ -368,6 +368,130 @@ class GoTypeGeneratorTest {
     }
 
     @Nested
+    class Methods {
+
+        @Test
+        void aMethodOfAStructShouldHaveAValueReceiverAndAPanickingBody() {
+            final String go = generate("""
+                    namespace a
+                    Account {
+                        @@immutable id: string
+                        // Renames the account.
+                        void rename(name: string)
+                    }
+                    """, "a/account.go");
+            assertThat(go).contains("// Rename renames the account.\nfunc (a Account) Rename(name string) {\n"
+                    + "\tpanic(\"Not implemented yet: Account.Rename\")\n}\n");
+        }
+
+        @Test
+        void throwsShouldAddAnErrorResultAndAsyncAContext() {
+            final String go = generate("""
+                    namespace a
+                    Client {
+                        @@immutable id: string
+                        // Loads it.
+                        @@throws(not-found-error) string load(key: string)
+                        // Sends it.
+                        @@async @@throws(failed-error) void send(payload: bytes)
+                        // Counts them.
+                        int32 count()
+                    }
+                    """, "a/client.go");
+            assertThat(go)
+                    .contains("func (c Client) Load(key string) (string, error) {")
+                    .contains("func (c Client) Send(ctx context.Context, payload []byte) error {")
+                    .contains("func (c Client) Count() int32 {");
+        }
+
+        @Test
+        void aStreamingMethodShouldReturnASequence() {
+            final String go = generate("""
+                    namespace a
+                    Topic {
+                        @@immutable id: string
+                        // Follows it.
+                        @@streaming string follow()
+                    }
+                    """, "a/topic.go");
+            assertThat(go).contains("func (t Topic) Follow() iter.Seq2[string, error] {");
+        }
+
+        @Test
+        void overloadsShouldBeDistinguishedByTheirParameters() {
+            final String go = generate("""
+                    namespace a
+                    Keys {
+                        @@immutable id: string
+                        // Creates one.
+                        string create(value: string)
+                        // Creates one from raw bytes.
+                        string create(raw: bytes)
+                    }
+                    """, "a/keys.go");
+            assertThat(go).contains("func (k Keys) Create(value string) string {")
+                    .contains("func (k Keys) CreateFromRaw(raw []byte) string {");
+        }
+
+        @Test
+        void aMethodReturningTheSelfTypeShouldReturnTheDeclaringType() {
+            final String go = generate("""
+                    namespace a
+                    abstraction Builder<$$Self extends Builder<$$Self>> {
+                        // Sets the memo.
+                        $$Self memo(text: string)
+                    }
+                    Request extends Builder<Request> {
+                        @@immutable id: string
+                        // Sets the memo.
+                        Request memo(text: string)
+                    }
+                    """, "a/request.go");
+            // Go drops the self parameter, so the member names the declaring type instead
+            assertThat(go).contains("func (r Request) Memo(text string) Request {");
+            assertThat(generate("""
+                    namespace a
+                    abstraction Builder<$$Self extends Builder<$$Self>> {
+                        // Sets the memo.
+                        $$Self memo(text: string)
+                    }
+                    Request extends Builder<Request> {
+                        @@immutable id: string
+                        // Sets the memo.
+                        Request memo(text: string)
+                    }
+                    """, "a/builder.go")).contains("\tMemo(text string) Builder\n");
+        }
+
+        @Test
+        void aStaticMethodShouldBecomeAPackageLevelFunction() {
+            final String go = generate("""
+                    namespace a
+                    Address {
+                        @@immutable id: string
+                        // Parses one.
+                        @@static Address parse(text: string)
+                    }
+                    """, "a/address.go");
+            assertThat(go).contains("func AddressParse(text string) Address {");
+        }
+
+        @Test
+        void aNamespaceFunctionShouldBecomeAPackageLevelFunction() {
+            final String go = generate("""
+                    namespace a
+                    Client {
+                        @@immutable id: string
+                    }
+                    // Creates a client.
+                    @@static Client createClient(url: string)
+                    """, "a/functions.go");
+            assertThat(go).contains("// CreateClient creates a client.\nfunc CreateClient(url string) Client {")
+                    .contains("panic(\"Not implemented yet: a.CreateClient\")");
+        }
+    }
+
+    @Nested
     class Streaming {
 
         @Test

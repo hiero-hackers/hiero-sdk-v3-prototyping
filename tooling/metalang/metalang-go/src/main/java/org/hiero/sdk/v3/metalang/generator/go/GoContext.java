@@ -9,8 +9,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
+import org.hiero.sdk.v3.metalang.model.MethodDefinition;
 import org.hiero.sdk.v3.metalang.model.ParameterDefinition;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
 import org.hiero.sdk.v3.metalang.model.Type;
@@ -305,6 +307,30 @@ final class GoContext {
      *
      * @return the gaps, keyed by qualified name
      */
+    /**
+     * {@code [T any, R Receipt]}: the type parameters of a declaration or of a generic method. Go constrains a
+     * parameter with an interface; a concrete bound has no Go form at all, because Go has no subtyping for structs,
+     * so such a parameter is widened to {@code any}.
+     *
+     * @param parameters the type parameters
+     * @param imports    the imports of the file
+     * @return the rendered list, or {@code ""} when there is none
+     */
+    String typeParameters(final List<TypeParameterDefinition> parameters, final GoImports imports) {
+        if (parameters.isEmpty()) {
+            return "";
+        }
+        return "[" + parameters.stream().map(parameter -> {
+            final String name = parameterName(parameter.name());
+            if (parameter.bound() == null) {
+                return name + " any";
+            }
+            final GoType bound = type(parameter.bound());
+            return name + " " + (bound instanceof GoType.Declared declared && declared.iface()
+                    ? bound.render(imports) : "any");
+        }).collect(Collectors.joining(", ")) + "]";
+    }
+
     Map<QualifiedName, String> gaps() {
         if (gaps != null) {
             return gaps;
@@ -316,6 +342,13 @@ final class GoContext {
                         .filter(Objects::nonNull).forEach(this::type);
                 definition.supertypes().forEach(this::type);
                 definition.fields().stream().map(FieldDefinition::type).forEach(this::type);
+                // a method whose signature has no Go form would make the type impossible to generate as well
+                for (final MethodDefinition method : definition.methods()) {
+                    type(method.returnType());
+                    method.parameters().stream().map(ParameterDefinition::type).forEach(this::type);
+                    method.typeParameters().stream().map(TypeParameterDefinition::bound).filter(Objects::nonNull)
+                            .forEach(this::type);
+                }
                 if (definition instanceof TypeDefinition.EnumDefinition enumeration) {
                     enumeration.attributes().stream().map(ParameterDefinition::type).forEach(this::type);
                 }

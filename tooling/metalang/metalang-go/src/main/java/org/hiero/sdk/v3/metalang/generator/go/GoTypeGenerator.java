@@ -3,6 +3,7 @@ package org.hiero.sdk.v3.metalang.generator.go;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.model.EnumValueDefinition;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
+import org.hiero.sdk.v3.metalang.model.MethodDefinition;
 import org.hiero.sdk.v3.metalang.model.ParameterDefinition;
 import org.hiero.sdk.v3.metalang.model.Type;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
@@ -29,6 +31,8 @@ final class GoTypeGenerator {
 
     private final GoContext context;
 
+    private final GoMembers members;
+
 
 
     /**
@@ -38,6 +42,7 @@ final class GoTypeGenerator {
      */
     GoTypeGenerator(final GoContext context) {
         this.context = Objects.requireNonNull(context, "context must not be null");
+        this.members = new GoMembers(context);
     }
 
     /**
@@ -65,22 +70,49 @@ final class GoTypeGenerator {
         go.append(widenedNote(definition));
         go.append("type ").append(name).append(typeParameters(GoContext.goParameters(definition), imports))
                 .append(" interface {\n");
-        final List<String> members = new ArrayList<>();
+        final List<String> declarations = new ArrayList<>();
         for (final Type.DeclaredType supertype : context.abstractionSupertypes(definition)) {
-            members.add("\t" + context.type(supertype).render(imports) + "\n");
+            declarations.add("\t" + context.type(supertype).render(imports) + "\n");
         }
         for (final FieldDefinition field : definition.declaredFields()) {
             final String getter = GoNames.exported(field.name());
-            members.add(GoDoc.comment(getterDoc(field, getter)).indent(0).replace("//", "\t//")
+            declarations.add(GoDoc.comment(getterDoc(field, getter)).indent(0).replace("//", "\t//")
                     + "\t" + getter + "() " + fieldType(field, imports).render(imports) + "\n");
+        }
+        members.owner(definition, name + typeArguments(GoContext.goParameters(definition)));
+        final Map<MethodDefinition, String> methodNames =
+                members.names(definition.declaredMethods().stream().filter(m -> !m.isStatic()).toList());
+        final List<Map.Entry<MethodDefinition, String>> lifted = new ArrayList<>();
+        for (final Map.Entry<MethodDefinition, String> method : methodNames.entrySet()) {
+            if (method.getKey().typeParameters().isEmpty()) {
+                declarations.add(members.declaration(method.getKey(), method.getValue(), imports));
+            } else {
+                // Go forbids type parameters on an interface method; such a method becomes a function below
+                lifted.add(method);
+            }
         }
         if (definition.hasAnnotation("sealed")) {
             // only the declaring package can implement an unexported method, which is Go's sealed hierarchy
-            members.add("\t// " + marker(name) + " keeps the implementations of " + name
+            declarations.add("\t// " + marker(name) + " keeps the implementations of " + name
                     + " inside this package.\n\t" + marker(name) + "()\n");
         }
-        go.append(String.join("\n", members)).append("}\n");
+        go.append(String.join("\n", declarations)).append("}\n");
+        for (final Map.Entry<MethodDefinition, String> method : lifted) {
+            // the instance comes first, as the guide's "<TypeName><MethodName>(instance, …)" form
+            go.append('\n').append(members.function(method.getKey(), name + method.getValue(), name,
+                    receiverParameter(name, definition, imports), imports));
+        }
+        for (final Map.Entry<MethodDefinition, String> method
+                : members.names(definition.declaredMethods().stream().filter(MethodDefinition::isStatic).toList())
+                        .entrySet()) {
+            go.append('\n').append(members.render(method.getKey(), name + method.getValue(), null, name, imports));
+        }
         return go.toString();
+    }
+
+    /** {@code o Obj}: the lifted instance parameter of a generic method of an abstraction. */
+    private String receiverParameter(final String name, final TypeDefinition definition, final GoImports imports) {
+        return receiver(name) + " " + name + typeArguments(GoContext.goParameters(definition));
     }
 
     /** The name of the marker method of a sealed abstraction. */
@@ -119,6 +151,21 @@ final class GoTypeGenerator {
                 go.append("\nfunc (").append(receiver).append(' ').append(self).append(") ")
                         .append(marker(sealed)).append("() {}\n");
             }
+        }
+        // every effective method, not only the declared ones: Go has no inheritance, so a struct carries what its
+        // abstractions declare, which is also what makes it satisfy their interfaces
+        members.owner(definition, self);
+        final String receiverExpression = receiver + " " + self;
+        for (final Map.Entry<MethodDefinition, String> method
+                : members.names(definition.methods().stream().filter(m -> !m.isStatic()).toList()).entrySet()) {
+            go.append('\n').append(members.render(method.getKey(), method.getValue(), receiverExpression, name,
+                    imports));
+        }
+        for (final Map.Entry<MethodDefinition, String> method
+                : members.names(definition.declaredMethods().stream().filter(MethodDefinition::isStatic).toList())
+                        .entrySet()) {
+            // a static method has no receiver; it becomes a package-level function named after its type
+            go.append('\n').append(members.render(method.getKey(), name + method.getValue(), null, name, imports));
         }
         return go.toString();
     }
@@ -350,21 +397,7 @@ final class GoTypeGenerator {
 
     /** {@code [T any, U Unit]}, or {@code ""} when the type is not generic. */
     private String typeParameters(final List<TypeParameterDefinition> parameters, final GoImports imports) {
-        if (parameters.isEmpty()) {
-            return "";
-        }
-        return "[" + parameters.stream().map(parameter -> {
-            final String name = parameterName(parameter);
-            if (parameter.bound() == null) {
-                return name + " any";
-            }
-            final GoType bound = context.type(parameter.bound());
-            // Go constrains a parameter with an interface. A concrete bound has no Go form at all: a type set of
-            // one struct admits that struct only, because Go has no subtyping for structs. The parameter is
-            // widened to `any` and the declaration says so.
-            return name + " " + (bound instanceof GoType.Declared declared && declared.iface()
-                    ? bound.render(imports) : "any");
-        }).collect(Collectors.joining(", ")) + "]";
+        return context.typeParameters(parameters, imports);
     }
 
     /** {@code [T, U]}: the parameters again, as arguments, for a receiver or a return type. */

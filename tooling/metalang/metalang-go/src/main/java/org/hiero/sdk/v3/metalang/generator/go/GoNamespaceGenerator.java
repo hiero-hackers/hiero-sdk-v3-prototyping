@@ -2,10 +2,14 @@ package org.hiero.sdk.v3.metalang.generator.go;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.TreeMap;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
+import org.hiero.sdk.v3.metalang.model.FunctionDefinition;
+import org.hiero.sdk.v3.metalang.model.MethodDefinition;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
 
@@ -59,7 +63,39 @@ final class GoNamespaceGenerator {
             files.add(new GeneratedFile(directory + "/" + fileName(definition),
                     GoGenerator.HEADER + "\npackage " + packageName + "\n\n" + imports.render() + body));
         }
+        functions(namespace, directory, packageName, self).ifPresent(files::add);
         return List.copyOf(files);
+    }
+
+    /**
+     * The namespace functions of a package, in {@code functions.go}. A namespace is no type in Go, so its functions
+     * are package-level functions - the form the guide prescribes, and the same one a factory type's methods take.
+     */
+    private Optional<GeneratedFile> functions(final String namespace, final String directory,
+                                              final String packageName, final String self) {
+        final List<MethodDefinition> declarations = context.model().functions().stream()
+                .filter(function -> function.namespace().equals(namespace))
+                .map(FunctionDefinition::method).toList();
+        if (declarations.isEmpty()) {
+            return Optional.empty();
+        }
+        final GoMembers members = new GoMembers(context);
+        final GoImports imports = new GoImports(self);
+        final StringBuilder go = new StringBuilder();
+        final Map<MethodDefinition, String> names = members.names(declarations);
+        for (final Map.Entry<MethodDefinition, String> function : names.entrySet()) {
+            try {
+                go.append(go.isEmpty() ? "" : "\n")
+                        .append(members.render(function.getKey(), function.getValue(), null, packageName, imports));
+            } catch (final GoGap gap) {
+                deferred.put(new QualifiedName(namespace, function.getKey().name()), gap.getMessage());
+            }
+        }
+        if (go.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(new GeneratedFile(directory + "/functions.go",
+                GoGenerator.HEADER + "\npackage " + packageName + "\n\n" + imports.render() + go));
     }
 
     /**
