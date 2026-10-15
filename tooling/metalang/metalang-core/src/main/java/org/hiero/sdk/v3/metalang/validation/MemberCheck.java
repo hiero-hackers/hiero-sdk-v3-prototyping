@@ -126,11 +126,44 @@ final class MemberCheck implements Check {
     private static void checkNullableCollection(final SpecModel model, final SchemaFile file, final Annotated element,
                                                 final TypeRef type, final String description,
                                                 final SourceLocation location, final DiagnosticCollector out) {
-        if (element.hasAnnotation("nullable") && type instanceof TypeRef.Named named
-                && model.resolve(file, named) instanceof ResolvedType.Builtin builtin
-                && builtin.type().isCollection()) {
+        if (!element.hasAnnotation("nullable") || !(type instanceof TypeRef.Named named)) {
+            return;
+        }
+        final ResolvedType resolved = model.resolve(file, named);
+        if (resolved instanceof ResolvedType.Builtin builtin && builtin.type().isCollection()) {
             out.report(Rule.COLLECTION_NULLABLE, description + " is a @@nullable '" + type.text()
                     + "'; use an empty collection instead", location);
+            return;
         }
+        if (resolved instanceof ResolvedType.Declared declared) {
+            final Declaration.TypeDeclaration wrapper = declared.declaration();
+            final String collection = collectionOf(model, file, wrapper);
+            if (collection != null) {
+                out.report(Rule.COLLECTION_NULLABLE_WRAPPER, description + " is a @@nullable '" + type.text()
+                        + "', a type whose only content is the '" + collection + "' '"
+                        + wrapper.fields().getFirst().name()
+                        + "'; the empty collection already expresses absence", location);
+            }
+        }
+    }
+
+    /**
+     * The collection type a declaration wraps, or {@code null} if it is not such a wrapper. A wrapper is a complex
+     * type that declares exactly one field, of a collection type, and inherits nothing - making a {@code @@nullable}
+     * reference to it a nullable collection with one indirection (see ADR-0010).
+     */
+    private static String collectionOf(final SpecModel model, final SchemaFile file,
+                                       final Declaration.TypeDeclaration declaration) {
+        if (!(declaration instanceof Declaration.ComplexType complexType) || complexType.abstraction()
+                || !complexType.supertypes().isEmpty() || complexType.fields().size() != 1) {
+            return null;
+        }
+        final Field field = complexType.fields().getFirst();
+        if (field.type() instanceof TypeRef.Named named
+                && model.resolve(file, named) instanceof ResolvedType.Builtin builtin
+                && builtin.type().isCollection()) {
+            return field.type().text();
+        }
+        return null;
     }
 }

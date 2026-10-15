@@ -22,7 +22,9 @@ Six declarations violate the rule today, and generation stops on them. They fall
 
 The second group is not an authoring mistake: the `@@oneOf` rules in the same guideline open with "All listed fields
 must be declared with `@@nullable`", so a collection arm *must* be written in a form the collection rule then
-rejects. Two guideline rules contradict each other.
+rejects. Two guideline rules contradict each other, and the contradiction is mechanical, not editorial: both are
+enforced at `ERROR` (`collection.nullable` and `oneof.not-nullable`), and removing `@@nullable` from such an arm
+simply trades the first finding for the second.
 
 ### Why the third state does not exist
 
@@ -100,7 +102,9 @@ Rejected alternatives:
 - "Empty means unchanged" for the node endpoints is carried by a doc comment, not by the type. A caller who passes an
   empty list expecting a clear gets a silent no-op — matching the protocol, but not self-explanatory.
 - The rule remains circumventable by wrapping a collection in a type and making *that* nullable — the trick HAPI
-  itself uses (`AssociatedRegisteredNodeList`, `node_update.proto:205`). This stays legal; see the follow-up.
+  itself uses (`AssociatedRegisteredNodeList`, `node_update.proto:205`). This stays legal, because such a type can
+  be legitimate; only the nullable reference to it is the smell, and it is reported as `collection.nullable-wrapper`
+  at `WARNING`.
 - If the protocol ever gains a way to clear a list, the affected fields change type (field → wrapper), which is a
   breaking change for callers.
 
@@ -110,8 +114,8 @@ Rejected alternatives:
   the list unchanged" — together with this ADR.
 - Link this ADR from the *Never define nullable collections* section of `guidelines/api-guideline.md` and from the
   `collection.nullable` entry in the `Rule` catalogue.
-- Add a `WARNING` rule for the wrapper loophole (a `@@nullable` reference to a type whose only content is a
-  collection), with the rule fixture that `RuleFixturesTest` requires.
+- `collection.nullable-wrapper` reports the wrapper loophole at `WARNING` (added with this ADR; it fires nowhere in
+  the current specs).
 - Decide how `@@oneOf` and collections coexist — either `@@oneOf` stops demanding `@@nullable` for collection arms,
   or collections stop being valid arms and the four sites are remodeled. Separate ADR; this one cannot be `Accepted`
   before it lands.

@@ -1133,7 +1133,9 @@ In that case the language-specific semantics should be used in the implementatio
 Such special behavior must be documented in the best-practice guidelines for the specific language.
 
 Where absence genuinely has to be distinguished from emptiness, that is a state and not a value: model it as a type
-(a sum type or a wrapper), never as `null`. The rule knows no exception — there is no suppression annotation and no
+(a sum type or a wrapper), never as `null`. Wrapping the collection in a type and making *that* `@@nullable` is the
+same `null` with one indirection; it is reported as `collection.nullable-wrapper` (a warning, because such a type
+can be legitimate — only the nullable reference to it is the smell). The rule knows no exception — there is no suppression annotation and no
 lower severity. The reasons, the rejected alternatives and the conditions under which the decision would be
 revisited are recorded in
 [ADR-0010](../docs/adr/0010-collections-are-never-nullable.md); change this section only by superseding that ADR.
