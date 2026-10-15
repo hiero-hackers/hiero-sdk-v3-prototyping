@@ -13,6 +13,7 @@ is safe to run repeatedly.
 | `generate-rust.sh` | Rust API into `sdk-rust/generated`, then `cargo build --all-targets` |
 | `generate-go.sh` | Go API into `sdk-go/generated`, then `go build`, `go vet` and the `gofmt -l` check |
 | `generate-python.sh` | Python API into `sdk-python/generated`, then `mypy --strict` |
+| `clean.sh` | Removes the generated code again; with options also the build output and the caches |
 | `tck-java.sh` | Generates API + TCK server, builds them and runs the Hiero TCK against the Java server |
 | `tck-ts.sh` | The same for the TypeScript server |
 
@@ -59,3 +60,19 @@ the TCK against what was built before.
 
 There is no TCK script for Rust, Go and Python: `metalang tck generate` supports `--language=java`
 and `--language=ts` only.
+
+## Cleaning up
+
+`clean.sh` removes every `sdk-<lang>/generated` tree and the two generated TCK parts. None of it is
+under version control and `generate-*.sh` produces all of it again, so it is always safe; the
+hand-written modules are never touched. `--dry-run` prints what would go, with its size.
+
+```bash
+scripts/clean.sh --dry-run
+```
+
+It takes `--build-output` (the compiled output of the hand-written modules and the CLI jar),
+`--caches` (`sdk-ts/node_modules`, `sdk-ts/package-lock.json`, `sdk-python/.venv` — restoring them
+needs network access) and `--all` for both. `--maven-repository` additionally removes
+`~/.m2/repository/org/hiero/sdk`; that is outside the repository, which is why `--all` leaves it
+alone.

@@ -64,7 +64,7 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | `sdk-java/support/`, `sdk-ts/support/` | Hand-written support types the generated API depends on (`@ThreadSafe`, streaming; `Duration`, `StreamItem`, `AbstractConstructor`) |
 | `sdk-<lang>/tck/` | The language-specific TCK parts: `runtime/` (hand-written); `generated/` (contract + server) is produced by the generator like the API |
 | `tooling/tck/` | The language-neutral TCK parts: the bindings, the Solo configuration and `run-tck.sh` |
-| [`scripts/`](scripts) | One script per task: generate (and build) one language or all of them, run the TCK against the Java or the TypeScript server |
+| [`scripts/`](scripts) | One script per task: generate (and build) one language or all of them, run the TCK against the Java or the TypeScript server, remove the generated code again |
 | [`docs/pipeline.html`](docs/pipeline.html) | How the generator, the protobuf tree and the TCK server fit together — folder map and diagrams (open it in a browser) |
 | [`docs/missing-features.md`](docs/missing-features.md) | What the V3 specs do not cover yet, measured against the v2 SDKs — the feature backlog |
 | [`docs/TODO.md`](docs/TODO.md) | Open follow-up tasks on the guides, the meta-language and the specs |
@@ -223,6 +223,9 @@ scripts/generate-all.sh
 | [`scripts/generate-go.sh`](scripts/generate-go.sh) | `sdk-go/generated` | `go build`, `go vet` and the `gofmt -l` check |
 | [`scripts/generate-python.sh`](scripts/generate-python.sh) | `sdk-python/generated` | `mypy --strict` |
 | [`scripts/generate-all.sh`](scripts/generate-all.sh) | all five | each of the above; every language is attempted even if an earlier one failed |
+
+[`scripts/clean.sh`](scripts/clean.sh) removes the generated trees again (`--dry-run` shows what would go, `--all`
+includes the build output and the npm and Python caches).
 
 Each of them takes `--no-build` (generate only) and `--test` (also run the generated tests, which fail for every
 method that is still a stub). `REBUILD_CLI=1` forces a rebuild of the CLI, `PYTHON=<interpreter>` selects the
