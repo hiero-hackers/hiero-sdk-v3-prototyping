@@ -33,7 +33,7 @@ NetworkSetting {
 @@throws(not-found-error) @@static NetworkSetting getNetworkSetting(identifier: string) 
 ```
 
-## Default Instances
+## Default Instances for Testing
 
 ```
 // The configuration of the Hedera testnet.

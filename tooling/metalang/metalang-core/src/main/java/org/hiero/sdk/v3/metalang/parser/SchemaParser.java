@@ -44,7 +44,7 @@ public final class SchemaParser {
     }
 
     /**
-     * The result of parsing a "## Default Instances" block.
+     * The result of parsing a "## Default Instances for Testing" block.
      *
      * @param instances   the default instances (empty if the block has syntax errors)
      * @param diagnostics the syntax errors
@@ -64,7 +64,7 @@ public final class SchemaParser {
     }
 
     /**
-     * Parses the code block of a "## Default Instances" section.
+     * Parses the code block of a "## Default Instances for Testing" section.
      *
      * @param source the code block
      * @return the default instances and the syntax errors

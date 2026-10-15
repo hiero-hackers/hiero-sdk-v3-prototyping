@@ -12,7 +12,7 @@ A { @@immutable b: B }
 B { @@immutable a: A }
 ```
 
-## Default Instances
+## Default Instances for Testing
 
 ```
 instance A = A{b: DEFAULT}

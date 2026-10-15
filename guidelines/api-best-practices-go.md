@@ -399,7 +399,7 @@ qualified `exports … to …`, Rust a non-`pub` module, TypeScript an `exports`
 
 Generated tests are `_test.go` files next to the type they test, using the standard `testing` package and
 table-driven cases. They follow the same contract as the Java, TypeScript and Rust tests: construct from the
-`## Default Instances` of the spec, check the declared constraints, and fail for a method that is not implemented
+`## Default Instances for Testing` of the spec, check the declared constraints, and fail for a method that is not implemented
 yet.
 
 ## Questions & Comments

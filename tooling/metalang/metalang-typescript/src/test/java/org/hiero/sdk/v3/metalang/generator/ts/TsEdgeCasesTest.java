@@ -99,7 +99,7 @@ class TsEdgeCasesTest {
     Path temp;
 
     private static List<GeneratedFile> generate() {
-        final String markdown = TestSpecs.markdown(SPEC).replace("## Testing", "## Default Instances\n\n```\n"
+        final String markdown = TestSpecs.markdown(SPEC).replace("## Testing", "## Default Instances for Testing\n\n```\n"
                 + INSTANCES + "```\n\n## Testing");
         final ValidationReport report = new MetaLang().validate(Map.of("f/a.md", markdown));
         assertThat(report.diagnostics()).filteredOn(d -> d.severity() == Severity.ERROR).isEmpty();
@@ -196,7 +196,7 @@ class TsEdgeCasesTest {
     @Test
     void shouldReportTheValuesThatCannotBeBuilt() throws Exception {
         // GIVEN
-        final String markdown = TestSpecs.markdown(UNBUILDABLE).replace("## Testing", "## Default Instances\n\n```\n"
+        final String markdown = TestSpecs.markdown(UNBUILDABLE).replace("## Testing", "## Default Instances for Testing\n\n```\n"
                 + UNBUILDABLE_INSTANCES + "```\n\n## Testing");
         final ValidationReport report = new MetaLang().validate(Map.of("g/b.md", markdown));
         assertThat(report.diagnostics()).filteredOn(d -> d.severity() == Severity.ERROR).isEmpty();
@@ -285,7 +285,7 @@ class TsEdgeCasesTest {
     @Test
     void shouldFindValuesOfSubtypesFactoriesAndInstances() throws Exception {
         // GIVEN
-        final String markdown = TestSpecs.markdown(SUBTYPES).replace("## Testing", "## Default Instances\n\n```\n"
+        final String markdown = TestSpecs.markdown(SUBTYPES).replace("## Testing", "## Default Instances for Testing\n\n```\n"
                 + SUBTYPES_INSTANCES + "```\n\n## Testing");
         final ValidationReport report = new MetaLang().validate(Map.of("h/c.md", markdown));
         assertThat(report.diagnostics()).filteredOn(d -> d.severity() == Severity.ERROR).isEmpty();

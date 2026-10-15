@@ -25,7 +25,7 @@ import org.hiero.sdk.v3.metalang.semantic.SpecModel;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Resolves the default instances of the specs ({@code ## Default Instances}) against the linked model: names of types,
+ * Resolves the default instances of the specs ({@code ## Default Instances for Testing}) against the linked model: names of types,
  * functions, static methods, methods, attributes, constants and enum constants, the overload of a call (by the names
  * and types of its arguments), and the types of all values. A default instance must be declared in the spec of the
  * namespace that declares its type, at most once per type, and default instances must not depend on each other in a

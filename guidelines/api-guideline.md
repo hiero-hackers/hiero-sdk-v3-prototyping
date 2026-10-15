@@ -870,11 +870,12 @@ constant MAX_TRANSACTIONS:int32 = 100
 
 ### Default instances
 
-Tests, examples and documentation need instances of the API's types. How to obtain one is often not obvious from the
-API schema alone: a `TransactionSigner` is an abstraction without implementation in the SDK, but every `HieroClient`
-provides one; a `PrivateKey` can be created from many formats, but tests must use a key whose bytes are known. The
-optional `## Default Instances` section of a spec (directly after `## API Schema`) records the **standard way to
-obtain an instance through the API** for the types the spec declares.
+Tests need instances of the API's types. How to obtain one is often not obvious from the API schema alone: a
+`TransactionSigner` is an abstraction without implementation in the SDK, but every `HieroClient` provides one; a
+`PrivateKey` can be created from many formats, but tests must use a key whose bytes are known. The optional
+`## Default Instances for Testing` section of a spec (directly after `## API Schema`) records the **standard way to
+obtain an instance through the API** for the types the spec declares. The instances exist for testing: the generated
+tests and the tests of the [test language](test-language.md) (`DEFAULT(Type)`) use them.
 
 The section contains one code block. It uses the namespace and the imports of the file's API schema (no `namespace` or
 `requires` statement); types of other namespaces are referenced like in the schema, imported or qualified. Each

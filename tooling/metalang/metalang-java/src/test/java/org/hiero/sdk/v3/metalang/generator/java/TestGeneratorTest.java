@@ -394,7 +394,7 @@ class TestGeneratorTest {
                     @@static Key createKey(value: bytes)
                     @@static Session openSession(key: Key)
                     """).replace("## Testing", """
-                    ## Default Instances
+                    ## Default Instances for Testing
 
                     ```
                     // a fixed key

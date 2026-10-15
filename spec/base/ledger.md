@@ -340,7 +340,7 @@ constant ZERO_CONTRACT_ID: ContractId = ContractId{shard: 0, realm: 0, num: 0, c
 
 ```
 
-## Default Instances
+## Default Instances for Testing
 
 ```
 // The Hedera testnet with HBAR as native token.

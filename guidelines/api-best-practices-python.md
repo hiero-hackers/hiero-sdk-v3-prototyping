@@ -288,7 +288,7 @@ does not list it.
 ## Tests
 
 Generated tests (a later step) are `pytest` modules next to the package, under the same contract as the other
-languages: construct from the `## Default Instances`, check the declared constraints, and fail for a method that is
+languages: construct from the `## Default Instances for Testing`, check the declared constraints, and fail for a method that is
 not implemented yet.
 
 ## What the generator does today

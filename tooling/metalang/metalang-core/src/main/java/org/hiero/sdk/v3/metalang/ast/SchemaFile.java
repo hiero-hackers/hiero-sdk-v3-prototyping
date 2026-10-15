@@ -15,7 +15,7 @@ import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
  * @param location     location of the {@code namespace} statement
  * @param description  the Markdown text of the spec's {@code ## Description} section (may be empty)
  * @param descriptionLine the Markdown line of the first line of {@code description} (0 if there is none)
- * @param instances    the default instances of the spec's {@code ## Default Instances} section
+ * @param instances    the default instances of the spec's {@code ## Default Instances for Testing} section
  */
 public record SchemaFile(String namespace, List<Requires> requires, List<Declaration> declarations,
                          List<Comment> comments, SourceLocation location, String description, int descriptionLine,

@@ -56,7 +56,7 @@ class TestValuesTest {
                 @@static void reset()
                 @@static @@nullable Remote find()
                 """).replace("## Testing", """
-                ## Default Instances
+                ## Default Instances for Testing
 
                 ```
                 instance Remote = connect()

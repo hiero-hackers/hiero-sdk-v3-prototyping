@@ -50,7 +50,7 @@ final class AstBuilder {
     }
 
     /**
-     * Builds the default instances of a "## Default Instances" block.
+     * Builds the default instances of a "## Default Instances for Testing" block.
      *
      * @param ctx the parse tree
      * @return the default instances in source order

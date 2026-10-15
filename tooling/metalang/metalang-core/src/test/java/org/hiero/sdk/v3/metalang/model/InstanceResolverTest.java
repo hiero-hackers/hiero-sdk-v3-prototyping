@@ -49,7 +49,7 @@ class InstanceResolverTest {
 
     private static String markdown(final String schema, final String instances) {
         return "# T\n\n## Description\n\nT.\n\n## API Schema\n\n```\n" + schema + "```\n\n"
-                + (instances == null ? "" : "## Default Instances\n\n```\n" + instances
+                + (instances == null ? "" : "## Default Instances for Testing\n\n```\n" + instances
                 + (instances.endsWith("\n") ? "" : "\n") + "```\n\n")
                 + "## Testing\n\nN.\n\n## Questions & Comments\n";
     }

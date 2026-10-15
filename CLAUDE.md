@@ -177,9 +177,9 @@ tooling/metalang/               # Prototype tooling, multi-module Maven build (s
 points to keep specs valid and consistent:
 
 - Each spec file follows the same skeleton: `# Title` → `## Description` → optional `## Design Notes` →
-  `## API Schema` (a fenced code block) → optional `## Default Instances` → optional `## Examples` → optional
+  `## API Schema` (a fenced code block) → optional `## Default Instances for Testing` → optional `## Examples` → optional
   `## Testing` → `## Questions & Comments`.
-- `## Default Instances` records the standard way to obtain an instance of the spec's types through the API
+- `## Default Instances for Testing` records the standard way to obtain an instance of the spec's types through the API
   (`instance PublicKey = DEFAULT(PrivateKey).createPublicKey()`), with concrete values where implementations check them
   (keys, addresses). Generated tests use them first; the validator warns (`instance.missing`) about types that cannot
   be obtained at all. See "Default instances" in `guidelines/api-guideline.md`.

@@ -4,7 +4,7 @@ import java.util.Objects;
 import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
 
 /**
- * A default instance (a declaration of the "## Default Instances" block): the standard way to obtain an instance of a
+ * A default instance (a declaration of the "## Default Instances for Testing" block): the standard way to obtain an instance of a
  * type through the API, e.g. {@code instance PublicKey = DEFAULT(PrivateKey).createPublicKey()}.
  *
  * @param type          the type the instance is for

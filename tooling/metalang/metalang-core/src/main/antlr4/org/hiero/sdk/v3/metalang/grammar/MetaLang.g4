@@ -46,7 +46,7 @@ topLevelDecl
     ;
 
 // --- default instances -------------------------------------------------------------------------
-// The content of a spec's "## Default Instances" code block: for a type, the standard way to obtain an instance
+// The content of a spec's "## Default Instances for Testing" code block: for a type, the standard way to obtain an instance
 // through the API. It uses the namespace and the imports of the file's API schema.
 
 instances

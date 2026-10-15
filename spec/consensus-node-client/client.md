@@ -81,7 +81,7 @@ HieroClient<$$Unit extends NativeTokenUnit> {
 @@static HieroClient<ANY> createClient(networkSettings: NetworkSetting, operatorAccount: Account, transactionSigner: TransactionSigner)
 ```
 
-## Default Instances
+## Default Instances for Testing
 
 ```
 // The operator account: the default account id with the default private key.

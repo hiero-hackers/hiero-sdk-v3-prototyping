@@ -156,7 +156,7 @@ enum KeyFormat(container: KeyContainer, encoding: KeyEncoding) {
 
 ```
 
-## Default Instances
+## Default Instances for Testing
 
 ```
 // An ED25519 key with known bytes (the key of the examples below), so that tests can check signatures and

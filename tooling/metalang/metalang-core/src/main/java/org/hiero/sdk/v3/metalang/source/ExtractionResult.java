@@ -11,7 +11,7 @@ import org.jspecify.annotations.Nullable;
  *
  * @param source      the extracted schema, or {@code null} if the file contains none
  * @param diagnostics findings about the document structure
- * @param instances   the code block of the "## Default Instances" section, or {@code null} if there is none
+ * @param instances   the code block of the "## Default Instances for Testing" section, or {@code null} if there is none
  */
 public record ExtractionResult(@Nullable SchemaSource source, List<Diagnostic> diagnostics,
                                @Nullable SchemaSource instances) {
@@ -47,7 +47,7 @@ public record ExtractionResult(@Nullable SchemaSource source, List<Diagnostic> d
     }
 
     /**
-     * Returns the code block of the "## Default Instances" section, if any.
+     * Returns the code block of the "## Default Instances for Testing" section, if any.
      *
      * @return the block
      */

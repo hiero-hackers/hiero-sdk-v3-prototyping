@@ -305,7 +305,7 @@ java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar rules
 
 ```
 spec/*.md
-  │ source/      MarkdownSchemaExtractor  "## API Schema" and "## Default Instances" code blocks + skeleton checks
+  │ source/      MarkdownSchemaExtractor  "## API Schema" and "## Default Instances for Testing" code blocks + skeleton checks
   │                                        (doc.*)
   │ parser/      ANTLR4 grammar → parse tree → immutable AST (ast/, records + sealed interfaces)
   │ semantic/    SpecModel: namespaces, type index, name resolution (local / requires / wildcard / qualified)
@@ -708,7 +708,7 @@ Every test and test class has a `@DisplayName` that describes it (`port: rejects
 
 ## Default instances
 
-The optional `## Default Instances` section of a spec (see "Default instances" in `guidelines/api-guideline.md`)
+The optional `## Default Instances for Testing` section of a spec (see "Default instances" in `guidelines/api-guideline.md`)
 records the standard way to obtain an instance of a type through the API:
 `instance TransactionSigner = DEFAULT(HieroClient<ANY>).transactionSigner`. The section has its own start rule in the
 grammar (`instances`) and uses the namespace and imports of the file's API schema. `InstanceResolver` resolves it into

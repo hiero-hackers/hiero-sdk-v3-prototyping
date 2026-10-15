@@ -307,7 +307,7 @@ class RustEdgeCasesTest {
     Path temp;
 
     private static List<GeneratedFile> generate(final String folder, final String schema, final String instances) {
-        final String markdown = TestSpecs.markdown(schema).replace("## Testing", "## Default Instances\n\n```\n"
+        final String markdown = TestSpecs.markdown(schema).replace("## Testing", "## Default Instances for Testing\n\n```\n"
                 + instances + "```\n\n## Testing");
         final ValidationReport report = new MetaLang().validate(Map.of(folder + "/x.md", markdown));
         // nullable collections are an error of the specs, but the real specs still have them (see collection.nullable)
@@ -426,7 +426,7 @@ class RustEdgeCasesTest {
                         requires {Shape} from a
                         Circle extends Shape { double area() }
                         @@static Shape circle()
-                        """).replace("## Testing", "## Default Instances\n\n```\ninstance Shape = circle()\n```\n\n"
+                        """).replace("## Testing", "## Default Instances for Testing\n\n```\ninstance Shape = circle()\n```\n\n"
                         + "## Testing"));
         final LinkedModel model = LinkedModel.of(new MetaLang().validate(documents).model());
 

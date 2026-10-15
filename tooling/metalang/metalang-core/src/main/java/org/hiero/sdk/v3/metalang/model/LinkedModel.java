@@ -39,7 +39,7 @@ public final class LinkedModel {
     }
 
     /**
-     * Returns the default instances of the specs ({@code ## Default Instances}) that could be resolved.
+     * Returns the default instances of the specs ({@code ## Default Instances for Testing}) that could be resolved.
      *
      * @return the default instances, ordered by spec file and source order
      */

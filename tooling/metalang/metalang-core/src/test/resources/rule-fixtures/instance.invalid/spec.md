@@ -14,7 +14,7 @@ Point { @@immutable x: int32 }
 @@static Point origin()
 ```
 
-## Default Instances
+## Default Instances for Testing
 
 ```
 // an unknown attribute, a missing attribute

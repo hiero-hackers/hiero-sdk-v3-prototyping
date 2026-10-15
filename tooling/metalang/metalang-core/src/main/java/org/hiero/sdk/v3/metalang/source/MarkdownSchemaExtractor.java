@@ -24,11 +24,11 @@ import org.jspecify.annotations.Nullable;
 public final class MarkdownSchemaExtractor {
 
     private static final List<String> CANONICAL_ORDER = List.of(
-            "Description", "Design Notes", "API Schema", "Default Instances", "Examples", "Testing",
+            "Description", "Design Notes", "API Schema", "Default Instances for Testing", "Examples", "Testing",
             "Questions & Comments");
 
     /** The heading of the section with the default instances. */
-    public static final String DEFAULT_INSTANCES = "Default Instances";
+    public static final String DEFAULT_INSTANCES = "Default Instances for Testing";
 
     private static final List<String> REQUIRED_SECTIONS = List.of(
             "Description", "API Schema", "Testing", "Questions & Comments");
@@ -114,7 +114,7 @@ public final class MarkdownSchemaExtractor {
         return new ExtractionResult(source, diagnostics.sorted(), instances);
     }
 
-    /** The first code block of the "## Default Instances" section. */
+    /** The first code block of the "## Default Instances for Testing" section. */
     private static @Nullable SchemaSource instances(final String file, final Scan scan,
                                                     final DiagnosticCollector diagnostics) {
         final List<CodeBlock> blocks = scan.blocks().stream()
@@ -289,7 +289,7 @@ public final class MarkdownSchemaExtractor {
             return "API Schema";
         }
         return switch (heading) {
-            case "Description", "Design Notes", "Default Instances", "Examples", "Testing", "Questions & Comments" ->
+            case "Description", "Design Notes", "Default Instances for Testing", "Examples", "Testing", "Questions & Comments" ->
                     heading;
             case "Example" -> "Examples";
             default -> null;

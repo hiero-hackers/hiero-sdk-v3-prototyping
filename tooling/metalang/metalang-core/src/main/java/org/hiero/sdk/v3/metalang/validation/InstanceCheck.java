@@ -20,7 +20,7 @@ import org.hiero.sdk.v3.metalang.model.TypeDefinition;
 import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 
 /**
- * Checks the default instances ({@code ## Default Instances}): reports what the linker could not resolve
+ * Checks the default instances ({@code ## Default Instances for Testing}): reports what the linker could not resolve
  * ({@link Rule#INSTANCE_INVALID}, {@link Rule#INSTANCE_CYCLE}) and warns about every type that attributes or
  * parameters use but that cannot be obtained through the API ({@link Rule#INSTANCE_MISSING}) — the generated tests
  * cannot pass such a value. A type can be obtained if it has a default instance, is an enum with a value, is a
@@ -56,7 +56,7 @@ final class InstanceCheck implements Check {
                 out.report(Rule.INSTANCE_MISSING, "There is no way to obtain an instance of '" + name.name() + "' through the API "
                         + "(no default instance, no concrete subtype, no factory): the tests that need one cannot be "
                         + "generated (" + uses.size() + " use(s), e.g. " + uses.getFirst() + "); define its default "
-                        + "instance in '## Default Instances'", location(type));
+                        + "instance in '## Default Instances for Testing'", location(type));
             }
         });
     }

@@ -69,7 +69,7 @@ class GuidelineExamplesTest {
         final Optional<String> schema = Stream.of("as-is", "namespace", "type body", "type expressions")
                 .filter(w -> parser.parse("api-guideline.md", wrappers.get(w)).diagnostics().isEmpty())
                 .findFirst();
-        // the content of a "## Default Instances" section
+        // the content of a "## Default Instances for Testing" section
         return schema.or(() -> parser.parseInstances(org.hiero.sdk.v3.metalang.source.SchemaSource.ofPlainText(
                 "api-guideline.md", text)).diagnostics().isEmpty() ? Optional.of("default instances")
                 : Optional.empty());
