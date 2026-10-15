@@ -27,6 +27,8 @@ modules depend (ADR-0007).
 ```
 guidelines/
   api-guideline.md              # THE meta-language: syntax + cross-cutting API best practices. Read this first.
+  test-language.md              # DRAFT, not implemented: the language of `tests` blocks in a spec's `## Testing`,
+                                #   from which unit tests are generated per language (analysis: docs/spec-defined-tests.md)
   api-best-practices-java.md    # How meta-language concepts map to idiomatic Java
   api-best-practices-rust.md    # ... Rust (the mapping of the Rust generator)
   api-best-practices-go.md      # ... Go (the mapping of the Go generator)
@@ -93,8 +95,8 @@ sdk-python/
   generated/                    # Generated Python API as ONE distribution (hiero-sdk, import package hiero_sdk), one
                                 #   package per namespace re-exporting its types, one private module per type.
                                 #   Never edit by hand. Every package must import and `mypy --strict src` must be
-                                #   clean (Python 3.12+). Incomplete: types only - no methods, functions, tests,
-                                #   protobuf or TCK part (Go has methods and functions, Python does not yet).
+                                #   clean (Python 3.12+). Incomplete: no constants, errors, tests, protobuf or
+                                #   TCK part; types, methods and functions are generated.
 
 # There are exactly two Maven builds - sdk-java/ and tooling/metalang/ - and each carries its own
 # Maven wrapper (mvnw, mvnw.cmd, .mvn/) and its own .sdkmanrc (JDK 25). Build from inside one of
@@ -332,9 +334,11 @@ Comments` of the respective spec files and are the real output of the spike:
   Go compiler rejected (no inherited state via an embedded base struct, self types dropped, concrete type
   parameter bounds widened to `any`, maps copied like slices) — see "Guideline decisions driven by the tooling"
   in `tooling/metalang/README.md`.
-- **The Python generator is as young and as incomplete as the Go one**, with the same scope: the distribution, one
-  package per namespace and the declared types (frozen dataclasses, `typing.Protocol` for abstractions, union aliases
-  for `@@sealed`, both enum shapes). It follows `api-best-practices-python.md` (Python 3.12, PEP 695 generics,
+- **The Python generator is as young as the Go one**, with the same scope: the distribution, one package per
+  namespace, the declared types (frozen dataclasses, `typing.Protocol` for abstractions, union aliases for
+  `@@sealed`, both enum shapes) and their methods and functions (`...` in a protocol, `NotImplementedError`
+  elsewhere, `async def`, `AsyncIterator`, `@staticmethod`, `_functions.py` per namespace, `typing.overload` for an
+  overload set). It follows `api-best-practices-python.md` (Python 3.12, PEP 695 generics,
   `kw_only` dataclasses, `async def` only). Abstractions are protocols because a dataclass cannot inherit a property
   of the same name as one of its attributes. Verify a change with `mypy --strict src` in `sdk-python/generated` — the
   generator tests run it when `-Dpython.executable=<python with mypy>` is given, and always import every package.

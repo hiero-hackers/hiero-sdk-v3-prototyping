@@ -659,9 +659,16 @@ are imported under `TYPE_CHECKING`; a base class (with its type arguments), an e
 imported at runtime. `PythonGeneratorTest` imports every package of the real specs with `python3` (skipped below 3.12)
 and runs `mypy --strict` when the interpreter has mypy (`-Dpython.executable=...`).
 
-Still missing: methods, namespace functions, constants, errors, `@@async`/`@@streaming` signatures, runtime checks of
-the constraints (`__post_init__`), generated tests, the support package, the protobuf wiring, the Python conformance
-check (`check --language=python` is rejected) and the Python TCK part.
+Methods and functions are generated: a protocol declares its members with `...`, a class raises
+`NotImplementedError`, `@@async` is `async def`, `@@streaming` returns `AsyncIterator[T]`, a `@@static` method is a
+`@staticmethod`, and a namespace function is a module-level function in `_functions.py` that the package re-exports.
+An overload set stays one name - `typing.overload` declarations plus one implementation that takes
+`*args: Any, **kwargs: Any` and returns the union of the overload results. A member named like a builtin shadows it
+inside the class body, so such annotations are written as `_builtins.bytes`.
+
+Still missing: constants, errors, runtime checks of the constraints (`__post_init__`), generated tests, the support
+package, the protobuf wiring, the Python conformance check (`check --language=python` is rejected) and the Python TCK
+part.
 
 ## Generated tests
 

@@ -3,7 +3,9 @@ package org.hiero.sdk.v3.metalang.generator.python;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -12,6 +14,8 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
+import org.hiero.sdk.v3.metalang.model.FunctionDefinition;
+import org.hiero.sdk.v3.metalang.model.MethodDefinition;
 import org.hiero.sdk.v3.metalang.model.NamespaceDefinition;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
@@ -29,6 +33,9 @@ public final class PythonGenerator {
 
     /** The first line of every generated Python, TOML and ignore file. */
     static final String HEADER = "# " + MARKER + "\n";
+
+    /** The module of the namespace functions, beside the private module of each type. */
+    private static final String FUNCTIONS_MODULE = "_functions";
 
     private final PythonGeneratorConfig config;
     private final SortedMap<QualifiedName, String> deferred = new TreeMap<>();
@@ -81,6 +88,7 @@ public final class PythonGenerator {
                         HEADER + "\n" + header + body));
                 exported.put(definition.name().name(), module);
             }
+            functions(namespace.name(), context, directory, exported).ifPresent(files::add);
             files.add(new GeneratedFile(directory + "/__init__.py", packageModule(namespace, exported)));
             // every parent directory of a namespace is a package as well
             for (String parent = directory; parent.contains("/"); parent = parent.substring(0,
@@ -105,6 +113,49 @@ public final class PythonGenerator {
      */
     public SortedMap<QualifiedName, String> deferred() {
         return Collections.unmodifiableSortedMap(deferred);
+    }
+
+    /**
+     * The functions of a namespace, in {@code _functions.py}. A namespace is no type in Python, so its functions
+     * are module-level functions of the namespace's package, as the guide prescribes.
+     */
+    private Optional<GeneratedFile> functions(final String namespace, final PyContext context,
+                                              final String directory, final SortedMap<String, String> exported) {
+        final List<MethodDefinition> declarations = context.model().functions().stream()
+                .filter(function -> function.namespace().equals(namespace))
+                .map(FunctionDefinition::method).toList();
+        if (declarations.isEmpty()) {
+            return Optional.empty();
+        }
+        final PyMembers members = new PyMembers(context);
+        members.owner(null);
+        final PyImports imports = new PyImports(config.modulePath(namespace) + "." + FUNCTIONS_MODULE, Set.of());
+        final StringBuilder py = new StringBuilder();
+        final List<String> names = new ArrayList<>();
+        for (final Map.Entry<String, List<MethodDefinition>> function
+                : PyMembers.byName(declarations).entrySet()) {
+            try {
+                py.append(py.isEmpty() ? "" : "\n")
+                        .append(members.render(function.getValue(), PyMembers.Kind.FUNCTION, namespace, "", imports));
+                final String name = PyNames.identifier(function.getKey());
+                names.add(name);
+                // the package re-exports every function, as it re-exports every type
+                exported.put(name, config.modulePath(namespace) + "." + FUNCTIONS_MODULE);
+            } catch (final PyGap gap) {
+                deferred.put(new QualifiedName(namespace, function.getKey()), gap.getMessage());
+            }
+        }
+        if (py.isEmpty()) {
+            return Optional.empty();
+        }
+        final StringBuilder module = new StringBuilder(HEADER);
+        module.append(PyDoc.docstring("", "The functions of the namespace ``" + namespace + "``."));
+        module.append('\n').append(imports.render()).append(py);
+        module.append("\n__all__ = [\n");
+        names.stream().sorted().forEach(name -> module.append("    ")
+                .append(PyTypeGenerator.quote(name)).append(",\n"));
+        module.append("]\n");
+        return Optional.of(new GeneratedFile(directory + "/" + FUNCTIONS_MODULE + ".py", module.toString()));
     }
 
     /** The package of a namespace: its description as docstring, and the re-exports of its types. */

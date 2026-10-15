@@ -224,8 +224,6 @@ Python 3.12 declares type parameters in the class header (PEP 695) and infers th
 
 ## Methods and overloading
 
-Generated in a later step. The target:
-
 - Methods are instance methods with `snake_case` names; namespace-level functions are module-level functions of the
   namespace's package; factory types (`KeysFactory`) disappear into those functions.
 - **Overloads** become one function with `typing.overload` declarations and keyword-only parameters where the
@@ -233,6 +231,13 @@ Generated in a later step. The target:
   `create_private_key(container=…, value=…)` stay one name — Python's idiom, unlike Go's distinct names.
 - A setter of a mutable attribute is the attribute itself (plain assignment) on a non-frozen dataclass; the chaining
   form `with_memo(...) -> Self` is added only where the specs chain.
+
+> **What the generator produces.** The overload implementation takes `*args: Any, **kwargs: Any` and returns the
+> union of what the overloads return, which is the signature mypy accepts for every arm; keyword-only parameters per
+> overload are not derived from the specs. A member named like a builtin - an attribute `bytes` - shadows it inside
+> the class body, so annotations of that type are written as `_builtins.bytes`. A method body is
+> `raise NotImplementedError("Not implemented yet: Type.method")`, the counterpart of the stubs the other generators
+> emit.
 
 ## Errors
 
@@ -289,9 +294,12 @@ not implemented yet.
 ## What the generator does today
 
 `metalang generate --language=python` emits the distribution (`pyproject.toml`, `py.typed`), one package per
-namespace and the declared types: dataclasses for concrete types, protocols for abstractions, union aliases for sealed
-abstractions and both enum shapes. Methods, functions, constants, errors, tests, the protobuf wiring and the TCK part
-are not generated yet. A declaration the generator cannot express is left out and reported by `--show-deferred`, so
+namespace, the declared types - dataclasses for concrete types, protocols for abstractions, union aliases for sealed
+abstractions and both enum shapes - and their methods and functions: a protocol declares a member with `...`, a class
+raises `NotImplementedError`, `@@async` is `async def`, `@@streaming` returns `AsyncIterator[T]`, a `@@static` method
+is a `@staticmethod` and a namespace function a module-level function in `_functions.py`, re-exported by the package.
+An overload set stays one name, with `typing.overload` declarations and one implementation. Constants, errors, tests,
+the protobuf wiring and the TCK part are not generated yet. A declaration the generator cannot express is left out and reported by `--show-deferred`, so
 `sdk-python/generated` always imports and passes `mypy --strict`; on the current specs nothing is deferred. The import
 order and the blank lines follow isort/ruff, and `pyproject.toml` sets ruff's line length to 120.
 

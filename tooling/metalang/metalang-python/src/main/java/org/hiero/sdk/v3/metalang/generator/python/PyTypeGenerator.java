@@ -31,6 +31,8 @@ final class PyTypeGenerator {
 
     private final PyContext context;
 
+    private final PyMembers members;
+
     /**
      * Creates the generator.
      *
@@ -38,6 +40,7 @@ final class PyTypeGenerator {
      */
     PyTypeGenerator(final PyContext context) {
         this.context = Objects.requireNonNull(context, "context must not be null");
+        this.members = new PyMembers(context);
     }
 
     /**
@@ -78,16 +81,22 @@ final class PyTypeGenerator {
         superclass.ifPresent(s -> py.append('(').append(context.declared(s, imports, PyContext.Mode.RUNTIME))
                 .append(')'));
         py.append(":\n");
-        final List<String> members = new ArrayList<>();
+        final List<String> declarations = new ArrayList<>();
         final String doc = PyDoc.of(INDENT, withNotes(documentation(definition), definition), definition);
         if (!doc.isEmpty()) {
-            members.add(doc);
+            declarations.add(doc);
         }
         for (final FieldDefinition field : fields) {
-            members.add(INDENT + PyNames.identifier(field.name()) + ": " + fieldType(field, imports)
+            declarations.add(INDENT + PyNames.identifier(field.name()) + ": " + fieldType(field, imports)
                     + defaultValue(field, imports) + "\n" + PyDoc.of(INDENT, field.documentation(), field));
         }
-        return py.append(body(members)).toString();
+        // every effective method: Python has no inherited implementation here, and a dataclass satisfies a
+        // protocol only when it declares what the protocol declares
+        members.owner(definition);
+        PyMembers.byName(definition.methods()).values()
+                .forEach(overloads -> declarations.add(members.render(overloads, PyMembers.Kind.METHOD,
+                        definition.name().name(), INDENT, imports)));
+        return py.append(body(declarations)).toString();
     }
 
     /** The documentation of a concrete type, with the abstractions it implements. */
@@ -124,23 +133,28 @@ final class PyTypeGenerator {
         final StringBuilder py = new StringBuilder("class ").append(definition.name().name())
                 .append(typeParameters(definition, imports)).append('(').append(String.join(", ", bases))
                 .append("):\n");
-        final List<String> members = new ArrayList<>();
+        final List<String> declarations = new ArrayList<>();
         final String doc = PyDoc.of(INDENT, withNotes(definition.documentation(), definition), definition);
         if (!doc.isEmpty()) {
-            members.add(doc);
+            declarations.add(doc);
         }
         for (final FieldDefinition field : definition.declaredFields()) {
             final String name = PyNames.identifier(field.name());
             final String type = fieldType(field, imports);
             final String fieldDoc = PyDoc.of(INDENT + INDENT, field.documentation(), field);
             if (field.hasAnnotation("immutable")) {
-                members.add(INDENT + "@property\n" + INDENT + "def " + name + "(self) -> " + type + ":\n"
+                declarations.add(INDENT + "@property\n" + INDENT + "def " + name + "(self) -> " + type + ":\n"
                         + fieldDoc + INDENT + INDENT + "...\n");
             } else {
-                members.add(INDENT + name + ": " + type + "\n" + PyDoc.of(INDENT, field.documentation(), field));
+                declarations.add(INDENT + name + ": " + type + "\n"
+                        + PyDoc.of(INDENT, field.documentation(), field));
             }
         }
-        return py.append(body(members)).toString();
+        members.owner(definition);
+        PyMembers.byName(definition.declaredMethods()).values()
+                .forEach(overloads -> declarations.add(members.render(overloads, PyMembers.Kind.PROTOCOL,
+                        definition.name().name(), INDENT, imports)));
+        return py.append(body(declarations)).toString();
     }
 
     /**

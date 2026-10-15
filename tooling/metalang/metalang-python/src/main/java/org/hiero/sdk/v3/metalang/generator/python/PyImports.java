@@ -25,7 +25,7 @@ final class PyImports {
 
     /** The lowercase standard library modules, imported as a whole under an alias. */
     private static final Map<String, String> MODULE_ALIASES = Map.of(
-            "datetime", "_dt", "decimal", "_decimal", "uuid", "_uuid");
+            "datetime", "_dt", "decimal", "_decimal", "uuid", "_uuid", "builtins", "_builtins");
 
     /** The line length of the generated code, the one {@code pyproject.toml} configures for ruff. */
     static final int LINE_LENGTH = 120;

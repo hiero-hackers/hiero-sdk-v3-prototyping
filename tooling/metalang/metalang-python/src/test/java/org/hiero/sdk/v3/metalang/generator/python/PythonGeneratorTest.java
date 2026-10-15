@@ -323,6 +323,121 @@ class PythonGeneratorTest {
     }
 
     @Nested
+    class Methods {
+
+        @Test
+        void aMethodShouldRaiseNotImplementedAndAProtocolShouldDeclareIt() {
+            final List<GeneratedFile> files = new PythonGenerator().generate(model("""
+                    namespace a
+                    // A repository.
+                    abstraction Repository {
+                        // Finds one.
+                        string find(key: string)
+                    }
+                    // An account.
+                    Account {
+                        @@immutable id: string
+                        // Renames it.
+                        void rename(name: string)
+                    }
+                    """));
+            assertThat(module(files, "/_repository.py"))
+                    .contains("    def find(self, key: str) -> str:\n        \"\"\"Finds one.\"\"\"\n        ...\n");
+            assertThat(module(files, "/_account.py"))
+                    .contains("    def rename(self, name: str) -> None:\n        \"\"\"Renames it.\"\"\"\n"
+                            + "        raise NotImplementedError(\"Not implemented yet: Account.rename\")\n");
+        }
+
+        @Test
+        void asyncShouldBeACoroutineAndStreamingAnAsyncIterator() {
+            final List<GeneratedFile> files = new PythonGenerator().generate(model("""
+                    namespace a
+                    // A client.
+                    Client {
+                        @@immutable id: string
+                        // Loads it.
+                        @@async string load(key: string)
+                        // Follows it.
+                        @@streaming string follow()
+                    }
+                    """));
+            assertThat(module(files, "/_client.py"))
+                    .contains("    async def load(self, key: str) -> str:")
+                    .contains("    def follow(self) -> AsyncIterator[str]:");
+        }
+
+        @Test
+        void overloadsShouldStayOneNameWithTypingOverload() {
+            final List<GeneratedFile> files = new PythonGenerator().generate(model("""
+                    namespace a
+                    // Keys.
+                    Keys {
+                        @@immutable id: string
+                        // Creates one.
+                        string create(value: string)
+                        // Creates one from bytes.
+                        bytes create(raw: bytes)
+                    }
+                    """));
+            // the implementation accepts every overload and returns what every overload can produce
+            assertThat(module(files, "/_keys.py"))
+                    .contains("    @overload\n    def create(self, value: str) -> str: ...\n")
+                    .contains("    @overload\n    def create(self, raw: bytes) -> bytes: ...\n")
+                    .contains("    def create(self, *args: Any, **kwargs: Any) -> str | bytes:");
+        }
+
+        @Test
+        void aMemberNamedLikeABuiltinShouldQualifyTheBuiltinInAnnotations() {
+            final List<GeneratedFile> files = new PythonGenerator().generate(model("""
+                    namespace a
+                    // A key.
+                    Key {
+                        @@immutable bytes: bytes
+                        // Encodes it.
+                        bytes encode()
+                    }
+                    """));
+            // the attribute shadows the builtin inside the class body, so the annotation names the module
+            assertThat(module(files, "/_key.py")).contains("    def encode(self) -> _builtins.bytes:")
+                    .contains("import builtins as _builtins");
+        }
+
+        @Test
+        void aStaticMethodShouldBeAStaticmethod() {
+            final List<GeneratedFile> files = new PythonGenerator().generate(model("""
+                    namespace a
+                    // An address.
+                    Address {
+                        @@immutable id: string
+                        // Parses one.
+                        @@static Address parse(text: string)
+                    }
+                    """));
+            assertThat(module(files, "/_address.py"))
+                    .contains("    @staticmethod\n    def parse(text: str) -> Address:");
+        }
+
+        @Test
+        void aNamespaceFunctionShouldBeAModuleLevelFunction() {
+            final List<GeneratedFile> files = new PythonGenerator().generate(model("""
+                    namespace a
+                    // A client.
+                    Client {
+                        @@immutable id: string
+                    }
+                    // Creates a client.
+                    @@static Client createClient(url: string)
+                    """));
+            assertThat(module(files, "/_functions.py"))
+                    .contains("def create_client(url: str) -> Client:")
+                    .contains("raise NotImplementedError(\"Not implemented yet: a.create_client\")")
+                    .contains("__all__ = [\n    \"create_client\",\n]\n");
+            // the package re-exports it, as it re-exports every type
+            assertThat(module(files, "/a/__init__.py")).contains("from hiero_sdk.a._functions import create_client");
+        }
+    }
+
+    @Nested
     class Gaps {
 
         @Test
