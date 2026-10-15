@@ -27,8 +27,9 @@ modules depend (ADR-0007).
 ```
 guidelines/
   api-guideline.md              # THE meta-language: syntax + cross-cutting API best practices. Read this first.
-  test-language.md              # DRAFT, not implemented: the language of `tests` blocks in a spec's `## Testing`,
-                                #   from which unit tests are generated per language (analysis: docs/spec-defined-tests.md)
+  test-language.md              # DRAFT: the language of `tests` blocks in a spec's `## Testing`, from which unit
+                                #   tests are generated per language (analysis: docs/spec-defined-tests.md). Only the
+                                #   parser exists (start rule `tests` in MetaLang.g4); no type checking or generation yet
   api-best-practices-java.md    # How meta-language concepts map to idiomatic Java
   api-best-practices-rust.md    # ... Rust (the mapping of the Rust generator)
   api-best-practices-go.md      # ... Go (the mapping of the Go generator)

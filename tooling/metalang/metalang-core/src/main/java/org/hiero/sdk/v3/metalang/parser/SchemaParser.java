@@ -2,9 +2,14 @@ package org.hiero.sdk.v3.metalang.parser;
 
 import java.util.List;
 import java.util.Objects;
+import org.hiero.sdk.v3.metalang.ast.Expression;
 import org.hiero.sdk.v3.metalang.ast.Instance;
 import org.hiero.sdk.v3.metalang.ast.SchemaFile;
+import org.hiero.sdk.v3.metalang.ast.Statement;
+import org.hiero.sdk.v3.metalang.ast.TestCase;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
+import org.hiero.sdk.v3.metalang.diagnostic.DiagnosticCollector;
+import org.hiero.sdk.v3.metalang.diagnostic.Rule;
 import org.hiero.sdk.v3.metalang.grammar.MetaLangParser;
 import org.hiero.sdk.v3.metalang.source.SchemaSource;
 
@@ -77,5 +82,71 @@ public final class SchemaParser {
             return new InstancesResult(List.of(), syntax.diagnostics());
         }
         return new InstancesResult(new AstBuilder(source, syntax.tokens()).instances(syntax.tree()), List.of());
+    }
+
+    /**
+     * The result of parsing a {@code tests} block.
+     *
+     * @param tests       the tests (empty if the block has syntax errors)
+     * @param diagnostics the syntax errors
+     */
+    public record TestsResult(List<TestCase> tests, List<Diagnostic> diagnostics) {
+
+        /**
+         * Creates a result.
+         *
+         * @param tests       the tests
+         * @param diagnostics the syntax errors
+         */
+        public TestsResult {
+            tests = List.copyOf(tests);
+            diagnostics = List.copyOf(diagnostics);
+        }
+    }
+
+    /**
+     * Parses a {@code tests} code block of a "## Testing" section.
+     *
+     * @param source the code block
+     * @return the tests and the syntax errors
+     */
+    public TestsResult parseTests(final SchemaSource source) {
+        Objects.requireNonNull(source, "source must not be null");
+        final SyntaxParser.Result<MetaLangParser.TestsContext> syntax = SyntaxParser.parse(source,
+                MetaLangParser::tests);
+        if (!syntax.diagnostics().isEmpty()) {
+            return new TestsResult(List.of(), syntax.diagnostics());
+        }
+        final List<TestCase> tests = new AstBuilder(source, syntax.tokens()).tests(syntax.tree());
+        final DiagnosticCollector notCalls = new DiagnosticCollector();
+        tests.forEach(t -> requireCalls(t.body(), notCalls));
+        if (!notCalls.sorted().isEmpty()) {
+            return new TestsResult(List.of(), notCalls.sorted());
+        }
+        return new TestsResult(tests, List.of());
+    }
+
+    /**
+     * An expression statement must be a call. Statements are not separated by a token and the keywords are valid
+     * names, so without this check a broken statement such as {@code let x 1} would be read as the three statements
+     * {@code let}, {@code x} and {@code 1}.
+     */
+    private static void requireCalls(final List<Statement> statements, final DiagnosticCollector out) {
+        for (final Statement statement : statements) {
+            switch (statement) {
+                case Statement.Evaluate evaluate when !(evaluate.expression() instanceof Expression.Call
+                        || evaluate.expression() instanceof Expression.MethodCall) ->
+                        out.report(Rule.SYNTAX_ERROR, "A statement must be 'let', 'if', 'for' or a call",
+                                evaluate.location());
+                case Statement.If conditional -> {
+                    requireCalls(conditional.then(), out);
+                    requireCalls(conditional.otherwise(), out);
+                }
+                case Statement.For loop -> requireCalls(loop.body(), out);
+                default -> {
+                    // a binding or a call
+                }
+            }
+        }
     }
 }

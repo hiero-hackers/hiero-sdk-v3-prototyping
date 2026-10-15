@@ -80,6 +80,17 @@ final class SyntaxParser {
                 lines[lines.length - 1].length() + 1);
     }
 
+    /**
+     * An explanation for an error that is hard to understand from the grammar alone: {@code n-1} is a single
+     * kebab-case token (the form of error ids), not a subtraction.
+     */
+    private static String hint(final Object offendingSymbol) {
+        if (offendingSymbol instanceof Token token && token.getType() == MetaLangLexer.KEBAB_ID) {
+            return " ('" + token.getText() + "' is read as one error id; write a subtraction with spaces around '-')";
+        }
+        return "";
+    }
+
     static Result<MetaLangParser.SchemaContext> parse(final SchemaSource source) {
         return parse(source, MetaLangParser::schema);
     }
@@ -101,7 +112,7 @@ final class SyntaxParser {
             public void syntaxError(final Recognizer<?, ?> recognizer, final Object offendingSymbol,
                                     final int line, final int charPositionInLine, final String msg,
                                     final RecognitionException e) {
-                diagnostics.report(Rule.SYNTAX_ERROR, msg, offendingSymbol instanceof Token token
+                diagnostics.report(Rule.SYNTAX_ERROR, msg + hint(offendingSymbol), offendingSymbol instanceof Token token
                         && token.getType() == Token.EOF
                         ? endOfText(source)
                         : new SourceLocation(source.file(), line + source.lineOffset(), charPositionInLine + 1));

@@ -16,10 +16,11 @@ import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
  * @param description  the Markdown text of the spec's {@code ## Description} section (may be empty)
  * @param descriptionLine the Markdown line of the first line of {@code description} (0 if there is none)
  * @param instances    the default instances of the spec's {@code ## Default Instances for Testing} section
+ * @param tests        the tests of the {@code tests} blocks of the spec's {@code ## Testing} section
  */
 public record SchemaFile(String namespace, List<Requires> requires, List<Declaration> declarations,
                          List<Comment> comments, SourceLocation location, String description, int descriptionLine,
-                         List<Instance> instances)
+                         List<Instance> instances, List<TestCase> tests)
         implements Node {
 
     /**
@@ -33,9 +34,11 @@ public record SchemaFile(String namespace, List<Requires> requires, List<Declara
      * @param description  the description section (Markdown)
      * @param descriptionLine line of the first description line or 0
      * @param instances    the default instances
+     * @param tests        the tests
      */
     public SchemaFile {
         instances = List.copyOf(Objects.requireNonNull(instances, "instances must not be null"));
+        tests = List.copyOf(Objects.requireNonNull(tests, "tests must not be null"));
         Objects.requireNonNull(description, "description must not be null");
         Objects.requireNonNull(namespace, "namespace must not be null");
         requires = List.copyOf(Objects.requireNonNull(requires, "requires must not be null"));
@@ -72,6 +75,17 @@ public record SchemaFile(String namespace, List<Requires> requires, List<Declara
      */
     public SchemaFile withInstances(final List<Instance> newInstances) {
         return new SchemaFile(namespace, requires, declarations, comments, location, description, descriptionLine,
-                newInstances);
+                newInstances, tests);
+    }
+
+    /**
+     * Returns a copy with the given tests.
+     *
+     * @param newTests the tests
+     * @return the copy
+     */
+    public SchemaFile withTests(final List<TestCase> newTests) {
+        return new SchemaFile(namespace, requires, declarations, comments, location, description, descriptionLine,
+                instances, newTests);
     }
 }

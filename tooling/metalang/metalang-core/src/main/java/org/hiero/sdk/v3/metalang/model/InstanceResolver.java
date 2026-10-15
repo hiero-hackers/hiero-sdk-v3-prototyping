@@ -111,6 +111,12 @@ final class InstanceResolver {
             case Expression.Access access -> access(access, file, out);
             case Expression.Value value -> value(value, expected, file, out);
             case Expression.ListValue list -> list(list, expected, file, out);
+            case Expression.Negate negate -> testOnly(negate, out);
+            case Expression.Binary binary -> testOnly(binary, out);
+            case Expression.IsNull isNull -> testOnly(isNull, out);
+            case Expression.IsType isType -> testOnly(isType, out);
+            case Expression.Index index -> testOnly(index, out);
+            case Expression.MapValue map -> testOnly(map, out);
         };
         if (result != null && expected != null && !assignable(result.type(), expected)) {
             out.report(Rule.INSTANCE_INVALID, "The value is a '" + result.type().text() + "', but a '"
@@ -118,6 +124,12 @@ final class InstanceResolver {
             return null;
         }
         return result;
+    }
+
+    private static @Nullable InstanceExpression testOnly(final Expression expression, final DiagnosticCollector out) {
+        out.report(Rule.INSTANCE_INVALID, "Operators, indexes and maps are only allowed in tests, not in a default "
+                + "instance", expression.location());
+        return null;
     }
 
     private @Nullable InstanceExpression defaultValue(final Expression.Default value, final @Nullable Type expected,

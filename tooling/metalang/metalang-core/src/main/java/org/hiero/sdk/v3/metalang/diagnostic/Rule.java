@@ -31,6 +31,8 @@ public enum Rule {
             "A section of the spec skeleton is missing", "testing-guideline.md#where-tests-live-the--testing-section"),
     DOC_UNCLOSED_FENCE("doc.unclosed-fence", Severity.ERROR,
             "Fenced code block is never closed", "CLAUDE.md#how-to-make-changes"),
+    DOC_TESTS_OUTSIDE_SECTION("doc.tests-outside-section", Severity.WARNING,
+            "A 'tests' code block outside the '## Testing' section is ignored", "test-language.md#where-tests-live"),
     DOC_INVALID_ENCODING("doc.invalid-encoding", Severity.ERROR,
             "File is not valid UTF-8 and cannot be read", "CLAUDE.md#audience--language"),
 

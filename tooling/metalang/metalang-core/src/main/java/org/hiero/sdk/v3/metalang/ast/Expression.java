@@ -6,8 +6,10 @@ import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
 import org.jspecify.annotations.Nullable;
 
 /**
- * An expression of a default instance: it describes how a value is obtained through the API. Arguments are always
- * named after the parameter or attribute they are passed to.
+ * An expression of a default instance or a test: it describes how a value is obtained through the API. Arguments are
+ * always named after the parameter or attribute they are passed to. The operators, indexes and maps
+ * ({@link Negate}, {@link Binary}, {@link IsNull}, {@link IsType}, {@link Index}, {@link MapValue}) are only allowed in
+ * tests.
  */
 public sealed interface Expression extends Node {
 
@@ -150,6 +152,211 @@ public sealed interface Expression extends Node {
          */
         public ListValue {
             items = List.copyOf(items);
+        }
+    }
+
+    /**
+     * The element of a list or the value of a map: {@code keys[0]}, {@code balances[account]}.
+     *
+     * @param target   the list or map
+     * @param index    the index or key
+     * @param location the location of the opening bracket
+     */
+    record Index(Expression target, Expression index, SourceLocation location) implements Expression {
+
+        /**
+         * Creates an index expression.
+         *
+         * @param target   the list or map
+         * @param index    the index or key
+         * @param location the location
+         */
+        public Index {
+            Objects.requireNonNull(target, "target must not be null");
+            Objects.requireNonNull(index, "index must not be null");
+            Objects.requireNonNull(location, "location must not be null");
+        }
+    }
+
+    /**
+     * The negation of a number: {@code -amount}. A negated number literal is no {@code Negate} but a negative
+     * {@link Literal.NumberLiteral}.
+     *
+     * @param operand  the number
+     * @param location the location of the minus sign
+     */
+    record Negate(Expression operand, SourceLocation location) implements Expression {
+
+        /**
+         * Creates a negation.
+         *
+         * @param operand  the number
+         * @param location the location
+         */
+        public Negate {
+            Objects.requireNonNull(operand, "operand must not be null");
+            Objects.requireNonNull(location, "location must not be null");
+        }
+    }
+
+    /**
+     * The binary operators, in the notation of the test language.
+     */
+    enum Operator {
+        /** {@code *}. */
+        MULTIPLY("*"),
+        /** {@code /}. */
+        DIVIDE("/"),
+        /** {@code %}. */
+        REMAINDER("%"),
+        /** {@code +}. */
+        ADD("+"),
+        /** {@code -}. */
+        SUBTRACT("-"),
+        /** {@code <}. */
+        LESS("<"),
+        /** {@code <=}. */
+        LESS_OR_EQUAL("<="),
+        /** {@code >}. */
+        GREATER(">"),
+        /** {@code >=}. */
+        GREATER_OR_EQUAL(">="),
+        /** {@code ==}. */
+        EQUAL("=="),
+        /** {@code !=}. */
+        NOT_EQUAL("!="),
+        /** {@code &&}. */
+        AND("&&"),
+        /** {@code ||}. */
+        OR("||");
+
+        private final String symbol;
+
+        Operator(final String symbol) {
+            this.symbol = symbol;
+        }
+
+        /**
+         * Returns the operator as written in a test.
+         *
+         * @return the symbol
+         */
+        public String symbol() {
+            return symbol;
+        }
+    }
+
+    /**
+     * A binary operation: {@code a + b}, {@code a == b}, {@code a && b}.
+     *
+     * @param operator the operator
+     * @param left     the left operand
+     * @param right    the right operand
+     * @param location the location of the operator
+     */
+    record Binary(Operator operator, Expression left, Expression right, SourceLocation location)
+            implements Expression {
+
+        /**
+         * Creates a binary operation.
+         *
+         * @param operator the operator
+         * @param left     the left operand
+         * @param right    the right operand
+         * @param location the location
+         */
+        public Binary {
+            Objects.requireNonNull(operator, "operator must not be null");
+            Objects.requireNonNull(left, "left must not be null");
+            Objects.requireNonNull(right, "right must not be null");
+            Objects.requireNonNull(location, "location must not be null");
+        }
+    }
+
+    /**
+     * A check for {@code null}: {@code a is null}, {@code a is not null}.
+     *
+     * @param operand  the value
+     * @param negated  whether it is {@code is not null}
+     * @param location the location of {@code is}
+     */
+    record IsNull(Expression operand, boolean negated, SourceLocation location) implements Expression {
+
+        /**
+         * Creates a null check.
+         *
+         * @param operand  the value
+         * @param negated  whether the check is negated
+         * @param location the location
+         */
+        public IsNull {
+            Objects.requireNonNull(operand, "operand must not be null");
+            Objects.requireNonNull(location, "location must not be null");
+        }
+    }
+
+    /**
+     * A check for a type: {@code a is PublicKey}, {@code a is not PublicKey}.
+     *
+     * @param operand  the value
+     * @param type     the type
+     * @param negated  whether it is {@code is not}
+     * @param location the location of {@code is}
+     */
+    record IsType(Expression operand, TypeRef type, boolean negated, SourceLocation location) implements Expression {
+
+        /**
+         * Creates a type check.
+         *
+         * @param operand  the value
+         * @param type     the type
+         * @param negated  whether the check is negated
+         * @param location the location
+         */
+        public IsType {
+            Objects.requireNonNull(operand, "operand must not be null");
+            Objects.requireNonNull(type, "type must not be null");
+            Objects.requireNonNull(location, "location must not be null");
+        }
+    }
+
+    /**
+     * An entry of a map.
+     *
+     * @param key   the key
+     * @param value the value
+     */
+    record Entry(Expression key, Expression value) {
+
+        /**
+         * Creates an entry.
+         *
+         * @param key   the key
+         * @param value the value
+         */
+        public Entry {
+            Objects.requireNonNull(key, "key must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+        }
+    }
+
+    /**
+     * A map: {@code {"a": 1, "b": 2}}.
+     *
+     * @param entries  the entries in source order
+     * @param location the location of the opening brace
+     */
+    record MapValue(List<Entry> entries, SourceLocation location) implements Expression {
+
+        /**
+         * Creates a map.
+         *
+         * @param entries  the entries
+         * @param location the location
+         */
+        public MapValue {
+            entries = List.copyOf(entries);
+            Objects.requireNonNull(location, "location must not be null");
         }
     }
 }

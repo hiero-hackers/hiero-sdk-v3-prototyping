@@ -1,8 +1,9 @@
 /*
  * Grammar of the Hiero SDK V3 API meta-language.
  *
- * Normative prose: guidelines/api-guideline.md. This grammar is the machine-readable counterpart and
- * describes the content of a spec's "## API Schema" code block.
+ * Normative prose: guidelines/api-guideline.md and guidelines/test-language.md. This grammar is the
+ * machine-readable counterpart and describes the content of a spec's "## API Schema" code block (start rule
+ * `schema`), of its "## Default Instances for Testing" block (`instances`) and of its `tests` blocks (`tests`).
  *
  * Design notes:
  * - The grammar is intentionally *lenient* for a small, closed set of syntax variants that occur in
@@ -57,16 +58,34 @@ instanceDecl
     : INSTANCE typeRef ASSIGN expression SEMI?
     ;
 
+// Expressions of default instances and tests. The grammar accepts the operators everywhere; a default instance
+// that uses one is reported by the instance resolver. The alternatives are ordered by precedence, the highest
+// first (see "Operators" in guidelines/test-language.md); binary operators are left-associative.
 expression
     : expression DOT identifier LPAREN argumentList? RPAREN         # methodCallExpression
     | expression DOT identifier                                      # accessExpression
+    | expression LBRACK expression RBRACK                            # indexExpression
+    | MINUS expression                                               # negateExpression
+    | expression op=(STAR | SLASH | PERCENT) expression              # multiplicativeExpression
+    | expression op=(PLUS | MINUS) expression                        # additiveExpression
+    | expression op=(LT | LE | GT | GE) expression                   # comparisonExpression
+    | expression IS NOT? typeRef                                     # isExpression
+    | expression op=(EQ | NEQ) expression                            # equalityExpression
+    | expression AND expression                                      # andExpression
+    | expression OR expression                                       # orExpression
     | DEFAULT (LPAREN typeRef RPAREN)?                               # defaultExpression
     | qualifiedName typeArguments? LBRACE argumentList? RBRACE       # constructExpression
     | qualifiedName LPAREN argumentList? RPAREN                      # callExpression
     | LBRACK (expression (COMMA expression)* COMMA?)? RBRACK         # listExpression
+    | LBRACE (mapEntry (COMMA mapEntry)* COMMA?)? RBRACE             # mapExpression
+    | LPAREN expression RPAREN                                       # parenthesizedExpression
     | STRING                                                         # stringExpression
     | NUMBER                                                         # numberExpression
     | qualifiedName                                                  # nameExpression
+    ;
+
+mapEntry
+    : expression COLON expression
     ;
 
 argumentList
@@ -75,6 +94,46 @@ argumentList
 
 argument
     : identifier COLON expression
+    ;
+
+// --- tests -----------------------------------------------------------------------------------
+// The content of a `tests` code block of a spec's "## Testing" section. Like the default instances it uses the
+// namespace and the imports of the file's API schema. Statements are not separated by a token; a `;` is allowed.
+
+tests
+    : testDecl* EOF
+    ;
+
+testDecl
+    : annotation* TEST STRING block
+    ;
+
+block
+    : LBRACE statement* RBRACE
+    ;
+
+statement
+    : letStatement
+    | ifStatement
+    | forStatement
+    | expressionStatement
+    ;
+
+letStatement
+    : LET identifier (COLON typeRef)? ASSIGN expression SEMI?
+    ;
+
+ifStatement
+    : IF expression block (ELSE (ifStatement | block))?
+    ;
+
+forStatement
+    : FOR identifier IN expression block
+    ;
+
+// a call whose result is not used, e.g. an assertion; only calls are allowed (checked by the validator)
+expressionStatement
+    : annotation* expression SEMI?
     ;
 
 // --- constants ---------------------------------------------------------------------------------
@@ -200,7 +259,7 @@ annotationArgument
 
 literal
     : STRING                                                                   # stringLiteral
-    | NUMBER                                                                   # numberLiteral
+    | MINUS? NUMBER                                                            # numberLiteral
     | LBRACK (literal (COMMA literal)*)? RBRACK                                # listLiteral
     | qualifiedName LBRACE (structEntry (COMMA structEntry)* COMMA?)? RBRACE   # structLiteral
     | qualifiedName                                                            # nameLiteral
@@ -231,6 +290,14 @@ identifier
     | FUNCTION
     | INSTANCE
     | DEFAULT
+    | TEST
+    | LET
+    | IF
+    | ELSE
+    | FOR
+    | IN
+    | IS
+    | NOT
     ;
 
 // ---------------------------------------------------------------------------------------------
@@ -248,10 +315,28 @@ EXTENDS     : 'extends';
 FUNCTION    : 'function';
 INSTANCE    : 'instance';
 DEFAULT     : 'DEFAULT';
+TEST        : 'test';
+LET         : 'let';
+IF          : 'if';
+ELSE        : 'else';
+FOR         : 'for';
+IN          : 'in';
+IS          : 'is';
+NOT         : 'not';
 ANY         : 'ANY';
 VOID        : 'void';
 
 ELLIPSIS : '...';
+EQ       : '==';
+NEQ      : '!=';
+LE       : '<=';
+GE       : '>=';
+AND      : '&&';
+OR       : '||';
+PLUS     : '+';
+MINUS    : '-';
+SLASH    : '/';
+PERCENT  : '%';
 LBRACE   : '{';
 RBRACE   : '}';
 LPAREN   : '(';
@@ -271,9 +356,11 @@ ANNOTATION_NAME : '@@' [a-zA-Z] [a-zA-Z0-9]*;
 GENERIC_NAME    : '$$' [a-zA-Z] [a-zA-Z0-9_]*;
 
 // lowercase-kebab-case error identifiers used in @@throws(...); must contain at least one hyphen
+// (in a test, `n-1` is therefore one token and no subtraction: a binary minus needs spaces around it)
 KEBAB_ID   : [a-z] [a-z0-9]* ('-' [a-z0-9]+)+;
 IDENTIFIER : [a-zA-Z_] [a-zA-Z0-9_]*;
-NUMBER     : '-'? [0-9] [0-9_]* ('.' [0-9] [0-9_]*)?;
+// unsigned: a sign is the MINUS token, so that `a -1` is a subtraction
+NUMBER     : [0-9] [0-9_]* ('.' [0-9] [0-9_]*)?;
 STRING     : '"' (~["\\\r\n] | '\\' .)* '"';
 
 LINE_COMMENT  : '//' ~[\r\n]* -> channel(HIDDEN);

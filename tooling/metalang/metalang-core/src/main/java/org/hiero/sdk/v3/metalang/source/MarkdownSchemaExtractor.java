@@ -27,6 +27,12 @@ public final class MarkdownSchemaExtractor {
             "Description", "Design Notes", "API Schema", "Default Instances for Testing", "Examples", "Testing",
             "Questions & Comments");
 
+    /** The heading of the section with the tests. */
+    public static final String TESTING = "Testing";
+
+    /** The info string of a code block with tests. */
+    public static final String TESTS_INFO = "tests";
+
     /** The heading of the section with the default instances. */
     public static final String DEFAULT_INSTANCES = "Default Instances for Testing";
 
@@ -107,11 +113,30 @@ public final class MarkdownSchemaExtractor {
         final SchemaSource source = selected == null ? null : new SchemaSource(selected.file(), selected.text(),
                 selected.lineOffset(), description.text(), description.line());
         SchemaSource instances = null;
+        List<SchemaSource> tests = List.of();
         if (source != null) {
             checkSkeleton(file, scan.headings(), diagnostics);
             instances = instances(file, scan, diagnostics);
+            tests = tests(file, scan, diagnostics);
         }
-        return new ExtractionResult(source, diagnostics.sorted(), instances);
+        return new ExtractionResult(source, diagnostics.sorted(), instances, tests);
+    }
+
+    /** The {@code tests} code blocks of the "## Testing" section; such blocks elsewhere are reported and ignored. */
+    private static List<SchemaSource> tests(final String file, final Scan scan, final DiagnosticCollector diagnostics) {
+        final List<SchemaSource> tests = new ArrayList<>();
+        for (final CodeBlock block : scan.blocks()) {
+            if (!TESTS_INFO.equals(block.info())) {
+                continue;
+            }
+            if (TESTING.equals(block.section())) {
+                tests.add(new SchemaSource(file, block.content(), block.firstContentLine() - 1));
+            } else {
+                diagnostics.report(Rule.DOC_TESTS_OUTSIDE_SECTION, "A '" + TESTS_INFO + "' code block outside the '## "
+                        + TESTING + "' section is ignored", new SourceLocation(file, block.openingLine(), 1));
+            }
+        }
+        return List.copyOf(tests);
     }
 
     /** The first code block of the "## Default Instances for Testing" section. */

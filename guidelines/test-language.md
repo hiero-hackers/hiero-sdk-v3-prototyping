@@ -5,7 +5,8 @@ from which every target language gets deterministically generated unit tests. It
 [`api-guideline.md`](api-guideline.md) for tests: the API guideline defines how an API is *described*, this document
 defines how its behaviour is *checked*.
 
-> **Status: draft.** Nothing of this document is implemented yet. The analysis that led to it is
+> **Status: draft.** The parser is implemented (`tests` start rule of `MetaLang.g4`, `SchemaParser.parseTests`);
+> type checking, the `test.*` rules and the generators are not. The analysis that led to it is
 > [`docs/spec-defined-tests.md`](../docs/spec-defined-tests.md). Open decisions are marked in the text and collected
 > under [Questions & Comments](#questions--comments).
 
@@ -90,6 +91,10 @@ A test passes when all its statements run without a failed assertion and without
 | `if condition { … } else if condition { … } else { … }` | Runs one of the blocks. |
 | `for name in expression { … }` | Runs the block once per element of a list or a set (in an unspecified order, so the block must not depend on it); `range(start: 0, end: 10)` gives a list of integers. |
 
+Statements are written one after another, usually one per line; a `;` after a statement is allowed but not needed.
+An expression on its own is only a statement if it is a call — `a + b` or a bare name is a syntax error, so that a
+broken statement cannot silently turn into several harmless ones.
+
 There is no assignment, no `while`, no `break`/`continue` and no `return`. A loop always ends: it iterates a finite
 collection, and the collection is computed before the first iteration.
 
@@ -154,7 +159,8 @@ highest   a.b   a.m(…)   a[i]
           a * b   a / b   a % b
           a + b   a - b
           a < b   a <= b   a > b   a >= b
-          a == b   a != b   a is null   a is not null   a is Type   a is not Type
+          a is null   a is not null   a is Type   a is not Type
+          a == b   a != b
           a && b
 lowest    a || b
 ```
@@ -174,6 +180,9 @@ Operands and results:
 
 The logical operators `&&` and `||` take two `bool` values and evaluate their right operand only if needed. There is
 no conditional operator (`a ? b : c`); use `if`.
+
+A binary `-` between two lowercase names or a name and a number needs spaces around it: `n-1` is read as one token,
+because error ids such as `illegal-format` have that form. Write `n - 1`.
 
 ## Values
 

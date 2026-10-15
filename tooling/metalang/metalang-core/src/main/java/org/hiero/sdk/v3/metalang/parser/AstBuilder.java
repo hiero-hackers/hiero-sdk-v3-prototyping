@@ -20,6 +20,8 @@ import org.hiero.sdk.v3.metalang.ast.MethodSyntax;
 import org.hiero.sdk.v3.metalang.ast.Parameter;
 import org.hiero.sdk.v3.metalang.ast.Requires;
 import org.hiero.sdk.v3.metalang.ast.SchemaFile;
+import org.hiero.sdk.v3.metalang.ast.Statement;
+import org.hiero.sdk.v3.metalang.ast.TestCase;
 import org.hiero.sdk.v3.metalang.ast.TypeParameter;
 import org.hiero.sdk.v3.metalang.ast.TypeRef;
 import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
@@ -46,7 +48,7 @@ final class AstBuilder {
         final List<Requires> requires = ctx.requiresDecl().stream().map(this::requires).toList();
         final List<Declaration> declarations = ctx.topLevelDecl().stream().map(this::declaration).toList();
         return new SchemaFile(qualifiedName(ns.qualifiedName()), requires, declarations, comments(),
-                location(ns.start), source.description(), source.descriptionLine(), List.of());
+                location(ns.start), source.description(), source.descriptionLine(), List.of(), List.of());
     }
 
     /**
@@ -60,9 +62,72 @@ final class AstBuilder {
                 documentation(d), location(d.INSTANCE().getSymbol()))).toList();
     }
 
+    /**
+     * Builds the tests of a {@code tests} block.
+     *
+     * @param ctx the parse tree
+     * @return the tests in source order
+     */
+    List<TestCase> tests(final MetaLangParser.TestsContext ctx) {
+        return ctx.testDecl().stream().map(t -> new TestCase(unquote(t.STRING().getText()),
+                annotations(t.annotation()), statements(t.block()), documentation(t),
+                location(t.TEST().getSymbol()))).toList();
+    }
+
+    private List<Statement> statements(final MetaLangParser.BlockContext ctx) {
+        return ctx.statement().stream().map(this::statement).toList();
+    }
+
+    private Statement statement(final MetaLangParser.StatementContext ctx) {
+        if (ctx.letStatement() != null) {
+            final MetaLangParser.LetStatementContext let = ctx.letStatement();
+            return new Statement.Let(identifier(let.identifier()), let.typeRef() == null ? null : typeRef(let.typeRef()),
+                    expression(let.expression()), location(let.LET().getSymbol()));
+        }
+        if (ctx.ifStatement() != null) {
+            return ifStatement(ctx.ifStatement());
+        }
+        if (ctx.forStatement() != null) {
+            final MetaLangParser.ForStatementContext loop = ctx.forStatement();
+            return new Statement.For(identifier(loop.identifier()), expression(loop.expression()),
+                    statements(loop.block()), location(loop.FOR().getSymbol()));
+        }
+        final MetaLangParser.ExpressionStatementContext evaluate = ctx.expressionStatement();
+        return new Statement.Evaluate(annotations(evaluate.annotation()), expression(evaluate.expression()),
+                location(evaluate.start));
+    }
+
+    private Statement.If ifStatement(final MetaLangParser.IfStatementContext ctx) {
+        final List<Statement> otherwise;
+        if (ctx.ifStatement() != null) {
+            otherwise = List.of(ifStatement(ctx.ifStatement()));
+        } else if (ctx.block().size() > 1) {
+            otherwise = statements(ctx.block(1));
+        } else {
+            otherwise = List.of();
+        }
+        return new Statement.If(expression(ctx.expression()), statements(ctx.block(0)), otherwise,
+                location(ctx.IF().getSymbol()));
+    }
+
     private Expression expression(final MetaLangParser.ExpressionContext ctx) {
         final SourceLocation location = location(ctx.start);
         return switch (ctx) {
+            case MetaLangParser.IndexExpressionContext i -> new Expression.Index(expression(i.expression(0)),
+                    expression(i.expression(1)), location(i.LBRACK().getSymbol()));
+            case MetaLangParser.NegateExpressionContext n -> negate(n);
+            case MetaLangParser.MultiplicativeExpressionContext b -> binary(b.op, b.expression(0), b.expression(1));
+            case MetaLangParser.AdditiveExpressionContext b -> binary(b.op, b.expression(0), b.expression(1));
+            case MetaLangParser.ComparisonExpressionContext b -> binary(b.op, b.expression(0), b.expression(1));
+            case MetaLangParser.EqualityExpressionContext b -> binary(b.op, b.expression(0), b.expression(1));
+            case MetaLangParser.AndExpressionContext b -> binary(b.AND().getSymbol(), b.expression(0),
+                    b.expression(1));
+            case MetaLangParser.OrExpressionContext b -> binary(b.OR().getSymbol(), b.expression(0), b.expression(1));
+            case MetaLangParser.IsExpressionContext i -> is(i);
+            case MetaLangParser.MapExpressionContext m -> new Expression.MapValue(m.mapEntry().stream()
+                    .map(e -> new Expression.Entry(expression(e.expression(0)), expression(e.expression(1))))
+                    .toList(), location);
+            case MetaLangParser.ParenthesizedExpressionContext p -> expression(p.expression());
             case MetaLangParser.MethodCallExpressionContext c -> new Expression.MethodCall(expression(c.expression()),
                     identifier(c.identifier()), arguments(c.argumentList()), location(c.identifier().start));
             case MetaLangParser.AccessExpressionContext a -> new Expression.Access(expression(a.expression()),
@@ -85,6 +150,47 @@ final class AstBuilder {
                     new Literal.NameLiteral(qualifiedName(n.qualifiedName()), location), location);
             default -> throw new IllegalStateException("Unexpected expression: " + ctx.getClass());
         };
+    }
+
+    /** A negated number literal stays a literal ({@code -7}), so that default instances keep their negative numbers. */
+    private Expression negate(final MetaLangParser.NegateExpressionContext ctx) {
+        final SourceLocation location = location(ctx.MINUS().getSymbol());
+        if (ctx.expression() instanceof MetaLangParser.NumberExpressionContext number) {
+            return new Expression.Value(new Literal.NumberLiteral("-" + number.NUMBER().getText(), location), location);
+        }
+        return new Expression.Negate(expression(ctx.expression()), location);
+    }
+
+    private Expression binary(final Token operator, final MetaLangParser.ExpressionContext left,
+                              final MetaLangParser.ExpressionContext right) {
+        final Expression.Operator op = switch (operator.getType()) {
+            case MetaLangLexer.STAR -> Expression.Operator.MULTIPLY;
+            case MetaLangLexer.SLASH -> Expression.Operator.DIVIDE;
+            case MetaLangLexer.PERCENT -> Expression.Operator.REMAINDER;
+            case MetaLangLexer.PLUS -> Expression.Operator.ADD;
+            case MetaLangLexer.MINUS -> Expression.Operator.SUBTRACT;
+            case MetaLangLexer.LT -> Expression.Operator.LESS;
+            case MetaLangLexer.LE -> Expression.Operator.LESS_OR_EQUAL;
+            case MetaLangLexer.GT -> Expression.Operator.GREATER;
+            case MetaLangLexer.GE -> Expression.Operator.GREATER_OR_EQUAL;
+            case MetaLangLexer.EQ -> Expression.Operator.EQUAL;
+            case MetaLangLexer.NEQ -> Expression.Operator.NOT_EQUAL;
+            case MetaLangLexer.AND -> Expression.Operator.AND;
+            case MetaLangLexer.OR -> Expression.Operator.OR;
+            default -> throw new IllegalStateException("Unexpected operator: " + operator.getText());
+        };
+        return new Expression.Binary(op, expression(left), expression(right), location(operator));
+    }
+
+    /** {@code a is null} is a null check, every other {@code a is Name} a type check. */
+    private Expression is(final MetaLangParser.IsExpressionContext ctx) {
+        final SourceLocation location = location(ctx.IS().getSymbol());
+        final TypeRef type = typeRef(ctx.typeRef());
+        final boolean negated = ctx.NOT() != null;
+        if (type instanceof TypeRef.Named named && named.name().equals("null") && named.arguments().isEmpty()) {
+            return new Expression.IsNull(expression(ctx.expression()), negated, location);
+        }
+        return new Expression.IsType(expression(ctx.expression()), type, negated, location);
     }
 
     private List<Expression.Argument> arguments(final MetaLangParser.ArgumentListContext ctx) {
@@ -272,7 +378,8 @@ final class AstBuilder {
         final SourceLocation location = location(ctx.start);
         return switch (ctx) {
             case MetaLangParser.StringLiteralContext s -> new Literal.StringLiteral(unquote(s.STRING().getText()), location);
-            case MetaLangParser.NumberLiteralContext n -> new Literal.NumberLiteral(n.NUMBER().getText(), location);
+            case MetaLangParser.NumberLiteralContext n -> new Literal.NumberLiteral(
+                    (n.MINUS() == null ? "" : "-") + n.NUMBER().getText(), location);
             case MetaLangParser.ListLiteralContext l -> new Literal.ListLiteral(
                     l.literal().stream().map(this::literal).toList(), location);
             case MetaLangParser.StructLiteralContext s -> new Literal.StructLiteral(qualifiedName(s.qualifiedName()),

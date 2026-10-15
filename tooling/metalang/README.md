@@ -305,9 +305,10 @@ java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar rules
 
 ```
 spec/*.md
-  │ source/      MarkdownSchemaExtractor  "## API Schema" and "## Default Instances for Testing" code blocks + skeleton checks
-  │                                        (doc.*)
-  │ parser/      ANTLR4 grammar → parse tree → immutable AST (ast/, records + sealed interfaces)
+  │ source/      MarkdownSchemaExtractor  "## API Schema" and "## Default Instances for Testing" code blocks, the `tests`
+  │                                        blocks of "## Testing" + skeleton checks (doc.*)
+  │ parser/      ANTLR4 grammar → parse tree → immutable AST (ast/, records + sealed interfaces); the tests of the
+  │                           test language (guidelines/test-language.md) are parsed only, not yet checked
   │ semantic/    SpecModel: namespaces, type index, name resolution (local / requires / wildcard / qualified)
   │ model/       LinkedModel: every reference resolved, effective members with substituted type arguments,
   │                           default instances resolved (InstanceResolver)

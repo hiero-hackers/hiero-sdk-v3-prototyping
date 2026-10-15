@@ -16,6 +16,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 import org.hiero.sdk.v3.metalang.ast.SchemaFile;
+import org.hiero.sdk.v3.metalang.ast.TestCase;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
 import org.hiero.sdk.v3.metalang.diagnostic.DiagnosticCollector;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
@@ -25,6 +26,7 @@ import org.hiero.sdk.v3.metalang.parser.SchemaParser;
 import org.hiero.sdk.v3.metalang.semantic.SpecModel;
 import org.hiero.sdk.v3.metalang.source.ExtractionResult;
 import org.hiero.sdk.v3.metalang.source.MarkdownSchemaExtractor;
+import org.hiero.sdk.v3.metalang.source.SchemaSource;
 import org.hiero.sdk.v3.metalang.validation.Validator;
 
 /**
@@ -118,6 +120,13 @@ public final class MetaLang {
                 diagnostics.addAll(instances.diagnostics());
                 schema = schema == null ? null : schema.withInstances(instances.instances());
             }
+            final List<TestCase> tests = new ArrayList<>();
+            for (final SchemaSource block : extraction.tests()) {
+                final SchemaParser.TestsResult parsedTests = parser.parseTests(block);
+                diagnostics.addAll(parsedTests.diagnostics());
+                tests.addAll(parsedTests.tests());
+            }
+            schema = schema == null ? null : schema.withTests(tests);
             if (schema != null) {
                 schemas.add(schema);
             }

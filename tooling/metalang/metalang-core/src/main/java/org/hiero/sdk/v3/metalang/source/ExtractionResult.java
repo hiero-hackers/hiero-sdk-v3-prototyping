@@ -12,9 +12,10 @@ import org.jspecify.annotations.Nullable;
  * @param source      the extracted schema, or {@code null} if the file contains none
  * @param diagnostics findings about the document structure
  * @param instances   the code block of the "## Default Instances for Testing" section, or {@code null} if there is none
+ * @param tests       the {@code tests} code blocks of the "## Testing" section, in document order
  */
 public record ExtractionResult(@Nullable SchemaSource source, List<Diagnostic> diagnostics,
-                               @Nullable SchemaSource instances) {
+                               @Nullable SchemaSource instances, List<SchemaSource> tests) {
 
     /**
      * Creates a new extraction result.
@@ -22,9 +23,11 @@ public record ExtractionResult(@Nullable SchemaSource source, List<Diagnostic> d
      * @param source      the extracted schema or {@code null}
      * @param diagnostics findings about the document structure
      * @param instances   the default instances block or {@code null}
+     * @param tests       the tests blocks
      */
     public ExtractionResult {
         diagnostics = List.copyOf(Objects.requireNonNull(diagnostics, "diagnostics must not be null"));
+        tests = List.copyOf(Objects.requireNonNull(tests, "tests must not be null"));
     }
 
     /**
@@ -43,7 +46,7 @@ public record ExtractionResult(@Nullable SchemaSource source, List<Diagnostic> d
      * @param diagnostics findings about the document structure
      */
     public ExtractionResult(final @Nullable SchemaSource source, final List<Diagnostic> diagnostics) {
-        this(source, diagnostics, null);
+        this(source, diagnostics, null, List.of());
     }
 
     /**
