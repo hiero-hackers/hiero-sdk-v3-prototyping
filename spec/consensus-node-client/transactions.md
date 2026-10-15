@@ -222,14 +222,18 @@ abstraction PackedTransaction<$$Receipt extends Receipt, $$Transaction extends T
   @@immutable transactionId: TransactionId
   @@immutable nodeSignatures: list<NodeSignature> 
 
+  // Adds the signature of the account's private key for every target node. A key that has already signed
+  // this transaction is not added again.
   PackedTransaction<$$Receipt, $$Transaction> sign(account: Account)
-  
+
+  // Adds the signatures of the signer for every target node. A key that has already signed this transaction is
+  // not added again.
   PackedTransaction<$$Receipt, $$Transaction> sign(signer: TransactionSigner)
 
   // Returns the serialized TransactionBody bytes for every target node. Used by out-of-process
   // signing flows (raw HSMs, async signing pipelines, multi-party coordination, audit archival)
   // that cannot be wrapped behind a synchronous TransactionSigner. The returned list has one
-  // NodeBody per target node.
+  // NodeBody per target node, in the order in which the nodes were given.
   list<NodeBody> signableBodies()
 
   // Attaches externally-produced NodeSignatures to this PackedTransaction and returns a new
@@ -391,6 +395,199 @@ PackedTransaction<...> resumed = PackedTransaction.fromBytes(db.load(jobId));
 list<NodeSignature> signatures = ...;      // produced by remote signer
 PackedTransaction<...> signed = resumed.sign(signatures);
 signed.submit(client);
+```
+
+## Testing
+
+Offline tests of packing and signing, written as given / when / then. They use the smallest transaction type,
+`PrngTransaction`, and the default account (an Ed25519 key) as payer; nothing is submitted. The behaviour is the
+one of the HAPI protocol — one body per target node, signatures over the body bytes — and is tested the same way by
+the current SDKs (see `docs/sdk-unit-test-analysis.md`); the comment above each test names where.
+
+```tests
+// Source: HAPI (one TransactionBody per target node, each with its nodeAccountID); the Java, Go, JavaScript and
+// Python SDKs.
+test "packing gives one body per target node, in the order of the nodes" {
+    // given
+    let payer = DEFAULT(Account)
+    let node3 = AccountId.fromString(value: "0.0.3")
+    let node4 = AccountId.fromString(value: "0.0.4")
+
+    // when
+    let packed = consensusnode.transactions.utility.PrngTransaction{}.pack(payer: payer, nodes: [node3, node4])
+
+    // then
+    let bodies = packed.signableBodies()
+    assertEquals(expected: 2, actual: length(value: bodies))
+    assertEquals(expected: node3, actual: bodies[0].node)
+    assertEquals(expected: node4, actual: bodies[1].node)
+    assertNotEquals(unexpected: bodies[0].bytes, actual: bodies[1].bytes, message: "each body names its node")
+    assertEquals(expected: payer.accountId, actual: packed.transactionId.accountId)
+    assertEquals(expected: 0, actual: length(value: packed.nodeSignatures))
+}
+
+// Source: HAPI (a signature covers the bodyBytes of its SignedTransaction); the Java, Python, C++ and Go SDKs.
+test "signing adds one signature per node that verifies over the body of that node" {
+    // given
+    let payer = DEFAULT(Account)
+    let nodes = [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")]
+
+    // when
+    let packed = consensusnode.transactions.utility.PrngTransaction{}.sign(payer: payer, nodes: nodes)
+
+    // then
+    assertEquals(expected: 2, actual: length(value: packed.nodeSignatures))
+    for signature in packed.nodeSignatures {
+        assertEquals(expected: payer.privateKey.createPublicKey(), actual: signature.publicKey)
+        assertEquals(expected: 64, actual: length(value: signature.signature))
+        for body in packed.signableBodies() {
+            if body.node == signature.node {
+                assertTrue(condition: signature.publicKey.verify(message: body.bytes, signature: signature.signature))
+            }
+        }
+    }
+}
+
+// Source: the Python, Java and Go SDKs (a key in a SignatureMap only once).
+test "signing again with the same key adds no signature" {
+    // given
+    let payer = DEFAULT(Account)
+    let packed = consensusnode.transactions.utility.PrngTransaction{}
+            .sign(payer: payer, nodes: [AccountId.fromString(value: "0.0.3")])
+
+    // when
+    let again = packed.sign(account: payer)
+
+    // then
+    assertEquals(expected: 1, actual: length(value: again.nodeSignatures))
+}
+
+// Source: the JavaScript and Python SDKs (Ed25519 and ECDSA signatures on one transaction). The second key is the
+// secp256k1 key of the tests of keys.md.
+test "an Ed25519 and a secp256k1 key both sign every body" {
+    // given
+    let payer = DEFAULT(Account)
+    let second = Account{accountId: AccountId.fromString(value: "0.0.1002"),
+            privateKey: keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
+                    value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")}
+    let packed = consensusnode.transactions.utility.PrngTransaction{}
+            .sign(payer: payer, nodes: [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")])
+
+    // when
+    let signed = packed.sign(account: second)
+
+    // then
+    assertEquals(expected: 4, actual: length(value: signed.nodeSignatures))
+    for signature in signed.nodeSignatures {
+        for body in signed.signableBodies() {
+            if body.node == signature.node {
+                assertTrue(condition: signature.publicKey.verify(message: body.bytes, signature: signature.signature))
+            }
+        }
+    }
+}
+
+// Source: the Rust, Python, JavaScript, Go and Swift SDKs (the body bytes stay byte-exact, otherwise the signatures
+// break).
+test "a signed transaction survives toBytes and fromBytes unchanged" {
+    // given
+    let packed = consensusnode.transactions.utility.PrngTransaction{}
+            .sign(payer: DEFAULT(Account), nodes: [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")])
+    let bytes = packed.toBytes()
+
+    // when
+    let restored = PackedTransaction.fromBytes(bytes: bytes)
+
+    // then
+    assertEquals(expected: bytes, actual: restored.toBytes())
+    assertEquals(expected: packed.transactionId.accountId, actual: restored.transactionId.accountId)
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+    assertEquals(expected: length(value: packed.nodeSignatures), actual: length(value: restored.nodeSignatures))
+}
+
+// Source: the multi-party flow of the Python SDK: a transaction is packed by one party and signed by another.
+test "a restored transaction can be signed by another party" {
+    // given
+    let payer = DEFAULT(Account)
+    let bytes = consensusnode.transactions.utility.PrngTransaction{}
+            .sign(payer: payer, nodes: [AccountId.fromString(value: "0.0.3")]).toBytes()
+    let other = Account{accountId: AccountId.fromString(value: "0.0.1002"),
+            privateKey: keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
+                    value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")}
+
+    // when
+    let signed = PackedTransaction.fromBytes(bytes: bytes).sign(account: other)
+
+    // then
+    assertEquals(expected: 2, actual: length(value: signed.nodeSignatures))
+    for signature in signed.nodeSignatures {
+        assertTrue(condition: signature.publicKey.verify(message: signed.signableBodies()[0].bytes,
+                signature: signature.signature))
+    }
+}
+
+// Source: the out-of-process signing of the Rust SDK and the JavaScript SDK (sign the body bytes, attach the
+// signatures).
+test "signatures made outside the SDK are attached to their bodies" {
+    // given
+    let payer = DEFAULT(Account)
+    let packed = consensusnode.transactions.utility.PrngTransaction{}
+            .pack(payer: payer, nodes: [AccountId.fromString(value: "0.0.3")])
+    let body = packed.signableBodies()[0]
+    let external = NodeSignature{node: body.node, publicKey: payer.privateKey.createPublicKey(),
+            signature: payer.privateKey.sign(message: body.bytes)}
+
+    // when
+    let signed = packed.sign(signatures: [external])
+
+    // then
+    assertEquals(expected: [external], actual: signed.nodeSignatures)
+    assertEquals(expected: packed.transactionId.accountId, actual: signed.transactionId.accountId)
+}
+
+// Source: HIP-551 (an inner batch transaction is addressed to node 0.0.0); the Python SDK.
+test "a transaction packed for a batch has one body for node 0.0.0" {
+    // given
+    let payer = DEFAULT(Account)
+    let batchKey = authority.PublicKeyAuthority{publicKey: payer.privateKey.createPublicKey()}
+
+    // when
+    let packed = consensusnode.transactions.utility.PrngTransaction{}.packForBatch(payer: payer, batchKey: batchKey)
+
+    // then
+    assertEquals(expected: 1, actual: length(value: packed.signableBodies()))
+    assertEquals(expected: AccountId.fromString(value: "0.0.0"), actual: packed.signableBodies()[0].node)
+    assertEquals(expected: payer.accountId, actual: packed.transactionId.accountId)
+}
+
+// Source: a fixture of the JavaScript SDK (a TransactionList with one body for node 0.0.3, payer 0.0.1234, valid
+// start 4891363200 = 2125-01-01, memo "Transaction with validStart in 2125"); a regression test for valid starts
+// beyond 32-bit seconds.
+test "a transaction of another SDK is read with a valid start in 2125" {
+    // given
+    let bytes = hex(text: "0acc012ac9010a5f0a0d0a0608808fb19c12120318d209120218031880c2d72f2202087832235472616e73616374"
+            + "696f6e20776974682076616c6964537461727420696e2032313235721c0a1a0a0b0a0318d20910ffa7d6b9070a0b0a0318ae2c1080"
+            + "a8d6b90712660a640a205afd59dfc4401b63272c050535457495841ba2d414891cb8609549d3f08ef6671a40a82b1257b5476a98c6"
+            + "5fe73e802150e9526eed77c11b377da642893e0004db096c258636a47327d986084a5044409220d68dde2ea34b1b1b097b39129d83d302")
+
+    // when
+    let transaction = PackedTransaction.fromBytes(bytes: bytes)
+
+    // then
+    assertEquals(expected: AccountId.fromString(value: "0.0.1234"), actual: transaction.transactionId.accountId)
+    assertTrue(condition: startsWith(value: transaction.transactionId.toString(), prefix: "0.0.1234@4891363200."))
+    assertEquals(expected: 1, actual: length(value: transaction.signableBodies()))
+    assertEquals(expected: AccountId.fromString(value: "0.0.3"), actual: transaction.signableBodies()[0].node)
+    assertEquals(expected: 1, actual: length(value: transaction.nodeSignatures))
+}
+
+// Source: ResponseCodeEnum of the HAPI (response_code.proto).
+test "the basic transaction statuses have the codes of the protocol" {
+    assertEquals(expected: 0, actual: BasicTransactionStatus.OK.code)
+    assertEquals(expected: 1, actual: BasicTransactionStatus.INVALID_TRANSACTION.code)
+    assertEquals(expected: 2, actual: BasicTransactionStatus.PAYER_ACCOUNT_NOT_FOUND.code)
+    assertEquals(expected: 399, actual: BasicTransactionStatus.GRPC_WEB_PROXY_NOT_SUPPORTED.code)
+}
 ```
 
 ## Questions & Comments

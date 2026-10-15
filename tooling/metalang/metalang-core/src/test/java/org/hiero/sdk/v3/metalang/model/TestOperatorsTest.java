@@ -30,6 +30,8 @@ class TestOperatorsTest {
 
             abstraction Shape {}
 
+            enum Level(code: int32) { LOW(1), HIGH(2) }
+
             Circle extends Shape {
                 @@immutable r: int32
             }
@@ -116,6 +118,8 @@ class TestOperatorsTest {
         "v.i % 2 == 1          ; bool",
         "abs(value: -v.i)      ; int256",
         "toString(value: v.m)  ; string",
+        "Level.HIGH.code       ; int32",
+        "Level.HIGH.code + 1   ; int256",
     })
     void operatorsShouldHaveTheirTypes(final String expression, final String type) {
         assertThat(typeOf(expression).text()).isEqualTo(type);
@@ -141,6 +145,8 @@ class TestOperatorsTest {
         "let x = v.s.missing()",
         "let x = DEFAULT",
         "assertInstanceOf(expected: Unknown, actual: v)",
+        "let x = Level.HIGH.missing",
+        "let x = Level.MIDDLE.code",
         "assertEquals(expected: v.s, actual: v.i)",
         "assertEquals(expected: 1, actual: \"a\", message: 2)",
         "let x = contains(value: v.l, element: 1)",

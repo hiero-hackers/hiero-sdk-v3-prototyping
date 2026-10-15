@@ -410,6 +410,22 @@ final class InstanceResolver {
         final boolean known = enumType.flatMap(t -> linked.type(t.name()))
                 .filter(TypeDefinition.EnumDefinition.class::isInstance).map(TypeDefinition.EnumDefinition.class::cast)
                 .filter(e -> e.values().stream().anyMatch(v -> v.name().equals(simple))).isPresent();
+        if (!known && tests()) {
+            // an attribute of a constant or enum constant: BasicTransactionStatus.OK.code
+            for (int end = segments.length - 1; end >= 2; end--) {
+                final DiagnosticCollector trial = new DiagnosticCollector();
+                InstanceExpression result = name(new Literal.NameLiteral(String.join(".",
+                        java.util.Arrays.copyOfRange(segments, 0, end)), location), new Type.AnyType(), null,
+                        location, file, trial);
+                if (result == null || !trial.sorted().isEmpty()) {
+                    continue;
+                }
+                for (int i = end; i < segments.length && result != null; i++) {
+                    result = attribute(result, segments[i], location, out);
+                }
+                return result;
+            }
+        }
         if (!known) {
             out.report(invalid, "'" + text + "' is no constant and no enum constant"
                     + (type instanceof Type.DeclaredType ? " of '" + type.text() + "'" : ""), location);

@@ -130,6 +130,34 @@ evmAddress)` makes `num` null, while Java and Go return 0 — the test follows t
   (Java, JS, Go). Expressible as far as the `@@pattern` of `MirrorNodeHttpRequest.path` reaches; see category 2.
 - **ServiceEndpoint** is `@@oneOf(ipAddress, domainName)`: an endpoint with both is rejected (Java, Python).
 
+### Transactions (`spec/consensus-node-client/transactions.md`)
+
+The generic transaction behaviour that the V3 API can express offline, tested on `PrngTransaction` with the default
+account as payer (the tests are in the `## Testing` section of `transactions.md`):
+
+| Test | Protocol / source | SDKs |
+|---|---|---|
+| one body per target node, in the order of the nodes, each naming its node; the payer is the account of the id | HAPI | Java, Go, JS, Python |
+| signing adds one 64-byte signature per node that verifies over the body of that node | HAPI (signature over `bodyBytes`) | Java, Python, C++, Go |
+| signing again with the same key adds nothing | a key appears once in a `SignatureMap` | Python, Java, Go |
+| an Ed25519 and a secp256k1 key both sign every body | `SignaturePair` | JS, Python |
+| `toBytes`/`fromBytes` keeps the bytes, the id, the bodies and the signatures | body bytes are kept byte-exact | Rust, Python, JS, Go, Swift |
+| a restored transaction is signed by another party | multi-party signing | Python |
+| signatures made outside the SDK are attached (`sign(signatures)`) | out-of-process signing | Rust, JS |
+| `packForBatch`: one body for node `0.0.0` | HIP-551 | Python |
+| a `TransactionList` of another SDK with a valid start in 2125 is read (✔ decoded independently) | 64-bit seconds | JS fixture |
+| `BasicTransactionStatus` codes 0, 1, 2, 399 (✔) | `response_code.proto` | Java, Swift, JS, Go, Python |
+
+Two sentences were added to the API documentation because every SDK behaves that way: `signableBodies()` keeps the
+order of the nodes, and `PackedTransaction.sign(...)` does not add a key that has already signed.
+
+Not expressible yet (category 2): the transaction hash (SHA-384 of the signed transaction bytes; a JS fixture pins
+`c0a57957…`), reading memo, fee and valid duration back from a `PackedTransaction`, the 120-second default valid
+duration, the 100-byte memo limit, `@@throws` ids for `sign(signatures)` (wrong or missing node) and `fromBytes`
+(empty, malformed, smuggled bodies), a fixed `TransactionId` for byte-exact fixtures, a default `TransactionSigner`
+for `sign(payerId, signer, nodes)`, `highVolume` (HIP-1313, tested by six SDKs), and the remaining status codes.
+Not adopted: the default max fees per type (SDK conventions), and everything about V2 freezing.
+
 ## Category 2: adopt after a spec change
 
 The behaviour is general and the SDKs agree, but the spec cannot express it yet.
