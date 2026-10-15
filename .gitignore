@@ -20,3 +20,8 @@ sdk-ts/tck/generated/*/*.tsbuildinfo
 
 # virtual environment of the Python type check (scripts/generate-python.sh)
 sdk-python/.venv/
+/sdk-go/generated/**
+/sdk-java/generated/**
+/sdk-python/generated/**
+/sdk-rust/generated/**
+/sdk-ts/generated/**
