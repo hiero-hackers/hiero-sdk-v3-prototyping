@@ -35,6 +35,9 @@ import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
  */
 final class TsTypeGenerator {
 
+    /** Prefix of the union alias beside the interface of a sealed abstraction that carries members. */
+    private static final String VARIANTS_PREFIX = "Any";
+
     private static final String INDENT = "    ";
 
     private TsTypeGenerator() {
@@ -64,16 +67,10 @@ final class TsTypeGenerator {
     private static String interfaceType(final TypeDefinition.ComplexTypeDefinition type, final TsImports imports) {
         final String name = type.name().name();
         final List<String> permitted = permitted(type, imports.context());
-        if (!permitted.isEmpty()) {
-            // a sealed abstraction is the union of its permitted types, distinguished with instanceof
-            final StringBuilder ts = new StringBuilder(TsDoc.render("", List.of(type.documentation()), List.of(),
-                    type.hasAnnotation("deprecated")));
-            ts.append("export type ").append(name).append(TsTypes.typeParameters(type.typeParameters(), imports))
-                    .append(" = ").append(String.join(" | ", permitted.stream()
-                            .map(p -> imports.type(new org.hiero.sdk.v3.metalang.model.QualifiedName(
-                                    p.substring(0, p.lastIndexOf('.')), p.substring(p.lastIndexOf('.') + 1))))
-                            .toList())).append(";\n");
-            return ts.toString();
+        if (!permitted.isEmpty() && isPureSum(type, imports.context())) {
+            // a sealed abstraction without members of its own is only the union of its permitted types
+            return TsDoc.render("", List.of(type.documentation()), List.of(), type.hasAnnotation("deprecated"))
+                    + unionAlias(name, permitted, imports);
         }
         final List<String> members = new ArrayList<>();
         for (final FieldDefinition field : type.declaredFields()) {
@@ -100,6 +97,11 @@ final class TsTypeGenerator {
                     .append(String.join("\n", TsMembers.render(name, statics, TsMembers.Kind.FUNCTION, INDENT,
                             imports)))
                     .append("}\n");
+        }
+        if (!permitted.isEmpty()) {
+            // the interface carries the shared members, the alias is the closed set for exhaustive narrowing
+            ts.append('\n').append(TsDoc.render("", List.of("The variants of `" + name + "`.")))
+                    .append(unionAlias(VARIANTS_PREFIX + name, permitted, imports));
         }
         return ts.toString();
     }
@@ -214,6 +216,23 @@ final class TsTypeGenerator {
         return ts.toString();
     }
 
+    /** {@code export type <name> = A | B;} over the permitted subtypes, which bind every type parameter. */
+    private static String unionAlias(final String name, final List<String> permitted, final TsImports imports) {
+        return "export type " + name + " = " + String.join(" | ", permitted.stream()
+                .map(p -> imports.type(new org.hiero.sdk.v3.metalang.model.QualifiedName(
+                        p.substring(0, p.lastIndexOf('.')), p.substring(p.lastIndexOf('.') + 1))))
+                .toList()) + ";\n";
+    }
+
+    /**
+     * Whether a sealed abstraction is a pure sum: it extends nothing that is generated, so the union of its permitted
+     * types says everything about it. Members are no obstacle - every variant declares them, so they resolve on the
+     * union. A supertype is: a union cannot extend an interface, so its variants would silently lose that contract.
+     */
+    private static boolean isPureSum(final TypeDefinition type, final TsContext context) {
+        return !permitted(type, context).isEmpty() && type.supertypes().isEmpty();
+    }
+
     /** The permitted subtypes of a sealed abstraction ({@code @@sealed(A, B)}) as qualified names. */
     private static List<String> permitted(final TypeDefinition type, final TsContext context) {
         return type.annotation("sealed").stream().flatMap(a -> a.arguments().stream()).map(a -> a.text())
@@ -223,9 +242,9 @@ final class TsTypeGenerator {
                 .toList();
     }
 
-    /** Whether a supertype is a sealed abstraction: a union type that classes do not implement explicitly. */
+    /** Whether a supertype is a pure sum: a union type that classes do not implement explicitly. */
     private static boolean isSealed(final Type.DeclaredType type, final TsContext context) {
-        return context.model().type(type.name()).map(t -> !permitted(t, context).isEmpty()).orElse(false);
+        return context.model().type(type.name()).map(t -> isPureSum(t, context)).orElse(false);
     }
 
     private static String typeArguments(final Type.DeclaredType type, final TsImports imports) {

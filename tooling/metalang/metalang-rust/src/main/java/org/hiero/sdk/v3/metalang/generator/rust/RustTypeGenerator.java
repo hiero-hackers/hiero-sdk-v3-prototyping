@@ -40,7 +40,7 @@ final class RustTypeGenerator {
         imports.declare(type.name());
         final String code = switch (type) {
             case TypeDefinition.EnumDefinition enumType -> enumType(enumType, imports);
-            case TypeDefinition.ComplexTypeDefinition complex when context.isSealed(complex.name()) ->
+            case TypeDefinition.ComplexTypeDefinition complex when context.isSealedEnum(complex.name()) ->
                     sealed(complex, imports);
             case TypeDefinition.ComplexTypeDefinition complex when complex.abstraction() -> trait(complex, imports);
             case TypeDefinition.ComplexTypeDefinition complex -> struct(complex, imports);
@@ -141,6 +141,12 @@ final class RustTypeGenerator {
             if (context.isGenerated(trait.name())) {
                 out.append('\n').append(traitImpl(type, trait, scope, names, imports));
             }
+        }
+        if (context.traits(type).stream().anyMatch(trait -> context.isMarkerSealed(trait.name()))) {
+            // one marker implementation per type, however many sealed traits it implements
+            out.append("\nimpl").append(boundedGenerics(type, context, imports, null)).append(' ')
+                    .append(RustNames.SEALED_MARKER).append(" for ").append(type.name().name()).append(generics)
+                    .append(" {}\n");
         }
         for (final Type supertype : type.supertypes()) {
             if (supertype instanceof Type.DeclaredType declared && context.isStruct(declared.name())
@@ -422,6 +428,10 @@ final class RustTypeGenerator {
         for (final Type.DeclaredType supertype : context.supertraits(type)) {
             supertraits.add(new RustType.Dyn(supertype.name(), context.keptArguments(supertype, scope))
                     .render(imports).replaceFirst("^.*?<dyn ", "").replaceFirst(">$", ""));
+        }
+        if (context.isMarkerSealed(type.name())) {
+            // the marker lives in a private module, so only this crate can implement the trait
+            supertraits.add(RustNames.SEALED_MARKER);
         }
         supertraits.add(imports.external("std::fmt::Debug"));
         supertraits.add("Send");

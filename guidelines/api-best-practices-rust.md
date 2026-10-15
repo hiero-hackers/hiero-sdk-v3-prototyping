@@ -172,9 +172,12 @@ let through_trait: Option<u64> = Identifier::num(&id);   // the trait: Option
 
 ## Sealed abstractions
 
-A sealed abstraction (`@@sealed(A, B)`) is an enum with one variant per permitted type, which matches exhaustively;
-each permitted type converts into it with `From`. Attributes and methods of the sealed abstraction are inherent
-methods of the enum.
+A sealed abstraction (`@@sealed(A, B)`) has **two mappings**, decided by whether the abstraction carries anything of
+its own.
+
+**Without own members and without a generated supertype it is an enum** with one variant per permitted type, which
+matches exhaustively; each permitted type converts into it with `From`. Attributes and methods of the sealed
+abstraction are inherent methods of the enum.
 
 ```rust
 pub enum Authority {
@@ -185,6 +188,30 @@ pub enum Authority {
 
 let authority = Authority::from(PublicKeyAuthority::new(key));
 ```
+
+**With own members or a supertype it is a sealed trait**: an enum cannot be a supertype, so its variants would lose
+the shared contract — in the specs a mint transaction would stop being a `Transaction`. The trait is public, its
+supertrait is not, which is the standard way to close a trait in Rust (the standard library seals `SliceIndex` and
+`Pattern` the same way):
+
+```rust
+// lib.rs - no `pub`, so no other crate can name the marker
+mod sealed {
+    pub trait Sealed {}
+}
+
+pub trait TokenMintTransaction<ReceiptT>: Transaction + crate::sealed::Sealed + Debug + Send + Sync {
+    fn token_id(&self) -> &Address;
+}
+
+impl TokenMintTransaction<TokenMintNftReceipt> for TokenMintNftTransaction { /* … */ }
+impl Transaction for TokenMintNftTransaction { /* … */ }
+impl crate::sealed::Sealed for TokenMintNftTransaction {}
+```
+
+A caller writes `&dyn TokenMintTransaction<_>` for the shared access and keeps every variant usable as itself. What
+is given up is exhaustiveness: Rust checks it only for enums. The marker is left out when a permitted type lives in
+another crate, because it could not implement it there.
 
 ## Enumerations
 

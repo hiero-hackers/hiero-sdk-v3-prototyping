@@ -10,6 +10,7 @@ import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.model.EnumValueDefinition;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
 import org.hiero.sdk.v3.metalang.model.ParameterDefinition;
+import org.hiero.sdk.v3.metalang.model.QualifiedName;
 import org.hiero.sdk.v3.metalang.model.Type;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
 import org.hiero.sdk.v3.metalang.model.TypeParameterDefinition;
@@ -142,16 +143,28 @@ final class PyTypeGenerator {
         return py.append(body(members)).toString();
     }
 
-    /** A sealed abstraction: the union of the subtypes {@code @@sealed} permits. */
+    /**
+     * A sealed abstraction: the union of the subtypes {@code @@sealed} permits.
+     *
+     * <p>A generic abstraction keeps its parameters on the alias although the union does not use them: a permitted
+     * subtype binds them (a transaction binds its receipt and its self type), so the union of the subtypes is already
+     * the closed set, while a usage that still passes arguments stays valid. Shared members need no separate
+     * protocol - mypy resolves an attribute on a union when every member has it.
+     */
     private String sealed(final TypeDefinition.ComplexTypeDefinition definition, final PyImports imports) {
-        if (!PyContext.pythonParameters(definition).isEmpty()) {
-            throw new PyGap("a generic sealed abstraction has no union alias yet");
+        for (final QualifiedName variant : context.sealedMembers(definition)) {
+            if (!PyContext.pythonParameters(context.model().type(variant)
+                    .orElseThrow(() -> new PyGap("the permitted subtype " + variant.name() + " is not declared")))
+                    .isEmpty()) {
+                throw new PyGap("the permitted subtype " + variant.name()
+                        + " is generic; a union alias of generic subtypes is not supported yet");
+            }
         }
         final List<String> members = context.sealedMembers(definition).stream()
                 .map(t -> imports.sdk(context.module(t), t.name(), true)).toList();
         final String doc = PyDoc.of("", definition.documentation(), definition);
-        return "type " + definition.name().name() + " = " + String.join(" | ", members) + "\n"
-                + (doc.isEmpty() ? "" : doc);
+        return "type " + definition.name().name() + typeParameters(definition, imports) + " = "
+                + String.join(" | ", members) + "\n" + (doc.isEmpty() ? "" : doc);
     }
 
     // --- enumerations -----------------------------------------------------------------------------------------

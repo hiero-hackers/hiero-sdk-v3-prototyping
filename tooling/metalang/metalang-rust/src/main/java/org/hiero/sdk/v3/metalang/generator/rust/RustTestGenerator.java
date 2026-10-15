@@ -79,7 +79,7 @@ public final class RustTestGenerator {
         final TestFile file = new TestFile(type.name().namespace(), context);
         final boolean tested = switch (type) {
             case TypeDefinition.EnumDefinition enumType -> file.enumTests(enumType);
-            case TypeDefinition.ComplexTypeDefinition complex when context.isSealed(complex.name()) ->
+            case TypeDefinition.ComplexTypeDefinition complex when context.isSealedEnum(complex.name()) ->
                     file.sealedTests(complex);
             case TypeDefinition.ComplexTypeDefinition complex when complex.abstraction() -> file.traitTests(complex);
             case TypeDefinition.ComplexTypeDefinition complex -> file.structTests(complex);

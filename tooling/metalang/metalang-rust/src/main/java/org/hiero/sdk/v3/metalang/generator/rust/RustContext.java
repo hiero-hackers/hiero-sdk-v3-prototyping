@@ -176,13 +176,57 @@ final class RustContext {
                 .map(t -> ((TypeDefinition.ComplexTypeDefinition) t).abstraction()).orElse(false);
     }
 
-    boolean isSealed(final QualifiedName type) {
-        return model.type(type).map(t -> t.hasAnnotation("sealed")).orElse(false) && isAbstraction(type);
+    /**
+     * Whether a type becomes an {@code enum}: a sealed abstraction that extends nothing generated, so the list of its
+     * variants says everything about it. Its own attributes and methods are no obstacle - they become inherent
+     * members of the enum.
+     *
+     * <p>A sealed abstraction that does extend another generated type becomes a sealed trait instead: an enum cannot
+     * be a supertype in Rust, so its variants would silently lose that contract (see ADR-0011).
+     *
+     * @param type the type
+     * @return {@code true} if the type is generated as an enum of its variants
+     */
+    boolean isSealedEnum(final QualifiedName type) {
+        if (!isAbstraction(type) || !model.type(type).map(t -> t.hasAnnotation("sealed")).orElse(false)) {
+            return false;
+        }
+        return model.type(type).orElseThrow().supertypes().isEmpty();
     }
 
-    /** Whether a type becomes a trait: an abstraction that is not sealed. */
+    /** Whether a sealed abstraction is generated as a trait rather than as an enum. */
+    boolean isSealedTrait(final QualifiedName type) {
+        return isAbstraction(type) && model.type(type).map(t -> t.hasAnnotation("sealed")).orElse(false)
+                && !isSealedEnum(type);
+    }
+
+    /**
+     * Whether a sealed abstraction is sealed with the private marker trait of its crate: it becomes a trait, and
+     * every permitted type lives in the same crate, so only that crate can implement it. A variant in another crate
+     * could not name the marker, so such a trait stays unsealed.
+     *
+     * @param type the type
+     * @return {@code true} if the trait lists {@code crate::sealed::Sealed} as a supertrait
+     */
+    boolean isMarkerSealed(final QualifiedName type) {
+        if (!isSealedTrait(type)) {
+            return false;
+        }
+        final String crate = folder(type.namespace());
+        return model.type(type).map(this::sealedVariants).orElse(List.of()).stream()
+                .allMatch(variant -> isGenerated(variant) && crate.equals(folder(variant.namespace())));
+    }
+
+    /** Whether any type of the crate is sealed with the marker trait, so that the crate declares it. */
+    boolean hasMarkerSealed(final String folderName) {
+        return model.types().stream().map(TypeDefinition::name)
+                .filter(n -> folderName.equals(folderOf.get(n.namespace())))
+                .anyMatch(this::isMarkerSealed);
+    }
+
+    /** Whether a type becomes a trait: an abstraction that is not generated as an enum. */
     boolean isTrait(final QualifiedName type) {
-        return isAbstraction(type) && !isSealed(type);
+        return isAbstraction(type) && !isSealedEnum(type);
     }
 
     boolean isStruct(final QualifiedName type) {
@@ -429,7 +473,7 @@ final class RustContext {
         if (definition instanceof TypeDefinition.EnumDefinition) {
             return new RustType.Enum(type.name());
         }
-        if (isSealed(type.name())) {
+        if (isSealedEnum(type.name())) {
             return new RustType.Sealed(type.name());
         }
         final List<RustType> arguments = new ArrayList<>();
@@ -480,7 +524,7 @@ final class RustContext {
         }
         final TypeDefinition definition = model.type(name).orElseThrow();
         Capabilities result = new Capabilities(false, true, true, true);
-        if (isSealed(name)) {
+        if (isSealedEnum(name)) {
             for (final QualifiedName variant : sealedVariants(definition)) {
                 result = result.and(capabilities(isAbstraction(variant) ? new RustType.Dyn(variant, List.of())
                         : new RustType.Struct(variant, List.of())));

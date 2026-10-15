@@ -335,6 +335,29 @@ class RustGeneratorTest {
     class Types {
 
         @Test
+        void aSealedAbstractionWithASupertypeShouldBeASealedTrait() {
+            // GIVEN a sealed abstraction that extends another abstraction - an enum cannot carry that supertype
+            final List<GeneratedFile> files = generate("""
+                    namespace a
+                    // A thing.
+                    abstraction Base { @@immutable id: string }
+                    // A parcel.
+                    @@sealed(SmallParcel, LargeParcel)
+                    abstraction Parcel extends Base { @@immutable label: string }
+                    SmallParcel extends Parcel { @@immutable width: int32 }
+                    LargeParcel extends Parcel { @@immutable height: int32 }
+                    """);
+
+            // THEN it is a trait, sealed by the private marker of its crate, and the variants implement both
+            assertThat(file(files, "/src/a/parcel.rs")).contains("pub trait Parcel: Base + crate::sealed::Sealed");
+            assertThat(file(files, "/src/a/small_parcel.rs"))
+                    .contains("impl Parcel for SmallParcel {")
+                    .contains("impl Base for SmallParcel {")
+                    .contains("impl crate::sealed::Sealed for SmallParcel {}");
+            assertThat(file(files, "/src/lib.rs")).contains("mod sealed {").contains("pub trait Sealed {}");
+        }
+
+        @Test
         void shouldMapEveryKindOfDeclaration() {
             // WHEN
             final List<GeneratedFile> files = generate(FEATURES);

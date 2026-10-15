@@ -296,14 +296,77 @@ class TsGeneratorTest {
                     // A shape.
                     @@sealed(Circle, Square)
                     abstraction Shape { double area() }
-                    Circle extends Shape { @@immutable r: double
+                    // Anything round.
+                    abstraction Circle extends Shape { @@immutable r: double
                         double area() }
                     Square extends Shape { @@immutable side: double
                         double area() }
                     """);
             assertThat(file(files, "/a/Shape.ts")).contains("/**\n * A shape.\n */\n"
                     + "export type Shape = Circle | Square;\n");
-            assertThat(file(files, "/a/Circle.ts")).contains("export class Circle {");
+            // a union cannot be extended, so the sealed supertype is left out of its variants, class or interface
+            assertThat(file(files, "/a/Circle.ts")).contains("export interface Circle {");
+            assertThat(file(files, "/a/Square.ts")).contains("export class Square {");
+        }
+
+        @Test
+        void aSealedAbstractionWithASupertypeShouldStayAnInterface() {
+            final List<GeneratedFile> files = generate("""
+                    namespace a
+                    // A thing.
+                    abstraction Base { @@immutable id: string }
+                    // A shape.
+                    @@sealed(Circle, Square)
+                    abstraction Shape extends Base { @@immutable corners: int32 }
+                    Circle extends Shape { @@immutable r: double }
+                    Square extends Shape { @@immutable side: double }
+                    """);
+            // a union cannot extend Base, so the abstraction stays an interface and the union is named beside it
+            assertThat(file(files, "/a/Shape.ts"))
+                    .contains("export interface Shape extends Base {")
+                    .contains("export type AnyShape = Circle | Square;");
+            assertThat(file(files, "/a/Circle.ts")).contains("export class Circle implements Shape {");
+        }
+
+        @Test
+        void aSealedVariantMayAlsoExtendAClass() {
+            final List<GeneratedFile> files = generate("""
+                    namespace a
+                    // A base.
+                    Base { @@immutable id: string
+                        // Touches it.
+                        void touch()
+                        // Creates one.
+                        @@static Base create() }
+                    // A choice.
+                    @@sealed(First, Second)
+                    abstraction Choice {}
+                    First extends Choice { @@immutable x: int32 }
+                    Second extends Base, Choice { @@immutable y: int32 }
+                    """);
+            assertThat(file(files, "/a/Choice.ts")).contains("export type Choice = First | Second;");
+            // the class keeps the concrete superclass and drops the union
+            assertThat(file(files, "/a/Second.ts")).contains("export class Second extends Base {")
+                    // and it does not repeat what the superclass already implements
+                    .doesNotContain("touch()");
+        }
+
+        @Test
+        void aSealedAbstractionShouldSkipAPermittedTypeThatIsNotGenerated() {
+            // GIVEN one of the two permitted types cannot be generated (it refers to an undeclared type)
+            final LinkedModel model = LinkedModel.of(new MetaLang().validate(Map.of("f/a.md", TestSpecs.markdown(
+                    """
+                    namespace a
+                    @@sealed(Good, Broken)
+                    abstraction Choice {}
+                    Good extends Choice { @@immutable x: int32 }
+                    Broken extends Choice { @@immutable y: Unknown }
+                    """))).model());
+
+            // THEN the union names only what exists, instead of referring to a type that was never written
+            assertThat(new TsGenerator().generate(model).stream()
+                    .filter(f -> f.path().endsWith("/a/Choice.ts")).findFirst().orElseThrow().content())
+                    .contains("export type Choice = Good;");
         }
 
         @Test

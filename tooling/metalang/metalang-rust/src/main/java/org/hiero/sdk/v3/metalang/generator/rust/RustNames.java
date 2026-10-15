@@ -21,6 +21,12 @@ final class RustNames {
     /** The directory of the support module ({@code src/support}) and its module name. */
     static final String SUPPORT = "support";
 
+    /** The private marker trait that seals a trait: only this crate can name it, so only this crate implements it. */
+    static final String SEALED_MARKER = "crate::sealed::Sealed";
+
+    /** The module of {@link #SEALED_MARKER}, declared by {@code lib.rs} without {@code pub}. */
+    static final String SEALED_MODULE = "sealed";
+
     private RustNames() {
     }
 

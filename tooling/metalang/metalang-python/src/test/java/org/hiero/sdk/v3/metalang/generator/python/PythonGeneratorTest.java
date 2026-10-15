@@ -237,6 +237,22 @@ class PythonGeneratorTest {
         }
 
         @Test
+        void aGenericSealedAbstractionShouldBeAUnionAliasWithoutParameters() {
+            final List<GeneratedFile> files = new PythonGenerator().generate(model("""
+                    namespace a
+                    // A receipt.
+                    Receipt { @@immutable id: string }
+                    // A box.
+                    @@sealed(SmallBox, LargeBox)
+                    abstraction Box<$$Self extends Box<$$Self>> { @@immutable label: string }
+                    SmallBox extends Box<SmallBox> { @@immutable width: int32 }
+                    LargeBox extends Box<LargeBox> { @@immutable height: int32 }
+                    """));
+            // the subtypes bind every parameter, so the alias needs none of its own
+            assertThat(module(files, "/_box.py")).contains("type Box = SmallBox | LargeBox\n");
+        }
+
+        @Test
         void genericsShouldUsePep695() {
             final List<GeneratedFile> files = new PythonGenerator().generate(model("""
                     namespace a

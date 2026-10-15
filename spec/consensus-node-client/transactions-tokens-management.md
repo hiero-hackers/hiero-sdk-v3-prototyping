@@ -62,10 +62,9 @@ requires {Address, AccountId} from ledger
 requires {Receipt, Transaction} from consensusnode.transactions
 
 // Removes (burns) units of a token from a NON-treasury account. Requires the token's
-// wipeAuthority. The payload differs by token kind:
-//   - FUNGIBLE_COMMON     → set `amount` (count in the smallest unit, must be > 0).
-//   - NON_FUNGIBLE_UNIQUE → set `serials` (the serials held by `accountId`, max 10).
-// Which of the two wipe transactions applies follows from the token's type.
+// wipeAuthority. Which of the two wipe transactions applies follows from the token's type:
+// TokenWipeFungibleTransaction for FUNGIBLE_COMMON, TokenWipeNftTransaction for
+// NON_FUNGIBLE_UNIQUE.
 @@sealed(TokenWipeFungibleTransaction, TokenWipeNftTransaction)
 abstraction TokenWipeTransaction<$$Self extends TokenWipeTransaction<$$Self>> extends Transaction<TokenWipeReceipt, $$Self> {
     @@immutable tokenId: Address                                    // the token to wipe

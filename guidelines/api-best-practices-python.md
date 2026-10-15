@@ -161,7 +161,18 @@ type Authority = PublicKeyAuthority | ContractAuthority | AuthorityList
 ```
 
 A `match` over it is exhaustive for the type checker (`typing.assert_never` in the last case), which is what sealing is
-for. No current spec uses `@@sealed`.
+for.
+
+The alias carries **no type parameters**, even when the abstraction is generic: a permitted subtype binds them (a
+transaction binds its receipt and its self type), so the union of the subtypes is already the closed set. Shared
+members need no separate protocol either — mypy resolves an attribute on a union when every member has it:
+
+```python
+type TokenMintTransaction = TokenMintFungibleTransaction | TokenMintNftTransaction
+
+def target_token(mint: TokenMintTransaction) -> Address:
+    return mint.token_id          # every variant has it
+```
 
 ## Enumerations
 

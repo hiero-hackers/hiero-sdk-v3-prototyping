@@ -56,15 +56,16 @@ variant on its own?*
 the deadlock without amending either rule.
 
 **`@@sealed` gets two language mappings** where a language distinguishes them — decided by whether the abstraction
-has members or supertypes of its own:
+extends another generated type. Members alone are no reason: every variant declares them, so they resolve on a union
+or become inherent members of an enum. A supertype is, because neither a union nor an enum can carry one:
 
-| | abstraction with members (shape 1) | abstraction without members (shape 2) |
+| | extends another generated type | extends nothing |
 |---|---|---|
 | Java | `abstract sealed class … permits` | `sealed interface … permits` |
-| TypeScript | abstract class + union | union type |
+| TypeScript | `interface` the variants implement, plus an `Any…` union | union type |
 | Rust | **sealed trait** (public trait, private supertrait) | `enum` |
-| Go | interface with an unexported method | interface with an unexported method |
-| Python | `Protocol` + union alias | union alias |
+| Go | interface with an unexported marker method | interface with an unexported marker method |
+| Python | union alias | union alias |
 
 Rejected alternatives:
 
@@ -94,25 +95,25 @@ Rejected alternatives:
 
 ### Negative
 
-- **Shape 1 does not generate correctly today.** Java is fine; TypeScript emits the variant class without its
-  supertype and Rust emits an `enum` plus structs with no `impl Transaction`, in both cases silently — nothing is
-  reported as deferred. Two generator changes are a precondition for the three token transactions.
+- `@@sealed` now has two mappings in TypeScript and Rust, decided by whether the abstraction extends another
+  generated type. That is one more rule to know when reading generated code: the mapping of a spec type depends on
+  its supertype, not on the annotation alone.
 - The type count grows: three transactions become three abstractions plus six final types, and `NftAllowance` gains
   three types.
 - Exhaustive handling is not available everywhere: Rust (sealed trait) and Go (interface) cannot offer it; Java,
   TypeScript and Python can.
-- `@@sealed` becomes context-dependent in Rust, which is one more rule for a spec author to understand when reading
-  generated code.
 - Callers of the current draft API rename (`TokenMintTransaction` → `TokenMintFungibleTransaction` /
   `TokenMintNftTransaction`). V3 is unreleased, so nothing outside this repository breaks.
 
 ### Follow-ups
 
 - Apply the pattern to the four sites, including their examples and prose — done in this change.
-- Teach the generators shape 1: a variant keeps the supertypes of its sealed abstraction, and Rust maps a sealed
-  abstraction with members or supertypes to a sealed trait. Until then the three token transactions generate
-  incompletely in TypeScript and Rust.
-- Record the two mappings in `api-best-practices-{rust,ts,go,python,java}.md`.
+- ~~Teach the generators shape 1~~ — done in the same change: a sealed abstraction that extends another generated
+  type becomes an interface plus an `Any…` union in TypeScript and a sealed trait (public trait, private
+  `crate::sealed::Sealed` supertrait) in Rust, and Python emits the union alias even for a generic abstraction.
+  Java and Go already produced the right shapes.
+- ~~Record the two mappings in the language guides~~ — done for Rust, TypeScript and Python; the Java and Go
+  guides already describe what their generators emit.
 - Describe in the SPI how two API types map to one HAPI body (`TokenMintTransactionBody`).
 - Fold the working papers `docs/oneof-collections.md` and `docs/oneof-collections-in-code.md` into this ADR and the
   guideline, then delete them.

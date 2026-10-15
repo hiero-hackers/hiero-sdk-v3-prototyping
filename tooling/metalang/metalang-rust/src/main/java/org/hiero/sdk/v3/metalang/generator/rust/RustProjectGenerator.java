@@ -202,6 +202,13 @@ final class RustProjectGenerator {
             // no `pub`: the wire format is an implementation detail, see src/proto.rs
             rs.append("\nmod ").append(PROTOBUF_MODULE).append(";\n");
         }
+        if (context.hasMarkerSealed(folder.name())) {
+            // no `pub`: a crate outside cannot name Sealed, so it cannot implement the sealed traits of this crate
+            rs.append("\nmod ").append(RustNames.SEALED_MODULE).append(" {\n")
+                    .append("    //! The marker that seals the traits of this crate.\n\n")
+                    .append("    /// Supertrait of every sealed trait of this crate; implemented only here.\n")
+                    .append("    pub trait Sealed {}\n}\n");
+        }
         return new GeneratedFile(RustNames.crateDirectory(folder.name()) + "/src/lib.rs", rs.toString());
     }
 }

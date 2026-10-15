@@ -259,16 +259,11 @@ TokenDissociateReceipt extends Receipt {
 }
 
 // Mints new units of a token, crediting them to the treasury account. Requires the token's
-// supplyAuthority to sign. The payload differs by `tokenType`:
-//
-//   - FUNGIBLE_COMMON  → set `amount` (count in the smallest indivisible unit, must be > 0).
-//   - NON_FUNGIBLE_UNIQUE → set `metadata` (one entry per new serial, max 10 per transaction);
-//                           the consensus node assigns sequential serial numbers and returns
-//                           them in the receipt.
-//
-// Which of the two mint transactions applies follows from the token's type.
+// supplyAuthority to sign. Which of the two mint transactions applies follows from the token's
+// type: TokenMintFungibleTransaction for FUNGIBLE_COMMON, TokenMintNftTransaction for
+// NON_FUNGIBLE_UNIQUE.
 @@sealed(TokenMintFungibleTransaction, TokenMintNftTransaction)
-abstraction TokenMintTransaction<$$Receipt extends TokenMintReceipt, $$Self extends TokenMintTransaction<$$Receipt, $$Self>> extends Transaction<$$Receipt, $$Self> {
+abstraction TokenMintTransaction<$$Receipt extends Receipt, $$Self extends TokenMintTransaction<$$Receipt, $$Self>> extends Transaction<$$Receipt, $$Self> {
     @@immutable tokenId: Address                                    // the token to mint
 }
 
@@ -295,15 +290,11 @@ TokenMintNftReceipt extends TokenMintReceipt {
     @@immutable @@default([]) serials: list<int64>                  // the serial numbers of the newly minted NFTs
 }
 
-// Burns existing units of a token from the treasury account. Requires the token's supplyAuthority to
-// sign. The payload differs by `tokenType`:
-//
-//   - FUNGIBLE_COMMON  → set `amount` (must be > 0 and ≤ treasury balance).
-//   - NON_FUNGIBLE_UNIQUE → set `serials` (the serials to burn, each currently held by the
-//                           treasury account; max 10 per transaction).
+// Burns existing units of a token from the treasury account. Requires the token's supplyAuthority
+// to sign; which of the two burn transactions applies follows from the token's type.
 //
 // Burning NFT serials held by a non-treasury account is not possible via this transaction —
-// use `TokenWipeTransaction` (gated by `wipeAuthority`) instead.
+// use the wipe transactions (gated by `wipeAuthority`) instead.
 @@sealed(TokenBurnFungibleTransaction, TokenBurnNftTransaction)
 abstraction TokenBurnTransaction<$$Self extends TokenBurnTransaction<$$Self>> extends Transaction<TokenBurnReceipt, $$Self> {
     @@immutable tokenId: Address                                    // the token to burn from

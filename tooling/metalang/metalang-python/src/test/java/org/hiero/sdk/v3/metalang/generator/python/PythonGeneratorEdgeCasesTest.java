@@ -103,8 +103,9 @@ class PythonGeneratorEdgeCasesTest {
                         """)));
         assertThat(module(files, "/a/_shape.py")).contains("type Shape = Near | Far\n")
                 .contains("from hiero_sdk.b._far import Far\n");
-        assertThat(generator.deferred()).containsOnlyKeys(q("Generic"));
-        assertThat(generator.deferred().get(q("Generic"))).contains("generic sealed");
+        // a generic abstraction keeps its parameters although the union of its concrete subtypes does not use them
+        assertThat(module(files, "/a/_generic.py")).contains("type Generic[T] = Near\n");
+        assertThat(generator.deferred()).isEmpty();
     }
 
     @Test

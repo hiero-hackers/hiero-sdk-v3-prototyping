@@ -255,7 +255,7 @@ final class RustSamples {
         }
         return switch (definition) {
             case TypeDefinition.EnumDefinition enumType -> constant(enumType, variant);
-            case TypeDefinition.ComplexTypeDefinition complex when context.isSealed(complex.name()) ->
+            case TypeDefinition.ComplexTypeDefinition complex when context.isSealedEnum(complex.name()) ->
                     sealed(complex, variant, visiting);
             case TypeDefinition.ComplexTypeDefinition complex when complex.abstraction() ->
                     implementation(type, variant, visiting);

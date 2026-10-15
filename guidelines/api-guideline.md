@@ -1211,15 +1211,18 @@ pair of variant types would be heavier than the thing it describes (`num` / `evm
 `ipAddress` / `domainName` of an endpoint). A `list`, `set` or `map` must never be an arm of `@@oneOf`: that case is
 always one of the two shapes above.
 
-The per-language mapping follows from `@@sealed` and is spelled out in the language guides. In short:
+The per-language mapping follows from `@@sealed` and is spelled out in the language guides. What decides it is not
+the shape above but one question a generator can answer: **does the sealed abstraction extend another generated
+type?** A sum that extends nothing can be a plain union — its members resolve on every variant — while a sum that
+has a supertype cannot, because neither a union nor an enum can carry one:
 
-| | Shape 1 (abstraction with members) | Shape 2 (abstraction without members) |
+| | extends another type | extends nothing |
 |---|---|---|
-| Java | `abstract sealed class … permits`, exhaustive `switch` | `sealed interface … permits` + records |
-| TypeScript | abstract class + union of the variants | union type |
+| Java | `abstract sealed class … permits`, exhaustive `switch` | `sealed interface … permits` |
+| TypeScript | `interface` the variants implement, plus an `Any…` union of them | union type |
 | Rust | sealed trait (public trait, private supertrait) | `enum` |
-| Go | interface with an unexported method | interface with an unexported method |
-| Python | `Protocol` for the shared members + union alias | union alias |
+| Go | interface with an unexported marker method | interface with an unexported marker method |
+| Python | union alias (an attribute of every variant resolves on it) | union alias |
 
 The reasoning, the rejected alternatives and the worked examples are recorded in
 [ADR-0011](../docs/adr/0011-model-a-choice-as-a-sealed-type.md).

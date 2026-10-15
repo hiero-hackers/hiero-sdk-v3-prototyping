@@ -499,8 +499,9 @@ const id: TransactionId = TransactionId.generateTransactionId(payer);
 
 ### Sealed abstractions are discriminated unions
 
-A `@@sealed` abstraction is a **union with a literal discriminant**, which is the TypeScript idiom for a closed set
-of variants and the only form that gives compile-time exhaustiveness:
+A `@@sealed` abstraction that carries nothing of its own — no members, no generated supertype — is a **union with a
+literal discriminant**, which is the TypeScript idiom for a closed set of variants and the only form that gives
+compile-time exhaustiveness:
 
 ```ts
 export type Authority =
