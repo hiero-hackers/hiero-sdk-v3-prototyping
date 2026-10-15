@@ -5,16 +5,13 @@
 # modules themselves are installed into the local Maven repository, so that the TCK server and any
 # other consumer can resolve them.
 #
-# usage: scripts/generate-java.sh [--no-build] [--test]
+# usage: scripts/generate-java.sh [--no-build] [--test] [--ignore-spec-errors]
 
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 parse_generate_options "$@"
 
 log "generating the Java API into sdk-java/generated"
-metalang generate --language=java --fail-on=never \
-  --config="$repository/sdk-java/generator.properties" \
-  --output="$repository/sdk-java/generated" \
-  "$repository/spec"
+generate_api java sdk-java
 
 if (( build )); then
   # a plain assignment, so that a missing JDK fails the script instead of exporting nothing

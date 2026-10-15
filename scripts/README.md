@@ -25,6 +25,7 @@ never run.
 Every `generate-*.sh` takes:
 
 - `--no-build` — only generate, do not compile or check
+- `--ignore-spec-errors` — generate although the specs have findings at or above `error`
 - `--test` — also run the generated tests. They fail for every method that is still a stub, which is
   what makes the implementation status visible; the scripts therefore do not fail on them. The Go
   and Python generators emit no tests yet, so the option does nothing there.
@@ -32,6 +33,23 @@ Every `generate-*.sh` takes:
 - `PYTHON=<interpreter>` — the interpreter for `generate-python.sh` (default `python3`); it needs to
   be Python 3.12 or newer
 - `SKIP_TYPE_CHECK=1` — generate the Python API without running mypy
+
+## Broken specs
+
+A generate script writes nothing while `metalang validate` reports a finding at or above `error`.
+A typo like `inti32` instead of `int32` would otherwise not stop anything: the generator drops the
+declarations it cannot resolve and everything that refers to them, so the SDK would be built without
+them. The scripts therefore print the findings and stop:
+
+```
+==> the findings of the specs
+consensus-node-admin-client/queries-network.md:62:24: ERROR [type.unknown] Unknown type 'inti32'
+...
+error: nothing was generated. Fix the findings above, or generate anyway with --ignore-spec-errors.
+```
+
+`--ignore-spec-errors` generates anyway; what was left out is then listed, because the scripts always
+pass `--show-deferred`.
 
 mypy does not have to be installed: if the interpreter has none, `generate-python.sh` creates the
 virtual environment `sdk-python/.venv` (git-ignored) and installs mypy there once. That is also the

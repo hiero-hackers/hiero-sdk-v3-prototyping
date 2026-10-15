@@ -227,11 +227,22 @@ scripts/generate-all.sh
 [`scripts/clean.sh`](scripts/clean.sh) removes the generated trees again (`--dry-run` shows what would go, `--all`
 includes the build output and the npm and Python caches).
 
-Each of them takes `--no-build` (generate only) and `--test` (also run the generated tests, which fail for every
-method that is still a stub). `REBUILD_CLI=1` forces a rebuild of the CLI, `PYTHON=<interpreter>` selects the
-interpreter for the Python check and `SKIP_TYPE_CHECK=1` leaves that check out. mypy does not have to be installed:
+Each of them takes `--no-build` (generate only), `--test` (also run the generated tests, which fail for every
+method that is still a stub) and `--ignore-spec-errors` (see below). `REBUILD_CLI=1` forces a rebuild of the CLI,
+`PYTHON=<interpreter>` selects the interpreter for the Python check and `SKIP_TYPE_CHECK=1` leaves that check out. mypy does not have to be installed:
 `generate-python.sh` creates the git-ignored virtual environment `sdk-python/.venv` and installs it there if the
 interpreter has none. [`scripts/README.md`](scripts/README.md) documents them in full.
+
+### When the specs have errors
+
+Nothing is generated while [`metalang validate`](tooling/metalang/README.md) reports a finding at or above `error`
+— neither by a script nor by the commands below. That gate matters because a generator does not fail on a broken
+declaration: it leaves the declaration out, together with everything that refers to it, and reports that in one line.
+A single `inti32` instead of `int32` therefore costs the whole namespace, and the result still compiles. The scripts
+print the findings and stop; `--ignore-spec-errors` (`--fail-on=never` for the raw commands) generates anyway.
+
+The specs currently carry six `collection.nullable` findings at severity `error`, so until those are resolved every
+generation needs that override.
 
 ### Do it by hand
 
@@ -242,18 +253,17 @@ cd tooling/metalang && ./mvnw -q package -DskipTests
 ```
 
 All commands below are run from the **repository root**. Each writes into the `generated` directory of its language
-folder and reads the decisions the specs cannot express from that folder's `generator.properties`.
-`--fail-on=never` generates even while the specs still have validation findings; without it nothing is written as
-long as an `error` finding exists. `--show-deferred` lists the declarations a generator cannot express yet, with the
-reason; `--output` takes any directory, so a throwaway target is the way to inspect a generator change. Details on
-every generator are in [`tooling/metalang/README.md`](tooling/metalang/README.md).
+folder and reads the decisions the specs cannot express from that folder's `generator.properties`. `--show-deferred`
+lists the declarations a generator leaves out, with the reason; `--output` takes any directory, so a throwaway
+target is the way to inspect a generator change. Details on every generator are in
+[`tooling/metalang/README.md`](tooling/metalang/README.md).
 
 #### Java
 
 A Maven project: a parent `pom.xml` with one sub-module per Java module, each with its JUnit tests.
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=java --fail-on=never --config=sdk-java/generator.properties --output=sdk-java/generated spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=java --config=sdk-java/generator.properties --output=sdk-java/generated spec
 ```
 
 The generated modules depend on the hand-written support module (`sdk-java/support`) and, for the consensus node
@@ -280,7 +290,7 @@ java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --langua
 One npm package per spec folder, with `node:test` tests, inside the npm workspace `sdk-ts`:
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=ts --fail-on=never --config=sdk-ts/generator.properties --output=sdk-ts/generated spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=ts --config=sdk-ts/generator.properties --output=sdk-ts/generated spec
 ```
 
 `npm install` links the hand-written `@hiero/support` package into the workspace and `tsc --build` builds it first.
@@ -296,7 +306,7 @@ A Cargo workspace with one crate per spec folder and an integration test per cra
 1:1 from [`guidelines/rust-files`](guidelines/rust-files):
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=rust --fail-on=never --config=sdk-rust/generator.properties --output=sdk-rust/generated spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=rust --config=sdk-rust/generator.properties --output=sdk-rust/generated spec
 ```
 
 ```bash
@@ -318,7 +328,7 @@ cargo test --manifest-path sdk-rust/generated/Cargo.toml --no-fail-fast --tests
 One Go module for everything (a spec folder is no artifact boundary in Go), one package per namespace:
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=go --fail-on=never --config=sdk-go/generator.properties --output=sdk-go/generated spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=go --config=sdk-go/generator.properties --output=sdk-go/generated spec
 ```
 
 The Go generator is still incomplete — it emits the declared types, but no methods, namespace functions, tests,
@@ -334,7 +344,7 @@ cd sdk-go/generated && go build ./... && go vet ./... && gofmt -l .
 One distribution (`hiero-sdk`, import package `hiero_sdk`), one package per namespace:
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=python --fail-on=never --config=sdk-python/generator.properties --output=sdk-python/generated spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=python --config=sdk-python/generator.properties --output=sdk-python/generated spec
 ```
 
 As incomplete as the Go generator and with the same scope. The check is that every package imports and the strict
@@ -379,11 +389,11 @@ both have to exist first — the API as described in
 repository root, `--language=ts` and the `sdk-ts` paths for the TypeScript server):
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck generate --language=java --fail-on=never --config=sdk-java/generator.properties --bindings=tooling/tck/bindings --output=sdk-java/tck/generated spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck generate --language=java --config=sdk-java/generator.properties --bindings=tooling/tck/bindings --output=sdk-java/tck/generated spec
 ```
 
 ```bash
-java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck generate --language=ts --fail-on=never --config=sdk-ts/generator.properties --bindings=tooling/tck/bindings --output=sdk-ts/tck/generated spec
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck generate --language=ts --config=sdk-ts/generator.properties --bindings=tooling/tck/bindings --output=sdk-ts/tck/generated spec
 ```
 
 **4. Build the server.** Java, from `sdk-java`, in this order — the `sdk env` activates the JDK 25 pinned in

@@ -5,7 +5,7 @@
 # starts the server and runs the TCK against a local Solo network. Everything after the options is
 # passed on as the list of TCK test files; without one the complete suite runs.
 #
-# usage: scripts/tck-java.sh [--skip-build] [TCK test file ...]
+# usage: scripts/tck-java.sh [--skip-build] [--ignore-spec-errors] [TCK test file ...]
 #
 # environment:
 #   TCK_DIR          a clone of https://github.com/hiero-ledger/hiero-sdk-tck with 'npm install' done (required)
@@ -15,20 +15,25 @@
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 skip_build=0
-if [[ "${1:-}" == "--skip-build" ]]; then
-  skip_build=1
+generate_options=""
+while (( $# > 0 )); do
+  case "$1" in
+    --skip-build) skip_build=1 ;;
+    --ignore-spec-errors) fail_on="never"; generate_options="--ignore-spec-errors" ;;
+    *) break ;;
+  esac
   shift
-fi
+done
 
 # checked here and not only in run-tck.sh, so that a missing clone does not surface after the build
 [[ -n "${TCK_DIR:-}" && -f "$TCK_DIR/package.json" ]] \
   || fail "TCK_DIR must point to a clone of hiero-sdk-tck (with 'npm install' done)"
 
 if (( ! skip_build )); then
-  "$(dirname "${BASH_SOURCE[0]}")/generate-java.sh"
+  "$(dirname "${BASH_SOURCE[0]}")/generate-java.sh" $generate_options
 
   log "generating the Java TCK contract and server into sdk-java/tck/generated"
-  metalang tck generate --language=java --fail-on=never \
+  metalang tck generate --language=java --fail-on="$fail_on" \
     --config="$repository/sdk-java/generator.properties" \
     --bindings="$repository/tooling/tck/bindings" \
     --output="$repository/sdk-java/tck/generated" \

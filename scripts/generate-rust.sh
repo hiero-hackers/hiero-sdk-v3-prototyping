@@ -6,16 +6,13 @@
 # ExchangeRate, whose fenced code block rustdoc compiles as Rust and which therefore always fails
 # (see the Rust section of README.md).
 #
-# usage: scripts/generate-rust.sh [--no-build] [--test]
+# usage: scripts/generate-rust.sh [--no-build] [--test] [--ignore-spec-errors]
 
 source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 parse_generate_options "$@"
 
 log "generating the Rust API into sdk-rust/generated"
-metalang generate --language=rust --fail-on=never \
-  --config="$repository/sdk-rust/generator.properties" \
-  --output="$repository/sdk-rust/generated" \
-  "$repository/spec"
+generate_api rust sdk-rust
 
 if (( build )); then
   command -v cargo >/dev/null || fail "cargo is needed (Rust 1.85 or newer, see https://rustup.rs)"

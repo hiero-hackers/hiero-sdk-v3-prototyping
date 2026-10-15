@@ -5,7 +5,7 @@
 # is `mypy --strict`. mypy is not expected to be installed: if the interpreter has none, the script
 # creates the virtual environment sdk-python/.venv (git-ignored) and installs it there once.
 #
-# usage: scripts/generate-python.sh [--no-build] [--test]
+# usage: scripts/generate-python.sh [--no-build] [--test] [--ignore-spec-errors]
 #
 # environment:
 #   PYTHON             the interpreter (default: python3); Python 3.12 or newer
@@ -15,10 +15,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 parse_generate_options "$@"
 
 log "generating the Python API into sdk-python/generated"
-metalang generate --language=python --fail-on=never \
-  --config="$repository/sdk-python/generator.properties" \
-  --output="$repository/sdk-python/generated" \
-  "$repository/spec"
+generate_api python sdk-python
 
 if (( build )); then
   python="${PYTHON:-python3}"

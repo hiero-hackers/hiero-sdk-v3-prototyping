@@ -84,18 +84,39 @@ metalang() {
 }
 
 # Options of the generate scripts: --no-build generates only, --test also runs the generated tests
-# (they fail for every method that is only a stub).
+# (they fail for every method that is only a stub), --ignore-spec-errors generates although the
+# specs have findings at or above 'error'.
 build=1
 run_tests=0
+fail_on="error"
 parse_generate_options() {
-  local usage="usage: $(basename "$0") [--no-build] [--test]"
+  local usage="usage: $(basename "$0") [--no-build] [--test] [--ignore-spec-errors]"
   while (( $# > 0 )); do
     case "$1" in
       --no-build) build=0 ;;
       --test) run_tests=1 ;;
+      --ignore-spec-errors) fail_on="never" ;;
       -h | --help) echo "$usage"; exit 0 ;;
       *) fail "unknown option '$1'. $usage" ;;
     esac
     shift
   done
+}
+
+# generate_api <language> <language folder>
+#
+# Generates into <language folder>/generated. The generator writes nothing while the specs have a
+# finding at or above 'error', so that a broken spec cannot silently produce an SDK with the
+# affected declarations missing; this prints the findings and how to override it.
+generate_api() {
+  local language="$1" folder="$2"
+  if metalang generate --language="$language" --fail-on="$fail_on" --show-deferred \
+      --config="$repository/$folder/generator.properties" \
+      --output="$repository/$folder/generated" \
+      "$repository/spec"; then
+    return 0
+  fi
+  log "the findings of the specs"
+  metalang validate --min-severity=error "$repository/spec" || true
+  fail "nothing was generated. Fix the findings above, or generate anyway with --ignore-spec-errors."
 }
