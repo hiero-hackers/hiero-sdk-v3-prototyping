@@ -17,3 +17,6 @@ sdk-ts/node_modules/
 sdk-ts/package-lock.json
 sdk-ts/tck/generated/*/dist/
 sdk-ts/tck/generated/*/*.tsbuildinfo
+
+# virtual environment of the Python type check (scripts/generate-python.sh)
+sdk-python/.venv/

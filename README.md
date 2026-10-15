@@ -226,7 +226,9 @@ scripts/generate-all.sh
 
 Each of them takes `--no-build` (generate only) and `--test` (also run the generated tests, which fail for every
 method that is still a stub). `REBUILD_CLI=1` forces a rebuild of the CLI, `PYTHON=<interpreter>` selects the
-interpreter for the Python check. [`scripts/README.md`](scripts/README.md) documents them in full.
+interpreter for the Python check and `SKIP_TYPE_CHECK=1` leaves that check out. mypy does not have to be installed:
+`generate-python.sh` creates the git-ignored virtual environment `sdk-python/.venv` and installs it there if the
+interpreter has none. [`scripts/README.md`](scripts/README.md) documents them in full.
 
 ### Do it by hand
 

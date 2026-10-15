@@ -28,8 +28,14 @@ Every `generate-*.sh` takes:
   what makes the implementation status visible; the scripts therefore do not fail on them. The Go
   and Python generators emit no tests yet, so the option does nothing there.
 - `REBUILD_CLI=1` — build the `metalang` CLI even if the jar is there (after a change of the tooling)
-- `PYTHON=<interpreter>` — the interpreter for `generate-python.sh` (default `python3`); it needs
-  Python 3.12 or newer and mypy
+- `PYTHON=<interpreter>` — the interpreter for `generate-python.sh` (default `python3`); it needs to
+  be Python 3.12 or newer
+- `SKIP_TYPE_CHECK=1` — generate the Python API without running mypy
+
+mypy does not have to be installed: if the interpreter has none, `generate-python.sh` creates the
+virtual environment `sdk-python/.venv` (git-ignored) and installs mypy there once. That is also the
+way around a Python that refuses `pip install` because its distribution marks it as externally
+managed (PEP 668), which is what Homebrew and most Linux distributions do.
 
 The JDK is not taken from the `PATH`: a Maven build gets the version pinned in the `.sdkmanrc` next
 to it, from `$JAVA_HOME` if that is new enough, otherwise from the SDKMAN! installation or from
