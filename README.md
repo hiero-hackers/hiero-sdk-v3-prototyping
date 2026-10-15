@@ -64,6 +64,7 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | `sdk-java/support/`, `sdk-ts/support/` | Hand-written support types the generated API depends on (`@ThreadSafe`, streaming; `Duration`, `StreamItem`, `AbstractConstructor`) |
 | `sdk-<lang>/tck/` | The language-specific TCK parts: `runtime/` (hand-written); `generated/` (contract + server) is produced by the generator like the API |
 | `tooling/tck/` | The language-neutral TCK parts: the bindings, the Solo configuration and `run-tck.sh` |
+| [`scripts/`](scripts) | One script per task: generate (and build) one language or all of them, run the TCK against the Java or the TypeScript server |
 | [`docs/pipeline.html`](docs/pipeline.html) | How the generator, the protobuf tree and the TCK server fit together — folder map and diagrams (open it in a browser) |
 | [`docs/missing-features.md`](docs/missing-features.md) | What the V3 specs do not cover yet, measured against the v2 SDKs — the feature backlog |
 | [`docs/TODO.md`](docs/TODO.md) | Open follow-up tasks on the guides, the meta-language and the specs |
@@ -205,6 +206,11 @@ Build the CLI once; it is a self-contained jar and needs the JDK of [Toolchain](
 cd tooling/metalang && ./mvnw -q package -DskipTests
 ```
 
+Every step below is also a script in [`scripts/`](scripts) — `scripts/generate-<lang>.sh` for one language,
+[`scripts/generate-all.sh`](scripts/generate-all.sh) for all five. They build the CLI themselves, resolve the pinned
+JDK and take `--no-build` and `--test`; [`scripts/README.md`](scripts/README.md) documents them. The commands behind
+them are the ones below.
+
 All commands below are run from the **repository root**. Each writes into the `generated` directory of its language
 folder and reads the decisions the specs cannot express from that folder's `generator.properties`.
 `--fail-on=never` generates even while the specs still have validation findings; without it nothing is written as
@@ -320,6 +326,10 @@ bindings in [`tooling/tck/bindings`](tooling/tck/bindings) (see [`tck-binding.md
 [Solo](https://solo.hiero.org) network (Solo 0.63+). As long as the API is only generated stubs, every bound method
 fails with `-32603` (already `setup` calls stubs) and the TCK skips the methods without binding (`-32601`); a run
 shows whether server, network and TCK work together.
+
+Steps 3 to 5 are also one script: `TCK_DIR=../hiero-sdk-tck scripts/tck-java.sh` (or
+[`scripts/tck-ts.sh`](scripts/tck-ts.sh)) generates, builds and runs. Solo and the TCK clone of steps 1 and 2 are
+needed either way.
 
 **1. Start Solo** (requires Docker and the Solo CLI, see the
 [Solo quickstart](https://solo.hiero.org/docs/simple-solo-setup/quickstart/)):
