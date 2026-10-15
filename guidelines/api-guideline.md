@@ -1125,12 +1125,18 @@ rest immutable, and document clearly why the mutable fields cannot be immutable.
 
 #### Never define nullable collections
 
-The data types `list`, `set`, and `map` should never be nullable.
-It is best practice to return an empty collection instead of `null`.
+The data types `list`, `set`, and `map` must never be nullable — as a field, as a return type and as a parameter.
+Absence *is* the empty collection.
 
 Some languages (like Go) have custom semantics for the defined behavior (like `nil` in Go).
 In that case the language-specific semantics should be used in the implementation.
 Such special behavior must be documented in the best-practice guidelines for the specific language.
+
+Where absence genuinely has to be distinguished from emptiness, that is a state and not a value: model it as a type
+(a sum type or a wrapper), never as `null`. The rule knows no exception — there is no suppression annotation and no
+lower severity. The reasons, the rejected alternatives and the conditions under which the decision would be
+revisited are recorded in
+[ADR-0010](../docs/adr/0010-collections-are-never-nullable.md); change this section only by superseding that ADR.
 
 #### Avoid `ANY` as a standalone type
 

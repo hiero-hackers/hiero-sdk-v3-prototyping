@@ -85,6 +85,16 @@ pending `NodeUpdate`). `ConsensusNode` does **not** currently carry `nodeId` —
 The consensus node validates the `@@oneOf` at submission time; setting both or neither
 fails with `INVALID_ENDPOINT`.
 
+### Why the endpoint lists of `NodeUpdateTransaction` are not nullable
+
+Per [ADR-0010](../../docs/adr/0010-collections-are-never-nullable.md) a collection never carries
+`@@nullable`; the empty list is the absent one. Nothing is lost here, because the protocol has no
+third state either: `node_update.proto` documents `gossip_endpoint` and `service_endpoint` as plain
+`repeated` fields with "If set, the new list SHALL replace the existing list." and "This list MUST
+NOT be empty.", and protobuf tracks no presence for a repeated field. Empty, absent and unchanged
+are the same value on the wire, and a node's endpoint list cannot be cleared at all. Should a
+protocol change ever allow clearing, the distinction returns as a type, not as `null`.
+
 ## API Schema
 
 ```
@@ -124,14 +134,15 @@ NodeCreateReceipt extends Receipt {
 }
 
 // Updates one or more of a node's mutable fields. Fields that are not set are left unchanged. Setting an endpoint
-// list replaces the entire current list — there is no way to add or remove a single entry.
+// list replaces the entire current list — there is no way to add or remove a single entry, and no way to clear a
+// list: an empty list means "leave this list as it is".
 @@finalType
 NodeUpdateTransaction extends Transaction<NodeUpdateReceipt, NodeUpdateTransaction> {
     @@immutable nodeId: int64                                            // the node to update
     @@immutable @@nullable accountId: AccountId                          // when set, the new account's key must also sign
     @@immutable @@nullable description: string                           // new free-form description
-    @@immutable @@nullable gossipEndpoints: list<ServiceEndpoint>        // replaces the entire list when set
-    @@immutable @@nullable serviceEndpoints: list<ServiceEndpoint>       // replaces the entire list when set
+    @@immutable @@default([]) gossipEndpoints: list<ServiceEndpoint>     // when not empty, replaces the entire list; empty leaves it unchanged
+    @@immutable @@default([]) serviceEndpoints: list<ServiceEndpoint>    // when not empty, replaces the entire list; empty leaves it unchanged
     @@immutable @@nullable gossipCaCertificate: bytes                    // new gossip CA certificate (X.509 DER bytes)
     @@immutable @@nullable grpcCertificateHash: bytes                    // new SHA-384 hash of the gRPC certificate
     @@immutable @@nullable adminAuthority: Authority                         // when set, the new key must also sign

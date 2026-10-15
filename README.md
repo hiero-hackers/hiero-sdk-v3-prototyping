@@ -241,8 +241,9 @@ declaration: it leaves the declaration out, together with everything that refers
 A single `inti32` instead of `int32` therefore costs the whole namespace, and the result still compiles. The scripts
 print the findings and stop; `--ignore-spec-errors` (`--fail-on=never` for the raw commands) generates anyway.
 
-The specs currently carry six `collection.nullable` findings at severity `error`, so until those are resolved every
-generation needs that override.
+The specs currently carry four `collection.nullable` findings at severity `error` — the collection arms of the four
+`@@oneOf` transactions, which [ADR-0010](docs/adr/0010-collections-are-never-nullable.md) deliberately leaves to a
+follow-up decision. Until that lands, every generation needs the override.
 
 ### Do it by hand
 
