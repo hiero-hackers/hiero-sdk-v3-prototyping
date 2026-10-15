@@ -200,16 +200,41 @@ The specifications under `spec/` are the only source of the API: the code of eve
 them by the `metalang` generator, and the generated trees are **not** part of this repository. They are produced on
 demand, and the output is reproducible — a diff of two runs shows exactly what a spec or generator change did.
 
+The generators produce the **API only**: every method body is a stub that throws "Not implemented yet", which is why
+the generated tests fail for each method that is not implemented. The `AccountCreateTransaction` spike that filled
+those bodies in Java and TypeScript by hand lives in the git history; [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md)
+is the runbook for it.
+
+### Run a script
+
+[`scripts/`](scripts) holds one script per language and one for all of them. They can be run from anywhere, build
+the `metalang` CLI themselves if its jar is missing, and resolve the JDK from the `.sdkmanrc` of the Maven build they
+drive instead of taking whatever is on the `PATH`:
+
+```bash
+scripts/generate-all.sh
+```
+
+| Script | Generates into | Then builds with |
+|---|---|---|
+| [`scripts/generate-java.sh`](scripts/generate-java.sh) | `sdk-java/generated` | Maven — `support`, `protobuf` and the generated modules into the local repository |
+| [`scripts/generate-ts.sh`](scripts/generate-ts.sh) | `sdk-ts/generated` | `npm install` in the workspace, then `tsc --build` |
+| [`scripts/generate-rust.sh`](scripts/generate-rust.sh) | `sdk-rust/generated` | `cargo build --all-targets` |
+| [`scripts/generate-go.sh`](scripts/generate-go.sh) | `sdk-go/generated` | `go build`, `go vet` and the `gofmt -l` check |
+| [`scripts/generate-python.sh`](scripts/generate-python.sh) | `sdk-python/generated` | `mypy --strict` |
+| [`scripts/generate-all.sh`](scripts/generate-all.sh) | all five | each of the above; every language is attempted even if an earlier one failed |
+
+Each of them takes `--no-build` (generate only) and `--test` (also run the generated tests, which fail for every
+method that is still a stub). `REBUILD_CLI=1` forces a rebuild of the CLI, `PYTHON=<interpreter>` selects the
+interpreter for the Python check. [`scripts/README.md`](scripts/README.md) documents them in full.
+
+### Do it by hand
+
 Build the CLI once; it is a self-contained jar and needs the JDK of [Toolchain](#toolchain):
 
 ```bash
 cd tooling/metalang && ./mvnw -q package -DskipTests
 ```
-
-Every step below is also a script in [`scripts/`](scripts) — `scripts/generate-<lang>.sh` for one language,
-[`scripts/generate-all.sh`](scripts/generate-all.sh) for all five. They build the CLI themselves, resolve the pinned
-JDK and take `--no-build` and `--test`; [`scripts/README.md`](scripts/README.md) documents them. The commands behind
-them are the ones below.
 
 All commands below are run from the **repository root**. Each writes into the `generated` directory of its language
 folder and reads the decisions the specs cannot express from that folder's `generator.properties`.
@@ -218,12 +243,7 @@ long as an `error` finding exists. `--show-deferred` lists the declarations a ge
 reason; `--output` takes any directory, so a throwaway target is the way to inspect a generator change. Details on
 every generator are in [`tooling/metalang/README.md`](tooling/metalang/README.md).
 
-The generators produce the **API only**: every method body is a stub that throws "Not implemented yet", which is why
-the generated tests fail for each method that is not implemented. The `AccountCreateTransaction` spike that filled
-those bodies in Java and TypeScript by hand lives in the git history; [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md)
-is the runbook for it.
-
-### Java
+#### Java
 
 A Maven project: a parent `pom.xml` with one sub-module per Java module, each with its JUnit tests.
 
@@ -250,7 +270,7 @@ implementation that started from it — is answered by the conformance check:
 java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --language=java --fail-on=never --config=sdk-java/generator.properties --project=sdk-java/generated spec
 ```
 
-### TypeScript
+#### TypeScript
 
 One npm package per spec folder, with `node:test` tests, inside the npm workspace `sdk-ts`:
 
@@ -265,7 +285,7 @@ The `test` script of the generated workspace root compiles and then runs the tes
 npm --prefix sdk-ts install && npm --prefix sdk-ts/generated test
 ```
 
-### Rust
+#### Rust
 
 A Cargo workspace with one crate per spec folder and an integration test per crate; the support types are copied
 1:1 from [`guidelines/rust-files`](guidelines/rust-files):
@@ -288,7 +308,7 @@ from the vendored definitions, not from the API generator. `--tests` runs the in
 cargo test --manifest-path sdk-rust/generated/Cargo.toml --no-fail-fast --tests
 ```
 
-### Go
+#### Go
 
 One Go module for everything (a spec folder is no artifact boundary in Go), one package per namespace:
 
@@ -304,7 +324,7 @@ always builds. There is nothing to run yet; what has to hold is that it builds, 
 cd sdk-go/generated && go build ./... && go vet ./... && gofmt -l .
 ```
 
-### Python
+#### Python
 
 One distribution (`hiero-sdk`, import package `hiero_sdk`), one package per namespace:
 
