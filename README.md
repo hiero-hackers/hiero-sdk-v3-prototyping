@@ -252,10 +252,11 @@ One npm package per spec folder, with `node:test` tests, inside the npm workspac
 java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=ts --fail-on=never --config=sdk-ts/generator.properties --output=sdk-ts/generated spec
 ```
 
-`npm install` links the hand-written `@hiero/support` package into the workspace and `tsc --build` builds it first:
+`npm install` links the hand-written `@hiero/support` package into the workspace and `tsc --build` builds it first.
+The `test` script of the generated workspace root compiles and then runs the tests with `node --test`:
 
 ```bash
-npm --prefix sdk-ts install && npm --prefix sdk-ts test --workspaces
+npm --prefix sdk-ts install && npm --prefix sdk-ts/generated test
 ```
 
 ### Rust
@@ -269,6 +270,16 @@ java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --lan
 
 ```bash
 cargo test --manifest-path sdk-rust/generated/Cargo.toml --no-fail-fast
+```
+
+Besides the failures of the method stubs, that run reports one failing **doctest**. The HAPI comment of
+`ExchangeRate` in [`exchange_rate.proto`](tooling/protobuf/consensus-node/services/exchange_rate.proto) ends in a
+fenced code block with the formula `amountInTinybar = (amountInTinycent * hbarEquiv) / centEquiv`, `prost` copies the
+comment into the generated protobuf code, and rustdoc compiles an untagged fenced block as Rust. It therefore comes
+from the vendored definitions, not from the API generator. `--tests` runs the integration tests without the doctests:
+
+```bash
+cargo test --manifest-path sdk-rust/generated/Cargo.toml --no-fail-fast --tests
 ```
 
 ### Go

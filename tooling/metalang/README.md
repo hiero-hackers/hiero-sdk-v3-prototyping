@@ -152,7 +152,7 @@ git). `npm install` in `sdk-ts` links the hand-written support package `sdk-ts/s
 builds it first. As for Java, the tests of methods that are not implemented yet fail:
 
 ```bash
-npm --prefix sdk-ts install && npm --prefix sdk-ts test --workspaces
+npm --prefix sdk-ts install && npm --prefix sdk-ts/generated test
 ```
 
 ### Generate the Go API
