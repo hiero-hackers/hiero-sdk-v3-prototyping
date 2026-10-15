@@ -7,8 +7,7 @@
   "workspaces": [
     "support",
     "generated/packages/*",
-    "tck/generated/contract",
-    "tck/generated/server",
+    "tck/generated/*",
     "tck/runtime"
   ],
   "scripts": {

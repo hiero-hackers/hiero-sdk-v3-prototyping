@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Runs the Hiero TCK (https://github.com/hiero-ledger/hiero-sdk-tck) against a generated V3 TCK server. By default the
-# network is a local Solo network (tck/solo.env); start it first with `solo one-shot single deploy`.
+# network is a local Solo network (tooling/tck/solo.env); start it first with `solo one-shot single deploy`.
 #
-# Usage:   tck/run-tck.sh java|ts [TCK test file ...]
-# Example: TCK_DIR=../hiero-sdk-tck tck/run-tck.sh java src/tests/crypto-service/test-account-create-transaction.ts
+# Usage:   tooling/tck/run-tck.sh java|ts [TCK test file ...]
+# Example: TCK_DIR=../hiero-sdk-tck tooling/tck/run-tck.sh java src/tests/crypto-service/test-account-create-transaction.ts
 #
 # Environment:
 #   TCK_DIR   the clone of hiero-sdk-tck with installed dependencies (required)
-#   TCK_ENV   the TCK configuration (default: tck/solo.env); it is copied to $TCK_DIR/.env, an existing .env is
+#   TCK_ENV   the TCK configuration (default: tooling/tck/solo.env); it is copied to $TCK_DIR/.env, an existing .env is
 #             saved as .env.before-v3
 #   JAVA_HOME a JDK 25 (Java server only; `sdk env` sets it from .sdkmanrc)
 #   TCK_SERVER_LOG  how much the server logs about failed calls: 'error' (default) logs the first call of each
@@ -22,7 +22,7 @@ set -euo pipefail
 repository="$(cd "$(dirname "$0")/../.." && pwd)"
 language="${1:-}"
 if [[ "$language" != "java" && "$language" != "ts" ]]; then
-  echo "Usage: tck/run-tck.sh java|ts [TCK test file ...]" >&2
+  echo "Usage: tooling/tck/run-tck.sh java|ts [TCK test file ...]" >&2
   exit 2
 fi
 shift
@@ -30,7 +30,7 @@ if [[ -z "${TCK_DIR:-}" || ! -f "${TCK_DIR}/package.json" ]]; then
   echo "TCK_DIR must point to a clone of hiero-sdk-tck (with 'npm install' done)" >&2
   exit 2
 fi
-env_file="${TCK_ENV:-$repository/tck/solo.env}"
+env_file="${TCK_ENV:-$repository/tooling/tck/solo.env}"
 
 # the configuration, also for the server (MIRROR_NODE_REST_URL)
 set -a

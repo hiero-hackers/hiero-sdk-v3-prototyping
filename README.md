@@ -59,10 +59,10 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | [`guidelines/api-best-practices-ts.md`](guidelines/api-best-practices-ts.md) | ... TypeScript (the mapping of the TypeScript generator) |
 | [`guidelines/api-best-practices-js.md`](guidelines/api-best-practices-js.md) | ... using the resulting API from JavaScript |
 | `guidelines/js-files/` | Illustrative reference snippets (not a buildable module) |
-| `sdk-java/`, `sdk-ts/`, `sdk-rust/`, `sdk-go/`, `sdk-python/` | One folder per target language: its generator configuration, its hand-written modules and its generated ones (see [ADR-0008](docs/adr/0008-one-folder-per-target-language.md)) |
-| `sdk-<lang>/generated/` | The generated API. Never edited by hand — except the Java and TypeScript ones, which currently carry the `AccountCreateTransaction` spike |
+| `sdk-java/`, `sdk-ts/`, `sdk-rust/`, `sdk-go/`, `sdk-python/` | One folder per target language: its generator configuration and its hand-written modules; the generated ones are produced into `generated/` (see [ADR-0008](docs/adr/0008-one-folder-per-target-language.md)) |
+| `sdk-<lang>/generated/` | Not part of the repository: the generated API is produced from the specs on demand, see [Generating the native API code](#generating-the-native-api-code) |
 | `sdk-java/support/`, `sdk-ts/support/` | Hand-written support types the generated API depends on (`@ThreadSafe`, streaming; `Duration`, `StreamItem`, `AbstractConstructor`) |
-| `sdk-<lang>/tck/` | The language-specific TCK parts: `generated/` (contract + server) and `runtime/` (hand-written) |
+| `sdk-<lang>/tck/` | The language-specific TCK parts: `runtime/` (hand-written); `generated/` (contract + server) is produced by the generator like the API |
 | `tooling/tck/` | The language-neutral TCK parts: the bindings, the Solo configuration and `run-tck.sh` |
 | [`docs/pipeline.html`](docs/pipeline.html) | How the generator, the protobuf tree and the TCK server fit together — folder map and diagrams (open it in a browser) |
 | [`docs/missing-features.md`](docs/missing-features.md) | What the V3 specs do not cover yet, measured against the v2 SDKs — the feature backlog |
@@ -100,7 +100,17 @@ The repository pins its build tools so that every contributor builds with the sa
 |------|---------|-----------|
 | JDK | 25 (Temurin) | [`sdk-java/.sdkmanrc`](sdk-java/.sdkmanrc), [`tooling/metalang/.sdkmanrc`](tooling/metalang/.sdkmanrc) |
 | Maven | 3.9.11 | `sdk-java/.mvn/wrapper/maven-wrapper.properties`, `tooling/metalang/.mvn/wrapper/maven-wrapper.properties` |
-| Node.js | 22 | — |
+| Node.js | 22 (LTS) | — (the runtime the TypeScript mapping targets, [`api-best-practices-ts.md`](guidelines/api-best-practices-ts.md)) |
+| TypeScript | 6.0.3 | [`sdk-ts/package.json`](sdk-ts/package.json) (`devDependencies`, together with `@types/node`) |
+| Rust | 1.85 or newer, edition 2024 | the `Cargo.toml` the Rust generator writes, [`api-best-practices-rust.md`](guidelines/api-best-practices-rust.md) |
+| Go | 1.27 or newer | [`sdk-go/generator.properties`](sdk-go/generator.properties) (`go.version`) |
+| Python | 3.12 or newer | the `pyproject.toml` the Python generator writes (`requires-python`), [`api-best-practices-python.md`](guidelines/api-best-practices-python.md) |
+| protoc | 4.31.1 | [`tooling/protobuf/sources.json`](tooling/protobuf/sources.json) (`protocVersion`) |
+
+Only the JDK and Maven are needed to build this repository: the spec tooling in `tooling/metalang` is a Maven build
+and carries its own wrapper. The four other toolchains are needed only to *verify* a generated SDK — the generator
+tests skip what is not installed (`cargo` missing, `node` or `sdk-ts/node_modules` missing, a `python3` below 3.12 or
+without mypy), so `./mvnw verify` stays green on a machine that has none of them.
 
 **Java** — install [SDKMAN!](https://sdkman.io), then once per machine:
 
@@ -137,6 +147,161 @@ sdk env            # not needed with sdkman_auto_env=true, which switches on cd
 On Windows use `mvnw.cmd`. The repository root carries no toolchain pin on purpose: nothing is built there, and the
 CLI jar the tooling produces targets `release` 21, so it runs on any JDK 21 or newer.
 
+**Node.js and TypeScript** — install Node.js 22 (e.g. with [nvm](https://github.com/nvm-sh/nvm) or
+[fnm](https://github.com/Schniz/fnm)); the TypeScript compiler is not installed globally but comes from the npm
+workspace, so a single install provides it for every TypeScript module:
+
+```bash
+npm --prefix sdk-ts install
+```
+
+That links the hand-written `sdk-ts/support` package into the workspace and puts `typescript` and `@types/node` at the
+pinned versions into `sdk-ts/node_modules`. The generator tests of `tooling/metalang` use the same installation; without
+it they skip the compile and run steps.
+
+**Rust** — install the toolchain with [rustup](https://rustup.rs); edition 2024 requires Rust 1.85 or newer:
+
+```bash
+rustup toolchain install stable
+```
+
+Cargo is needed twice: to build and test a generated workspace (`cargo test --manifest-path
+sdk-rust/generated/Cargo.toml --no-fail-fast`) and for `metalang check --language=rust`, which builds its `syn`-based
+helper `rs-api` once (`--cargo=<executable>` selects a Cargo that is not on the `PATH`). A generated crate that
+compiles protobuf needs **no** protobuf installation: its build script takes `protoc` from the `protoc-bin-vendored`
+crate.
+
+**Go** — install Go 1.27 or newer ([go.dev/dl](https://go.dev/dl/)); the version is the minimum for `iter.Seq2`
+(streaming) and generic methods on concrete types. Nothing in the build depends on a Go toolchain being present — the
+generator produces the column alignment `gofmt` would — so Go is only needed to check a generated module:
+
+```bash
+cd sdk-go/generated && go build ./... && go vet ./... && gofmt -l .
+```
+
+**Python** — Python 3.12 or newer (PEP 695 generics) plus [mypy](https://mypy-lang.org); there is nothing to run yet,
+the check is that every package imports and the strict type check is clean:
+
+```bash
+cd sdk-python/generated && python3 -m mypy --strict src
+```
+
+**protoc** — never installed by hand. Every build fetches it at the pinned version: `tooling/protobuf/verify.sh` and
+`sdk-java/protobuf` through the Maven wrapper, the Rust crates through `protoc-bin-vendored`, TypeScript through
+[`buf`](https://buf.build) from the `devDependencies` of `sdk-ts`.
+
+The commands above assume the respective `sdk-<lang>/generated` tree exists — see
+[Generating the native API code](#generating-the-native-api-code).
+
+## Generating the native API code
+
+The specifications under `spec/` are the only source of the API: the code of every target language is produced from
+them by the `metalang` generator, and the generated trees are **not** part of this repository. They are produced on
+demand, and the output is reproducible — a diff of two runs shows exactly what a spec or generator change did.
+
+Build the CLI once; it is a self-contained jar and needs the JDK of [Toolchain](#toolchain):
+
+```bash
+cd tooling/metalang && ./mvnw -q package -DskipTests
+```
+
+All commands below are run from the **repository root**. Each writes into the `generated` directory of its language
+folder and reads the decisions the specs cannot express from that folder's `generator.properties`.
+`--fail-on=never` generates even while the specs still have validation findings; without it nothing is written as
+long as an `error` finding exists. `--show-deferred` lists the declarations a generator cannot express yet, with the
+reason; `--output` takes any directory, so a throwaway target is the way to inspect a generator change. Details on
+every generator are in [`tooling/metalang/README.md`](tooling/metalang/README.md).
+
+The generators produce the **API only**: every method body is a stub that throws "Not implemented yet", which is why
+the generated tests fail for each method that is not implemented. The `AccountCreateTransaction` spike that filled
+those bodies in Java and TypeScript by hand lives in the git history; [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md)
+is the runbook for it.
+
+### Java
+
+A Maven project: a parent `pom.xml` with one sub-module per Java module, each with its JUnit tests.
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=java --fail-on=never --config=sdk-java/generator.properties --output=sdk-java/generated spec
+```
+
+The generated modules depend on the hand-written support module (`sdk-java/support`) and, for the consensus node
+client, on `sdk-java/protobuf`, so install those first (JDK 25, `sdk env`):
+
+```bash
+cd sdk-java && sdk env
+```
+
+```bash
+./mvnw -f support install && ./mvnw -f protobuf install && ./mvnw -f generated package -DskipTests
+```
+
+`-Dmaven.test.failure.ignore=true` instead of `-DskipTests` runs the generated tests through all modules and shows
+the implementation status. Whether a tree still provides the API of the specs — the generated one or an
+implementation that started from it — is answered by the conformance check:
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar check --language=java --fail-on=never --config=sdk-java/generator.properties --project=sdk-java/generated spec
+```
+
+### TypeScript
+
+One npm package per spec folder, with `node:test` tests, inside the npm workspace `sdk-ts`:
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=ts --fail-on=never --config=sdk-ts/generator.properties --output=sdk-ts/generated spec
+```
+
+`npm install` links the hand-written `@hiero/support` package into the workspace and `tsc --build` builds it first:
+
+```bash
+npm --prefix sdk-ts install && npm --prefix sdk-ts test --workspaces
+```
+
+### Rust
+
+A Cargo workspace with one crate per spec folder and an integration test per crate; the support types are copied
+1:1 from [`guidelines/rust-files`](guidelines/rust-files):
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=rust --fail-on=never --config=sdk-rust/generator.properties --output=sdk-rust/generated spec
+```
+
+```bash
+cargo test --manifest-path sdk-rust/generated/Cargo.toml --no-fail-fast
+```
+
+### Go
+
+One Go module for everything (a spec folder is no artifact boundary in Go), one package per namespace:
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=go --fail-on=never --config=sdk-go/generator.properties --output=sdk-go/generated spec
+```
+
+The Go generator is still incomplete — it emits the declared types, but no methods, namespace functions, tests,
+protobuf wiring or TCK part. A declaration it cannot express is left out rather than emitted broken, so the module
+always builds. There is nothing to run yet; what has to hold is that it builds, vets clean and is already formatted:
+
+```bash
+cd sdk-go/generated && go build ./... && go vet ./... && gofmt -l .
+```
+
+### Python
+
+One distribution (`hiero-sdk`, import package `hiero_sdk`), one package per namespace:
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar generate --language=python --fail-on=never --config=sdk-python/generator.properties --output=sdk-python/generated spec
+```
+
+As incomplete as the Go generator and with the same scope. The check is that every package imports and the strict
+type check is clean:
+
+```bash
+cd sdk-python/generated && python3 -m mypy --strict src
+```
+
 ## Running the TCK
 
 The [Hiero TCK](https://github.com/hiero-ledger/hiero-sdk-tck) can be run against a TCK server generated from the
@@ -162,7 +327,20 @@ git clone https://github.com/hiero-ledger/hiero-sdk-tck.git ../hiero-sdk-tck
 npm --prefix ../hiero-sdk-tck install
 ```
 
-**3. Build the server.** Java, from `sdk-java`, in this order — the `sdk env` activates the JDK 25 pinned in
+**3. Generate the API and the server.** The server is generated from the bindings against the generated API, so
+both have to exist first — the API as described in
+[Generating the native API code](#generating-the-native-api-code), the server with `tck generate` (from the
+repository root, `--language=ts` and the `sdk-ts` paths for the TypeScript server):
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck generate --language=java --fail-on=never --config=sdk-java/generator.properties --bindings=tooling/tck/bindings --output=sdk-java/tck/generated spec
+```
+
+```bash
+java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar tck generate --language=ts --fail-on=never --config=sdk-ts/generator.properties --bindings=tooling/tck/bindings --output=sdk-ts/tck/generated spec
+```
+
+**4. Build the server.** Java, from `sdk-java`, in this order — the `sdk env` activates the JDK 25 pinned in
 [`sdk-java/.sdkmanrc`](sdk-java/.sdkmanrc) and can be skipped if you set `sdkman_auto_env=true` (see
 [Toolchain](#toolchain)):
 
@@ -200,14 +378,14 @@ TypeScript (Node.js 22, from the repository root):
 npm --prefix sdk-ts install && npm --prefix sdk-ts run build:tck-ts
 ```
 
-**4. Run the TCK** — one test file first, then the complete suite (`ts` instead of `java` for the TypeScript server):
+**5. Run the TCK** — one test file first, then the complete suite (`ts` instead of `java` for the TypeScript server):
 
 ```bash
-TCK_DIR=../hiero-sdk-tck tck/run-tck.sh java src/tests/crypto-service/test-account-create-transaction.ts
+TCK_DIR=../hiero-sdk-tck tooling/tck/run-tck.sh java src/tests/crypto-service/test-account-create-transaction.ts
 ```
 
 ```bash
-TCK_DIR=../hiero-sdk-tck tck/run-tck.sh java
+TCK_DIR=../hiero-sdk-tck tooling/tck/run-tck.sh java
 ```
 
 [`tooling/tck/run-tck.sh`](tooling/tck/run-tck.sh) checks that Solo is reachable at `127.0.0.1:35211`, starts the server on port 8544,
@@ -233,7 +411,7 @@ next.
 silent:
 
 ```bash
-TCK_SERVER_LOG=debug TCK_DIR=../hiero-sdk-tck tck/run-tck.sh java
+TCK_SERVER_LOG=debug TCK_DIR=../hiero-sdk-tck tooling/tck/run-tck.sh java
 ```
 
 Possible stumbling blocks:
