@@ -217,9 +217,11 @@ tmIywvmyCdn6Jb2nuM=
 
 ## Testing
 
-Known-answer tests of the default key, written as given / when / then: the expected values are the raw bytes of the
-default instance and the PKCS#8 encoding listed under "Key examples". What the spec does not state as a value (the
-derived public key, a signature) is checked by the properties the API promises.
+Known-answer tests, written as given / when / then. The expected values come from this spec (the default key and its
+PKCS#8 encoding under "Key examples"), from published standards (RFC 8032, RFC 8410, RFC 5480, SEC 1) or from the
+reference vectors that the Hiero SDKs share (hedera-sdk-reference#93); the comment above each test names its source.
+What no source states as a value (a signature of the default key) is checked by the properties the API promises.
+See `docs/sdk-unit-test-analysis.md` for where the SDKs test the same.
 
 ```tests
 test "a private key imported from hex has these raw bytes" {
@@ -314,6 +316,174 @@ test "a hex key of the wrong length is rejected" {
         @@expectThrows(illegal-format)
         createPrivateKey(algorithm: KeyAlgorithm.ED25519, encoding: ByteImportEncoding.HEX, value: hexText)
     }
+}
+
+// Source: the reference vectors of hashgraph/hedera-sdk-reference#93, read with the same results by the
+// Java, JavaScript, Rust, C++ and Swift SDKs; verified with OpenSSL.
+test "an Ed25519 PKCS#8 DER key derives the reference public key" {
+    // given
+    let der = hex(text: "302e020100300506032b657004220420feb858a4a69600a5eef2d9c76f7fb84fc0b6627f29e0ab17e160f640c267d404")
+
+    // when
+    let key = createPrivateKey(container: KeyFormat.PKCS8_WITH_DER, value: der)
+
+    // then
+    assertEquals(expected: KeyAlgorithm.ED25519, actual: key.algorithm)
+    assertEquals(expected: hex(text: "feb858a4a69600a5eef2d9c76f7fb84fc0b6627f29e0ab17e160f640c267d404"), actual: key.bytes)
+    assertEquals(expected: hex(text: "8ccd31b53d1835b467aac795dab19b274dd3b37e3daf12fcec6bc02bac87b53d"),
+            actual: key.createPublicKey().bytes)
+}
+
+// Source: hedera-sdk-reference#93 (Java, JavaScript, Rust, C++, Swift); verified with OpenSSL.
+test "an Ed25519 PKCS#8 PEM key derives the reference public key" {
+    // given
+    let pem = "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIOgbjaHgEqF7PY0t2dUf2VU0u1MRoKii/fywDlze4lvl\n-----END PRIVATE KEY-----\n"
+
+    // when
+    let key = createPrivateKey(container: KeyFormat.PKCS8_WITH_PEM, value: pem)
+
+    // then
+    assertEquals(expected: hex(text: "e81b8da1e012a17b3d8d2dd9d51fd95534bb5311a0a8a2fdfcb00e5cdee25be5"), actual: key.bytes)
+    assertEquals(expected: hex(text: "f7b9aa4a8e4eee94e4277dfe757d8d7cde027e7cd5349b7d8e6ee21c9b9395be"),
+            actual: key.createPublicKey().bytes)
+}
+
+// Source: RFC 8410 (SPKI of Ed25519); the key is the one of the Java, Go, Rust and Swift tests.
+test "an Ed25519 public key is read from and written as SPKI DER" {
+    // given
+    let raw = hex(text: "e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7")
+    let der = hex(text: "302a300506032b6570032100") + raw
+
+    // when
+    let read = createPublicKey(container: KeyFormat.SPKI_WITH_DER, value: der)
+    let written = createPublicKey(algorithm: KeyAlgorithm.ED25519, rawBytes: raw).toBytes(container: KeyFormat.SPKI_WITH_DER)
+
+    // then
+    assertEquals(expected: raw, actual: read.bytes)
+    assertEquals(expected: der, actual: written)
+}
+
+// Source: RFC 8032, section 7.1, TEST 1 and TEST 2 (published test vectors).
+test "the RFC 8032 secret keys derive the RFC 8032 public keys" {
+    // given
+    let secret1 = hex(text: "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60")
+    let secret2 = hex(text: "4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb")
+
+    // when
+    let public1 = createPrivateKey(algorithm: KeyAlgorithm.ED25519, rawBytes: secret1).createPublicKey()
+    let public2 = createPrivateKey(algorithm: KeyAlgorithm.ED25519, rawBytes: secret2).createPublicKey()
+
+    // then
+    assertEquals(expected: hex(text: "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a"), actual: public1.bytes)
+    assertEquals(expected: hex(text: "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c"), actual: public2.bytes)
+}
+
+// Source: RFC 8032, section 7.1, TEST 2.
+test "an RFC 8032 signature verifies only for its message" {
+    // given
+    let publicKey = createPublicKey(algorithm: KeyAlgorithm.ED25519,
+            rawBytes: hex(text: "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c"))
+    let signature = hex(text: "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da"
+            + "085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00")
+
+    // when
+    let valid = publicKey.verify(message: hex(text: "72"), signature: signature)
+    let otherMessage = publicKey.verify(message: hex(text: "73"), signature: signature)
+
+    // then
+    assertTrue(condition: valid)
+    assertFalse(condition: otherMessage)
+}
+
+// Source: secp256k1 (SEC 2); the vector of the Go, JavaScript, Rust and Swift tests, verified with OpenSSL. The public
+// key of an ECDSA key is the compressed SEC 1 point (33 bytes) in every SDK.
+test "a secp256k1 private key derives its compressed public key" {
+    // given
+    let hexText = "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"
+
+    // when
+    let publicKey = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX, value: hexText)
+            .createPublicKey()
+
+    // then
+    assertEquals(expected: KeyAlgorithm.ECDSA, actual: publicKey.algorithm)
+    assertEquals(expected: hex(text: "02703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"),
+            actual: publicKey.bytes)
+}
+
+// Source: RFC 5480 (SPKI of an EC key); the vectors of hedera-sdk-reference#93 (Java, JavaScript, Rust, C++, Swift),
+// verified with OpenSSL.
+test "a secp256k1 SPKI DER key with a compressed or uncompressed point is read as the compressed point" {
+    // given
+    let compressed = hex(text: "3036301006072a8648ce3d020106052b8104000a032200036843f5cb338bbb4cdb21b0da4ea739d910951d6e8a5f703d313efe31afe788f4")
+    let uncompressed = hex(text: "3056301006072a8648ce3d020106052b8104000a03420004aaac1c3ac1bea0245b8e00ce1e2018f9eab61b6331fbef7266f2287750a6597795f855ddcad2377e22259d1fcb4e0f1d35e8f2056300c15070bcbfce3759cc9d")
+
+    // when
+    let first = createPublicKey(container: KeyFormat.SPKI_WITH_DER, value: compressed)
+    let second = createPublicKey(container: KeyFormat.SPKI_WITH_DER, value: uncompressed)
+
+    // then
+    assertEquals(expected: hex(text: "036843f5cb338bbb4cdb21b0da4ea739d910951d6e8a5f703d313efe31afe788f4"), actual: first.bytes)
+    assertEquals(expected: hex(text: "03aaac1c3ac1bea0245b8e00ce1e2018f9eab61b6331fbef7266f2287750a65977"), actual: second.bytes)
+}
+
+// Source: SEC 1, section 3.2 (a private key is in [1, n - 1]); rejected by the Go and Python SDKs.
+test "a secp256k1 private key of zero or of the group order is rejected" {
+    // given
+    let zero = repeat(value: hex(text: "00"), count: 32)
+    let order = hex(text: "fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141")
+
+    for rawBytes in [zero, order] {
+        // when / then
+        @@expectThrows(illegal-format)
+        createPrivateKey(algorithm: KeyAlgorithm.ECDSA, rawBytes: rawBytes)
+    }
+}
+
+// Source: SEC 1, section 2.3.4 (a point must be on the curve); rejected by the Go SDK (the Java SDK accepts it).
+test "33 zero bytes are no secp256k1 public key" {
+    // given
+    let rawBytes = repeat(value: hex(text: "00"), count: 33)
+
+    // when / then
+    @@expectThrows(illegal-format)
+    createPublicKey(algorithm: KeyAlgorithm.ECDSA, rawBytes: rawBytes)
+}
+
+// Source: the C++ and Go SDKs.
+test "text that is no hex is rejected" {
+    // given
+    let noHex = "fdsakfdsalf"
+    let oddLength = "303"
+
+    for value in [noHex, oddLength] {
+        // when / then
+        @@expectThrows(illegal-format)
+        createPrivateKey(algorithm: KeyAlgorithm.ED25519, encoding: ByteImportEncoding.HEX, value: value)
+    }
+}
+
+// Source: RFC 7468 (PEM labels); rejected by the Rust and Swift SDKs.
+test "a PEM key with an unknown label is rejected" {
+    // given
+    let pem = "-----BEGIN PRIVATE KEYS-----\nMC4CAQAwBQYDK2VwBCIEIOgbjaHgEqF7PY0t2dUf2VU0u1MRoKii/fywDlze4lvl\n-----END PRIVATE KEYS-----\n"
+
+    // when / then
+    @@expectThrows(illegal-format)
+    createPrivateKey(value: pem)
+}
+
+// Source: the Python SDK; a key is its algorithm and its bytes.
+test "the same bytes as Ed25519 and as secp256k1 key are different keys" {
+    // given
+    let rawBytes = repeat(value: hex(text: "01"), count: 32)
+
+    // when
+    let ed25519 = createPrivateKey(algorithm: KeyAlgorithm.ED25519, rawBytes: rawBytes)
+    let ecdsa = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, rawBytes: rawBytes)
+
+    // then
+    assertNotEquals(unexpected: ed25519, actual: ecdsa)
 }
 ```
 

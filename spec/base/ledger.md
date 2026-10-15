@@ -366,6 +366,191 @@ instance ConsensusNode = ConsensusNode{ip: DEFAULT, port: 50211,
 instance MirrorNode = MirrorNode{restBaseUrl: "https://testnet.mirrornode.hedera.com"}
 ```
 
+## Testing
+
+Tests of the ids, written as given / when / then. The checksums are those of HIP-15 for the ledger ids of mainnet
+(`0`), testnet (`1`) and previewnet (`2`); the comment above each test names its source. See
+`docs/sdk-unit-test-analysis.md` for where the SDKs test the same.
+
+```tests
+// Source: HIP-15; the vectors of the Java, JavaScript, Rust, Swift, Go and Python SDKs.
+test "the HIP-15 checksum of an account id is valid only on its ledger" {
+    // given
+    let mainnet = Network<hedera.HbarUnit>{id: [0], name: "mainnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
+    let testnet = Network<hedera.HbarUnit>{id: [1], name: "testnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
+    let previewnet = Network<hedera.HbarUnit>{id: [2], name: "previewnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
+
+    // when
+    let onMainnet = AccountId.fromString(value: "0.0.123-vfmkw")
+    let onTestnet = AccountId.fromString(value: "0.0.123-esxsf")
+    let onPreviewnet = AccountId.fromString(value: "0.0.123-ogizo")
+
+    // then
+    assertEquals(expected: "vfmkw", actual: onMainnet.checksum)
+    assertTrue(condition: onMainnet.validateChecksum(network: mainnet))
+    assertTrue(condition: onTestnet.validateChecksum(network: testnet))
+    assertTrue(condition: onPreviewnet.validateChecksum(network: previewnet))
+    assertFalse(condition: onMainnet.validateChecksum(network: testnet))
+    assertFalse(condition: AccountId.fromString(value: "0.0.123-ntjli").validateChecksum(network: previewnet))
+}
+
+// Source: HIP-15; the vectors of the Python SDK (ledgers 0 to 3) and of the Rust and Swift SDKs (a ledger id of more
+// than one byte).
+test "the HIP-15 checksum depends on every byte of the ledger id" {
+    // given
+    let local = Network<hedera.HbarUnit>{id: [3], name: "local", nativeTokenUnit: hedera.HbarUnit.HBAR}
+    let custom = Network<hedera.HbarUnit>{id: [12, 31, 0, 2], name: "custom", nativeTokenUnit: hedera.HbarUnit.HBAR}
+
+    // when
+    let one = Address.fromString(address: "0.0.1-ftsts")
+    let zero = Address.fromString(address: "0.0.0-kenvf")
+
+    // then
+    assertTrue(condition: one.validateChecksum(network: local))
+    assertTrue(condition: zero.validateChecksum(network: custom))
+    assertFalse(condition: zero.validateChecksum(network: local))
+}
+
+// Source: HIP-15 (five lowercase letters); rejected by the Java, Go, Rust and Swift SDKs.
+test "a malformed checksum is rejected" {
+    for text in ["0.0.123-ntjl", "0.0.123-ntjl1", "0.0.123-"] {
+        // when / then
+        @@expectThrows(illegal-format)
+        AccountId.fromString(value: text)
+    }
+}
+
+// Source: the JavaScript, Python, C++, Java, Rust and Swift SDKs.
+test "text that is no account id is rejected" {
+    for text in ["", "0.0", "0.0.", "0.0.a", "a.b.c", "0.0.-1", "-1.-1.-1", "1.2.3.4"] {
+        // when / then
+        @@expectThrows(illegal-format)
+        AccountId.fromString(value: text)
+    }
+}
+
+// Source: all seven SDKs.
+test "an account id is read from and written as shard.realm.num" {
+    for text in ["0.0.5005", "1.2.3", "10.50.25050"] {
+        // when
+        let id = AccountId.fromString(value: text)
+
+        // then
+        assertEquals(expected: text, actual: id.toString())
+        assertNotNull(actual: id.num)
+        assertNull(actual: id.evmAddress)
+    }
+}
+
+// Source: the Rust and Swift SDKs.
+test "an account id keeps its shard, realm and number" {
+    // when
+    let id = AccountId.fromString(value: "10.50.25050")
+
+    // then
+    assertEquals(expected: 10, actual: id.shard)
+    assertEquals(expected: 50, actual: id.realm)
+    assertEquals(expected: 25050, actual: id.num)
+    assertEquals(expected: "", actual: id.checksum)
+}
+
+// Source: the Swift, Rust, Python and C++ SDKs.
+test "an EVM address is read from 40 hex digits with or without 0x" {
+    // given
+    let bytes = hex(text: "1234567890abcdef1234567890abcdef12345678")
+
+    // when
+    let withPrefix = EvmAddress.fromString(value: "0x1234567890abcdef1234567890abcdef12345678")
+    let withoutPrefix = EvmAddress.fromString(value: "1234567890abcdef1234567890abcdef12345678")
+
+    // then
+    assertEquals(expected: bytes, actual: withPrefix.bytes)
+    assertEquals(expected: bytes, actual: withoutPrefix.bytes)
+    assertEquals(expected: withPrefix, actual: EvmAddress.fromBytes(value: bytes))
+}
+
+// Source: the Swift, Rust, Python and C++ SDKs.
+test "an EVM address of the wrong length or with other characters is rejected" {
+    for text in ["", "0x1234", "0x0f0e0d0c0b0a09080706050403020100", "0xGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG"] {
+        // when / then
+        @@expectThrows(illegal-format)
+        EvmAddress.fromString(value: text)
+    }
+    for size in [19, 21] {
+        // when / then
+        @@expectThrows(illegal-format)
+        EvmAddress.fromBytes(value: repeat(value: hex(text: "00"), count: size))
+    }
+}
+
+// Source: the Java, Rust, Go and JavaScript SDKs. Following `@@oneOf(num, evmAddress)`, the number is absent.
+test "a contract id of an EVM address keeps its shard, realm and address" {
+    // given
+    let address = EvmAddress.fromString(value: "98329e006610472e6B372C080833f6D79ED833cf")
+
+    // when
+    let id = ContractId.fromEvmAddress(shard: 1, realm: 2, address: address)
+
+    // then
+    assertEquals(expected: 1, actual: id.shard)
+    assertEquals(expected: 2, actual: id.realm)
+    assertEquals(expected: address, actual: id.evmAddress)
+    assertNull(actual: id.num)
+}
+
+// Source: the dotted-quad notation of IPv4 (RFC 791); the C++ SDK.
+test "an IPv4 address is written as dotted quad and needs four bytes" {
+    // when
+    let address = IpAddress.fromBytes(value: [192, 168, 1, 1])
+
+    // then
+    assertEquals(expected: "192.168.1.1", actual: address.toString())
+    assertEquals(expected: address, actual: IpAddress.fromString(value: "192.168.1.1"))
+    for size in [3, 5] {
+        // when / then
+        @@expectThrows(illegal-format)
+        IpAddress.fromBytes(value: repeat(value: hex(text: "01"), count: size))
+    }
+}
+
+// Source: the Java, Rust and Swift SDKs.
+test "a transaction id is read from and written as account@seconds.nanos" {
+    // given
+    let text = "0.0.23847@1588539964.632521325"
+
+    // when
+    let id = TransactionId.fromString(transactionId: text)
+
+    // then
+    assertEquals(expected: text, actual: id.toString())
+    assertEquals(expected: AccountId.fromString(value: "0.0.23847"), actual: id.accountId)
+    assertNull(actual: id.nonce)
+}
+
+// Source: the Java, Rust and Swift SDKs.
+test "a transaction id keeps its nonce" {
+    // given
+    let text = "0.0.23847@1588539964.632521325/4"
+
+    // when
+    let id = TransactionId.fromString(transactionId: text)
+
+    // then
+    assertEquals(expected: text, actual: id.toString())
+    assertEquals(expected: 4, actual: id.nonce)
+}
+
+// Source: the Rust, Swift, Java and Python SDKs.
+test "text that is no transaction id is rejected" {
+    for text in ["0.0.31415?1641088801.2", "0.0.31415/1641088801.2", "0.0.31415?scheduled/1412@1641088801.2",
+            "0.0.23847.1588539964.632521325/4", "0.0.23847@1588539964/4", "0.0.123@abc.def"] {
+        // when / then
+        @@expectThrows(illegal-format)
+        TransactionId.fromString(transactionId: text)
+    }
+}
+```
+
 ## Questions & Comments
 
 - [@hendrikebbers](https://github.com/hendrikebbers): Should we rename `Ledger` to `Network`?

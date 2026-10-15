@@ -324,6 +324,14 @@ class TestsParserTest {
         }
 
         @Test
+        void stringsOfTestsShouldKnowTheEscapesOfTheTestLanguage() {
+            final Expression.Value value = (Expression.Value) expression(
+                    "\"a\\nb\\tc \\\"q\\\" \\\\ \\u{1F600} \\d\"");
+            assertThat(((Literal.StringLiteral) value.literal()).value())
+                    .isEqualTo("a\nb\tc \"q\" \\ \uD83D\uDE00 \\d");
+        }
+
+        @Test
         void keywordsShouldStayUsableAsNames() {
             // `a.b` of names is a qualified name; whether it is an attribute of a variable is resolved later
             final Expression.Call not = (Expression.Call) expression("not(value: is.in && test.let)");

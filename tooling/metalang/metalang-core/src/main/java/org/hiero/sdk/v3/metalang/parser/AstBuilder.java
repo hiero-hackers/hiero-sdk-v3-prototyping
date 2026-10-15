@@ -37,6 +37,8 @@ final class AstBuilder {
 
     private final SchemaSource source;
     private final CommonTokenStream tokens;
+    /** Whether a test is built: its strings know the escapes of the test language ({@code \\n}, {@code \\u{1F600}}). */
+    private boolean testStrings;
 
     AstBuilder(final SchemaSource source, final CommonTokenStream tokens) {
         this.source = Objects.requireNonNull(source, "source must not be null");
@@ -69,6 +71,7 @@ final class AstBuilder {
      * @return the tests in source order
      */
     List<TestCase> tests(final MetaLangParser.TestsContext ctx) {
+        testStrings = true;
         return ctx.testDecl().stream().map(t -> new TestCase(unquote(t.STRING().getText()),
                 annotations(t.annotation()), statements(t.block()), documentation(t),
                 location(t.TEST().getSymbol()))).toList();
@@ -166,8 +169,9 @@ final class AstBuilder {
                     arguments(c.argumentList()), location);
             case MetaLangParser.ListExpressionContext l -> new Expression.ListValue(
                     l.expression().stream().map(this::expression).toList(), location);
-            case MetaLangParser.StringExpressionContext s -> new Expression.Value(
-                    new Literal.StringLiteral(unquote(s.STRING().getText()), location), location);
+            case MetaLangParser.StringExpressionContext s -> new Expression.Value(new Literal.StringLiteral(
+                    testStrings ? unquoteTest(s.STRING().getText()) : unquote(s.STRING().getText()), location),
+                    location);
             case MetaLangParser.NumberExpressionContext n -> new Expression.Value(
                     new Literal.NumberLiteral(n.NUMBER().getText(), location), location);
             case MetaLangParser.NameExpressionContext n -> new Expression.Value(
@@ -420,6 +424,32 @@ final class AstBuilder {
      * Removes the quotes of a string literal. Only {@code \"} and {@code \\} are unescaped; every other
      * escape sequence is kept verbatim so regular expressions such as {@code "^/[^\s]*$"} survive.
      */
+    /**
+     * A string literal of a test: the escapes of the test language ({@code \\"}, {@code \\\\}, {@code \\n},
+     * {@code \\t}, {@code \\u{1F600}}); any other backslash stays as it is.
+     */
+    static String unquoteTest(final String quoted) {
+        final String body = quoted.substring(1, quoted.length() - 1);
+        final StringBuilder result = new StringBuilder(body.length());
+        for (int i = 0; i < body.length(); i++) {
+            final char c = body.charAt(i);
+            final char next = i + 1 < body.length() ? body.charAt(i + 1) : 0;
+            if (c != '\\') {
+                result.append(c);
+            } else if (next == 'n' || next == 't' || next == '"' || next == '\\') {
+                result.append(next == 'n' ? '\n' : next == 't' ? '\t' : next);
+                i++;
+            } else if (next == 'u' && body.startsWith("{", i + 2) && body.indexOf('}', i + 3) > i + 3) {
+                final int end = body.indexOf('}', i + 3);
+                result.appendCodePoint(Integer.parseInt(body.substring(i + 3, end), 16));
+                i = end;
+            } else {
+                result.append(c);
+            }
+        }
+        return result.toString();
+    }
+
     static String unquote(final String quoted) {
         final String body = quoted.substring(1, quoted.length() - 1);
         final StringBuilder result = new StringBuilder(body.length());
