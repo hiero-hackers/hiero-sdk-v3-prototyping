@@ -4,10 +4,12 @@ package org.hiero.shop;
 
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.processing.Generated;
 import org.hiero.shop.money.Money;
 import org.jspecify.annotations.Nullable;
 
 /// A square with a price.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public record Square(@Nullable Integer size, Money price) implements Shape, Priced {
 
     /// Creates a new `Square`.

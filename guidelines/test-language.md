@@ -5,8 +5,8 @@ from which every target language gets deterministically generated unit tests. It
 [`api-guideline.md`](api-guideline.md) for tests: the API guideline defines how an API is *described*, this document
 defines how its behaviour is *checked*.
 
-> **Status: draft.** The parser is implemented (`tests` start rule of `MetaLang.g4`, `SchemaParser.parseTests`);
-> type checking, the `test.*` rules and the generators are not. The analysis that led to it is
+> **Status: draft.** Parser, type checking with the `test.*` rules and the Java generator are implemented (see
+> "Tests in the specs" in `tooling/metalang/README.md`); the other languages are not yet. The analysis that led to it is
 > [`docs/spec-defined-tests.md`](../docs/spec-defined-tests.md). Open decisions are marked in the text and collected
 > under [Questions & Comments](#questions--comments).
 
@@ -43,7 +43,13 @@ Parsing of account ids.
 
 ```tests
 test "fromString reads shard, realm and number" {
-    let id = AccountId.fromString(value: "0.0.1234")
+    // given
+    let text = "0.0.1234"
+
+    // when
+    let id = AccountId.fromString(value: text)
+
+    // then
     assertEquals(expected: 1234, actual: id.num)
 }
 ```
@@ -80,6 +86,32 @@ test "name" {
 
 A test passes when all its statements run without a failed assertion and without an unexpected error.
 
+### Given, when, then
+
+Every test is written in three parts, each introduced by a comment of its own:
+
+```tests
+test "a signature verifies with the public key" {
+    // given
+    let message = utf8(text: "hello")
+
+    // when
+    let signature = DEFAULT(PrivateKey).sign(message: message)
+
+    // then
+    assertTrue(condition: DEFAULT(PublicKey).verify(message: message, signature: signature))
+}
+```
+
+- **`// given`** — the values the test needs: `let` with default instances, literals and calls that prepare.
+- **`// when`** — the one behaviour the test is about, usually a call whose result is bound with `let`.
+- **`// then`** — the assertions on that result.
+
+A part without statements is left out; a test that needs no values starts with `// when`. Where the call is the check
+itself — `@@expectThrows` — the two parts are one: `// when / then`. A loop or a condition may contain the parts
+(`for format in … { // when … // then … }`). A comment may say more than the name of the part
+(`// when / then: a format for public keys rejects a private key`).
+
 ## Statements
 
 | Statement | Meaning |
@@ -94,6 +126,10 @@ A test passes when all its statements run without a failed assertion and without
 Statements are written one after another, usually one per line; a `;` after a statement is allowed but not needed.
 An expression on its own is only a statement if it is a call — `a + b` or a bare name is a syntax error, so that a
 broken statement cannot silently turn into several harmless ones.
+
+Comments (`// …` and `/* … */`) may stand anywhere. A comment inside a test is part of it: the generated test of every
+language carries it at the same place, so the given / when / then parts stay visible there. A comment directly above
+`test` is the documentation of the test.
 
 There is no assignment, no `while`, no `break`/`continue` and no `return`. A loop always ends: it iterates a finite
 collection, and the collection is computed before the first iteration.
@@ -557,22 +593,40 @@ instance PublicKey = DEFAULT(PrivateKey).createPublicKey()
 ## Testing
 
 ```tests
-test "the default private key has its raw bytes" {
-    let key = DEFAULT(PrivateKey)
-    assertEquals(expected: hex(text: "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"),
-            actual: key.bytes)
+test "a private key imported from hex has these raw bytes" {
+    // given
+    let hexText = "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"
+
+    // when
+    let key = createPrivateKey(algorithm: KeyAlgorithm.ED25519, encoding: ByteImportEncoding.HEX, value: hexText)
+
+    // then
+    assertEquals(expected: hex(text: hexText), actual: key.bytes)
     assertEquals(expected: KeyAlgorithm.ED25519, actual: key.algorithm)
     assertEquals(expected: KeyType.PRIVATE, actual: key.type)
 }
 
 test "the default private key encodes as PKCS#8 DER" {
+    // given
+    let key = DEFAULT(PrivateKey)
+
+    // when
+    let der = key.toBytes(container: KeyFormat.PKCS8_WITH_DER)
+
+    // then
     assertEquals(
             expected: hex(text: "302e020100300506032b657004220420d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"),
-            actual: DEFAULT(PrivateKey).toBytes(container: KeyFormat.PKCS8_WITH_DER))
+            actual: der)
 }
 
 test "the public key of an Ed25519 key is a public Ed25519 key of 32 bytes" {
-    let publicKey = DEFAULT(PrivateKey).createPublicKey()
+    // given
+    let privateKey = DEFAULT(PrivateKey)
+
+    // when
+    let publicKey = privateKey.createPublicKey()
+
+    // then
     assertEquals(expected: KeyType.PUBLIC, actual: publicKey.type)
     assertEquals(expected: KeyAlgorithm.ED25519, actual: publicKey.algorithm)
     assertEquals(expected: 32, actual: length(value: publicKey.bytes))
@@ -580,25 +634,41 @@ test "the public key of an Ed25519 key is a public Ed25519 key of 32 bytes" {
 }
 
 test "a signature verifies with the public key and only for its message" {
-    let signature = DEFAULT(PrivateKey).sign(message: utf8(text: "hello"))
+    // given
+    let message = utf8(text: "hello")
+
+    // when
+    let signature = DEFAULT(PrivateKey).sign(message: message)
+
+    // then
     assertEquals(expected: 64, actual: length(value: signature))
-    assertEquals(expected: signature, actual: DEFAULT(PrivateKey).sign(message: utf8(text: "hello")),
+    assertEquals(expected: signature, actual: DEFAULT(PrivateKey).sign(message: message),
             message: "Ed25519 signatures are deterministic")
-    assertTrue(condition: DEFAULT(PublicKey).verify(message: utf8(text: "hello"), signature: signature))
+    assertTrue(condition: DEFAULT(PublicKey).verify(message: message, signature: signature))
     assertFalse(condition: DEFAULT(PublicKey).verify(message: utf8(text: "hello!"), signature: signature))
 }
 
 test "a key survives every format that supports its type" {
+    // given
     let key = DEFAULT(PrivateKey)
+
     for format in [KeyFormat.PKCS8_WITH_DER, KeyFormat.SPKI_WITH_DER, KeyFormat.PKCS8_WITH_PEM,
             KeyFormat.SPKI_WITH_PEM] {
         if not(value: format.supportsType(type: KeyType.PRIVATE)) {
+            // when / then: a format for public keys rejects a private key
             @@expectThrows(illegal-format)
             key.toBytes(container: format)
         } else if format.encoding == KeyEncoding.DER {
-            assertEquals(expected: key, actual: createPrivateKey(container: format, value: key.toBytes(container: format)))
+            // when
+            let der = key.toBytes(container: format)
+
+            // then
+            assertEquals(expected: key, actual: createPrivateKey(container: format, value: der))
         } else {
+            // when
             let pem = key.toString(container: format)
+
+            // then
             assertTrue(condition: startsWith(value: pem, prefix: "-----BEGIN PRIVATE KEY-----"))
             assertEquals(expected: key, actual: createPrivateKey(container: format, value: pem))
         }
@@ -606,7 +676,12 @@ test "a key survives every format that supports its type" {
 }
 
 test "a hex key of the wrong length is rejected" {
-    for hexText in ["d3671a1e", repeat(value: "ab", count: 33)] {
+    // given
+    let tooShort = "d3671a1e"
+    let tooLong = repeat(value: "ab", count: 33)
+
+    for hexText in [tooShort, tooLong] {
+        // when / then
         @@expectThrows(illegal-format)
         createPrivateKey(algorithm: KeyAlgorithm.ED25519, encoding: ByteImportEncoding.HEX, value: hexText)
     }
@@ -616,6 +691,8 @@ test "a hex key of the wrong length is rejected" {
 
 ## Questions & Comments
 
+- **Checking the structure.** Given / when / then is a convention of this guideline, not checked by the validator. A
+  warning for a test without `// then` (or with assertions before `// when`) would enforce it. — open
 - **Table-driven tests.** A test repeated over rows of values, each row its own generated test case (a parameterized
   test, a subtest), is postponed. Until then a `for` loop inside a test covers several values, but stops at the first
   failing one. — open

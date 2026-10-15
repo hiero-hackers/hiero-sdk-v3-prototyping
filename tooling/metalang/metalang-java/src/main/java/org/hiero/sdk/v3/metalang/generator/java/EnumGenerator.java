@@ -110,12 +110,14 @@ final class EnumGenerator {
         // before rendering the imports: the annotation registers its import
         final String threadSafe = context.threadSafe(enumType.name()).map(a -> ThreadSafeGenerator.render(a, imports) + "\n")
                 .orElse("");
+        final String generated = JavaGenerator.generated(imports);
         final String importBlock = imports.render();
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
         }
         java.append(MarkdownComment.render("", List.of(enumType.documentation()), List.of(),
                 enumType.hasAnnotation("deprecated")));
+        java.append(generated);
         if (enumType.hasAnnotation("deprecated")) {
             java.append("@Deprecated\n");
         }

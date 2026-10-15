@@ -77,12 +77,17 @@ final class Linker {
             }
         }
         final LinkedModel linked = new LinkedModel(types, functions, constants, namespaces(types, functions, constants),
-                List.of(), List.of());
+                List.of(), List.of(), List.of(), List.of());
         // the default instances refer to everything else, so they are resolved against the linked model
         final InstanceResolver.Result instances = InstanceResolver.resolve(model, linked,
                 (ref, file) -> type(ref, file, Map.of()));
+        final LinkedModel withInstances = new LinkedModel(types, functions, constants, linked.namespaces(),
+                instances.instances(), instances.diagnostics(), List.of(), List.of());
+        // the tests use everything, the default instances included
+        final TestResolver.Result tests = TestResolver.resolve(model, withInstances,
+                (ref, file) -> type(ref, file, Map.of()));
         return new LinkedModel(types, functions, constants, linked.namespaces(), instances.instances(),
-                instances.diagnostics());
+                instances.diagnostics(), tests.tests(), tests.diagnostics());
     }
 
     // --- namespaces ------------------------------------------------------------------------------

@@ -21,7 +21,9 @@ final class ExceptionGenerator {
         final String objects = imports.use("java.util", "Objects");
         final String serial = imports.use("java.io", "Serial");
         final String nullable = imports.use(JavaTypes.JSPECIFY, "Nullable");
+        final String generated = JavaGenerator.generated(imports);
         final String body = MarkdownComment.render("", List.of("Signals " + JavaExceptions.anError(errorId) + "."))
+                + generated
                 + "public final class " + className + " extends RuntimeException {\n\n"
                 + "    @" + serial + "\n"
                 + "    private static final long serialVersionUID = 1L;\n\n"

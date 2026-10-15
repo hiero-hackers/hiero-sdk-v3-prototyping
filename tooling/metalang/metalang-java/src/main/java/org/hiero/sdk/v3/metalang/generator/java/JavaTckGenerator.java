@@ -154,7 +154,7 @@ public final class JavaTckGenerator {
                 .append("final class ").append(className).append(" {\n\n")
                 .append(members)
                 .append("}\n");
-        return new GeneratedFile(SOURCE_ROOT + className + ".java", java.toString());
+        return new GeneratedFile(SOURCE_ROOT + className + ".java", JavaGenerator.annotated(java.toString()));
     }
 
     /** The fields and the constructor: the runtime, its converters and (for the bindings) the common parameters. */
@@ -443,7 +443,7 @@ public final class JavaTckGenerator {
                 + "final class CommonBindings {\n\n"
                 + members
                 + "}\n";
-        return new GeneratedFile(SOURCE_ROOT + "CommonBindings.java", java);
+        return new GeneratedFile(SOURCE_ROOT + "CommonBindings.java", JavaGenerator.annotated(java));
     }
 
     private static void documentationOf(final TckBindings.Resolved common, final StringBuilder body) {
@@ -514,7 +514,7 @@ public final class JavaTckGenerator {
                 .append("System.out.println(\"TCK server listening on port \" + port);\n")
                 .append(INDENT).append("}\n")
                 .append("}\n");
-        return new GeneratedFile(SOURCE_ROOT + "TckMain.java", java.toString());
+        return new GeneratedFile(SOURCE_ROOT + "TckMain.java", JavaGenerator.annotated(java.toString()));
     }
 
     /**

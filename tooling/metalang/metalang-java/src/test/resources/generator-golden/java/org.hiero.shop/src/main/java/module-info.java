@@ -10,6 +10,7 @@ import org.jspecify.annotations.NullMarked;
 module org.hiero.shop {
     requires transitive org.hiero.core;
     requires static transitive org.jspecify;
+    requires static transitive java.compiler;
 
     exports org.hiero.shop;
 }

@@ -2,7 +2,10 @@
 
 package org.hiero.shop;
 
+import javax.annotation.processing.Generated;
+
 /// Constants of the package `org.hiero.shop`.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public final class ShopConstants {
 
     public static final int MAX_PRODUCTS = 1_000;

@@ -5,11 +5,13 @@ package org.hiero.shop.money;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Objects;
+import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 
 /// An amount of money.
 ///
 /// @param cents the amount in cents
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public record Money(BigInteger cents, @Nullable Duration timeout) {
 
     private static final BigInteger CENTS_MIN = new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968");

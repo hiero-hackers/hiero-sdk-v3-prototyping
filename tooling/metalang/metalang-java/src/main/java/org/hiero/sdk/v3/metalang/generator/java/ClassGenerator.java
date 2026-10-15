@@ -213,12 +213,14 @@ final class ClassGenerator {
         // before rendering the imports: the annotation registers its import
         final String threadSafe = context.threadSafe(type.name()).map(a -> ThreadSafeGenerator.render(a, imports) + "\n")
                 .orElse("");
+        final String generated = JavaGenerator.generated(imports);
         final String importBlock = imports.render();
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
         }
         java.append(MarkdownComment.render("", List.of(type.documentation()), List.of(),
                 type.hasAnnotation("deprecated")));
+        java.append(generated);
         if (type.hasAnnotation("deprecated")) {
             java.append("@Deprecated\n");
         }

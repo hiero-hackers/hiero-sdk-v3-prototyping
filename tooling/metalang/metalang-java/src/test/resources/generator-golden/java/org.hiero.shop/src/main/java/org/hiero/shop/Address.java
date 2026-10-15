@@ -6,11 +6,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.regex.Pattern;
+import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 
 /// A postal address.
 ///
 /// @param street street and house number
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public record Address(String street, @Nullable String zip, @Nullable String website, String map) {
 
     private static final Pattern ZIP_PATTERN = Pattern.compile("^[0-9]{5}$");

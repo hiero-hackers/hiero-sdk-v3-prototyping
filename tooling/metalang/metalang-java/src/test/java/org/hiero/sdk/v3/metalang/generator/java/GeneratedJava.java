@@ -62,6 +62,10 @@ final class GeneratedJava {
     static final Path SUPPORT = Path.of(System.getProperty("spec.root", "../../../spec"))
             .resolveSibling("sdk-java/support/src/main/java");
 
+    /** The sources of the hand-written test support module (the built-in functions of the spec tests). */
+    static final Path TEST_SUPPORT = Path.of(System.getProperty("spec.root", "../../../spec"))
+            .resolveSibling("sdk-java/test-support/src/main/java");
+
     private GeneratedJava() {
     }
 
@@ -174,6 +178,13 @@ final class GeneratedJava {
         for (final GeneratedFile file : files) {
             if (file.path().endsWith(".java") && file.path().contains("/src/test/java/")) {
                 sources.add(directory.resolve("src").resolve(file.path()));
+            }
+        }
+        // the spec tests use the test support module; on the class path like a test dependency of Maven
+        if (files.stream().anyMatch(f -> f.path().endsWith("SpecTest.java"))) {
+            try (Stream<Path> support = Files.walk(TEST_SUPPORT)) {
+                support.filter(p -> p.toString().endsWith(".java") && !p.endsWith("module-info.java"))
+                        .sorted().forEach(sources::add);
             }
         }
         final List<String> classPath = new ArrayList<>(List.of(System.getProperty("java.class.path")

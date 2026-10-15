@@ -197,8 +197,9 @@ class JavaApiTest {
 
         // THEN
         final ApiModule module = api.modules().get("org.hiero.base");
-        assertThat(module.requires()).containsExactly(Map.entry("java.compiler", "static"),
-                Map.entry("java.net.http", ""), Map.entry("org.jspecify", "transitive"));
+        // java.compiler (for the source-only @Generated) is no part of the API
+        assertThat(module.requires()).containsExactly(Map.entry("java.net.http", ""),
+                Map.entry("org.jspecify", "transitive"));
         assertThat(module.exports()).containsExactly("org.hiero.keys", "org.hiero.ledger");
         assertThat(module.annotations()).containsExactly("@org.jspecify.annotations.NullMarked");
         assertThat(module.line()).isEqualTo(4);

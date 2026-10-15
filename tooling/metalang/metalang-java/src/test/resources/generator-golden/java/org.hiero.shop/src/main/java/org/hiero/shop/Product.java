@@ -5,10 +5,12 @@ package org.hiero.shop;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.processing.Generated;
 import org.hiero.shop.money.Money;
 import org.jspecify.annotations.Nullable;
 
 /// A product.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public final class Product extends Entity<Long> {
 
     private final String name;

@@ -3,9 +3,11 @@
 package org.hiero.shop;
 
 import java.util.NoSuchElementException;
+import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 
 /// A product category.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public enum Category implements Coded {
 
     /// things to eat

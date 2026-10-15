@@ -249,6 +249,28 @@ public enum Rule {
             "No way to obtain an instance of a type through the API: tests that need one cannot be generated",
             "api-guideline.md#default-instances"),
 
+    // --- tests ------------------------------------------------------------------------------------
+    TEST_INVALID("test.invalid", Severity.ERROR,
+            "A test does not resolve (unknown function, method, attribute, variable or argument, wrong type, "
+                    + "misplaced or unknown annotation)", "test-language.md#validation"),
+    TEST_DUPLICATE_ID("test.duplicate-id", Severity.ERROR,
+            "Two tests of one namespace have the same id", "test-language.md#tests"),
+    TEST_DUPLICATE_NAME("test.duplicate-name", Severity.ERROR,
+            "A variable is bound twice in a test", "test-language.md#statements"),
+    TEST_UNDECLARED_ERROR("test.undeclared-error", Severity.ERROR,
+            "@@expectThrows names an error that no call of the statement declares", "test-language.md#errors"),
+    TEST_NULLABLE("test.nullable", Severity.ERROR,
+            "A value that may be null is used where null is not allowed", "test-language.md#null"),
+    TEST_INCOMPARABLE("test.incomparable", Severity.ERROR,
+            "'==' or '!=' on values of incompatible types", "test-language.md#equality"),
+    TEST_OUT_OF_RANGE("test.out-of-range", Severity.ERROR,
+            "A number does not fit its type", "test-language.md#integers"),
+    TEST_AMBIGUOUS_CALL("test.ambiguous-call", Severity.ERROR,
+            "An unqualified call fits a built-in function and a function of the spec's namespaces",
+            "test-language.md#built-in-functions"),
+    TEST_EMPTY("test.empty", Severity.WARNING,
+            "A test checks nothing: no assertion and no @@expectThrows", "test-language.md#validation"),
+
     // --- enums -----------------------------------------------------------------------------------
     ENUM_BODY_ATTRIBUTE("enum.body-attribute", Severity.ERROR,
             "Enum attributes must be declared in the attribute list after the enum name, not in the body",

@@ -93,7 +93,7 @@ final class JavaTckContractGenerator {
                 + "public interface Converters {\n"
                 + methods
                 + "}\n";
-        return new GeneratedFile(SOURCE_ROOT + "Converters.java", java);
+        return new GeneratedFile(SOURCE_ROOT + "Converters.java", JavaGenerator.annotated(java));
     }
 
     /** Whether the canonical type of a converter is part of the generated API (always true for basic types). */
@@ -114,8 +114,8 @@ final class JavaTckContractGenerator {
     }
 
     private static GeneratedFile file(final String name, final String body) {
-        return new GeneratedFile(SOURCE_ROOT + name + ".java", JavaGenerator.HEADER + '\n'
-                + "package " + PACKAGE + ";\n\n" + body);
+        return new GeneratedFile(SOURCE_ROOT + name + ".java", JavaGenerator.annotated(JavaGenerator.HEADER + '\n'
+                + "package " + PACKAGE + ";\n\n" + body));
     }
 
     private static final String RUNTIME = """

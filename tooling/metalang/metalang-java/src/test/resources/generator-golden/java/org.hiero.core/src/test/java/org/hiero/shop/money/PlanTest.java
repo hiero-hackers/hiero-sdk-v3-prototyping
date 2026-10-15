@@ -8,11 +8,13 @@ import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Plan`, generated from the specs.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 @DisplayName("Plan")
 class PlanTest {
 

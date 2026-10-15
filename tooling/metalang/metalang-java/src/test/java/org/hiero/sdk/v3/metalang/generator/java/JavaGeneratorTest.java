@@ -87,6 +87,7 @@ class JavaGeneratorTest {
             assertThat(moduleInfo(files, "org.hiero.my.base")).contains("""
                     module org.hiero.my.base {
                         requires static transitive org.jspecify;
+                        requires static transitive java.compiler;
 
                         exports org.hiero.a;
                         // exports org.hiero.b.sub; (enabled as soon as the package contains generated types)
@@ -159,6 +160,7 @@ class JavaGeneratorTest {
                             /// First part.
                             ///
                             /// Third part.
+                            @javax.annotation.processing.Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
                             package org.hiero.a;
                             """));
         }

@@ -7,6 +7,7 @@ sdk-java/generated/*/target/
 sdk-java/tck/generated/*/target/
 sdk-java/tck/runtime/target/
 sdk-java/support/target/
+sdk-java/test-support/target/
 sdk-java/protobuf/target/
 
 # descriptor sets of protobuf/verify.sh --keep

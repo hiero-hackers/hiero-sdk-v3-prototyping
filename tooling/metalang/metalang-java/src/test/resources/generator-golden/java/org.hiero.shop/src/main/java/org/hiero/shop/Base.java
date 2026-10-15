@@ -3,9 +3,11 @@
 package org.hiero.shop;
 
 import java.util.Objects;
+import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 
 /// Neither a record nor its subtype: records cannot be extended.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public class Base {
 
     private final int a;

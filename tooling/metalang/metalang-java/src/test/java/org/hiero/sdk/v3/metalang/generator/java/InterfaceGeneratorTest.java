@@ -90,9 +90,11 @@ class InterfaceGeneratorTest {
 
                     import java.util.NoSuchElementException;
                     import java.util.concurrent.CompletionStage;
+                    import javax.annotation.processing.Generated;
                     import org.jspecify.annotations.Nullable;
 
                     /// A named thing.
+                    @Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
                     public interface Named {
 
                         /// the name

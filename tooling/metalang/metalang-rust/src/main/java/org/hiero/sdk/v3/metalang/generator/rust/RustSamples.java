@@ -601,6 +601,7 @@ final class RustSamples {
                         ? imports.external("std::collections::HashSet") + "::from([" + String.join(", ", items) + "])"
                         : "vec![" + String.join(", ", items) + "]");
             }
+            default -> Optional.empty(); // the variables and operators of tests do not occur here
         };
     }
 

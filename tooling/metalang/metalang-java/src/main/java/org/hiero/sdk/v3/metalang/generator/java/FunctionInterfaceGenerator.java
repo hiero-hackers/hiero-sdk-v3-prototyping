@@ -36,6 +36,7 @@ final class FunctionInterfaceGenerator {
         final String method = signature(function, imports);
         final StringBuilder java = new StringBuilder(JavaGenerator.HEADER).append('\n');
         java.append("package ").append(packageName).append(";\n\n");
+        final String generated = JavaGenerator.generated(imports);
         final String importBlock = imports.render();
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
@@ -43,6 +44,7 @@ final class FunctionInterfaceGenerator {
         java.append(MarkdownComment.render("", List.of("A function `" + function.name() + "` with the parameters "
                         + function.parameters().stream().map(p -> "`" + p.name() + "`")
                         .collect(Collectors.joining(", ")) + ".")))
+                .append(generated)
                 .append("@FunctionalInterface\n")
                 .append("public interface ").append(name.name()).append(" {\n\n")
                 .append("    ").append(method).append(";\n")

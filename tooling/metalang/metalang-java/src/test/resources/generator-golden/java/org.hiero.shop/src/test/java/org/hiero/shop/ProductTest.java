@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import javax.annotation.processing.Generated;
 import org.hiero.shop.money.Money;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 ///
 /// Not generated:
 /// - no valid arguments for `sameAs(shop.Entity<$$O>)`
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 @DisplayName("Product")
 class ProductTest {
 

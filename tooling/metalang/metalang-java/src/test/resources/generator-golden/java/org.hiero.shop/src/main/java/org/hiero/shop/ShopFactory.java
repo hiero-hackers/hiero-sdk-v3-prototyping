@@ -2,7 +2,10 @@
 
 package org.hiero.shop;
 
+import javax.annotation.processing.Generated;
+
 /// Factory methods of the package `org.hiero.shop`.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public final class ShopFactory {
 
     public static Product create(final String name, final String... tags) {

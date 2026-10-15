@@ -85,6 +85,7 @@ class FunctionTypeTest {
         assertThat(files).filteredOn(f -> f.path().endsWith("Function.java")).hasSize(2);
         assertThat(source(files, "OnMessageFunction")).contains("""
                 /// A function `onMessage` with the parameters `topic`, `message`, `at`.
+                @Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
                 @FunctionalInterface
                 public interface OnMessageFunction {
 

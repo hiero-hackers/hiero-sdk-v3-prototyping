@@ -12,8 +12,10 @@ The current SDKs are all at version 2; **V3 is the codename for the new generati
 designed from scratch with **no backward-compatibility constraints** with V2.
 
 **This repo contains specifications, not a shippable SDK.** The specs themselves have no build system and do not
-compile; the only buildable module is the spec tooling under `tooling/metalang` (Maven, Java 21). The API is defined once in a **language-agnostic meta-language** and is meant to be translated into
-idiomatic implementations per language (Java, JavaScript/TypeScript, Go, Rust, Python, C++, Swift). The `.java`/`.js`
+compile. What builds is the spec tooling under `tooling/metalang` (Maven, Java 21) and the hand-written modules of
+each language (`sdk-<lang>/support`, ...); the code of every language is **generated** from the specs on demand and
+is not part of the repository. The API is defined once in a **language-agnostic meta-language** and is meant to be
+translated into idiomatic implementations per language (Java, JavaScript/TypeScript, Go, Rust, Python, C++, Swift). The `.java`/`.js`
 files under `guidelines/` are reference snippets, not a buildable module — except `guidelines/rust-files/`: the
 single source of the Rust support types (`BoxFuture`, `BoxStream`, `StreamItem`, `InvalidArgumentError`), which the
 generator copies 1:1 into `sdk-rust/generated`, so they must always compile. The Java and TypeScript support types are not
@@ -28,8 +30,8 @@ modules depend (ADR-0007).
 guidelines/
   api-guideline.md              # THE meta-language: syntax + cross-cutting API best practices. Read this first.
   test-language.md              # DRAFT: the language of `tests` blocks in a spec's `## Testing`, from which unit
-                                #   tests are generated per language (analysis: docs/spec-defined-tests.md). Only the
-                                #   parser exists (start rule `tests` in MetaLang.g4); no type checking or generation yet
+                                #   tests are generated per language (analysis: docs/spec-defined-tests.md). Parsed,
+                                #   resolved (test.* rules) and generated for Java (`<Spec>SpecTest`) so far
   api-best-practices-java.md    # How meta-language concepts map to idiomatic Java
   api-best-practices-rust.md    # ... Rust (the mapping of the Rust generator)
   api-best-practices-go.md      # ... Go (the mapping of the Go generator)
@@ -42,25 +44,29 @@ guidelines/
 # One folder per target language. Each holds its generator configuration, its hand-written modules and
 # its generated modules - the per-language view (ADR-0008). A module stays either wholly generated or
 # wholly hand-written (ADR-0007); `generated/` in the path is what marks the generated ones.
+# Every `generated/` tree is git-ignored and produced on demand: scripts/generate-<lang>.sh (or
+# generate-all.sh) generates and builds it, scripts/clean.sh removes it. Regenerating is always safe.
 
 sdk-java/
   generator.properties          # Java generator configuration (e.g. java.interfaces), see tooling/metalang/README.md
   support/                      # Hand-written Java support types (streaming, thread-safety) as Maven module
                                 #   hiero-sdk-support; sdk-java/generated depends on it (install it first)
+  test-support/                 # Hand-written Maven module hiero-sdk-test-support (JPMS org.hiero.sdk.test.support):
+                                #   the built-in functions and assertions of the test language (class Testing); the
+                                #   generated spec tests (<Spec>SpecTest) depend on it in test scope (install it first)
   protobuf/                     # Hand-written Maven module hiero-sdk-protobuf (JPMS org.hiero.sdk.protobuf). Has no
                                 #   sources of its own: it compiles /tooling/protobuf into Java at build time. NOT public
                                 #   API - every package is exported only with `exports ... to <sdk module>`.
                                 #   No gRPC codegen; the client builds its io.grpc.MethodDescriptor by hand.
-  generated/                    # Generated Java API as Maven project, one sub-module/JAR per Java module (tracked in
-                                #   git; regenerate after spec or generator changes, commands in
-                                #   tooling/metalang/README.md). !! CURRENTLY HAND-EDITED, DO NOT REGENERATE - see
-                                #   "The AccountCreateTransaction spike" below. `metalang check` verifies
-                                #   that it (or an implementation based on it) provides the API of the specs.
-                                #   src/test/java holds generated JUnit tests of the spec contract; the tests of
-                                #   method stubs fail until the methods are implemented.
-  tck/generated/                # Generated from tck/bindings and the converter catalogue (tracked in git; `metalang
-                                #   tck generate`). Never edit by hand. contract/: interfaces the runtime
-                                #   implements; server/: the TCK server, compiled against API + contract only.
+  generated/                    # Generated Java API as Maven project, one sub-module/JAR per Java module
+                                #   (scripts/generate-java.sh). `metalang check` verifies that it (or an
+                                #   implementation based on it) provides the API of the specs. src/test/java holds
+                                #   the generated JUnit tests: the contract tests per type (<Type>Test) and the tests
+                                #   of the specs' `tests` blocks (<Spec>SpecTest); tests of method stubs fail until
+                                #   the methods are implemented.
+  tck/generated/                # Generated from tooling/tck/bindings and the converter catalogue (`metalang tck
+                                #   generate`, scripts/tck-java.sh). contract/: interfaces the runtime implements;
+                                #   server/: the TCK server, compiled against API + contract only.
   tck/runtime/                  # Hand-written runtime of the Java TCK server (JSON-RPC, converters, setup); Maven
                                 #   module hiero-sdk-tck-runtime, implements sdk-java/tck/generated/contract
 
@@ -73,20 +79,20 @@ sdk-ts/
   support/                      # Hand-written TypeScript support types (Duration, StreamItem, AbstractConstructor)
                                 #   as npm package @hiero/support
   generated/                    # Generated TypeScript API, one package per spec folder, with generated node:test
-                                #   tests (tracked in git). !! ALSO HAND-EDITED by the spike, DO NOT REGENERATE.
+                                #   tests (scripts/generate-ts.sh)
   tck/generated/                # Generated TCK contract and server (@hiero/tck-contract, @hiero/tck-server)
   tck/runtime/                  # Hand-written TypeScript runtime (@hiero/tck-runtime), implements the contract
 
 sdk-rust/
   generator.properties          # Rust generator configuration (crate prefix, version)
   generated/                    # Generated Rust API as Cargo workspace, one crate per spec folder, with a generated
-                                #   integration test per crate (tracked in git; `cargo test` builds and tests it).
-                                #   Never edit by hand. Support types are copied from guidelines/rust-files.
+                                #   integration test per crate (scripts/generate-rust.sh; `cargo test` builds and
+                                #   tests it). Support types are copied from guidelines/rust-files.
 
 sdk-go/
   generator.properties          # Go generator configuration (go.module, go.version)
   generated/                    # Generated Go API as ONE Go module (a spec folder is no artifact boundary in Go),
-                                #   one package per namespace in a directory per segment. Never edit by hand.
+                                #   one package per namespace in a directory per segment (scripts/generate-go.sh).
                                 #   `go build ./... && go vet ./... && gofmt -l .` must be clean; the generator
                                 #   produces gofmt's alignment itself, nothing in the build needs a Go toolchain.
                                 #   Incomplete: no setters, error types, constants, tests, protobuf or TCK part.
@@ -94,41 +100,47 @@ sdk-go/
 sdk-python/
   generator.properties          # Python generator configuration (python.distribution, python.package, python.version)
   generated/                    # Generated Python API as ONE distribution (hiero-sdk, import package hiero_sdk), one
-                                #   package per namespace re-exporting its types, one private module per type.
-                                #   Never edit by hand. Every package must import and `mypy --strict src` must be
+                                #   package per namespace re-exporting its types, one private module per type
+                                #   (scripts/generate-python.sh). Every package must import and `mypy --strict src` must be
                                 #   clean (Python 3.12+). Incomplete: no constants, errors, tests, protobuf or
                                 #   TCK part; types, methods and functions are generated.
 
 # There are exactly two Maven builds - sdk-java/ and tooling/metalang/ - and each carries its own
 # Maven wrapper (mvnw, mvnw.cmd, .mvn/) and its own .sdkmanrc (JDK 25). Build from inside one of
-# them (`cd sdk-java && ./mvnw -f support install`); never call a locally installed `mvn`.
+# them (`cd sdk-java && ./mvnw -f support install`); never call a locally installed `mvn`. Under
+# sdk-java/ every module is built on its own with -f: support, test-support and protobuf before
+# generated (scripts/generate-java.sh does it in that order).
 # `sdk env` does not search parent directories, which is why the pin is per build and not at the
 # root. The root needs none: nothing is built there, and the CLI jar targets release 21.
 
-spec/                           # The actual V3 public-API specifications, written in the meta-language
+spec/                           # The actual V3 public-API specifications, written in the meta-language; one spec
+                                #   folder is one module/package/crate of the generated code
   base/                         # Foundational namespaces shared by everything
     common.md (common)          #   Page<$$T> and other shared types
-    ledger.md (ledger)          #   Ledger, Address, ConsensusNode, MirrorNode
-    ledger-config.md (ledger.config)
-    keys.md (keys)              #   Keys + key import/export (PKCS#8, SPKI, DER, PEM)
-    authority.md (authority) #  Authorization model (HAPI Key): Authority sum type (public key / contract / m-of-n)
-    native-token.md (nativeToken + hbar)  # NativeToken abstraction + Hedera-specific HBAR implementation
-    token.md (token)              #   HTS token classifier enums (TokenType, TokenSupplyType); future home for TokenId / NftId
-    grpc.md (grpc)
-    proto.md (proto)
-  consensus-node-client/        # Talking to the consensus node
-    client.md (consensusnode.client)              # HieroClient, Account, TransactionSigner
-    transactions.md (consensusnode.transactions)  # Transaction<$$Receipt, $$Self>, Response, Receipt, Record
-    transactions-accounts.md (consensusnode.transactions.accounts)
-    transactions-spi.md (consensusnode.transactions.spi)   # SPI for custom services/transaction types
-    proto.md / proto-accounts.md (consensusnode.proto[.account])
-  mirror-node-client/           # Querying the Hiero Mirror Node REST API
-    mirror-node.md (mirrornode) # MirrorNodeClient with per-domain repositories
-    mirror-node-{account,contract,network,nft,token,topic,transaction,common}.md
+    ledger.md (ledger)          #   Ledger, Address, AccountId, TransactionId, ConsensusNode, MirrorNode
+    ledger-config.md (ledger.config)  # network settings
+    keys.md (keys)              #   Keys + key import/export (PKCS#8, SPKI, DER, PEM); has the first `tests` block
+    authority.md (authority)    #   Authorization model (HAPI Key): Authority sum type (public key / contract / m-of-n)
+    native-token.md (nativeToken)  # NativeToken abstraction (amount + unit), ExchangeRate
+    hedera.md (hedera)          #   Hedera mainnet/testnet settings, Hbar and HbarUnit (the Hedera native token)
+    solo.md (solo)              #   the local Solo network as network setting
+    token.md (token)            #   HTS token classifier enums (TokenType, TokenSupplyType)
+    grpc.md, http.md, proto.md  #   (grpc, http, proto)
+  consensus-node-client/        # Talking to the consensus node (namespaces consensusnode.*)
+    client.md                   #   HieroClient, Account, TransactionSigner
+    transactions.md, queries.md #   Transaction<$$Receipt, $$Self>, Response, Receipt, Record; FreeQuery, PaidQuery
+    transactions-*.md, queries-*.md  # accounts, files, schedules, tokens, topics, batch, utility
+    transactions-spi.md         #   SPI for custom services/transaction types
+    proto.md, proto-accounts.md #   (consensusnode.proto[.account]) the protobuf messages the SPI exposes
+  consensus-node-admin-client/  # Network administration (consensusnode.admin.*): freeze, nodes, system, network
+  mirror-node-client/           # Querying the Hiero Mirror Node REST API (mirrornode.*), paginated Page<$$T>
   enterprise/                   # High-level "service" layer on top of the raw SDK for app/framework integration
-    service.md (enterprise.service)
-    service-account.md (enterprise.service.account)
-    service-contract.md (enterprise.service.contract)
+                                #   (enterprise.service.*: account, contract, file, nft, token, topic)
+
+scripts/                        # generate-<lang>.sh / generate-all.sh (generate + build), clean.sh, tck-java.sh,
+                                #   tck-ts.sh; documented in scripts/README.md
+docs/                           # ADRs (docs/adr), analyses and runbooks (spec-defined-tests.md,
+                                #   rebuilding-the-spike.md, tck-binding.md, ...)
 
 tooling/                        # Everything that is neither a specification nor one of the language SDKs
 
@@ -148,20 +160,21 @@ tooling/tck/                    # The language-NEUTRAL parts of the TCK spike (s
 
 tooling/metalang/               # Prototype tooling, multi-module Maven build (see its README):
   metalang-core/                #   ANTLR grammar, parser, semantic model, validator, shared generator support,
-                                #   TCK bindings (parser, resolver, coverage check)
-  metalang-java/                #   Java generator + Java conformance check + Java TCK server generator
+                                #   default instances and tests of the specs (InstanceResolver, TestResolver, the
+                                #   built-in functions in resources/.../testing.md), TCK bindings
+  metalang-java/                #   Java generator (incl. the spec tests) + Java conformance check + TCK server generator
   metalang-typescript/          #   TypeScript generator + TypeScript conformance check
   metalang-rust/                #   Rust generator + Rust conformance check (rs-api, a syn-based helper)
-  metalang-go/                  #   Go generator (types only so far; no conformance check yet)
-  metalang-python/              #   Python generator (types only so far; no conformance check yet)
+  metalang-go/                  #   Go generator (types, methods, functions; no tests, no conformance check yet)
+  metalang-python/              #   Python generator (types, methods, functions; no tests, no conformance check yet)
   metalang-cli/                 #   command line tool; builds tooling/metalang/target/metalang-*-cli.jar
 ```
 
 ### How the layers relate
 
-- **`base`** — primitives every layer depends on (`ledger`, `keys`, `nativeToken`/`hbar`, `common`, `proto`, `grpc`).
-  The native token is modeled as an abstraction (`nativeToken`) with HBAR as one concrete implementation (`hbar`), so
-  the SDK is not bound to Hedera.
+- **`base`** — primitives every layer depends on (`ledger`, `keys`, `nativeToken`, `common`, `proto`, `grpc`).
+  The native token is modeled as an abstraction (`nativeToken`) with `Hbar` as one concrete implementation (namespace
+  `hedera`), so the SDK is not bound to Hedera.
 - **`consensusnode.*`** — the low-level client: build/sign/execute transactions against the consensus node. The
   `spi` namespace exists because the consensus node is service-oriented and supports *custom* services and transaction
   types, so the SDK must be extensible (hence `TransactionStatus` is an abstraction with an `int32` code, not a closed
@@ -180,6 +193,11 @@ points to keep specs valid and consistent:
 - Each spec file follows the same skeleton: `# Title` → `## Description` → optional `## Design Notes` →
   `## API Schema` (a fenced code block) → optional `## Default Instances for Testing` → optional `## Examples` → optional
   `## Testing` → `## Questions & Comments`.
+- `## Testing` may hold `tests` code blocks in the test language of `guidelines/test-language.md`
+  (`test "name" { let key = DEFAULT(PrivateKey) ... assertEquals(expected: ..., actual: ...) }`). The validator
+  resolves them against the model (`test.*` rules); the Java generator turns them into `<Spec>SpecTest` classes.
+  Expected values must come from the spec itself or a published test vector, never from a value computed for the
+  test (see the guideline's `## Questions & Comments`).
 - `## Default Instances for Testing` records the standard way to obtain an instance of the spec's types through the API
   (`instance PublicKey = DEFAULT(PrivateKey).createPublicKey()`), with concrete values where implementations check them
   (keys, addresses). Generated tests use them first; the validator warns (`instance.missing`) about types that cannot
@@ -242,53 +260,22 @@ generate the placeholders. See [ADR-0009](docs/adr/0009-protobuf-messages-in-the
 `rust.protobuf` in the three `generator.properties` list the spec folders that need it (Rust also has
 `rust.protobufRoot`). Without the key nothing protobuf-related is generated.
 
-## The AccountCreateTransaction spike
+## The AccountCreateTransaction spike (git history only)
 
-**`sdk-java/generated` AND `sdk-ts/generated` are hand-edited and must not be regenerated.** Running
-`metalang generate` over either overwrites every file that carries the generator header, so all method
-bodies of the spike are lost. The hand-written files in the `internal` packages carry no header and
-survive - orphaned, and the module no longer compiles.
+To find out what implementing the V3 API actually costs, the `createAccount` path of the Hiero TCK was implemented
+end to end (keys -> protobuf -> gRPC -> signing -> receipt polling) in **Java and TypeScript**, by filling the method
+bodies of the generated code by hand. Both passed 34 of the 42 tests of `test-account-create-transaction.ts` against a
+local Solo network, with the same eight failures.
 
-`sdk-ts/generated` is affected exactly like `sdk-java/generated`: the TypeScript spike filled method bodies in
-generated files (e.g. `packages/base/src/keys/functions.ts`) and added
-`consensusnode/transactions/HapiTransactionStatus.ts` **with the generator header**, which makes the
-generator delete it as stale. A regeneration reintroduces ~36 `Not implemented yet` stubs. Only
-`sdk-rust/generated` and `sdk-go/generated` are safe.
+The spike is **no longer in the working tree**: commit `3b5305d` removed all generated code, and `generated/` is
+git-ignored since. Its last state is `3b5305d~1` (introduced in `3caad63 "Durchstich :)"`). To use it - e.g. to run
+generated tests against a real implementation - extract it into a scratch directory instead of the working tree:
+`git archive 3b5305d~1 sdk-java/generated | tar -x -C <scratch>`. [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md)
+is the runbook for restoring it on top of freshly generated code (file inventory, stubs to fill, build order, traps).
+`KeysSpecTest`, generated from `spec/base/keys.md`, passes against the Java spike that way.
 
-To verify a generator change, generate into a throwaway directory
-(`--output=/tmp/ts-out`) and inspect that, instead of regenerating in place.
-
-**If it is gone, rebuild it with
-[`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md)** - a runbook with the file
-inventory, the stubs to fill, the build order and the 14 traps that cost time the first time. Start
-there, not from scratch: the spike is in git (`3caad63 "Durchstich :)"`) and restoring beats
-retyping.
-
-To find out what implementing the V3 API actually costs, the `createAccount` path of the Hiero TCK was
-implemented end to end (keys -> protobuf -> gRPC -> signing -> receipt polling), in **Java and
-TypeScript**. Both pass 34 of the 42 tests of `test-account-create-transaction.ts` against a local
-Solo network, with the same eight failures. Rust has no slice: `metalang tck generate` supports only
-`--language=java|ts`, so there is nothing to measure one against yet.
-
-ADR-0007 leaves open where an implementation of the API may live, and the generated shapes rule out
-every option except editing in place: `AccountCreateTransaction` is `final` with stubbed `pack`/`sign`
-overrides, `ClientFactory`/`KeysFactory`/`AuthorityFactory` are `final` with private constructors and
-static stubs. The decision for this spike was therefore to edit the generated classes directly and to
-settle the architecture afterwards, informed by what the spike found.
-
-The conformance check stays green throughout: `metalang check` allows method bodies, additional types
-and additional `requires`/`exports`, so only bodies were filled and types were added, never changed.
-
-What the spike added inside `sdk-java/generated` (everything else is untouched):
-
-- `org.hiero.keys.internal` - Ed25519 and ECDSA secp256k1 over BouncyCastle, PKCS#8/SPKI DER by OID
-- `org.hiero.ledger.internal.DefaultTransactionId`, `org.hiero.nativeToken.internal.DefaultExchangeRate`
-- `org.hiero.consensusnode.client.internal` - `ClientRuntime` (gRPC channels, node selection, receipt
-  polling), `Protobuf`, `Grpc`, `DefaultPackedTransaction`
-- `org.hiero.consensusnode.transactions.HapiTransactionStatus` - 350 constants from `response_code.proto`
-
-Four spec problems made this harder than it should be; they are recorded in the `## Questions &
-Comments` of the respective spec files and are the real output of the spike:
+Four spec problems made the spike harder than it should be; they are recorded in the `## Questions & Comments` of the
+respective spec files and are its real output:
 
 1. `HieroClient` is a record and `Network` carries no consensus nodes, so a client cannot reach its
    network - the `NetworkSetting` passed to `ClientFactory` is dropped.
@@ -296,7 +283,9 @@ Comments` of the respective spec files and are the real output of the spike:
 3. `TransactionId.generateTransactionId` takes an `Address`, but `TransactionId` holds an `AccountId`.
 4. `BasicTransactionStatus` has no `SUCCESS`; the protocol value is 22.
 
-(1) and (2) are bridged by a process-wide registry in `ClientRuntime` - a workaround, not a design.
+The spike bridged (1) and (2) with a process-wide registry - a workaround, not a design. ADR-0007 leaves open where an
+implementation of the API may live; the generated shapes (`final` classes with stubbed methods, factories with private
+constructors) left the spike no option but editing in place.
 
 ## How to make changes
 
@@ -312,8 +301,15 @@ Comments` of the respective spec files and are the real output of the spike:
   `RuleFixturesTest`).
 - **Generated vs. hand-written:** every module is either completely generated (under `sdk-<lang>/generated/`, every file carries
   the generator header, never edited by hand) or completely hand-written; generated code never contains copies of
-  hand-written code. Hand-written code that generated code needs is a support module or implements a generated
-  contract — see [ADR-0007](docs/adr/0007-separate-generated-and-hand-written-modules.md).
+  hand-written code. Hand-written code that generated code needs is a support module (`sdk-java/support`,
+  `sdk-java/test-support`, `sdk-ts/support`) or implements a generated contract — see
+  [ADR-0007](docs/adr/0007-separate-generated-and-hand-written-modules.md). To look at the output of a generator
+  change without touching `sdk-<lang>/generated`, generate into a scratch directory (`--output=<dir>`).
+- **Changing the test language** (`guidelines/test-language.md`): the grammar (start rule `tests`), `TestResolver` /
+  the test mode of `InstanceResolver`, the `test.*` rules with fixtures, and — for a built-in function — the schema in
+  the guideline **and** its copy `metalang-core/src/main/resources/org/hiero/sdk/v3/metalang/testing.md` (a test keeps
+  both equal) plus its implementation in `sdk-java/test-support` (`Testing`) and the Java mapping in
+  `SpecTestGenerator` / `api-best-practices-java.md`. Only Java generates spec tests so far.
 - **Open design questions** belong under each file's `## Questions & Comments` (often attributed to a GitHub handle).
   Don't silently resolve them; surface them.
 - **Language best-practice docs** (`api-best-practices-*.md`) describe how a meta-language concept maps to one

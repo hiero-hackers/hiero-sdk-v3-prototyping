@@ -23,6 +23,7 @@ import org.hiero.sdk.v3.metalang.model.MethodDefinition;
 import org.hiero.sdk.v3.metalang.model.NamespaceDefinition;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
 import org.hiero.sdk.v3.metalang.model.Type;
+import org.hiero.sdk.v3.metalang.model.TestDefinition;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
 import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 import org.jspecify.annotations.Nullable;
@@ -66,6 +67,46 @@ public final class JavaGenerator {
 
     /** First line of every generated Java file. */
     static final String HEADER = "// " + MARKER + "\n";
+
+    /** The package of {@code @Generated} (JDK module {@value #GENERATED_MODULE}). */
+    static final String GENERATED_PACKAGE = "javax.annotation.processing";
+
+    /**
+     * The JDK module of {@code @Generated}: source retention, so the modules require it {@code static}, and
+     * {@code transitive} because exported types carry it.
+     */
+    static final String GENERATED_MODULE = "java.compiler";
+
+    /** The value of {@code @Generated}: the generator that wrote the source. */
+    static final String GENERATOR = JavaGenerator.class.getName();
+
+    /**
+     * The {@code @Generated} annotation that every generated type carries, with its line break. It names the
+     * generator only: a date would make the output differ between runs.
+     *
+     * @param imports the imports of the file (registers the import)
+     * @return the annotation
+     */
+    static String generated(final Imports imports) {
+        return "@" + imports.use(GENERATED_PACKAGE, "Generated") + "(\"" + GENERATOR + "\")\n";
+    }
+
+    /**
+     * Adds {@code @Generated} (fully qualified) to the top-level type of a Java source that is assembled from text
+     * blocks: in front of the first line that declares a type at the start of a line.
+     *
+     * @param source the source
+     * @return the source with the annotation
+     */
+    static String annotated(final String source) {
+        final java.util.regex.Matcher type = java.util.regex.Pattern.compile(
+                "(?m)^(?:public |final |abstract |sealed |non-sealed )*(?:class|interface|record|enum) ").matcher(source);
+        if (!type.find()) {
+            throw new IllegalArgumentException("No top-level type in the source");
+        }
+        return source.substring(0, type.start()) + "@" + GENERATED_PACKAGE + ".Generated(\"" + GENERATOR + "\")\n"
+                + source.substring(type.start());
+    }
 
     /** The JPMS module of the nullness annotations used by the Java mapping. */
     static final String JSPECIFY_MODULE = "org.jspecify";
@@ -125,6 +166,7 @@ public final class JavaGenerator {
         final List<GeneratedFile> files = new ArrayList<>();
         final List<FunctionDefinition> allFunctions = plan.functions().values().stream().flatMap(List::stream).toList();
         final Set<String> supportUsers = new HashSet<>();
+        final Set<String> specTestModules = new HashSet<>();
         for (final Module module : modules) {
             final Set<String> packagesWithTypes = new TreeSet<>();
             // the tests of a module can only use the types of the modules it requires
@@ -150,6 +192,15 @@ public final class JavaGenerator {
                             allFunctions));
                     packagesWithTypes.add(namespace.name());
                 }
+                // the tests of the `tests` blocks: one class per spec
+                final Map<String, List<TestDefinition>> specTests = new java.util.TreeMap<>();
+                model.tests().stream().filter(t -> t.namespace().equals(namespace.name()))
+                        .forEach(t -> specTests.computeIfAbsent(t.specName(), k -> new ArrayList<>()).add(t));
+                specTests.forEach((spec, tests) -> SpecTestGenerator.generate(module.name(), namespace.name(), spec,
+                        tests, context, visible, allFunctions).ifPresent(file -> {
+                            files.add(file);
+                            specTestModules.add(module.name());
+                        }));
                 final List<ConstantDefinition> constants = plan.constants().getOrDefault(namespace.name(), List.of());
                 if (!constants.isEmpty()) {
                     files.add(ConstantsGenerator.generate(module.name(), namespace.name(), constants, context));
@@ -188,7 +239,8 @@ public final class JavaGenerator {
                                                 ? Stream.of(SupportFiles.ARTIFACT) : Stream.<String>empty(),
                                         config.protobuf().contains(m.folder())
                                                 ? Stream.of(ProtobufFiles.ARTIFACT) : Stream.<String>empty())
-                                .flatMap(stream -> stream).toList()))
+                                .flatMap(stream -> stream).toList(),
+                        specTestModules.contains(m.name()) ? List.of(SpecTestGenerator.ARTIFACT) : List.of()))
                 .toList();
         files.add(MavenGenerator.parent(mavenModules, config));
         mavenModules.forEach(m -> files.add(MavenGenerator.module(m, config)));
@@ -999,6 +1051,8 @@ public final class JavaGenerator {
         }
         // static: only needed at compile time; transitive: the annotations are part of the exported API
         java.append("    requires static transitive ").append(JSPECIFY_MODULE).append(";\n");
+        // static: @Generated on every type has source retention; transitive: it annotates exported types
+        java.append("    requires static transitive ").append(GENERATED_MODULE).append(";\n");
         java.append('\n');
         for (final NamespaceDefinition namespace : namespaces) {
             if (packagesWithTypes.contains(namespace.name())) {
@@ -1027,8 +1081,10 @@ public final class JavaGenerator {
         if (paragraphs.isEmpty()) {
             return Optional.empty();
         }
+        // a package annotation precedes the package declaration, before any import: fully qualified
         final String java = HEADER + '\n'
                 + MarkdownComment.render("", paragraphs)
+                + "@" + GENERATED_PACKAGE + ".Generated(\"" + GENERATOR + "\")\n"
                 + "package " + JavaNames.packageName(namespace.name()) + ";\n";
         return Optional.of(new GeneratedFile(
                 JavaNames.packageDirectory(module.name(), namespace.name()) + "/package-info.java", java));

@@ -63,6 +63,7 @@ class ConstantsGeneratorTest {
         // THEN
         assertThat(source(files, "AConstants")).contains("""
                 /// Constants of the package `org.hiero.sub.a`.
+                @Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
                 public final class AConstants {
 
                     /// the maximum

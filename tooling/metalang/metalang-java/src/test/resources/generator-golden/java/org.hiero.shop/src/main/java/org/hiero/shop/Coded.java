@@ -2,7 +2,10 @@
 
 package org.hiero.shop;
 
+import javax.annotation.processing.Generated;
+
 /// Something with a numeric code.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public interface Coded {
 
     /// Returns the `code`.

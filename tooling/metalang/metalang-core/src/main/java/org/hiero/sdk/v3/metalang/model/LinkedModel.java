@@ -25,11 +25,17 @@ public final class LinkedModel {
     private final List<NamespaceDefinition> namespaces;
     private final List<InstanceDefinition> instances;
     private final List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> instanceDiagnostics;
+    private final List<TestDefinition> tests;
+    private final List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> testDiagnostics;
 
     LinkedModel(final Map<QualifiedName, TypeDefinition> types, final List<FunctionDefinition> functions,
                 final List<ConstantDefinition> constants, final List<NamespaceDefinition> namespaces,
                 final List<InstanceDefinition> instances,
-                final List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> instanceDiagnostics) {
+                final List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> instanceDiagnostics,
+                final List<TestDefinition> tests,
+                final List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> testDiagnostics) {
+        this.tests = List.copyOf(tests);
+        this.testDiagnostics = List.copyOf(testDiagnostics);
         this.types = Collections.unmodifiableSortedMap(new TreeMap<>(types));
         this.functions = List.copyOf(functions);
         this.constants = List.copyOf(constants);
@@ -64,6 +70,24 @@ public final class LinkedModel {
      */
     public List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> instanceDiagnostics() {
         return instanceDiagnostics;
+    }
+
+    /**
+     * Returns the tests of the specs ({@code tests} blocks of {@code ## Testing}) that could be resolved.
+     *
+     * @return the tests, ordered by spec file and source order
+     */
+    public List<TestDefinition> tests() {
+        return tests;
+    }
+
+    /**
+     * Returns the problems found while resolving the tests (reported by the validator).
+     *
+     * @return the diagnostics
+     */
+    public List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> testDiagnostics() {
+        return testDiagnostics;
     }
 
     /**

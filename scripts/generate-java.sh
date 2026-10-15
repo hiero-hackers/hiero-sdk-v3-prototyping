@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Generates the Java API from the specs into sdk-java/generated and builds it.
 #
-# The hand-written modules the generated code depends on (support, protobuf) and the generated
+# The hand-written modules the generated code depends on (support, test-support, protobuf) and the generated
 # modules themselves are installed into the local Maven repository, so that the TCK server and any
 # other consumer can resolve them.
 #
@@ -19,8 +19,10 @@ if (( build )); then
   export JAVA_HOME
   cd "$repository/sdk-java"
 
-  log "building hiero-sdk-support and hiero-sdk-protobuf"
+  log "building hiero-sdk-support, hiero-sdk-test-support and hiero-sdk-protobuf"
   ./mvnw -f support install
+  # the tests generated from the specs' `tests` blocks depend on it (test scope)
+  ./mvnw -f test-support install
   ./mvnw -f protobuf install
 
   log "building the generated modules"

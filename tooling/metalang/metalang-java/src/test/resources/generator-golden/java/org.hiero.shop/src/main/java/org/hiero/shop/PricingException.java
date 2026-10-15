@@ -4,9 +4,11 @@ package org.hiero.shop;
 
 import java.io.Serial;
 import java.util.Objects;
+import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 
 /// Signals a pricing error.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public final class PricingException extends RuntimeException {
 
     @Serial

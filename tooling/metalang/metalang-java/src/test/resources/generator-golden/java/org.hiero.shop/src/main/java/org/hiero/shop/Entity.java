@@ -2,9 +2,11 @@
 
 package org.hiero.shop;
 
+import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 
 /// Something with an id.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public abstract class Entity<Id> {
 
     private final @Nullable Id id;

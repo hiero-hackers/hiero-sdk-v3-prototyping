@@ -38,8 +38,22 @@ final class MavenGenerator {
      * @param artifactId the artifactId
      * @param name       the display name of the spec folder
      * @param requires   the artifactIds of the modules it depends on
+     * @param testRequires the artifactIds of the modules its tests depend on in addition
      */
-    record MavenModule(String directory, String artifactId, String name, List<String> requires) {
+    record MavenModule(String directory, String artifactId, String name, List<String> requires,
+                       List<String> testRequires) {
+
+        /**
+         * Creates a module whose tests need nothing but JUnit.
+         *
+         * @param directory  the directory of the module
+         * @param artifactId the artifactId
+         * @param name       the display name of the spec folder
+         * @param requires   the artifactIds of the modules it depends on
+         */
+        MavenModule(final String directory, final String artifactId, final String name, final List<String> requires) {
+            this(directory, artifactId, name, requires, List.of());
+        }
     }
 
     private MavenGenerator() {
@@ -155,6 +169,13 @@ final class MavenGenerator {
                 + "            <artifactId>junit-jupiter</artifactId>\n"
                 + "            <scope>test</scope>\n"
                 + "        </dependency>\n"
+                // the tests of the specs use the hand-written test support (sdk-java/test-support)
+                + module.testRequires().stream().map(r -> "        <dependency>\n"
+                        + "            <groupId>${project.groupId}</groupId>\n"
+                        + "            <artifactId>" + r + "</artifactId>\n"
+                        + "            <version>${project.version}</version>\n"
+                        + "            <scope>test</scope>\n"
+                        + "        </dependency>\n").collect(Collectors.joining())
                 + "    </dependencies>\n"
                 + "</project>\n";
         return new GeneratedFile(module.directory() + "/pom.xml", xml);

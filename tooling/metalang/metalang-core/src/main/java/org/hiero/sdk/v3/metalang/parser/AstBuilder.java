@@ -74,8 +74,32 @@ final class AstBuilder {
                 location(t.TEST().getSymbol()))).toList();
     }
 
+    /** The statements of a block, with the comments between them (and before the closing brace) in order. */
     private List<Statement> statements(final MetaLangParser.BlockContext ctx) {
-        return ctx.statement().stream().map(this::statement).toList();
+        final List<Statement> result = new ArrayList<>();
+        int previousLine = -1; // no statement before the first one: a comment behind `{` is no trailing comment
+        for (final MetaLangParser.StatementContext statement : ctx.statement()) {
+            comments(statement.start.getTokenIndex(), previousLine, result);
+            result.add(statement(statement));
+            previousLine = statement.stop.getLine();
+        }
+        comments(ctx.RBRACE().getSymbol().getTokenIndex(), previousLine, result);
+        return result;
+    }
+
+    /** The comments in front of a token, one {@link Statement.Comment} per line. */
+    private void comments(final int tokenIndex, final int previousLine, final List<Statement> out) {
+        final List<Token> comments = tokens.getHiddenTokensToLeft(tokenIndex, MetaLangLexer.HIDDEN);
+        if (comments == null) {
+            return;
+        }
+        for (final Token comment : comments) {
+            final boolean trailing = comment.getLine() == previousLine;
+            final List<String> lines = commentText(comment).lines().toList();
+            for (int i = 0; i < lines.size(); i++) {
+                out.add(new Statement.Comment(lines.get(i), trailing && i == 0, location(comment)));
+            }
+        }
     }
 
     private Statement statement(final MetaLangParser.StatementContext ctx) {

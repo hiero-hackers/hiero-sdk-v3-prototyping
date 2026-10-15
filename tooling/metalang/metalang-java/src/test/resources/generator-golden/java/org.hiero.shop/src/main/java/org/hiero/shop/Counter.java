@@ -2,7 +2,10 @@
 
 package org.hiero.shop;
 
+import javax.annotation.processing.Generated;
+
 /// Not a record: the attribute is mutable.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public class Counter {
 
     private int value;

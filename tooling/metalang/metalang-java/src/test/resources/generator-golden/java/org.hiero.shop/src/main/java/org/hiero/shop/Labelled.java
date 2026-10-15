@@ -2,9 +2,11 @@
 
 package org.hiero.shop;
 
+import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 
 /// Something with a label that can change.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public abstract class Labelled<Self extends Labelled<Self>> {
 
     private @Nullable String label;

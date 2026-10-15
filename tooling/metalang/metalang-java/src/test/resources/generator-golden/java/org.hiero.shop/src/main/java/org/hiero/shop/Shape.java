@@ -2,9 +2,11 @@
 
 package org.hiero.shop;
 
+import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 
 /// A shape; the set of shapes is closed.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public sealed interface Shape permits Circle, Square {
 
     /// Returns the `size`.

@@ -3,8 +3,10 @@
 package org.hiero.shop;
 
 import java.util.Objects;
+import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public class Derived extends Base {
 
     private final int b;

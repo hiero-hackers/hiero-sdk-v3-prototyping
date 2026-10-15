@@ -469,6 +469,7 @@ final class TsSamples {
                         : builtin.name().equals("set") ? "new Set([" + String.join(", ", items) + "])"
                         : "[" + String.join(", ", items) + "]");
             }
+            default -> Optional.empty(); // the variables and operators of tests do not occur here
         };
     }
 

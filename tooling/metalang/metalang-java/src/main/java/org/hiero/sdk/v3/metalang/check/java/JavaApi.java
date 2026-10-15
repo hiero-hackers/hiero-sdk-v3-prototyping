@@ -74,7 +74,13 @@ public record JavaApi(SortedMap<String, ApiType> types, SortedMap<String, ApiMod
 
     /** Annotations that are no API contract (compiler hints, serialization). */
     private static final Set<String> IGNORED_ANNOTATIONS = Set.of("Override", "SuppressWarnings", "Serial",
-            "SafeVarargs");
+            "SafeVarargs", "Generated");
+
+    /**
+     * Modules that are required for source-only annotations of the implementation ({@code @Generated}), not for the
+     * API: an implementation may or may not require them.
+     */
+    private static final Set<String> IGNORED_MODULES = Set.of("java.compiler");
 
     /** Modifiers that belong to the API of a type or member; others (synchronized, native, ...) are implementation. */
     private static final Set<Modifier> API_MODIFIERS = Set.of(Modifier.PUBLIC, Modifier.PROTECTED, Modifier.STATIC,
@@ -288,7 +294,8 @@ public record JavaApi(SortedMap<String, ApiType> types, SortedMap<String, ApiMod
             final SortedMap<String, String> requires = new TreeMap<>();
             final Set<String> exports = new TreeSet<>();
             for (final DirectiveTree directive : module.getDirectives()) {
-                if (directive instanceof RequiresTree required) {
+                if (directive instanceof RequiresTree required
+                        && !IGNORED_MODULES.contains(required.getModuleName().toString())) {
                     requires.put(required.getModuleName().toString(),
                             ((required.isTransitive() ? "transitive " : "") + (required.isStatic() ? "static" : ""))
                                     .strip());

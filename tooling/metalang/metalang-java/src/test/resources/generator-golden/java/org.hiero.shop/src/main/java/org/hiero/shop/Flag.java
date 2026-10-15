@@ -2,6 +2,9 @@
 
 package org.hiero.shop;
 
+import javax.annotation.processing.Generated;
+
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public enum Flag {
 
     ON(true),

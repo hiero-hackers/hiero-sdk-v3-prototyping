@@ -1020,6 +1020,7 @@ public final class TestGenerator {
                         + INDENT + "}\n");
             }
             final String displayName = imports.use(JUNIT, "DisplayName");
+            final String generated = JavaGenerator.generated(imports);
             final String importBlock = imports.render();
             if (!importBlock.isEmpty()) {
                 java.append(importBlock).append('\n');
@@ -1029,6 +1030,7 @@ public final class TestGenerator {
                 java.append("///\n/// Not generated:\n");
                 notes.stream().distinct().forEach(n -> java.append(NOTE).append(n).append('\n'));
             }
+            java.append(generated);
             if (deprecated) {
                 java.append("@SuppressWarnings(\"deprecation\")\n");
             }

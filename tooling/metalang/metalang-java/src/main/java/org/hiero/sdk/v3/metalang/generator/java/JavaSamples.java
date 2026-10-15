@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.ast.Annotation;
 import org.hiero.sdk.v3.metalang.ast.Literal;
+import org.hiero.sdk.v3.metalang.model.Builtins;
 import org.hiero.sdk.v3.metalang.model.EnumValueDefinition;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
 import org.hiero.sdk.v3.metalang.model.FunctionDefinition;
@@ -63,6 +64,10 @@ final class JavaSamples {
     private final List<FunctionDefinition> functions;
     private boolean deprecated;
     private boolean doubles;
+    /** Renders the variables and operators of the tests in the specs; without it they have no Java form. */
+    private java.util.function.Function<InstanceExpression, Optional<String>> testExpressions = e -> Optional.empty();
+    /** Renders a value passed to a parameter or attribute of the given type (tests convert exact integers). */
+    private java.util.function.BiFunction<InstanceExpression, Type, Optional<String>> testArguments;
 
     /**
      * Creates the sample builder of a test file.
@@ -89,6 +94,44 @@ final class JavaSamples {
         return deprecated;
     }
 
+
+    /**
+     * Sets the renderer of the expressions that only tests have (variables, operators, indexes, maps); the expressions
+     * of the API inside them are rendered by this class.
+     *
+     * @param renderer the renderer
+     */
+    void testExpressions(final java.util.function.Function<InstanceExpression, Optional<String>> renderer,
+                         final java.util.function.BiFunction<InstanceExpression, Type, Optional<String>> arguments) {
+        testExpressions = renderer;
+        testArguments = arguments;
+    }
+
+    /** Whether the expressions belong to a test: calls may throw checked exceptions and async calls are awaited. */
+    private boolean tests() {
+        return testArguments != null;
+    }
+
+    /** A value passed to a parameter or attribute of the given type. */
+    private Optional<String> argument(final InstanceExpression value, final Type target,
+                                      final Set<QualifiedName> visiting) {
+        return tests() ? testArguments.apply(value, target) : render(value, visiting);
+    }
+
+    /** A call: in a test, the result of an {@code @@async} method is awaited. */
+    private String awaited(final MethodDefinition method, final String call) {
+        return tests() && method.hasAnnotation("async") ? call + ".toCompletableFuture().join()" : call;
+    }
+
+    /**
+     * Renders a resolved expression as Java expression.
+     *
+     * @param expression the expression
+     * @return the Java expression, empty if a part has no Java form
+     */
+    Optional<String> expression(final InstanceExpression expression) {
+        return render(expression, Set.of());
+    }
 
     /**
      * Returns a valid value.
@@ -573,13 +616,17 @@ final class JavaSamples {
      */
     private Optional<String> render(final InstanceExpression expression, final Set<QualifiedName> visiting) {
         return switch (expression) {
+            // in a test, default instances and built-in functions are rendered by the test generator
+            case InstanceExpression.Default value when tests() -> testExpressions.apply(value);
+            case InstanceExpression.Call call when tests() && call.namespace().equals(Builtins.NAMESPACE) ->
+                    testExpressions.apply(call);
             case InstanceExpression.Default value -> value(value.type(), List.of(), 0, visiting);
             case InstanceExpression.Construct construct -> renderConstruct(construct, visiting);
             case InstanceExpression.Call call -> renderCall(call, visiting);
             case InstanceExpression.MethodCall call -> checked(call.method()) ? Optional.empty()
                     : render(call.target(), visiting).flatMap(target -> renderArguments(call.method(),
-                    call.arguments(), visiting).map(arguments -> target + "."
-                    + JavaKeywords.identifier(call.method().name()) + "(" + arguments + ")"));
+                    call.arguments(), visiting).map(arguments -> awaited(call.method(), target + "."
+                    + JavaKeywords.identifier(call.method().name()) + "(" + arguments + ")")));
             case InstanceExpression.Access access -> render(access.target(), visiting)
                     .map(target -> target + "." + JavaKeywords.identifier(access.field().name()) + "()");
             case InstanceExpression.Value value -> Optional.of(renderValue(value));
@@ -587,6 +634,7 @@ final class JavaSamples {
                     constant.constant().name().namespace()), ConstantsGenerator.className(constant.constant().name()
                     .namespace())) + "." + constant.constant().name().name());
             case InstanceExpression.ListValue list -> renderList(list, visiting);
+            default -> testExpressions.apply(expression);
         };
     }
 
@@ -632,7 +680,8 @@ final class JavaSamples {
         for (final FieldDefinition parameter : parameters) {
             final InstanceExpression value = construct.values().get(parameter.name());
             if (value != null) {
-                final Optional<String> rendered = render(value, visiting);
+                final Optional<String> rendered = argument(value, context.model().substitute(construct.type(),
+                        parameter.type()), visiting);
                 if (rendered.isEmpty()) {
                     return Optional.empty();
                 }
@@ -682,8 +731,8 @@ final class JavaSamples {
             owner = imports.use(JavaNames.packageName(call.namespace()), factory.name());
         }
         deprecated |= call.method().hasAnnotation("deprecated");
-        return renderArguments(call.method(), call.arguments(), visiting)
-                .map(arguments -> owner + "." + JavaKeywords.identifier(call.method().name()) + "(" + arguments + ")");
+        return renderArguments(call.method(), call.arguments(), visiting).map(arguments -> awaited(call.method(),
+                owner + "." + JavaKeywords.identifier(call.method().name()) + "(" + arguments + ")"));
     }
 
     /** The arguments in parameter order; {@code null} (with the parameter type) for parameters without value. */
@@ -699,7 +748,7 @@ final class JavaSamples {
                 }
                 continue;
             }
-            final Optional<String> rendered = render(value, visiting);
+            final Optional<String> rendered = argument(value, parameter.type(), visiting);
             if (rendered.isEmpty()) {
                 return Optional.empty();
             }
@@ -710,7 +759,7 @@ final class JavaSamples {
 
     /** Whether the method declares a checked exception (a test value cannot be built in an expression then). */
     private boolean checked(final MethodDefinition method) {
-        return method.annotation("throws").stream().flatMap(t -> t.arguments().stream())
+        return !tests() && method.annotation("throws").stream().flatMap(t -> t.arguments().stream())
                 .anyMatch(id -> context.exception(id.text()).checked());
     }
 

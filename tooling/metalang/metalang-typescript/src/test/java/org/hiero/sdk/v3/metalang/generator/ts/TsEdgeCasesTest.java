@@ -218,6 +218,17 @@ class TsEdgeCasesTest {
     }
 
     @Test
+    void aSetInADefaultInstanceShouldBeASet() {
+        final String markdown = TestSpecs.markdown("namespace c\nCodes { @@immutable codes: set<int32> }\nHolder { @@immutable codes: Codes }\n")
+                .replace("## Testing", "## Default Instances for Testing\n\n```\ninstance Codes = Codes{codes: [1, 2]}\n```"
+                        + "\n\n## Testing");
+        final ValidationReport report = new MetaLang().validate(Map.of("h/c.md", markdown));
+        assertThat(report.diagnostics()).filteredOn(d -> d.severity() == Severity.ERROR).isEmpty();
+        assertThat(TsGeneratorTest.file(new TsGenerator().generate(LinkedModel.of(report.model())), "/c/Holder.test.ts"))
+                .contains("new Set([1, 2])");
+    }
+
+    @Test
     void shouldQuoteAllSpecialCharacters() {
         assertThat(TsLiterals.quote("\"\\\n\r\t\u0001\u2028\u2029x"))
                 .isEqualTo("\"\\\"\\\\\\n\\r\\t\\u0001\\u2028\\u2029x\"");

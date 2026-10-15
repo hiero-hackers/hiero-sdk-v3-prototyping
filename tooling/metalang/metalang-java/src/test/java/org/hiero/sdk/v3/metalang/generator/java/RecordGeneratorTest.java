@@ -234,8 +234,10 @@ class RecordGeneratorTest {
 
                     package org.hiero.a;
 
+                    import javax.annotation.processing.Generated;
                     import org.jspecify.annotations.Nullable;
 
+                    @Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
                     public record Point(int x, @Nullable String label) {
                     }
                     """);

@@ -4,12 +4,14 @@ package org.hiero.shop;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import javax.annotation.processing.Generated;
 import org.junit.jupiter.api.DisplayName;
 
 /// Tests of `Listing`, generated from the specs.
 ///
 /// Not generated:
 /// - no valid value for `entity` of Listing: constructor, attribute and method tests
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 @DisplayName("Listing")
 class ListingTest {
 }

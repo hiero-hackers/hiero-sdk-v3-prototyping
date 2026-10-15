@@ -59,7 +59,7 @@ class CheckCommandTest {
 
         // THEN
         assertThat(changed).isEqualTo(MetaLangCli.EXIT_FINDINGS);
-        assertThat(out()).isEqualTo("org.hiero.f/src/main/java/org/hiero/a/Client.java:5: Method "
+        assertThat(out()).isEqualTo("org.hiero.f/src/main/java/org/hiero/a/Client.java:7: Method "
                 + "org.hiero.a.Client.open() is missing\n"
                 + "1 difference(s) between " + project + " and the API of the specs (1 type(s), 1 module(s) "
                 + "expected)\n");

@@ -217,7 +217,7 @@ scripts/generate-all.sh
 
 | Script | Generates into | Then builds with |
 |---|---|---|
-| [`scripts/generate-java.sh`](scripts/generate-java.sh) | `sdk-java/generated` | Maven — `support`, `protobuf` and the generated modules into the local repository |
+| [`scripts/generate-java.sh`](scripts/generate-java.sh) | `sdk-java/generated` | Maven — `support`, `test-support`, `protobuf` and the generated modules into the local repository |
 | [`scripts/generate-ts.sh`](scripts/generate-ts.sh) | `sdk-ts/generated` | `npm install` in the workspace, then `tsc --build` |
 | [`scripts/generate-rust.sh`](scripts/generate-rust.sh) | `sdk-rust/generated` | `cargo build --all-targets` |
 | [`scripts/generate-go.sh`](scripts/generate-go.sh) | `sdk-go/generated` | `go build`, `go vet` and the `gofmt -l` check |

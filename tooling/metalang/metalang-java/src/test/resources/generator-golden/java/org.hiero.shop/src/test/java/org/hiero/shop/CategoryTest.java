@@ -6,11 +6,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Category`, generated from the specs.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 @SuppressWarnings("deprecation")
 @DisplayName("Category")
 class CategoryTest {

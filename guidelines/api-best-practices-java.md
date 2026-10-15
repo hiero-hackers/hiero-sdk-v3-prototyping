@@ -3675,6 +3675,37 @@ public interface TopicSubscription {
 | Stream-level   | Exception from `Iterator.next()` / `hasNext()` | Delivered via `onError`                   |
 | Cancellation   | `close()` / try-with-resources                 | `Subscription.cancel()`                   |
 
+## Tests in the specs
+
+The tests of the `tests` blocks in a spec's `## Testing` section (see [`test-language.md`](test-language.md)) become
+JUnit tests that look like the other generated tests:
+
+| Test language | Java |
+|---|---|
+| the tests of spec `keys.md` | class `KeysSpecTest` in `src/test/java`, package of the namespace (`org.hiero.keys`) |
+| `test "name" { … }` | `@Test @DisplayName("name") void name() { … }`; the id (`keys/name`) and the comment above the test as `///` comment |
+| `@@disabled("reason")` | `@Disabled("reason")` |
+| `// given`, `// when`, `// then` and every other comment inside a test | the same `//` comment at the same place; a comment after a statement starts a new paragraph (blank line), a comment behind a statement stays behind it |
+| `@@deprecated("reason")` | `/// Deprecated: reason` and `@SuppressWarnings("deprecation")` on the class |
+| `let x = …` | `final <Type> x = …;` (`@Nullable` where the value may be `null`) |
+| `if` / `else if` / `else`, `for x in …` | `if (…) { … } else if …`, `for (final <Type> x : …)` |
+| `DEFAULT(PrivateKey)` | a helper `private static PrivateKey defaultPrivateKey()` that returns the default instance |
+| `assertEquals(expected: a, actual: b)` and the other built-in functions | the static methods of `org.hiero.sdk.testing.Testing` (`import static org.hiero.sdk.testing.Testing.*`), from the hand-written module `sdk-java/test-support`; `toString` is called `text` (an unqualified `toString(…)` would find `Object.toString()`) |
+| `@@expectThrows(illegal-format) call(…)` | `assertThrows(IllegalArgumentException.class, () -> call(…));` with the exception of the error id |
+| `a == b`, `a != b` | `equal(a, b)`, `!equal(a, b)` (value equality: arrays by content, numbers by value); `a == b` for enum constants |
+| integer arithmetic `a + b`, `a < b` | exact on `BigInteger`: `integer(a).add(integer(b))`, `unsigned(u)` for a `uint64`, `….compareTo(…) < 0` |
+| an exact integer passed to an `int32` parameter | `checked(value, "int32").intValueExact()`: a value out of range fails the test |
+| `double` and `decimal` arithmetic | `a + b` for `double`; `a.add(b)`, `a.compareTo(b)` for `BigDecimal` |
+| `a + b` of `bytes`, of lists | `concat(a, b)` |
+| `x is null`, `x is PublicKey` | `x == null`, `x instanceof PublicKey` |
+| `list[i]`, `map[k]` | `get(list, i)`, `get(map, k)` (an index out of range or a missing key fails the test) |
+| `{"a": 1}` | `Map.of("a", 1L)` (`Map.ofEntries` above ten entries) |
+| a call of an `@@async` method | `….toCompletableFuture().join()` |
+| a call that declares a checked exception | the test method declares `throws Exception` |
+
+A module whose specs have tests gets `hiero-sdk-test-support` as test dependency. Like every generated type, a test
+class carries `@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")`.
+
 ## Questions & Comments
 
 ## Todos based on AI tests for generating Java code

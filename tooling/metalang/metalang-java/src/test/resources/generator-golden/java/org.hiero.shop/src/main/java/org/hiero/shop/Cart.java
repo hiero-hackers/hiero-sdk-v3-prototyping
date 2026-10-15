@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.processing.Generated;
 import org.hiero.shop.money.Money;
 import org.jspecify.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import org.jspecify.annotations.Nullable;
 ///
 /// @param items the items in the cart;
 ///   never more than 100
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public record Cart<Item>(
         List<Item> items,
         Set<String> coupons,

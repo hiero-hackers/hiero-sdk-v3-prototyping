@@ -6,7 +6,9 @@ import java.math.BigInteger;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.processing.Generated;
 
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public enum Plan {
 
     BASIC(Duration.ofSeconds(30L), new BigInteger("1000"), List.of("a", "b")),

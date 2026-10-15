@@ -7,12 +7,14 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.processing.Generated;
 import org.hiero.shop.money.Money;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Square`, generated from the specs.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 @DisplayName("Square")
 class SquareTest {
 

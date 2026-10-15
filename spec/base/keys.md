@@ -215,6 +215,108 @@ tmIywvmyCdn6Jb2nuM=
 -----END PUBLIC KEY-----
 ```
 
+## Testing
+
+Known-answer tests of the default key, written as given / when / then: the expected values are the raw bytes of the
+default instance and the PKCS#8 encoding listed under "Key examples". What the spec does not state as a value (the
+derived public key, a signature) is checked by the properties the API promises.
+
+```tests
+test "a private key imported from hex has these raw bytes" {
+    // given
+    let hexText = "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"
+
+    // when
+    let key = createPrivateKey(algorithm: KeyAlgorithm.ED25519, encoding: ByteImportEncoding.HEX, value: hexText)
+
+    // then
+    assertEquals(expected: hex(text: hexText), actual: key.bytes)
+    assertEquals(expected: KeyAlgorithm.ED25519, actual: key.algorithm)
+    assertEquals(expected: KeyType.PRIVATE, actual: key.type)
+}
+
+test "the default private key encodes as PKCS#8 DER" {
+    // given
+    let key = DEFAULT(PrivateKey)
+
+    // when
+    let der = key.toBytes(container: KeyFormat.PKCS8_WITH_DER)
+
+    // then
+    assertEquals(
+            expected: hex(text: "302e020100300506032b657004220420d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"),
+            actual: der)
+}
+
+test "the public key of an Ed25519 key is a public Ed25519 key of 32 bytes" {
+    // given
+    let privateKey = DEFAULT(PrivateKey)
+
+    // when
+    let publicKey = privateKey.createPublicKey()
+
+    // then
+    assertEquals(expected: KeyType.PUBLIC, actual: publicKey.type)
+    assertEquals(expected: KeyAlgorithm.ED25519, actual: publicKey.algorithm)
+    assertEquals(expected: 32, actual: length(value: publicKey.bytes))
+    assertEquals(expected: publicKey, actual: createPublicKey(algorithm: KeyAlgorithm.ED25519, rawBytes: publicKey.bytes))
+}
+
+test "a signature verifies with the public key and only for its message" {
+    // given
+    let message = utf8(text: "hello")
+
+    // when
+    let signature = DEFAULT(PrivateKey).sign(message: message)
+
+    // then
+    assertEquals(expected: 64, actual: length(value: signature))
+    assertEquals(expected: signature, actual: DEFAULT(PrivateKey).sign(message: message),
+            message: "Ed25519 signatures are deterministic")
+    assertTrue(condition: DEFAULT(PublicKey).verify(message: message, signature: signature))
+    assertFalse(condition: DEFAULT(PublicKey).verify(message: utf8(text: "hello!"), signature: signature))
+}
+
+test "a key survives every format that supports its type" {
+    // given
+    let key = DEFAULT(PrivateKey)
+
+    for format in [KeyFormat.PKCS8_WITH_DER, KeyFormat.SPKI_WITH_DER, KeyFormat.PKCS8_WITH_PEM,
+            KeyFormat.SPKI_WITH_PEM] {
+        if not(value: format.supportsType(type: KeyType.PRIVATE)) {
+            // when / then: a format for public keys rejects a private key
+            @@expectThrows(illegal-format)
+            key.toBytes(container: format)
+        } else if format.encoding == KeyEncoding.DER {
+            // when
+            let der = key.toBytes(container: format)
+
+            // then
+            assertEquals(expected: key, actual: createPrivateKey(container: format, value: der))
+        } else {
+            // when
+            let pem = key.toString(container: format)
+
+            // then
+            assertTrue(condition: startsWith(value: pem, prefix: "-----BEGIN PRIVATE KEY-----"))
+            assertEquals(expected: key, actual: createPrivateKey(container: format, value: pem))
+        }
+    }
+}
+
+test "a hex key of the wrong length is rejected" {
+    // given
+    let tooShort = "d3671a1e"
+    let tooLong = repeat(value: "ab", count: 33)
+
+    for hexText in [tooShort, tooLong] {
+        // when / then
+        @@expectThrows(illegal-format)
+        createPrivateKey(algorithm: KeyAlgorithm.ED25519, encoding: ByteImportEncoding.HEX, value: hexText)
+    }
+}
+```
+
 ## Questions & Comments
 
 - **No EVM address of an ECDSA public key.** The EVM address of an account with an ECDSA (secp256k1)

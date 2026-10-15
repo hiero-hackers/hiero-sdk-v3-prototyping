@@ -27,7 +27,8 @@ public final class Validator {
             new GenericMethodCheck(),
             new EnumCheck(),
             new DocumentationCheck(),
-            new InstanceCheck());
+            new InstanceCheck(),
+            new TestCheck());
 
     /**
      * Validates the model.

@@ -4,9 +4,11 @@ package org.hiero.shop;
 
 import java.util.Arrays;
 import java.util.Objects;
+import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 
 /// A hash; prints itself.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public record Hash(byte[] value) {
 
     /// Creates a new `Hash`.

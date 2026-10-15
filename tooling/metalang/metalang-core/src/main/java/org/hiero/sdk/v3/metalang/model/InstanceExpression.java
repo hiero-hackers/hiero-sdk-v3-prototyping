@@ -3,11 +3,14 @@ package org.hiero.sdk.v3.metalang.model;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.hiero.sdk.v3.metalang.ast.Expression.Operator;
 import org.hiero.sdk.v3.metalang.ast.Literal;
 
 /**
- * A resolved expression of a default instance: how a value is obtained through the API. Every expression knows its
- * type; arguments are ordered like the parameters or attributes they are passed to.
+ * A resolved expression of a default instance or a test: how a value is obtained through the API. Every expression
+ * knows its type; arguments are ordered like the parameters or attributes they are passed to. The variables,
+ * operators, indexes and maps ({@link Variable}, {@link Negate}, {@link Binary}, {@link IsNull}, {@link IsType},
+ * {@link Index}, {@link MapValue}) only occur in tests.
  */
 public sealed interface InstanceExpression {
 
@@ -146,6 +149,88 @@ public sealed interface InstanceExpression {
          */
         public ListValue {
             items = List.copyOf(items);
+        }
+    }
+
+    /**
+     * A variable of a test, bound by {@code let} or {@code for}.
+     *
+     * @param name     the name
+     * @param type     the type
+     * @param nullable whether the value may be {@code null} at this point of the test
+     */
+    record Variable(String name, Type type, boolean nullable) implements InstanceExpression {
+    }
+
+    /**
+     * The negation of a number.
+     *
+     * @param operand the number
+     * @param type    the type of the result
+     */
+    record Negate(InstanceExpression operand, Type type) implements InstanceExpression {
+    }
+
+    /**
+     * A binary operation.
+     *
+     * @param operator the operator
+     * @param left     the left operand
+     * @param right    the right operand
+     * @param type     the type of the result
+     */
+    record Binary(Operator operator, InstanceExpression left, InstanceExpression right, Type type)
+            implements InstanceExpression {
+    }
+
+    /**
+     * A check for {@code null}.
+     *
+     * @param operand the value
+     * @param negated whether it is {@code is not null}
+     * @param type    {@code bool}
+     */
+    record IsNull(InstanceExpression operand, boolean negated, Type type) implements InstanceExpression {
+    }
+
+    /**
+     * A check for a type.
+     *
+     * @param operand the value
+     * @param checked the type the value is checked for
+     * @param negated whether it is {@code is not}
+     * @param type    {@code bool}
+     */
+    record IsType(InstanceExpression operand, Type checked, boolean negated, Type type) implements InstanceExpression {
+    }
+
+    /**
+     * The element of a list or the value of a map.
+     *
+     * @param target the list or map
+     * @param index  the index or key
+     * @param type   the type of the element or value
+     */
+    record Index(InstanceExpression target, InstanceExpression index, Type type) implements InstanceExpression {
+    }
+
+    /**
+     * A map.
+     *
+     * @param entries the keys and values in source order
+     * @param type    the type of the map
+     */
+    record MapValue(List<Map.Entry<InstanceExpression, InstanceExpression>> entries, Type type)
+            implements InstanceExpression {
+
+        /**
+         * Creates a map.
+         *
+         * @param entries the entries
+         * @param type    the type
+         */
+        public MapValue {
+            entries = List.copyOf(entries);
         }
     }
 }

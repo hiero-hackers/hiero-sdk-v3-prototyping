@@ -13,12 +13,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.processing.Generated;
 import org.hiero.shop.money.Money;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Cart`, generated from the specs.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 @SuppressWarnings("deprecation")
 @DisplayName("Cart")
 class CartTest {

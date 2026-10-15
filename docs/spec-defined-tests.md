@@ -302,6 +302,10 @@ No existing tool covers this: the prior art either is bound to its own model lan
 data with a hand-written runner (test vectors, TCK) or needs hand-written glue (Gherkin). Most of the building blocks
 exist in this repository, so the language is built here.
 
+Status: steps 1 to 3 are done for Java (parser, type checking with the `test.*` rules, `SpecTestGenerator` with the
+test support module `sdk-java/test-support`); `spec/base/keys.md` has the first known-answer tests, and the generated
+`KeysSpecTest` passes against the implementation of the Java spike.
+
 1. **The guideline** — done as a draft: [`guidelines/test-language.md`](../guidelines/test-language.md) defines
    syntax, semantics, built-in functions and validation rules.
 2. **Grammar and resolver** in `metalang-core`: a `tests` entry rule in `MetaLang.g4` that reuses the existing

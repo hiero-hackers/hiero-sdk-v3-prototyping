@@ -174,6 +174,9 @@ class EnumGeneratorTest {
             assertThat(literal(one, basic("uint16"))).isEqualTo("1_000");
             assertThat(literal(one, basic("uint32"))).isEqualTo("1_000L");
             assertThat(literal(one, basic("uint64"))).isEqualTo("1_000L");
+            // above Long.MAX_VALUE a uint64 has no long literal
+            assertThat(literal(new Literal.NumberLiteral("18446744073709551615", AT), basic("uint64")))
+                    .isEqualTo("Long.parseUnsignedLong(\"18446744073709551615\")");
             assertThat(literal(one, basic("uint256"))).isEqualTo("new BigInteger(\"1000\")");
             assertThat(literal(one, basic("decimal"))).isEqualTo("new BigDecimal(\"1000\")");
             assertThat(literal(one, basic("double"))).isEqualTo("1_000.0");

@@ -4,10 +4,12 @@ package org.hiero.shop;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import javax.annotation.processing.Generated;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ShopFactory`, generated from the specs.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 @DisplayName("ShopFactory")
 class ShopFactoryTest {
 

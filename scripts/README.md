@@ -8,7 +8,7 @@ is safe to run repeatedly.
 | Script | What it does |
 |---|---|
 | `generate-all.sh` | Generates and builds all five languages; every language is attempted even if an earlier one failed, the summary names what failed |
-| `generate-java.sh` | Java API into `sdk-java/generated`, then `support`, `protobuf` and the generated modules into the local Maven repository |
+| `generate-java.sh` | Java API into `sdk-java/generated`, then `support`, `test-support`, `protobuf` and the generated modules into the local Maven repository |
 | `generate-ts.sh` | TypeScript API into `sdk-ts/generated`, then `npm install` in the workspace and `tsc --build` |
 | `generate-rust.sh` | Rust API into `sdk-rust/generated`, then `cargo build --all-targets` |
 | `generate-go.sh` | Go API into `sdk-go/generated`, then `go build`, `go vet` and the `gofmt -l` check |

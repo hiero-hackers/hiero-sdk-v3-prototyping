@@ -127,7 +127,9 @@ final class JavaLiterals {
                 } else if (JavaTypes.javaBits(builtin) <= 32) {
                     yield text;
                 } else if (JavaTypes.javaBits(builtin) <= 64) {
-                    yield text + "L";
+                    // a uint64 above Long.MAX_VALUE has no long literal: Long.parseUnsignedLong("...")
+                    final java.math.BigInteger value = new java.math.BigInteger(text.replace("_", ""));
+                    yield value.bitLength() > 63 ? JavaIntegers.literal(builtin, value, imports) : text + "L";
                 }
                 yield "new " + imports.use("java.math", "BigInteger") + "(\"" + text.replace("_", "") + "\")";
             }

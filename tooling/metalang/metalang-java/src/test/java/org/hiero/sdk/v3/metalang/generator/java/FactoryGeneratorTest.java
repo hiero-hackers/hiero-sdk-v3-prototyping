@@ -55,6 +55,7 @@ class FactoryGeneratorTest {
         // THEN
         assertThat(source(files, "KeysFactory")).contains("""
                 /// Factory methods of the package `org.hiero.sub.keys`.
+                @Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
                 public final class KeysFactory {
 
                     /// Creates a key.

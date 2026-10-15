@@ -132,6 +132,28 @@ class TestsParserTest {
         }
 
         @Test
+        void commentsShouldBeKeptAsStatementsInOrder() {
+            final List<Statement> body = parse("""
+                    test "t" { // not trailing: behind the brace
+                        // given
+                        let x = 1 // one
+                        /* when
+                           and more */
+                        assertEquals(expected: 1, actual: x)
+                        if x == 1 {
+                            // then
+                        }
+                        // the end
+                    }
+                    """).getFirst().body();
+            assertThat(body).extracting(s -> s instanceof Statement.Comment c ? (c.trailing() ? "~" : "") + c.text()
+                    : s.getClass().getSimpleName()).containsExactly("not trailing: behind the brace", "given", "Let",
+                    "~one", "when", "and more", "Evaluate", "If", "the end");
+            assertThat(((Statement.If) body.get(7)).then()).singleElement()
+                    .satisfies(c -> assertThat(((Statement.Comment) c).text()).isEqualTo("then"));
+        }
+
+        @Test
         void ifShouldChainElseIfAsNestedIf() {
             final Statement.If statement = (Statement.If) parse("""
                     test "t" {

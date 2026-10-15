@@ -3,8 +3,10 @@
 package org.hiero.shop;
 
 import java.util.Objects;
+import javax.annotation.processing.Generated;
 
 /// Deferred: refers to an abstraction.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public record Listing(Entity<String> entity) {
 
     /// Creates a new `Listing`.

@@ -3,8 +3,10 @@
 package org.hiero.shop;
 
 import java.util.Objects;
+import javax.annotation.processing.Generated;
 
 /// A circle always has a size.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public record Circle(Integer size) implements Shape {
 
     /// Creates a new `Circle`.

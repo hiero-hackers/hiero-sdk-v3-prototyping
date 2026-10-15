@@ -40,11 +40,13 @@ final class FactoryGenerator {
                 .collect(Collectors.joining("\n"));
         final StringBuilder java = new StringBuilder(JavaGenerator.HEADER).append('\n');
         java.append("package ").append(packageName).append(";\n\n");
+        final String generated = JavaGenerator.generated(imports);
         final String importBlock = imports.render();
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
         }
         java.append(MarkdownComment.render("", List.of("Factory methods of the package `" + packageName + "`.")))
+                .append(generated)
                 .append("public final class ").append(className).append(" {\n\n")
                 .append(methods).append('\n')
                 .append(INDENT).append("private ").append(className).append("() {\n")

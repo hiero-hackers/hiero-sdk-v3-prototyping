@@ -2,7 +2,10 @@
 
 package org.hiero.shop;
 
+import javax.annotation.processing.Generated;
+
 /// Not a record: no attributes.
+@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public class Printer {
 
     /// Creates a new `Printer`.

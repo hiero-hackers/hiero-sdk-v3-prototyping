@@ -307,11 +307,12 @@ java -jar tooling/metalang/target/metalang-0.1.0-SNAPSHOT-cli.jar rules
 spec/*.md
   │ source/      MarkdownSchemaExtractor  "## API Schema" and "## Default Instances for Testing" code blocks, the `tests`
   │                                        blocks of "## Testing" + skeleton checks (doc.*)
-  │ parser/      ANTLR4 grammar → parse tree → immutable AST (ast/, records + sealed interfaces); the tests of the
-  │                           test language (guidelines/test-language.md) are parsed only, not yet checked
+  │ parser/      ANTLR4 grammar → parse tree → immutable AST (ast/, records + sealed interfaces), including the
+  │                           tests of the test language (guidelines/test-language.md)
   │ semantic/    SpecModel: namespaces, type index, name resolution (local / requires / wildcard / qualified)
   │ model/       LinkedModel: every reference resolved, effective members with substituted type arguments,
-  │                           default instances resolved (InstanceResolver)
+  │                           default instances resolved (InstanceResolver), tests resolved and typed
+  │                           (TestResolver, the built-in functions of namespace `testing` from testing.md)
   │ validation/  Validator: one Check per guideline topic, every finding refers to a stable Rule id
   ▼
 ValidationReport (sorted diagnostics) → CLI (text / JSON / summary)
@@ -358,6 +359,11 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   `-Xlint:all -Werror` and attaches a Javadoc JAR to every module (doclint `all,-missing`, warnings fail the build).
   groupId and version come from the configuration (`java.groupId`, default `org.hiero.sdk`; `java.version`, default
   `0.1.0-SNAPSHOT`).
+- **`@Generated`**: every generated type — API, tests and the TCK contract and server — and every `package-info.java`
+  carries `@javax.annotation.processing.Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")`, without
+  a date, so that the output stays reproducible. The annotation has source retention: the modules declare
+  `requires static transitive java.compiler` (transitive because exported types carry it). The conformance check
+  ignores both — an implementation does not have to carry them.
 - **`@NullMarked` modules**: every `module-info.java` is annotated with jspecify's `@NullMarked`, so unannotated types
   are non-null — the default of the meta-language. Only `@@nullable` declarations get `@Nullable`; `@NonNull` is never
   generated (it would be about 700 annotations, see "Prefer `@NullMarked` and `@Nullable`" in the Java guide).
@@ -706,6 +712,36 @@ resort: an anonymous subclass whose methods throw. Method arguments never use te
 implementation may call them. A test whose values cannot be built is not generated and listed in the comment of the
 test class and by `generate` (today: two values with a generic class literal or a list of generic abstractions).
 Every test and test class has a `@DisplayName` that describes it (`port: rejects a value above the maximum (65536)`).
+
+## Tests in the specs
+
+The `tests` blocks of a spec's `## Testing` section are written in the test language of
+[`guidelines/test-language.md`](../../guidelines/test-language.md). The start rule `tests` of the grammar parses them;
+`TestResolver` resolves every test against the linked model into `LinkedModel.tests()` (`TestDefinition`): statements,
+variables and their scopes, the narrowing of nullable variables (`assertNotNull`, `if x is not null`), the types of
+the operators, and every expression with `InstanceResolver` in its test mode (variables, operators, inference of the
+type parameters of generic functions, so that `assertEquals(expected: 3, actual: item.count)` types `3` as `uint64`).
+The built-in functions and assertions are the namespace `testing`, declared in the meta-language in the resource
+`metalang-core/src/main/resources/org/hiero/sdk/v3/metalang/testing.md` — a copy of the schema in the guideline that a
+test keeps equal — and linked on their own, so they never become part of the API. Integer arithmetic has the type
+`int256` in the model (the test language computes without overflow). Rules: `test.invalid`, `test.duplicate-id`,
+`test.duplicate-name`, `test.undeclared-error`, `test.nullable`, `test.incomparable`, `test.out-of-range`,
+`test.ambiguous-call` and the warning `test.empty`.
+
+Generators: **Java only so far.** `SpecTestGenerator` writes one class per spec, `<Spec>SpecTest` (e.g.
+`KeysSpecTest`), into `src/test/java` of the module and in the package of the namespace, in the style of the other
+generated tests (header, `@DisplayName`, `///` comments, helpers `defaultPrivateKey()` for the default instances).
+The comments inside a test (`// given`, `// when`, `// then`, ...) are copied to the same place; a comment that
+follows a statement starts a new paragraph, a comment behind a statement stays behind it. The
+API parts are rendered by `JavaSamples` in a test mode (`@@async` calls are awaited with `join()`, calls may throw
+checked exceptions, exact integers are checked and converted where they are passed to the API:
+`checked(…, "int32").intValueExact()`). The built-in functions and assertions are static methods of the hand-written
+module `sdk-java/test-support` (`org.hiero.sdk.testing.Testing`, artifact `hiero-sdk-test-support`), which
+implements the semantics of the test language where Java differs (code points, `BigInteger` arithmetic, value
+equality); a module with spec tests gets it as test dependency. `@@expectThrows(id)` becomes
+`assertThrows(<exception of the id>.class, () -> …)`. A test that has no Java form is not generated and listed in the
+comment of the class and by `generate`. `SpecTestGeneratorTest` compiles the generated tests with `-Werror` against
+the generated modules and the sources of `sdk-java/test-support`, and runs them.
 
 ## Default instances
 

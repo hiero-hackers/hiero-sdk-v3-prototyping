@@ -11,6 +11,28 @@ import org.jspecify.annotations.Nullable;
 public sealed interface Statement extends Node {
 
     /**
+     * A comment line of a test, kept for the generated code: {@code // given}. A block comment gives one per line.
+     *
+     * @param text     the text without the comment markers
+     * @param trailing whether the comment stands behind a statement on the same line
+     * @param location the location of the comment
+     */
+    record Comment(String text, boolean trailing, SourceLocation location) implements Statement {
+
+        /**
+         * Creates a comment.
+         *
+         * @param text     the text
+         * @param trailing whether it follows a statement on its line
+         * @param location the location
+         */
+        public Comment {
+            Objects.requireNonNull(text, "text must not be null");
+            Objects.requireNonNull(location, "location must not be null");
+        }
+    }
+
+    /**
      * Binds a value to a name: {@code let id = AccountId.fromString(value: "0.0.1234")}.
      *
      * @param name     the name
