@@ -50,6 +50,10 @@ Updating a token's custom-fee schedule (gated by `feeScheduleAuthority`) is not 
 - `TokenWipe` mixing fungible and NFT payloads is rejected by the network; the `@@oneOf` makes it
   statically checkable.
 
+- **Wipe is sealed over its two variants.** Like mint and burn it follows
+  [ADR-0011](../../docs/adr/0011-model-a-choice-as-a-sealed-type.md): the shared `tokenId` and
+  `accountId` sit in the abstraction, the amount and the serials each in their own final type.
+
 ## API Schema
 
 ```
@@ -61,14 +65,23 @@ requires {Receipt, Transaction} from consensusnode.transactions
 // wipeAuthority. The payload differs by token kind:
 //   - FUNGIBLE_COMMON     → set `amount` (count in the smallest unit, must be > 0).
 //   - NON_FUNGIBLE_UNIQUE → set `serials` (the serials held by `accountId`, max 10).
-// Exactly one of `amount` and `serials` must be set.
-@@oneOf(amount, serials)
-@@finalType
-TokenWipeTransaction extends Transaction<TokenWipeReceipt, TokenWipeTransaction> {
-    @@immutable tokenId: Address
+// Which of the two wipe transactions applies follows from the token's type.
+@@sealed(TokenWipeFungibleTransaction, TokenWipeNftTransaction)
+abstraction TokenWipeTransaction<$$Self extends TokenWipeTransaction<$$Self>> extends Transaction<TokenWipeReceipt, $$Self> {
+    @@immutable tokenId: Address                                    // the token to wipe
     @@immutable accountId: AccountId                                // the non-treasury account to wipe from (MUST NOT be the treasury)
-    @@immutable @@nullable @@min(1) amount: int64                   // FUNGIBLE_COMMON only
-    @@immutable @@nullable @@minSize(1) @@maxSize(10) serials: list<int64>   // NON_FUNGIBLE_UNIQUE only; protocol cap 10 per transaction
+}
+
+// Wipes units of a FUNGIBLE_COMMON token from the account.
+@@finalType
+TokenWipeFungibleTransaction extends TokenWipeTransaction<TokenWipeFungibleTransaction> {
+    @@immutable @@min(1) amount: int64                              // amount to wipe, in the smallest indivisible unit
+}
+
+// Wipes NON_FUNGIBLE_UNIQUE serials held by the account.
+@@finalType
+TokenWipeNftTransaction extends TokenWipeTransaction<TokenWipeNftTransaction> {
+    @@immutable @@minSize(1) @@maxSize(10) serials: list<int64>     // serials held by accountId; the protocol caps the list at 10 per transaction
 }
 
 @@finalType
@@ -182,7 +195,7 @@ new TokenUnfreezeTransaction()
 The operator pays; a dedicated wipe-key holder authorises the claw-back.
 
 ```
-PackedTransaction<...> packed = new TokenWipeTransaction()
+PackedTransaction<...> packed = new TokenWipeNftTransaction()
     .tokenId(nftCollectionId)
     .accountId(holder.accountId)
     .serials([7L, 8L])

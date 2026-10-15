@@ -123,6 +123,13 @@ right now (`supplyAuthority`, `kycAuthority`, `freezeAuthority`, `wipeAuthority`
   `KeyUpdate` operation (per ADR-0004), not expressible as an `Authority` value — see
   *Questions & Comments*.
 
+- **Mint, burn and wipe are sealed over their two variants.** A token is either `FUNGIBLE_COMMON` or
+  `NON_FUNGIBLE_UNIQUE`, and the payload differs accordingly. Rather than two nullable fields with
+  "exactly one of" attached, each transaction is a `@@sealed` abstraction carrying the shared fields,
+  with one final type per token kind — the pattern of
+  [ADR-0011](../../docs/adr/0011-model-a-choice-as-a-sealed-type.md). The NFT mint additionally has
+  its own receipt, because only it carries the assigned serial numbers.
+
 ## API Schema
 
 ```
@@ -259,19 +266,33 @@ TokenDissociateReceipt extends Receipt {
 //                           the consensus node assigns sequential serial numbers and returns
 //                           them in the receipt.
 //
-// Exactly one of `amount` and `metadata` must be set.
-@@oneOf(amount, metadata)
-@@finalType
-TokenMintTransaction extends Transaction<TokenMintReceipt, TokenMintTransaction> {
-    @@immutable tokenId: Address
-    @@immutable @@nullable @@min(1) amount: int64                   // FUNGIBLE_COMMON only: amount to mint (in smallest unit)
-    @@immutable @@nullable @@maxSize(10) metadata: list<bytes>    // NON_FUNGIBLE_UNIQUE only: one metadata blob per new serial; the protocol caps the list at 10 per transaction
+// Which of the two mint transactions applies follows from the token's type.
+@@sealed(TokenMintFungibleTransaction, TokenMintNftTransaction)
+abstraction TokenMintTransaction<$$Receipt extends TokenMintReceipt, $$Self extends TokenMintTransaction<$$Receipt, $$Self>> extends Transaction<$$Receipt, $$Self> {
+    @@immutable tokenId: Address                                    // the token to mint
 }
 
+// Mints units of a FUNGIBLE_COMMON token. The treasury account receives them.
 @@finalType
+TokenMintFungibleTransaction extends TokenMintTransaction<TokenMintReceipt, TokenMintFungibleTransaction> {
+    @@immutable @@min(1) amount: int64                              // amount to mint, in the smallest indivisible unit
+}
+
+// Mints NON_FUNGIBLE_UNIQUE tokens, one per metadata entry. The consensus node assigns sequential
+// serial numbers and returns them in the receipt.
+@@finalType
+TokenMintNftTransaction extends TokenMintTransaction<TokenMintNftReceipt, TokenMintNftTransaction> {
+    @@immutable @@minSize(1) @@maxSize(10) metadata: list<bytes>    // one metadata blob per new serial; the protocol caps the list at 10 per transaction
+}
+
 TokenMintReceipt extends Receipt {
     @@immutable totalSupply: int64                                  // the token's new totalSupply after this mint
-    @@immutable @@default([]) serials: list<int64>                  // NON_FUNGIBLE_UNIQUE only: the serial numbers assigned to the newly minted NFTs (empty for FUNGIBLE_COMMON)
+}
+
+// The receipt of an NFT mint: it also carries the serial numbers the network assigned.
+@@finalType
+TokenMintNftReceipt extends TokenMintReceipt {
+    @@immutable @@default([]) serials: list<int64>                  // the serial numbers of the newly minted NFTs
 }
 
 // Burns existing units of a token from the treasury account. Requires the token's supplyAuthority to
@@ -282,14 +303,22 @@ TokenMintReceipt extends Receipt {
 //                           treasury account; max 10 per transaction).
 //
 // Burning NFT serials held by a non-treasury account is not possible via this transaction —
-// use `TokenWipeTransaction` (gated by `wipeAuthority`) instead. Exactly one of `amount` and
-// `serials` must be set.
-@@oneOf(amount, serials)
+// use `TokenWipeTransaction` (gated by `wipeAuthority`) instead.
+@@sealed(TokenBurnFungibleTransaction, TokenBurnNftTransaction)
+abstraction TokenBurnTransaction<$$Self extends TokenBurnTransaction<$$Self>> extends Transaction<TokenBurnReceipt, $$Self> {
+    @@immutable tokenId: Address                                    // the token to burn from
+}
+
+// Burns units of a FUNGIBLE_COMMON token held by the treasury.
 @@finalType
-TokenBurnTransaction extends Transaction<TokenBurnReceipt, TokenBurnTransaction> {
-    @@immutable tokenId: Address
-    @@immutable @@nullable @@min(1) amount: int64                   // FUNGIBLE_COMMON only: amount to burn (in smallest unit)
-    @@immutable @@nullable @@maxSize(10) serials: list<int64>     // NON_FUNGIBLE_UNIQUE only: serials to burn (must be held by the treasury); the protocol caps the list at 10 per transaction
+TokenBurnFungibleTransaction extends TokenBurnTransaction<TokenBurnFungibleTransaction> {
+    @@immutable @@min(1) amount: int64                              // amount to burn, in the smallest indivisible unit
+}
+
+// Burns NON_FUNGIBLE_UNIQUE serials held by the treasury.
+@@finalType
+TokenBurnNftTransaction extends TokenBurnTransaction<TokenBurnNftTransaction> {
+    @@immutable @@minSize(1) @@maxSize(10) serials: list<int64>     // serials to burn; the protocol caps the list at 10 per transaction
 }
 
 @@finalType
@@ -383,7 +412,7 @@ The treasury automatically receives the new units. The `supplyAuthority` (here t
 sign.
 
 ```
-Response<TokenMintReceipt> response = new TokenMintTransaction()
+Response<TokenMintReceipt> response = new TokenMintFungibleTransaction()
     .tokenId(tokenId)
     .amount(500_000_000L)                      // 500.000000 additional EUSD
     .signWithOperatorAndSubmit(client);
@@ -397,7 +426,7 @@ Up to 10 metadata blobs may be supplied per transaction; the protocol assigns se
 numbers and returns them in the receipt.
 
 ```
-Response<TokenMintReceipt> response = new TokenMintTransaction()
+Response<TokenMintNftReceipt> response = new TokenMintNftTransaction()
     .tokenId(nftCollectionId)
     .metadata([
         "ipfs://QmHash1".bytes,
@@ -407,6 +436,7 @@ Response<TokenMintReceipt> response = new TokenMintTransaction()
     .signWithOperatorAndSubmit(client);
 
 list<int64> newSerials = response.queryReceipt().serials;   // e.g. [1, 2, 3]
+                                                            // only TokenMintNftReceipt has them
 ```
 
 ### Burn fungible / NFT supply
@@ -416,13 +446,13 @@ supply key authorises the burn.
 
 ```
 // Fungible:
-new TokenBurnTransaction()
+new TokenBurnFungibleTransaction()
     .tokenId(tokenId)
     .amount(10_000_000L)
     .signWithOperatorAndSubmit(client);
 
 // NFT (serials must be currently held by the treasury):
-new TokenBurnTransaction()
+new TokenBurnNftTransaction()
     .tokenId(nftCollectionId)
     .serials([1L, 2L])
     .signWithOperatorAndSubmit(client);

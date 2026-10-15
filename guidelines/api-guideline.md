@@ -153,6 +153,8 @@ The following annotations should be used:
 
 Rules and recommendations for `@@oneOf`:
 
+- The listed fields must be scalars. A `list`, `set` or `map` must never be an arm — such a choice is modelled as a
+  sealed type, see [Model a choice as a type](#model-a-choice-as-a-type-not-as-a-set-of-nullable-fields).
 - All listed fields must be declared with `@@nullable`
 - None or all listed fields must be declared with `@@immutable`.
 - If the fields are not `@@immutable` and a field is set, an SDK must unset all other fields
@@ -1139,6 +1141,88 @@ can be legitimate — only the nullable reference to it is the smell). The rule 
 lower severity. The reasons, the rejected alternatives and the conditions under which the decision would be
 revisited are recorded in
 [ADR-0010](../docs/adr/0010-collections-are-never-nullable.md); change this section only by superseding that ADR.
+
+#### Model a choice as a type, not as a set of nullable fields
+
+When exactly one of several fields may be set, the choice is a **state**, and a state is expressed by a type. Two
+nullable fields with a rule attached ("exactly one of these") leave the illegal combinations representable, and if
+one of the alternatives is a collection the declaration cannot even be written — a collection is never `@@nullable`
+(see above), while every `@@oneOf` arm must be.
+
+The pattern has two shapes. Which one applies is decided by a single question: **does the API accept the variant on
+its own?**
+
+**Shape 1 — the variants are the types.** If a caller builds, passes or submits a variant as itself, the variants
+*are* the choice. A `@@sealed` abstraction above them carries what they have in common:
+
+```
+@@sealed(BulkShipment, ItemizedShipment)
+abstraction Shipment<$$Self extends Shipment<$$Self>> extends Request<ShipmentReceipt, $$Self> {
+    @@immutable destination: string
+}
+
+// Ships goods measured by weight.
+@@finalType
+BulkShipment extends Shipment<BulkShipment> {
+    @@immutable @@min(1) weightInGrams: int64
+}
+
+// Ships a set of individually identified items.
+@@finalType
+ItemizedShipment extends Shipment<ItemizedShipment> {
+    @@immutable @@minSize(1) itemIds: list<string>
+}
+```
+
+Each variant is complete on its own: every field is required, nothing is nullable, and `BulkShipment` cannot carry
+item ids. The abstraction is what a caller uses when it does not care which variant it holds
+(`Shipment<?> shipment` → `shipment.destination`), and it is what makes handling exhaustive.
+
+**Shape 2 — the choice is a field.** If a variant never travels alone but only ever appears inside another type,
+that type keeps its shared fields and the choice becomes one of them:
+
+```
+@@sealed(PercentageDiscount, CouponDiscount) abstraction Discount {}
+
+// A discount given as a percentage of the line total.
+@@finalType
+PercentageDiscount extends Discount {
+    @@immutable @@min(1) @@max(100) percent: int32
+}
+
+// A discount given by one or more coupon codes.
+@@finalType
+CouponDiscount extends Discount {
+    @@immutable @@minSize(1) codes: list<string>
+}
+
+// One line of an order; a discount only ever exists as part of one.
+OrderLine {
+    @@immutable articleId: string
+    @@immutable @@min(1) quantity: int32
+    @@immutable @@nullable discount: Discount
+}
+```
+
+Here the sealed abstraction has no members of its own — it exists only to say "one of these".
+
+**`@@oneOf` keeps its place** for a choice between two or more *scalar* fields that carry no further data, where a
+pair of variant types would be heavier than the thing it describes (`num` / `evmAddress` of an address,
+`ipAddress` / `domainName` of an endpoint). A `list`, `set` or `map` must never be an arm of `@@oneOf`: that case is
+always one of the two shapes above.
+
+The per-language mapping follows from `@@sealed` and is spelled out in the language guides. In short:
+
+| | Shape 1 (abstraction with members) | Shape 2 (abstraction without members) |
+|---|---|---|
+| Java | `abstract sealed class … permits`, exhaustive `switch` | `sealed interface … permits` + records |
+| TypeScript | abstract class + union of the variants | union type |
+| Rust | sealed trait (public trait, private supertrait) | `enum` |
+| Go | interface with an unexported method | interface with an unexported method |
+| Python | `Protocol` for the shared members + union alias | union alias |
+
+The reasoning, the rejected alternatives and the worked examples are recorded in
+[ADR-0011](../docs/adr/0011-model-a-choice-as-a-sealed-type.md).
 
 #### Avoid `ANY` as a standalone type
 

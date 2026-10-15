@@ -42,20 +42,29 @@ a *spender* account. Three independent flavours exist:
 - **HBAR allowances** — the spender may transfer up to `amount` HBAR from the owner.
 - **Fungible-token allowances** — the spender may transfer up to `amount` units of `tokenId`
   from the owner.
-- **NFT allowances** — either a list of specific `serials` of `tokenId` (per-serial grant)
-  *or* `approveAll = true` (a blanket grant covering every current and future serial of
-  `tokenId` the owner holds). The `delegatingSpender` field supports HIP-336 sub-approvals:
-  a spender that already holds an `approveAll` grant may delegate per-serial rights onward.
+- **NFT allowances** — an `NftGrant`, which is either an `NftSerialGrant` over specific serials of
+  `tokenId` or an `NftCollectionGrant` covering every current and future serial of `tokenId` the
+  owner holds. The `delegatingSpender` field supports HIP-336 sub-approvals: a spender that already
+  holds a collection grant may delegate per-serial rights onward.
 
 Re-running approve with the same `(owner, spender, asset)` triple overwrites the prior amount
 (for HBAR / fungible tokens) — an amount of `0` revokes the allowance. NFT per-serial grants
-accumulate; `approveAll = false` revokes the blanket grant for that `(owner, spender, tokenId)`.
+accumulate; an `NftCollectionGrant(false)` revokes the collection-wide grant for that
+`(owner, spender, tokenId)`.
 
 `AccountAllowanceDeleteTransaction` is **NFT-only**: it lets the *owner* revoke previously
 granted per-serial NFT allowances independently of any specific spender. HBAR and
 fungible-token allowances are not deletable through this transaction; revoke them by issuing
-an approve with `amount = 0`. Blanket `approveAll = true` grants are revoked by issuing an
-approve with `approveAll = false` for the same `(owner, spender, tokenId)`.
+an approve with `amount = 0`. Collection-wide grants are revoked by issuing an approve with
+`NftCollectionGrant(false)` for the same `(owner, spender, tokenId)`.
+
+## Design Notes
+
+- **An NFT allowance carries an `NftGrant`, not two nullable fields.** What is granted — named
+  serials or the whole collection — is a choice, and a choice is a type: a `@@sealed` abstraction
+  with one final type per case, following
+  [ADR-0011](../../docs/adr/0011-model-a-choice-as-a-sealed-type.md). The grant never appears
+  outside an allowance, so it is a field of it rather than a variant of `NftAllowance` itself.
 
 ## API Schema
 
@@ -174,24 +183,32 @@ type TokenAllowance {
     @@immutable amount: int64                       // upper bound in the token's smallest unit; 0 = revoke
 }
 
-// Allowance for an NFT collection. Exactly one of `serials` or `approveAll` must be set:
+// What a spender is granted on an NFT collection.
+@@sealed(NftSerialGrant, NftCollectionGrant) abstraction NftGrant {}
+
+// Per-serial rights to the listed serials. Additive across multiple approve transactions.
+@@finalType
+NftSerialGrant extends NftGrant {
+    @@immutable @@minSize(1) serials: list<int64>
+}
+
+// Rights to every current and future serial of the collection the owner holds (HAPI
+// `approved_for_all`).
+@@finalType
+NftCollectionGrant extends NftGrant {
+    @@immutable approved: bool                                      // false revokes an existing collection-wide grant
+}
+
+// Allowance for an NFT collection, granting either named serials or the whole collection.
 //
-// - `serials` grants the spender per-serial rights to the listed serials (additive across
-//   multiple approve transactions).
-// - `approveAll = true` grants the spender every current and future serial of `tokenId` the
-//   owner holds; `approveAll = false` revokes a previously granted blanket grant for this
-//   (owner, spender, tokenId) triple.
-//
-// `delegatingSpender` supports HIP-336: a spender that already holds an `approveAll` grant may
+// `delegatingSpender` supports HIP-336: a spender that already holds an `NftCollectionGrant` may
 // delegate per-serial rights onward without involving the original owner. When set, the
 // transaction must be signed by `delegatingSpender`, not by `ownerAccountId`.
-@@oneOf(serials, approveAll)
-type NftAllowance {
+NftAllowance {
     @@immutable tokenId: Address
     @@immutable ownerAccountId: AccountId
     @@immutable spenderAccountId: AccountId
-    @@immutable @@nullable serials: list<int64>
-    @@immutable @@nullable approveAll: bool
+    @@immutable grant: NftGrant
     @@immutable @@nullable delegatingSpender: AccountId
 }
 
@@ -222,8 +239,8 @@ type NftAllowanceDeletion {
 }
 
 // Revokes previously granted NFT allowances. NFT-only — HBAR and fungible-token allowances are
-// revoked by approving them with amount = 0, and blanket `approveAll` grants are revoked by
-// approving with approveAll = false.
+// revoked by approving them with amount = 0, and collection-wide grants are revoked by approving
+// with an `NftCollectionGrant(false)`.
 @@finalType
 AccountAllowanceDeleteTransaction extends Transaction<AccountAllowanceDeleteReceipt, AccountAllowanceDeleteTransaction> {
     @@immutable nftAllowanceDeletions: list<NftAllowanceDeletion>
@@ -337,9 +354,9 @@ new AccountAllowanceApproveTransaction()
     ])
     .nftAllowances([
         // Specific serials:
-        new NftAllowance(nftCollectionId,   client.operatorAccountId, spender, [1L, 2L, 3L], null, null),
+        new NftAllowance(nftCollectionId,   client.operatorAccountId, spender, new NftSerialGrant([1L, 2L, 3L]), null),
         // Or: blanket grant over every current and future serial:
-        new NftAllowance(otherCollectionId, client.operatorAccountId, spender, null,         true, null),
+        new NftAllowance(otherCollectionId, client.operatorAccountId, spender, new NftCollectionGrant(true), null),
     ])
     .signWithOperatorAndSubmit(client);
 ```
@@ -354,10 +371,10 @@ new AccountAllowanceApproveTransaction()
     ])
     .signWithOperatorAndSubmit(client);
 
-// Revoke a blanket NFT grant by setting approveAll = false:
+// Revoke a collection-wide NFT grant with NftCollectionGrant(false):
 new AccountAllowanceApproveTransaction()
     .nftAllowances([
-        new NftAllowance(otherCollectionId, client.operatorAccountId, spender, null, false, null),
+        new NftAllowance(otherCollectionId, client.operatorAccountId, spender, new NftCollectionGrant(false), null),
     ])
     .signWithOperatorAndSubmit(client);
 

@@ -21,3 +21,4 @@ deleted — superseded ADRs link forward to the decision that replaces them.
 | [0008](0008-one-folder-per-target-language.md) | One folder per target language: configuration, hand-written and generated modules together | Accepted |
 | [0009](0009-protobuf-messages-in-the-spi.md) | The SPI exposes protobuf messages; a namespace maps to the generated protobuf code | Accepted |
 | [0010](0010-collections-are-never-nullable.md) | A collection is never nullable | Proposed |
+| [0011](0011-model-a-choice-as-a-sealed-type.md) | Model a choice between variants as a sealed type | Proposed |
