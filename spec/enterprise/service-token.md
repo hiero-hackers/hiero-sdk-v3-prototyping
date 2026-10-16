@@ -38,7 +38,7 @@ TokenCreateParams {
     @@immutable @@default(false) freezeDefault: bool
     @@immutable @@nullable @@maxLength(100) tokenMemo: string
     // Opaque metadata of the token (e.g. an IPFS CID, a URL or a JSON manifest).
-    @@immutable @@default([]) metadata: bytes
+    @@immutable @@default([]) @@maxSize(100) metadata: bytes
     // When the token expires; the network default if absent.
     @@immutable @@nullable expirationTime: zonedDateTime
     // The renewal period applied when the expiration approaches; the network default if absent.
@@ -260,6 +260,13 @@ test "a finite token rejects a max supply of 0" {
     @@expectThrows(invalid-argument-error)
     TokenCreateParams{name: "Token Name", symbol: "TKN", supplyType: TokenSupplyType.FINITE, maxSupply: 0}
 }
+
+// Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100).
+test "token parameters reject metadata longer than 100 bytes" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenCreateParams{name: "Token Name", symbol: "TKN", metadata: repeat(value: hex(text: "78"), count: 101)}
+}
 ```
 
 ## Questions & Comments
@@ -273,8 +280,6 @@ test "a finite token rejects a max supply of 0" {
   `@@maxLength(100)` counts characters: a name of 100 non-ASCII characters passes the annotation and is rejected by the
   network. The tests therefore check the limit only with ASCII text. Should the meta-language get a byte-length
   annotation (e.g. `@@maxUtf8Bytes(100)`), or should the services check the byte length themselves?
-- **Size of `metadata`.** HAPI limits the token metadata to 100 bytes (the Python SDK rejects more in
-  `set_metadata`), but `metadata` has no `@@maxSize(100)`. Should it get one?
 
 We need better "annotation" support to define ranges of params. For example:
 

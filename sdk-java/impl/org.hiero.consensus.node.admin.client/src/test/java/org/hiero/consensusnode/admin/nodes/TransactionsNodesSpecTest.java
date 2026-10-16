@@ -35,6 +35,16 @@ class TransactionsNodesSpecTest {
         return repeat(hex("cd"), 48L);
     }
 
+    /// One endpoint beyond the @@maxSize(10) of the gossip endpoints (11 entries).
+    private static List<ServiceEndpoint> ELEVEN_ENDPOINTS() {
+        return List.of(defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint());
+    }
+
+    /// One endpoint beyond the @@maxSize(8) of the service endpoints (9 entries).
+    private static List<ServiceEndpoint> NINE_ENDPOINTS() {
+        return List.of(defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint(), defaultServiceEndpoint());
+    }
+
     /// `consensusnode.admin.nodes/an-endpoint-by-ip-address-keeps-the-address-and-the-port`
     ///
     /// Source: the Go (TestEndpointSetAndGetAddress, TestEndpointSetAndGetPort), Python (test_constructor_with_values),
@@ -253,6 +263,42 @@ class TransactionsNodesSpecTest {
 
         // then
         assertEquals(7L, transaction.nodeId());
+    }
+
+    /// `consensusnode.admin.nodes/a-node-create-transaction-with-more-than-10-gossip-endpoints-is-rejected`
+    ///
+    /// Source: this spec (@@maxSize(10)); HAPI node_create.proto (gossip_endpoint: "MUST NOT contain more than 10
+    /// entries"); the consensus node (nodes.maxGossipEndpoint = 10, GOSSIP_ENDPOINTS_EXCEEDED_LIMIT); the Java, JavaScript,
+    /// Go and Python SDKs reject more than 10 gossip endpoints.
+    @Test
+    @DisplayName("a node create transaction with more than 10 gossip endpoints is rejected")
+    void aNodeCreateTransactionWithMoreThan10GossipEndpointsIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(defaultAccountId(), null, ELEVEN_ENDPOINTS(), List.of(NODE_DOMAIN_ENDPOINT()), GOSSIP_CA_CERTIFICATE(), GRPC_CERTIFICATE_HASH(), defaultAuthority(), false, null));
+    }
+
+    /// `consensusnode.admin.nodes/a-node-create-transaction-with-more-than-8-service-endpoints-is-rejected`
+    ///
+    /// Source: this spec (@@maxSize(8)); HAPI node_create.proto (service_endpoint: "MUST NOT contain more than 8
+    /// entries"); the consensus node (nodes.maxServiceEndpoint = 8, SERVICE_ENDPOINTS_EXCEEDED_LIMIT); the Java,
+    /// JavaScript, Go and Python SDKs reject more than 8 service endpoints.
+    @Test
+    @DisplayName("a node create transaction with more than 8 service endpoints is rejected")
+    void aNodeCreateTransactionWithMoreThan8ServiceEndpointsIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(defaultAccountId(), null, List.of(defaultServiceEndpoint()), NINE_ENDPOINTS(), GOSSIP_CA_CERTIFICATE(), GRPC_CERTIFICATE_HASH(), defaultAuthority(), false, null));
+    }
+
+    /// `consensusnode.admin.nodes/a-node-update-transaction-with-too-many-endpoints-is-rejected`
+    ///
+    /// Source: this spec (@@maxSize(10) and @@maxSize(8)); the Java SDK (NodeUpdateTransaction.setGossipEndpoints and
+    /// setServiceEndpoints reject more than 10 resp. 8 entries).
+    @Test
+    @DisplayName("a node update transaction with too many endpoints is rejected")
+    void aNodeUpdateTransactionWithTooManyEndpointsIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new NodeUpdateTransaction(7L, null, null, ELEVEN_ENDPOINTS(), List.of(), null, null, null, null, null));
+        assertThrows(IllegalArgumentException.class, () -> new NodeUpdateTransaction(7L, null, null, List.of(), NINE_ENDPOINTS(), null, null, null, null, null));
     }
 
     private static ServiceEndpoint defaultServiceEndpoint() {

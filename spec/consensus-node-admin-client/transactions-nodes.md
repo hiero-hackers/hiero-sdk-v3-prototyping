@@ -118,8 +118,8 @@ type ServiceEndpoint {
 NodeCreateTransaction extends Transaction<NodeCreateReceipt, NodeCreateTransaction> {
     @@immutable accountId: AccountId                                     // account that receives the node's staking rewards
     @@immutable @@nullable description: string                           // free-form description (at most 100 characters)
-    @@immutable @@minSize(1) gossipEndpoints: list<ServiceEndpoint>    // inter-node hashgraph gossip endpoints
-    @@immutable @@minSize(1) serviceEndpoints: list<ServiceEndpoint>   // public gRPC endpoints for client transactions
+    @@immutable @@minSize(1) @@maxSize(10) gossipEndpoints: list<ServiceEndpoint>   // inter-node hashgraph gossip endpoints
+    @@immutable @@minSize(1) @@maxSize(8) serviceEndpoints: list<ServiceEndpoint>   // public gRPC endpoints for client transactions
     @@immutable gossipCaCertificate: bytes                               // X.509 DER bytes of the certificate that terminates mutual TLS for gossip
     @@immutable grpcCertificateHash: bytes                               // SHA-384 of the certificate served on serviceEndpoints; clients pin against this
     @@immutable adminAuthority: Authority                                    // required to update / delete the node; must co-sign this create
@@ -141,8 +141,8 @@ NodeUpdateTransaction extends Transaction<NodeUpdateReceipt, NodeUpdateTransacti
     @@immutable nodeId: int64                                            // the node to update
     @@immutable @@nullable accountId: AccountId                          // when set, the new account's key must also sign
     @@immutable @@nullable description: string                           // new free-form description
-    @@immutable @@default([]) gossipEndpoints: list<ServiceEndpoint>     // when not empty, replaces the entire list; empty leaves it unchanged
-    @@immutable @@default([]) serviceEndpoints: list<ServiceEndpoint>    // when not empty, replaces the entire list; empty leaves it unchanged
+    @@immutable @@default([]) @@maxSize(10) gossipEndpoints: list<ServiceEndpoint>   // when not empty, replaces the entire list; empty leaves it unchanged
+    @@immutable @@default([]) @@maxSize(8) serviceEndpoints: list<ServiceEndpoint>   // when not empty, replaces the entire list; empty leaves it unchanged
     @@immutable @@nullable gossipCaCertificate: bytes                    // new gossip CA certificate (X.509 DER bytes)
     @@immutable @@nullable grpcCertificateHash: bytes                    // new SHA-384 hash of the gRPC certificate
     @@immutable @@nullable adminAuthority: Authority                         // when set, the new key must also sign
@@ -183,6 +183,17 @@ values NODE_DOMAIN_ENDPOINT: ServiceEndpoint = ServiceEndpoint{ipAddress: null, 
 values GOSSIP_CA_CERTIFICATE: bytes = utf8(text: "gossip CA certificate")
 
 values GRPC_CERTIFICATE_HASH: bytes = repeat(value: hex(text: "cd"), count: 48)
+
+// One endpoint beyond the @@maxSize(10) of the gossip endpoints (11 entries).
+values ELEVEN_ENDPOINTS: list<ServiceEndpoint> = [DEFAULT(ServiceEndpoint), DEFAULT(ServiceEndpoint),
+        DEFAULT(ServiceEndpoint), DEFAULT(ServiceEndpoint), DEFAULT(ServiceEndpoint), DEFAULT(ServiceEndpoint),
+        DEFAULT(ServiceEndpoint), DEFAULT(ServiceEndpoint), DEFAULT(ServiceEndpoint), DEFAULT(ServiceEndpoint),
+        DEFAULT(ServiceEndpoint)]
+
+// One endpoint beyond the @@maxSize(8) of the service endpoints (9 entries).
+values NINE_ENDPOINTS: list<ServiceEndpoint> = [DEFAULT(ServiceEndpoint), DEFAULT(ServiceEndpoint),
+        DEFAULT(ServiceEndpoint), DEFAULT(ServiceEndpoint), DEFAULT(ServiceEndpoint), DEFAULT(ServiceEndpoint),
+        DEFAULT(ServiceEndpoint), DEFAULT(ServiceEndpoint), DEFAULT(ServiceEndpoint)]
 ```
 
 ## Examples
@@ -438,6 +449,38 @@ test "a node delete transaction keeps its node id" {
     // then
     assertEquals(expected: 7, actual: transaction.nodeId)
 }
+
+// Source: this spec (@@maxSize(10)); HAPI node_create.proto (gossip_endpoint: "MUST NOT contain more than 10
+// entries"); the consensus node (nodes.maxGossipEndpoint = 10, GOSSIP_ENDPOINTS_EXCEEDED_LIMIT); the Java, JavaScript,
+// Go and Python SDKs reject more than 10 gossip endpoints.
+test "a node create transaction with more than 10 gossip endpoints is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    NodeCreateTransaction{accountId: DEFAULT(AccountId), gossipEndpoints: ELEVEN_ENDPOINTS,
+            serviceEndpoints: [NODE_DOMAIN_ENDPOINT], gossipCaCertificate: GOSSIP_CA_CERTIFICATE,
+            grpcCertificateHash: GRPC_CERTIFICATE_HASH, adminAuthority: DEFAULT(Authority)}
+}
+
+// Source: this spec (@@maxSize(8)); HAPI node_create.proto (service_endpoint: "MUST NOT contain more than 8
+// entries"); the consensus node (nodes.maxServiceEndpoint = 8, SERVICE_ENDPOINTS_EXCEEDED_LIMIT); the Java,
+// JavaScript, Go and Python SDKs reject more than 8 service endpoints.
+test "a node create transaction with more than 8 service endpoints is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    NodeCreateTransaction{accountId: DEFAULT(AccountId), gossipEndpoints: [DEFAULT(ServiceEndpoint)],
+            serviceEndpoints: NINE_ENDPOINTS, gossipCaCertificate: GOSSIP_CA_CERTIFICATE,
+            grpcCertificateHash: GRPC_CERTIFICATE_HASH, adminAuthority: DEFAULT(Authority)}
+}
+
+// Source: this spec (@@maxSize(10) and @@maxSize(8)); the Java SDK (NodeUpdateTransaction.setGossipEndpoints and
+// setServiceEndpoints reject more than 10 resp. 8 entries).
+test "a node update transaction with too many endpoints is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    NodeUpdateTransaction{nodeId: 7, gossipEndpoints: ELEVEN_ENDPOINTS}
+    @@expectThrows(invalid-argument-error)
+    NodeUpdateTransaction{nodeId: 7, serviceEndpoints: NINE_ENDPOINTS}
+}
 ```
 
 ## Questions & Comments
@@ -479,10 +522,19 @@ test "a node delete transaction keeps its node id" {
   endpoint, matching the current HAPI shape; if HIP-1046 evolves to a list, both
   `NodeCreate` and `NodeUpdate` need to grow accordingly. Tracked here for visibility.
 
-- **The client-side limits of the current SDKs are not part of this API.** The Go and Python SDKs reject, before
-  submission, more than 10 gossip endpoints, more than 8 service endpoints, a description of more than 100 UTF-8
-  bytes, an empty `gossipCaCertificate` and an endpoint with both an IP address and a domain name. This spec states
-  only `@@minSize(1)` for the endpoint lists of `NodeCreateTransaction` and the "at most 100 characters" in a
-  comment. Whether the limits belong into the API (`@@maxSize(10)`, `@@maxSize(8)`, `@@maxLength(100)`,
-  `@@minSize(1)`, `@@min(1)` for the port) — they are network settings that may change — is open. Once declared, a
-  `tests` block can check them like the `@@minSize(1)` of the endpoint lists (`invalid-argument-error`).
+- **Further client-side limits of the current SDKs are not part of this API yet.** The endpoint lists carry the
+  limits of the network (`@@maxSize(10)` and `@@maxSize(8)`, defaults of `nodes.maxGossipEndpoint` and
+  `nodes.maxServiceEndpoint`, network settings that a network may change). Still open:
+  - The `description` is limited to 100 UTF-8 bytes (and must not contain a zero byte; `INVALID_NODE_DESCRIPTION`),
+    which the Java, Go and Python SDKs check; `@@maxLength(100)` counts characters and would let up to 400 bytes
+    through, and the comments say "100 characters". This needs a byte-length annotation (see the same question in
+    `transactions-accounts.md` for memos).
+  - An empty `gossipCaCertificate` is rejected by the network (`INVALID_GOSSIP_CA_CERTIFICATE`) and by the Java, Go
+    and Python SDKs: `@@minSize(1)` on both transactions?
+  - A `nodeId` below 0 is rejected by the network (`INVALID_NODE_ID`) and by the Java SDK: `@@min(0)`?
+  - `grpcCertificateHash` is optional in HAPI `NodeCreateTransactionBody`, but required here; the network does not
+    check its length (48 bytes for SHA-384), only that an update does not set it empty.
+  - The comment "0 is invalid" of `ServiceEndpoint.port` holds only for gossip and service endpoints: the network does
+    not check the port of `grpcWebProxyEndpoint` (an all-default endpoint unsets it on update), and address books
+    read from the network contain port 0 (the Go and Rust SDKs map it to 50211). So `@@min(1)` cannot go on the
+    shared type.

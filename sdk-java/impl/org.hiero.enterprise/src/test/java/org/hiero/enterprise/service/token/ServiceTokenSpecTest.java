@@ -173,6 +173,16 @@ class ServiceTokenSpecTest {
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams("Token Name", "TKN", null, 0, 0L, TokenSupplyType.FINITE, 0L, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
     }
 
+    /// `enterprise.service.token/token-parameters-reject-metadata-longer-than-100-bytes`
+    ///
+    /// Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100).
+    @Test
+    @DisplayName("token parameters reject metadata longer than 100 bytes")
+    void tokenParametersRejectMetadataLongerThan100Bytes() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams("Token Name", "TKN", null, 0, 0L, TokenSupplyType.INFINITE, null, false, null, repeat(hex("78"), 101L), null, null, null, null, null, null, null, null, null, null, null));
+    }
+
     private static TokenCreateParams defaultTokenCreateParams() {
         return new TokenCreateParams("Token Name", "TKN", null, 0, 0L, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null);
     }

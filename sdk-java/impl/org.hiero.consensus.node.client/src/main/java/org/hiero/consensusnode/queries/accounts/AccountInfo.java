@@ -33,10 +33,14 @@ public record AccountInfo(
     /// Creates a new `AccountInfo`.
     ///
     /// @throws NullPointerException if a required value is `null`
+    /// @throws IllegalArgumentException if a value violates its constraints
     public AccountInfo {
         Objects.requireNonNull(accountId, "accountId must not be null");
         Objects.requireNonNull(balance, "balance must not be null");
         Objects.requireNonNull(expirationTime, "expirationTime must not be null");
+        if ((stakedAccountId != null ? 1 : 0) + (stakedNodeId != null ? 1 : 0) > 1) {
+            throw new IllegalArgumentException("at most one of stakedAccountId, stakedNodeId may be set");
+        }
     }
 
     /// Creates a new `AccountInfo` with the default value of `maxAutomaticTokenAssociations`, `receiverSignatureRequired`, `ownedNfts`, `deleted`, `declineStakingReward`.
@@ -222,6 +226,7 @@ public record AccountInfo(
         ///
         /// @return the new `AccountInfo`
         /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
         public AccountInfo build() {
             return new AccountInfo(
                     Objects.requireNonNull(accountId, "accountId must not be null"),

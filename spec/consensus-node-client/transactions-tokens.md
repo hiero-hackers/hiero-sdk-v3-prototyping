@@ -155,7 +155,7 @@ TokenCreateTransaction extends Transaction<TokenCreateReceipt, TokenCreateTransa
     @@immutable @@nullable @@min(1) maxSupply: int64                // FINITE only: protocol-enforced ceiling on totalSupply; unset (and only valid) when supplyType is INFINITE
     @@immutable @@default(false) freezeDefault: bool                // when true, newly associated accounts start in the FROZEN state (require an explicit TokenUnfreeze before they can move balances); requires freezeAuthority to be set
     @@immutable @@nullable @@maxLength(100) tokenMemo: string       // short, human-readable label
-    @@immutable @@default([]) metadata: bytes                       // opaque token-level metadata (e.g. IPFS CID, HTTPS URL, JSON manifest)
+    @@immutable @@default([]) @@maxSize(100) metadata: bytes        // opaque token-level metadata (e.g. IPFS CID, HTTPS URL, JSON manifest)
     @@immutable @@nullable expirationTime: zonedDateTime            // when the token expires; SDK default applies when unset
     @@immutable @@nullable autoRenewPeriod: seconds                 // renewal window applied when expiration approaches; protocol default applies when unset
     @@immutable @@nullable autoRenewAccount: AccountId              // account paying for auto-renewal; MUST sign the create transaction if set and not equal to the treasury / payer
@@ -193,7 +193,7 @@ TokenUpdateTransaction extends Transaction<TokenUpdateReceipt, TokenUpdateTransa
     @@immutable @@nullable @@maxLength(100) symbol: string
     @@immutable @@nullable treasuryAccountId: AccountId             // when set, replaces the treasury; both the OLD and the NEW treasury MUST sign
     @@immutable @@nullable @@maxLength(100) tokenMemo: string
-    @@immutable @@nullable metadata: bytes                          // when set, replaces the token-level metadata
+    @@immutable @@nullable @@maxSize(100) metadata: bytes           // when set, replaces the token-level metadata
     @@immutable @@nullable expirationTime: zonedDateTime
     @@immutable @@nullable autoRenewPeriod: seconds
     @@immutable @@nullable autoRenewAccount: AccountId              // when set, replaces the auto-renew account; the new account MUST also sign
@@ -885,6 +885,23 @@ test "every token lifecycle transaction survives toBytes and fromBytes unchanged
         assertEquals(expected: 2, actual: length(value: restored.nodeSignatures))
     }
 }
+
+// Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100,
+// METADATA_TOO_LONG); the Python SDK (TokenCreateTransaction.set_metadata rejects more than 100 bytes).
+test "a token create transaction rejects metadata longer than 100 bytes" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenCreateTransaction{name: "test name", symbol: "test symbol", tokenType: TokenType.FUNGIBLE_COMMON,
+            treasuryAccountId: AccountId.fromString(value: "7.7.7"), metadata: repeat(value: hex(text: "78"), count: 101)}
+}
+
+// Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100).
+test "a token update transaction rejects metadata longer than 100 bytes" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenUpdateTransaction{tokenId: Address.fromString(address: "4.2.0"),
+            metadata: repeat(value: hex(text: "78"), count: 101)}
+}
 ```
 
 ## Questions & Comments
@@ -938,11 +955,10 @@ test "every token lifecycle transaction survives toBytes and fromBytes unchanged
   `Address`; [`ledger.md`](../base/ledger.md) defines `ZERO_ACCOUNT_ID` for exactly this field. Should the text name
   `ZERO_ACCOUNT_ID`? — open
 
-- **No size limit on token and NFT metadata.** `TokenCreateTransaction.metadata`,
-  `TokenUpdateTransaction.metadata` and the entries of `TokenMintNftTransaction.metadata` carry no `@@maxSize`,
-  while `TokenUpdateNftsTransaction.metadata` has `@@maxSize(100)`. The network limits each to 100 bytes (HIP-646,
-  HIP-657), and the Python SDK rejects longer token metadata before submitting. Add `@@maxSize(100)` to the first two?
-  The list entries cannot be annotated today (no annotation on a type argument). — open
+- **No size limit on the metadata of a minted NFT.** The network limits the metadata of each new serial to 100 bytes
+  (`tokens.nfts.maxMetadataBytes`), like the token metadata, which carries `@@maxSize(100)`. The entries of
+  `TokenMintNftTransaction.metadata` cannot be annotated today (no annotation on a type argument), and the same holds
+  for the serial lists, whose entries the network requires to be at least 1. — open
 
 - **Cross-field rules are not expressed as annotations.** `decimals` and `initialSupply` MUST be 0 for
   `NON_FUNGIBLE_UNIQUE`, `maxSupply` is only valid with `FINITE`, and `freezeDefault = true` requires a

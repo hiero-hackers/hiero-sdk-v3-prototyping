@@ -83,6 +83,9 @@ public final class TokenUpdateTransaction extends Transaction<TokenUpdateReceipt
             throw new IllegalArgumentException("tokenMemo must be at most 100 characters long");
         }
         this.tokenMemo = tokenMemo;
+        if (metadata != null && metadata.length > 100) {
+            throw new IllegalArgumentException("metadata must contain at most 100 element(s)");
+        }
         this.metadata = metadata == null ? null : metadata.clone();
         this.expirationTime = expirationTime;
         this.autoRenewPeriod = autoRenewPeriod;

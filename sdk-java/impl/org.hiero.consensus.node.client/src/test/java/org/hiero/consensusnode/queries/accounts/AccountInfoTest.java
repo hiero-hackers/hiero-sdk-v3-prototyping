@@ -39,7 +39,7 @@ class AccountInfoTest {
         final long ownedNfts = ownedNftsValue();
         final boolean deleted = deletedValue();
         final @Nullable AccountId stakedAccountId = stakedAccountIdValue();
-        final @Nullable Long stakedNodeId = stakedNodeIdValue();
+        final @Nullable Long stakedNodeId = (Long) null;
         final boolean declineStakingReward = declineStakingRewardValue();
         final AccountInfo subject = new AccountInfo(accountId, evmAddress, balance, authority, accountMemo, expirationTime, autoRenewPeriod, maxAutomaticTokenAssociations, receiverSignatureRequired, ownedNfts, deleted, stakedAccountId, stakedNodeId, declineStakingReward);
         assertValue(accountId, subject.accountId());
@@ -61,7 +61,7 @@ class AccountInfoTest {
     @Test
     @DisplayName("creates an AccountInfo with the default values")
     void shouldCreateWithTheDefaultValues() {
-        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), stakedAccountIdValue(), stakedNodeIdValue());
+        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null);
         assertValue(0, subject.maxAutomaticTokenAssociations());
         assertValue(false, subject.receiverSignatureRequired());
         assertValue(0L, subject.ownedNfts());
@@ -84,7 +84,7 @@ class AccountInfoTest {
         final long ownedNfts = ownedNftsValue();
         final boolean deleted = deletedValue();
         final @Nullable AccountId stakedAccountId = stakedAccountIdValue();
-        final @Nullable Long stakedNodeId = stakedNodeIdValue();
+        final @Nullable Long stakedNodeId = (Long) null;
         final boolean declineStakingReward = declineStakingRewardValue();
         final AccountInfo subject = AccountInfo.builder()
                 .accountId(accountId)
@@ -125,6 +125,7 @@ class AccountInfoTest {
                 .accountId(accountIdValue())
                 .balance(balanceValue())
                 .expirationTime(expirationTimeValue())
+                .stakedAccountId(stakedAccountIdValue())
                 .build();
         assertNull(subject.evmAddress());
         assertNull(subject.authority());
@@ -134,7 +135,7 @@ class AccountInfoTest {
         assertValue(false, subject.receiverSignatureRequired());
         assertValue(0L, subject.ownedNfts());
         assertValue(false, subject.deleted());
-        assertNull(subject.stakedAccountId());
+        assertValue(stakedAccountIdValue(), subject.stakedAccountId());
         assertNull(subject.stakedNodeId());
         assertValue(false, subject.declineStakingReward());
     }
@@ -148,26 +149,26 @@ class AccountInfoTest {
     @Test
     @DisplayName("rejects null for accountId")
     void shouldRejectNullAccountId() {
-        assertThrows(NullPointerException.class, () -> new AccountInfo((AccountId) null, evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue()));
+        assertThrows(NullPointerException.class, () -> new AccountInfo((AccountId) null, evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
     }
 
     @Test
     @DisplayName("rejects null for balance")
     void shouldRejectNullBalance() {
-        assertThrows(NullPointerException.class, () -> new AccountInfo(accountIdValue(), evmAddressValue(), (NativeToken<?, ?>) null, authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue()));
+        assertThrows(NullPointerException.class, () -> new AccountInfo(accountIdValue(), evmAddressValue(), (NativeToken<?, ?>) null, authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
     }
 
     @Test
     @DisplayName("rejects null for expirationTime")
     void shouldRejectNullExpirationTime() {
-        assertThrows(NullPointerException.class, () -> new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), (ZonedDateTime) null, autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue()));
+        assertThrows(NullPointerException.class, () -> new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), (ZonedDateTime) null, autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
     }
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the minimum (-2147483648)")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMinimum() {
         final int value = Integer.MIN_VALUE;
-        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), value, receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue());
+        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), value, receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
         assertValue(value, subject.maxAutomaticTokenAssociations());
     }
 
@@ -175,7 +176,7 @@ class AccountInfoTest {
     @DisplayName("maxAutomaticTokenAssociations: accepts the maximum (2147483647)")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMaximum() {
         final int value = 2147483647;
-        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), value, receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue());
+        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), value, receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
         assertValue(value, subject.maxAutomaticTokenAssociations());
     }
 
@@ -183,7 +184,7 @@ class AccountInfoTest {
     @DisplayName("ownedNfts: accepts the minimum (-9223372036854775808)")
     void shouldAcceptOwnedNftsAtMinimum() {
         final long value = -9223372036854775808L;
-        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), value, deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue());
+        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), value, deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
         assertValue(value, subject.ownedNfts());
     }
 
@@ -191,7 +192,7 @@ class AccountInfoTest {
     @DisplayName("ownedNfts: accepts the maximum (9223372036854775807)")
     void shouldAcceptOwnedNftsAtMaximum() {
         final long value = 9223372036854775807L;
-        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), value, deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue());
+        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), value, deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
         assertValue(value, subject.ownedNfts());
     }
 
@@ -199,7 +200,7 @@ class AccountInfoTest {
     @DisplayName("stakedNodeId: accepts the minimum (-9223372036854775808)")
     void shouldAcceptStakedNodeIdAtMinimum() {
         final @Nullable Long value = -9223372036854775808L;
-        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), value, declineStakingRewardValue());
+        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), (AccountId) null, value, declineStakingRewardValue());
         assertValue(value, subject.stakedNodeId());
     }
 
@@ -207,8 +208,14 @@ class AccountInfoTest {
     @DisplayName("stakedNodeId: accepts the maximum (9223372036854775807)")
     void shouldAcceptStakedNodeIdAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
-        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), value, declineStakingRewardValue());
+        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), (AccountId) null, value, declineStakingRewardValue());
         assertValue(value, subject.stakedNodeId());
+    }
+
+    @Test
+    @DisplayName("rejects stakedAccountId and stakedNodeId together (@@oneOrNoneOf)")
+    void shouldRejectTwoOfStakedAccountIdOrStakedNodeId() {
+        assertThrows(IllegalArgumentException.class, () -> new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue()));
     }
 
     private static AccountId accountIdValue() {
@@ -268,6 +275,6 @@ class AccountInfoTest {
     }
 
     private static AccountInfo create() {
-        return new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue());
+        return new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
     }
 }

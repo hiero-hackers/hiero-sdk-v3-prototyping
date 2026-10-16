@@ -168,6 +168,16 @@ class ServiceNftSpecTest {
         assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams("Nft Tokens", "NT", null, TokenSupplyType.FINITE, 0L, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
     }
 
+    /// `enterprise.service.nft/nft-type-parameters-reject-metadata-longer-than-100-bytes`
+    ///
+    /// Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100).
+    @Test
+    @DisplayName("NFT type parameters reject metadata longer than 100 bytes")
+    void nFTTypeParametersRejectMetadataLongerThan100Bytes() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams("Nft Tokens", "NT", null, TokenSupplyType.INFINITE, null, false, null, repeat(hex("78"), 101L), null, null, null, null, null, null, null, null, null, null, null));
+    }
+
     private static NftTypeCreateParams defaultNftTypeCreateParams() {
         return new NftTypeCreateParams("Nft Tokens", "NT", null, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null);
     }

@@ -51,10 +51,16 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
         if (gossipEndpoints.size() < 1) {
             throw new IllegalArgumentException("gossipEndpoints must contain at least 1 element(s)");
         }
+        if (gossipEndpoints.size() > 10) {
+            throw new IllegalArgumentException("gossipEndpoints must contain at most 10 element(s)");
+        }
         this.gossipEndpoints = List.copyOf(gossipEndpoints);
         Objects.requireNonNull(serviceEndpoints, "serviceEndpoints must not be null");
         if (serviceEndpoints.size() < 1) {
             throw new IllegalArgumentException("serviceEndpoints must contain at least 1 element(s)");
+        }
+        if (serviceEndpoints.size() > 8) {
+            throw new IllegalArgumentException("serviceEndpoints must contain at most 8 element(s)");
         }
         this.serviceEndpoints = List.copyOf(serviceEndpoints);
         Objects.requireNonNull(gossipCaCertificate, "gossipCaCertificate must not be null");

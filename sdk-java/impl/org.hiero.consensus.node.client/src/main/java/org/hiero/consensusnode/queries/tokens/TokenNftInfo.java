@@ -26,8 +26,12 @@ public record TokenNftInfo(
     /// Creates a new `TokenNftInfo`.
     ///
     /// @throws NullPointerException if a required value is `null`
+    /// @throws IllegalArgumentException if a value violates its constraints
     public TokenNftInfo {
         Objects.requireNonNull(tokenId, "tokenId must not be null");
+        if (serial < 1L) {
+            throw new IllegalArgumentException("serial must be at least 1");
+        }
         Objects.requireNonNull(accountId, "accountId must not be null");
         Objects.requireNonNull(creationTime, "creationTime must not be null");
         Objects.requireNonNull(metadata, "metadata must not be null");
@@ -168,6 +172,7 @@ public record TokenNftInfo(
         ///
         /// @return the new `TokenNftInfo`
         /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
         public TokenNftInfo build() {
             return new TokenNftInfo(
                     Objects.requireNonNull(tokenId, "tokenId must not be null"),

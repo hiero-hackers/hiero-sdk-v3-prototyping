@@ -75,6 +75,9 @@ public record TokenCreateParams(
         }
         Objects.requireNonNull(metadata, "metadata must not be null");
         metadata = metadata.clone();
+        if (metadata.length > 100) {
+            throw new IllegalArgumentException("metadata must contain at most 100 element(s)");
+        }
     }
 
     /// Creates a new `TokenCreateParams` with the default value of `decimals`, `initialSupply`, `supplyType`, `freezeDefault`, `metadata`.

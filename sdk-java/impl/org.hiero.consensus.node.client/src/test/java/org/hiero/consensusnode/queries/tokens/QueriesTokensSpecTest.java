@@ -184,6 +184,16 @@ class QueriesTokensSpecTest {
         assertThrows(IllegalArgumentException.class, () -> new TokenNftInfoQuery(defaultAddress(), 0L));
     }
 
+    /// `consensusnode.queries.tokens/an-nft-info-rejects-serial-0`
+    ///
+    /// Source: this spec (@@min(1) of serial: the network assigns serials from 1 on, TokenMintHandler of the consensus node).
+    @Test
+    @DisplayName("an NFT info rejects serial 0")
+    void anNFTInfoRejectsSerial0() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenNftInfo(defaultAddress(), 0L, defaultAccountId(), ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), new byte[0], null));
+    }
+
     private static Address defaultAddress() {
         return new Address(0L, 0L, "", 1001L);
     }

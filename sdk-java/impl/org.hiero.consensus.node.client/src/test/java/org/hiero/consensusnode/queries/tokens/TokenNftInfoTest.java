@@ -91,9 +91,9 @@ class TokenNftInfoTest {
     }
 
     @Test
-    @DisplayName("serial: accepts the minimum (-9223372036854775808)")
+    @DisplayName("serial: accepts the minimum (1)")
     void shouldAcceptSerialAtMinimum() {
-        final long value = -9223372036854775808L;
+        final long value = 1L;
         final TokenNftInfo subject = new TokenNftInfo(tokenIdValue(), value, accountIdValue(), creationTimeValue(), metadataValue(), spenderIdValue());
         assertValue(value, subject.serial());
     }
@@ -104,6 +104,12 @@ class TokenNftInfoTest {
         final long value = 9223372036854775807L;
         final TokenNftInfo subject = new TokenNftInfo(tokenIdValue(), value, accountIdValue(), creationTimeValue(), metadataValue(), spenderIdValue());
         assertValue(value, subject.serial());
+    }
+
+    @Test
+    @DisplayName("serial: rejects a value below the minimum (0)")
+    void shouldRejectSerialBelowMinimum() {
+        assertThrows(IllegalArgumentException.class, () -> new TokenNftInfo(tokenIdValue(), 0L, accountIdValue(), creationTimeValue(), metadataValue(), spenderIdValue()));
     }
 
     @Test

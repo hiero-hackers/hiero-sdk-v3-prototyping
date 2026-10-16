@@ -399,6 +399,17 @@ class TransactionsAccountsSpecTest {
         assertEquals(packed.signableBodies(), restored.signableBodies());
     }
 
+    /// `consensusnode.transactions.accounts/an-account-update-transaction-rejects-being-staked-to-an-account-and-to-a-node`
+    ///
+    /// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI (CryptoUpdateTransactionBody.staked_id is a
+    /// oneof); the Java SDK (AccountUpdateTransaction.setStakedAccountId / setStakedNodeId: setting one clears the other).
+    @Test
+    @DisplayName("an account update transaction rejects being staked to an account and to a node")
+    void anAccountUpdateTransactionRejectsBeingStakedToAnAccountAndToANode() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new AccountUpdateTransaction(defaultAccountId(), null, null, null, null, null, null, AccountId.fromString("0.0.3"), 4L, null));
+    }
+
     private static Authority defaultAuthority() {
         return new PublicKeyAuthority(defaultPublicKey());
     }

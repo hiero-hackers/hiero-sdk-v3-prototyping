@@ -32,6 +32,7 @@ public final class AccountUpdateTransaction extends Transaction<AccountUpdateRec
     /// Creates a new `AccountUpdateTransaction`.
     ///
     /// @throws NullPointerException if a required value is `null`
+    /// @throws IllegalArgumentException if a value violates its constraints
     public AccountUpdateTransaction(
             final AccountId accountId,
             final @Nullable Authority authority,
@@ -55,6 +56,9 @@ public final class AccountUpdateTransaction extends Transaction<AccountUpdateRec
         this.stakedAccountId = stakedAccountId;
         this.stakedNodeId = stakedNodeId;
         this.declineStakingReward = declineStakingReward;
+        if ((stakedAccountId != null ? 1 : 0) + (stakedNodeId != null ? 1 : 0) > 1) {
+            throw new IllegalArgumentException("at most one of stakedAccountId, stakedNodeId may be set");
+        }
     }
 
     /// the account that is being updated
@@ -301,6 +305,7 @@ public final class AccountUpdateTransaction extends Transaction<AccountUpdateRec
         ///
         /// @return the new `AccountUpdateTransaction`
         /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
         public AccountUpdateTransaction build() {
             return new AccountUpdateTransaction(
                     Objects.requireNonNull(accountId, "accountId must not be null"),

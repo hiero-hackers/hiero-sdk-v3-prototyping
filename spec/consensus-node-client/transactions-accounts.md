@@ -99,6 +99,7 @@ AccountCreateReceipt extends Receipt {
 }
 
 @@finalType
+@@oneOrNoneOf(stakedAccountId, stakedNodeId)
 AccountUpdateTransaction extends Transaction<AccountUpdateReceipt, AccountUpdateTransaction> {
     @@immutable accountId: AccountId                            // the account that is being updated
     @@immutable @@nullable authority: Authority                          // the new key (requires signatures with both old and new keys)
@@ -742,9 +743,31 @@ test "an allowance delete transaction keeps its deletions and survives toBytes a
     assertEquals(expected: [1, 2, 3], actual: transaction.nftAllowanceDeletions[0].serials)
     assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
 }
+
+// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI (CryptoUpdateTransactionBody.staked_id is a
+// oneof); the Java SDK (AccountUpdateTransaction.setStakedAccountId / setStakedNodeId: setting one clears the other).
+test "an account update transaction rejects being staked to an account and to a node" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    AccountUpdateTransaction{accountId: DEFAULT(AccountId), stakedAccountId: AccountId.fromString(value: "0.0.3"),
+            stakedNodeId: 4}
+}
 ```
 
 ## Questions & Comments
+
+- **How does an update remove the staking of an account?** `null` leaves `stakedAccountId` and `stakedNodeId`
+  unchanged, so there is no way to say "stake to nothing". The current SDKs send a sentinel in one of the two fields
+  (`clearStakedAccountId()` sends `0.0.0`, `clearStakedNodeId()` sends `-1`; documented in HAPI
+  `crypto_update.proto`), which a V3 caller can only pass as a raw value today. Should the API model the removal
+  explicitly? Note that `@@min(0)` on `stakedNodeId` would rule out the `-1` sentinel. — open
+
+- **Memos are limited in UTF-8 bytes, not in characters.** The network rejects a memo of more than 100 UTF-8 bytes
+  (`MEMO_TOO_LONG`, `transaction.maxMemoUtf8Bytes`) or with a zero byte (`INVALID_ZERO_BYTE_IN_STRING`). The current
+  SDKs only document the limit. `@@maxLength(100)` counts characters and lets up to 400 bytes through, which is why
+  `accountMemo`, `topicMemo`, `fileMemo`, `scheduleMemo` and the transaction memo carry no limit, while `tokenMemo`
+  and the memos of the enterprise services use `@@maxLength(100)`. Should the meta-language get a byte-length
+  annotation (e.g. `@@maxUtf8Bytes(100)`) for all of them? — open
 
 - **`AccountAllowanceDeleteTransaction` is NFT-only by design.** HAPI exposes only an NFT
   removal list, and HBAR / fungible-token allowances are deleted by approving zero. We

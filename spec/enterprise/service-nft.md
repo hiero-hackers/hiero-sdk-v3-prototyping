@@ -34,7 +34,7 @@ NftTypeCreateParams {
     @@immutable @@default(false) freezeDefault: bool
     @@immutable @@nullable @@maxLength(100) tokenMemo: string
     // Opaque metadata of the token (e.g. an IPFS CID, a URL or a JSON manifest).
-    @@immutable @@default([]) metadata: bytes
+    @@immutable @@default([]) @@maxSize(100) metadata: bytes
     // When the token expires; the network default if absent.
     @@immutable @@nullable expirationTime: zonedDateTime
     // The renewal period applied when the expiration approaches; the network default if absent.
@@ -84,7 +84,7 @@ NftService {
     @@throws(service-error) void dissociateNft(accountId: AccountId, tokenIds: Address...)
 
     // Mint a single NFT with the given metadata; returns the new NFT including its serial number
-    @@throws(service-error) Nft mintNft(tokenId: Address, metadata: bytes)
+    @@throws(service-error) Nft mintNft(tokenId: Address, @@maxSize(100) metadata: bytes)
 
     // Mint multiple NFTs in one operation; returns the new NFTs in the order of the given metadata
     @@throws(service-error) list<Nft> mintNfts(tokenId: Address, metadata: bytes...)
@@ -280,6 +280,13 @@ test "a finite NFT type rejects a max supply of 0" {
     @@expectThrows(invalid-argument-error)
     NftTypeCreateParams{name: "Nft Tokens", symbol: "NT", supplyType: TokenSupplyType.FINITE, maxSupply: 0}
 }
+
+// Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100).
+test "NFT type parameters reject metadata longer than 100 bytes" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    NftTypeCreateParams{name: "Nft Tokens", symbol: "NT", metadata: repeat(value: hex(text: "78"), count: 101)}
+}
 ```
 
 ## Questions & Comments
@@ -293,8 +300,6 @@ test "a finite NFT type rejects a max supply of 0" {
   `@@maxLength(100)` counts characters: a name of 100 non-ASCII characters passes the annotation and is rejected by the
   network. The tests therefore check the limit only with ASCII text. Should the meta-language get a byte-length
   annotation (e.g. `@@maxUtf8Bytes(100)`), or should the services check the byte length themselves?
-- **Size of `metadata`.** HAPI limits the metadata of a token to 100 bytes (the Python SDK rejects more in
-  `set_metadata`), but `metadata` has no `@@maxSize(100)`. Should it get one?
 
 We should have immutable data objects as input params for the "create" methods.
 That would allow full flexibility and we only need 1 method with such data object + a hand full of convenience methods.

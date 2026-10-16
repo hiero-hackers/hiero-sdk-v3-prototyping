@@ -34,6 +34,7 @@ public final class NodeUpdateTransaction extends Transaction<NodeUpdateReceipt, 
     /// Creates a new `NodeUpdateTransaction`.
     ///
     /// @throws NullPointerException if a required value is `null`
+    /// @throws IllegalArgumentException if a value violates its constraints
     public NodeUpdateTransaction(
             final long nodeId,
             final @Nullable AccountId accountId,
@@ -50,8 +51,14 @@ public final class NodeUpdateTransaction extends Transaction<NodeUpdateReceipt, 
         this.accountId = accountId;
         this.description = description;
         Objects.requireNonNull(gossipEndpoints, "gossipEndpoints must not be null");
+        if (gossipEndpoints.size() > 10) {
+            throw new IllegalArgumentException("gossipEndpoints must contain at most 10 element(s)");
+        }
         this.gossipEndpoints = List.copyOf(gossipEndpoints);
         Objects.requireNonNull(serviceEndpoints, "serviceEndpoints must not be null");
+        if (serviceEndpoints.size() > 8) {
+            throw new IllegalArgumentException("serviceEndpoints must contain at most 8 element(s)");
+        }
         this.serviceEndpoints = List.copyOf(serviceEndpoints);
         this.gossipCaCertificate = gossipCaCertificate == null ? null : gossipCaCertificate.clone();
         this.grpcCertificateHash = grpcCertificateHash == null ? null : grpcCertificateHash.clone();
@@ -329,6 +336,7 @@ public final class NodeUpdateTransaction extends Transaction<NodeUpdateReceipt, 
         ///
         /// @return the new `NodeUpdateTransaction`
         /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
         public NodeUpdateTransaction build() {
             return new NodeUpdateTransaction(
                     Objects.requireNonNull(nodeId, "nodeId must not be null"),

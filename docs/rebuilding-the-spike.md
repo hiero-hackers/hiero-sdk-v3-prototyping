@@ -3,8 +3,8 @@
 How the V3 API is implemented today, how to build and verify it, and what cost time on the way. Written to be
 executed by an agent.
 
-- **Java:** `sdk-java/impl` is a **copy of the generated Java project** that is maintained by hand. Of the 371 tests
-  of the specs, 333 pass against it (all of keys 38, ledger 27, hedera 12 and transactions 10); the other 38 fail at
+- **Java:** `sdk-java/impl` is a **copy of the generated Java project** that is maintained by hand. Of the 381 tests
+  of the specs, 343 pass against it (all of keys 38, ledger 27, hedera 12 and transactions 10); the other 38 fail at
   methods that are not implemented yet.
 - **TypeScript:** only the first spike, which was written into the generated code in place and exists in git
   history only (section 6).

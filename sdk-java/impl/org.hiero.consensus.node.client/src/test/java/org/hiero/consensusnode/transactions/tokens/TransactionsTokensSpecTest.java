@@ -447,6 +447,27 @@ class TransactionsTokensSpecTest {
         }
     }
 
+    /// `consensusnode.transactions.tokens/a-token-create-transaction-rejects-metadata-longer-than-100-bytes`
+    ///
+    /// Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100,
+    /// METADATA_TOO_LONG); the Python SDK (TokenCreateTransaction.set_metadata rejects more than 100 bytes).
+    @Test
+    @DisplayName("a token create transaction rejects metadata longer than 100 bytes")
+    void aTokenCreateTransactionRejectsMetadataLongerThan100Bytes() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction("test name", "test symbol", TokenType.FUNGIBLE_COMMON, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.INFINITE, null, false, null, repeat(hex("78"), 101L), null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `consensusnode.transactions.tokens/a-token-update-transaction-rejects-metadata-longer-than-100-bytes`
+    ///
+    /// Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100).
+    @Test
+    @DisplayName("a token update transaction rejects metadata longer than 100 bytes")
+    void aTokenUpdateTransactionRejectsMetadataLongerThan100Bytes() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenUpdateTransaction(Address.fromString("4.2.0"), null, null, null, null, repeat(hex("78"), 101L), null, null, null, null, null, null, null, null, null, null, null));
+    }
+
     private static Account defaultAccount() {
         return new Account(defaultAccountId(), defaultPrivateKey());
     }

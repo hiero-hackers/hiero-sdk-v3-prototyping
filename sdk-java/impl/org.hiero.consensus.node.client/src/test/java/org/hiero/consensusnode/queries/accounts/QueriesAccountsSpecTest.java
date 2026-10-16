@@ -154,6 +154,17 @@ class QueriesAccountsSpecTest {
         assertThrows(IllegalArgumentException.class, () -> new AccountBalanceQuery(null, null));
     }
 
+    /// `consensusnode.queries.accounts/an-account-info-rejects-being-staked-to-an-account-and-to-a-node`
+    ///
+    /// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI basic_types.proto (StakingInfo.staked_id is a
+    /// oneof).
+    @Test
+    @DisplayName("an account info rejects being staked to an account and to a node")
+    void anAccountInfoRejectsBeingStakedToAnAccountAndToANode() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new AccountInfo(defaultAccountId(), null, defaultHbar(), null, null, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, 0, false, 0L, false, AccountId.fromString("0.0.3"), 4L, false));
+    }
+
     private static AccountId defaultAccountId() {
         return new AccountId(0L, 0L, "", 1001L, null, null);
     }

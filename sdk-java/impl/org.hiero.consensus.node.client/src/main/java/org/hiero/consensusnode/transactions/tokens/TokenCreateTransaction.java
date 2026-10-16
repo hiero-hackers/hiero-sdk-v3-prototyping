@@ -103,6 +103,9 @@ public final class TokenCreateTransaction extends Transaction<TokenCreateReceipt
         }
         this.tokenMemo = tokenMemo;
         Objects.requireNonNull(metadata, "metadata must not be null");
+        if (metadata.length > 100) {
+            throw new IllegalArgumentException("metadata must contain at most 100 element(s)");
+        }
         this.metadata = metadata.clone();
         this.expirationTime = expirationTime;
         this.autoRenewPeriod = autoRenewPeriod;

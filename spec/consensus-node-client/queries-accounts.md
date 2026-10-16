@@ -53,6 +53,7 @@ AccountBalanceQuery extends FreeQuery<AccountBalance> {
 }
 
 // Full account state snapshot. Returned by `AccountInfoQuery`.
+@@oneOrNoneOf(stakedAccountId, stakedNodeId)
 type AccountInfo {
     @@immutable accountId: AccountId
     @@immutable @@nullable evmAddress: EvmAddress                     // 20-byte EVM-address alias if assigned
@@ -287,6 +288,15 @@ test "a balance query for neither an account nor a contract is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
     AccountBalanceQuery{accountId: null, contractId: null}
+}
+
+// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI basic_types.proto (StakingInfo.staked_id is a
+// oneof).
+test "an account info rejects being staked to an account and to a node" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    AccountInfo{accountId: DEFAULT, balance: DEFAULT(hedera.Hbar), expirationTime: DEFAULT,
+            stakedAccountId: AccountId.fromString(value: "0.0.3"), stakedNodeId: 4}
 }
 ```
 

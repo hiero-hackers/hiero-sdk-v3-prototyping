@@ -98,7 +98,7 @@ TokenInfoQuery extends PaidQuery<TokenInfo> {
 // Metadata of a single NFT serial. Returned by `TokenNftInfoQuery`.
 type TokenNftInfo {
     @@immutable tokenId: Address                                // the NFT collection
-    @@immutable serial: int64                                   // serial number within the collection
+    @@immutable @@min(1) serial: int64                          // serial number within the collection
     @@immutable accountId: AccountId                            // current owner of this serial
     @@immutable creationTime: zonedDateTime                     // consensus time at which this serial was minted
     @@immutable @@default([]) metadata: bytes                   // opaque per-serial metadata set at mint (e.g. IPFS CID)
@@ -318,6 +318,13 @@ test "an NFT info query rejects serial 0" {
     // when / then
     @@expectThrows(invalid-argument-error)
     TokenNftInfoQuery{tokenId: DEFAULT(Address), serial: 0}
+}
+
+// Source: this spec (@@min(1) of serial: the network assigns serials from 1 on, TokenMintHandler of the consensus node).
+test "an NFT info rejects serial 0" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenNftInfo{tokenId: DEFAULT, serial: 0, accountId: DEFAULT, creationTime: DEFAULT}
 }
 ```
 
