@@ -11,14 +11,32 @@ single transaction into chunks. Files are identified by an `Address`.
 ```
 namespace enterprise.service.file
 requires {Address} from ledger
+requires {Authority} from authority
 requires {Session} from enterprise.service
+
+// The parameters of a new file: everything that can be set when it is created. Nothing is required.
+@@finalType
+FileCreateParams {
+    // The initial contents; more can be appended later.
+    @@immutable @@default([]) contents: bytes
+    // Allows to change and delete the file; an authority that all must sign is an AuthorityList.
+    @@immutable @@nullable authority: Authority
+    // When the file expires; the network default if absent.
+    @@immutable @@nullable expirationTime: zonedDateTime
+    @@immutable @@nullable @@maxLength(100) fileMemo: string
+}
 
 FileService {
 
-    // Create a new file with the given contents; returns the id of the new file
+    // Create a new file with the given contents; returns the id of the new file. The same as createFile with
+    // FileCreateParams that have only these values.
     @@throws(service-error) Address createFile(contents: bytes)
 
     @@throws(service-error) Address createFile(contents: bytes, expirationTime: zonedDateTime)
+
+    // Create a new file with the given parameters; returns the id of the new file: the general form of the methods
+    // above, for every option of a new file.
+    @@throws(service-error) Address createFile(params: FileCreateParams)
 
     // Read the full contents of a file
     @@throws(service-error) bytes readFile(fileId: Address)

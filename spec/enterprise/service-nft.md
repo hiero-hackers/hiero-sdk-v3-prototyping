@@ -16,16 +16,66 @@ requires {Address, AccountId} from ledger
 requires {Authority} from authority
 requires {Nft, NftMetadata} from mirrornode.nft
 requires {Session} from enterprise.service
+requires {TokenSupplyType} from token
+
+// The parameters of a new NFT type (collection): everything that can be set when it is created. Name and symbol are
+// required.
+@@finalType
+NftTypeCreateParams {
+    @@immutable @@maxLength(100) name: string
+    @@immutable @@maxLength(100) symbol: string
+    // The account that receives the initial supply and every mint; the operator account if absent.
+    @@immutable @@nullable treasuryAccountId: AccountId
+    // INFINITE or FINITE; cannot be changed later.
+    @@immutable @@default(INFINITE) supplyType: TokenSupplyType
+    // The highest total supply; only for a FINITE supply type.
+    @@immutable @@nullable @@min(1) maxSupply: int64
+    // When true, newly associated accounts start frozen; requires a freeze authority.
+    @@immutable @@default(false) freezeDefault: bool
+    @@immutable @@nullable @@maxLength(100) tokenMemo: string
+    // Opaque metadata of the token (e.g. an IPFS CID, a URL or a JSON manifest).
+    @@immutable @@default([]) metadata: bytes
+    // When the token expires; the network default if absent.
+    @@immutable @@nullable expirationTime: zonedDateTime
+    // The renewal period applied when the expiration approaches; the network default if absent.
+    @@immutable @@nullable autoRenewPeriod: seconds
+    // The account that pays for the renewal.
+    @@immutable @@nullable autoRenewAccount: AccountId
+
+    // The authorities of the token. An authority that is not set when the token is created cannot be added later.
+
+    // Allows to update and delete the token; without it the token cannot be changed.
+    @@immutable @@nullable adminAuthority: Authority
+    // Allows to mint and burn; without it the supply is fixed after creation.
+    @@immutable @@nullable supplyAuthority: Authority
+    // Allows to grant and revoke KYC; without it KYC is disabled.
+    @@immutable @@nullable kycAuthority: Authority
+    // Allows to freeze and unfreeze accounts; without it accounts cannot be frozen.
+    @@immutable @@nullable freezeAuthority: Authority
+    // Allows to wipe the balances of accounts other than the treasury; without it wiping is disabled.
+    @@immutable @@nullable wipeAuthority: Authority
+    // Allows to pause and unpause the token; without it the token cannot be paused.
+    @@immutable @@nullable pauseAuthority: Authority
+    // Allows to update the custom fee schedule; without it the fees cannot be changed.
+    @@immutable @@nullable feeScheduleAuthority: Authority
+    // Allows to update the metadata of single tokens (HIP-657); without it that metadata cannot be changed.
+    @@immutable @@nullable metadataAuthority: Authority
+}
 
 NftService {
 
     // Create a new NFT type (collection); returns the metadata of the new type, including its token id.
-    // The treasury defaults to the operator account; a supply authority enables minting.
+    // The treasury defaults to the operator account; a supply authority enables minting. The same as createNftType
+    // with NftTypeCreateParams that have only these values.
     @@throws(service-error) NftMetadata createNftType(name: string, symbol: string)
 
     @@throws(service-error) NftMetadata createNftType(name: string, symbol: string, supplyAuthority: Authority)
 
     @@throws(service-error) NftMetadata createNftType(name: string, symbol: string, treasuryAccount: AccountId, supplyAuthority: Authority)
+
+    // Create a new NFT type with the given parameters: the general form of the methods above, for every option of
+    // a new NFT type.
+    @@throws(service-error) NftMetadata createNftType(params: NftTypeCreateParams)
 
     // Associate an account with one or more NFT types so it can hold them
     @@throws(service-error) void associateNft(accountId: AccountId, tokenIds: Address...)

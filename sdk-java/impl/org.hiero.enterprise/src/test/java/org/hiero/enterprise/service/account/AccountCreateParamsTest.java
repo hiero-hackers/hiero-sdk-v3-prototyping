@@ -17,12 +17,12 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/// Tests of `AccountDef`, generated from the specs.
-@DisplayName("AccountDef")
-class AccountDefTest {
+/// Tests of `AccountCreateParams`, generated from the specs.
+@DisplayName("AccountCreateParams")
+class AccountCreateParamsTest {
 
     @Test
-    @DisplayName("creates an AccountDef and returns the values")
+    @DisplayName("creates an AccountCreateParams and returns the values")
     void shouldCreateAndReturnTheValues() {
         final Authority authority = authorityValue();
         final @Nullable NativeToken<?, ?> initialBalance = initialBalanceValue();
@@ -34,7 +34,7 @@ class AccountDefTest {
         final @Nullable Long stakedNodeId = (Long) null;
         final boolean declineStakingReward = declineStakingRewardValue();
         final byte @Nullable [] alias = aliasValue();
-        final AccountDef subject = new AccountDef(authority, initialBalance, accountMemo, receiverSignatureRequired, maxAutomaticTokenAssociations, autoRenewPeriod, stakedAccountId, stakedNodeId, declineStakingReward, alias);
+        final AccountCreateParams subject = new AccountCreateParams(authority, initialBalance, accountMemo, receiverSignatureRequired, maxAutomaticTokenAssociations, autoRenewPeriod, stakedAccountId, stakedNodeId, declineStakingReward, alias);
         assertValue(authority, subject.authority());
         assertValue(initialBalance, subject.initialBalance());
         assertValue(accountMemo, subject.accountMemo());
@@ -48,9 +48,9 @@ class AccountDefTest {
     }
 
     @Test
-    @DisplayName("creates an AccountDef with the default values")
+    @DisplayName("creates an AccountCreateParams with the default values")
     void shouldCreateWithTheDefaultValues() {
-        final AccountDef subject = new AccountDef(authorityValue(), initialBalanceValue(), accountMemoValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, aliasValue());
+        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, aliasValue());
         assertValue(false, subject.receiverSignatureRequired());
         assertValue(false, subject.declineStakingReward());
     }
@@ -68,7 +68,7 @@ class AccountDefTest {
         final @Nullable Long stakedNodeId = (Long) null;
         final boolean declineStakingReward = declineStakingRewardValue();
         final byte @Nullable [] alias = aliasValue();
-        final AccountDef subject = AccountDef.builder()
+        final AccountCreateParams subject = AccountCreateParams.builder()
                 .authority(authority)
                 .initialBalance(initialBalance)
                 .accountMemo(accountMemo)
@@ -95,7 +95,7 @@ class AccountDefTest {
     @Test
     @DisplayName("a value that is not set is null or its default value")
     void shouldBuildWithoutTheOptionalValues() {
-        final AccountDef subject = AccountDef.builder()
+        final AccountCreateParams subject = AccountCreateParams.builder()
                 .authority(authorityValue())
                 .stakedAccountId(stakedAccountIdValue())
                 .build();
@@ -113,20 +113,20 @@ class AccountDefTest {
     @Test
     @DisplayName("the builder rejects a missing required value")
     void shouldRejectAMissingRequiredValue() {
-        assertThrows(NullPointerException.class, () -> AccountDef.builder().build());
+        assertThrows(NullPointerException.class, () -> AccountCreateParams.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for authority")
     void shouldRejectNullAuthority() {
-        assertThrows(NullPointerException.class, () -> new AccountDef((Authority) null, initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue()));
+        assertThrows(NullPointerException.class, () -> new AccountCreateParams((Authority) null, initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue()));
     }
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the minimum (-2147483648)")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
-        final AccountDef subject = new AccountDef(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), value, autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
+        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), value, autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
         assertValue(value, subject.maxAutomaticTokenAssociations());
     }
 
@@ -134,7 +134,7 @@ class AccountDefTest {
     @DisplayName("maxAutomaticTokenAssociations: accepts the maximum (2147483647)")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMaximum() {
         final @Nullable Integer value = 2147483647;
-        final AccountDef subject = new AccountDef(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), value, autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
+        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), value, autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
         assertValue(value, subject.maxAutomaticTokenAssociations());
     }
 
@@ -142,7 +142,7 @@ class AccountDefTest {
     @DisplayName("stakedNodeId: accepts the minimum (-9223372036854775808)")
     void shouldAcceptStakedNodeIdAtMinimum() {
         final @Nullable Long value = -9223372036854775808L;
-        final AccountDef subject = new AccountDef(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), (AccountId) null, value, declineStakingRewardValue(), aliasValue());
+        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), (AccountId) null, value, declineStakingRewardValue(), aliasValue());
         assertValue(value, subject.stakedNodeId());
     }
 
@@ -150,7 +150,7 @@ class AccountDefTest {
     @DisplayName("stakedNodeId: accepts the maximum (9223372036854775807)")
     void shouldAcceptStakedNodeIdAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
-        final AccountDef subject = new AccountDef(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), (AccountId) null, value, declineStakingRewardValue(), aliasValue());
+        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), (AccountId) null, value, declineStakingRewardValue(), aliasValue());
         assertValue(value, subject.stakedNodeId());
     }
 
@@ -159,7 +159,7 @@ class AccountDefTest {
     void shouldCopyAliasIn() {
         final byte[] value = aliasValue();
         final byte[] expected = value.clone();
-        final AccountDef subject = new AccountDef(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), value);
+        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), value);
         value[0] = (byte) (value[0] + 1);
         assertValue(expected, subject.alias());
         final byte[] returned = subject.alias();
@@ -171,7 +171,7 @@ class AccountDefTest {
     @Test
     @DisplayName("rejects stakedAccountId and stakedNodeId together (@@oneOrNoneOf)")
     void shouldRejectTwoOfStakedAccountIdOrStakedNodeId() {
-        assertThrows(IllegalArgumentException.class, () -> new AccountDef(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue(), aliasValue()));
+        assertThrows(IllegalArgumentException.class, () -> new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue(), aliasValue()));
     }
 
     private static Authority authorityValue() {
@@ -214,7 +214,7 @@ class AccountDefTest {
         return new byte[] {1, 2, 3};
     }
 
-    private static AccountDef create() {
-        return new AccountDef(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
+    private static AccountCreateParams create() {
+        return new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
     }
 }

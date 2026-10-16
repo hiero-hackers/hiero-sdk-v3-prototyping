@@ -2558,13 +2558,13 @@ it.
 ### Generated builders
 
 The specs do not ask for a builder: whether a type is easy to construct is a question of the language, and the
-meta-language keeps such a type immutable (`@@immutable` attributes) - a parameter object such as `AccountDef` is a
-value. The Java generator derives the builder from the rules above. A record or class gets one if it is concrete,
-**no other type extends it**, and its constructor takes **more than four values or at least two optional ones**
-(`@@nullable` or `@@default`). Generated:
+meta-language keeps such a type immutable (`@@immutable` attributes) - a parameter object such as
+`AccountCreateParams` is a value. The Java generator derives the builder from the rules above. A record or class gets
+one if it is concrete, **no other type extends it**, and its constructor takes **more than four values or at least two
+optional ones** (`@@nullable` or `@@default`). Generated:
 
 ```java
-AccountDef account = AccountDef.builder()
+AccountCreateParams params = AccountCreateParams.builder()
         .authority(authority)
         .initialBalance(new Hbar(10, HbarUnit.HBAR))
         .accountMemo("savings")

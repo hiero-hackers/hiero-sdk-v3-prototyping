@@ -50,10 +50,10 @@ class AccountServiceTest {
     }
 
     @Test
-    @DisplayName("createNewAccount(account) can be called and returns a value (only ServiceException may occur)")
+    @DisplayName("createNewAccount(params) can be called and returns a value (only ServiceException may occur)")
     void shouldCallCreateNewAccount3() throws Exception {
         try {
-            assertNotNull(create().createNewAccount(accountValue()));
+            assertNotNull(create().createNewAccount(paramsValue()));
         } catch (final Exception e) {
             if (!(e instanceof ServiceException)) {
                 throw e;
@@ -77,7 +77,7 @@ class AccountServiceTest {
     @DisplayName("deleteAccount(account) can be called (only ServiceException may occur)")
     void shouldCallDeleteAccount() throws Exception {
         try {
-            create().deleteAccount(accountValue2());
+            create().deleteAccount(accountValue());
         } catch (final Exception e) {
             if (!(e instanceof ServiceException)) {
                 throw e;
@@ -89,7 +89,7 @@ class AccountServiceTest {
     @DisplayName("findById(account) can be called and returns a value (only ServiceException may occur)")
     void shouldCallFindById() throws Exception {
         try {
-            assertNotNull(create().findById(accountValue2()));
+            assertNotNull(create().findById(accountValue()));
         } catch (final Exception e) {
             if (!(e instanceof ServiceException)) {
                 throw e;
@@ -121,8 +121,8 @@ class AccountServiceTest {
         return new Hbar(1L, HbarUnit.TINYBAR);
     }
 
-    private static AccountDef accountValue() {
-        return new AccountDef(new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c").createPublicKey()), null, null, true, null, null, null, null, true, null);
+    private static AccountCreateParams paramsValue() {
+        return new AccountCreateParams(new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c").createPublicKey()), null, null, true, null, null, null, null, true, null);
     }
 
     private static AccountId accountIdValue() {
@@ -137,7 +137,7 @@ class AccountServiceTest {
         return new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c").createPublicKey());
     }
 
-    private static AccountId accountValue2() {
+    private static AccountId accountValue() {
         return new AccountId(0L, 0L, "", 1001L, null, null);
     }
 }

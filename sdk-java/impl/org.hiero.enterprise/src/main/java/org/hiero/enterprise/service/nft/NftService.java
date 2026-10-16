@@ -18,7 +18,8 @@ public class NftService {
     }
 
     /// Create a new NFT type (collection); returns the metadata of the new type, including its token id.
-    /// The treasury defaults to the operator account; a supply authority enables minting.
+    /// The treasury defaults to the operator account; a supply authority enables minting. The same as createNftType
+    /// with NftTypeCreateParams that have only these values.
     ///
     /// @throws ServiceException if a service error occurs
     public NftMetadata createNftType(final String name, final String symbol) {
@@ -32,6 +33,14 @@ public class NftService {
 
     /// @throws ServiceException if a service error occurs
     public NftMetadata createNftType(final String name, final String symbol, final AccountId treasuryAccount, final Authority supplyAuthority) {
+        throw new UnsupportedOperationException("Not implemented yet: NftService.createNftType");
+    }
+
+    /// Create a new NFT type with the given parameters: the general form of the methods above, for every option of
+    /// a new NFT type.
+    ///
+    /// @throws ServiceException if a service error occurs
+    public NftMetadata createNftType(final NftTypeCreateParams params) {
         throw new UnsupportedOperationException("Not implemented yet: NftService.createNftType");
     }
 

@@ -19,7 +19,9 @@ is reported by `getType(index)`; callers check it before using the value.
 ```
 namespace enterprise.service.contract
 requires {Page} from common
-requires {Address, ContractId, EvmAddress} from ledger
+requires {Address, AccountId, ContractId, EvmAddress} from ledger
+requires {Authority} from authority
+requires {NativeToken} from nativeToken
 requires {Session} from enterprise.service
 
 ParamSupplier<$$SolidityType> {
@@ -48,11 +50,46 @@ Contract {
     @@immutable contractId: ContractId
 }
 
+// The parameters of a new smart contract: everything that can be set when it is created. The bytecode comes either
+// from a file or directly; a contract is staked to an account or to a node, not to both.
+@@finalType
+@@oneOf(fileId, bytecode)
+@@oneOrNoneOf(stakedAccountId, stakedNodeId)
+ContractCreateParams {
+    // The file that holds the bytecode.
+    @@immutable @@nullable fileId: Address
+    // The bytecode itself.
+    @@immutable @@nullable bytecode: bytes
+    // The parameters of the constructor, in order.
+    @@immutable @@default([]) constructorParams: list<Param<ANY, ANY>>
+    // The gas for running the constructor; a default of the service if absent.
+    @@immutable @@nullable @@min(1) gas: int64
+    // Amount transferred from the payer to the new contract.
+    @@immutable @@nullable initialBalance: NativeToken<ANY, ANY>
+    // Allows to update and delete the contract; without it the contract cannot be changed.
+    @@immutable @@nullable adminAuthority: Authority
+    @@immutable @@nullable @@maxLength(100) contractMemo: string
+    // The renewal period applied when the expiration approaches; the network default if absent.
+    @@immutable @@nullable autoRenewPeriod: seconds
+    // The account that pays for the renewal.
+    @@immutable @@nullable autoRenewAccount: AccountId
+    @@immutable @@nullable maxAutomaticTokenAssociations: int32
+    @@immutable @@nullable stakedAccountId: AccountId
+    @@immutable @@nullable stakedNodeId: int64
+    @@immutable @@default(false) declineStakingReward: bool
+}
+
 SmartContractService {
 
+    // Create a contract from the bytecode in a file or from the bytecode itself. The same as createContract with
+    // ContractCreateParams that have only these values.
     @@throws(service-error) Contract createContract(fileId:Address, constructorParams:Param<ANY, ANY>...)
 
     @@throws(service-error) Contract createContract(contents:bytes, constructorParams:Param<ANY, ANY>...)
+
+    // Create a contract with the given parameters: the general form of the methods above, for every option of a new
+    // contract.
+    @@throws(service-error) Contract createContract(params: ContractCreateParams)
 
     @@throws(service-error) ContractCallResult callContractFunction(contract:Contract, functionName:string, params:Param<ANY, ANY>...)
 
@@ -93,3 +130,8 @@ SmartContractService createService(session: Session)
 
 - Long-form (shard.realm.num) Hedera id overloads of `ofAddress` (taking `AccountId` / `ContractId`) belong next to the
   other param factory functions as follow-ups once a HAPI long-form-encoding helper is decided.
+
+- `ContractCreateParams` follows the HAPI `ContractCreateTransactionBody` (bytecode from a file or inline, gas,
+  constructor parameters, admin authority, staking), because the consensus layer has no `ContractCreateTransaction`
+  yet. Once it exists, the fields should be aligned with it, as the other `…CreateParams` types are with their
+  transactions. Open: whether `gas` should stay optional (a default chosen by the service) or be required as in HAPI.

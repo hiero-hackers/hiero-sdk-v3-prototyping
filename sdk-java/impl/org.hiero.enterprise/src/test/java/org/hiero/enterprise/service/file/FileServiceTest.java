@@ -44,6 +44,18 @@ class FileServiceTest {
     }
 
     @Test
+    @DisplayName("createFile(params) can be called and returns a value (only ServiceException may occur)")
+    void shouldCallCreateFile3() throws Exception {
+        try {
+            assertNotNull(create().createFile(paramsValue()));
+        } catch (final Exception e) {
+            if (!(e instanceof ServiceException)) {
+                throw e;
+            }
+        }
+    }
+
+    @Test
     @DisplayName("readFile(fileId) can be called and returns a value (only ServiceException may occur)")
     void shouldCallReadFile() throws Exception {
         try {
@@ -137,6 +149,10 @@ class FileServiceTest {
 
     private static ZonedDateTime expirationTimeValue() {
         return ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+    }
+
+    private static FileCreateParams paramsValue() {
+        return new FileCreateParams(new byte[] {1, 2, 3}, null, null, null);
     }
 
     private static Address fileIdValue() {

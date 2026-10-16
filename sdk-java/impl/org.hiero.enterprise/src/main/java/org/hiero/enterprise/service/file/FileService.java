@@ -10,7 +10,8 @@ public class FileService {
     public FileService() {
     }
 
-    /// Create a new file with the given contents; returns the id of the new file
+    /// Create a new file with the given contents; returns the id of the new file. The same as createFile with
+    /// FileCreateParams that have only these values.
     ///
     /// @throws ServiceException if a service error occurs
     public Address createFile(final byte[] contents) {
@@ -19,6 +20,14 @@ public class FileService {
 
     /// @throws ServiceException if a service error occurs
     public Address createFile(final byte[] contents, final ZonedDateTime expirationTime) {
+        throw new UnsupportedOperationException("Not implemented yet: FileService.createFile");
+    }
+
+    /// Create a new file with the given parameters; returns the id of the new file: the general form of the methods
+    /// above, for every option of a new file.
+    ///
+    /// @throws ServiceException if a service error occurs
+    public Address createFile(final FileCreateParams params) {
         throw new UnsupportedOperationException("Not implemented yet: FileService.createFile");
     }
 

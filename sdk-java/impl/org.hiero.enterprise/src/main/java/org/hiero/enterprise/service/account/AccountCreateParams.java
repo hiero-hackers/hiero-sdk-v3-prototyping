@@ -8,12 +8,12 @@ import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 
-/// The definition of a new account: everything that can be set when an account is created. Only the authority is
+/// The parameters of a new account: everything that can be set when an account is created. Only the authority is
 /// required. An account is staked to another account or to a node, not to both.
 ///
 /// @param initialBalance Amount transferred from the payer to the new account. If absent, the account is created with a balance
 ///   of 0 in the native token of the network.
-public record AccountDef(
+public record AccountCreateParams(
         Authority authority,
         @Nullable NativeToken<?, ?> initialBalance,
         @Nullable String accountMemo,
@@ -25,11 +25,11 @@ public record AccountDef(
         boolean declineStakingReward,
         byte @Nullable [] alias) {
 
-    /// Creates a new `AccountDef`.
+    /// Creates a new `AccountCreateParams`.
     ///
     /// @throws NullPointerException if a required value is `null`
     /// @throws IllegalArgumentException if a value violates its constraints
-    public AccountDef {
+    public AccountCreateParams {
         Objects.requireNonNull(authority, "authority must not be null");
         alias = alias == null ? null : alias.clone();
         if ((stakedAccountId != null ? 1 : 0) + (stakedNodeId != null ? 1 : 0) > 1) {
@@ -37,8 +37,8 @@ public record AccountDef(
         }
     }
 
-    /// Creates a new `AccountDef` with the default value of `receiverSignatureRequired`, `declineStakingReward`.
-    public AccountDef(
+    /// Creates a new `AccountCreateParams` with the default value of `receiverSignatureRequired`, `declineStakingReward`.
+    public AccountCreateParams(
             final Authority authority,
             final @Nullable NativeToken<?, ?> initialBalance,
             final @Nullable String accountMemo,
@@ -58,7 +58,7 @@ public record AccountDef(
 
     @Override
     public boolean equals(final @Nullable Object obj) {
-        return obj instanceof AccountDef other
+        return obj instanceof AccountCreateParams other
             && Objects.equals(authority, other.authority)
             && Objects.equals(initialBalance, other.initialBalance)
             && Objects.equals(accountMemo, other.accountMemo)
@@ -78,19 +78,19 @@ public record AccountDef(
 
     @Override
     public String toString() {
-        return "AccountDef[authority=" + authority + ", initialBalance=" + initialBalance + ", accountMemo=" + accountMemo + ", receiverSignatureRequired=" + receiverSignatureRequired + ", maxAutomaticTokenAssociations=" + maxAutomaticTokenAssociations + ", autoRenewPeriod=" + autoRenewPeriod + ", stakedAccountId=" + stakedAccountId + ", stakedNodeId=" + stakedNodeId + ", declineStakingReward=" + declineStakingReward + ", alias=" + (alias == null ? "null" : "byte[" + alias.length + "]") + "]";
+        return "AccountCreateParams[authority=" + authority + ", initialBalance=" + initialBalance + ", accountMemo=" + accountMemo + ", receiverSignatureRequired=" + receiverSignatureRequired + ", maxAutomaticTokenAssociations=" + maxAutomaticTokenAssociations + ", autoRenewPeriod=" + autoRenewPeriod + ", stakedAccountId=" + stakedAccountId + ", stakedNodeId=" + stakedNodeId + ", declineStakingReward=" + declineStakingReward + ", alias=" + (alias == null ? "null" : "byte[" + alias.length + "]") + "]";
     }
 
-    /// Returns a builder for a new `AccountDef`.
+    /// Returns a builder for a new `AccountCreateParams`.
     ///
     /// @return the builder
     public static Builder builder() {
         return new Builder();
     }
 
-    /// The builder of `AccountDef`.
+    /// The builder of `AccountCreateParams`.
     ///
-    /// `build()` creates the `AccountDef` of the values set one by one.
+    /// `build()` creates the `AccountCreateParams` of the values set one by one.
     ///
     /// A value that is not set is `null`, or has its default value.
     public static final class Builder {
@@ -107,7 +107,7 @@ public record AccountDef(
         private byte @Nullable [] alias;
 
         private Builder() {
-            // created by AccountDef.builder()
+            // created by AccountCreateParams.builder()
         }
 
         /// Sets the `authority`.
@@ -203,13 +203,13 @@ public record AccountDef(
             return this;
         }
 
-        /// Creates the `AccountDef` of the values set.
+        /// Creates the `AccountCreateParams` of the values set.
         ///
-        /// @return the new `AccountDef`
+        /// @return the new `AccountCreateParams`
         /// @throws NullPointerException if a required value is not set
         /// @throws IllegalArgumentException if a value violates its constraints
-        public AccountDef build() {
-            return new AccountDef(
+        public AccountCreateParams build() {
+            return new AccountCreateParams(
                     Objects.requireNonNull(authority, "authority must not be null"),
                     initialBalance,
                     accountMemo,

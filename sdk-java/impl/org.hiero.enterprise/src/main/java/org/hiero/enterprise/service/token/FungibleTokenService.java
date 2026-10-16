@@ -17,7 +17,7 @@ public class FungibleTokenService {
     }
 
     /// Create a fungible token and return its id. The treasury defaults to the operator account; a supply authority
-    /// enables minting and burning.
+    /// enables minting and burning. The same as createToken with TokenCreateParams that have only these values.
     ///
     /// @throws ServiceException if a service error occurs
     public Address createToken(final String name, final String symbol) {
@@ -31,6 +31,14 @@ public class FungibleTokenService {
 
     /// @throws ServiceException if a service error occurs
     public Address createToken(final String name, final String symbol, final AccountId treasuryAccount, final Authority supplyAuthority) {
+        throw new UnsupportedOperationException("Not implemented yet: FungibleTokenService.createToken");
+    }
+
+    /// Create a fungible token with the given parameters and return its id: the general form of the methods above,
+    /// for every option of a new token.
+    ///
+    /// @throws ServiceException if a service error occurs
+    public Address createToken(final TokenCreateParams params) {
         throw new UnsupportedOperationException("Not implemented yet: FungibleTokenService.createToken");
     }
 

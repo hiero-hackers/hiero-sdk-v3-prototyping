@@ -13,6 +13,7 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.mirrornode.nft.Nft;
+import org.hiero.token.TokenSupplyType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -55,6 +56,18 @@ class NftServiceTest {
     void shouldCallCreateNftType3() throws Exception {
         try {
             assertNotNull(create().createNftType(nameValue(), symbolValue(), treasuryAccountValue(), supplyAuthorityValue()));
+        } catch (final Exception e) {
+            if (!(e instanceof ServiceException)) {
+                throw e;
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("createNftType(params) can be called and returns a value (only ServiceException may occur)")
+    void shouldCallCreateNftType4() throws Exception {
+        try {
+            assertNotNull(create().createNftType(paramsValue()));
         } catch (final Exception e) {
             if (!(e instanceof ServiceException)) {
                 throw e;
@@ -320,6 +333,10 @@ class NftServiceTest {
 
     private static AccountId treasuryAccountValue() {
         return new AccountId(0L, 0L, "", 1001L, null, null);
+    }
+
+    private static NftTypeCreateParams paramsValue() {
+        return new NftTypeCreateParams("value", "value", null, TokenSupplyType.INFINITE, null, true, null, new byte[] {1, 2, 3}, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     private static AccountId accountIdValue() {

@@ -59,6 +59,18 @@ class TopicServiceTest {
     }
 
     @Test
+    @DisplayName("createTopic(params) can be called and returns a value (only ServiceException may occur)")
+    void shouldCallCreateTopic4() throws Exception {
+        try {
+            assertNotNull(create().createTopic(paramsValue()));
+        } catch (final Exception e) {
+            if (!(e instanceof ServiceException)) {
+                throw e;
+            }
+        }
+    }
+
+    @Test
     @DisplayName("findById(topicId) can be called (only ServiceException may occur)")
     void shouldCallFindById() throws Exception {
         try {
@@ -146,6 +158,10 @@ class TopicServiceTest {
 
     private static Authority adminAuthorityValue() {
         return new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c").createPublicKey());
+    }
+
+    private static TopicCreateParams paramsValue() {
+        return new TopicCreateParams(null, null, null, null, null);
     }
 
     private static Address topicIdValue() {

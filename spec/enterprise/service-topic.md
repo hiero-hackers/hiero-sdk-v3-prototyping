@@ -25,6 +25,21 @@ Topic {
     @@immutable memo: string
 }
 
+// The parameters of a new topic: everything that can be set when it is created. Nothing is required: without values
+// the topic is public and cannot be changed.
+@@finalType
+TopicCreateParams {
+    // Allows to update and delete the topic; without it the topic cannot be changed. It must sign the creation.
+    @@immutable @@nullable adminAuthority: Authority
+    // Allows to submit messages; without it anybody can submit messages.
+    @@immutable @@nullable submitAuthority: Authority
+    @@immutable @@nullable @@maxLength(100) topicMemo: string
+    // The renewal period applied when the expiration approaches; the network default if absent.
+    @@immutable @@nullable autoRenewPeriod: seconds
+    // The account that pays for the renewal; it must sign the creation.
+    @@immutable @@nullable autoRenewAccount: AccountId
+}
+
 @@finalType
 TopicMessage {
     @@immutable consensusTimestamp: zonedDateTime
@@ -37,11 +52,16 @@ TopicMessage {
 TopicService {
 
     // Create a public topic (anyone may submit messages). An admin authority allows later updates and deletion.
+    // The same as createTopic with TopicCreateParams that have only these values.
     @@throws(service-error) Topic createTopic()
 
     @@throws(service-error) Topic createTopic(memo: string)
 
     @@throws(service-error) Topic createTopic(adminAuthority: Authority, memo: string)
+
+    // Create a topic with the given parameters: the general form of the methods above, for every option of a new
+    // topic.
+    @@throws(service-error) Topic createTopic(params: TopicCreateParams)
     
     @@throws(service-error) @@nullable Topic findById(topicId: Address)
     

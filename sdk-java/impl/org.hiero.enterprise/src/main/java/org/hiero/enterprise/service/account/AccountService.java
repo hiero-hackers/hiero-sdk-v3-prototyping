@@ -12,26 +12,27 @@ public class AccountService {
     public AccountService() {
     }
 
-    /// Creates an account with the given authority; the same as createNewAccount with an AccountDef that has only
-    /// the authority.
+    /// Creates an account with the given authority; the same as createNewAccount with AccountCreateParams that have
+    /// only the authority.
     ///
     /// @throws ServiceException if a service error occurs
     public AccountId createNewAccount(final Authority authority) {
         throw new UnsupportedOperationException("Not implemented yet: AccountService.createNewAccount");
     }
 
-    /// Creates an account with the given authority and initial balance; the same as createNewAccount with an
-    /// AccountDef that has only these two values.
+    /// Creates an account with the given authority and initial balance; the same as createNewAccount with
+    /// AccountCreateParams that have only these two values.
     ///
     /// @throws ServiceException if a service error occurs
     public AccountId createNewAccount(final Authority authority, final NativeToken<?, ?> initialBalance) {
         throw new UnsupportedOperationException("Not implemented yet: AccountService.createNewAccount");
     }
 
-    /// Creates an account as defined: the general form of the methods above, for every option of a new account.
+    /// Creates an account with the given parameters: the general form of the methods above, for every option of a
+    /// new account.
     ///
     /// @throws ServiceException if a service error occurs
-    public AccountId createNewAccount(final AccountDef account) {
+    public AccountId createNewAccount(final AccountCreateParams params) {
         throw new UnsupportedOperationException("Not implemented yet: AccountService.createNewAccount");
     }
 

@@ -2,6 +2,7 @@ package org.hiero.enterprise.service.contract;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.List;
 import org.hiero.enterprise.service.ServiceException;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;
@@ -43,10 +44,22 @@ class SmartContractServiceTest {
     }
 
     @Test
+    @DisplayName("createContract(params) can be called and returns a value (only ServiceException may occur)")
+    void shouldCallCreateContract3() throws Exception {
+        try {
+            assertNotNull(create().createContract(paramsValue()));
+        } catch (final Exception e) {
+            if (!(e instanceof ServiceException)) {
+                throw e;
+            }
+        }
+    }
+
+    @Test
     @DisplayName("callContractFunction(contract, functionName, params) can be called and returns a value (only ServiceException may occur)")
     void shouldCallCallContractFunction() throws Exception {
         try {
-            assertNotNull(create().callContractFunction(contractValue(), functionNameValue(), paramsValue()));
+            assertNotNull(create().callContractFunction(contractValue(), functionNameValue(), paramsValue2()));
         } catch (final Exception e) {
             if (!(e instanceof ServiceException)) {
                 throw e;
@@ -58,7 +71,7 @@ class SmartContractServiceTest {
     @DisplayName("callContractFunction(contractId, functionName, params) can be called and returns a value (only ServiceException may occur)")
     void shouldCallCallContractFunction2() throws Exception {
         try {
-            assertNotNull(create().callContractFunction(contractIdValue(), functionNameValue(), paramsValue()));
+            assertNotNull(create().callContractFunction(contractIdValue(), functionNameValue(), paramsValue2()));
         } catch (final Exception e) {
             if (!(e instanceof ServiceException)) {
                 throw e;
@@ -106,6 +119,10 @@ class SmartContractServiceTest {
         return new byte[] {1, 2, 3};
     }
 
+    private static ContractCreateParams paramsValue() {
+        return new ContractCreateParams(new Address(0L, 0L, "", 1001L), null, List.of(new Param<>("value", "value", new ParamSupplier<>())), null, null, null, null, null, null, null, null, null, true);
+    }
+
     private static Contract contractValue() {
         return new Contract(new ContractId(0L, 0L, "", 1001L, null));
     }
@@ -114,7 +131,7 @@ class SmartContractServiceTest {
         return "value";
     }
 
-    private static Param<?, ?> paramsValue() {
+    private static Param<?, ?> paramsValue2() {
         return new Param<>("value", "value", new ParamSupplier<>());
     }
 

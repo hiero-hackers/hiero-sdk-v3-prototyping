@@ -14,6 +14,7 @@ public class TopicService {
     }
 
     /// Create a public topic (anyone may submit messages). An admin authority allows later updates and deletion.
+    /// The same as createTopic with TopicCreateParams that have only these values.
     ///
     /// @throws ServiceException if a service error occurs
     public Topic createTopic() {
@@ -27,6 +28,14 @@ public class TopicService {
 
     /// @throws ServiceException if a service error occurs
     public Topic createTopic(final Authority adminAuthority, final String memo) {
+        throw new UnsupportedOperationException("Not implemented yet: TopicService.createTopic");
+    }
+
+    /// Create a topic with the given parameters: the general form of the methods above, for every option of a new
+    /// topic.
+    ///
+    /// @throws ServiceException if a service error occurs
+    public Topic createTopic(final TopicCreateParams params) {
         throw new UnsupportedOperationException("Not implemented yet: TopicService.createTopic");
     }
 

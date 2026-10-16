@@ -12,6 +12,9 @@ public class SmartContractService {
     public SmartContractService() {
     }
 
+    /// Create a contract from the bytecode in a file or from the bytecode itself. The same as createContract with
+    /// ContractCreateParams that have only these values.
+    ///
     /// @throws ServiceException if a service error occurs
     public Contract createContract(final Address fileId, final Param<?, ?>... constructorParams) {
         throw new UnsupportedOperationException("Not implemented yet: SmartContractService.createContract");
@@ -19,6 +22,14 @@ public class SmartContractService {
 
     /// @throws ServiceException if a service error occurs
     public Contract createContract(final byte[] contents, final Param<?, ?>... constructorParams) {
+        throw new UnsupportedOperationException("Not implemented yet: SmartContractService.createContract");
+    }
+
+    /// Create a contract with the given parameters: the general form of the methods above, for every option of a new
+    /// contract.
+    ///
+    /// @throws ServiceException if a service error occurs
+    public Contract createContract(final ContractCreateParams params) {
         throw new UnsupportedOperationException("Not implemented yet: SmartContractService.createContract");
     }
 
