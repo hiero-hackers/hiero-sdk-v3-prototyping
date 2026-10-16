@@ -151,12 +151,14 @@ itself — `@@expectThrows` — the two parts are one: `// when / then`. A loop 
 | `let name: Type = expression` | The same with a declared type, for a value whose type is not obvious or must be a supertype. |
 | `call(…)` | Calls a function or method and ignores its result; typically an [assertion](#assertions) such as `assertEquals(expected: 1234, actual: id.num)`. |
 | `@@expectThrows(error-id) call(…)` | Fails the test unless the call fails with the error `error-id`, see [Errors](#errors). |
+| `@@expectThrows(invalid-argument-error) Type{…}` | Fails the test unless creating the value fails because a value violates a validation annotation, see [Errors](#errors). |
 | `if condition { … } else if condition { … } else { … }` | Runs one of the blocks. |
 | `for name in expression { … }` | Runs the block once per element of a list or a set (in an unspecified order, so the block must not depend on it); `range(start: 0, end: 10)` gives a list of integers. |
 
 Statements are written one after another, usually one per line; a `;` after a statement is allowed but not needed.
-An expression on its own is only a statement if it is a call — `a + b` or a bare name is a syntax error, so that a
-broken statement cannot silently turn into several harmless ones.
+An expression on its own is only a statement if it is a call, or a construction `Type{…}` with `@@expectThrows` —
+`a + b` or a bare name is a syntax error, so that a broken statement cannot silently turn into several harmless
+ones.
 
 Comments (`// …` and `/* … */`) may stand anywhere. A comment inside a test is part of it: the generated test of every
 language carries it at the same place, so the given / when / then parts stay visible there. A comment directly above
@@ -338,9 +340,27 @@ Java, JavaScript and TypeScript) or does not compare contents (Go slices and map
 ### Errors
 
 - A call statement annotated with `@@expectThrows(error-id)` passes if the call fails with `error-id`, and fails the
-  test if it completes normally or fails with another error. The annotation is allowed on call statements only — not
-  on `let`, `if` or `for` (`test.invalid`) — and at most once per statement. The error must be declared by at least one
-  call in the statement (`@@throws`) — otherwise the validator reports
+  test if it completes normally or fails with another error. The annotation is allowed on call statements and
+  constructions only — not on `let`, `if` or `for` (`test.invalid`) — and at most once per statement. The error must be
+  declared by at least one call in the statement (`@@throws`) — otherwise the validator reports
+  `test.undeclared-error`.
+- **Violated validation annotations.** A value that violates a validation annotation (`@@min`, `@@max`,
+  `@@minLength`, `@@maxLength`, `@@minSize`, `@@maxSize`, `@@pattern`, `@@urlPattern`) or a `@@oneOf` /
+  `@@oneOrNoneOf` group of immutable attributes is rejected with `invalid-argument-error` (see "Validation annotations"
+  in `api-guideline.md`). So `@@expectThrows(invalid-argument-error)` is declared by every construction of a type
+  with such an annotation or group, and by every call with an annotated parameter:
+
+  ```tests
+  test "a token name longer than 100 characters is rejected" {
+      // when / then
+      @@expectThrows(invalid-argument-error)
+      TokenCreateParams{name: repeat(value: "a", count: 101), symbol: "T"}
+  }
+  ```
+
+  The error of the language is fixed by the mapping of `invalid-argument-error` (Java `IllegalArgumentException`,
+  TypeScript `RangeError`), so a method stub ("not implemented yet") never makes such a test pass. A group of
+  mutable attributes is set one by one and is not checked on creation; expecting its error is
   `test.undeclared-error`.
 - Every other error, anywhere in the test, fails the test with that error.
 - An error that the test language itself raises (division by zero, an index out of range, a value out of range for a
@@ -612,7 +632,7 @@ The spec validator parses and checks every `tests` block. The rules (all ERROR u
 | `test.invalid` | an expression does not resolve: unknown method, attribute or variable, missing or unknown argument, no matching overload, wrong type |
 | `test.duplicate-id` | two tests of one namespace have the same id |
 | `test.duplicate-name` | a variable is bound twice in a test, or has the name of named test values |
-| `test.undeclared-error` | `@@expectThrows` names an error that no call in the statement declares |
+| `test.undeclared-error` | `@@expectThrows` names an error that no call in the statement declares (for `invalid-argument-error`: and no validation annotation checks a value of the statement) |
 | `test.nullable` | a nullable value is used where it may not be (see [`null`](#null)) |
 | `test.incomparable` | `==`/`!=` on incompatible types |
 | `test.out-of-range` | a constant value does not fit its type |

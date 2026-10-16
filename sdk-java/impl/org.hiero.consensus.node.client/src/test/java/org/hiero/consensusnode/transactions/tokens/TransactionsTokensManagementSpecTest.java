@@ -1,6 +1,7 @@
 package org.hiero.consensusnode.transactions.tokens;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import org.hiero.consensusnode.client.Account;
@@ -17,6 +18,11 @@ import org.junit.jupiter.api.Test;
 /// Tests of the spec `transactions-tokens-management`, generated from the `tests` blocks of its `## Testing` section.
 @DisplayName("transactions-tokens-management")
 class TransactionsTokensManagementSpecTest {
+
+    /// One serial beyond the @@maxSize(10) of the serials of an NFT wipe and an NFT metadata update (the serials 1 to 11).
+    private static List<Long> ELEVEN_SERIALS() {
+        return range(1L, 12L);
+    }
 
     /// `consensusnode.transactions.tokens/a-fungible-wipe-transaction-keeps-the-token-the-account-and-the-amount`
     ///
@@ -130,6 +136,68 @@ class TransactionsTokensManagementSpecTest {
         assertEquals(Address.fromString("4.2.0"), update.tokenId());
         assertEquals(List.of(8L, 9L, 10L), update.serials());
         assertEquals(hex("0102030405"), update.metadata());
+    }
+
+    /// `consensusnode.transactions.tokens/a-fungible-wipe-transaction-rejects-an-amount-of-0`
+    ///
+    /// Source: this spec (@@min(1) of amount).
+    @Test
+    @DisplayName("a fungible wipe transaction rejects an amount of 0")
+    void aFungibleWipeTransactionRejectsAnAmountOf0() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenWipeFungibleTransaction(Address.fromString("4.2.0"), AccountId.fromString("0.6.9"), 0L));
+    }
+
+    /// `consensusnode.transactions.tokens/an-nft-wipe-transaction-rejects-an-empty-list-of-serials`
+    ///
+    /// Source: this spec (@@minSize(1)).
+    @Test
+    @DisplayName("an NFT wipe transaction rejects an empty list of serials")
+    void anNFTWipeTransactionRejectsAnEmptyListOfSerials() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenWipeNftTransaction(Address.fromString("4.2.0"), AccountId.fromString("0.6.9"), List.of()));
+    }
+
+    /// `consensusnode.transactions.tokens/an-nft-wipe-transaction-rejects-more-than-10-serials`
+    ///
+    /// Source: this spec (@@maxSize(10): the network caps a wipe at 10 NFTs).
+    @Test
+    @DisplayName("an NFT wipe transaction rejects more than 10 serials")
+    void anNFTWipeTransactionRejectsMoreThan10Serials() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenWipeNftTransaction(Address.fromString("4.2.0"), AccountId.fromString("0.6.9"), ELEVEN_SERIALS()));
+    }
+
+    /// `consensusnode.transactions.tokens/an-nft-metadata-update-rejects-an-empty-list-of-serials`
+    ///
+    /// Source: this spec (@@minSize(1)); the Python SDK (test_build_transaction_body_validation_errors of
+    /// TokenUpdateNftsTransaction: "Missing serial numbers").
+    @Test
+    @DisplayName("an NFT metadata update rejects an empty list of serials")
+    void anNFTMetadataUpdateRejectsAnEmptyListOfSerials() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenUpdateNftsTransaction(Address.fromString("4.2.0"), List.of(), null));
+    }
+
+    /// `consensusnode.transactions.tokens/an-nft-metadata-update-rejects-more-than-10-serials`
+    ///
+    /// Source: this spec (@@maxSize(10): the network caps an update at 10 NFTs).
+    @Test
+    @DisplayName("an NFT metadata update rejects more than 10 serials")
+    void anNFTMetadataUpdateRejectsMoreThan10Serials() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenUpdateNftsTransaction(Address.fromString("4.2.0"), ELEVEN_SERIALS(), null));
+    }
+
+    /// `consensusnode.transactions.tokens/an-nft-metadata-update-rejects-metadata-longer-than-100-bytes`
+    ///
+    /// Source: this spec (@@maxSize(100)); HIP-657 (NFT metadata of at most 100 bytes); the Python SDK
+    /// (test_build_transaction_body_validation_errors of TokenUpdateNftsTransaction: b"x" * 101).
+    @Test
+    @DisplayName("an NFT metadata update rejects metadata longer than 100 bytes")
+    void anNFTMetadataUpdateRejectsMetadataLongerThan100Bytes() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenUpdateNftsTransaction(Address.fromString("4.2.0"), List.of(8L, 9L, 10L), repeat(hex("78"), 101L)));
     }
 
     /// `consensusnode.transactions.tokens/every-token-management-transaction-survives-tobytes-and-frombytes-unchanged`

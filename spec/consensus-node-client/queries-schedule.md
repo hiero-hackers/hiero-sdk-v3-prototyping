@@ -201,6 +201,17 @@ test "a deleted schedule info keeps its deletion time and has no execution time"
     assertEquals(expected: toZonedDateTime(text: "2019-04-01T22:42:22Z"), actual: info.deletionTime)
     assertNull(actual: info.executionTime)
 }
+
+// Source: this spec (@@oneOrNoneOf(executionTime, deletionTime)); HAPI (schedule_get_info.proto, ScheduleInfo: the
+// deletion and the execution time are one `oneof data`).
+test "a schedule info with both an execution and a deletion time is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    ScheduleInfo{scheduleId: DEFAULT, creatorAccountId: DEFAULT, payerAccountId: DEFAULT,
+            scheduledTransaction: consensusnode.transactions.utility.PrngTransaction{},
+            scheduledTransactionId: DEFAULT, expirationTime: SCHEDULE_TEST_TIME, executionTime: SCHEDULE_TEST_TIME,
+            deletionTime: SCHEDULE_TEST_TIME}
+}
 ```
 
 ## Questions & Comments

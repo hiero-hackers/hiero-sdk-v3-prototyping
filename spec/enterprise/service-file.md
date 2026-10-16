@@ -76,8 +76,8 @@ instance FileCreateParams = FileCreateParams{}
 ## Testing
 
 Tests of `FileCreateParams`. The methods of `FileService` talk to the network and are not unit-tested here (among them
-the splitting of large contents into chunks). A violated `@@maxLength` cannot be expected yet: the test language
-expects errors of calls only, and creating a `FileCreateParams` declares none.
+the splitting of large contents into chunks). A memo longer than its `@@maxLength` is rejected with
+`invalid-argument-error`.
 
 ```tests
 // Source: this spec (@@default and @@nullable of FileCreateParams, "Nothing is required"); hiero-enterprise-java
@@ -144,6 +144,13 @@ test "a file memo of 100 characters is accepted" {
 
     // then
     assertEquals(expected: memo, actual: params.fileMemo)
+}
+
+// Source: this spec (@@maxLength(100) of fileMemo); HAPI limits a memo to 100 bytes.
+test "a file memo of 101 characters is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    FileCreateParams{fileMemo: repeat(value: "a", count: 101)}
 }
 ```
 

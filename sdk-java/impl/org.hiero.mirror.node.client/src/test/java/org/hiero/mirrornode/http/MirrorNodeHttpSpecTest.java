@@ -1,6 +1,7 @@
 package org.hiero.mirrornode.http;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Duration;
 import java.util.List;
@@ -19,6 +20,14 @@ class MirrorNodeHttpSpecTest {
     /// path of this spec's example.
     private static List<String> RELATIVE_PATHS() {
         return List.of("/accounts/0.0.1", "/accounts/0.0.1?limit=25", "/accounts/0.0.1/tokens?token.id=gt:0.0.5&order=asc", "/", "/accounts/0x00000000000000000000000000000000000004d2", "/accounts?order=..", "/accounts/0.0.1234?limit=25");
+    }
+
+    /// Paths that @@pattern("^/[^\s]*$") rejects: those of the Go SDK (TestUnitMirrorRestPathRejectsHost) without a leading
+    /// slash or with a space, the absolute URL and the space of the Java SDK (MirrorNodeRestPathTest.rejectsAbsoluteUrl,
+    /// rejectsWhitespace) and the absolute URL of this spec's example. The protocol-relative and ".." paths that the SDKs also
+    /// reject are accepted by the pattern and therefore not listed.
+    private static List<String> REJECTED_PATHS() {
+        return List.of("", "accounts/0.0.1", "https://evil.example.com/steal", "http://evil.example.com/steal", "/accounts/0.0.1 ?limit=1", "https://evil.example/api/v1/accounts", "/accounts/0.0.1 2", "https://mainnet.mirrornode.hedera.com/api/v1/accounts/0.0.1234");
     }
 
     /// `mirrornode.http/a-request-keeps-a-path-relative-to-the-rest-base-url-unchanged`
@@ -89,5 +98,38 @@ class MirrorNodeHttpSpecTest {
         assertNotNull(timeout);
         assertTrue(timeout.compareTo(toDuration("PT1.501S")) < 0);
         assertTrue(timeout.compareTo(toDuration("PT1.499S")) > 0);
+    }
+
+    /// `mirrornode.http/a-request-rejects-a-path-that-is-no-relative-rest-path`
+    ///
+    /// Source: the Go SDK (TestUnitMirrorRestPathRejectsHost), the Java SDK (MirrorNodeRestPathTest.rejectsAbsoluteUrl,
+    /// rejectsWhitespace), this spec's example and this spec (@@pattern("^/[^\s]*$")); the values of REJECTED_PATHS.
+    @Test
+    @DisplayName("a request rejects a path that is no relative REST path")
+    void aRequestRejectsAPathThatIsNoRelativeRESTPath() {
+        for (final String path : REJECTED_PATHS()) {
+            // when / then
+            assertThrows(IllegalArgumentException.class, () -> new MirrorNodeHttpRequest(HttpMethod.GET, path, null, null, Map.of()));
+        }
+    }
+
+    /// `mirrornode.http/a-request-rejects-a-path-with-an-embedded-newline`
+    ///
+    /// Source: the Go SDK (TestUnitMirrorRestPathRejectsHost: "embedded newline"); this spec (@@pattern("^/[^\s]*$")).
+    @Test
+    @DisplayName("a request rejects a path with an embedded newline")
+    void aRequestRejectsAPathWithAnEmbeddedNewline() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new MirrorNodeHttpRequest(HttpMethod.GET, "/accounts\n/0.0.1", null, null, Map.of()));
+    }
+
+    /// `mirrornode.http/a-request-rejects-a-path-with-an-embedded-tab`
+    ///
+    /// Source: the Go SDK (TestUnitMirrorRestPathRejectsHost: "embedded tab"); this spec (@@pattern("^/[^\s]*$")).
+    @Test
+    @DisplayName("a request rejects a path with an embedded tab")
+    void aRequestRejectsAPathWithAnEmbeddedTab() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new MirrorNodeHttpRequest(HttpMethod.GET, "/accounts\t0.0.1", null, null, Map.of()));
     }
 }

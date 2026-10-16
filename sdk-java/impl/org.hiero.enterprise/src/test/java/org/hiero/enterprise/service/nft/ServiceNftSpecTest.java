@@ -1,6 +1,7 @@
 package org.hiero.enterprise.service.nft;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -125,6 +126,46 @@ class ServiceNftSpecTest {
         // then
         assertEquals(TokenSupplyType.FINITE, params.supplyType());
         assertEquals(1L, params.maxSupply());
+    }
+
+    /// `enterprise.service.nft/nft-type-parameters-reject-a-name-of-101-characters`
+    ///
+    /// Source: this spec (@@maxLength(100) of name); HAPI limits a token name to 100 bytes.
+    @Test
+    @DisplayName("NFT type parameters reject a name of 101 characters")
+    void nFTTypeParametersRejectANameOf101Characters() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams(repeat("a", 101L), "NT", null, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `enterprise.service.nft/nft-type-parameters-reject-a-symbol-of-101-characters`
+    ///
+    /// Source: this spec (@@maxLength(100) of symbol); HAPI limits a token symbol to 100 bytes.
+    @Test
+    @DisplayName("NFT type parameters reject a symbol of 101 characters")
+    void nFTTypeParametersRejectASymbolOf101Characters() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams("Nft Tokens", repeat("a", 101L), null, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `enterprise.service.nft/nft-type-parameters-reject-a-memo-of-101-characters`
+    ///
+    /// Source: this spec (@@maxLength(100) of tokenMemo); HAPI limits a memo to 100 bytes.
+    @Test
+    @DisplayName("NFT type parameters reject a memo of 101 characters")
+    void nFTTypeParametersRejectAMemoOf101Characters() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams("Nft Tokens", "NT", null, TokenSupplyType.INFINITE, null, false, repeat("a", 101L), new byte[0], null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `enterprise.service.nft/a-finite-nft-type-rejects-a-max-supply-of-0`
+    ///
+    /// Source: this spec (@@min(1) of maxSupply).
+    @Test
+    @DisplayName("a finite NFT type rejects a max supply of 0")
+    void aFiniteNFTTypeRejectsAMaxSupplyOf0() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams("Nft Tokens", "NT", null, TokenSupplyType.FINITE, 0L, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
     }
 
     private static NftTypeCreateParams defaultNftTypeCreateParams() {

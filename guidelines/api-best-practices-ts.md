@@ -457,6 +457,19 @@ function isAbsoluteUrl(value: string): boolean {
 `new URL(value)` throws for a relative URL, and the `host` check rejects the absolute forms without one (`file:`,
 `data:`).
 
+### `@@oneOf` and `@@oneOrNoneOf`
+
+The constructor checks the groups of `@@immutable` attributes: `@@oneOf(a, b)` exactly one is not `null` (or
+omitted), `@@oneOrNoneOf(a, b)` at most one; otherwise it throws a `RangeError`, like any other violated constraint.
+The check counts the values passed in `init`, so it also covers attributes inherited from a superclass. The attributes
+of a mutable group are `null` after construction and are set one by one, so such a group is not checked.
+
+```ts
+if ((init.stakedAccountId != null ? 1 : 0) + (init.stakedNodeId != null ? 1 : 0) > 1) {
+    throw new RangeError("at most one of stakedAccountId, stakedNodeId may be set");
+}
+```
+
 ## Collections
 
 - The public API uses `readonly T[]`, `ReadonlySet<T>` and `ReadonlyMap<K, V>` and never the mutable interfaces.

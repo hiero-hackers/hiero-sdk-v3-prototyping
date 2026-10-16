@@ -431,6 +431,22 @@ test "a request keeps its own timeout and headers" {
     assertEquals(expected: body, actual: request.body)
 }
 
+// Source: this spec (@@urlPattern: url is absolute; no base-URL resolution happens here). The path of the first
+// example without scheme and host.
+test "a request with a relative URL is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    HttpRequest{method: HttpMethod.GET, url: "/api/v1/accounts/0.0.1234", body: null, timeout: null, headers: {}}
+}
+
+// Source: this spec (@@urlPattern: an absolute URL has a scheme). The URL of the first example without its scheme.
+test "a request with a URL without scheme is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    HttpRequest{method: HttpMethod.GET, url: "mainnet.mirrornode.hedera.com/api/v1/accounts/0.0.1234", body: null,
+            timeout: null, headers: {}}
+}
+
 // Source: this spec (an HttpClient carries the configuration it applies to every exchange; createHttpClient creates
 // the default client for a configuration).
 test "the default client applies the configuration it was created with" {

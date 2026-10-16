@@ -123,6 +123,20 @@ class TestResolverTest {
     }
 
     @Test
+    void namedTestValuesShouldUseTheStringEscapesOfTheTestLanguage() {
+        final LinkedModel model = LinkedModel.of(validate("values TEXTS: list<string> = [\"a\\nb\", \"\\u{1F600}\"]\n",
+                """
+                test "uses them" {
+                    assertEquals(expected: 3, actual: length(value: TEXTS[0]))
+                }
+                """).model());
+        final InstanceExpression.ListValue texts = (InstanceExpression.ListValue) model.testValues().getFirst()
+                .value();
+        assertThat(texts.items()).extracting(i -> ((org.hiero.sdk.v3.metalang.ast.Literal.StringLiteral)
+                ((InstanceExpression.Value) i).literal()).value()).containsExactly("a\nb", "\uD83D\uDE00");
+    }
+
+    @Test
     void namedTestValuesShouldBeReported() {
         final String uses = """
                 test "uses them" {
@@ -149,6 +163,59 @@ class TestResolverTest {
     @Test
     void namedTestValuesWithoutTestsShouldBeReportedAsUnused() {
         assertThat(rules("values NAMES: list<string> = [\"a\"]\n", "")).containsExactly("test.unused-values");
+    }
+
+    @Test
+    void aViolatedValidationAnnotationShouldBeAnInvalidArgumentError() {
+        final String schema = """
+                namespace v
+
+                Limited {
+                    @@immutable @@min(1) count: int32
+                }
+
+                @@oneOf(a, b)
+                Choice {
+                    @@immutable @@nullable a: string
+                    @@immutable @@nullable b: string
+                }
+
+                @@oneOf(a, b)
+                Pending {
+                    @@nullable a: string
+                    @@nullable b: string
+                }
+
+                Plain {
+                    @@immutable count: int32
+                }
+
+                Service {
+                    @@static int32 take(@@maxLength(3) text: string)
+                    @@static int32 free(text: string)
+                }
+                """;
+        final java.util.function.Function<String, List<String>> rules = tests -> new MetaLang().validate(Map.of(
+                "v.md", "# V\n\n## Description\n\nText.\n\n## API Schema\n\n```\n" + schema + "```\n\n## Testing\n\n"
+                        + "```tests\n" + tests + "```\n\n## Questions & Comments\n")).diagnostics().stream()
+                .map(Diagnostic::ruleId).filter(r -> r.startsWith("test.")).toList();
+        // a construction or call checked by a validation annotation or an immutable @@oneOf group
+        assertThat(rules.apply("""
+                test "rejected" {
+                    @@expectThrows(invalid-argument-error)
+                    Limited{count: 0}
+                    @@expectThrows(invalid-argument-error)
+                    Choice{a: "x", b: "y"}
+                    @@expectThrows(invalid-argument-error)
+                    Service.take(text: "four")
+                }
+                """)).isEmpty();
+        // nothing checks these values: no validation annotation, a mutable group, no annotated parameter
+        for (final String statement : List.of("Plain{count: 0}", "Pending{a: \"x\", b: \"y\"}",
+                "Service.free(text: \"four\")")) {
+            assertThat(rules.apply("test \"rejected\" {\n    @@expectThrows(invalid-argument-error)\n    "
+                    + statement + "\n}\n")).as(statement).containsExactly("test.undeclared-error");
+        }
     }
 
     @Test

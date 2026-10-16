@@ -81,8 +81,7 @@ instance AccountCreateParams = AccountCreateParams{authority: DEFAULT}
 ## Testing
 
 Tests of `AccountCreateParams`. The methods of `AccountService` talk to the network and are not unit-tested here. A
-violation of `@@oneOrNoneOf` (both staking targets set) cannot be expected yet: the test language expects errors of
-calls only, and creating an `AccountCreateParams` declares none.
+violation of `@@oneOrNoneOf` (both staking targets set) is rejected with `invalid-argument-error`.
 
 ```tests
 // Source: this spec (@@default and @@nullable of AccountCreateParams).
@@ -147,6 +146,14 @@ test "an account is staked to an account, to a node or to neither" {
     assertNull(actual: toNode.stakedAccountId)
     assertNull(actual: toNeither.stakedAccountId)
     assertNull(actual: toNeither.stakedNodeId)
+}
+
+// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI crypto_create.proto (staked_id is a oneof:
+// staked_account_id or staked_node_id).
+test "account parameters staked to both an account and a node are rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    AccountCreateParams{authority: DEFAULT, stakedAccountId: DEFAULT(AccountId), stakedNodeId: 3}
 }
 ```
 

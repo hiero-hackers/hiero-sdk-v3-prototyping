@@ -1,6 +1,7 @@
 package org.hiero.consensusnode.transactions.accounts;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -108,6 +109,18 @@ class TransactionsAccountsSpecTest {
             assertEquals(packed.toBytes(), restored.toBytes());
             assertEquals(packed.signableBodies(), restored.signableBodies());
         }
+    }
+
+    /// `consensusnode.transactions.accounts/an-account-create-transaction-rejects-being-staked-to-an-account-and-to-a-node`
+    ///
+    /// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI (CryptoCreateTransactionBody.staked_id is a
+    /// oneof); the C++ SDK (AccountCreateTransactionUnitTests.ResetStakedAccountId and ResetStakedNodeId) and the Python SDK
+    /// (test_set_stake_account_id_reset_stake_node_id): setting one clears the other.
+    @Test
+    @DisplayName("an account create transaction rejects being staked to an account and to a node")
+    void anAccountCreateTransactionRejectsBeingStakedToAnAccountAndToANode() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new AccountCreateTransaction(defaultAuthority(), null, null, false, null, null, AccountId.fromString("0.0.3"), 4L, false, null));
     }
 
     /// `consensusnode.transactions.accounts/an-account-update-transaction-changes-nothing-but-what-it-names`
@@ -332,6 +345,17 @@ class TransactionsAccountsSpecTest {
 
         // then
         assertEquals(delegatingSpender, allowance.delegatingSpender());
+    }
+
+    /// `consensusnode.transactions.accounts/a-serial-grant-rejects-an-empty-list-of-serials`
+    ///
+    /// Source: this spec (@@minSize(1): the whole collection is granted by an NftCollectionGrant, not by an empty list of
+    /// serials as in the current SDKs, e.g. the JavaScript SDK TokenNftAllowance "toProtobuf() with no serial numbers").
+    @Test
+    @DisplayName("a serial grant rejects an empty list of serials")
+    void aSerialGrantRejectsAnEmptyListOfSerials() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new NftSerialGrant(List.of()));
     }
 
     /// `consensusnode.transactions.accounts/an-allowance-approve-transaction-survives-tobytes-and-frombytes`

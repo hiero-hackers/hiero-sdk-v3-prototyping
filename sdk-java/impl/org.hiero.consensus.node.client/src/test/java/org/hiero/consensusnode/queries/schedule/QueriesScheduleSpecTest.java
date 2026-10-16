@@ -1,6 +1,7 @@
 package org.hiero.consensusnode.queries.schedule;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -91,6 +92,17 @@ class QueriesScheduleSpecTest {
         assertEquals(toZonedDateTime("2019-04-01T22:42:22Z"), info.expirationTime());
         assertEquals(toZonedDateTime("2019-04-01T22:42:22Z"), info.deletionTime());
         assertNull(info.executionTime());
+    }
+
+    /// `consensusnode.queries.schedule/a-schedule-info-with-both-an-execution-and-a-deletion-time-is-rejected`
+    ///
+    /// Source: this spec (@@oneOrNoneOf(executionTime, deletionTime)); HAPI (schedule_get_info.proto, ScheduleInfo: the
+    /// deletion and the execution time are one `oneof data`).
+    @Test
+    @DisplayName("a schedule info with both an execution and a deletion time is rejected")
+    void aScheduleInfoWithBothAnExecutionAndADeletionTimeIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new ScheduleInfo(defaultAddress(), defaultAccountId(), defaultAccountId(), new PrngTransaction(null), defaultTransactionId(), List.of(), null, null, SCHEDULE_TEST_TIME(), false, SCHEDULE_TEST_TIME(), SCHEDULE_TEST_TIME()));
     }
 
     private static Address defaultAddress() {

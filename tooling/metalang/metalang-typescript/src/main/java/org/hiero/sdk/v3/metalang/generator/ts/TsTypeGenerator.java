@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
+import org.hiero.sdk.v3.metalang.generator.OneOfGroups;
 import org.hiero.sdk.v3.metalang.model.EnumValueDefinition;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
 import org.hiero.sdk.v3.metalang.model.MethodDefinition;
@@ -152,6 +153,15 @@ final class TsTypeGenerator {
                 constructor.append(INDENT).append(INDENT).append("this.#").append(field.name()).append(" = ")
                         .append(copyIn(field, local)).append(";\n");
             }
+        }
+        for (final OneOfGroups.Group group : OneOfGroups.checked(type)) {
+            final String count = group.fields().stream().map(f -> "(init." + f + " != null ? 1 : 0)")
+                    .collect(Collectors.joining(" + "));
+            constructor.append(INDENT).append(INDENT).append("if (").append(count)
+                    .append(group.exactlyOne() ? " !== 1" : " > 1").append(") {\n").append(INDENT).append(INDENT)
+                    .append(INDENT).append("throw new RangeError(\"").append(group.message()).append("\");\n")
+                    .append(INDENT).append(INDENT).append("}\n");
+            rangeChecks = true;
         }
         if (!context.hasSubtypes(type.name())) {
             constructor.append(INDENT).append(INDENT).append("Object.freeze(this);\n");

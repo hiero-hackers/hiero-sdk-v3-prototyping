@@ -132,7 +132,8 @@ public final class SchemaParser {
     }
 
     /**
-     * An expression statement must be a call. Statements are not separated by a token and the keywords are valid
+     * An expression statement must be a call, or a construction that is expected to fail ({@code @@expectThrows}:
+     * the value violates a validation annotation). Statements are not separated by a token and the keywords are valid
      * names, so without this check a broken statement such as {@code let x 1} would be read as the three statements
      * {@code let}, {@code x} and {@code 1}.
      */
@@ -140,9 +141,11 @@ public final class SchemaParser {
         for (final Statement statement : statements) {
             switch (statement) {
                 case Statement.Evaluate evaluate when !(evaluate.expression() instanceof Expression.Call
-                        || evaluate.expression() instanceof Expression.MethodCall) ->
-                        out.report(Rule.SYNTAX_ERROR, "A statement must be 'let', 'if', 'for' or a call",
-                                evaluate.location());
+                        || evaluate.expression() instanceof Expression.MethodCall
+                        || evaluate.expression() instanceof Expression.Construct
+                        && evaluate.annotations().stream().anyMatch(a -> a.name().equals("expectThrows"))) ->
+                        out.report(Rule.SYNTAX_ERROR, "A statement must be 'let', 'if', 'for', a call, or a "
+                                + "construction with @@expectThrows", evaluate.location());
                 case Statement.If conditional -> {
                     requireCalls(conditional.then(), out);
                     requireCalls(conditional.otherwise(), out);

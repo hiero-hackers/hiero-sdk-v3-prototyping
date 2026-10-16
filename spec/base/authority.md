@@ -273,6 +273,30 @@ test "authorities are equal when their trees match" {
             actual: AuthorityList{children: [alice, bob], threshold: 2})
     assertNotEquals(unexpected: of(threshold: 1, children: alice), actual: alice)
 }
+
+// Source: this spec (@@minSize(1) children: an empty AuthorityList is forbidden, "remove this key" is no Authority).
+test "a composition without children is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    AuthorityList{children: [], threshold: 1}
+}
+
+// Source: this spec (@@min(1) threshold of AuthorityList).
+test "a composition with threshold 0 is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    AuthorityList{children: [of(publicKey: PUBLIC_KEYS[0])], threshold: 0}
+}
+
+// Source: this spec (@@min(1) threshold of the m-of-n factory of(threshold, children)).
+test "the m-of-n factory rejects threshold 0" {
+    // given
+    let child = of(publicKey: PUBLIC_KEYS[0])
+
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    of(threshold: 0, children: child)
+}
 ```
 
 ## Questions & Comments

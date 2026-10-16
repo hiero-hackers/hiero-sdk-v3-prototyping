@@ -1,6 +1,7 @@
 package org.hiero.consensusnode.transactions.tokens;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -39,6 +40,21 @@ class TransactionsTokensSpecTest {
     /// whole seconds.
     private static ZonedDateTime SDK_TEST_EXPIRATION_TIME() {
         return toZonedDateTime("2019-04-01T22:42:22Z");
+    }
+
+    /// One character beyond the @@maxLength(100) of the token name, symbol and memo.
+    private static String TEXT_OF_101_CHARACTERS() {
+        return repeat("a", 101L);
+    }
+
+    /// One entry beyond the @@maxSize(10) of the NFT mint metadata (11 entries).
+    private static List<byte[]> ELEVEN_METADATA_ENTRIES() {
+        return List.of(new byte[] {(byte) 1}, new byte[] {(byte) 2}, new byte[] {(byte) 3}, new byte[] {(byte) 4}, new byte[] {(byte) 5}, new byte[] {(byte) 6}, new byte[] {(byte) 7}, new byte[] {(byte) 8}, new byte[] {(byte) 9}, new byte[] {(byte) 10}, new byte[] {(byte) 11});
+    }
+
+    /// One serial beyond the @@maxSize(10) of the NFT burn serials (the serials 1 to 11).
+    private static List<Long> ELEVEN_SERIALS() {
+        return range(1L, 12L);
     }
 
     /// `consensusnode.transactions.tokens/a-token-create-transaction-without-optional-values-has-the-defaults-of-the-spec`
@@ -269,6 +285,137 @@ class TransactionsTokensSpecTest {
         // then
         assertEquals(Address.fromString("4.2.0"), burn.tokenId());
         assertEquals(List.of(420L, 1L, 2L), burn.serials());
+    }
+
+    /// `consensusnode.transactions.tokens/a-token-create-transaction-rejects-a-name-longer-than-100-characters`
+    ///
+    /// Source: this spec (@@maxLength(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
+    @Test
+    @DisplayName("a token create transaction rejects a name longer than 100 characters")
+    void aTokenCreateTransactionRejectsANameLongerThan100Characters() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction(TEXT_OF_101_CHARACTERS(), "test symbol", TokenType.FUNGIBLE_COMMON, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `consensusnode.transactions.tokens/a-token-create-transaction-rejects-a-symbol-longer-than-100-characters`
+    ///
+    /// Source: this spec (@@maxLength(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
+    @Test
+    @DisplayName("a token create transaction rejects a symbol longer than 100 characters")
+    void aTokenCreateTransactionRejectsASymbolLongerThan100Characters() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction("test name", TEXT_OF_101_CHARACTERS(), TokenType.FUNGIBLE_COMMON, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `consensusnode.transactions.tokens/a-token-create-transaction-rejects-a-memo-longer-than-100-characters`
+    ///
+    /// Source: this spec (@@maxLength(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
+    @Test
+    @DisplayName("a token create transaction rejects a memo longer than 100 characters")
+    void aTokenCreateTransactionRejectsAMemoLongerThan100Characters() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction("test name", "test symbol", TokenType.FUNGIBLE_COMMON, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.INFINITE, null, false, TEXT_OF_101_CHARACTERS(), new byte[0], null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `consensusnode.transactions.tokens/a-token-create-transaction-rejects-a-maximum-supply-of-0`
+    ///
+    /// Source: this spec (@@min(1) of maxSupply); the network rejects a finite token without a positive maximum supply
+    /// (INVALID_TOKEN_MAX_SUPPLY).
+    @Test
+    @DisplayName("a token create transaction rejects a maximum supply of 0")
+    void aTokenCreateTransactionRejectsAMaximumSupplyOf0() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction("test name", "test symbol", TokenType.NON_FUNGIBLE_UNIQUE, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.FINITE, 0L, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `consensusnode.transactions.tokens/a-token-update-transaction-rejects-a-name-longer-than-100-characters`
+    ///
+    /// Source: this spec (@@maxLength(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
+    @Test
+    @DisplayName("a token update transaction rejects a name longer than 100 characters")
+    void aTokenUpdateTransactionRejectsANameLongerThan100Characters() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenUpdateTransaction(Address.fromString("4.2.0"), TEXT_OF_101_CHARACTERS(), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `consensusnode.transactions.tokens/a-token-update-transaction-rejects-a-symbol-longer-than-100-characters`
+    ///
+    /// Source: this spec (@@maxLength(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
+    @Test
+    @DisplayName("a token update transaction rejects a symbol longer than 100 characters")
+    void aTokenUpdateTransactionRejectsASymbolLongerThan100Characters() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenUpdateTransaction(Address.fromString("4.2.0"), null, TEXT_OF_101_CHARACTERS(), null, null, null, null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `consensusnode.transactions.tokens/a-token-update-transaction-rejects-a-memo-longer-than-100-characters`
+    ///
+    /// Source: this spec (@@maxLength(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
+    @Test
+    @DisplayName("a token update transaction rejects a memo longer than 100 characters")
+    void aTokenUpdateTransactionRejectsAMemoLongerThan100Characters() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenUpdateTransaction(Address.fromString("4.2.0"), null, null, null, TEXT_OF_101_CHARACTERS(), null, null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `consensusnode.transactions.tokens/a-fungible-mint-transaction-rejects-an-amount-of-0`
+    ///
+    /// Source: this spec (@@min(1) of amount).
+    @Test
+    @DisplayName("a fungible mint transaction rejects an amount of 0")
+    void aFungibleMintTransactionRejectsAnAmountOf0() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenMintFungibleTransaction(Address.fromString("4.2.0"), 0L));
+    }
+
+    /// `consensusnode.transactions.tokens/an-nft-mint-transaction-rejects-an-empty-list-of-metadata`
+    ///
+    /// Source: this spec (@@minSize(1): one metadata entry per new serial).
+    @Test
+    @DisplayName("an NFT mint transaction rejects an empty list of metadata")
+    void anNFTMintTransactionRejectsAnEmptyListOfMetadata() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenMintNftTransaction(Address.fromString("4.2.0"), List.of()));
+    }
+
+    /// `consensusnode.transactions.tokens/an-nft-mint-transaction-rejects-more-than-10-metadata-entries`
+    ///
+    /// Source: this spec (@@maxSize(10): the network caps a mint at 10 NFTs, TOKEN_MAX_BATCH_SIZE_REACHED).
+    @Test
+    @DisplayName("an NFT mint transaction rejects more than 10 metadata entries")
+    void anNFTMintTransactionRejectsMoreThan10MetadataEntries() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenMintNftTransaction(Address.fromString("4.2.0"), ELEVEN_METADATA_ENTRIES()));
+    }
+
+    /// `consensusnode.transactions.tokens/a-fungible-burn-transaction-rejects-an-amount-of-0`
+    ///
+    /// Source: this spec (@@min(1) of amount).
+    @Test
+    @DisplayName("a fungible burn transaction rejects an amount of 0")
+    void aFungibleBurnTransactionRejectsAnAmountOf0() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenBurnFungibleTransaction(Address.fromString("4.2.0"), 0L));
+    }
+
+    /// `consensusnode.transactions.tokens/an-nft-burn-transaction-rejects-an-empty-list-of-serials`
+    ///
+    /// Source: this spec (@@minSize(1)).
+    @Test
+    @DisplayName("an NFT burn transaction rejects an empty list of serials")
+    void anNFTBurnTransactionRejectsAnEmptyListOfSerials() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenBurnNftTransaction(Address.fromString("4.2.0"), List.of()));
+    }
+
+    /// `consensusnode.transactions.tokens/an-nft-burn-transaction-rejects-more-than-10-serials`
+    ///
+    /// Source: this spec (@@maxSize(10): the network caps a burn at 10 NFTs, TOKEN_MAX_BATCH_SIZE_REACHED).
+    @Test
+    @DisplayName("an NFT burn transaction rejects more than 10 serials")
+    void anNFTBurnTransactionRejectsMoreThan10Serials() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenBurnNftTransaction(Address.fromString("4.2.0"), ELEVEN_SERIALS()));
     }
 
     /// `consensusnode.transactions.tokens/every-token-lifecycle-transaction-survives-tobytes-and-frombytes-unchanged`

@@ -1,6 +1,7 @@
 package org.hiero.consensusnode.admin.nodes;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import org.hiero.authority.Authority;
@@ -89,6 +90,29 @@ class TransactionsNodesSpecTest {
         assertNotEquals(endpoint, NODE_DOMAIN_ENDPOINT());
     }
 
+    /// `consensusnode.admin.nodes/an-endpoint-with-both-an-ip-address-and-a-domain-name-is-rejected`
+    ///
+    /// Source: the Java (validateThrowsOnIpAndDomain), Go (TestEndpointValidateFailure "BothAddressAndDomain") and Python
+    /// (test_validate_no_ip_and_domain_containing_both_ip_and_domain) Endpoint unit tests; `@@oneOf(ipAddress, domainName)`
+    /// of this spec.
+    @Test
+    @DisplayName("an endpoint with both an IP address and a domain name is rejected")
+    void anEndpointWithBothAnIPAddressAndADomainNameIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), "node7.consensus.example", 50211));
+    }
+
+    /// `consensusnode.admin.nodes/an-endpoint-with-neither-an-ip-address-nor-a-domain-name-is-rejected`
+    ///
+    /// Source: the Go Endpoint unit test (TestEndpointValidateFailure "NeitherAddressNorDomain");
+    /// `@@oneOf(ipAddress, domainName)` of this spec.
+    @Test
+    @DisplayName("an endpoint with neither an IP address nor a domain name is rejected")
+    void anEndpointWithNeitherAnIPAddressNorADomainNameIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new ServiceEndpoint(null, null, 50211));
+    }
+
     /// `consensusnode.admin.nodes/a-node-create-transaction-keeps-all-its-attributes`
     ///
     /// Source: the Java, Go (TestUnitNodeCreateTransactionGet), Python (test_constructor_with_parameters), C++, JavaScript
@@ -129,6 +153,26 @@ class TransactionsNodesSpecTest {
         assertFalse(transaction.declineReward());
         assertNull(transaction.description());
         assertNull(transaction.grpcWebProxyEndpoint());
+    }
+
+    /// `consensusnode.admin.nodes/a-node-create-transaction-without-gossip-endpoints-is-rejected`
+    ///
+    /// Source: HAPI node_create.proto (gossip_endpoint: "This list MUST NOT be empty"); `@@minSize(1)` of this spec.
+    @Test
+    @DisplayName("a node create transaction without gossip endpoints is rejected")
+    void aNodeCreateTransactionWithoutGossipEndpointsIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(defaultAccountId(), null, List.of(), List.of(NODE_DOMAIN_ENDPOINT()), GOSSIP_CA_CERTIFICATE(), GRPC_CERTIFICATE_HASH(), defaultAuthority(), false, null));
+    }
+
+    /// `consensusnode.admin.nodes/a-node-create-transaction-without-service-endpoints-is-rejected`
+    ///
+    /// Source: HAPI node_create.proto (service_endpoint: "This list MUST NOT be empty"); `@@minSize(1)` of this spec.
+    @Test
+    @DisplayName("a node create transaction without service endpoints is rejected")
+    void aNodeCreateTransactionWithoutServiceEndpointsIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(defaultAccountId(), null, List.of(defaultServiceEndpoint()), List.of(), GOSSIP_CA_CERTIFICATE(), GRPC_CERTIFICATE_HASH(), defaultAuthority(), false, null));
     }
 
     /// `consensusnode.admin.nodes/a-node-update-transaction-changes-nothing-but-what-is-set`

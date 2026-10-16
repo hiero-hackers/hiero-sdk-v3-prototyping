@@ -124,6 +124,51 @@ TokenRejectReceipt extends Receipt {
 }
 ```
 
+## Default Instances for Testing
+
+```
+// One pending airdrop beyond the @@maxSize(10) of a claim or a cancel: the ten fungible airdrops of the tokens 0.0.8000
+// to 0.0.8009 and an eleventh of the token 0.0.9999 from 0.0.8001 to 0.0.8002, as in the Python SDK
+// (token_airdrop_claim_test, test_cannot_exceed_max_airdrops).
+values ELEVEN_PENDING_AIRDROPS: list<PendingAirdrop> = [
+        PendingAirdrop{senderId: AccountId.fromString(value: "0.0.8001"), receiverId: AccountId.fromString(value: "0.0.8002"),
+                tokenId: Address.fromString(address: "0.0.8000")},
+        PendingAirdrop{senderId: AccountId.fromString(value: "0.0.8001"), receiverId: AccountId.fromString(value: "0.0.8002"),
+                tokenId: Address.fromString(address: "0.0.8001")},
+        PendingAirdrop{senderId: AccountId.fromString(value: "0.0.8001"), receiverId: AccountId.fromString(value: "0.0.8002"),
+                tokenId: Address.fromString(address: "0.0.8002")},
+        PendingAirdrop{senderId: AccountId.fromString(value: "0.0.8001"), receiverId: AccountId.fromString(value: "0.0.8002"),
+                tokenId: Address.fromString(address: "0.0.8003")},
+        PendingAirdrop{senderId: AccountId.fromString(value: "0.0.8001"), receiverId: AccountId.fromString(value: "0.0.8002"),
+                tokenId: Address.fromString(address: "0.0.8004")},
+        PendingAirdrop{senderId: AccountId.fromString(value: "0.0.8001"), receiverId: AccountId.fromString(value: "0.0.8002"),
+                tokenId: Address.fromString(address: "0.0.8005")},
+        PendingAirdrop{senderId: AccountId.fromString(value: "0.0.8001"), receiverId: AccountId.fromString(value: "0.0.8002"),
+                tokenId: Address.fromString(address: "0.0.8006")},
+        PendingAirdrop{senderId: AccountId.fromString(value: "0.0.8001"), receiverId: AccountId.fromString(value: "0.0.8002"),
+                tokenId: Address.fromString(address: "0.0.8007")},
+        PendingAirdrop{senderId: AccountId.fromString(value: "0.0.8001"), receiverId: AccountId.fromString(value: "0.0.8002"),
+                tokenId: Address.fromString(address: "0.0.8008")},
+        PendingAirdrop{senderId: AccountId.fromString(value: "0.0.8001"), receiverId: AccountId.fromString(value: "0.0.8002"),
+                tokenId: Address.fromString(address: "0.0.8009")},
+        PendingAirdrop{senderId: AccountId.fromString(value: "0.0.8001"), receiverId: AccountId.fromString(value: "0.0.8002"),
+                tokenId: Address.fromString(address: "0.0.9999")}]
+
+// One token reference beyond the @@maxSize(10) of a token reject: the fungible tokens 0.0.8000 to 0.0.8010.
+values ELEVEN_TOKEN_REFERENCES: list<TokenReference> = [
+        TokenReference{tokenId: Address.fromString(address: "0.0.8000")},
+        TokenReference{tokenId: Address.fromString(address: "0.0.8001")},
+        TokenReference{tokenId: Address.fromString(address: "0.0.8002")},
+        TokenReference{tokenId: Address.fromString(address: "0.0.8003")},
+        TokenReference{tokenId: Address.fromString(address: "0.0.8004")},
+        TokenReference{tokenId: Address.fromString(address: "0.0.8005")},
+        TokenReference{tokenId: Address.fromString(address: "0.0.8006")},
+        TokenReference{tokenId: Address.fromString(address: "0.0.8007")},
+        TokenReference{tokenId: Address.fromString(address: "0.0.8008")},
+        TokenReference{tokenId: Address.fromString(address: "0.0.8009")},
+        TokenReference{tokenId: Address.fromString(address: "0.0.8010")}]
+```
+
 ## Examples
 
 ### Airdrop a fungible token (parks as pending if the recipient is not associated)
@@ -166,9 +211,9 @@ new TokenRejectTransaction()
 ## Testing
 
 Offline tests of the HIP-904 airdrop transactions, written as given / when / then: the defaults and values a
-transaction keeps, the identity of a pending airdrop, and that a packed transaction survives its serialized form.
-Nothing is submitted; whether an airdrop is delivered or parked as pending is decided by the network and tested by the
-Hiero TCK. The comment above each test names the SDK tests it comes from.
+transaction keeps, the identity of a pending airdrop, the list sizes a transaction rejects, and that a packed
+transaction survives its serialized form. Nothing is submitted; whether an airdrop is delivered or parked as pending is
+decided by the network and tested by the Hiero TCK. The comment above each test names the SDK tests it comes from.
 
 ```tests
 // Source: the @@default values of TokenAirdropTransaction; the Python SDK (test_from_proto_without_nft_transfers,
@@ -317,6 +362,54 @@ test "a token reject transaction keeps the owner and its fungible and NFT refere
     // then
     assertEquals(expected: AccountId.fromString(value: "0.6.9"), actual: reject.owner)
     assertEquals(expected: rejections, actual: reject.rejections)
+}
+
+// Source: this spec (@@minSize(1)); the network rejects an empty claim with EMPTY_PENDING_AIRDROP_ID_LIST (the Java
+// SDK, TokenAirdropClaimIntegrationTest "Cannot claim the tokens with empty list") and the Python SDK
+// (test_min_ids_enforced_on_build_hits_validation).
+test "a claim airdrop transaction rejects an empty list of pending airdrops" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenClaimAirdropTransaction{pendingAirdrops: []}
+}
+
+// Source: this spec (@@maxSize(10)); the Python SDK (token_airdrop_claim_test, test_cannot_exceed_max_airdrops).
+test "a claim airdrop transaction rejects more than 10 pending airdrops" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenClaimAirdropTransaction{pendingAirdrops: ELEVEN_PENDING_AIRDROPS}
+}
+
+// Source: this spec (@@minSize(1)); the network rejects an empty cancel with EMPTY_PENDING_AIRDROP_ID_LIST (the Java
+// SDK, TokenAirdropCancelIntegrationTest "Cannot cancel the tokens with empty list").
+test "a cancel airdrop transaction rejects an empty list of pending airdrops" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenCancelAirdropTransaction{pendingAirdrops: []}
+}
+
+// Source: this spec (@@maxSize(10), the same protocol cap as a claim).
+test "a cancel airdrop transaction rejects more than 10 pending airdrops" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenCancelAirdropTransaction{pendingAirdrops: ELEVEN_PENDING_AIRDROPS}
+}
+
+// Source: this spec (@@minSize(1)); the network rejects a reject without references with EMPTY_TOKEN_REFERENCE_LIST
+// (the Java SDK, TokenRejectIntegrationTest "Cannot Reject a Token when Token Or NFT ID is not set").
+test "a token reject transaction rejects an empty list of references" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenRejectTransaction{rejections: []}
+}
+
+// Source: this spec (@@maxSize(10)); the network rejects 11 references with TOKEN_REFERENCE_LIST_SIZE_LIMIT_EXCEEDED
+// (the Java SDK, TokenRejectIntegrationTest "Cannot Reject a Token when executing TokenReject and Token Reference List
+// Size Exceeded", and the same test of the Go, JavaScript, Python, Rust and Swift SDKs).
+test "a token reject transaction rejects more than 10 references" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenRejectTransaction{rejections: ELEVEN_TOKEN_REFERENCES}
 }
 
 // Source: the Java SDK (shouldBytes / shouldBytesNoSetters of the TokenAirdrop, TokenClaimAirdrop, TokenCancelAirdrop

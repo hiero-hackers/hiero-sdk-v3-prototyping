@@ -263,7 +263,7 @@ test "network stake keeps its staking parameters and its staking period" {
 - **`ServiceEndpoint` does not state its invariants as annotations.** Its comment says that one of `ipAddressV4` /
   `domainName` is populated, but there is no `@@oneOf(ipAddressV4, domainName)`, and `port` has no
   `@@min(0) @@max(65535)` — the Java SDK rejects `-1` and `65536` (`MirrorNodeServiceEndpointTest`). With the
-  annotations, these SDK tests would apply here too (once the test language can expect a construction error).
+  annotations, these SDK tests would apply here too.
 - **`NetworkStake.stakingPeriod` loses the current period.** The Mirror Node returns both
   `staking_period` — the *current* period as a timestamp range (`from` / `to`) — and
   `staking_period_duration`, the length of a period in **minutes** (1440 on mainnet). V3 has a

@@ -16,6 +16,7 @@ import java.util.stream.IntStream;
 import org.hiero.sdk.v3.metalang.ast.Annotation;
 import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.generator.Constraints;
+import org.hiero.sdk.v3.metalang.generator.OneOfGroups;
 import org.hiero.sdk.v3.metalang.generator.IntegerRange;
 import org.hiero.sdk.v3.metalang.model.EnumValueDefinition;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
@@ -320,9 +321,26 @@ final class TsSamples {
         final Set<QualifiedName> nested = new HashSet<>(visiting);
         nested.add(definition.name());
         final List<String> values = new ArrayList<>();
+        // a @@oneOf group needs one attribute that is set: the first one that has a value
+        final Set<String> setInGroup = new HashSet<>();
+        for (final OneOfGroups.Group group : OneOfGroups.checked(definition)) {
+            if (!group.exactlyOne()) {
+                continue;
+            }
+            for (final String name : group.fields()) {
+                final Optional<FieldDefinition> field = definition.fields().stream()
+                        .filter(f -> f.name().equals(name)).findFirst();
+                if (field.isPresent() && value(LinkedModel.substitute(field.get().type(), arguments.get()),
+                        field.get().annotations(), 0, nested).isPresent()) {
+                    setInGroup.add(name);
+                    break;
+                }
+            }
+        }
         int index = 0;
         for (final FieldDefinition field : definition.fields()) {
-            if (field.hasAnnotation("nullable") || field.hasAnnotation("default")) {
+            if ((field.hasAnnotation("nullable") || field.hasAnnotation("default"))
+                    && !setInGroup.contains(field.name())) {
                 continue; // omitted: null or the default
             }
             final Optional<String> value = value(LinkedModel.substitute(field.type(), arguments.get()),

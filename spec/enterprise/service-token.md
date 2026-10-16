@@ -127,8 +127,7 @@ instance TokenCreateParams = TokenCreateParams{name: "Token Name", symbol: "TKN"
 ## Testing
 
 Tests of `TokenCreateParams`. The methods of `FungibleTokenService` talk to the network and are not unit-tested here.
-A violated validation annotation (`@@maxLength`, `@@min`) cannot be expected yet: the test language expects errors of
-calls only, and creating a `TokenCreateParams` declares none.
+A value that violates a validation annotation (`@@maxLength`, `@@min`) is rejected with `invalid-argument-error`.
 
 ```tests
 // Source: this spec (@@default and @@nullable of TokenCreateParams); the Python SDK
@@ -232,6 +231,34 @@ test "a finite token accepts a max supply of 1" {
     // then
     assertEquals(expected: TokenSupplyType.FINITE, actual: params.supplyType)
     assertEquals(expected: 1, actual: params.maxSupply)
+}
+
+// Source: this spec (@@maxLength(100) of name); HAPI limits a token name to 100 bytes.
+test "token parameters reject a name of 101 characters" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenCreateParams{name: repeat(value: "a", count: 101), symbol: "TKN"}
+}
+
+// Source: this spec (@@maxLength(100) of symbol); HAPI limits a token symbol to 100 bytes.
+test "token parameters reject a symbol of 101 characters" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenCreateParams{name: "Token Name", symbol: repeat(value: "a", count: 101)}
+}
+
+// Source: this spec (@@maxLength(100) of tokenMemo); HAPI limits a memo to 100 bytes.
+test "token parameters reject a memo of 101 characters" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenCreateParams{name: "Token Name", symbol: "TKN", tokenMemo: repeat(value: "a", count: 101)}
+}
+
+// Source: this spec (@@min(1) of maxSupply).
+test "a finite token rejects a max supply of 0" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenCreateParams{name: "Token Name", symbol: "TKN", supplyType: TokenSupplyType.FINITE, maxSupply: 0}
 }
 ```
 

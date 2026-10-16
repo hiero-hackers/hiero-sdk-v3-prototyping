@@ -1,6 +1,7 @@
 package org.hiero.enterprise.service.token;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -130,6 +131,46 @@ class ServiceTokenSpecTest {
         // then
         assertEquals(TokenSupplyType.FINITE, params.supplyType());
         assertEquals(1L, params.maxSupply());
+    }
+
+    /// `enterprise.service.token/token-parameters-reject-a-name-of-101-characters`
+    ///
+    /// Source: this spec (@@maxLength(100) of name); HAPI limits a token name to 100 bytes.
+    @Test
+    @DisplayName("token parameters reject a name of 101 characters")
+    void tokenParametersRejectANameOf101Characters() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams(repeat("a", 101L), "TKN", null, 0, 0L, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `enterprise.service.token/token-parameters-reject-a-symbol-of-101-characters`
+    ///
+    /// Source: this spec (@@maxLength(100) of symbol); HAPI limits a token symbol to 100 bytes.
+    @Test
+    @DisplayName("token parameters reject a symbol of 101 characters")
+    void tokenParametersRejectASymbolOf101Characters() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams("Token Name", repeat("a", 101L), null, 0, 0L, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `enterprise.service.token/token-parameters-reject-a-memo-of-101-characters`
+    ///
+    /// Source: this spec (@@maxLength(100) of tokenMemo); HAPI limits a memo to 100 bytes.
+    @Test
+    @DisplayName("token parameters reject a memo of 101 characters")
+    void tokenParametersRejectAMemoOf101Characters() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams("Token Name", "TKN", null, 0, 0L, TokenSupplyType.INFINITE, null, false, repeat("a", 101L), new byte[0], null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `enterprise.service.token/a-finite-token-rejects-a-max-supply-of-0`
+    ///
+    /// Source: this spec (@@min(1) of maxSupply).
+    @Test
+    @DisplayName("a finite token rejects a max supply of 0")
+    void aFiniteTokenRejectsAMaxSupplyOf0() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams("Token Name", "TKN", null, 0, 0L, TokenSupplyType.FINITE, 0L, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
     }
 
     private static TokenCreateParams defaultTokenCreateParams() {

@@ -274,6 +274,10 @@ class SpecTestGeneratorTest {
                 @@immutable content: $$T
             }
 
+            Limited {
+                @@immutable @@min(1) count: int32
+            }
+
             Numbers {
                 @@immutable small: int8
                 @@immutable i: int32
@@ -388,6 +392,11 @@ class SpecTestGeneratorTest {
                 assertTrue(condition: toSeconds(value: 90) > toSeconds(value: 89))
             }
 
+            test "a value that violates a validation annotation is rejected" {
+                @@expectThrows(invalid-argument-error)
+                Limited{count: 0}
+            }
+
             test "a type literal is passed as class" {
                 assertEquals(expected: 1, actual: Numbers.count(kind: Circle))
             }
@@ -425,6 +434,7 @@ class SpecTestGeneratorTest {
                 .contains("assertTrue(n.m().multiply(n.m()).compareTo(n.m().negate()) >= 0);")
                 .contains("assertInstanceOf(Circle.class, n.shape());")
                 .contains("assertEquals(1, Numbers.count(Circle.class));")
+                .contains("assertThrows(IllegalArgumentException.class, () -> new Limited(0));")
                 .contains("assertEquals(toDuration(\"PT90S\"), toDuration(\"PT1M30S\"));")
                 .contains("Map.ofEntries(Map.entry(1L, 1L)")
                 .contains("    /// Deprecated: replaced\n")

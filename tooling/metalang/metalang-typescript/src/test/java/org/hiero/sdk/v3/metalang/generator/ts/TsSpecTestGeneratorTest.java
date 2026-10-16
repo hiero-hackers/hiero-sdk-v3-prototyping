@@ -303,6 +303,10 @@ class TsSpecTestGeneratorTest {
                 @@immutable content: $$T
             }
 
+            Limited {
+                @@immutable @@min(1) count: int32
+            }
+
             Numbers {
                 @@immutable small: int8
                 @@immutable i: int32
@@ -404,6 +408,11 @@ class TsSpecTestGeneratorTest {
                 assertTrue(condition: toSeconds(value: 90) > toSeconds(value: 89))
             }
 
+            test "a value that violates a validation annotation is rejected" {
+                @@expectThrows(invalid-argument-error)
+                Limited{count: 0}
+            }
+
             test "type literals are classes" {
                 assertEquals(expected: 1, actual: Numbers.count(kind: Circle))
             }
@@ -444,6 +453,7 @@ class TsSpecTestGeneratorTest {
                 .contains("assertTrue(compare(day, other) < 0);")
                 .contains("concat(n.b, hex(\"02\"))")
                 .contains("assertEquals(1, Numbers.count(Circle));")
+                .contains("assert.throws(() => new Limited({ count: 0 }), RangeError);")
                 .contains("assertEquals(toDuration(\"PT90S\"), toDuration(\"PT1M30S\"));")
                 .contains("// - `an interface has no class at runtime`: the type b.Shape has no class at runtime\n")
                 .contains("assert.throws(() => defaultNumbers().find(), NotFoundError);")
@@ -460,6 +470,7 @@ class TsSpecTestGeneratorTest {
         assertThat(run.stubs()).contains("a custom error is expected");
         assertThat(run.stubs()).doesNotContain("doubles and decimals", "values are joined", "dates compare",
                 "date, time and durations are read from ISO 8601",
+                "a value that violates a validation annotation is rejected",
                 "literals, defaults and parentheses");
     }
 

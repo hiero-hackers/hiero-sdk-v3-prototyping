@@ -112,7 +112,8 @@ new SystemDeleteTransaction()
 ## Testing
 
 Offline tests of the attributes the system delete and undelete transactions keep, written as given / when / then.
-Following `@@oneOf(fileId, contractId)`, a transaction that targets a file has no contract and the other way round.
+Following `@@oneOf(fileId, contractId)`, a transaction that targets a file has no contract and the other way round, and
+one with both or neither is rejected with `invalid-argument-error`.
 The comment above each test names the SDK tests it comes from.
 
 ```tests
@@ -151,6 +152,22 @@ test "a system delete of a contract keeps the contract and needs no expiration t
     assertNull(actual: transaction.expirationTime)
 }
 
+// Source: the JavaScript SystemDeleteTransaction unit tests ("should never encode both ids at once": fileID and
+// contractID are a protobuf oneof); `@@oneOf(fileId, contractId)` of this spec.
+test "a system delete of both a file and a contract is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    SystemDeleteTransaction{fileId: DEFAULT(Address), contractId: DEFAULT(ContractId),
+            expirationTime: toZonedDateTime(text: "2019-04-01T22:42:22Z")}
+}
+
+// Source: this spec (`@@oneOf(fileId, contractId)`: exactly one target).
+test "a system delete without a file and without a contract is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    SystemDeleteTransaction{fileId: null, contractId: null, expirationTime: null}
+}
+
 // Source: the Java (shouldSerializeFile), C++, Go and Swift (test_GetSetFileId) SystemUndeleteTransaction unit tests.
 test "a system undelete of a file keeps the file" {
     // given
@@ -176,6 +193,20 @@ test "a system undelete of a contract keeps the contract" {
     // then
     assertNull(actual: transaction.fileId)
     assertEquals(expected: contract, actual: transaction.contractId)
+}
+
+// Source: HAPI system_undelete.proto (fileID and contractID are a oneof); `@@oneOf(fileId, contractId)` of this spec.
+test "a system undelete of both a file and a contract is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    SystemUndeleteTransaction{fileId: DEFAULT(Address), contractId: DEFAULT(ContractId)}
+}
+
+// Source: this spec (`@@oneOf(fileId, contractId)`: exactly one target).
+test "a system undelete without a file and without a contract is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    SystemUndeleteTransaction{fileId: null, contractId: null}
 }
 ```
 

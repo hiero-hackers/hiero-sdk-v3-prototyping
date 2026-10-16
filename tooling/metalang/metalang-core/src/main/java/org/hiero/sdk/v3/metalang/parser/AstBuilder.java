@@ -72,8 +72,15 @@ final class AstBuilder {
      * @return the named test values in source order
      */
     List<TestValues> values(final MetaLangParser.InstancesContext ctx) {
-        return ctx.valuesDecl().stream().map(d -> new TestValues(identifier(d.identifier()), typeRef(d.typeRef()),
-                expression(d.expression()), documentation(d), location(d.VALUES().getSymbol()))).toList();
+        // named test values are expressions of the test language: its string escapes (newline, tab, code point) apply
+        final boolean previous = testStrings;
+        testStrings = true;
+        try {
+            return ctx.valuesDecl().stream().map(d -> new TestValues(identifier(d.identifier()), typeRef(d.typeRef()),
+                    expression(d.expression()), documentation(d), location(d.VALUES().getSymbol()))).toList();
+        } finally {
+            testStrings = previous;
+        }
     }
 
     /**

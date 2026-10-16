@@ -1,6 +1,7 @@
 package org.hiero.consensusnode.queries.accounts;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Duration;
 import java.time.ZoneOffset;
@@ -129,6 +130,28 @@ class QueriesAccountsSpecTest {
         // then
         assertEquals(defaultAccountId(), records.accountId());
         assertEquals(0L, length(records.records()));
+    }
+
+    /// `consensusnode.queries.accounts/a-balance-query-for-both-an-account-and-a-contract-is-rejected`
+    ///
+    /// Source: this spec (@@oneOf(accountId, contractId)); the Python SDK (account_balance_query.py, _make_request: "Specify
+    /// either account_id or contract_id, not both.").
+    @Test
+    @DisplayName("a balance query for both an account and a contract is rejected")
+    void aBalanceQueryForBothAnAccountAndAContractIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new AccountBalanceQuery(defaultAccountId(), defaultContractId()));
+    }
+
+    /// `consensusnode.queries.accounts/a-balance-query-for-neither-an-account-nor-a-contract-is-rejected`
+    ///
+    /// Source: this spec (@@oneOf(accountId, contractId)); the Python SDK (account_balance_query_e2e_test.py,
+    /// test_integration_balance_query_raises_when_neither_source_set: the network rejects it with INVALID_ACCOUNT_ID).
+    @Test
+    @DisplayName("a balance query for neither an account nor a contract is rejected")
+    void aBalanceQueryForNeitherAnAccountNorAContractIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new AccountBalanceQuery(null, null));
     }
 
     private static AccountId defaultAccountId() {

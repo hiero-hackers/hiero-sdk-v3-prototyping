@@ -250,7 +250,8 @@ new NodeDeleteTransaction()
 ## Testing
 
 Offline tests of the endpoints and of the attributes the node transactions keep, written as given / when / then.
-The checks of the consensus node (signatures, `INVALID_ENDPOINT`, limits of the network) are not tested here. The
+The `@@oneOf` of an endpoint and the `@@minSize(1)` of the endpoint lists reject a violating value with
+`invalid-argument-error`; the checks of the consensus node (signatures, limits of the network) are not tested here. The
 comment above each test names the SDK tests it comes from.
 
 ```tests
@@ -297,6 +298,23 @@ test "endpoints are equal when address, name and port are equal" {
     assertNotEquals(unexpected: endpoint, actual: NODE_DOMAIN_ENDPOINT)
 }
 
+// Source: the Java (validateThrowsOnIpAndDomain), Go (TestEndpointValidateFailure "BothAddressAndDomain") and Python
+// (test_validate_no_ip_and_domain_containing_both_ip_and_domain) Endpoint unit tests; `@@oneOf(ipAddress, domainName)`
+// of this spec.
+test "an endpoint with both an IP address and a domain name is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    ServiceEndpoint{ipAddress: IpAddress{bytes: [10, 0, 0, 7]}, domainName: "node7.consensus.example", port: 50211}
+}
+
+// Source: the Go Endpoint unit test (TestEndpointValidateFailure "NeitherAddressNorDomain");
+// `@@oneOf(ipAddress, domainName)` of this spec.
+test "an endpoint with neither an IP address nor a domain name is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    ServiceEndpoint{ipAddress: null, domainName: null, port: 50211}
+}
+
 // Source: the Java, Go (TestUnitNodeCreateTransactionGet), Python (test_constructor_with_parameters), C++, JavaScript
 // and Swift NodeCreateTransaction unit tests.
 test "a node create transaction keeps all its attributes" {
@@ -334,6 +352,24 @@ test "a node create transaction takes the reward and has no description and no p
     assertFalse(condition: transaction.declineReward)
     assertNull(actual: transaction.description)
     assertNull(actual: transaction.grpcWebProxyEndpoint)
+}
+
+// Source: HAPI node_create.proto (gossip_endpoint: "This list MUST NOT be empty"); `@@minSize(1)` of this spec.
+test "a node create transaction without gossip endpoints is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    NodeCreateTransaction{accountId: DEFAULT(AccountId), gossipEndpoints: [], serviceEndpoints: [NODE_DOMAIN_ENDPOINT],
+            gossipCaCertificate: GOSSIP_CA_CERTIFICATE, grpcCertificateHash: GRPC_CERTIFICATE_HASH,
+            adminAuthority: DEFAULT(Authority)}
+}
+
+// Source: HAPI node_create.proto (service_endpoint: "This list MUST NOT be empty"); `@@minSize(1)` of this spec.
+test "a node create transaction without service endpoints is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    NodeCreateTransaction{accountId: DEFAULT(AccountId), gossipEndpoints: [DEFAULT(ServiceEndpoint)],
+            serviceEndpoints: [], gossipCaCertificate: GOSSIP_CA_CERTIFICATE,
+            grpcCertificateHash: GRPC_CERTIFICATE_HASH, adminAuthority: DEFAULT(Authority)}
 }
 
 // Source: the Python (test_constructor_default_values), Go (TestUnitNodeUpdateTransactionSetNothing) and JavaScript
@@ -448,6 +484,5 @@ test "a node delete transaction keeps its node id" {
   bytes, an empty `gossipCaCertificate` and an endpoint with both an IP address and a domain name. This spec states
   only `@@minSize(1)` for the endpoint lists of `NodeCreateTransaction` and the "at most 100 characters" in a
   comment. Whether the limits belong into the API (`@@maxSize(10)`, `@@maxSize(8)`, `@@maxLength(100)`,
-  `@@minSize(1)`, `@@min(1)` for the port) — they are network settings that may change — is open. Even then, a
-  `tests` block could not check them: a violated constructor constraint declares no error id that
-  `@@expectThrows` could name.
+  `@@minSize(1)`, `@@min(1)` for the port) — they are network settings that may change — is open. Once declared, a
+  `tests` block can check them like the `@@minSize(1)` of the endpoint lists (`invalid-argument-error`).

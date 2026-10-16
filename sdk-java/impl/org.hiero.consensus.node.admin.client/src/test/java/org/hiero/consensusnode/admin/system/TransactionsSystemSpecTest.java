@@ -1,6 +1,7 @@
 package org.hiero.consensusnode.admin.system;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZonedDateTime;
 import org.hiero.ledger.Address;
@@ -55,6 +56,27 @@ class TransactionsSystemSpecTest {
         assertNull(transaction.expirationTime());
     }
 
+    /// `consensusnode.admin.system/a-system-delete-of-both-a-file-and-a-contract-is-rejected`
+    ///
+    /// Source: the JavaScript SystemDeleteTransaction unit tests ("should never encode both ids at once": fileID and
+    /// contractID are a protobuf oneof); `@@oneOf(fileId, contractId)` of this spec.
+    @Test
+    @DisplayName("a system delete of both a file and a contract is rejected")
+    void aSystemDeleteOfBothAFileAndAContractIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new SystemDeleteTransaction(defaultAddress(), defaultContractId(), toZonedDateTime("2019-04-01T22:42:22Z")));
+    }
+
+    /// `consensusnode.admin.system/a-system-delete-without-a-file-and-without-a-contract-is-rejected`
+    ///
+    /// Source: this spec (`@@oneOf(fileId, contractId)`: exactly one target).
+    @Test
+    @DisplayName("a system delete without a file and without a contract is rejected")
+    void aSystemDeleteWithoutAFileAndWithoutAContractIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new SystemDeleteTransaction(null, null, null));
+    }
+
     /// `consensusnode.admin.system/a-system-undelete-of-a-file-keeps-the-file`
     ///
     /// Source: the Java (shouldSerializeFile), C++, Go and Swift (test_GetSetFileId) SystemUndeleteTransaction unit tests.
@@ -88,6 +110,26 @@ class TransactionsSystemSpecTest {
         // then
         assertNull(transaction.fileId());
         assertEquals(contract, transaction.contractId());
+    }
+
+    /// `consensusnode.admin.system/a-system-undelete-of-both-a-file-and-a-contract-is-rejected`
+    ///
+    /// Source: HAPI system_undelete.proto (fileID and contractID are a oneof); `@@oneOf(fileId, contractId)` of this spec.
+    @Test
+    @DisplayName("a system undelete of both a file and a contract is rejected")
+    void aSystemUndeleteOfBothAFileAndAContractIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new SystemUndeleteTransaction(defaultAddress(), defaultContractId()));
+    }
+
+    /// `consensusnode.admin.system/a-system-undelete-without-a-file-and-without-a-contract-is-rejected`
+    ///
+    /// Source: this spec (`@@oneOf(fileId, contractId)`: exactly one target).
+    @Test
+    @DisplayName("a system undelete without a file and without a contract is rejected")
+    void aSystemUndeleteWithoutAFileAndWithoutAContractIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new SystemUndeleteTransaction(null, null));
     }
 
     private static Address defaultAddress() {

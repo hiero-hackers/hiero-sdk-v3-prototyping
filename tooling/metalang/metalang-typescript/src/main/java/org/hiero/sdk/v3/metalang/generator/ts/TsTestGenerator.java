@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.ast.Annotation;
 import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.generator.Constraints;
+import org.hiero.sdk.v3.metalang.generator.OneOfGroups;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 import org.hiero.sdk.v3.metalang.generator.IntegerRange;
 import org.hiero.sdk.v3.metalang.generator.RegexSamples;
@@ -142,7 +143,7 @@ public final class TsTestGenerator {
             final List<Input> inputs = fields.stream().map(f -> input(f, variables.get())).toList();
 
             // the attribute values of create()
-            final List<String> values = new ArrayList<>();
+            final Map<String, String> initial = new LinkedHashMap<>();
             for (final Input input : inputs) {
                 final Optional<String> helper = helper(input, 0, true);
                 if (helper.isEmpty() && !input.nullable() && !hasDefault(fields, input)) {
@@ -151,8 +152,25 @@ public final class TsTestGenerator {
                     staticMethods(type);
                     return true;
                 }
-                helper.ifPresent(h -> values.add(INDENT + INDENT + input.name() + ": " + h + "(),\n"));
+                helper.ifPresent(h -> initial.put(input.name(), h));
             }
+            // @@oneOf and @@oneOrNoneOf: the first attribute of a group that has a value is set, the others are null
+            final List<OneOfGroups.Group> groups = OneOfGroups.checked(type);
+            final Set<String> kept = new HashSet<>();
+            for (final OneOfGroups.Group group : groups) {
+                final Optional<String> chosen = group.fields().stream().filter(initial::containsKey).findFirst();
+                chosen.ifPresent(kept::add);
+                if (group.exactlyOne() && chosen.isEmpty()) {
+                    notes.add("no valid value for any of " + String.join(", ", group.fields()) + " of "
+                            + type.name().name() + ": constructor, attribute and method tests");
+                    staticMethods(type);
+                    return true;
+                }
+            }
+            initial.keySet().removeIf(name -> !kept.contains(name)
+                    && groups.stream().anyMatch(g -> g.fields().contains(name)));
+            final List<String> values = new ArrayList<>();
+            initial.forEach((name, h) -> values.add(INDENT + INDENT + name + ": " + h + "(),\n"));
             helpers.put("init", "function init() {\n" + INDENT + "return {\n" + String.join("", values) + INDENT
                     + "};\n}\n");
             helpers.put("create", "function create(): " + typeName + " {\n" + INDENT + "return new " + className
@@ -163,15 +181,19 @@ public final class TsTestGenerator {
                     + INDENT + INDENT + "const subject = new " + className + "(values);\n"
                     + INDENT + INDENT + "assert.ok(subject instanceof " + className + ");\n");
             for (final Input input : inputs) {
-                if (helper(input, 0, true).isPresent()) {
+                if (initial.containsKey(input.name())) {
                     create.append(assertValue("values." + input.name(), "subject." + input.name()));
                 }
             }
             test("creates " + article(type.name().name()) + " and returns the values", false, create.toString());
-            defaultsTest(type, inputs, className);
+            defaultsTest(type, inputs, className, kept);
             for (final Input input : inputs) {
+                // a value of an attribute of a group makes the other attributes of the group null
+                final String others = groups.stream().filter(g -> g.fields().contains(input.name()))
+                        .flatMap(g -> g.fields().stream()).filter(f -> !f.equals(input.name())).distinct()
+                        .map(f -> f + ": null, ").collect(Collectors.joining());
                 final java.util.function.Function<String, String> construct = value -> "new " + className
-                        + "({ ...init(), " + input.name() + ": " + value + " })";
+                        + "({ ...init(), " + others + input.name() + ": " + value + " })";
                 if (!input.nullable()) {
                     test("rejects null for " + input.name(), false, INDENT + INDENT + "assert.throws(() => "
                             + construct.apply("null as never") + ", TypeError);\n");
@@ -187,6 +209,27 @@ public final class TsTestGenerator {
                     }
                 }
                 copyTest(input, "the constructor", construct, null);
+            }
+
+            // @@oneOf and @@oneOrNoneOf: two attributes of a group are rejected, none only for @@oneOf
+            for (final OneOfGroups.Group group : groups) {
+                final List<String> withValue = group.fields().stream()
+                        .filter(f -> inputs.stream().anyMatch(i -> i.name().equals(f)))
+                        .filter(f -> helper(inputs.stream().filter(i -> i.name().equals(f)).findFirst().orElseThrow(),
+                                0, true).isPresent()).toList();
+                if (withValue.size() >= 2) {
+                    final String first = withValue.get(0);
+                    final String second = withValue.get(1);
+                    test("rejects " + first + " and " + second + " together (" + (group.exactlyOne() ? "@@oneOf"
+                            : "@@oneOrNoneOf") + ")", false, INDENT + INDENT + "assert.throws(() => new " + className
+                            + "({ ...init(), " + first + ": " + helperOf(inputs, first) + "(), " + second + ": "
+                            + helperOf(inputs, second) + "() }), RangeError);\n");
+                }
+                if (group.exactlyOne()) {
+                    test("rejects none of " + String.join(", ", group.fields()) + " (@@oneOf)", false, INDENT
+                            + INDENT + "assert.throws(() => new " + className + "({ ...init(), " + group.fields()
+                            .stream().map(f -> f + ": null").collect(Collectors.joining(", ")) + " }), RangeError);\n");
+                }
             }
 
             // setters
@@ -206,14 +249,21 @@ public final class TsTestGenerator {
             return true;
         }
 
+        private String helperOf(final List<Input> inputs, final String name) {
+            return helper(inputs.stream().filter(i -> i.name().equals(name)).findFirst().orElseThrow(), 0, true)
+                    .orElseThrow();
+        }
+
         private static boolean hasDefault(final List<FieldDefinition> fields, final Input input) {
             return fields.stream().anyMatch(f -> f.name().equals(input.name()) && f.hasAnnotation("default"));
         }
 
         private void defaultsTest(final TypeDefinition.ComplexTypeDefinition type, final List<Input> inputs,
-                                  final String className) {
+                                  final String className, final Set<String> kept) {
+            // the attribute of a @@oneOf group that is set is not optional then
             final List<FieldDefinition> optional = type.fields().stream()
-                    .filter(f -> f.hasAnnotation("nullable") || f.hasAnnotation("default")).toList();
+                    .filter(f -> f.hasAnnotation("nullable") || f.hasAnnotation("default"))
+                    .filter(f -> !kept.contains(f.name())).toList();
             if (optional.isEmpty()) {
                 return;
             }

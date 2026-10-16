@@ -89,7 +89,7 @@ bytes seed = receipt.prngBytes;   // 48 bytes
 
 ## Testing
 
-Offline tests of `PrngTransaction`, written as given / when / then: the attributes it keeps and its packed form. The
+Offline tests of `PrngTransaction`, written as given / when / then: the attributes it keeps, its packed form and the range it rejects. The
 random value itself is produced by the network and is tested by the TCK, not here.
 
 ```tests
@@ -125,6 +125,14 @@ test "a PRNG transaction with a range survives toBytes and fromBytes" {
     // then
     assertEquals(expected: bytes, actual: restored.toBytes())
     assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+
+// Source: this spec (@@min(1)); the Python SDK rejects a negative range
+// (test_build_proto_body_with_negative_range_raises_error).
+test "a PRNG transaction rejects a range of 0" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    PrngTransaction{range: 0}
 }
 ```
 

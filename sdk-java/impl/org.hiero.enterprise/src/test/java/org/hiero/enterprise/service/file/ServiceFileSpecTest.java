@@ -1,6 +1,7 @@
 package org.hiero.enterprise.service.file;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZonedDateTime;
 import org.hiero.authority.Authority;
@@ -96,6 +97,16 @@ class ServiceFileSpecTest {
 
         // then
         assertEquals(memo, params.fileMemo());
+    }
+
+    /// `enterprise.service.file/a-file-memo-of-101-characters-is-rejected`
+    ///
+    /// Source: this spec (@@maxLength(100) of fileMemo); HAPI limits a memo to 100 bytes.
+    @Test
+    @DisplayName("a file memo of 101 characters is rejected")
+    void aFileMemoOf101CharactersIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new FileCreateParams(new byte[0], null, null, repeat("a", 101L)));
     }
 
     private static FileCreateParams defaultFileCreateParams() {

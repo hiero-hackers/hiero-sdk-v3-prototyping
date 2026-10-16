@@ -115,6 +115,10 @@ final class TsContext {
     }
 
     ErrorClass error(final String errorId) {
+        if (!errors.containsKey(errorId) && STANDARD_ERRORS.containsKey(errorId)) {
+            // a standard error that no method declares (the error of a violated validation annotation)
+            return new ErrorClass(null, STANDARD_ERRORS.get(errorId));
+        }
         return Objects.requireNonNull(errors.get(errorId), () -> "no error class for " + errorId);
     }
 

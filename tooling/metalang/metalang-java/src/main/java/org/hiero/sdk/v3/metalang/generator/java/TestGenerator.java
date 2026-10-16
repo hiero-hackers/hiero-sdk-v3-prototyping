@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.ast.Annotation;
 import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
+import org.hiero.sdk.v3.metalang.generator.OneOfGroups;
 import org.hiero.sdk.v3.metalang.generator.IntegerRange;
 import org.hiero.sdk.v3.metalang.model.EnumValueDefinition;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
@@ -272,7 +273,7 @@ public final class TestGenerator {
             // @@oneOf and @@oneOrNoneOf: the first attribute of a group that has a value is set, the others are null
             final List<String> values = new ArrayList<>(arguments);
             final Set<String> kept = new HashSet<>();
-            for (final JavaOneOf.Group group : JavaOneOf.checked(type)) {
+            for (final OneOfGroups.Group group : JavaOneOf.checked(type)) {
                 boolean chosen = false;
                 for (final String name : group.fields()) {
                     for (int i = 0; i < parameters.size(); i++) {
@@ -354,7 +355,7 @@ public final class TestGenerator {
             }
 
             // @@oneOf and @@oneOrNoneOf: two attributes of a group are rejected, none only for @@oneOf
-            for (final JavaOneOf.Group group : JavaOneOf.checked(type)) {
+            for (final OneOfGroups.Group group : JavaOneOf.checked(type)) {
                 final List<Integer> members = new ArrayList<>();
                 for (int i = 0; i < parameters.size(); i++) {
                     if (group.fields().contains(parameters.get(i).name())) {
@@ -1134,7 +1135,7 @@ public final class TestGenerator {
             result.set(index, value);
             final Input parameter = parameters.get(index);
             if (!value.equals(nullOf(parameter))) {
-                for (final JavaOneOf.Group group : JavaOneOf.checked(type)) {
+                for (final OneOfGroups.Group group : JavaOneOf.checked(type)) {
                     if (group.fields().contains(parameter.name())) {
                         for (int i = 0; i < parameters.size(); i++) {
                             if (i != index && group.fields().contains(parameters.get(i).name())) {

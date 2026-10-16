@@ -272,6 +272,22 @@ test "account records without records have an empty list" {
     assertEquals(expected: DEFAULT(AccountId), actual: records.accountId)
     assertEquals(expected: 0, actual: length(value: records.records))
 }
+
+// Source: this spec (@@oneOf(accountId, contractId)); the Python SDK (account_balance_query.py, _make_request: "Specify
+// either account_id or contract_id, not both.").
+test "a balance query for both an account and a contract is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    AccountBalanceQuery{accountId: DEFAULT(AccountId), contractId: DEFAULT(ContractId)}
+}
+
+// Source: this spec (@@oneOf(accountId, contractId)); the Python SDK (account_balance_query_e2e_test.py,
+// test_integration_balance_query_raises_when_neither_source_set: the network rejects it with INVALID_ACCOUNT_ID).
+test "a balance query for neither an account nor a contract is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    AccountBalanceQuery{accountId: null, contractId: null}
+}
 ```
 
 ## Questions & Comments

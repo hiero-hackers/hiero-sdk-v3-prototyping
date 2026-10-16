@@ -1,6 +1,7 @@
 package org.hiero.enterprise.service.topic;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Duration;
 import java.time.ZoneOffset;
@@ -81,6 +82,16 @@ class ServiceTopicSpecTest {
 
         // then
         assertEquals(memo, params.topicMemo());
+    }
+
+    /// `enterprise.service.topic/a-topic-memo-of-101-characters-is-rejected`
+    ///
+    /// Source: this spec (@@maxLength(100) of topicMemo); HAPI limits a memo to 100 bytes.
+    @Test
+    @DisplayName("a topic memo of 101 characters is rejected")
+    void aTopicMemoOf101CharactersIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TopicCreateParams(null, null, repeat("a", 101L), null, null));
     }
 
     /// `enterprise.service.topic/a-topic-keeps-the-values-it-is-created-with`

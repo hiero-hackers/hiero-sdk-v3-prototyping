@@ -1,6 +1,7 @@
 package org.hiero.consensusnode.transactions.tokens;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import org.hiero.consensusnode.client.Account;
@@ -19,6 +20,18 @@ import org.junit.jupiter.api.Test;
 /// Tests of the spec `transactions-tokens-airdrops`, generated from the `tests` blocks of its `## Testing` section.
 @DisplayName("transactions-tokens-airdrops")
 class TransactionsTokensAirdropsSpecTest {
+
+    /// One pending airdrop beyond the @@maxSize(10) of a claim or a cancel: the ten fungible airdrops of the tokens 0.0.8000
+    /// to 0.0.8009 and an eleventh of the token 0.0.9999 from 0.0.8001 to 0.0.8002, as in the Python SDK
+    /// (token_airdrop_claim_test, test_cannot_exceed_max_airdrops).
+    private static List<PendingAirdrop> ELEVEN_PENDING_AIRDROPS() {
+        return List.of(new PendingAirdrop(AccountId.fromString("0.0.8001"), AccountId.fromString("0.0.8002"), Address.fromString("0.0.8000"), null), new PendingAirdrop(AccountId.fromString("0.0.8001"), AccountId.fromString("0.0.8002"), Address.fromString("0.0.8001"), null), new PendingAirdrop(AccountId.fromString("0.0.8001"), AccountId.fromString("0.0.8002"), Address.fromString("0.0.8002"), null), new PendingAirdrop(AccountId.fromString("0.0.8001"), AccountId.fromString("0.0.8002"), Address.fromString("0.0.8003"), null), new PendingAirdrop(AccountId.fromString("0.0.8001"), AccountId.fromString("0.0.8002"), Address.fromString("0.0.8004"), null), new PendingAirdrop(AccountId.fromString("0.0.8001"), AccountId.fromString("0.0.8002"), Address.fromString("0.0.8005"), null), new PendingAirdrop(AccountId.fromString("0.0.8001"), AccountId.fromString("0.0.8002"), Address.fromString("0.0.8006"), null), new PendingAirdrop(AccountId.fromString("0.0.8001"), AccountId.fromString("0.0.8002"), Address.fromString("0.0.8007"), null), new PendingAirdrop(AccountId.fromString("0.0.8001"), AccountId.fromString("0.0.8002"), Address.fromString("0.0.8008"), null), new PendingAirdrop(AccountId.fromString("0.0.8001"), AccountId.fromString("0.0.8002"), Address.fromString("0.0.8009"), null), new PendingAirdrop(AccountId.fromString("0.0.8001"), AccountId.fromString("0.0.8002"), Address.fromString("0.0.9999"), null));
+    }
+
+    /// One token reference beyond the @@maxSize(10) of a token reject: the fungible tokens 0.0.8000 to 0.0.8010.
+    private static List<TokenReference> ELEVEN_TOKEN_REFERENCES() {
+        return List.of(new TokenReference(Address.fromString("0.0.8000"), null), new TokenReference(Address.fromString("0.0.8001"), null), new TokenReference(Address.fromString("0.0.8002"), null), new TokenReference(Address.fromString("0.0.8003"), null), new TokenReference(Address.fromString("0.0.8004"), null), new TokenReference(Address.fromString("0.0.8005"), null), new TokenReference(Address.fromString("0.0.8006"), null), new TokenReference(Address.fromString("0.0.8007"), null), new TokenReference(Address.fromString("0.0.8008"), null), new TokenReference(Address.fromString("0.0.8009"), null), new TokenReference(Address.fromString("0.0.8010"), null));
+    }
 
     /// `consensusnode.transactions.tokens/an-airdrop-transaction-without-transfers-has-no-token-and-no-nft-legs`
     ///
@@ -169,6 +182,72 @@ class TransactionsTokensAirdropsSpecTest {
         // then
         assertEquals(AccountId.fromString("0.6.9"), reject.owner());
         assertEquals(rejections, reject.rejections());
+    }
+
+    /// `consensusnode.transactions.tokens/a-claim-airdrop-transaction-rejects-an-empty-list-of-pending-airdrops`
+    ///
+    /// Source: this spec (@@minSize(1)); the network rejects an empty claim with EMPTY_PENDING_AIRDROP_ID_LIST (the Java
+    /// SDK, TokenAirdropClaimIntegrationTest "Cannot claim the tokens with empty list") and the Python SDK
+    /// (test_min_ids_enforced_on_build_hits_validation).
+    @Test
+    @DisplayName("a claim airdrop transaction rejects an empty list of pending airdrops")
+    void aClaimAirdropTransactionRejectsAnEmptyListOfPendingAirdrops() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenClaimAirdropTransaction(List.of()));
+    }
+
+    /// `consensusnode.transactions.tokens/a-claim-airdrop-transaction-rejects-more-than-10-pending-airdrops`
+    ///
+    /// Source: this spec (@@maxSize(10)); the Python SDK (token_airdrop_claim_test, test_cannot_exceed_max_airdrops).
+    @Test
+    @DisplayName("a claim airdrop transaction rejects more than 10 pending airdrops")
+    void aClaimAirdropTransactionRejectsMoreThan10PendingAirdrops() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenClaimAirdropTransaction(ELEVEN_PENDING_AIRDROPS()));
+    }
+
+    /// `consensusnode.transactions.tokens/a-cancel-airdrop-transaction-rejects-an-empty-list-of-pending-airdrops`
+    ///
+    /// Source: this spec (@@minSize(1)); the network rejects an empty cancel with EMPTY_PENDING_AIRDROP_ID_LIST (the Java
+    /// SDK, TokenAirdropCancelIntegrationTest "Cannot cancel the tokens with empty list").
+    @Test
+    @DisplayName("a cancel airdrop transaction rejects an empty list of pending airdrops")
+    void aCancelAirdropTransactionRejectsAnEmptyListOfPendingAirdrops() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenCancelAirdropTransaction(List.of()));
+    }
+
+    /// `consensusnode.transactions.tokens/a-cancel-airdrop-transaction-rejects-more-than-10-pending-airdrops`
+    ///
+    /// Source: this spec (@@maxSize(10), the same protocol cap as a claim).
+    @Test
+    @DisplayName("a cancel airdrop transaction rejects more than 10 pending airdrops")
+    void aCancelAirdropTransactionRejectsMoreThan10PendingAirdrops() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenCancelAirdropTransaction(ELEVEN_PENDING_AIRDROPS()));
+    }
+
+    /// `consensusnode.transactions.tokens/a-token-reject-transaction-rejects-an-empty-list-of-references`
+    ///
+    /// Source: this spec (@@minSize(1)); the network rejects a reject without references with EMPTY_TOKEN_REFERENCE_LIST
+    /// (the Java SDK, TokenRejectIntegrationTest "Cannot Reject a Token when Token Or NFT ID is not set").
+    @Test
+    @DisplayName("a token reject transaction rejects an empty list of references")
+    void aTokenRejectTransactionRejectsAnEmptyListOfReferences() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenRejectTransaction(null, List.of()));
+    }
+
+    /// `consensusnode.transactions.tokens/a-token-reject-transaction-rejects-more-than-10-references`
+    ///
+    /// Source: this spec (@@maxSize(10)); the network rejects 11 references with TOKEN_REFERENCE_LIST_SIZE_LIMIT_EXCEEDED
+    /// (the Java SDK, TokenRejectIntegrationTest "Cannot Reject a Token when executing TokenReject and Token Reference List
+    /// Size Exceeded", and the same test of the Go, JavaScript, Python, Rust and Swift SDKs).
+    @Test
+    @DisplayName("a token reject transaction rejects more than 10 references")
+    void aTokenRejectTransactionRejectsMoreThan10References() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenRejectTransaction(null, ELEVEN_TOKEN_REFERENCES()));
     }
 
     /// `consensusnode.transactions.tokens/every-airdrop-transaction-survives-tobytes-and-frombytes-unchanged`

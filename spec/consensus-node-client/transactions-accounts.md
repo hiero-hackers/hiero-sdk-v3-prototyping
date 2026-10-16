@@ -400,9 +400,9 @@ new AccountAllowanceDeleteTransaction()
 ## Testing
 
 Offline tests of the account transactions, written as given / when / then: the attributes a transaction keeps, the
-defaults of the attributes it leaves out, and the packed form of each transaction. Submitting and the network's
-checks of the transfer sums, signatures and allowances are tested by the TCK, not here. The comment above each test
-names where the current SDKs test the same.
+defaults of the attributes it leaves out, the packed form of each transaction and the values it rejects. Submitting
+and the network's checks of the transfer sums, signatures and allowances are tested by the TCK, not here. The comment
+above each test names where the current SDKs test the same.
 
 ```tests
 // Source: this spec (@@default(false), @@nullable); the Python SDK (test_constructor_default_values of the account
@@ -475,6 +475,16 @@ test "an account create transaction survives toBytes and fromBytes, staked to an
         assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
         assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
     }
+}
+
+// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI (CryptoCreateTransactionBody.staked_id is a
+// oneof); the C++ SDK (AccountCreateTransactionUnitTests.ResetStakedAccountId and ResetStakedNodeId) and the Python SDK
+// (test_set_stake_account_id_reset_stake_node_id): setting one clears the other.
+test "an account create transaction rejects being staked to an account and to a node" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    AccountCreateTransaction{authority: DEFAULT(Authority), stakedAccountId: AccountId.fromString(value: "0.0.3"),
+            stakedNodeId: 4}
 }
 
 // Source: this spec (@@nullable: an update changes only what it names); the Python SDK
@@ -680,6 +690,14 @@ test "an NFT allowance keeps its delegating spender" {
 
     // then
     assertEquals(expected: delegatingSpender, actual: allowance.delegatingSpender)
+}
+
+// Source: this spec (@@minSize(1): the whole collection is granted by an NftCollectionGrant, not by an empty list of
+// serials as in the current SDKs, e.g. the JavaScript SDK TokenNftAllowance "toProtobuf() with no serial numbers").
+test "a serial grant rejects an empty list of serials" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    NftSerialGrant{serials: []}
 }
 
 // Source: the Java SDK (AccountAllowanceApproveTransactionTest.shouldBytes), the JavaScript SDK ("should round trip

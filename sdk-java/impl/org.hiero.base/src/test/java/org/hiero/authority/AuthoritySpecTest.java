@@ -1,6 +1,7 @@
 package org.hiero.authority;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import org.hiero.keys.KeyAlgorithm;
@@ -133,6 +134,39 @@ class AuthoritySpecTest {
         assertNotEquals(new AuthorityList(List.of(alice, bob), 1), new AuthorityList(List.of(alice, bob), 2));
         assertNotEquals(new AuthorityList(List.of(bob, alice), 2), new AuthorityList(List.of(alice, bob), 2));
         assertNotEquals(AuthorityFactory.of(1, alice), alice);
+    }
+
+    /// `authority/a-composition-without-children-is-rejected`
+    ///
+    /// Source: this spec (@@minSize(1) children: an empty AuthorityList is forbidden, "remove this key" is no Authority).
+    @Test
+    @DisplayName("a composition without children is rejected")
+    void aCompositionWithoutChildrenIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new AuthorityList(List.of(), 1));
+    }
+
+    /// `authority/a-composition-with-threshold-0-is-rejected`
+    ///
+    /// Source: this spec (@@min(1) threshold of AuthorityList).
+    @Test
+    @DisplayName("a composition with threshold 0 is rejected")
+    void aCompositionWithThreshold0IsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new AuthorityList(List.of(AuthorityFactory.of(get(PUBLIC_KEYS(), 0L))), 0));
+    }
+
+    /// `authority/the-m-of-n-factory-rejects-threshold-0`
+    ///
+    /// Source: this spec (@@min(1) threshold of the m-of-n factory of(threshold, children)).
+    @Test
+    @DisplayName("the m-of-n factory rejects threshold 0")
+    void theMOfNFactoryRejectsThreshold0() {
+        // given
+        final Authority child = AuthorityFactory.of(get(PUBLIC_KEYS(), 0L));
+
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> AuthorityFactory.of(0, child));
     }
 
     private static ContractId defaultContractId() {

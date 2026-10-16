@@ -295,6 +295,30 @@ test "an NFT info keeps the time at which its serial was minted" {
     // then
     assertEquals(expected: toZonedDateTime(text: "2019-04-01T22:42:22Z"), actual: info.creationTime)
 }
+
+// Source: this spec (@@maxLength(100) name).
+test "a token info with a name of 101 characters is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenInfo{tokenId: DEFAULT, type: TokenType.FUNGIBLE_COMMON, name: repeat(value: "a", count: 101), symbol: "F",
+            totalSupply: 1000, treasuryAccountId: DEFAULT, supplyType: TokenSupplyType.INFINITE, expirationTime: DEFAULT}
+}
+
+// Source: this spec (@@maxLength(100) symbol).
+test "a token info with a symbol of 101 characters is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenInfo{tokenId: DEFAULT, type: TokenType.FUNGIBLE_COMMON, name: "ffff", symbol: repeat(value: "a", count: 101),
+            totalSupply: 1000, treasuryAccountId: DEFAULT, supplyType: TokenSupplyType.INFINITE, expirationTime: DEFAULT}
+}
+
+// Source: this spec (@@min(1) serial: serials start at 1); the Java SDK (TokenNftInfoIntegrationTest: the network
+// rejects serial -1 with INVALID_TOKEN_NFT_SERIAL_NUMBER).
+test "an NFT info query rejects serial 0" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenNftInfoQuery{tokenId: DEFAULT(Address), serial: 0}
+}
 ```
 
 ## Questions & Comments

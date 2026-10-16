@@ -3,6 +3,7 @@ package org.hiero.sdk.v3.metalang.generator.java;
 import org.hiero.sdk.v3.metalang.generator.RegexSamples;
 import org.hiero.sdk.v3.metalang.generator.Constraints;
 import org.hiero.sdk.v3.metalang.generator.IntegerRange;
+import org.hiero.sdk.v3.metalang.generator.OneOfGroups;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
@@ -401,7 +402,7 @@ final class JavaSamples {
         final List<FieldDefinition> parameters = constructorParameters(definition);
         // a @@oneOf group needs one attribute that is set: the first one that has a value
         final Set<String> setInGroup = new HashSet<>();
-        for (final JavaOneOf.Group group : JavaOneOf.checked(definition)) {
+        for (final OneOfGroups.Group group : JavaOneOf.checked(definition)) {
             if (!group.exactlyOne()) {
                 continue;
             }

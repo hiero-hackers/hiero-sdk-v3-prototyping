@@ -539,6 +539,13 @@ The following annotations should be used:
   `urllib.parse` (Python) — that is far better tested than any expression we could write, so a binding enforces this
   annotation by delegating to its native parser rather than by matching a pattern. Should be included if the value must
   be enforced at the SDK level.
+
+A value that violates one of these validation annotations (`@@min`, `@@max`, `@@minLength`, `@@maxLength`, `@@minSize`,
+`@@maxSize`, `@@pattern`, `@@urlPattern`) is rejected with the standard error `invalid-argument-error`, without a
+`@@throws` for it: when a value of the type is created, and when a parameter with such an annotation is passed. The
+same holds for a `@@oneOf` or `@@oneOrNoneOf` group of immutable attributes. Each language maps the error once (Java
+`IllegalArgumentException`, TypeScript `RangeError`, Rust `InvalidArgumentError`), so a test can expect it
+(`@@expectThrows(invalid-argument-error)`, see `test-language.md`).
 - `@@threadSafe[(groupName)]`: Indicates that the attribute's accessor (getter and, if mutable, setter) can be called
   concurrently by the SDK and must be implemented in a thread-safe manner. The optional `groupName` parameter groups
   attributes (and methods) whose accessors can be called concurrently with each other. See the

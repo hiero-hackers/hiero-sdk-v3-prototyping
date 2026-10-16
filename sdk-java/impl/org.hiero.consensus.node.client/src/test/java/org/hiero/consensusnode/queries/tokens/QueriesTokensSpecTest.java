@@ -1,6 +1,7 @@
 package org.hiero.consensusnode.queries.tokens;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -150,6 +151,37 @@ class QueriesTokensSpecTest {
 
         // then
         assertEquals(toZonedDateTime("2019-04-01T22:42:22Z"), info.creationTime());
+    }
+
+    /// `consensusnode.queries.tokens/a-token-info-with-a-name-of-101-characters-is-rejected`
+    ///
+    /// Source: this spec (@@maxLength(100) name).
+    @Test
+    @DisplayName("a token info with a name of 101 characters is rejected")
+    void aTokenInfoWithANameOf101CharactersIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, repeat("a", 101L), "F", 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, null, new byte[0], ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, false, null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `consensusnode.queries.tokens/a-token-info-with-a-symbol-of-101-characters-is-rejected`
+    ///
+    /// Source: this spec (@@maxLength(100) symbol).
+    @Test
+    @DisplayName("a token info with a symbol of 101 characters is rejected")
+    void aTokenInfoWithASymbolOf101CharactersIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, "ffff", repeat("a", 101L), 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, null, new byte[0], ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, false, null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `consensusnode.queries.tokens/an-nft-info-query-rejects-serial-0`
+    ///
+    /// Source: this spec (@@min(1) serial: serials start at 1); the Java SDK (TokenNftInfoIntegrationTest: the network
+    /// rejects serial -1 with INVALID_TOKEN_NFT_SERIAL_NUMBER).
+    @Test
+    @DisplayName("an NFT info query rejects serial 0")
+    void anNFTInfoQueryRejectsSerial0() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenNftInfoQuery(defaultAddress(), 0L));
     }
 
     private static Address defaultAddress() {

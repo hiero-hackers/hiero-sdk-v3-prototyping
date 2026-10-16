@@ -1,6 +1,7 @@
 package org.hiero.enterprise.service.contract;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigInteger;
 import java.time.Duration;
@@ -118,6 +119,48 @@ class ServiceContractSpecTest {
         assertEquals(memo, params.contractMemo());
     }
 
+    /// `enterprise.service.contract/contract-parameters-reject-a-gas-of-0`
+    ///
+    /// Source: this spec (@@min(1) of gas); the Python SDK (contract_create_transaction_test.py,
+    /// test_set_gas_rejects_negative_values and test_constructor_rejects_negative_gas reject a negative gas).
+    @Test
+    @DisplayName("contract parameters reject a gas of 0")
+    void contractParametersRejectAGasOf0() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(defaultAddress(), null, List.of(), 0L, null, null, null, null, null, null, null, null, false));
+    }
+
+    /// `enterprise.service.contract/contract-parameters-reject-a-memo-of-101-characters`
+    ///
+    /// Source: this spec (@@maxLength(100) of contractMemo); HAPI limits a memo to 100 bytes.
+    @Test
+    @DisplayName("contract parameters reject a memo of 101 characters")
+    void contractParametersRejectAMemoOf101Characters() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(defaultAddress(), null, List.of(), null, null, null, repeat("a", 101L), null, null, null, null, null, false));
+    }
+
+    /// `enterprise.service.contract/contract-parameters-with-bytecode-both-from-a-file-and-directly-are-rejected`
+    ///
+    /// Source: this spec (@@oneOf(fileId, bytecode)); HAPI contract_create.proto (initcodeSource is a oneof of fileID and
+    /// initcode).
+    @Test
+    @DisplayName("contract parameters with bytecode both from a file and directly are rejected")
+    void contractParametersWithBytecodeBothFromAFileAndDirectlyAreRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(defaultAddress(), hex("608060405234801561001057600080fd5b50"), List.of(), null, null, null, null, null, null, null, null, null, false));
+    }
+
+    /// `enterprise.service.contract/contract-parameters-without-bytecode-are-rejected`
+    ///
+    /// Source: this spec (@@oneOf(fileId, bytecode): the bytecode is required).
+    @Test
+    @DisplayName("contract parameters without bytecode are rejected")
+    void contractParametersWithoutBytecodeAreRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(null, null, List.of(), null, null, null, null, null, null, null, null, null, false));
+    }
+
     /// `enterprise.service.contract/a-contract-is-staked-to-an-account-to-a-node-or-to-neither`
     ///
     /// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); the Python SDK (contract_create_transaction_test.py,
@@ -140,6 +183,16 @@ class ServiceContractSpecTest {
         assertNull(toNode.stakedAccountId());
         assertNull(toNeither.stakedAccountId());
         assertNull(toNeither.stakedNodeId());
+    }
+
+    /// `enterprise.service.contract/contract-parameters-staked-to-both-an-account-and-a-node-are-rejected`
+    ///
+    /// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI contract_create.proto (staked_id is a oneof).
+    @Test
+    @DisplayName("contract parameters staked to both an account and a node are rejected")
+    void contractParametersStakedToBothAnAccountAndANodeAreRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(defaultAddress(), null, List.of(), null, null, null, null, null, null, null, defaultAccountId(), 3L, false));
     }
 
     /// `enterprise.service.contract/a-parameter-keeps-the-value-it-wraps`

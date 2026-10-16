@@ -1,6 +1,7 @@
 package org.hiero.consensusnode.transactions.batch;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import org.hiero.authority.Authority;
@@ -110,6 +111,18 @@ class TransactionsBatchSpecTest {
 
         // then
         assertTrue(contains(get(packed.signableBodies(), 0L).bytes(), get(inner.signableBodies(), 0L).bytes()));
+    }
+
+    /// `consensusnode.transactions.batch/a-batch-rejects-an-empty-list-of-inner-transactions`
+    ///
+    /// Source: this spec (@@minSize(1)); the network rejects an empty batch with BATCH_LIST_EMPTY (the Java SDK,
+    /// BatchTransactionIntegrationTest "Batch Transaction with empty inner transaction's list should throw an error", and
+    /// the same test of the JavaScript, Python and Swift SDKs).
+    @Test
+    @DisplayName("a batch rejects an empty list of inner transactions")
+    void aBatchRejectsAnEmptyListOfInnerTransactions() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new BatchTransaction(List.of()));
     }
 
     private static Account defaultAccount() {

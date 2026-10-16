@@ -2,7 +2,7 @@ package org.hiero.sdk.v3.metalang.generator.java;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import org.hiero.sdk.v3.metalang.ast.Literal;
+import org.hiero.sdk.v3.metalang.generator.OneOfGroups;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
 
@@ -18,27 +18,13 @@ final class JavaOneOf {
     }
 
     /**
-     * A group of attributes.
-     *
-     * @param exactlyOne whether exactly one is set ({@code @@oneOf}); otherwise at most one ({@code @@oneOrNoneOf})
-     * @param fields     the attribute names, in the order of the annotation
-     */
-    record Group(boolean exactlyOne, List<String> fields) {
-    }
-
-    /**
      * The groups the constructor of a type checks.
      *
      * @param type the type
      * @return the groups of immutable attributes, in the order of the annotations
      */
-    static List<Group> checked(final TypeDefinition type) {
-        return type.annotations().stream()
-                .filter(a -> a.name().equals("oneOf") || a.name().equals("oneOrNoneOf"))
-                .map(a -> new Group(a.name().equals("oneOf"), a.arguments().stream().map(Literal::text).toList()))
-                .filter(g -> g.fields().stream().allMatch(f -> type.fields().stream()
-                        .anyMatch(d -> d.name().equals(f) && d.hasAnnotation("immutable"))))
-                .toList();
+    static List<OneOfGroups.Group> checked(final TypeDefinition type) {
+        return OneOfGroups.checked(type);
     }
 
     /**
@@ -50,15 +36,13 @@ final class JavaOneOf {
      */
     static String checks(final TypeDefinition type, final String indent) {
         final StringBuilder java = new StringBuilder();
-        for (final Group group : checked(type)) {
+        for (final OneOfGroups.Group group : checked(type)) {
             final String count = group.fields().stream()
                     .map(f -> "(" + JavaKeywords.identifier(f) + " != null ? 1 : 0)")
                     .collect(Collectors.joining(" + "));
-            final String names = String.join(", ", group.fields());
             java.append(indent).append("if (").append(count).append(group.exactlyOne() ? " != 1" : " > 1")
                     .append(") {\n").append(indent).append("    throw new IllegalArgumentException(\"")
-                    .append(group.exactlyOne() ? "exactly one of " + names + " must be set"
-                            : "at most one of " + names + " may be set").append("\");\n").append(indent).append("}\n");
+                    .append(group.message()).append("\");\n").append(indent).append("}\n");
         }
         return java.toString();
     }
@@ -70,7 +54,7 @@ final class JavaOneOf {
      * @param field the attribute
      * @return the group, {@code null} if the attribute is in no checked group
      */
-    static Group groupOf(final TypeDefinition type, final FieldDefinition field) {
+    static OneOfGroups.Group groupOf(final TypeDefinition type, final FieldDefinition field) {
         return checked(type).stream().filter(g -> g.fields().contains(field.name())).findFirst().orElse(null);
     }
 }

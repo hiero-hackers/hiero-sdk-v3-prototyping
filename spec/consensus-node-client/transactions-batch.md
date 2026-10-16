@@ -220,8 +220,8 @@ TransferReceipt innerReceipt = innerResponse.queryReceipt();
 
 ## Testing
 
-Offline tests of `BatchTransaction`, written as given / when / then: the inner transactions it keeps and its packed
-form. The inner transactions are `PrngTransaction`s packed for a batch with the default account as payer and its key
+Offline tests of `BatchTransaction`, written as given / when / then: the inner transactions it keeps, its packed
+form and the empty batch it rejects. The inner transactions are `PrngTransaction`s packed for a batch with the default account as payer and its key
 as batch key; nothing is submitted. Atomic execution and the network's restrictions on inner transactions are tested
 by the TCK, not here.
 
@@ -306,6 +306,15 @@ test "the body of a batch contains the bytes of its inner transactions" {
 
     // then
     assertTrue(condition: contains(value: packed.signableBodies()[0].bytes, part: inner.signableBodies()[0].bytes))
+}
+
+// Source: this spec (@@minSize(1)); the network rejects an empty batch with BATCH_LIST_EMPTY (the Java SDK,
+// BatchTransactionIntegrationTest "Batch Transaction with empty inner transaction's list should throw an error", and
+// the same test of the JavaScript, Python and Swift SDKs).
+test "a batch rejects an empty list of inner transactions" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    BatchTransaction{innerTransactions: []}
 }
 ```
 

@@ -153,8 +153,7 @@ instance NftTypeCreateParams = NftTypeCreateParams{name: "Nft Tokens", symbol: "
 ## Testing
 
 Tests of `NftTypeCreateParams`. The methods of `NftService` talk to the network and are not unit-tested here. A
-violated validation annotation (`@@maxLength`, `@@min`) cannot be expected yet: the test language expects errors of
-calls only, and creating an `NftTypeCreateParams` declares none.
+value that violates a validation annotation (`@@maxLength`, `@@min`) is rejected with `invalid-argument-error`.
 
 ```tests
 // Source: this spec (@@default and @@nullable of NftTypeCreateParams).
@@ -252,6 +251,34 @@ test "a finite NFT type accepts a max supply of 1" {
     // then
     assertEquals(expected: TokenSupplyType.FINITE, actual: params.supplyType)
     assertEquals(expected: 1, actual: params.maxSupply)
+}
+
+// Source: this spec (@@maxLength(100) of name); HAPI limits a token name to 100 bytes.
+test "NFT type parameters reject a name of 101 characters" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    NftTypeCreateParams{name: repeat(value: "a", count: 101), symbol: "NT"}
+}
+
+// Source: this spec (@@maxLength(100) of symbol); HAPI limits a token symbol to 100 bytes.
+test "NFT type parameters reject a symbol of 101 characters" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    NftTypeCreateParams{name: "Nft Tokens", symbol: repeat(value: "a", count: 101)}
+}
+
+// Source: this spec (@@maxLength(100) of tokenMemo); HAPI limits a memo to 100 bytes.
+test "NFT type parameters reject a memo of 101 characters" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    NftTypeCreateParams{name: "Nft Tokens", symbol: "NT", tokenMemo: repeat(value: "a", count: 101)}
+}
+
+// Source: this spec (@@min(1) of maxSupply).
+test "a finite NFT type rejects a max supply of 0" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    NftTypeCreateParams{name: "Nft Tokens", symbol: "NT", supplyType: TokenSupplyType.FINITE, maxSupply: 0}
 }
 ```
 

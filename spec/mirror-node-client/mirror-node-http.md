@@ -141,6 +141,14 @@ abstraction MirrorNodeHttpClient {
 values RELATIVE_PATHS: list<string> = ["/accounts/0.0.1", "/accounts/0.0.1?limit=25",
         "/accounts/0.0.1/tokens?token.id=gt:0.0.5&order=asc", "/", "/accounts/0x00000000000000000000000000000000000004d2",
         "/accounts?order=..", "/accounts/0.0.1234?limit=25"]
+
+// Paths that @@pattern("^/[^\s]*$") rejects: those of the Go SDK (TestUnitMirrorRestPathRejectsHost) without a leading
+// slash or with a space, the absolute URL and the space of the Java SDK (MirrorNodeRestPathTest.rejectsAbsoluteUrl,
+// rejectsWhitespace) and the absolute URL of this spec's example. The protocol-relative and ".." paths that the SDKs also
+// reject are accepted by the pattern and therefore not listed.
+values REJECTED_PATHS: list<string> = ["", "accounts/0.0.1", "https://evil.example.com/steal",
+        "http://evil.example.com/steal", "/accounts/0.0.1 ?limit=1", "https://evil.example/api/v1/accounts",
+        "/accounts/0.0.1 2", "https://mainnet.mirrornode.hedera.com/api/v1/accounts/0.0.1234"]
 ```
 
 ## Examples
@@ -238,6 +246,30 @@ test "a request keeps a timeout with millisecond precision" {
     assertTrue(condition: timeout < toDuration(text: "PT1.501S"))
     assertTrue(condition: timeout > toDuration(text: "PT1.499S"))
 }
+
+// Source: the Go SDK (TestUnitMirrorRestPathRejectsHost), the Java SDK (MirrorNodeRestPathTest.rejectsAbsoluteUrl,
+// rejectsWhitespace), this spec's example and this spec (@@pattern("^/[^\s]*$")); the values of REJECTED_PATHS.
+test "a request rejects a path that is no relative REST path" {
+    for path in REJECTED_PATHS {
+        // when / then
+        @@expectThrows(invalid-argument-error)
+        MirrorNodeHttpRequest{method: HttpMethod.GET, path: path, headers: {}}
+    }
+}
+
+// Source: the Go SDK (TestUnitMirrorRestPathRejectsHost: "embedded newline"); this spec (@@pattern("^/[^\s]*$")).
+test "a request rejects a path with an embedded newline" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    MirrorNodeHttpRequest{method: HttpMethod.GET, path: "/accounts\n/0.0.1", headers: {}}
+}
+
+// Source: the Go SDK (TestUnitMirrorRestPathRejectsHost: "embedded tab"); this spec (@@pattern("^/[^\s]*$")).
+test "a request rejects a path with an embedded tab" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    MirrorNodeHttpRequest{method: HttpMethod.GET, path: "/accounts\t0.0.1", headers: {}}
+}
 ```
 
 ## Questions & Comments
@@ -256,6 +288,3 @@ test "a request keeps a timeout with millisecond precision" {
 - **`@@pattern("^/[^\s]*$")` accepts paths that the Java and Go SDKs reject:** a protocol-relative `//evil.example/steal`
   and `..` segments such as `/accounts/../../etc/passwd` (the Java SDK accepts `..` only inside the query string).
   Concatenation keeps both on the configured host, but should the pattern reject them anyway?
-- **The rejection of a path that violates `@@pattern` cannot be tested yet:** the test language can only expect an
-  error that a call declares with `@@throws`, and creating a `MirrorNodeHttpRequest` declares none. The rejected inputs
-  of the Go and Java SDKs (`""`, `accounts/0.0.1`, `https://…`, embedded whitespace) are therefore not tested here.

@@ -449,7 +449,7 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
     with host) throwing `IllegalArgumentException`;
   - a second constructor without the `@@default` attributes;
   - the checks of `@@oneOf` (exactly one attribute is set) and `@@oneOrNoneOf` (at most one) for groups of
-    `@@immutable` attributes (`JavaOneOf`, also in classes), throwing `IllegalArgumentException`; the attributes of a
+    `@@immutable` attributes (`JavaOneOf` on top of `OneOfGroups` in `metalang-core`, also in classes), throwing `IllegalArgumentException`; the attributes of a
     mutable group are `null` after construction and set one by one, so it is not checked. Generated values and tests
     set one attribute of a group, and the tests check that two (and, for `@@oneOf`, none) are rejected;
   - a builder (`BuilderGenerator`, also for classes) if no type extends the type and its constructor takes more than
@@ -551,6 +551,9 @@ types that need an interface with type variables, and clashing names.
   `#private` fields, getters/setters and a constructor that takes one object with all attributes, enums classes with a
   `static readonly` instance per value. Constructors and setters check `null` (`TypeError`), integer ranges (also that a
   `number` is an integer) and validation annotations (`RangeError`) and copy `bytes`, collections and dates.
+  Constructors check `@@oneOf`/`@@oneOrNoneOf` groups of `@@immutable` attributes like Java (`OneOfGroups` in
+  `metalang-core`, shared by both generators), throwing `RangeError`; generated values and tests set one attribute of
+  a group, and the tests check that two (and, for `@@oneOf`, none) are rejected.
 - **Namespaces** (`TsNamespaceGenerator`): `functions.ts` (overloads as TypeScript overload signatures),
   `constants.ts`, `errors.ts` (one `Error` subclass per error id, placed like the Java exceptions), `index.ts`.
 - **Imports** (`TsImports`): relative within a package, the namespace subpath between packages, `import type` for
@@ -938,6 +941,7 @@ checks:
 | `JavaIntegersTest`, `RegexSamplesTest` | Ranges, range checks and literals of all integer types; accepted and rejected strings for patterns, never a wrong one. |
 | `TsGeneratorTest`, `TsTestGeneratorTest` | The TypeScript workspace (packages, exports, dependencies, project references, the support package), every type mapping (classes, interfaces, enum classes, sealed unions, narrowing, constants, overloaded functions, errors), deferral, configuration, determinism across JVM runs, the generated tests (names, boundaries, copies, setters, methods, todo entries), and — with Node.js and TypeScript installed (`npm install` in `sdk-ts`) — that **all real specs compile** with the strict configuration and their tests only fail for stubs, and that the tests **detect mutations**. |
 | `TsEdgeCasesTest` | Edge cases of the TypeScript generator, built and run with Node.js: every builtin type as value (`uuid`, `decimal`, `seconds`, `type<T>`, `streamResult`), sealed unions, narrowed attributes, reserved and global names, values that cannot be built (`test.todo`), subtypes, factory methods, default instances with constants, bounds of type parameters for `ANY` arguments, and string escaping. |
+| `TsOneOfTest` | The checks of `@@oneOf` and `@@oneOrNoneOf` in the constructors (immutable groups only), and that the generated values and tests respect the groups and pass. |
 | `TsConformanceTest` | Comparison of TypeScript APIs (additions allowed, every kind of difference), a missing TypeScript installation, and — with TypeScript installed — implemented and outdated projects and **`sdk-ts/generated` provides the API of the current specs**. |
 | `RustGeneratorTest` | The Cargo workspace (crates, manifests with the used libraries, module tree, re-exports, support module), configuration and structural errors, every mapping of a feature spec (enums with attributes, traits with async/streaming/errors/statics/final methods, `$$Self`, erased `ANY` parameters, sealed enums, overload names, keywords, validation, constants, error enums), and — with Cargo — that the feature spec and **all real specs compile without warnings** and their tests only fail for stubs; determinism across JVM runs. |
 | `RustTestGeneratorTest` | The generated tests (names, boundaries, setters, methods, enums, test doubles, ignored tests) and their execution with Cargo: they pass against the generated code, the method tests fail only because of the stubs, and they **detect mutations** (a removed range, length or setter check). |
@@ -962,7 +966,7 @@ checks:
 - **Rust:** a type parameter that the specs use with `ANY` is erased everywhere (`HieroClient`, `dyn NativeToken`):
   concrete types keep their exact types in their inherent methods, but code that works with trait objects gets
   erased values (`Response<Arc<dyn Receipt>>`). `type<T>` is a `TypeId`, `@@default` values are no default arguments
-  (Rust has none), and `@@oneOf` is not checked (as in TypeScript; Java checks groups of immutable attributes in the
+  (Rust has none), and `@@oneOf` is not checked (Java and TypeScript check groups of immutable attributes in the
   constructor).
 - **Lexical scope:** identifiers are ASCII; number literals support digits, `_`, sign and decimals, but no exponent
   or hex notation. `@@pattern` values are evaluated with Java regular expressions (`find` semantics).

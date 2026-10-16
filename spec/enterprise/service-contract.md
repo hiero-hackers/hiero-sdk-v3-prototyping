@@ -140,9 +140,8 @@ instance Contract = Contract{contractId: DEFAULT}
 
 Tests of `ContractCreateParams`, `Contract` and the parameter factory functions. The methods of
 `SmartContractService` talk to the network and are not unit-tested here; a `ContractCallResult` can only be obtained
-from them. A violation of `@@oneOf`, `@@oneOrNoneOf`, `@@min` or `@@maxLength` cannot be expected yet: the test
-language expects errors of calls only, and creating a `ContractCreateParams` declares none. The ABI encoding of a
-`Param` is not part of this API and is not tested.
+from them. A violation of `@@oneOf`, `@@oneOrNoneOf`, `@@min` or `@@maxLength` is rejected with
+`invalid-argument-error`. The ABI encoding of a `Param` is not part of this API and is not tested.
 
 ```tests
 // Source: this spec (@@oneOf(fileId, bytecode), @@default and @@nullable of ContractCreateParams); the Python SDK
@@ -226,6 +225,36 @@ test "contract parameters accept a gas of 1 and a memo of 100 characters" {
     assertEquals(expected: memo, actual: params.contractMemo)
 }
 
+// Source: this spec (@@min(1) of gas); the Python SDK (contract_create_transaction_test.py,
+// test_set_gas_rejects_negative_values and test_constructor_rejects_negative_gas reject a negative gas).
+test "contract parameters reject a gas of 0" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    ContractCreateParams{fileId: DEFAULT, gas: 0}
+}
+
+// Source: this spec (@@maxLength(100) of contractMemo); HAPI limits a memo to 100 bytes.
+test "contract parameters reject a memo of 101 characters" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    ContractCreateParams{fileId: DEFAULT, contractMemo: repeat(value: "a", count: 101)}
+}
+
+// Source: this spec (@@oneOf(fileId, bytecode)); HAPI contract_create.proto (initcodeSource is a oneof of fileID and
+// initcode).
+test "contract parameters with bytecode both from a file and directly are rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    ContractCreateParams{fileId: DEFAULT, bytecode: hex(text: "608060405234801561001057600080fd5b50")}
+}
+
+// Source: this spec (@@oneOf(fileId, bytecode): the bytecode is required).
+test "contract parameters without bytecode are rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    ContractCreateParams{fileId: null, bytecode: null}
+}
+
 // Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); the Python SDK (contract_create_transaction_test.py,
 // test_staked_setters_clear_each_other).
 test "a contract is staked to an account, to a node or to neither" {
@@ -244,6 +273,13 @@ test "a contract is staked to an account, to a node or to neither" {
     assertNull(actual: toNode.stakedAccountId)
     assertNull(actual: toNeither.stakedAccountId)
     assertNull(actual: toNeither.stakedNodeId)
+}
+
+// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI contract_create.proto (staked_id is a oneof).
+test "contract parameters staked to both an account and a node are rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    ContractCreateParams{fileId: DEFAULT, stakedAccountId: DEFAULT(AccountId), stakedNodeId: 3}
 }
 
 // Source: this spec (a Param wraps the value of the host language); hiero-enterprise-java (ContractParam: the value of

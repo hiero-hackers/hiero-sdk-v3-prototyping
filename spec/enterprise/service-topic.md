@@ -96,9 +96,8 @@ instance TopicCreateParams = TopicCreateParams{}
 ## Testing
 
 Tests of `TopicCreateParams`, `Topic` and `TopicMessage`. The methods of `TopicService` talk to the network and are
-not unit-tested here. A violated `@@maxLength` cannot be expected yet: the test language expects errors of calls only,
-and creating a `TopicCreateParams` declares none. Points in time have millisecond precision, the precision every
-target language can hold.
+not unit-tested here. A memo longer than its `@@maxLength` is rejected with `invalid-argument-error`. Points in time
+have millisecond precision, the precision every target language can hold.
 
 ```tests
 // Source: this spec (TopicCreateParams: "Nothing is required: without values the topic is public and cannot be
@@ -150,6 +149,13 @@ test "a topic memo of 100 characters is accepted" {
 
     // then
     assertEquals(expected: memo, actual: params.topicMemo)
+}
+
+// Source: this spec (@@maxLength(100) of topicMemo); HAPI limits a memo to 100 bytes.
+test "a topic memo of 101 characters is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TopicCreateParams{topicMemo: repeat(value: "a", count: 101)}
 }
 
 // Source: hiero-enterprise-java (Topic, and the Mirror Node fixture topic.json of MirrorNodeJsonConverterTest: topic

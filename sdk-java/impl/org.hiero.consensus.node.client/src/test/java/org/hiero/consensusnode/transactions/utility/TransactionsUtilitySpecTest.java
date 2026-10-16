@@ -1,6 +1,7 @@
 package org.hiero.consensusnode.transactions.utility;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import org.hiero.consensusnode.client.Account;
@@ -60,6 +61,17 @@ class TransactionsUtilitySpecTest {
         // then
         assertEquals(bytes, restored.toBytes());
         assertEquals(packed.signableBodies(), restored.signableBodies());
+    }
+
+    /// `consensusnode.transactions.utility/a-prng-transaction-rejects-a-range-of-0`
+    ///
+    /// Source: this spec (@@min(1)); the Python SDK rejects a negative range
+    /// (test_build_proto_body_with_negative_range_raises_error).
+    @Test
+    @DisplayName("a PRNG transaction rejects a range of 0")
+    void aPRNGTransactionRejectsARangeOf0() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new PrngTransaction(0));
     }
 
     private static Account defaultAccount() {

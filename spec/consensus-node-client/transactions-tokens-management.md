@@ -170,6 +170,13 @@ TokenUpdateNftsReceipt extends Receipt {
 }
 ```
 
+## Default Instances for Testing
+
+```
+// One serial beyond the @@maxSize(10) of the serials of an NFT wipe and an NFT metadata update (the serials 1 to 11).
+values ELEVEN_SERIALS: list<int64> = range(start: 1, end: 12)
+```
+
 ## Examples
 
 ### Freeze, then unfreeze an account (operator holds the freeze key)
@@ -217,7 +224,7 @@ new TokenUpdateNftsTransaction()
 ## Testing
 
 Offline tests of the token management transactions, written as given / when / then: the values a transaction keeps,
-and that a packed transaction survives its serialized form. Nothing is submitted; whether the network accepts a
+the values it rejects, and that a packed transaction survives its serialized form. Nothing is submitted; whether the network accepts a
 transaction (the token has the key, the account is no treasury) is tested by the Hiero TCK. The current SDKs test the
 same behaviour with their getter / setter and `fromBytes(toBytes())` tests; the comment above each test names where.
 
@@ -312,6 +319,54 @@ test "an NFT metadata update keeps the token, the serials and the metadata" {
     assertEquals(expected: Address.fromString(address: "4.2.0"), actual: update.tokenId)
     assertEquals(expected: [8, 9, 10], actual: update.serials)
     assertEquals(expected: hex(text: "0102030405"), actual: update.metadata)
+}
+
+// Source: this spec (@@min(1) of amount).
+test "a fungible wipe transaction rejects an amount of 0" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenWipeFungibleTransaction{tokenId: Address.fromString(address: "4.2.0"),
+            accountId: AccountId.fromString(value: "0.6.9"), amount: 0}
+}
+
+// Source: this spec (@@minSize(1)).
+test "an NFT wipe transaction rejects an empty list of serials" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenWipeNftTransaction{tokenId: Address.fromString(address: "4.2.0"),
+            accountId: AccountId.fromString(value: "0.6.9"), serials: []}
+}
+
+// Source: this spec (@@maxSize(10): the network caps a wipe at 10 NFTs).
+test "an NFT wipe transaction rejects more than 10 serials" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenWipeNftTransaction{tokenId: Address.fromString(address: "4.2.0"),
+            accountId: AccountId.fromString(value: "0.6.9"), serials: ELEVEN_SERIALS}
+}
+
+// Source: this spec (@@minSize(1)); the Python SDK (test_build_transaction_body_validation_errors of
+// TokenUpdateNftsTransaction: "Missing serial numbers").
+test "an NFT metadata update rejects an empty list of serials" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenUpdateNftsTransaction{tokenId: Address.fromString(address: "4.2.0"), serials: []}
+}
+
+// Source: this spec (@@maxSize(10): the network caps an update at 10 NFTs).
+test "an NFT metadata update rejects more than 10 serials" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenUpdateNftsTransaction{tokenId: Address.fromString(address: "4.2.0"), serials: ELEVEN_SERIALS}
+}
+
+// Source: this spec (@@maxSize(100)); HIP-657 (NFT metadata of at most 100 bytes); the Python SDK
+// (test_build_transaction_body_validation_errors of TokenUpdateNftsTransaction: b"x" * 101).
+test "an NFT metadata update rejects metadata longer than 100 bytes" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenUpdateNftsTransaction{tokenId: Address.fromString(address: "4.2.0"), serials: [8, 9, 10],
+            metadata: repeat(value: hex(text: "78"), count: 101)}
 }
 
 // Source: the Java SDK (shouldBytes / shouldBytesFungible / shouldBytesNft of the TokenWipe, TokenFreeze,

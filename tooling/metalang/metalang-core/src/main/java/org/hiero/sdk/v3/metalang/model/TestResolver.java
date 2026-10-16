@@ -35,8 +35,16 @@ final class TestResolver {
     private static final Set<String> TEST_ANNOTATIONS = Set.of("disabled", "deprecated");
     private static final String EXPECT_THROWS = "expectThrows";
 
+    /** The error of a value that violates a validation annotation or a @@oneOf/@@oneOrNoneOf group. */
+    static final String INVALID_ARGUMENT = "invalid-argument-error";
+
+    /** The annotations whose violation is an {@value #INVALID_ARGUMENT}. */
+    private static final Set<String> VALIDATION = Set.of("min", "max", "minLength", "maxLength", "minSize", "maxSize",
+            "pattern", "urlPattern");
+
     private final SpecModel spec;
     private final InstanceResolver expressions;
+    private final LinkedModel linked;
 
     /**
      * The resolved tests and the problems found.
@@ -48,9 +56,10 @@ final class TestResolver {
     record Result(List<TestDefinition> tests, List<TestValuesDefinition> values, List<Diagnostic> diagnostics) {
     }
 
-    private TestResolver(final SpecModel spec, final InstanceResolver expressions) {
+    private TestResolver(final SpecModel spec, final InstanceResolver expressions, final LinkedModel linked) {
         this.spec = spec;
         this.expressions = expressions;
+        this.linked = linked;
     }
 
     /**
@@ -66,7 +75,8 @@ final class TestResolver {
         if (spec.files().stream().allMatch(f -> f.tests().isEmpty() && f.values().isEmpty())) {
             return new Result(List.of(), List.of(), List.of());
         }
-        return new TestResolver(spec, InstanceResolver.forTests(spec, linked, types, Builtins.functions())).resolve();
+        return new TestResolver(spec, InstanceResolver.forTests(spec, linked, types, Builtins.functions()), linked)
+                .resolve();
     }
 
     private Result resolve() {
@@ -287,7 +297,8 @@ final class TestResolver {
                 errors(expression, declared);
                 if (!declared.contains(expected)) {
                     out.report(Rule.TEST_UNDECLARED_ERROR, "No call of the statement declares the error '" + expected
-                            + "'" + (declared.isEmpty() ? "" : "; declared are: " + String.join(", ",
+                            + "'" + (expected.equals(INVALID_ARGUMENT) ? " and no validation annotation checks its "
+                            + "values" : "") + (declared.isEmpty() ? "" : "; declared are: " + String.join(", ",
                             declared.stream().sorted().toList())), evaluate.location());
                     return null;
                 }
@@ -373,18 +384,33 @@ final class TestResolver {
     }
 
     /** The error ids that the calls of an expression declare with {@code @@throws}. */
-    private static void errors(final InstanceExpression expression, final Set<String> out) {
+    /**
+     * The error ids that an expression can raise: the ones its calls declare with {@code @@throws}, and
+     * {@value #INVALID_ARGUMENT} for a value created or passed where a validation annotation or a {@code @@oneOf} /
+     * {@code @@oneOrNoneOf} group checks it.
+     */
+    private void errors(final InstanceExpression expression, final Set<String> out) {
         switch (expression) {
             case InstanceExpression.Call call -> {
                 throwsOf(call.method(), out);
+                validated(call.method(), out);
                 call.arguments().values().forEach(a -> errors(a, out));
             }
             case InstanceExpression.MethodCall call -> {
                 throwsOf(call.method(), out);
+                validated(call.method(), out);
                 errors(call.target(), out);
                 call.arguments().values().forEach(a -> errors(a, out));
             }
-            case InstanceExpression.Construct construct -> construct.values().values().forEach(v -> errors(v, out));
+            case InstanceExpression.Construct construct -> {
+                if (linked.definition(construct.type()) instanceof TypeDefinition.ComplexTypeDefinition type
+                        && (type.fields().stream().anyMatch(f -> f.annotations().stream()
+                        .anyMatch(a -> VALIDATION.contains(a.name())))
+                        || type.annotations().stream().anyMatch(a -> checkedGroup(type, a)))) {
+                    out.add(INVALID_ARGUMENT);
+                }
+                construct.values().values().forEach(v -> errors(v, out));
+            }
             case InstanceExpression.Access access -> errors(access.target(), out);
             case InstanceExpression.ListValue list -> list.items().forEach(i -> errors(i, out));
             case InstanceExpression.Binary binary -> {
@@ -399,6 +425,23 @@ final class TestResolver {
             default -> {
                 // no calls
             }
+        }
+    }
+
+    /**
+     * Whether an annotation is a {@code @@oneOf} or {@code @@oneOrNoneOf} group that the constructor checks: one of
+     * immutable attributes (the attributes of a mutable group are set one by one, so it holds only when used).
+     */
+    private static boolean checkedGroup(final TypeDefinition.ComplexTypeDefinition type, final Annotation annotation) {
+        return (annotation.name().equals("oneOf") || annotation.name().equals("oneOrNoneOf"))
+                && annotation.arguments().stream().allMatch(name -> type.fields().stream()
+                .anyMatch(f -> f.name().equals(name.text()) && f.hasAnnotation("immutable")));
+    }
+
+    private static void validated(final MethodDefinition method, final Set<String> out) {
+        if (method.parameters().stream().anyMatch(p -> p.annotations().stream()
+                .anyMatch(a -> VALIDATION.contains(a.name())))) {
+            out.add(INVALID_ARGUMENT);
         }
     }
 

@@ -355,6 +355,15 @@ values JAVA_SDK_TOKEN_AUTHORITIES: list<Authority> = [
 // (token_create_transaction.rs and token_update_transaction.rs: EXPIRATION_TIME = VALID_START, 1554158542 seconds),
 // whole seconds.
 values SDK_TEST_EXPIRATION_TIME: zonedDateTime = toZonedDateTime(text: "2019-04-01T22:42:22Z")
+
+// One character beyond the @@maxLength(100) of the token name, symbol and memo.
+values TEXT_OF_101_CHARACTERS: string = repeat(value: "a", count: 101)
+
+// One entry beyond the @@maxSize(10) of the NFT mint metadata (11 entries).
+values ELEVEN_METADATA_ENTRIES: list<bytes> = [[1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11]]
+
+// One serial beyond the @@maxSize(10) of the NFT burn serials (the serials 1 to 11).
+values ELEVEN_SERIALS: list<int64> = range(start: 1, end: 12)
 ```
 
 ## Examples
@@ -525,7 +534,7 @@ new TokenDeleteTransaction()
 ## Testing
 
 Offline tests of the token lifecycle transactions, written as given / when / then: the defaults and values a
-transaction keeps, and that a packed transaction survives its serialized form. Nothing is submitted; what the network
+transaction keeps, the values it rejects, and that a packed transaction survives its serialized form. Nothing is submitted; what the network
 does with a transaction (signature checks, supply limits, association rules) is tested by the Hiero TCK. The current
 SDKs test the same behaviour with their getter / setter and `fromBytes(toBytes())` tests; the comment above each test
 names where.
@@ -741,6 +750,102 @@ test "an NFT burn transaction keeps its serials in order" {
     // then
     assertEquals(expected: Address.fromString(address: "4.2.0"), actual: burn.tokenId)
     assertEquals(expected: [420, 1, 2], actual: burn.serials)
+}
+
+// Source: this spec (@@maxLength(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
+test "a token create transaction rejects a name longer than 100 characters" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenCreateTransaction{name: TEXT_OF_101_CHARACTERS, symbol: "test symbol", tokenType: TokenType.FUNGIBLE_COMMON,
+            treasuryAccountId: AccountId.fromString(value: "7.7.7")}
+}
+
+// Source: this spec (@@maxLength(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
+test "a token create transaction rejects a symbol longer than 100 characters" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenCreateTransaction{name: "test name", symbol: TEXT_OF_101_CHARACTERS, tokenType: TokenType.FUNGIBLE_COMMON,
+            treasuryAccountId: AccountId.fromString(value: "7.7.7")}
+}
+
+// Source: this spec (@@maxLength(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
+test "a token create transaction rejects a memo longer than 100 characters" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenCreateTransaction{name: "test name", symbol: "test symbol", tokenType: TokenType.FUNGIBLE_COMMON,
+            treasuryAccountId: AccountId.fromString(value: "7.7.7"), tokenMemo: TEXT_OF_101_CHARACTERS}
+}
+
+// Source: this spec (@@min(1) of maxSupply); the network rejects a finite token without a positive maximum supply
+// (INVALID_TOKEN_MAX_SUPPLY).
+test "a token create transaction rejects a maximum supply of 0" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenCreateTransaction{name: "test name", symbol: "test symbol", tokenType: TokenType.NON_FUNGIBLE_UNIQUE,
+            treasuryAccountId: AccountId.fromString(value: "7.7.7"), supplyType: TokenSupplyType.FINITE, maxSupply: 0}
+}
+
+// Source: this spec (@@maxLength(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
+test "a token update transaction rejects a name longer than 100 characters" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenUpdateTransaction{tokenId: Address.fromString(address: "4.2.0"), name: TEXT_OF_101_CHARACTERS}
+}
+
+// Source: this spec (@@maxLength(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
+test "a token update transaction rejects a symbol longer than 100 characters" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenUpdateTransaction{tokenId: Address.fromString(address: "4.2.0"), symbol: TEXT_OF_101_CHARACTERS}
+}
+
+// Source: this spec (@@maxLength(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
+test "a token update transaction rejects a memo longer than 100 characters" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenUpdateTransaction{tokenId: Address.fromString(address: "4.2.0"), tokenMemo: TEXT_OF_101_CHARACTERS}
+}
+
+// Source: this spec (@@min(1) of amount).
+test "a fungible mint transaction rejects an amount of 0" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenMintFungibleTransaction{tokenId: Address.fromString(address: "4.2.0"), amount: 0}
+}
+
+// Source: this spec (@@minSize(1): one metadata entry per new serial).
+test "an NFT mint transaction rejects an empty list of metadata" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenMintNftTransaction{tokenId: Address.fromString(address: "4.2.0"), metadata: []}
+}
+
+// Source: this spec (@@maxSize(10): the network caps a mint at 10 NFTs, TOKEN_MAX_BATCH_SIZE_REACHED).
+test "an NFT mint transaction rejects more than 10 metadata entries" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenMintNftTransaction{tokenId: Address.fromString(address: "4.2.0"), metadata: ELEVEN_METADATA_ENTRIES}
+}
+
+// Source: this spec (@@min(1) of amount).
+test "a fungible burn transaction rejects an amount of 0" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenBurnFungibleTransaction{tokenId: Address.fromString(address: "4.2.0"), amount: 0}
+}
+
+// Source: this spec (@@minSize(1)).
+test "an NFT burn transaction rejects an empty list of serials" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenBurnNftTransaction{tokenId: Address.fromString(address: "4.2.0"), serials: []}
+}
+
+// Source: this spec (@@maxSize(10): the network caps a burn at 10 NFTs, TOKEN_MAX_BATCH_SIZE_REACHED).
+test "an NFT burn transaction rejects more than 10 serials" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenBurnNftTransaction{tokenId: Address.fromString(address: "4.2.0"), serials: ELEVEN_SERIALS}
 }
 
 // Source: the Java SDK (shouldBytes / shouldBytesFungible / shouldBytesNft of the TokenCreate, TokenUpdate,

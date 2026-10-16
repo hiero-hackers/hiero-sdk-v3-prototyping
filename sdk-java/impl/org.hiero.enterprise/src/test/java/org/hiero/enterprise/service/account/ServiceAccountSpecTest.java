@@ -1,6 +1,7 @@
 package org.hiero.enterprise.service.account;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.Duration;
 import org.hiero.authority.Authority;
@@ -90,6 +91,17 @@ class ServiceAccountSpecTest {
         assertNull(toNode.stakedAccountId());
         assertNull(toNeither.stakedAccountId());
         assertNull(toNeither.stakedNodeId());
+    }
+
+    /// `enterprise.service.account/account-parameters-staked-to-both-an-account-and-a-node-are-rejected`
+    ///
+    /// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI crypto_create.proto (staked_id is a oneof:
+    /// staked_account_id or staked_node_id).
+    @Test
+    @DisplayName("account parameters staked to both an account and a node are rejected")
+    void accountParametersStakedToBothAnAccountAndANodeAreRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new AccountCreateParams(defaultAuthority(), null, null, false, null, null, defaultAccountId(), 3L, false, null));
     }
 
     private static AccountCreateParams defaultAccountCreateParams() {

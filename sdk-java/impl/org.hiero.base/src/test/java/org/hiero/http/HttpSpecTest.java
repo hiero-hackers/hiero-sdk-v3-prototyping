@@ -132,6 +132,27 @@ class HttpSpecTest {
         assertEquals(body, request.body());
     }
 
+    /// `http/a-request-with-a-relative-url-is-rejected`
+    ///
+    /// Source: this spec (@@urlPattern: url is absolute; no base-URL resolution happens here). The path of the first
+    /// example without scheme and host.
+    @Test
+    @DisplayName("a request with a relative URL is rejected")
+    void aRequestWithARelativeURLIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new HttpRequest(HttpMethod.GET, "/api/v1/accounts/0.0.1234", null, null, Map.of()));
+    }
+
+    /// `http/a-request-with-a-url-without-scheme-is-rejected`
+    ///
+    /// Source: this spec (@@urlPattern: an absolute URL has a scheme). The URL of the first example without its scheme.
+    @Test
+    @DisplayName("a request with a URL without scheme is rejected")
+    void aRequestWithAURLWithoutSchemeIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new HttpRequest(HttpMethod.GET, "mainnet.mirrornode.hedera.com/api/v1/accounts/0.0.1234", null, null, Map.of()));
+    }
+
     /// `http/the-default-client-applies-the-configuration-it-was-created-with`
     ///
     /// Source: this spec (an HttpClient carries the configuration it applies to every exchange; createHttpClient creates
