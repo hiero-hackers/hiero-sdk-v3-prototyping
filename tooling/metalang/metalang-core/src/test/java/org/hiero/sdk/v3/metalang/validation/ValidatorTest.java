@@ -331,6 +331,13 @@ class ValidatorTest {
         }
 
         @Test
+        void shouldAcceptAnyAsTheParameterOfEquals() {
+            assertThat(rules("namespace a\nX { bool equals(other: ANY)\nbool same(other: ANY)\n"
+                    + "bool equals(a: ANY, b: ANY) }")).containsExactly("type.any-standalone", "type.any-standalone",
+                    "type.any-standalone");
+        }
+
+        @Test
         void shouldReportVoidOutsideReturnType() {
             assertThat(rules("namespace a\nX { @@immutable a: list<void>\nvoid m(p: void)\n"
                     + "void n(cb: function<void run()>) }")).containsExactly("type.unknown", "type.unknown");

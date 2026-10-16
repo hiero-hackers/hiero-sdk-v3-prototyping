@@ -28,9 +28,14 @@ public abstract class NativeToken<Self extends NativeToken<Self, Unit>, Unit ext
         return unit;
     }
 
-    /// Convert this amount to a different unit of the same token
+    /// Converts this amount to a different unit of the same token. Fails if the amount is not a whole number of the
+    /// target unit (a conversion never loses a part of the amount) or does not fit into an int64 in that unit.
+    ///
+    /// @throws IllegalArgumentException if an invalid argument error occurs
     public abstract Self to(final Unit targetUnit);
 
-    /// Total amount expressed in base (smallest) units
+    /// Total amount expressed in base (smallest) units. Fails if the amount does not fit into an int64 of base units.
+    ///
+    /// @throws IllegalArgumentException if an invalid argument error occurs
     public abstract long toBaseUnits();
 }

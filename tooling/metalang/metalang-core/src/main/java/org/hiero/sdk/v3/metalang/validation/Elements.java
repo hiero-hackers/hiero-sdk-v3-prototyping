@@ -86,8 +86,15 @@ final class Elements {
         final Position returnPosition = method.hasAnnotation("streaming") ? Position.STREAMING_RETURN : Position.RETURN;
         visitor.accept(new TypeSite(file, method.returnType(), returnPosition, scope));
         for (final Parameter parameter : method.parameters()) {
-            visitor.accept(new TypeSite(file, parameter.type(), Position.PARAMETER, scope));
+            // `equals(other: ANY)` overrides the equality of the target language, which compares with anything
+            if (!(isEquals(method) && parameter.type() instanceof TypeRef.Any)) {
+                visitor.accept(new TypeSite(file, parameter.type(), Position.PARAMETER, scope));
+            }
         }
+    }
+
+    private static boolean isEquals(final Method method) {
+        return method.name().equals("equals") && method.parameters().size() == 1;
     }
 
     /**

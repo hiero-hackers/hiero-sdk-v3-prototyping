@@ -26,11 +26,12 @@ abstraction NativeToken<$$Self extends NativeToken<$$Self, $$Unit>, $$Unit exten
     @@immutable amount: int64          // amount expressed in `unit`
     @@immutable unit: $$Unit  // the unit `amount` is expressed in
 
-    // Convert this amount to a different unit of the same token
-    $$Self to(targetUnit: $$Unit)
+    // Converts this amount to a different unit of the same token. Fails if the amount is not a whole number of the
+    // target unit (a conversion never loses a part of the amount) or does not fit into an int64 in that unit.
+    @@throws(invalid-argument-error) $$Self to(targetUnit: $$Unit)
 
-    // Total amount expressed in base (smallest) units
-    int64 toBaseUnits()
+    // Total amount expressed in base (smallest) units. Fails if the amount does not fit into an int64 of base units.
+    @@throws(invalid-argument-error) int64 toBaseUnits()
 }
 
 // Represents the exchange rate of a native token in USD cents.

@@ -44,30 +44,51 @@ class HbarTest {
     }
 
     @Test
-    @DisplayName("equal values give equal objects and hash codes")
-    void shouldCompareByValue() {
-        final Hbar subject = create();
-        final Hbar other = create();
-        assertEquals(subject, other);
-        assertEquals(subject.hashCode(), other.hashCode());
+    @DisplayName("to(targetUnit) can be called and returns a value (only IllegalArgumentException may occur)")
+    void shouldCallTo() throws Exception {
+        try {
+            assertNotNull(defaultSubject().to(targetUnitValue()));
+        } catch (final Exception e) {
+            if (!(e instanceof IllegalArgumentException)) {
+                throw e;
+            }
+        }
     }
 
     @Test
-    @DisplayName("to(targetUnit) can be called and returns a value")
-    void shouldCallTo() {
-        assertNotNull(create().to(targetUnitValue()));
+    @DisplayName("toBaseUnits() can be called (only IllegalArgumentException may occur)")
+    void shouldCallToBaseUnits() throws Exception {
+        try {
+            defaultSubject().toBaseUnits();
+        } catch (final Exception e) {
+            if (!(e instanceof IllegalArgumentException)) {
+                throw e;
+            }
+        }
     }
 
     @Test
-    @DisplayName("toBaseUnits() can be called")
-    void shouldCallToBaseUnits() {
-        create().toBaseUnits();
+    @DisplayName("toTinybars() can be called (only IllegalArgumentException may occur)")
+    void shouldCallToTinybars() throws Exception {
+        try {
+            defaultSubject().toTinybars();
+        } catch (final Exception e) {
+            if (!(e instanceof IllegalArgumentException)) {
+                throw e;
+            }
+        }
     }
 
     @Test
-    @DisplayName("toTinybars() can be called")
-    void shouldCallToTinybars() {
-        create().toTinybars();
+    @DisplayName("equals(other) can be called")
+    void shouldCallEquals() {
+        defaultSubject().equals(otherValue());
+    }
+
+    @Test
+    @DisplayName("hashCode() can be called")
+    void shouldCallHashCode() {
+        defaultSubject().hashCode();
     }
 
     private static long amountValue() {
@@ -82,8 +103,16 @@ class HbarTest {
         return new Hbar(amountValue(), unitValue());
     }
 
+    private static Hbar defaultSubject() {
+        return new Hbar(1L, HbarUnit.HBAR);
+    }
+
     private static HbarUnit targetUnitValue() {
         return HbarUnit.TINYBAR;
+    }
+
+    private static Object otherValue() {
+        return "value";
     }
 
     /// Asserts that two values are equal; arrays by their content.

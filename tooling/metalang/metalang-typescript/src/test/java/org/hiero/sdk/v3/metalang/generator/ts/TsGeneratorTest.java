@@ -542,8 +542,9 @@ class TsGeneratorTest {
             assertThat(build).isEmpty();
             assertThat(run.failures()).isEmpty();
             // the default instances build their values through the API (e.g. the default key through createPrivateKey),
-            // so against the stubs every test that needs such a value fails as well
-            assertThat(run.passed()).isGreaterThan(1600);
+            // so against the stubs every test that needs such a value fails as well; and a type that declares its own
+            // equals (Hbar) is compared through that stub, so does every test that compares a value holding one
+            assertThat(run.passed()).isGreaterThan(1500);
             assertThat(run.stubs()).isNotEmpty();
         }
     }
