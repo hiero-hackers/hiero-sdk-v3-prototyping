@@ -200,3 +200,9 @@ test "a client created with a signer signs with that signer" {
 
 - **`ClientFactory.createClient` returns `HieroClient<?>`**, so the caller loses the native-token unit
   and every later use needs a wildcard. Should the factory be generic in the unit of the `NetworkSetting`?
+
+- **The backoff and timeout settings of `Submittable` have no unit.** `minBackoff`, `maxBackoff` and
+  `attemptTimeout` are `int64`, so neither callers nor tests know whether a value is in milliseconds or seconds (the
+  V2 SDKs use durations: `Duration` in Java, milliseconds in JavaScript). The meta-language has `duration` (millisecond
+  precision) for exactly this; should the three fields become `duration`? Until then the tests cannot check them as
+  times.

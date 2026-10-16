@@ -3739,6 +3739,7 @@ JUnit tests that look like the other generated tests:
 | integer arithmetic `a + b`, `a < b` | exact on `BigInteger`: `integer(a).add(integer(b))`, `unsigned(u)` for a `uint64`, `….compareTo(…) < 0` |
 | an exact integer passed to an `int32` parameter | `checked(value, "int32").intValueExact()`: a value out of range fails the test |
 | `double` and `decimal` arithmetic | `a + b` for `double`; `a.add(b)`, `a.compareTo(b)` for `BigDecimal` |
+| `toZonedDateTime(text: …)`, `toDateTime`, `toDate`, `toTime`, `toDuration`, `toSeconds` | `ZonedDateTime.parse`, `LocalDateTime.parse`, `LocalDate.parse`, `LocalTime.parse`, `Duration.parse`, `Duration.ofSeconds` through the methods of the same name of `Testing`; text that is no ISO 8601 value fails the test |
 | `a + b` of `bytes`, of lists | `concat(a, b)` |
 | `x is null`, `x is PublicKey` | `x == null`, `x instanceof PublicKey` |
 | `list[i]`, `map[k]` | `get(list, i)`, `get(map, k)` (an index out of range or a missing key fails the test) |

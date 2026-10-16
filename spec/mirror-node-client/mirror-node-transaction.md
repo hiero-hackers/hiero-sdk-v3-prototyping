@@ -107,8 +107,7 @@ abstraction TransactionRepository {
 
 ## Testing
 
-The queries of `TransactionRepository` need a Mirror Node, and a `TransactionInfo` cannot be created in a test because
-the test language has no literal for `zonedDateTime` and `seconds`; only the transaction types are tested here.
+The queries of `TransactionRepository` need a Mirror Node; only the value types are tested here.
 
 ```tests
 // Source: this spec (BasicTransactionType, whose protocol names are those of the `TransactionTypes` enum of the Mirror
@@ -137,6 +136,54 @@ test "a basic transaction type is a transaction type with its protocol name" {
     // then
     assertInstanceOf(expected: BasicTransactionType, actual: type)
     assertEquals(expected: "CRYPTOTRANSFER", actual: type.protocolName)
+}
+
+// Source: the Hiero Enterprise Java test fixture transaction-list.json, first transaction (CRYPTOTRANSFER, SUCCESS,
+// charged fee 140686, max fee 1000000, node 0.0.13, consensus timestamp "1785848389.057282104", valid start
+// "1785848378.760000732", valid duration 120 seconds, no parent, no entity); millisecond precision.
+test "a transaction info keeps its timestamps and its valid duration" {
+    // given
+    let consensus = toZonedDateTime(text: "2026-08-04T12:59:49.057Z")
+    let validStart = toZonedDateTime(text: "2026-08-04T12:59:38.760Z")
+
+    // when
+    let info = TransactionInfo{transactionId: DEFAULT(TransactionId), transactionHash: [], chargedTxFee: 140686,
+            consensusTimestamp: consensus, maxFee: 1000000, memo: [], name: BasicTransactionType.CRYPTO_TRANSFER,
+            nonce: 0, node: "0.0.13", result: TransactionResult.SUCCESS, scheduled: false,
+            validDuration: toSeconds(value: 120), validStartTimestamp: validStart, transfers: [], tokenTransfers: [],
+            nftTransfers: [], stakingRewardTransfers: []}
+
+    // then
+    assertEquals(expected: toZonedDateTime(text: "2026-08-04T12:59:49.057Z"), actual: info.consensusTimestamp)
+    assertEquals(expected: toZonedDateTime(text: "2026-08-04T12:59:38.760Z"), actual: info.validStartTimestamp)
+    assertEquals(expected: toSeconds(value: 120), actual: info.validDuration)
+    assertNull(actual: info.parentConsensusTimestamp)
+    assertNull(actual: info.entityId)
+    assertEquals(expected: 140686, actual: info.chargedTxFee)
+    assertEquals(expected: 1000000, actual: info.maxFee)
+    assertEquals(expected: "0.0.13", actual: info.node)
+    assertEquals(expected: "CRYPTOTRANSFER", actual: info.name.protocolName)
+    assertEquals(expected: TransactionResult.SUCCESS, actual: info.result)
+}
+
+// Source: this spec (`parentConsensusTimestamp` is nullable); the Mirror Node REST API (`parent_consensus_timestamp`
+// is set for a child transaction, with its `nonce` greater than 0).
+test "a child transaction info keeps the consensus timestamp of its parent" {
+    // given
+    let parent = toZonedDateTime(text: "2026-08-04T12:59:49.057Z")
+    let child = toZonedDateTime(text: "2026-08-04T12:59:49.058Z")
+
+    // when
+    let info = TransactionInfo{transactionId: DEFAULT(TransactionId), transactionHash: [], chargedTxFee: 0,
+            consensusTimestamp: child, maxFee: 0, memo: [], name: BasicTransactionType.CRYPTO_TRANSFER, nonce: 1,
+            parentConsensusTimestamp: parent, result: TransactionResult.SUCCESS, scheduled: false,
+            validDuration: DEFAULT(seconds), validStartTimestamp: DEFAULT(zonedDateTime), transfers: [],
+            tokenTransfers: [], nftTransfers: [], stakingRewardTransfers: []}
+
+    // then
+    assertEquals(expected: parent, actual: info.parentConsensusTimestamp)
+    assertEquals(expected: child, actual: info.consensusTimestamp)
+    assertEquals(expected: 1, actual: info.nonce)
 }
 ```
 

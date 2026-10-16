@@ -116,6 +116,16 @@ ScheduleDeleteReceipt extends Receipt {
 }
 ```
 
+## Default Instances for Testing
+
+```
+// The expiration time of the schedule create tests of the Java SDK (ScheduleCreateTransactionTest: validStart =
+// Instant.ofEpochSecond(1554158542)), the Swift SDK (ScheduleCreateTransactionUnitTests: TestConstants.validStart =
+// Timestamp(seconds: 1_554_158_542, subSecondNanos: 0)) and the Rust SDK (schedule_create_transaction.rs:
+// EXPIRATION_TIME = VALID_START), whole seconds.
+values SDK_TEST_EXPIRATION_TIME: zonedDateTime = toZonedDateTime(text: "2019-04-01T22:42:22Z")
+```
+
 ## Examples
 
 ### Schedule a transfer and contribute the operator's signature
@@ -220,7 +230,8 @@ test "a schedule create transaction leaves out what is not given" {
 
 // Source: the Python SDK (test_constructor_with_parameters of ScheduleCreateTransaction: payer 0.0.123, "test memo",
 // waitForExpiry true, a transfer as inner transaction) and the Swift SDK (ScheduleCreateTransactionUnitTests
-// .test_GetSetPayerAccountId and test_GetSetAdminKey).
+// .test_GetSetPayerAccountId, test_GetSetAdminKey and test_GetSetExpirationTime: TestConstants.validStart =
+// 2019-04-01T22:42:22Z).
 test "a schedule create transaction keeps its inner transaction and attributes" {
     // given
     let inner: Transaction<ANY, ANY> = consensusnode.transactions.accounts.TransferTransaction{hbarTransfers: [
@@ -231,17 +242,20 @@ test "a schedule create transaction keeps its inner transaction and attributes" 
 
     // when
     let transaction = ScheduleCreateTransaction{scheduledTransaction: inner, adminKey: DEFAULT(Authority),
-            payerAccountId: AccountId.fromString(value: "0.0.123"), scheduleMemo: "test memo", waitForExpiry: true}
+            payerAccountId: AccountId.fromString(value: "0.0.123"), scheduleMemo: "test memo",
+            expirationTime: SDK_TEST_EXPIRATION_TIME, waitForExpiry: true}
 
     // then
     assertEquals(expected: inner, actual: transaction.scheduledTransaction)
     assertEquals(expected: DEFAULT(Authority), actual: transaction.adminKey)
     assertEquals(expected: AccountId.fromString(value: "0.0.123"), actual: transaction.payerAccountId)
     assertEquals(expected: "test memo", actual: transaction.scheduleMemo)
+    assertEquals(expected: SDK_TEST_EXPIRATION_TIME, actual: transaction.expirationTime)
     assertTrue(condition: transaction.waitForExpiry)
 }
 
-// Source: the Java SDK (ScheduleCreateTransactionTest.shouldBytes and shouldBytesNoSetters) and the Swift SDK
+// Source: the Java SDK (ScheduleCreateTransactionTest.shouldBytes and shouldBytesNoSetters; expiration time validStart
+// = Instant.ofEpochSecond(1554158542) = 2019-04-01T22:42:22Z) and the Swift SDK
 // (ScheduleCreateTransactionUnitTests.test_ToFromBytes).
 test "a schedule create transaction survives toBytes and fromBytes" {
     // given
@@ -251,7 +265,8 @@ test "a schedule create transaction survives toBytes and fromBytes" {
             consensusnode.transactions.accounts.HbarTransfer{accountId: AccountId.fromString(value: "0.0.1002"),
                     amount: hedera.Hbar{amount: 1, unit: hedera.HbarUnit.HBAR}}]}
     let packed = ScheduleCreateTransaction{scheduledTransaction: inner, adminKey: DEFAULT(Authority),
-            payerAccountId: AccountId.fromString(value: "0.0.123"), scheduleMemo: "test memo", waitForExpiry: true}
+            payerAccountId: AccountId.fromString(value: "0.0.123"), scheduleMemo: "test memo",
+            expirationTime: SDK_TEST_EXPIRATION_TIME, waitForExpiry: true}
             .pack(payer: DEFAULT(consensusnode.client.Account), nodes: [AccountId.fromString(value: "0.0.3"),
                     AccountId.fromString(value: "0.0.4")])
 

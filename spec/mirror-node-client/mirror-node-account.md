@@ -156,10 +156,18 @@ abstraction AccountRepository {
 
 ```
 
+## Default Instances for Testing
+
+```
+// The creation, expiry and balance timestamps of the Hiero Enterprise Java test fixture account-info.json
+// ("1605733260.898372007", "1612733260.898372007", "1742896287.333154756"), in millisecond precision.
+values TIMES: list<zonedDateTime> = [toZonedDateTime(text: "2020-11-18T21:01:00.898Z"),
+        toZonedDateTime(text: "2021-02-07T21:27:40.898Z"), toZonedDateTime(text: "2025-03-25T09:51:27.333Z")]
+```
+
 ## Testing
 
-The queries of `AccountRepository` need a Mirror Node, and the allowances, staking rewards and airdrops cannot be
-created in a test because the test language has no literal for `zonedDateTime`.
+The queries of `AccountRepository` need a Mirror Node; only the value types are tested here.
 
 ```tests
 // Source: this spec (`declineReward` and `deleted` default to false; the other optional values are nullable).
@@ -179,6 +187,143 @@ test "an account info without optional values does not decline rewards and is no
     assertNull(actual: info.alias)
     assertNull(actual: info.stakedAccountId)
     assertNull(actual: info.stakedNodeId)
+    assertNull(actual: info.balanceTimestamp)
+    assertNull(actual: info.createdTimestamp)
+    assertNull(actual: info.expiryTimestamp)
+    assertNull(actual: info.autoRenewPeriod)
+    assertNull(actual: info.stakePeriodStart)
+}
+
+// Source: the Hiero Enterprise Java test fixture account-info.json (created "1605733260.898372007", expiry
+// "1612733260.898372007", balance timestamp "1742896287.333154756", auto-renew period 7000000 seconds, no stake period
+// start), the values of TIMES; millisecond precision.
+test "an account info keeps its timestamps and its auto-renew period" {
+    // given
+    let created = TIMES[0]
+    let expiry = TIMES[1]
+    let balanceTime = TIMES[2]
+
+    // when
+    let info = AccountInfo{accountId: DEFAULT(AccountId), balance: 1663012637744658, balanceTimestamp: balanceTime,
+            ethereumNonce: 0, pendingReward: 0, createdTimestamp: created, expiryTimestamp: expiry,
+            autoRenewPeriod: toSeconds(value: 7000000)}
+
+    // then
+    assertEquals(expected: toZonedDateTime(text: "2020-11-18T21:01:00.898Z"), actual: info.createdTimestamp)
+    assertEquals(expected: toZonedDateTime(text: "2021-02-07T21:27:40.898Z"), actual: info.expiryTimestamp)
+    assertEquals(expected: toZonedDateTime(text: "2025-03-25T09:51:27.333Z"), actual: info.balanceTimestamp)
+    assertEquals(expected: toSeconds(value: 7000000), actual: info.autoRenewPeriod)
+    assertNull(actual: info.stakePeriodStart)
+}
+
+// Source: this spec (a staking reward is a payout of tinybars to the account at a consensus time); the values of
+// TIMES.
+test "a staking reward keeps its account, amount and payout time" {
+    // given
+    let account = DEFAULT(AccountId)
+
+    // when
+    let reward = StakingReward{accountId: account, amount: 100, timestamp: TIMES[0]}
+    let later = StakingReward{accountId: account, amount: 100, timestamp: TIMES[1]}
+
+    // then
+    assertEquals(expected: account, actual: reward.accountId)
+    assertEquals(expected: 100, actual: reward.amount)
+    assertEquals(expected: TIMES[0], actual: reward.timestamp)
+    assertEquals(expected: StakingReward{accountId: account, amount: 100, timestamp: TIMES[0]}, actual: reward)
+    assertNotEquals(unexpected: reward, actual: later)
+}
+
+// Source: this spec (an HBAR allowance has a remaining and an originally approved amount and the time it was granted
+// or last modified).
+test "a crypto allowance keeps its owner, spender, remaining and granted amounts and its time" {
+    // given
+    let owner = AccountId.fromString(value: "0.0.1001")
+    let spender = AccountId.fromString(value: "0.0.1002")
+    let time = DEFAULT(zonedDateTime)
+
+    // when
+    let allowance = CryptoAllowance{owner: owner, spender: spender, amount: 25, amountGranted: 100, timestamp: time}
+
+    // then
+    assertEquals(expected: owner, actual: allowance.owner)
+    assertEquals(expected: spender, actual: allowance.spender)
+    assertEquals(expected: 25, actual: allowance.amount)
+    assertEquals(expected: 100, actual: allowance.amountGranted)
+    assertEquals(expected: time, actual: allowance.timestamp)
+}
+
+// Source: this spec (a fungible-token allowance has the token, a remaining and an originally approved amount and the
+// time it was granted or last modified).
+test "a token allowance keeps its token, remaining and granted amounts and its time" {
+    // given
+    let token = Address.fromString(address: "0.0.5005")
+    let time = DEFAULT(zonedDateTime)
+
+    // when
+    let allowance = TokenAllowance{owner: AccountId.fromString(value: "0.0.1001"),
+            spender: AccountId.fromString(value: "0.0.1002"), tokenId: token, amount: 0, amountGranted: 10,
+            timestamp: time}
+
+    // then
+    assertEquals(expected: token, actual: allowance.tokenId)
+    assertEquals(expected: 0, actual: allowance.amount)
+    assertEquals(expected: 10, actual: allowance.amountGranted)
+    assertEquals(expected: time, actual: allowance.timestamp)
+}
+
+// Source: this spec (an NFT allowance is approved for all serials of the collection or not).
+test "an NFT allowance keeps whether it is approved for the whole collection" {
+    // given
+    let token = Address.fromString(address: "0.0.5005")
+    let time = DEFAULT(zonedDateTime)
+
+    for approved in [false, true] {
+        // when
+        let allowance = NftAllowance{owner: AccountId.fromString(value: "0.0.1001"),
+                spender: AccountId.fromString(value: "0.0.1002"), tokenId: token, approvedForAll: approved,
+                timestamp: time}
+
+        // then
+        assertEquals(expected: approved, actual: allowance.approvedForAll)
+        assertEquals(expected: token, actual: allowance.tokenId)
+        assertEquals(expected: time, actual: allowance.timestamp)
+    }
+}
+
+// Source: this spec (exactly one of `amount` and `serialNumber` is set; `serialNumber` is null for a fungible
+// airdrop); HIP-904.
+test "a fungible airdrop has an amount and no serial number" {
+    // given
+    let time = DEFAULT(zonedDateTime)
+
+    // when
+    let airdrop = TokenAirdrop{senderId: AccountId.fromString(value: "0.0.1001"),
+            receiverId: AccountId.fromString(value: "0.0.1002"), tokenId: Address.fromString(address: "0.0.5005"),
+            amount: 10, timestamp: time}
+
+    // then
+    assertEquals(expected: 10, actual: airdrop.amount)
+    assertNull(actual: airdrop.serialNumber)
+    assertEquals(expected: time, actual: airdrop.timestamp)
+}
+
+// Source: this spec (exactly one of `amount` and `serialNumber` is set; `amount` is null for an NFT airdrop);
+// HIP-904.
+test "an NFT airdrop has a serial number and no amount" {
+    // given
+    let sender = AccountId.fromString(value: "0.0.1001")
+    let receiver = AccountId.fromString(value: "0.0.1002")
+
+    // when
+    let airdrop = TokenAirdrop{senderId: sender, receiverId: receiver, tokenId: Address.fromString(address: "0.0.5005"),
+            serialNumber: 1, timestamp: DEFAULT(zonedDateTime)}
+
+    // then
+    assertEquals(expected: sender, actual: airdrop.senderId)
+    assertEquals(expected: receiver, actual: airdrop.receiverId)
+    assertEquals(expected: 1, actual: airdrop.serialNumber)
+    assertNull(actual: airdrop.amount)
 }
 
 // Source: this spec (`tokens` defaults to an empty list).

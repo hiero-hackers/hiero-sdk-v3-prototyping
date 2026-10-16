@@ -144,6 +144,20 @@ test "a file info of an immutable file without memo has no authority and no memo
     assertNull(actual: info.authority)
     assertNull(actual: info.fileMemo)
 }
+
+// Source: the Java SDK (FileInfoTest, the file info of its fixture): expiration time Instant.ofEpochMilli(3), i.e.
+// 1970-01-01T00:00:00.003Z. Millisecond precision.
+test "a file info keeps its expiration time" {
+    // given
+    let expirationTime = toZonedDateTime(text: "1970-01-01T00:00:00.003Z")
+
+    // when
+    let info = FileInfo{fileId: DEFAULT, size: 0, expirationTime: expirationTime, deleted: false, authority: null,
+            fileMemo: null}
+
+    // then
+    assertEquals(expected: toZonedDateTime(text: "1970-01-01T00:00:00.003Z"), actual: info.expirationTime)
+}
 ```
 
 ## Questions & Comments

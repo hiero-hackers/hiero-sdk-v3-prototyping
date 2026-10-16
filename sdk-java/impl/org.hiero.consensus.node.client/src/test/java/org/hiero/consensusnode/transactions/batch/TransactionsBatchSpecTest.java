@@ -73,7 +73,8 @@ class TransactionsBatchSpecTest {
     /// `consensusnode.transactions.batch/a-signed-batch-survives-tobytes-and-frombytes`
     ///
     /// Source: the Python SDK (test_round_trip_to_bytes_and_back_preserves_inner_transactions), the Java SDK
-    /// (BatchTransactionTest.shouldBytes) and the Swift SDK (BatchTransactionUnitTests.test_ToFromBytes).
+    /// (BatchTransactionTest.shouldBytes: the same transaction id, valid start included, after the round trip) and the
+    /// Swift SDK (BatchTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("a signed batch survives toBytes and fromBytes")
     void aSignedBatchSurvivesToBytesAndFromBytes() {
@@ -88,6 +89,7 @@ class TransactionsBatchSpecTest {
         // then
         assertEquals(packed.toBytes(), restored.toBytes());
         assertEquals(packed.transactionId().accountId(), restored.transactionId().accountId());
+        assertEquals(packed.transactionId().validStart(), restored.transactionId().validStart());
         assertEquals(packed.signableBodies(), restored.signableBodies());
         assertEquals(1L, length(restored.nodeSignatures()));
     }

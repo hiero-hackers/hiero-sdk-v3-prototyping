@@ -45,21 +45,24 @@ class ServiceAccountSpecTest {
     /// Source: the AccountCreateTransaction unit tests of the Java (AccountCreateTransactionTest), Go
     /// (account_create_transaction_unit_test.go), C++ (AccountCreateTransactionUnitTests), Swift
     /// (AccountCreateTransactionUnitTests) and Python (account_create_transaction_test.py) SDKs: every value that is set is
-    /// read back unchanged.
+    /// read back unchanged. The auto-renew period is the one of the Java test (Duration.ofHours(10), which is exactly 36000
+    /// seconds).
     @Test
     @DisplayName("account parameters keep the values they are created with")
     void accountParametersKeepTheValuesTheyAreCreatedWith() {
         // given
         final Authority authority = defaultAuthority();
+        final Duration autoRenewPeriod = toSeconds(36000L);
 
         // when
-        final AccountCreateParams params = new AccountCreateParams(authority, null, "memo", true, 10, Duration.ofSeconds(7_776_000L), null, 3L, true, null);
+        final AccountCreateParams params = new AccountCreateParams(authority, null, "memo", true, 10, autoRenewPeriod, null, 3L, true, null);
 
         // then
         assertEquals(authority, params.authority());
         assertEquals("memo", params.accountMemo());
         assertTrue(params.receiverSignatureRequired());
         assertEquals(10, params.maxAutomaticTokenAssociations());
+        assertEquals(autoRenewPeriod, params.autoRenewPeriod());
         assertEquals(3L, params.stakedNodeId());
         assertTrue(params.declineStakingReward());
     }

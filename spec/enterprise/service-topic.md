@@ -95,10 +95,10 @@ instance TopicCreateParams = TopicCreateParams{}
 
 ## Testing
 
-Tests of `TopicCreateParams`. The methods of `TopicService` talk to the network and are not unit-tested here. A
-violated `@@maxLength` cannot be expected yet: the test language expects errors of calls only, and creating a
-`TopicCreateParams` declares none. `Topic` and `TopicMessage` hold a `zonedDateTime`, which the test language cannot
-write yet (it has no date and time literals), so they are not tested.
+Tests of `TopicCreateParams`, `Topic` and `TopicMessage`. The methods of `TopicService` talk to the network and are
+not unit-tested here. A violated `@@maxLength` cannot be expected yet: the test language expects errors of calls only,
+and creating a `TopicCreateParams` declares none. Points in time have millisecond precision, the precision every
+target language can hold.
 
 ```tests
 // Source: this spec (TopicCreateParams: "Nothing is required: without values the topic is public and cannot be
@@ -119,20 +119,23 @@ test "topic parameters without values describe a public topic that cannot be cha
 // Source: the TopicCreateTransaction unit tests of the Java (TopicCreateTransactionTest), Go
 // (topic_create_transaction_unit_test.go), C++ (TopicCreateTransactionUnitTests), Swift
 // (TopicCreateTransactionUnitTests) and Python (topic_create_transaction_test.py, test_constructor) SDKs: every value
-// that is set is read back unchanged.
+// that is set is read back unchanged. The auto-renew period is the one of the Java test (Duration.ofHours(24), which
+// is exactly 86400 seconds).
 test "topic parameters keep the values they are created with" {
     // given
     let authority = DEFAULT(Authority)
     let autoRenewAccount = DEFAULT(AccountId)
+    let autoRenewPeriod = toSeconds(value: 86400)
 
     // when
     let params = TopicCreateParams{adminAuthority: authority, submitAuthority: authority, topicMemo: "memo",
-            autoRenewAccount: autoRenewAccount}
+            autoRenewPeriod: autoRenewPeriod, autoRenewAccount: autoRenewAccount}
 
     // then
     assertEquals(expected: authority, actual: params.adminAuthority)
     assertEquals(expected: authority, actual: params.submitAuthority)
     assertEquals(expected: "memo", actual: params.topicMemo)
+    assertEquals(expected: autoRenewPeriod, actual: params.autoRenewPeriod)
     assertEquals(expected: autoRenewAccount, actual: params.autoRenewAccount)
 }
 
@@ -147,6 +150,82 @@ test "a topic memo of 100 characters is accepted" {
 
     // then
     assertEquals(expected: memo, actual: params.topicMemo)
+}
+
+// Source: hiero-enterprise-java (Topic, and the Mirror Node fixture topic.json of MirrorNodeJsonConverterTest: topic
+// 0.0.1926 with an admin key, a submit key and the memo "1706816668096 Mirror node created test topic"). The created
+// timestamp of the fixture has nanosecond precision, so the test uses some valid point in time instead.
+test "a topic keeps the values it is created with" {
+    // given
+    let topicId = Address{shard: 0, realm: 0, num: 1926, checksum: ""}
+    let authority = DEFAULT(Authority)
+    let createdTimestamp = DEFAULT(zonedDateTime)
+
+    // when
+    let topic = Topic{topicId: topicId, adminAuthority: authority, submitAuthority: authority,
+            createdTimestamp: createdTimestamp, memo: "1706816668096 Mirror node created test topic"}
+
+    // then
+    assertEquals(expected: topicId, actual: topic.topicId)
+    assertEquals(expected: authority, actual: topic.adminAuthority)
+    assertEquals(expected: authority, actual: topic.submitAuthority)
+    assertEquals(expected: createdTimestamp, actual: topic.createdTimestamp)
+    assertEquals(expected: "1706816668096 Mirror node created test topic", actual: topic.memo)
+}
+
+// Source: this spec (Description: "A topic without a submit authority is public"; TopicCreateParams.adminAuthority:
+// "without it the topic cannot be changed").
+test "a topic without authorities has neither an admin nor a submit authority" {
+    // when
+    let topic = Topic{topicId: DEFAULT(Address), adminAuthority: null, submitAuthority: null,
+            createdTimestamp: DEFAULT(zonedDateTime), memo: ""}
+
+    // then
+    assertNull(actual: topic.adminAuthority)
+    assertNull(actual: topic.submitAuthority)
+}
+
+// Source: this spec (Topic is a value of its attributes); the points in time are the fixed timestamps of the Java
+// SDK tests (TopicMessageTest: Instant.ofEpochSecond(1554158542), FileCreateTransactionTest:
+// Instant.ofEpochSecond(1554158728); converted exactly to 2019-04-01T22:42:22Z and 2019-04-01T22:45:28Z).
+test "topics created at different times are not equal" {
+    // given
+    let created = toZonedDateTime(text: "2019-04-01T22:42:22Z")
+    let createdLater = toZonedDateTime(text: "2019-04-01T22:45:28Z")
+
+    // when
+    let topic = Topic{topicId: DEFAULT(Address), adminAuthority: null, submitAuthority: null,
+            createdTimestamp: created, memo: "memo"}
+    let sameTopic = Topic{topicId: DEFAULT(Address), adminAuthority: null, submitAuthority: null,
+            createdTimestamp: created, memo: "memo"}
+    let laterTopic = Topic{topicId: DEFAULT(Address), adminAuthority: null, submitAuthority: null,
+            createdTimestamp: createdLater, memo: "memo"}
+
+    // then
+    assertEquals(expected: topic, actual: sameTopic)
+    assertNotEquals(unexpected: topic, actual: laterTopic)
+    assertTrue(condition: topic.createdTimestamp < laterTopic.createdTimestamp)
+}
+
+// Source: the Java SDK (TopicMessageTest, constructWithArgs: consensus timestamp Instant.ofEpochSecond(1554158542),
+// converted exactly to 2019-04-01T22:42:22Z, sequence number 7, payer 0.0.1 of the transaction id); every value that
+// is set is read back unchanged.
+test "a topic message keeps the values it is created with" {
+    // given
+    let consensusTimestamp = toZonedDateTime(text: "2019-04-01T22:42:22Z")
+    let payer = AccountId{shard: 0, realm: 0, num: 1, checksum: ""}
+    let topicId = DEFAULT(Address)
+
+    // when
+    let message = TopicMessage{consensusTimestamp: consensusTimestamp, message: "Hello, Hiero!",
+            payerAccountId: payer, sequenceNumber: 7, topicId: topicId}
+
+    // then
+    assertEquals(expected: consensusTimestamp, actual: message.consensusTimestamp)
+    assertEquals(expected: "Hello, Hiero!", actual: message.message)
+    assertEquals(expected: payer, actual: message.payerAccountId)
+    assertEquals(expected: 7, actual: message.sequenceNumber)
+    assertEquals(expected: topicId, actual: message.topicId)
 }
 ```
 

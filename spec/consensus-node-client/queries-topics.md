@@ -139,6 +139,22 @@ test "a topic info of a public immutable topic has no authorities" {
     assertNull(actual: info.autoRenewPeriod)
     assertNull(actual: info.autoRenewAccount)
 }
+
+// Source: the Java SDK (TopicInfoTest, the topic info of its fixture): expiration time Instant.ofEpochMilli(4), i.e.
+// 1970-01-01T00:00:00.004Z, and auto-renew period Duration.ofDays(5), i.e. 432000 seconds. Millisecond precision.
+test "a topic info keeps its expiration time and auto-renew period" {
+    // given
+    let expirationTime = toZonedDateTime(text: "1970-01-01T00:00:00.004Z")
+    let runningHash = repeat(value: hex(text: "00"), count: 48)
+
+    // when
+    let info = TopicInfo{topicId: DEFAULT, runningHash: runningHash, sequenceNumber: 0, expirationTime: expirationTime,
+            autoRenewPeriod: toSeconds(value: 432000)}
+
+    // then
+    assertEquals(expected: expirationTime, actual: info.expirationTime)
+    assertEquals(expected: toSeconds(value: 432000), actual: info.autoRenewPeriod)
+}
 ```
 
 ## Questions & Comments

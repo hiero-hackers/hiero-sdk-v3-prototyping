@@ -186,23 +186,26 @@ test "contract parameters take the bytecode directly instead of from a file" {
 // (contract_create_transaction_unit_test.go), C++ (ContractCreateTransactionUnitTests), Swift
 // (ContractCreateTransactionUnitTests) and Python (contract_create_transaction_test.py, test_constructor_with_parameters)
 // SDKs; hiero-enterprise-java (ProtocolLayerDataCreationTests, testContractCreateRequestCreation: a file id, gas, an
-// admin key and constructor parameters): every value that is set is read back unchanged.
+// admin key and constructor parameters): every value that is set is read back unchanged. The auto-renew period is the
+// one of the Java test (Duration.ofHours(10), which is exactly 36000 seconds).
 test "contract parameters keep the values they are created with" {
     // given
     let authority = DEFAULT(Authority)
+    let autoRenewPeriod = toSeconds(value: 36000)
     let account = DEFAULT(AccountId)
     let constructorParam = ofString(value: "Hello from Hiero.")
 
     // when
     let params = ContractCreateParams{fileId: DEFAULT, constructorParams: [constructorParam], gas: 1_000_000,
-            adminAuthority: authority, contractMemo: "memo", autoRenewAccount: account,
-            maxAutomaticTokenAssociations: 10, stakedNodeId: 3, declineStakingReward: true}
+            adminAuthority: authority, contractMemo: "memo", autoRenewPeriod: autoRenewPeriod,
+            autoRenewAccount: account, maxAutomaticTokenAssociations: 10, stakedNodeId: 3, declineStakingReward: true}
 
     // then
     assertEquals(expected: 1, actual: length(value: params.constructorParams))
     assertEquals(expected: 1_000_000, actual: params.gas)
     assertEquals(expected: authority, actual: params.adminAuthority)
     assertEquals(expected: "memo", actual: params.contractMemo)
+    assertEquals(expected: autoRenewPeriod, actual: params.autoRenewPeriod)
     assertEquals(expected: account, actual: params.autoRenewAccount)
     assertEquals(expected: 10, actual: params.maxAutomaticTokenAssociations)
     assertEquals(expected: 3, actual: params.stakedNodeId)

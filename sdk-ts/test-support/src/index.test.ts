@@ -9,8 +9,9 @@ import {
     assertNull, assertTrue, base64, checked, checkedNumber, compare, compareDecimal, concat, contains, containsKey,
     decimal, divide, endsWith, equal, get, hex, int, keys, length, max, maxDecimal, min, multiplyDecimal,
     negateDecimal, range, repeat, slice, startsWith, subtractDecimal, substring, textDecimal, toDecimalDouble, toHex,
-    toInt, utf8, values,
+    toInt, utf8, values, toZonedDateTime, toDateTime, toDate, toTime, toDuration, toSeconds,
 } from "./index.js";
+import { Duration } from "@hiero/support";
 
 class Point {
     readonly #x: number;
@@ -159,5 +160,22 @@ describe("test support", () => {
         assert.throws(() => assertValue([1], [2]), AssertionError);
         assert.throws(() => assertValue(new Point(1, "a"), new Point(1, "a")), AssertionError);
         assert.throws(() => assertValue(1, 1n), AssertionError);
+    });
+    test("date, time and durations are read from ISO 8601", () => {
+        assert.equal(toZonedDateTime("2022-01-02T02:00:01.5Z").toISOString(), "2022-01-02T02:00:01.500Z");
+        assert.equal(toZonedDateTime("2022-01-02T03:00:01+01:00").toISOString(), "2022-01-02T02:00:01.000Z");
+        assert.equal(toZonedDateTime("2022-01-02T02:00:01.500000000Z").getTime(), Date.UTC(2022, 0, 2, 2, 0, 1, 500));
+        assert.throws(() => toZonedDateTime("2022-01-02T02:00:01.000000002Z"), /more precise/);
+        assert.throws(() => toZonedDateTime("2022-01-02T02:00:01"), AssertionError);
+        assert.equal(toDateTime("2022-01-02T02:00:01").toISOString(), "2022-01-02T02:00:01.000Z");
+        assert.equal(toDate("2022-01-02").toISOString(), "2022-01-02T00:00:00.000Z");
+        assert.throws(() => toDate("2022-02-30"), AssertionError);
+        assert.equal(toTime("02:00:01.5").toISOString(), "1970-01-01T02:00:01.500Z");
+        assert.ok(equal(toDuration("PT1.5S"), Duration.ofMillis(1500)));
+        assert.ok(equal(toDuration("P1DT2H3M4S"), Duration.ofMillis(((24 + 2) * 60 + 3) * 60000 + 4000)));
+        assert.throws(() => toDuration("1.5 seconds"), AssertionError);
+        assert.throws(() => toDuration("PT"), AssertionError);
+        assert.ok(equal(toSeconds(7776000n), Duration.ofSeconds(7776000)));
+        assert.ok(compare(toSeconds(89n), toSeconds(90n)) < 0 && compare(toDuration("PT1M"), toDuration("PT60S")) === 0);
     });
 });

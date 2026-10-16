@@ -273,6 +273,14 @@ abstraction HttpClient {
 @@static HttpClient createHttpClient(configuration: HttpConfiguration)
 ```
 
+## Default Instances for Testing
+
+```
+// The configuration of the first example of this spec: JSON is accepted, 5 seconds to connect, 10 seconds per request.
+values EXAMPLE_CONFIGURATION: HttpConfiguration = HttpConfiguration{defaultHeaders: {"accept": "application/json"},
+        connectTimeout: toDuration(text: "PT5S"), defaultRequestTimeout: toDuration(text: "PT10S")}
+```
+
 ## Examples
 
 The following example performs a single GET request and shows that a `404` is a normal result of
@@ -392,6 +400,62 @@ test "a request keeps its absolute URL" {
         assertNull(actual: request.body)
         assertNull(actual: request.timeout)
     }
+}
+
+// Source: this spec (the configuration of the first example: connectTimeout 5s, defaultRequestTimeout 10s and an
+// "accept" default header).
+test "an HTTP configuration keeps its timeouts and default headers" {
+    // when
+    let configuration = HttpConfiguration{defaultHeaders: {"accept": "application/json"},
+            connectTimeout: toDuration(text: "PT5S"), defaultRequestTimeout: toDuration(text: "PT10S")}
+
+    // then
+    assertEquals(expected: toDuration(text: "PT5S"), actual: configuration.connectTimeout)
+    assertEquals(expected: toDuration(text: "PT10S"), actual: configuration.defaultRequestTimeout)
+    assertEquals(expected: {"accept": "application/json"}, actual: configuration.defaultHeaders)
+}
+
+// Source: this spec (the second example: a POST request with its own timeout of 30s and its own headers). The body is
+// a stand-in for the JSON payload of the example.
+test "a request keeps its own timeout and headers" {
+    // given
+    let body = utf8(text: "{}")
+
+    // when
+    let request = HttpRequest{method: HttpMethod.POST, url: "https://example.org/api/v1/submit", body: body,
+            timeout: toDuration(text: "PT30S"), headers: {"content-type": "application/json"}}
+
+    // then
+    assertEquals(expected: toDuration(text: "PT30S"), actual: request.timeout)
+    assertEquals(expected: {"content-type": "application/json"}, actual: request.headers)
+    assertEquals(expected: body, actual: request.body)
+}
+
+// Source: this spec (an HttpClient carries the configuration it applies to every exchange; createHttpClient creates
+// the default client for a configuration).
+test "the default client applies the configuration it was created with" {
+    // when
+    let client = createHttpClient(configuration: EXAMPLE_CONFIGURATION)
+
+    // then
+    assertEquals(expected: EXAMPLE_CONFIGURATION, actual: client.configuration)
+    client.close()
+}
+
+// Source: this spec (client-closed-error: the client was closed before the request was submitted; close(closeTimeout)
+// completes normally and is idempotent like close(); the request and the 5s close timeout of the first example).
+test "a client closed with a timeout rejects a request" {
+    // given
+    let client = createHttpClient(configuration: EXAMPLE_CONFIGURATION)
+    let request = HttpRequest{method: HttpMethod.GET,
+            url: "https://mainnet.mirrornode.hedera.com/api/v1/accounts/0.0.1234", body: null, timeout: null,
+            headers: {}}
+    client.close(closeTimeout: toDuration(text: "PT5S"))
+    client.close(closeTimeout: toDuration(text: "PT5S"))
+
+    // when / then
+    @@expectThrows(client-closed-error)
+    client.execute(request: request, cancellation: Cancellation.none())
 }
 ```
 

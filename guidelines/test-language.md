@@ -346,6 +346,28 @@ Java, JavaScript and TypeScript) or does not compare contents (Go slices and map
 - An error that the test language itself raises (division by zero, an index out of range, a value out of range for a
   parameter, a failed assertion) is always a test failure and cannot be expected with `@@expectThrows`.
 
+### Date, time and durations
+
+There are no literals for them; the built-in functions `toZonedDateTime`, `toDateTime`, `toDate`, `toTime` and
+`toDuration` read ISO 8601 text, `toSeconds` takes a number of seconds:
+
+```tests
+test "a transaction id keeps its valid start" {
+    // given
+    let validStart = toZonedDateTime(text: "2022-01-02T02:00:01.000000002Z")
+
+    // then
+    assertTrue(condition: validStart < toZonedDateTime(text: "2022-01-02T02:00:02Z"))
+    assertTrue(condition: toSeconds(value: 7776000) > toSeconds(value: 0))
+}
+```
+
+A test that needs fixed points in time declares them as named test values
+(`values TIMES: list<zonedDateTime> = [toZonedDateTime(text: "…"), …]`); a test that needs just some valid value uses
+`DEFAULT(zonedDateTime)`. There is no current time: a value that depends on the clock cannot be an expected value.
+Precision is that of the target language's type: a value with more precision than the target can hold (nanoseconds
+where the target has milliseconds) fails the test there, and the test states its precision in its source comment.
+
 ### `@@async` and `@@streaming`
 
 - A call of an `@@async` method is awaited implicitly; the expression has the type of the result. A test that contains
@@ -556,6 +578,28 @@ namespace testing
 
 // The exact value.
 @@static decimal toDecimal(value: double)
+
+// --- date, time and durations ----------------------------------------------------------------
+
+// The instant with its zone or offset, from ISO 8601 text (e.g. "2022-01-02T02:00:01.000000002Z"); text that is no
+// such instant fails the test.
+@@static zonedDateTime toZonedDateTime(text: string)
+
+// The local date and time, from ISO 8601 text (e.g. "2022-01-02T02:00:01"); text that is no such value fails the
+// test.
+@@static dateTime toDateTime(text: string)
+
+// The date, from ISO 8601 text (e.g. "2022-01-02"); text that is no date fails the test.
+@@static date toDate(text: string)
+
+// The time of day, from ISO 8601 text (e.g. "02:00:01.5"); text that is no time fails the test.
+@@static time toTime(text: string)
+
+// The duration, from ISO 8601 text (e.g. "PT1.5S", "P1DT2H"); text that is no duration fails the test.
+@@static duration toDuration(text: string)
+
+// The duration of the number of seconds.
+@@static seconds toSeconds(value: int64)
 ```
 
 ## Validation
@@ -738,8 +782,6 @@ test "a hex key of the wrong length is rejected" {
   cannot be passed to `abs`, `min` or `max`. — open
 - **Verbosity of named arguments.** `hex(text: "…")` and `length(value: s)` are longer than positional calls, in
   exchange for one calling convention for API and built-in functions. — open
-- **Date and time literals.** There is no literal for `date`, `dateTime`, `duration` yet; candidates are ISO 8601
-  strings with a built-in (`date(text: "2026-10-15")`, `duration(text: "PT1.5S")`). — open
 - **Equality of complex types.** "All attributes are equal" presumes that every generated type implements value
   equality. Abstractions without a sealed set of subtypes, and types whose API defines its own `equals`, need a
   decision. — open

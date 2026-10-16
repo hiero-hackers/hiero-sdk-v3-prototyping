@@ -349,6 +349,12 @@ values JAVA_SDK_TOKEN_AUTHORITIES: list<Authority> = [
         authority.PublicKeyAuthority{publicKey: keys.createPrivateKey(container: keys.KeyFormat.PKCS8_WITH_DER,
                 value: hex(text: "302e020100300506032b657004220420"
                         + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e18")).createPublicKey()}]
+
+// The expiration time of the token tests of the Java SDK (TokenCreateTransactionTest.spawnTestTransactionFungible and
+// spawnTestTransactionNft: validStart = Instant.ofEpochSecond(1554158542)) and the Rust SDK
+// (token_create_transaction.rs and token_update_transaction.rs: EXPIRATION_TIME = VALID_START, 1554158542 seconds),
+// whole seconds.
+values SDK_TEST_EXPIRATION_TIME: zonedDateTime = toZonedDateTime(text: "2019-04-01T22:42:22Z")
 ```
 
 ## Examples
@@ -555,7 +561,10 @@ test "a token create transaction without optional values has the defaults of the
 }
 
 // Source: the Java SDK (TokenCreateTransactionTest, constructTokenCreateTransactionFungibleFromTransactionBodyProtobuf:
-// the same values); the getter / setter tests of the Python, Go and Swift SDKs.
+// the same values, an auto-renew period of Duration.ofHours(10) = 36000 seconds; the expiration time of
+// spawnTestTransactionFungible, Instant.ofEpochSecond(1554158542) = 2019-04-01T22:42:22Z, because the protobuf test uses
+// Instant.now()); the Rust SDK (token_create_transaction.rs make_transaction: an expiration time and an auto-renew
+// period together); the getter / setter tests of the Python, Go and Swift SDKs.
 test "a token create transaction for a fungible token keeps its values and each key in its own field" {
     // given
     let authorities = JAVA_SDK_TOKEN_AUTHORITIES
@@ -564,7 +573,8 @@ test "a token create transaction for a fungible token keeps its values and each 
     let transaction = TokenCreateTransaction{name: "test name", symbol: "test symbol",
             tokenType: TokenType.FUNGIBLE_COMMON, decimals: 3, initialSupply: 30,
             treasuryAccountId: AccountId.fromString(value: "7.7.7"), freezeDefault: true, tokenMemo: "test memo",
-            metadata: [1, 2, 3, 4, 5], autoRenewAccount: AccountId.fromString(value: "8.8.8"),
+            metadata: [1, 2, 3, 4, 5], expirationTime: SDK_TEST_EXPIRATION_TIME, autoRenewPeriod: toSeconds(value: 36000),
+            autoRenewAccount: AccountId.fromString(value: "8.8.8"),
             adminAuthority: authorities[0], kycAuthority: authorities[1], freezeAuthority: authorities[2],
             wipeAuthority: authorities[3], supplyAuthority: authorities[4], feeScheduleAuthority: authorities[5],
             pauseAuthority: authorities[6], metadataAuthority: authorities[7]}
@@ -579,6 +589,8 @@ test "a token create transaction for a fungible token keeps its values and each 
     assertTrue(condition: transaction.freezeDefault)
     assertEquals(expected: "test memo", actual: transaction.tokenMemo)
     assertEquals(expected: hex(text: "0102030405"), actual: transaction.metadata)
+    assertEquals(expected: SDK_TEST_EXPIRATION_TIME, actual: transaction.expirationTime)
+    assertEquals(expected: toSeconds(value: 36000), actual: transaction.autoRenewPeriod)
     assertEquals(expected: AccountId.fromString(value: "8.8.8"), actual: transaction.autoRenewAccount)
     assertEquals(expected: authorities[0], actual: transaction.adminAuthority)
     assertEquals(expected: authorities[1], actual: transaction.kycAuthority)
@@ -633,7 +645,9 @@ test "a token update transaction with only a token id changes nothing" {
 }
 
 // Source: the Java SDK (TokenUpdateTransactionTest, constructTokenUpdateTransactionFromTransactionBodyProtobuf: the
-// same keys and values); the getter / setter tests of the Python SDK (test_set_methods, test_single_key_fields).
+// same keys and values, an auto-renew period of Duration.ofHours(10) = 36000 seconds); the Rust SDK
+// (token_update_transaction.rs: TEST_EXPIRATION_TIME = VALID_START = 2019-04-01T22:42:22Z, because the Java test uses
+// Instant.now()); the getter / setter tests of the Python SDK (test_set_methods, test_single_key_fields).
 test "a token update transaction keeps each rotated key in its own field" {
     // given
     let authorities = JAVA_SDK_TOKEN_AUTHORITIES
@@ -641,7 +655,8 @@ test "a token update transaction keeps each rotated key in its own field" {
     // when
     let transaction = TokenUpdateTransaction{tokenId: Address.fromString(address: "4.2.0"), name: "test name",
             symbol: "test symbol", treasuryAccountId: AccountId.fromString(value: "7.7.7"), tokenMemo: "test memo",
-            metadata: [1, 2, 3, 4, 5], autoRenewAccount: AccountId.fromString(value: "8.8.8"),
+            metadata: [1, 2, 3, 4, 5], expirationTime: SDK_TEST_EXPIRATION_TIME, autoRenewPeriod: toSeconds(value: 36000),
+            autoRenewAccount: AccountId.fromString(value: "8.8.8"),
             adminAuthority: authorities[0], kycAuthority: authorities[1], freezeAuthority: authorities[2],
             wipeAuthority: authorities[3], supplyAuthority: authorities[4], feeScheduleAuthority: authorities[5],
             pauseAuthority: authorities[6], metadataAuthority: authorities[7]}
@@ -652,6 +667,8 @@ test "a token update transaction keeps each rotated key in its own field" {
     assertEquals(expected: AccountId.fromString(value: "7.7.7"), actual: transaction.treasuryAccountId)
     assertEquals(expected: "test memo", actual: transaction.tokenMemo)
     assertEquals(expected: hex(text: "0102030405"), actual: transaction.metadata)
+    assertEquals(expected: SDK_TEST_EXPIRATION_TIME, actual: transaction.expirationTime)
+    assertEquals(expected: toSeconds(value: 36000), actual: transaction.autoRenewPeriod)
     assertEquals(expected: AccountId.fromString(value: "8.8.8"), actual: transaction.autoRenewAccount)
     assertEquals(expected: authorities[0], actual: transaction.adminAuthority)
     assertEquals(expected: authorities[1], actual: transaction.kycAuthority)
@@ -728,7 +745,10 @@ test "an NFT burn transaction keeps its serials in order" {
 
 // Source: the Java SDK (shouldBytes / shouldBytesFungible / shouldBytesNft of the TokenCreate, TokenUpdate,
 // TokenDelete, TokenAssociate, TokenDissociate, TokenMint and TokenBurn tests: fromBytes(toBytes()) gives the same
-// transaction); the JavaScript SDK ("should round trip from bytes") and the to / from bytes tests of the Go SDK.
+// transaction; TokenCreate with the expiration time validStart = Instant.ofEpochSecond(1554158542) = 2019-04-01T22:42:22Z,
+// which clears its auto-renew period there, TokenUpdate with the auto-renew period Duration.ofHours(10) = 36000
+// seconds); the Rust SDK (token_update_transaction.rs to_from_bytes: the expiration time VALID_START); the JavaScript
+// SDK ("should round trip from bytes") and the to / from bytes tests of the Go SDK.
 test "every token lifecycle transaction survives toBytes and fromBytes unchanged" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
@@ -737,9 +757,10 @@ test "every token lifecycle transaction survives toBytes and fromBytes unchanged
     let account = AccountId.fromString(value: "0.6.9")
     let transactions: list<consensusnode.transactions.PackedTransaction<ANY, ANY>> = [
             TokenCreateTransaction{name: "test name", symbol: "test symbol", tokenType: TokenType.FUNGIBLE_COMMON,
-                    decimals: 3, initialSupply: 30, treasuryAccountId: account,
+                    decimals: 3, initialSupply: 30, treasuryAccountId: account, expirationTime: SDK_TEST_EXPIRATION_TIME,
                     adminAuthority: DEFAULT(Authority)}.sign(payer: payer, nodes: nodes),
-            TokenUpdateTransaction{tokenId: token, name: "test name"}.sign(payer: payer, nodes: nodes),
+            TokenUpdateTransaction{tokenId: token, name: "test name", expirationTime: SDK_TEST_EXPIRATION_TIME,
+                    autoRenewPeriod: toSeconds(value: 36000)}.sign(payer: payer, nodes: nodes),
             TokenDeleteTransaction{tokenId: token}.sign(payer: payer, nodes: nodes),
             TokenAssociateTransaction{accountId: account, tokens: [token]}.sign(payer: payer, nodes: nodes),
             TokenDissociateTransaction{accountId: account, tokens: [token]}.sign(payer: payer, nodes: nodes),
@@ -823,3 +844,10 @@ test "every token lifecycle transaction survives toBytes and fromBytes unchanged
   `freezeAuthority`; today these rules live only in comments, so neither the generated contract tests nor the spec
   tests can check them, and the network rejects them only on submit. Should they be checked by the SDK (and then
   declared, e.g. as a validation annotation or a `@@throws` of `pack` / `sign`), or stay network-side? — open
+
+- **`expirationTime` together with `autoRenewPeriod` on `TokenCreateTransaction`.** The spec allows both, and the
+  tests keep both. The Java SDK instead clears `autoRenewPeriod` when `setExpirationTime` is called, because a set
+  auto-renew period overrides the expiration time on the network; the Rust SDK keeps both. Is setting both a
+  meaningful combination in V3, should one of them win (and be documented), or should they be `@@oneOrNoneOf`?
+  Also, "SDK default applies when unset" for `expirationTime` names no default (the Java and Rust SDKs set an
+  auto-renew period of 90 days instead), so no test can check it. — open

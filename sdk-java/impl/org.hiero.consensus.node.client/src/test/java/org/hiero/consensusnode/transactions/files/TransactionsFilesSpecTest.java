@@ -2,6 +2,7 @@ package org.hiero.consensusnode.transactions.files;
 
 import static org.hiero.sdk.testing.Testing.*;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import org.hiero.authority.Authority;
 import org.hiero.authority.PublicKeyAuthority;
@@ -21,6 +22,13 @@ import org.junit.jupiter.api.Test;
 @DisplayName("transactions-files")
 class TransactionsFilesSpecTest {
 
+    /// The expiration time of the file create and update tests of the Java SDK (FileCreateTransactionTest and
+    /// FileUpdateTransactionTest: Instant.ofEpochSecond(1554158728)) and the Swift SDK (FileCreateTransactionUnitTests and
+    /// FileUpdateTransactionUnitTests: Timestamp(seconds: 1_554_158_728, subSecondNanos: 0)), whole seconds.
+    private static ZonedDateTime SDK_TEST_EXPIRATION_TIME() {
+        return toZonedDateTime("2019-04-01T22:45:28Z");
+    }
+
     /// `consensusnode.transactions.files/a-file-create-transaction-without-attributes-has-empty-contents-and-nothing-else`
     ///
     /// Source: this spec (@@default([]) of contents, @@nullable).
@@ -37,28 +45,31 @@ class TransactionsFilesSpecTest {
         assertNull(transaction.fileMemo());
     }
 
-    /// `consensusnode.transactions.files/a-file-create-transaction-keeps-its-contents-authority-and-memo`
+    /// `consensusnode.transactions.files/a-file-create-transaction-keeps-its-contents-authority-expiration-time-and-memo`
     ///
     /// Source: the Python SDK (test_constructor_with_parameters of FileCreateTransaction: "Test file content",
-    /// "Test memo") and the Swift SDK (FileCreateTransactionUnitTests.test_GetSetContents).
+    /// "Test memo") and the Swift SDK (FileCreateTransactionUnitTests.test_GetSetContents and test_GetSetExpirationTime:
+    /// Timestamp(seconds: 1_554_158_728) = 2019-04-01T22:45:28Z).
     @Test
-    @DisplayName("a file create transaction keeps its contents, authority and memo")
-    void aFileCreateTransactionKeepsItsContentsAuthorityAndMemo() {
+    @DisplayName("a file create transaction keeps its contents, authority, expiration time and memo")
+    void aFileCreateTransactionKeepsItsContentsAuthorityExpirationTimeAndMemo() {
         // given
         final byte[] contents = utf8("Test file content");
 
         // when
-        final FileCreateTransaction transaction = new FileCreateTransaction(contents, defaultAuthority(), null, "Test memo");
+        final FileCreateTransaction transaction = new FileCreateTransaction(contents, defaultAuthority(), SDK_TEST_EXPIRATION_TIME(), "Test memo");
 
         // then
         assertEquals(contents, transaction.contents());
         assertEquals(defaultAuthority(), transaction.authority());
+        assertEquals(SDK_TEST_EXPIRATION_TIME(), transaction.expirationTime());
         assertEquals("Test memo", transaction.fileMemo());
     }
 
     /// `consensusnode.transactions.files/a-file-create-transaction-survives-tobytes-and-frombytes`
     ///
-    /// Source: the Java SDK (FileCreateTransactionTest.shouldBytes and shouldBytesNoSetters) and the Swift SDK
+    /// Source: the Java SDK (FileCreateTransactionTest.shouldBytes and shouldBytesNoSetters; expiration time
+    /// Instant.ofEpochSecond(1554158728) = 2019-04-01T22:45:28Z) and the Swift SDK
     /// (FileCreateTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("a file create transaction survives toBytes and fromBytes")
@@ -66,7 +77,7 @@ class TransactionsFilesSpecTest {
         // given
         final Account payer = defaultAccount();
         final List<AccountId> nodes = List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"));
-        final FileCreateTransaction withAttributes = new FileCreateTransaction(utf8("Test file content"), defaultAuthority(), null, "Test memo");
+        final FileCreateTransaction withAttributes = new FileCreateTransaction(utf8("Test file content"), defaultAuthority(), SDK_TEST_EXPIRATION_TIME(), "Test memo");
         for (final FileCreateTransaction transaction : List.of(withAttributes, new FileCreateTransaction(new byte[0], null, null, null))) {
             // given
             final PackedTransaction<FileCreateReceipt, FileCreateTransaction> packed = transaction.pack(payer, nodes);
@@ -122,15 +133,37 @@ class TransactionsFilesSpecTest {
         assertNull(transaction.fileMemo());
     }
 
+    /// `consensusnode.transactions.files/a-file-update-transaction-keeps-its-contents-authority-expiration-time-and-memo`
+    ///
+    /// Source: the Python SDK (test_constructor_with_parameters of FileUpdateTransaction: "Updated content", "Updated memo")
+    /// and the Swift SDK (FileUpdateTransactionUnitTests.test_GetSetExpirationTime); the expiration time of the Java SDK
+    /// (FileUpdateTransactionTest: Instant.ofEpochSecond(1554158728) = 2019-04-01T22:45:28Z).
+    @Test
+    @DisplayName("a file update transaction keeps its contents, authority, expiration time and memo")
+    void aFileUpdateTransactionKeepsItsContentsAuthorityExpirationTimeAndMemo() {
+        // given
+        final byte[] contents = utf8("Updated content");
+
+        // when
+        final FileUpdateTransaction transaction = new FileUpdateTransaction(defaultAddress(), contents, defaultAuthority(), SDK_TEST_EXPIRATION_TIME(), "Updated memo");
+
+        // then
+        assertEquals(contents, transaction.contents());
+        assertEquals(defaultAuthority(), transaction.authority());
+        assertEquals(SDK_TEST_EXPIRATION_TIME(), transaction.expirationTime());
+        assertEquals("Updated memo", transaction.fileMemo());
+    }
+
     /// `consensusnode.transactions.files/a-file-update-transaction-survives-tobytes-and-frombytes`
     ///
     /// Source: the Python SDK (test_constructor_with_parameters of FileUpdateTransaction), the Java SDK
-    /// (FileUpdateTransactionTest.shouldBytes) and the Swift SDK (FileUpdateTransactionUnitTests.test_ToFromBytes).
+    /// (FileUpdateTransactionTest.shouldBytes: expiration time Instant.ofEpochSecond(1554158728) = 2019-04-01T22:45:28Z)
+    /// and the Swift SDK (FileUpdateTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("a file update transaction survives toBytes and fromBytes")
     void aFileUpdateTransactionSurvivesToBytesAndFromBytes() {
         // given
-        final PackedTransaction<FileUpdateReceipt, FileUpdateTransaction> packed = new FileUpdateTransaction(defaultAddress(), utf8("Updated content"), defaultAuthority(), null, "Updated memo").pack(defaultAccount(), List.of(AccountId.fromString("0.0.3")));
+        final PackedTransaction<FileUpdateReceipt, FileUpdateTransaction> packed = new FileUpdateTransaction(defaultAddress(), utf8("Updated content"), defaultAuthority(), SDK_TEST_EXPIRATION_TIME(), "Updated memo").pack(defaultAccount(), List.of(AccountId.fromString("0.0.3")));
 
         // when
         final PackedTransaction<?, ?> restored = PackedTransaction.fromBytes(packed.toBytes());

@@ -899,7 +899,8 @@ one test file per spec, next to the other generated tests:
 | an integer passed to the API | `checked(value, "uint64")` for a `bigint` parameter, `checkedNumber(value, "int32")` for a `number` one: a value out of range fails the test |
 | `double` arithmetic | the `number` operators |
 | `decimal` arithmetic and comparison | `addDecimal`, `subtractDecimal`, `multiplyDecimal`, `negateDecimal`, `compareDecimal(a, b) < 0` on the decimal text |
-| `<`, `>` on other values (dates) | `compare(a, b) < 0` |
+| `<`, `>` on other values (dates, durations) | `compare(a, b) < 0` |
+| `toZonedDateTime(text: …)`, `toDateTime`, `toDate`, `toTime`, `toDuration`, `toSeconds` | the functions of `@hiero/test-support`: a `Date` (all date and time types; a date or time of day in UTC) and a `Duration`; text more precise than milliseconds fails the test |
 | `a + b` of `bytes`, of lists | `concat(a, b)` |
 | `x is null`, `x is Circle` | `x === null`, `x instanceof Circle` (only a class has a type at runtime; `is` on an abstraction is not generated) |
 | `[a, b]`, `{k: v}`, `x[i]` | an array, `new Set([…])`, `new Uint8Array([…])`; `new Map([[k, v]])`; `get(x, i)` |

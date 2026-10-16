@@ -17,6 +17,7 @@
  */
 
 import { AssertionError, deepStrictEqual, strictEqual } from "node:assert/strict";
+import { Duration } from "@hiero/support";
 import { inspect } from "node:util";
 
 // --- assertions --------------------------------------------------------------------------------------------------
@@ -243,7 +244,8 @@ function getters(value: object): string[] {
 
 /**
  * Compares two values of the same type for `<`, `<=`, `>` and `>=` of the test language: strings code point by code
- * point, dates by their time, integers by value, everything else with a `compareTo` method.
+ * point, dates by their time, durations by their length, integers by value, everything else with a `compareTo`
+ * method.
  *
  * @param a a value
  * @param b a value
@@ -263,6 +265,9 @@ export function compare(a: unknown, b: unknown): number {
     }
     if (a instanceof Date && b instanceof Date) {
         return a.getTime() - b.getTime();
+    }
+    if (a instanceof Duration && b instanceof Duration) {
+        return a.toMillis() - b.toMillis();
     }
     if (isInteger(a) && isInteger(b)) {
         const difference = BigInt(a) - BigInt(b);
@@ -843,3 +848,101 @@ export function toDecimalDouble(value: number): string {
     const sign = bits >> 63n === 1n ? -1n : 1n;
     return formatDecimal(sign * mantissa * 5n ** BigInt(-exponent), -exponent);
 }
+
+// --- date, time and durations ------------------------------------------------------------------------------------
+//
+// The API maps every date and time type to `Date` and every duration to `Duration`, both with millisecond precision:
+// a value with finer precision fails the test instead of being rounded silently.
+
+const FRACTION = "(?:\\.(\\d+))?";
+const ZONED_DATE_TIME = new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}${FRACTION}(?:Z|[+-]\\d{2}:\\d{2})$`);
+const DATE_TIME = new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(?::\\d{2}${FRACTION})?$`);
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME = new RegExp(`^\\d{2}:\\d{2}(?::\\d{2}${FRACTION})?$`);
+
+function toDateValue(text: string, iso: string, pattern: RegExp, kind: string): Date {
+    const match = pattern.exec(text);
+    const value = new Date(iso);
+    if (match === null || Number.isNaN(value.getTime())) {
+        fail(`'${text}' is no ${kind} in ISO 8601`);
+    }
+    if (/[1-9]/.test((match[1] ?? "").substring(3))) {
+        fail(`'${text}' is more precise than the milliseconds of a JavaScript Date`);
+    }
+    return value;
+}
+
+/**
+ * The instant with its zone or offset, from ISO 8601 text; text that is no such instant fails the test.
+ *
+ * @param text the text, e.g. `2022-01-02T02:00:01.5Z`
+ * @returns the instant
+ */
+export function toZonedDateTime(text: string): Date {
+    return toDateValue(text, text, ZONED_DATE_TIME, "instant with zone");
+}
+
+/**
+ * The local date and time, from ISO 8601 text, as a `Date` in UTC; text that is no such value fails the test.
+ *
+ * @param text the text, e.g. `2022-01-02T02:00:01`
+ * @returns the date and time
+ */
+export function toDateTime(text: string): Date {
+    return toDateValue(text, text + "Z", DATE_TIME, "date and time");
+}
+
+/**
+ * The date, from ISO 8601 text, as a `Date` at midnight UTC; text that is no date fails the test.
+ *
+ * @param text the text, e.g. `2022-01-02`
+ * @returns the date
+ */
+export function toDate(text: string): Date {
+    const value = toDateValue(text, text + "T00:00:00Z", DATE, "date");
+    if (value.toISOString().substring(0, 10) !== text) {
+        fail(`'${text}' is no date in ISO 8601`);
+    }
+    return value;
+}
+
+/**
+ * The time of day, from ISO 8601 text, as a `Date` on 1970-01-01 UTC; text that is no time fails the test.
+ *
+ * @param text the text, e.g. `02:00:01.5`
+ * @returns the time
+ */
+export function toTime(text: string): Date {
+    return toDateValue(text, "1970-01-01T" + text + "Z", TIME, "time");
+}
+
+/**
+ * The duration, from ISO 8601 text (days, hours, minutes and seconds); text that is no such duration fails the test.
+ *
+ * @param text the text, e.g. `PT1.5S` or `P1DT2H`
+ * @returns the duration
+ */
+export function toDuration(text: string): Duration {
+    const match = /^(-)?P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)(?:\.(\d+))?S)?)?$/.exec(text);
+    if (match === null || text.endsWith("P") || text.endsWith("T")) {
+        fail(`'${text}' is no duration in ISO 8601 (days, hours, minutes and seconds)`);
+    }
+    const fraction = match[6] ?? "";
+    if (/[1-9]/.test(fraction.substring(3))) {
+        fail(`'${text}' is more precise than the milliseconds of a Duration`);
+    }
+    const millis = ((Number(match[2] ?? 0) * 24 + Number(match[3] ?? 0)) * 60 + Number(match[4] ?? 0)) * 60000
+        + Number(match[5] ?? 0) * 1000 + Number(fraction.padEnd(3, "0").substring(0, 3));
+    return Duration.ofMillis(match[1] === "-" ? -millis : millis);
+}
+
+/**
+ * The duration of a number of seconds.
+ *
+ * @param value the number of seconds
+ * @returns the duration
+ */
+export function toSeconds(value: bigint): Duration {
+    return Duration.ofSeconds(Number(value));
+}
+

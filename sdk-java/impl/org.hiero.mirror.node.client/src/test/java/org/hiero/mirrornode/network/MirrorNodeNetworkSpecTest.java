@@ -2,6 +2,8 @@ package org.hiero.mirrornode.network;
 
 import static org.hiero.sdk.testing.Testing.*;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
@@ -65,5 +67,81 @@ class MirrorNodeNetworkSpecTest {
 
         // then
         assertEquals(endpoints, node.serviceEndpoints());
+    }
+
+    /// `mirrornode.network/a-network-node-keeps-the-consensus-time-of-its-address-book-entry`
+    ///
+    /// Source: this spec (`timestamp` is the consensus time of the address-book entry).
+    @Test
+    @DisplayName("a network node keeps the consensus time of its address-book entry")
+    void aNetworkNodeKeepsTheConsensusTimeOfItsAddressBookEntry() {
+        // given
+        final ZonedDateTime time = ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+
+        // when
+        final NetworkNode node = new NetworkNode(0L, AccountId.fromString("0.0.3"), null, null, null, List.of(), null, 0L, time);
+
+        // then
+        assertEquals(time, node.timestamp());
+    }
+
+    /// `mirrornode.network/exchange-rates-keep-the-current-and-the-next-rate-with-their-expiration-times`
+    ///
+    /// Source: the Hiero Enterprise Java test fixture exchange-rate.json (current rate 212848 cents for 30000 HBAR expiring
+    /// at 1785852000, next rate 211949 cents for 30000 HBAR expiring at 1785855600; the epoch seconds written as ISO 8601).
+    @Test
+    @DisplayName("exchange rates keep the current and the next rate with their expiration times")
+    void exchangeRatesKeepTheCurrentAndTheNextRateWithTheirExpirationTimes() {
+        // given
+        final ExchangeRate current = new ExchangeRate(212848, 30000, toZonedDateTime("2026-08-04T14:00:00Z"));
+        final ExchangeRate next = new ExchangeRate(211949, 30000, toZonedDateTime("2026-08-04T15:00:00Z"));
+
+        // when
+        final ExchangeRates rates = new ExchangeRates(current, next);
+
+        // then
+        assertEquals(current, rates.currentRate());
+        assertEquals(next, rates.nextRate());
+        assertEquals(212848, rates.currentRate().centEquivalent());
+        assertEquals(30000, rates.currentRate().hbarEquivalent());
+        assertEquals(toZonedDateTime("2026-08-04T14:00:00Z"), rates.currentRate().expirationTime());
+        assertEquals(toZonedDateTime("2026-08-04T15:00:00Z"), rates.nextRate().expirationTime());
+        assertNotEquals(rates.currentRate(), rates.nextRate());
+    }
+
+    /// `mirrornode.network/exchange-rates-that-differ-only-in-their-expiration-time-are-different`
+    ///
+    /// Source: this spec (exchange rates are values: rates that differ only in their expiration time are different).
+    @Test
+    @DisplayName("exchange rates that differ only in their expiration time are different")
+    void exchangeRatesThatDifferOnlyInTheirExpirationTimeAreDifferent() {
+        // when
+        final ExchangeRate first = new ExchangeRate(212848, 30000, toZonedDateTime("2026-08-04T14:00:00Z"));
+        final ExchangeRate second = new ExchangeRate(212848, 30000, toZonedDateTime("2026-08-04T15:00:00Z"));
+
+        // then
+        assertNotEquals(first, second);
+        assertEquals(new ExchangeRate(212848, 30000, toZonedDateTime("2026-08-04T14:00:00Z")), first);
+    }
+
+    /// `mirrornode.network/network-stake-keeps-its-staking-parameters-and-its-staking-period`
+    ///
+    /// Source: the Hiero Enterprise Java test fixture network-stake.json (its values; `staking_period_duration` 1440
+    /// minutes, i.e. one day, is the staking period of 86400 seconds).
+    @Test
+    @DisplayName("network stake keeps its staking parameters and its staking period")
+    void networkStakeKeepsItsStakingParametersAndItsStakingPeriod() {
+        // when
+        final NetworkStake stake = new NetworkStake(650000000000000000L, 5287L, 44512288670430L, 0.1, 2781375493493491L, 8500000000000000L, 1465970599400000000L, toSeconds(86400L), 365L, 0.1, 44512288670430L, 25000000000000000L, 14652305964403937L);
+
+        // then
+        assertEquals(toSeconds(86400L), stake.stakingPeriod());
+        assertEquals(365L, stake.stakingPeriodsStored());
+        assertEquals(1465970599400000000L, stake.stakeTotal());
+        assertEquals(650000000000000000L, stake.maxStakeReward());
+        assertEquals(5287L, stake.maxStakeRewardPerHbar());
+        assertEquals(0.1, stake.nodeRewardFeeFraction());
+        assertEquals(0.1, stake.stakingRewardFeeFraction());
+        assertEquals(14652305964403937L, stake.unreservedStakingRewardBalance());
     }
 }

@@ -106,14 +106,16 @@ test "account parameters with only an authority have the defaults of the spec" {
 // Source: the AccountCreateTransaction unit tests of the Java (AccountCreateTransactionTest), Go
 // (account_create_transaction_unit_test.go), C++ (AccountCreateTransactionUnitTests), Swift
 // (AccountCreateTransactionUnitTests) and Python (account_create_transaction_test.py) SDKs: every value that is set is
-// read back unchanged.
+// read back unchanged. The auto-renew period is the one of the Java test (Duration.ofHours(10), which is exactly 36000
+// seconds).
 test "account parameters keep the values they are created with" {
     // given
     let authority = DEFAULT(Authority)
+    let autoRenewPeriod = toSeconds(value: 36000)
 
     // when
     let params = AccountCreateParams{authority: authority, accountMemo: "memo", receiverSignatureRequired: true,
-            maxAutomaticTokenAssociations: 10, autoRenewPeriod: 7_776_000, stakedNodeId: 3,
+            maxAutomaticTokenAssociations: 10, autoRenewPeriod: autoRenewPeriod, stakedNodeId: 3,
             declineStakingReward: true}
 
     // then
@@ -121,6 +123,7 @@ test "account parameters keep the values they are created with" {
     assertEquals(expected: "memo", actual: params.accountMemo)
     assertTrue(condition: params.receiverSignatureRequired)
     assertEquals(expected: 10, actual: params.maxAutomaticTokenAssociations)
+    assertEquals(expected: autoRenewPeriod, actual: params.autoRenewPeriod)
     assertEquals(expected: 3, actual: params.stakedNodeId)
     assertTrue(condition: params.declineStakingReward)
 }

@@ -2,6 +2,7 @@ package org.hiero.consensusnode.transactions.topics;
 
 import static org.hiero.sdk.testing.Testing.*;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import org.hiero.authority.Authority;
 import org.hiero.authority.PublicKeyAuthority;
@@ -21,6 +22,13 @@ import org.junit.jupiter.api.Test;
 @DisplayName("transactions-topics")
 class TransactionsTopicsSpecTest {
 
+    /// The expiration time of the topic update tests of the Swift SDK (TopicUpdateTransactionUnitTests:
+    /// TestConstants.validStart = Timestamp(seconds: 1_554_158_542, subSecondNanos: 0)) and the Rust SDK
+    /// (topic_update_transaction.rs: TEST_EXPIRATION_TIME = VALID_START, 1554158542 seconds), whole seconds.
+    private static ZonedDateTime SDK_TEST_EXPIRATION_TIME() {
+        return toZonedDateTime("2019-04-01T22:42:22Z");
+    }
+
     /// `consensusnode.transactions.topics/a-topic-create-transaction-without-attributes-creates-a-public-immutable-topic`
     ///
     /// Source: this spec (adminAuthority unset: an immutable topic, submitAuthority unset: a public topic); the Python SDK
@@ -39,38 +47,39 @@ class TransactionsTopicsSpecTest {
         assertNull(transaction.autoRenewAccount());
     }
 
-    /// `consensusnode.transactions.topics/a-topic-create-transaction-keeps-its-authorities-memo-and-auto-renew-account`
+    /// `consensusnode.transactions.topics/a-topic-create-transaction-keeps-its-authorities-memo-auto-renew-period-and-auto-renew-account`
     ///
     /// Source: the Python SDK (test_constructor of TopicCreateTransaction: "Test Topic", an admin and a submit key) and the
-    /// Swift SDK (TopicCreateTransactionUnitTests.test_GetSetSubmitKey, test_GetSetAdminKey and
-    /// test_GetSetAutoRenewAccountId).
+    /// Swift SDK (TopicCreateTransactionUnitTests.test_GetSetSubmitKey, test_GetSetAdminKey, test_GetSetAutoRenewAccountId
+    /// and test_GetSetAutoRenewPeriod: testAutoRenewPeriod = .days(1) = 86400 seconds).
     @Test
-    @DisplayName("a topic create transaction keeps its authorities, memo and auto-renew account")
-    void aTopicCreateTransactionKeepsItsAuthoritiesMemoAndAutoRenewAccount() {
+    @DisplayName("a topic create transaction keeps its authorities, memo, auto-renew period and auto-renew account")
+    void aTopicCreateTransactionKeepsItsAuthoritiesMemoAutoRenewPeriodAndAutoRenewAccount() {
         // given
         final Authority submitAuthority = new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048").createPublicKey());
 
         // when
-        final TopicCreateTransaction transaction = new TopicCreateTransaction(defaultAuthority(), submitAuthority, "Test Topic", null, AccountId.fromString("0.0.5678"));
+        final TopicCreateTransaction transaction = new TopicCreateTransaction(defaultAuthority(), submitAuthority, "Test Topic", toSeconds(86400L), AccountId.fromString("0.0.5678"));
 
         // then
         assertEquals(defaultAuthority(), transaction.adminAuthority());
         assertEquals(submitAuthority, transaction.submitAuthority());
         assertEquals("Test Topic", transaction.topicMemo());
+        assertEquals(toSeconds(86400L), transaction.autoRenewPeriod());
         assertEquals(AccountId.fromString("0.0.5678"), transaction.autoRenewAccount());
     }
 
     /// `consensusnode.transactions.topics/a-topic-create-transaction-survives-tobytes-and-frombytes`
     ///
-    /// Source: the Java SDK (TopicCreateTransactionTest.shouldBytes and shouldBytesNoSetters) and the Swift SDK
-    /// (TopicCreateTransactionUnitTests.test_ToFromBytes).
+    /// Source: the Java SDK (TopicCreateTransactionTest.shouldBytes and shouldBytesNoSetters; auto-renew period
+    /// Duration.ofHours(24) = 86400 seconds) and the Swift SDK (TopicCreateTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("a topic create transaction survives toBytes and fromBytes")
     void aTopicCreateTransactionSurvivesToBytesAndFromBytes() {
         // given
         final Account payer = defaultAccount();
         final List<AccountId> nodes = List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"));
-        final TopicCreateTransaction withAttributes = new TopicCreateTransaction(defaultAuthority(), defaultAuthority(), "Test Topic", null, AccountId.fromString("0.0.5678"));
+        final TopicCreateTransaction withAttributes = new TopicCreateTransaction(defaultAuthority(), defaultAuthority(), "Test Topic", toSeconds(86400L), AccountId.fromString("0.0.5678"));
         for (final TopicCreateTransaction transaction : List.of(withAttributes, new TopicCreateTransaction(null, null, null, null, null))) {
             // given
             final PackedTransaction<TopicCreateReceipt, TopicCreateTransaction> packed = transaction.pack(payer, nodes);
@@ -104,16 +113,33 @@ class TransactionsTopicsSpecTest {
         assertNull(transaction.autoRenewAccount());
     }
 
+    /// `consensusnode.transactions.topics/a-topic-update-transaction-keeps-its-expiration-time-and-auto-renew-period`
+    ///
+    /// Source: the Rust SDK (topic_update_transaction.rs get_set_expiration_time and get_set_auto_renew_period:
+    /// TEST_EXPIRATION_TIME = VALID_START = 2019-04-01T22:42:22Z, TEST_AUTO_RENEW_PERIOD = Duration::days(1) = 86400
+    /// seconds) and the Swift SDK (TopicUpdateTransactionUnitTests: the same values in makeTransaction2).
+    @Test
+    @DisplayName("a topic update transaction keeps its expiration time and auto-renew period")
+    void aTopicUpdateTransactionKeepsItsExpirationTimeAndAutoRenewPeriod() {
+        // when
+        final TopicUpdateTransaction transaction = new TopicUpdateTransaction(defaultAddress(), null, null, null, SDK_TEST_EXPIRATION_TIME(), toSeconds(86400L), null);
+
+        // then
+        assertEquals(SDK_TEST_EXPIRATION_TIME(), transaction.expirationTime());
+        assertEquals(toSeconds(86400L), transaction.autoRenewPeriod());
+    }
+
     /// `consensusnode.transactions.topics/a-topic-update-transaction-survives-tobytes-and-frombytes`
     ///
     /// Source: the Python SDK (test_topic_update_transaction_with_all_fields: "Comprehensive update", auto-renew account
     /// 0.0.5678), the Java SDK (TopicUpdateTransactionTest.shouldBytes) and the Swift SDK
-    /// (TopicUpdateTransactionUnitTests.test_ToFromBytes).
+    /// (TopicUpdateTransactionUnitTests.test_ToFromBytes2: expiration time TestConstants.validStart = 2019-04-01T22:42:22Z,
+    /// auto-renew period .days(1) = 86400 seconds).
     @Test
     @DisplayName("a topic update transaction survives toBytes and fromBytes")
     void aTopicUpdateTransactionSurvivesToBytesAndFromBytes() {
         // given
-        final PackedTransaction<TopicUpdateReceipt, TopicUpdateTransaction> packed = new TopicUpdateTransaction(defaultAddress(), defaultAuthority(), defaultAuthority(), "Comprehensive update", null, null, AccountId.fromString("0.0.5678")).pack(defaultAccount(), List.of(AccountId.fromString("0.0.3")));
+        final PackedTransaction<TopicUpdateReceipt, TopicUpdateTransaction> packed = new TopicUpdateTransaction(defaultAddress(), defaultAuthority(), defaultAuthority(), "Comprehensive update", SDK_TEST_EXPIRATION_TIME(), toSeconds(86400L), AccountId.fromString("0.0.5678")).pack(defaultAccount(), List.of(AccountId.fromString("0.0.3")));
 
         // when
         final PackedTransaction<?, ?> restored = PackedTransaction.fromBytes(packed.toBytes());

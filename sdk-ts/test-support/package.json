@@ -15,5 +15,8 @@
   ],
   "scripts": {
     "test": "tsc --build && node --test \"dist/**/*.test.js\""
+  },
+  "dependencies": {
+    "@hiero/support": "0.1.0-SNAPSHOT"
   }
 }

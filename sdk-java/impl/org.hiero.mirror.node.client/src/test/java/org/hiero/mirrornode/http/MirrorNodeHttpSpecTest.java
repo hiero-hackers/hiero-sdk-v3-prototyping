@@ -2,9 +2,11 @@ package org.hiero.mirrornode.http;
 
 import static org.hiero.sdk.testing.Testing.*;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.hiero.http.HttpMethod;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -55,5 +57,37 @@ class MirrorNodeHttpSpecTest {
         assertEquals(HttpMethod.POST, request.method());
         assertEquals(body, request.body());
         assertEquals(Map.of("authorization", "Bearer test"), request.headers());
+    }
+
+    /// `mirrornode.http/a-request-keeps-its-timeout`
+    ///
+    /// Source: the Java SDK (MirrorNodeHttpClientTest: calls with a deadline of 10 seconds); this spec (`timeout` is
+    /// optional, a request without one falls back to the default request timeout of the HttpClient).
+    @Test
+    @DisplayName("a request keeps its timeout")
+    void aRequestKeepsItsTimeout() {
+        // when
+        final MirrorNodeHttpRequest request = new MirrorNodeHttpRequest(HttpMethod.GET, "/accounts/0.0.1", null, toDuration("PT10S"), Map.of());
+
+        // then
+        assertEquals(toDuration("PT10S"), request.timeout());
+        assertNotEquals(toDuration("PT10.001S"), request.timeout());
+    }
+
+    /// `mirrornode.http/a-request-keeps-a-timeout-with-millisecond-precision`
+    ///
+    /// Source: the API guideline (`duration` has millisecond precision).
+    @Test
+    @DisplayName("a request keeps a timeout with millisecond precision")
+    void aRequestKeepsATimeoutWithMillisecondPrecision() {
+        // when
+        final MirrorNodeHttpRequest request = new MirrorNodeHttpRequest(HttpMethod.GET, "/accounts/0.0.1", null, toDuration("PT1.5S"), Map.of());
+        final @Nullable Duration timeout = request.timeout();
+
+        // then
+        assertEquals(toDuration("PT1.5S"), timeout);
+        assertNotNull(timeout);
+        assertTrue(timeout.compareTo(toDuration("PT1.501S")) < 0);
+        assertTrue(timeout.compareTo(toDuration("PT1.499S")) > 0);
     }
 }

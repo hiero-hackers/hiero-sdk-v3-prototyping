@@ -118,8 +118,7 @@ NetworkRepository {
 
 ## Testing
 
-The queries of `NetworkRepository` need a Mirror Node, and `ExchangeRate` and `NetworkStake` cannot be created in a
-test because the test language has no literal for `zonedDateTime` and `seconds`.
+The queries of `NetworkRepository` need a Mirror Node; only the value types are tested here.
 
 ```tests
 // Source: the Java SDK (MirrorNodeServiceEndpointTest: IP address 1.2.3.4, domain name "test.mirror.com", port 443);
@@ -167,6 +166,76 @@ test "a network node keeps its service endpoints in order" {
     // then
     assertEquals(expected: endpoints, actual: node.serviceEndpoints)
 }
+
+// Source: this spec (`timestamp` is the consensus time of the address-book entry).
+test "a network node keeps the consensus time of its address-book entry" {
+    // given
+    let time = DEFAULT(zonedDateTime)
+
+    // when
+    let node = NetworkNode{nodeId: 0, accountId: AccountId.fromString(value: "0.0.3"), stake: 0, timestamp: time}
+
+    // then
+    assertEquals(expected: time, actual: node.timestamp)
+}
+
+// Source: the Hiero Enterprise Java test fixture exchange-rate.json (current rate 212848 cents for 30000 HBAR expiring
+// at 1785852000, next rate 211949 cents for 30000 HBAR expiring at 1785855600; the epoch seconds written as ISO 8601).
+test "exchange rates keep the current and the next rate with their expiration times" {
+    // given
+    let current = ExchangeRate{centEquivalent: 212848, hbarEquivalent: 30000,
+            expirationTime: toZonedDateTime(text: "2026-08-04T14:00:00Z")}
+    let next = ExchangeRate{centEquivalent: 211949, hbarEquivalent: 30000,
+            expirationTime: toZonedDateTime(text: "2026-08-04T15:00:00Z")}
+
+    // when
+    let rates = ExchangeRates{currentRate: current, nextRate: next}
+
+    // then
+    assertEquals(expected: current, actual: rates.currentRate)
+    assertEquals(expected: next, actual: rates.nextRate)
+    assertEquals(expected: 212848, actual: rates.currentRate.centEquivalent)
+    assertEquals(expected: 30000, actual: rates.currentRate.hbarEquivalent)
+    assertEquals(expected: toZonedDateTime(text: "2026-08-04T14:00:00Z"), actual: rates.currentRate.expirationTime)
+    assertEquals(expected: toZonedDateTime(text: "2026-08-04T15:00:00Z"), actual: rates.nextRate.expirationTime)
+    assertNotEquals(unexpected: rates.currentRate, actual: rates.nextRate)
+}
+
+// Source: this spec (exchange rates are values: rates that differ only in their expiration time are different).
+test "exchange rates that differ only in their expiration time are different" {
+    // when
+    let first = ExchangeRate{centEquivalent: 212848, hbarEquivalent: 30000,
+            expirationTime: toZonedDateTime(text: "2026-08-04T14:00:00Z")}
+    let second = ExchangeRate{centEquivalent: 212848, hbarEquivalent: 30000,
+            expirationTime: toZonedDateTime(text: "2026-08-04T15:00:00Z")}
+
+    // then
+    assertNotEquals(unexpected: first, actual: second)
+    assertEquals(expected: ExchangeRate{centEquivalent: 212848, hbarEquivalent: 30000,
+            expirationTime: toZonedDateTime(text: "2026-08-04T14:00:00Z")}, actual: first)
+}
+
+// Source: the Hiero Enterprise Java test fixture network-stake.json (its values; `staking_period_duration` 1440
+// minutes, i.e. one day, is the staking period of 86400 seconds).
+test "network stake keeps its staking parameters and its staking period" {
+    // when
+    let stake = NetworkStake{maxStakeReward: 650000000000000000, maxStakeRewardPerHbar: 5287,
+            maxTotalReward: 44512288670430, nodeRewardFeeFraction: 0.1, reservedStakingRewards: 2781375493493491,
+            rewardBalanceThreshold: 8500000000000000, stakeTotal: 1465970599400000000,
+            stakingPeriod: toSeconds(value: 86400), stakingPeriodsStored: 365, stakingRewardFeeFraction: 0.1,
+            stakingRewardRate: 44512288670430, stakingStartThreshold: 25000000000000000,
+            unreservedStakingRewardBalance: 14652305964403937}
+
+    // then
+    assertEquals(expected: toSeconds(value: 86400), actual: stake.stakingPeriod)
+    assertEquals(expected: 365, actual: stake.stakingPeriodsStored)
+    assertEquals(expected: 1465970599400000000, actual: stake.stakeTotal)
+    assertEquals(expected: 650000000000000000, actual: stake.maxStakeReward)
+    assertEquals(expected: 5287, actual: stake.maxStakeRewardPerHbar)
+    assertEquals(expected: 0.1, actual: stake.nodeRewardFeeFraction)
+    assertEquals(expected: 0.1, actual: stake.stakingRewardFeeFraction)
+    assertEquals(expected: 14652305964403937, actual: stake.unreservedStakingRewardBalance)
+}
 ```
 
 ## Questions & Comments
@@ -195,3 +264,10 @@ test "a network node keeps its service endpoints in order" {
   `domainName` is populated, but there is no `@@oneOf(ipAddressV4, domainName)`, and `port` has no
   `@@min(0) @@max(65535)` — the Java SDK rejects `-1` and `65536` (`MirrorNodeServiceEndpointTest`). With the
   annotations, these SDK tests would apply here too (once the test language can expect a construction error).
+- **`NetworkStake.stakingPeriod` loses the current period.** The Mirror Node returns both
+  `staking_period` — the *current* period as a timestamp range (`from` / `to`) — and
+  `staking_period_duration`, the length of a period in **minutes** (1440 on mainnet). V3 has a
+  single `stakingPeriod: seconds`, which can only hold the length; the start and end of the current
+  period are lost, and the comment does not say that the minutes are converted. Should `NetworkStake`
+  have `stakingPeriodStart` / `stakingPeriodEnd: zonedDateTime` (or a range type, see the allowance
+  note in [`mirror-node-account.md`](mirror-node-account.md)) next to the duration?

@@ -393,6 +393,17 @@ class TsSpecTestGeneratorTest {
                 assertTrue(condition: -(-n.i) > 0 && (n.shape is Circle) == true)
             }
 
+            test "date, time and durations are read from ISO 8601" {
+                let first = toZonedDateTime(text: "2022-01-02T02:00:01.5Z")
+                let second = toZonedDateTime(text: "2022-01-02T02:00:02Z")
+                assertTrue(condition: first < second)
+                assertTrue(condition: toDate(text: "2022-01-02") < toDate(text: "2022-01-03"))
+                assertTrue(condition: toTime(text: "02:00:01") < toTime(text: "02:00:01.5"))
+                assertTrue(condition: toDateTime(text: "2022-01-02T02:00:01") < toDateTime(text: "2022-01-02T02:00:02"))
+                assertEquals(expected: toDuration(text: "PT90S"), actual: toDuration(text: "PT1M30S"))
+                assertTrue(condition: toSeconds(value: 90) > toSeconds(value: 89))
+            }
+
             test "type literals are classes" {
                 assertEquals(expected: 1, actual: Numbers.count(kind: Circle))
             }
@@ -433,6 +444,7 @@ class TsSpecTestGeneratorTest {
                 .contains("assertTrue(compare(day, other) < 0);")
                 .contains("concat(n.b, hex(\"02\"))")
                 .contains("assertEquals(1, Numbers.count(Circle));")
+                .contains("assertEquals(toDuration(\"PT90S\"), toDuration(\"PT1M30S\"));")
                 .contains("// - `an interface has no class at runtime`: the type b.Shape has no class at runtime\n")
                 .contains("assert.throws(() => defaultNumbers().find(), NotFoundError);")
                 .contains("// - `an abstraction has no type at runtime`: 'is b.Shape': only a class has a type at runtime\n")
@@ -447,6 +459,7 @@ class TsSpecTestGeneratorTest {
                 "an asynchronous error is awaited");
         assertThat(run.stubs()).contains("a custom error is expected");
         assertThat(run.stubs()).doesNotContain("doubles and decimals", "values are joined", "dates compare",
+                "date, time and durations are read from ISO 8601",
                 "literals, defaults and parentheses");
     }
 

@@ -16,6 +16,12 @@ import org.junit.jupiter.api.Test;
 @DisplayName("queries-tokens")
 class QueriesTokensSpecTest {
 
+    /// The point in time of the token fixtures of the Java SDK (TokenInfoTest and TokenNftInfoTest):
+    /// Instant.ofEpochSecond(1554158542), i.e. 2019-04-01T22:42:22Z.
+    private static ZonedDateTime TOKEN_TEST_TIME() {
+        return toZonedDateTime("2019-04-01T22:42:22Z");
+    }
+
     /// `consensusnode.queries.tokens/a-token-info-query-keeps-the-id-of-its-token`
     ///
     /// Source: the Java SDK (TokenInfoQueryTest.getSetTokenId), the Python SDK (token_info_query_test.py,
@@ -114,6 +120,36 @@ class QueriesTokensSpecTest {
         assertEquals(1L, info.serial());
         assertEquals(0L, length(info.metadata()));
         assertNull(info.spenderId());
+    }
+
+    /// `consensusnode.queries.tokens/a-token-info-keeps-its-expiration-time-and-auto-renew-period`
+    ///
+    /// Source: the Java SDK (TokenInfoTest, the token info of its fixture): expiration time Instant.ofEpochSecond(1554158542),
+    /// i.e. 2019-04-01T22:42:22Z, and auto-renew period Duration.ofHours(10), i.e. 36000 seconds. Second precision.
+    @Test
+    @DisplayName("a token info keeps its expiration time and auto-renew period")
+    void aTokenInfoKeepsItsExpirationTimeAndAutoRenewPeriod() {
+        // when
+        final TokenInfo info = new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, "ffff", "F", 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, null, new byte[0], TOKEN_TEST_TIME(), toSeconds(36000L), defaultAccountId(), false, null, null, null, null, null, null, null, null, null, null, null);
+
+        // then
+        assertEquals(toZonedDateTime("2019-04-01T22:42:22Z"), info.expirationTime());
+        assertEquals(toSeconds(36000L), info.autoRenewPeriod());
+        assertEquals(defaultAccountId(), info.autoRenewAccount());
+    }
+
+    /// `consensusnode.queries.tokens/an-nft-info-keeps-the-time-at-which-its-serial-was-minted`
+    ///
+    /// Source: the Java SDK (TokenNftInfoTest, the NFT info of its fixture): creation time Instant.ofEpochSecond(1554158542),
+    /// i.e. 2019-04-01T22:42:22Z. Second precision.
+    @Test
+    @DisplayName("an NFT info keeps the time at which its serial was minted")
+    void anNFTInfoKeepsTheTimeAtWhichItsSerialWasMinted() {
+        // when
+        final TokenNftInfo info = new TokenNftInfo(defaultAddress(), 1L, defaultAccountId(), TOKEN_TEST_TIME(), new byte[0], null);
+
+        // then
+        assertEquals(toZonedDateTime("2019-04-01T22:42:22Z"), info.creationTime());
     }
 
     private static Address defaultAddress() {

@@ -2,6 +2,7 @@ package org.hiero.consensusnode.transactions.tokens;
 
 import static org.hiero.sdk.testing.Testing.*;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import org.hiero.authority.Authority;
@@ -30,6 +31,14 @@ class TransactionsTokensSpecTest {
     /// keys ending in 11 to 18.
     private static List<Authority> JAVA_SDK_TOKEN_AUTHORITIES() {
         return List.of(new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, hex("302e020100300506032b657004220420" + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e11")).createPublicKey()), new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, hex("302e020100300506032b657004220420" + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e12")).createPublicKey()), new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, hex("302e020100300506032b657004220420" + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e13")).createPublicKey()), new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, hex("302e020100300506032b657004220420" + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e14")).createPublicKey()), new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, hex("302e020100300506032b657004220420" + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e15")).createPublicKey()), new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, hex("302e020100300506032b657004220420" + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e16")).createPublicKey()), new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, hex("302e020100300506032b657004220420" + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e17")).createPublicKey()), new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, hex("302e020100300506032b657004220420" + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e18")).createPublicKey()));
+    }
+
+    /// The expiration time of the token tests of the Java SDK (TokenCreateTransactionTest.spawnTestTransactionFungible and
+    /// spawnTestTransactionNft: validStart = Instant.ofEpochSecond(1554158542)) and the Rust SDK
+    /// (token_create_transaction.rs and token_update_transaction.rs: EXPIRATION_TIME = VALID_START, 1554158542 seconds),
+    /// whole seconds.
+    private static ZonedDateTime SDK_TEST_EXPIRATION_TIME() {
+        return toZonedDateTime("2019-04-01T22:42:22Z");
     }
 
     /// `consensusnode.transactions.tokens/a-token-create-transaction-without-optional-values-has-the-defaults-of-the-spec`
@@ -67,7 +76,10 @@ class TransactionsTokensSpecTest {
     /// `consensusnode.transactions.tokens/a-token-create-transaction-for-a-fungible-token-keeps-its-values-and-each-key-in-its-own-field`
     ///
     /// Source: the Java SDK (TokenCreateTransactionTest, constructTokenCreateTransactionFungibleFromTransactionBodyProtobuf:
-    /// the same values); the getter / setter tests of the Python, Go and Swift SDKs.
+    /// the same values, an auto-renew period of Duration.ofHours(10) = 36000 seconds; the expiration time of
+    /// spawnTestTransactionFungible, Instant.ofEpochSecond(1554158542) = 2019-04-01T22:42:22Z, because the protobuf test uses
+    /// Instant.now()); the Rust SDK (token_create_transaction.rs make_transaction: an expiration time and an auto-renew
+    /// period together); the getter / setter tests of the Python, Go and Swift SDKs.
     @Test
     @DisplayName("a token create transaction for a fungible token keeps its values and each key in its own field")
     void aTokenCreateTransactionForAFungibleTokenKeepsItsValuesAndEachKeyInItsOwnField() {
@@ -75,7 +87,7 @@ class TransactionsTokensSpecTest {
         final List<Authority> authorities = JAVA_SDK_TOKEN_AUTHORITIES();
 
         // when
-        final TokenCreateTransaction transaction = new TokenCreateTransaction("test name", "test symbol", TokenType.FUNGIBLE_COMMON, 3, 30L, AccountId.fromString("7.7.7"), TokenSupplyType.INFINITE, null, true, "test memo", new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5}, null, null, AccountId.fromString("8.8.8"), get(authorities, 0L), get(authorities, 4L), get(authorities, 1L), get(authorities, 2L), get(authorities, 3L), get(authorities, 6L), get(authorities, 5L), get(authorities, 7L));
+        final TokenCreateTransaction transaction = new TokenCreateTransaction("test name", "test symbol", TokenType.FUNGIBLE_COMMON, 3, 30L, AccountId.fromString("7.7.7"), TokenSupplyType.INFINITE, null, true, "test memo", new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5}, SDK_TEST_EXPIRATION_TIME(), toSeconds(36000L), AccountId.fromString("8.8.8"), get(authorities, 0L), get(authorities, 4L), get(authorities, 1L), get(authorities, 2L), get(authorities, 3L), get(authorities, 6L), get(authorities, 5L), get(authorities, 7L));
 
         // then
         assertEquals("test name", transaction.name());
@@ -87,6 +99,8 @@ class TransactionsTokensSpecTest {
         assertTrue(transaction.freezeDefault());
         assertEquals("test memo", transaction.tokenMemo());
         assertEquals(hex("0102030405"), transaction.metadata());
+        assertEquals(SDK_TEST_EXPIRATION_TIME(), transaction.expirationTime());
+        assertEquals(toSeconds(36000L), transaction.autoRenewPeriod());
         assertEquals(AccountId.fromString("8.8.8"), transaction.autoRenewAccount());
         assertEquals(get(authorities, 0L), transaction.adminAuthority());
         assertEquals(get(authorities, 1L), transaction.kycAuthority());
@@ -149,7 +163,9 @@ class TransactionsTokensSpecTest {
     /// `consensusnode.transactions.tokens/a-token-update-transaction-keeps-each-rotated-key-in-its-own-field`
     ///
     /// Source: the Java SDK (TokenUpdateTransactionTest, constructTokenUpdateTransactionFromTransactionBodyProtobuf: the
-    /// same keys and values); the getter / setter tests of the Python SDK (test_set_methods, test_single_key_fields).
+    /// same keys and values, an auto-renew period of Duration.ofHours(10) = 36000 seconds); the Rust SDK
+    /// (token_update_transaction.rs: TEST_EXPIRATION_TIME = VALID_START = 2019-04-01T22:42:22Z, because the Java test uses
+    /// Instant.now()); the getter / setter tests of the Python SDK (test_set_methods, test_single_key_fields).
     @Test
     @DisplayName("a token update transaction keeps each rotated key in its own field")
     void aTokenUpdateTransactionKeepsEachRotatedKeyInItsOwnField() {
@@ -157,7 +173,7 @@ class TransactionsTokensSpecTest {
         final List<Authority> authorities = JAVA_SDK_TOKEN_AUTHORITIES();
 
         // when
-        final TokenUpdateTransaction transaction = new TokenUpdateTransaction(Address.fromString("4.2.0"), "test name", "test symbol", AccountId.fromString("7.7.7"), "test memo", new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5}, null, null, AccountId.fromString("8.8.8"), get(authorities, 0L), get(authorities, 4L), get(authorities, 1L), get(authorities, 2L), get(authorities, 3L), get(authorities, 6L), get(authorities, 5L), get(authorities, 7L));
+        final TokenUpdateTransaction transaction = new TokenUpdateTransaction(Address.fromString("4.2.0"), "test name", "test symbol", AccountId.fromString("7.7.7"), "test memo", new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5}, SDK_TEST_EXPIRATION_TIME(), toSeconds(36000L), AccountId.fromString("8.8.8"), get(authorities, 0L), get(authorities, 4L), get(authorities, 1L), get(authorities, 2L), get(authorities, 3L), get(authorities, 6L), get(authorities, 5L), get(authorities, 7L));
 
         // then
         assertEquals("test name", transaction.name());
@@ -165,6 +181,8 @@ class TransactionsTokensSpecTest {
         assertEquals(AccountId.fromString("7.7.7"), transaction.treasuryAccountId());
         assertEquals("test memo", transaction.tokenMemo());
         assertEquals(hex("0102030405"), transaction.metadata());
+        assertEquals(SDK_TEST_EXPIRATION_TIME(), transaction.expirationTime());
+        assertEquals(toSeconds(36000L), transaction.autoRenewPeriod());
         assertEquals(AccountId.fromString("8.8.8"), transaction.autoRenewAccount());
         assertEquals(get(authorities, 0L), transaction.adminAuthority());
         assertEquals(get(authorities, 1L), transaction.kycAuthority());
@@ -257,7 +275,10 @@ class TransactionsTokensSpecTest {
     ///
     /// Source: the Java SDK (shouldBytes / shouldBytesFungible / shouldBytesNft of the TokenCreate, TokenUpdate,
     /// TokenDelete, TokenAssociate, TokenDissociate, TokenMint and TokenBurn tests: fromBytes(toBytes()) gives the same
-    /// transaction); the JavaScript SDK ("should round trip from bytes") and the to / from bytes tests of the Go SDK.
+    /// transaction; TokenCreate with the expiration time validStart = Instant.ofEpochSecond(1554158542) = 2019-04-01T22:42:22Z,
+    /// which clears its auto-renew period there, TokenUpdate with the auto-renew period Duration.ofHours(10) = 36000
+    /// seconds); the Rust SDK (token_update_transaction.rs to_from_bytes: the expiration time VALID_START); the JavaScript
+    /// SDK ("should round trip from bytes") and the to / from bytes tests of the Go SDK.
     @Test
     @DisplayName("every token lifecycle transaction survives toBytes and fromBytes unchanged")
     void everyTokenLifecycleTransactionSurvivesToBytesAndFromBytesUnchanged() {
@@ -266,7 +287,7 @@ class TransactionsTokensSpecTest {
         final List<AccountId> nodes = List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"));
         final Address token = Address.fromString("4.2.0");
         final AccountId account = AccountId.fromString("0.6.9");
-        final List<PackedTransaction<?, ?>> transactions = List.of(new TokenCreateTransaction("test name", "test symbol", TokenType.FUNGIBLE_COMMON, 3, 30L, account, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, defaultAuthority(), null, null, null, null, null, null, null).sign(payer, nodes), new TokenUpdateTransaction(token, "test name", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null).sign(payer, nodes), new TokenDeleteTransaction(token).sign(payer, nodes), new TokenAssociateTransaction(account, Set.of(token)).sign(payer, nodes), new TokenDissociateTransaction(account, Set.of(token)).sign(payer, nodes), new TokenMintFungibleTransaction(token, 10L).sign(payer, nodes), new TokenMintNftTransaction(token, List.of(new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5})).sign(payer, nodes), new TokenBurnFungibleTransaction(token, 69L).sign(payer, nodes), new TokenBurnNftTransaction(token, List.of(420L)).sign(payer, nodes));
+        final List<PackedTransaction<?, ?>> transactions = List.of(new TokenCreateTransaction("test name", "test symbol", TokenType.FUNGIBLE_COMMON, 3, 30L, account, TokenSupplyType.INFINITE, null, false, null, new byte[0], SDK_TEST_EXPIRATION_TIME(), null, null, defaultAuthority(), null, null, null, null, null, null, null).sign(payer, nodes), new TokenUpdateTransaction(token, "test name", null, null, null, null, SDK_TEST_EXPIRATION_TIME(), toSeconds(36000L), null, null, null, null, null, null, null, null, null).sign(payer, nodes), new TokenDeleteTransaction(token).sign(payer, nodes), new TokenAssociateTransaction(account, Set.of(token)).sign(payer, nodes), new TokenDissociateTransaction(account, Set.of(token)).sign(payer, nodes), new TokenMintFungibleTransaction(token, 10L).sign(payer, nodes), new TokenMintNftTransaction(token, List.of(new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5})).sign(payer, nodes), new TokenBurnFungibleTransaction(token, 69L).sign(payer, nodes), new TokenBurnNftTransaction(token, List.of(420L)).sign(payer, nodes));
         for (final PackedTransaction<?, ?> transaction : transactions) {
             // when
             final PackedTransaction<?, ?> restored = PackedTransaction.fromBytes(transaction.toBytes());

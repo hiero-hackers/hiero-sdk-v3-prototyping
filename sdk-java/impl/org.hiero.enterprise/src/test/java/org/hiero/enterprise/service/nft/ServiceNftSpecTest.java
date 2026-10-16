@@ -2,6 +2,8 @@ package org.hiero.enterprise.service.nft;
 
 import static org.hiero.sdk.testing.Testing.*;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import org.hiero.authority.Authority;
 import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.keys.ByteImportEncoding;
@@ -54,7 +56,9 @@ class ServiceNftSpecTest {
     /// Source: the TokenCreateTransaction unit tests of the Java (TokenCreateTransactionTest), Go
     /// (token_create_transaction_unit_test.go), C++ (TokenCreateTransactionUnitTests, with NON_FUNGIBLE_UNIQUE and FINITE)
     /// and Python (token_create_transaction_test.py, test_build_transaction_body_non_fungible) SDKs: every value that is
-    /// set is read back unchanged.
+    /// set is read back unchanged. The expiration time and the auto-renew period are those of the Java test
+    /// (spawnTestTransactionNft: Instant.ofEpochSecond(1554158542) and Duration.ofHours(10), converted exactly to
+    /// 2019-04-01T22:42:22Z and 36000 seconds).
     @Test
     @DisplayName("NFT type parameters keep the values they are created with")
     void nFTTypeParametersKeepTheValuesTheyAreCreatedWith() {
@@ -62,9 +66,11 @@ class ServiceNftSpecTest {
         final Authority authority = defaultAuthority();
         final AccountId treasury = defaultAccountId();
         final byte[] metadata = utf8("ipfs://bafkreigh2akiscaildc");
+        final ZonedDateTime expirationTime = toZonedDateTime("2019-04-01T22:42:22Z");
+        final Duration autoRenewPeriod = toSeconds(36000L);
 
         // when
-        final NftTypeCreateParams params = new NftTypeCreateParams("Nft Tokens", "NT", treasury, TokenSupplyType.FINITE, 10L, true, "memo", metadata, null, null, treasury, authority, authority, authority, authority, authority, authority, authority, authority);
+        final NftTypeCreateParams params = new NftTypeCreateParams("Nft Tokens", "NT", treasury, TokenSupplyType.FINITE, 10L, true, "memo", metadata, expirationTime, autoRenewPeriod, treasury, authority, authority, authority, authority, authority, authority, authority, authority);
 
         // then
         assertEquals("Nft Tokens", params.name());
@@ -75,6 +81,8 @@ class ServiceNftSpecTest {
         assertTrue(params.freezeDefault());
         assertEquals("memo", params.tokenMemo());
         assertEquals(metadata, params.metadata());
+        assertEquals(expirationTime, params.expirationTime());
+        assertEquals(autoRenewPeriod, params.autoRenewPeriod());
         assertEquals(treasury, params.autoRenewAccount());
         assertEquals(authority, params.adminAuthority());
         assertEquals(authority, params.supplyAuthority());

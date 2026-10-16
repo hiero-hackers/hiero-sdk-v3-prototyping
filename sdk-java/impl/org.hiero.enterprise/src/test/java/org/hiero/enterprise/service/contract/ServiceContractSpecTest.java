@@ -3,6 +3,7 @@ package org.hiero.enterprise.service.contract;
 import static org.hiero.sdk.testing.Testing.*;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.List;
 import org.hiero.authority.Authority;
 import org.hiero.authority.PublicKeyAuthority;
@@ -73,23 +74,26 @@ class ServiceContractSpecTest {
     /// (contract_create_transaction_unit_test.go), C++ (ContractCreateTransactionUnitTests), Swift
     /// (ContractCreateTransactionUnitTests) and Python (contract_create_transaction_test.py, test_constructor_with_parameters)
     /// SDKs; hiero-enterprise-java (ProtocolLayerDataCreationTests, testContractCreateRequestCreation: a file id, gas, an
-    /// admin key and constructor parameters): every value that is set is read back unchanged.
+    /// admin key and constructor parameters): every value that is set is read back unchanged. The auto-renew period is the
+    /// one of the Java test (Duration.ofHours(10), which is exactly 36000 seconds).
     @Test
     @DisplayName("contract parameters keep the values they are created with")
     void contractParametersKeepTheValuesTheyAreCreatedWith() {
         // given
         final Authority authority = defaultAuthority();
+        final Duration autoRenewPeriod = toSeconds(36000L);
         final AccountId account = defaultAccountId();
         final Param<String, ?> constructorParam = ContractFactory.ofString("Hello from Hiero.");
 
         // when
-        final ContractCreateParams params = new ContractCreateParams(defaultAddress(), null, List.of(constructorParam), 1_000_000L, null, authority, "memo", null, account, 10, null, 3L, true);
+        final ContractCreateParams params = new ContractCreateParams(defaultAddress(), null, List.of(constructorParam), 1_000_000L, null, authority, "memo", autoRenewPeriod, account, 10, null, 3L, true);
 
         // then
         assertEquals(1L, length(params.constructorParams()));
         assertEquals(1_000_000L, params.gas());
         assertEquals(authority, params.adminAuthority());
         assertEquals("memo", params.contractMemo());
+        assertEquals(autoRenewPeriod, params.autoRenewPeriod());
         assertEquals(account, params.autoRenewAccount());
         assertEquals(10, params.maxAutomaticTokenAssociations());
         assertEquals(3L, params.stakedNodeId());

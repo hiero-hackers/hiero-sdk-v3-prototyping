@@ -118,11 +118,13 @@ The comment above each test names the SDK tests it comes from.
 ```tests
 // Source: the Java (getSetFileId, getSetExpirationTime, constructSystemDeleteTransactionFromTransactionBodyProtobuf),
 // JavaScript ("should carry the file id and leave the contract id null"), C++ (GetSetFileId, GetSetExpirationTime),
-// Go and Swift SystemDeleteTransaction unit tests.
+// Go and Swift SystemDeleteTransaction unit tests. The expiration time is the one of the Java test
+// (Instant.ofEpochSecond(1554158542), converted exactly to 2019-04-01T22:42:22Z); whole seconds, as HAPI carries it
+// (see Questions & Comments).
 test "a system delete of a file keeps the file and the expiration time" {
     // given
     let file = DEFAULT(Address)
-    let expirationTime = DEFAULT(ledger.TransactionId).validStart
+    let expirationTime = toZonedDateTime(text: "2019-04-01T22:42:22Z")
 
     // when
     let transaction = SystemDeleteTransaction{fileId: file, contractId: null, expirationTime: expirationTime}
@@ -201,3 +203,8 @@ test "a system undelete of a contract keeps the contract" {
   sub-second part of the `zonedDateTime` is lost when the transaction is serialized (the JavaScript SDK tests this:
   "should drop nanoseconds across a round trip"). Whether the API should state this (a `seconds`-precision type or a
   documented truncation) is open; a test of it would also need access to the transaction of a `PackedTransaction`.
+
+- **Does a system delete of a contract keep an expiration time?** The API schema says that `expirationTime` is ignored
+  when `contractId` is set, but not whether the transaction keeps a value that is set anyway. The Java SDK keeps and
+  serializes it (SystemDeleteTransactionTest builds a contract delete with an expiration time and reads it back). The
+  tests set it to `null` for a contract until the spec decides.

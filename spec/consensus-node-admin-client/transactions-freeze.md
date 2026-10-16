@@ -145,10 +145,11 @@ missing field. The comment above each test names the SDK tests it comes from.
 
 ```tests
 // Source: the Java (getSetFreezeType, getSetStartTime, getSetFileId, getSetFileHash), Python
-// (test_constructor_with_parameters), C++, Go and Swift FreezeTransaction unit tests.
+// (test_constructor_with_parameters), C++, Go and Swift FreezeTransaction unit tests. The start time is the one of the
+// Java test (Instant.ofEpochSecond(1554158542), converted exactly to 2019-04-01T22:42:22Z).
 test "a freeze upgrade keeps its type, start time, update file and file hash" {
     // given
-    let startTime = DEFAULT(ledger.TransactionId).validStart
+    let startTime = toZonedDateTime(text: "2019-04-01T22:42:22Z")
 
     // when
     let transaction = FreezeTransaction{freezeType: FreezeType.FREEZE_UPGRADE, startTime: startTime,
@@ -175,11 +176,12 @@ test "a prepared upgrade needs no start time" {
     assertEquals(expected: UPGRADE_FILE_HASH, actual: transaction.fileHash)
 }
 
-// Source: the Python FreezeTransaction unit test (test_build_proto_body_with_none_fields); the Description of this
-// spec (FREEZE_ONLY needs no upgrade payload).
+// Source: the Python FreezeTransaction unit test (test_build_proto_body_with_none_fields, with the FREEZE_ONLY type and
+// the start time Timestamp(1640995200, 0) of its freeze_params fixture, converted exactly to 2022-01-01T00:00:00Z); the
+// Description of this spec (FREEZE_ONLY needs no upgrade payload).
 test "a freeze without upgrade needs no update file and no file hash" {
     // given
-    let startTime = DEFAULT(ledger.TransactionId).validStart
+    let startTime = toZonedDateTime(text: "2022-01-01T00:00:00Z")
 
     // when
     let transaction = FreezeTransaction{freezeType: FreezeType.FREEZE_ONLY, startTime: startTime, updateFile: null,
@@ -190,6 +192,24 @@ test "a freeze without upgrade needs no update file and no file hash" {
     assertEquals(expected: startTime, actual: transaction.startTime)
     assertNull(actual: transaction.updateFile)
     assertNull(actual: transaction.fileHash)
+}
+
+// Source: the Description of this spec (TELEMETRY_UPGRADE requires a start time, updateFile and fileHash like
+// FREEZE_UPGRADE); the start time is the one of the JavaScript FreezeTransaction unit test ("should correctly
+// deserialize from protobuf with all fields": Timestamp(1624430225, 0), converted exactly to 2021-06-23T06:37:05Z).
+test "a telemetry upgrade keeps its start time, update file and file hash" {
+    // given
+    let startTime = toZonedDateTime(text: "2021-06-23T06:37:05Z")
+
+    // when
+    let transaction = FreezeTransaction{freezeType: FreezeType.TELEMETRY_UPGRADE, startTime: startTime,
+            updateFile: UPGRADE_FILE, fileHash: UPGRADE_FILE_HASH}
+
+    // then
+    assertEquals(expected: FreezeType.TELEMETRY_UPGRADE, actual: transaction.freezeType)
+    assertEquals(expected: startTime, actual: transaction.startTime)
+    assertEquals(expected: UPGRADE_FILE, actual: transaction.updateFile)
+    assertEquals(expected: UPGRADE_FILE_HASH, actual: transaction.fileHash)
 }
 
 // Source: the Go (TestUnitFreezeTypeString) and Python (test_freeze_type_values, test_round_trip_conversion)
@@ -225,3 +245,10 @@ test "a freeze transaction keeps every freeze type" {
   Observing the actual restart still requires mirror-node / health-check polling outside
   this transaction's surface. Whether the admin client should expose a typed
   "upgrade-applied" event is open.
+
+- **Does the transaction keep a field its `freezeType` ignores?** The Description says that `PREPARE_UPGRADE` and
+  `FREEZE_ABORT` ignore `startTime`, but not whether the SDK keeps and sends a start time that is set anyway. The
+  JavaScript SDK keeps it (its unit test "should correctly deserialize from protobuf with all fields" reads back the
+  start time of a `PREPARE_UPGRADE`). Until the spec states one or the other, the tests set ignored fields to `null`.
+  The same holds for the precision of `startTime`: HAPI carries it as a `Timestamp` (nanoseconds), so it is kept
+  exactly, but the spec does not say so.

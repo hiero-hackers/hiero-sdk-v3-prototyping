@@ -2,6 +2,8 @@ package org.hiero.enterprise.service.token;
 
 import static org.hiero.sdk.testing.Testing.*;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import org.hiero.authority.Authority;
 import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.keys.ByteImportEncoding;
@@ -57,7 +59,9 @@ class ServiceTokenSpecTest {
     /// Source: the TokenCreateTransaction unit tests of the Java (TokenCreateTransactionTest), Go
     /// (token_create_transaction_unit_test.go), C++ (TokenCreateTransactionUnitTests), Swift
     /// (TokenCreateTransactionUnitTests) and Python (token_create_transaction_test.py) SDKs: every value that is set is
-    /// read back unchanged.
+    /// read back unchanged. The expiration time and the auto-renew period are those of the Java test (spawnTestTransactionFungible:
+    /// Instant.ofEpochSecond(1554158542) and Duration.ofHours(10), converted exactly to 2019-04-01T22:42:22Z and 36000
+    /// seconds).
     @Test
     @DisplayName("token parameters keep the values they are created with")
     void tokenParametersKeepTheValuesTheyAreCreatedWith() {
@@ -65,9 +69,11 @@ class ServiceTokenSpecTest {
         final Authority authority = defaultAuthority();
         final AccountId treasury = defaultAccountId();
         final byte[] metadata = utf8("ipfs://bafkreigh2akiscaildc");
+        final ZonedDateTime expirationTime = toZonedDateTime("2019-04-01T22:42:22Z");
+        final Duration autoRenewPeriod = toSeconds(36000L);
 
         // when
-        final TokenCreateParams params = new TokenCreateParams("USD Coin", "USDC", treasury, 6, 1_000_000L, TokenSupplyType.FINITE, 10_000_000L, true, "memo", metadata, null, null, treasury, authority, authority, authority, authority, authority, authority, authority, authority);
+        final TokenCreateParams params = new TokenCreateParams("USD Coin", "USDC", treasury, 6, 1_000_000L, TokenSupplyType.FINITE, 10_000_000L, true, "memo", metadata, expirationTime, autoRenewPeriod, treasury, authority, authority, authority, authority, authority, authority, authority, authority);
 
         // then
         assertEquals("USD Coin", params.name());
@@ -80,6 +86,8 @@ class ServiceTokenSpecTest {
         assertTrue(params.freezeDefault());
         assertEquals("memo", params.tokenMemo());
         assertEquals(metadata, params.metadata());
+        assertEquals(expirationTime, params.expirationTime());
+        assertEquals(autoRenewPeriod, params.autoRenewPeriod());
         assertEquals(treasury, params.autoRenewAccount());
         assertEquals(authority, params.adminAuthority());
         assertEquals(authority, params.supplyAuthority());

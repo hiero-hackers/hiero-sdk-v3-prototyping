@@ -72,8 +72,7 @@ abstraction TopicRepository {
 
 ## Testing
 
-The queries of `TopicRepository` need a Mirror Node, and `Topic` and `TopicMessage` cannot be created in a test
-because the test language has no literal for `zonedDateTime` and `seconds`.
+The queries of `TopicRepository` need a Mirror Node; only the value types are tested here.
 
 ```tests
 // Source: this spec (a message submitted in several chunks carries the chunk's number and the total number of
@@ -91,6 +90,84 @@ test "chunk info keeps the initial transaction id, the chunk number and the tota
     assertEquals(expected: 3, actual: chunk.total)
     assertFalse(condition: chunk.scheduled)
 }
+
+// Source: the Hiero Enterprise Java test fixture topic.json (topic 0.0.1926, auto-renew period 7776000 seconds, created
+// "1706816673.106110015", timestamp range from the creation, memo "1706816668096 Mirror node created test topic", no
+// custom fees, no fee-exempt keys); millisecond precision. The fixture has no end of the timestamp range, which this
+// spec requires, so the test uses some valid time for it.
+test "a topic keeps its auto-renew period and its creation time" {
+    // given
+    let created = toZonedDateTime(text: "2024-02-01T19:44:33.106Z")
+
+    // when
+    let topic = Topic{topicId: Address.fromString(address: "0.0.1926"), autoRenewPeriod: toSeconds(value: 7776000),
+            createdTimestamp: created, deleted: false, memo: "1706816668096 Mirror node created test topic",
+            fixedFees: [], feeExemptAuthorities: [], fromTimestamp: created, toTimestamp: DEFAULT(zonedDateTime)}
+
+    // then
+    assertEquals(expected: Address.fromString(address: "0.0.1926"), actual: topic.topicId)
+    assertEquals(expected: toSeconds(value: 7776000), actual: topic.autoRenewPeriod)
+    assertEquals(expected: toZonedDateTime(text: "2024-02-01T19:44:33.106Z"), actual: topic.createdTimestamp)
+    assertEquals(expected: created, actual: topic.fromTimestamp)
+    assertEquals(expected: "1706816668096 Mirror node created test topic", actual: topic.memo)
+    assertEquals(expected: 0, actual: length(value: topic.fixedFees))
+    assertEquals(expected: 0, actual: length(value: topic.feeExemptAuthorities))
+    assertNull(actual: topic.adminAuthority)
+    assertNull(actual: topic.autoRenewAccount)
+}
+
+// Source: the Hiero Enterprise Java test fixture topic-message.json (topic 0.0.9411905, payer 0.0.6105114, consensus
+// timestamp "1783075674.960707349", running hash version 3, sequence number 3, chunk 3 of 14); millisecond precision.
+// A running hash of version 3 is a SHA-384 hash of 48 bytes (HAPI, TransactionReceipt.topicRunningHashVersion).
+test "a topic message keeps its consensus timestamp, payer, running hash and sequence number" {
+    // given
+    let consensus = toZonedDateTime(text: "2026-07-03T10:47:54.960Z")
+    let runningHash = base64(text: "qAIp0612V63kRt90Jwnmg3TmOn9WYZ50hzqGeiAACy569p0XYSEzqp5u6b1e4Nmd")
+    let chunk = ChunkInfo{initialTransactionId: DEFAULT(TransactionId), nonce: 0, number: 3, total: 14,
+            scheduled: false}
+
+    // when
+    let message = TopicMessage{chunkInfo: chunk, consensusTimestamp: consensus, message: "message",
+            payerAccountId: AccountId.fromString(value: "0.0.6105114"), runningHash: runningHash,
+            runningHashVersion: 3, sequenceNumber: 3, topicId: Address.fromString(address: "0.0.9411905")}
+
+    // then
+    assertEquals(expected: toZonedDateTime(text: "2026-07-03T10:47:54.960Z"), actual: message.consensusTimestamp)
+    assertEquals(expected: AccountId.fromString(value: "0.0.6105114"), actual: message.payerAccountId)
+    assertEquals(expected: runningHash, actual: message.runningHash)
+    assertEquals(expected: 48, actual: length(value: message.runningHash))
+    assertEquals(expected: 3, actual: message.runningHashVersion)
+    assertEquals(expected: 3, actual: message.sequenceNumber)
+    assertEquals(expected: Address.fromString(address: "0.0.9411905"), actual: message.topicId)
+    assertEquals(expected: chunk, actual: message.chunkInfo)
+}
+
+// Source: this spec (`chunkInfo` is nullable: only a message submitted in several chunks carries it; a topic message is
+// a value, two messages that differ only in their consensus timestamp are different).
+test "a topic message submitted in one piece has no chunk info" {
+    // given
+    let topic = Address.fromString(address: "0.0.9411905")
+    let payer = AccountId.fromString(value: "0.0.6105114")
+    let runningHash = base64(text: "qAIp0612V63kRt90Jwnmg3TmOn9WYZ50hzqGeiAACy569p0XYSEzqp5u6b1e4Nmd")
+
+    // when
+    let message = TopicMessage{consensusTimestamp: toZonedDateTime(text: "2026-07-03T10:47:54.960Z"),
+            message: "message", payerAccountId: payer, runningHash: runningHash, runningHashVersion: 3,
+            sequenceNumber: 1, topicId: topic}
+    let later = TopicMessage{consensusTimestamp: toZonedDateTime(text: "2026-07-03T10:47:54.961Z"),
+            message: "message", payerAccountId: payer, runningHash: runningHash, runningHashVersion: 3,
+            sequenceNumber: 1, topicId: topic}
+
+    // then
+    assertNull(actual: message.chunkInfo)
+    assertNotEquals(unexpected: message, actual: later)
+}
 ```
 
 ## Questions & Comments
+- **`Topic.toTimestamp` is not nullable, but the Mirror Node leaves it open.** The REST API returns the validity of the
+  topic state as a range `timestamp: {from, to}`, and for the current state `to` is `null` (e.g. the Hiero Enterprise
+  Java test fixture `topic.json`). A `Topic` of the current state cannot be built without inventing an end time. Should
+  `toTimestamp` be `@@nullable`?
+- **`TopicMessage.message` is a `string`**, but the REST API returns the message Base64-encoded and a message can be
+  arbitrary bytes. Is it the Base64 text, the decoded UTF-8 text, or should it be `bytes`?

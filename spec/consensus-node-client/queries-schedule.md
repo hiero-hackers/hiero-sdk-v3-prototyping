@@ -89,6 +89,14 @@ ScheduleInfoQuery extends PaidQuery<ScheduleInfo> {
 }
 ```
 
+## Default Instances for Testing
+
+```
+// The point in time of the schedule fixtures of the Java SDK (ScheduleInfoTest, validStart):
+// Instant.ofEpochSecond(1554158542), i.e. 2019-04-01T22:42:22Z.
+values SCHEDULE_TEST_TIME: zonedDateTime = toZonedDateTime(text: "2019-04-01T22:42:22Z")
+```
+
 ## Examples
 
 ### Read a schedule's state (paid)
@@ -159,6 +167,39 @@ test "a pending schedule info has these defaults" {
     assertNull(actual: info.scheduleMemo)
     assertNull(actual: info.executionTime)
     assertNull(actual: info.deletionTime)
+}
+
+// Source: the Java SDK (ScheduleInfoTest.shouldSerialize, spawnScheduleInfoExample): expiration and execution time
+// Instant.ofEpochSecond(1554158542), i.e. 2019-04-01T22:42:22Z, no deletion time; this spec (an executed schedule
+// has its executionTime set). Second precision.
+test "an executed schedule info keeps its execution time and has no deletion time" {
+    // when
+    let info = ScheduleInfo{scheduleId: DEFAULT, creatorAccountId: DEFAULT, payerAccountId: DEFAULT,
+            scheduledTransaction: consensusnode.transactions.utility.PrngTransaction{},
+            scheduledTransactionId: DEFAULT, expirationTime: SCHEDULE_TEST_TIME, waitForExpiry: true,
+            executionTime: SCHEDULE_TEST_TIME, deletionTime: null}
+
+    // then
+    assertEquals(expected: toZonedDateTime(text: "2019-04-01T22:42:22Z"), actual: info.expirationTime)
+    assertEquals(expected: toZonedDateTime(text: "2019-04-01T22:42:22Z"), actual: info.executionTime)
+    assertNull(actual: info.deletionTime)
+    assertTrue(condition: info.waitForExpiry)
+}
+
+// Source: the Java SDK (ScheduleInfoTest.shouldSerializeDeleted, spawnScheduleInfoDeletedExample): expiration and
+// deletion time Instant.ofEpochSecond(1554158542), i.e. 2019-04-01T22:42:22Z, no execution time; this spec (a deleted
+// schedule has its deletionTime set). Second precision.
+test "a deleted schedule info keeps its deletion time and has no execution time" {
+    // when
+    let info = ScheduleInfo{scheduleId: DEFAULT, creatorAccountId: DEFAULT, payerAccountId: DEFAULT,
+            scheduledTransaction: consensusnode.transactions.utility.PrngTransaction{},
+            scheduledTransactionId: DEFAULT, expirationTime: SCHEDULE_TEST_TIME, executionTime: null,
+            deletionTime: SCHEDULE_TEST_TIME}
+
+    // then
+    assertEquals(expected: toZonedDateTime(text: "2019-04-01T22:42:22Z"), actual: info.expirationTime)
+    assertEquals(expected: toZonedDateTime(text: "2019-04-01T22:42:22Z"), actual: info.deletionTime)
+    assertNull(actual: info.executionTime)
 }
 ```
 

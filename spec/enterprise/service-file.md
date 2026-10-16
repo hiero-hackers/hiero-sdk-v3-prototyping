@@ -77,8 +77,7 @@ instance FileCreateParams = FileCreateParams{}
 
 Tests of `FileCreateParams`. The methods of `FileService` talk to the network and are not unit-tested here (among them
 the splitting of large contents into chunks). A violated `@@maxLength` cannot be expected yet: the test language
-expects errors of calls only, and creating a `FileCreateParams` declares none. An expiration time cannot be written
-in a test yet, as the test language has no date and time literals.
+expects errors of calls only, and creating a `FileCreateParams` declares none.
 
 ```tests
 // Source: this spec (@@default and @@nullable of FileCreateParams, "Nothing is required"); hiero-enterprise-java
@@ -98,19 +97,40 @@ test "file parameters without values have empty contents and nothing else" {
 // Source: the FileCreateTransaction unit tests of the Java (FileCreateTransactionTest), Go
 // (file_create_transaction_unit_test.go), C++ (FileCreateTransactionUnitTests) and Python
 // (file_create_transaction_test.py, test_constructor_with_parameters) SDKs: every value that is set is read back
-// unchanged.
+// unchanged. The expiration time is the one of the Java test (Instant.ofEpochSecond(1554158728), converted exactly to
+// 2019-04-01T22:45:28Z).
 test "file parameters keep the values they are created with" {
     // given
     let contents = utf8(text: "Hello, Hiero!")
     let authority = DEFAULT(Authority)
+    let expirationTime = toZonedDateTime(text: "2019-04-01T22:45:28Z")
 
     // when
-    let params = FileCreateParams{contents: contents, authority: authority, fileMemo: "fileMemo"}
+    let params = FileCreateParams{contents: contents, authority: authority, expirationTime: expirationTime,
+            fileMemo: "fileMemo"}
 
     // then
     assertEquals(expected: contents, actual: params.contents)
     assertEquals(expected: authority, actual: params.authority)
+    assertEquals(expected: expirationTime, actual: params.expirationTime)
     assertEquals(expected: "fileMemo", actual: params.fileMemo)
+}
+
+// Source: the Python SDK (file_create_transaction_test.py, test_constructor_with_custom_expiration_time: the given
+// expiration time Timestamp(1704067200, 0), "Jan 1, 2024", replaces the default); this spec (expirationTime: "the
+// network default if absent").
+test "file parameters keep an expiration time given without other values" {
+    // given
+    let expirationTime = toZonedDateTime(text: "2024-01-01T00:00:00Z")
+
+    // when
+    let params = FileCreateParams{expirationTime: expirationTime}
+
+    // then
+    assertEquals(expected: expirationTime, actual: params.expirationTime)
+    assertEquals(expected: 0, actual: length(value: params.contents))
+    assertNull(actual: params.authority)
+    assertNull(actual: params.fileMemo)
 }
 
 // Source: this spec (@@maxLength(100) of fileMemo); HAPI limits a memo to 100 bytes, which ASCII text of 100

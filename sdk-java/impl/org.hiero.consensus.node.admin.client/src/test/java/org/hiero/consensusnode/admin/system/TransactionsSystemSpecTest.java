@@ -5,7 +5,6 @@ import static org.hiero.sdk.testing.Testing.*;
 import java.time.ZonedDateTime;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;
-import org.hiero.ledger.TransactionId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,13 +16,15 @@ class TransactionsSystemSpecTest {
     ///
     /// Source: the Java (getSetFileId, getSetExpirationTime, constructSystemDeleteTransactionFromTransactionBodyProtobuf),
     /// JavaScript ("should carry the file id and leave the contract id null"), C++ (GetSetFileId, GetSetExpirationTime),
-    /// Go and Swift SystemDeleteTransaction unit tests.
+    /// Go and Swift SystemDeleteTransaction unit tests. The expiration time is the one of the Java test
+    /// (Instant.ofEpochSecond(1554158542), converted exactly to 2019-04-01T22:42:22Z); whole seconds, as HAPI carries it
+    /// (see Questions & Comments).
     @Test
     @DisplayName("a system delete of a file keeps the file and the expiration time")
     void aSystemDeleteOfAFileKeepsTheFileAndTheExpirationTime() {
         // given
         final Address file = defaultAddress();
-        final ZonedDateTime expirationTime = defaultTransactionId().validStart();
+        final ZonedDateTime expirationTime = toZonedDateTime("2019-04-01T22:42:22Z");
 
         // when
         final SystemDeleteTransaction transaction = new SystemDeleteTransaction(file, null, expirationTime);
@@ -91,10 +92,6 @@ class TransactionsSystemSpecTest {
 
     private static Address defaultAddress() {
         return new Address(0L, 0L, "", 1001L);
-    }
-
-    private static TransactionId defaultTransactionId() {
-        return TransactionId.generateTransactionId(defaultAddress());
     }
 
     private static ContractId defaultContractId() {

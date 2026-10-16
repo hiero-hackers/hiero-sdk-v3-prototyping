@@ -51,9 +51,68 @@ ContractRepository {
 
 ```
 
+## Testing
+
+The queries of `ContractRepository` need a Mirror Node; only the value type is tested here.
+
+```tests
+// Source: the Hiero Enterprise Java test fixture contract.json (contract 0.0.10790540, auto-renew period 7776000
+// seconds, created "1785753223.568147754", expiration "1793529223.568147754", timestamp range from the creation,
+// memo "0.0.10790537", nonce 1, max. automatic token associations 0); millisecond precision. The fixture has no end
+// of the timestamp range, which this spec requires, so the expiration time stands in for it.
+test "a contract keeps its auto-renew period and its lifecycle timestamps" {
+    // given
+    let created = toZonedDateTime(text: "2026-08-03T10:33:43.568Z")
+    let expiration = toZonedDateTime(text: "2026-11-01T10:33:43.568Z")
+
+    // when
+    let contract = Contract{contractId: ContractId.fromString(value: "0.0.10790540"),
+            autoRenewPeriod: toSeconds(value: 7776000), createdTimestamp: created, deleted: false,
+            expirationTimestamp: expiration, memo: "0.0.10790537", maxAutomaticTokenAssociations: 0, nonce: 1,
+            permanentRemoval: false, fromTimestamp: created, toTimestamp: expiration}
+
+    // then
+    assertEquals(expected: ContractId.fromString(value: "0.0.10790540"), actual: contract.contractId)
+    assertEquals(expected: toSeconds(value: 7776000), actual: contract.autoRenewPeriod)
+    assertEquals(expected: toZonedDateTime(text: "2026-08-03T10:33:43.568Z"), actual: contract.createdTimestamp)
+    assertEquals(expected: toZonedDateTime(text: "2026-11-01T10:33:43.568Z"), actual: contract.expirationTimestamp)
+    assertEquals(expected: created, actual: contract.fromTimestamp)
+    assertEquals(expected: expiration, actual: contract.toTimestamp)
+    assertEquals(expected: "0.0.10790537", actual: contract.memo)
+    assertEquals(expected: 1, actual: contract.nonce)
+    assertFalse(condition: contract.deleted)
+}
+
+// Source: this spec (the optional values of a contract are nullable).
+test "a contract without optional values has no admin authority, expiration, EVM address and bytecode" {
+    // given
+    let time = DEFAULT(zonedDateTime)
+
+    // when
+    let contract = Contract{contractId: DEFAULT(ContractId), autoRenewPeriod: DEFAULT(seconds), createdTimestamp: time,
+            deleted: false, permanentRemoval: false, fromTimestamp: time, toTimestamp: time}
+
+    // then
+    assertNull(actual: contract.adminAuthority)
+    assertNull(actual: contract.autoRenewAccount)
+    assertNull(actual: contract.expirationTimestamp)
+    assertNull(actual: contract.evmAddress)
+    assertNull(actual: contract.memo)
+    assertNull(actual: contract.nonce)
+    assertNull(actual: contract.obtainerId)
+    assertNull(actual: contract.bytecode)
+    assertNull(actual: contract.runtimeBytecode)
+}
+```
+
 ## Questions & Comments
 
 - TODO: `Contract.fileId` should be typed `Address` once the string-typed entity-id fields in this file are cleaned up
   (separate work).
 - TODO: `Contract.obtainerId` should be typed `AccountId` once the string-typed entity-id fields are cleaned up.
 - TODO: `Contract.proxyAccountId` should be typed `AccountId` once the string-typed entity-id fields are cleaned up.
+- **`Contract.toTimestamp` is not nullable, but the Mirror Node leaves it open.** The REST API returns the validity of
+  the contract state as a range `timestamp: {from, to}`, and for the current state `to` is `null` (e.g. the Hiero
+  Enterprise Java test fixture `contract.json`). A `Contract` of the current state therefore cannot be built without
+  inventing an end time. Should `toTimestamp` be `@@nullable`? The same holds for `permanentRemoval`, which the REST
+  API also returns as `null`.

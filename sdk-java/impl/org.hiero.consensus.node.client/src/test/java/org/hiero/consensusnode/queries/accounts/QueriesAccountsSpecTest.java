@@ -2,6 +2,7 @@ package org.hiero.consensusnode.queries.accounts;
 
 import static org.hiero.sdk.testing.Testing.*;
 
+import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -94,6 +95,25 @@ class QueriesAccountsSpecTest {
         assertNull(info.autoRenewPeriod());
         assertNull(info.stakedAccountId());
         assertNull(info.stakedNodeId());
+    }
+
+    /// `consensusnode.queries.accounts/an-account-info-keeps-its-expiration-time-and-auto-renew-period`
+    ///
+    /// Source: the Java SDK (AccountInfoTest, the account info of its fixture): expiration time Instant.ofEpochMilli(6),
+    /// i.e. 1970-01-01T00:00:00.006Z, and auto-renew period Duration.ofDays(7), i.e. 604800 seconds. Millisecond precision.
+    @Test
+    @DisplayName("an account info keeps its expiration time and auto-renew period")
+    void anAccountInfoKeepsItsExpirationTimeAndAutoRenewPeriod() {
+        // given
+        final ZonedDateTime expirationTime = toZonedDateTime("1970-01-01T00:00:00.006Z");
+        final Duration autoRenewPeriod = toSeconds(604800L);
+
+        // when
+        final AccountInfo info = new AccountInfo(defaultAccountId(), null, defaultHbar(), null, null, expirationTime, autoRenewPeriod, 0, false, 0L, false, null, null, false);
+
+        // then
+        assertEquals(expirationTime, info.expirationTime());
+        assertEquals(toSeconds(604800L), info.autoRenewPeriod());
     }
 
     /// `consensusnode.queries.accounts/account-records-without-records-have-an-empty-list`

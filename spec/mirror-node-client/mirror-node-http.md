@@ -212,6 +212,32 @@ test "a POST request keeps its body and headers" {
     assertEquals(expected: body, actual: request.body)
     assertEquals(expected: {"authorization": "Bearer test"}, actual: request.headers)
 }
+
+// Source: the Java SDK (MirrorNodeHttpClientTest: calls with a deadline of 10 seconds); this spec (`timeout` is
+// optional, a request without one falls back to the default request timeout of the HttpClient).
+test "a request keeps its timeout" {
+    // when
+    let request = MirrorNodeHttpRequest{method: HttpMethod.GET, path: "/accounts/0.0.1",
+            timeout: toDuration(text: "PT10S"), headers: {}}
+
+    // then
+    assertEquals(expected: toDuration(text: "PT10S"), actual: request.timeout)
+    assertNotEquals(unexpected: toDuration(text: "PT10.001S"), actual: request.timeout)
+}
+
+// Source: the API guideline (`duration` has millisecond precision).
+test "a request keeps a timeout with millisecond precision" {
+    // when
+    let request = MirrorNodeHttpRequest{method: HttpMethod.GET, path: "/accounts/0.0.1",
+            timeout: toDuration(text: "PT1.5S"), headers: {}}
+    let timeout = request.timeout
+
+    // then
+    assertEquals(expected: toDuration(text: "PT1.5S"), actual: timeout)
+    assertNotNull(actual: timeout)
+    assertTrue(condition: timeout < toDuration(text: "PT1.501S"))
+    assertTrue(condition: timeout > toDuration(text: "PT1.499S"))
+}
 ```
 
 ## Questions & Comments

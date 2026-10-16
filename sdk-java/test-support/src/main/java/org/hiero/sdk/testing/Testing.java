@@ -4,6 +4,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -926,6 +932,78 @@ public final class Testing {
      */
     public static BigDecimal toDecimal(final double value) {
         return new BigDecimal(value);
+    }
+
+    // --- date, time and durations -----------------------------------------------------------------
+
+    /**
+     * The instant with its zone or offset, from ISO 8601 text; text that is no such instant fails the test.
+     *
+     * @param text the text, e.g. {@code 2022-01-02T02:00:01.000000002Z}
+     * @return the instant
+     */
+    public static ZonedDateTime toZonedDateTime(final String text) {
+        return parse(text, ZonedDateTime::parse, "an instant with zone");
+    }
+
+    /**
+     * The local date and time, from ISO 8601 text; text that is no such value fails the test.
+     *
+     * @param text the text, e.g. {@code 2022-01-02T02:00:01}
+     * @return the date and time
+     */
+    public static LocalDateTime toDateTime(final String text) {
+        return parse(text, LocalDateTime::parse, "a date and time");
+    }
+
+    /**
+     * The date, from ISO 8601 text; text that is no date fails the test.
+     *
+     * @param text the text, e.g. {@code 2022-01-02}
+     * @return the date
+     */
+    public static LocalDate toDate(final String text) {
+        return parse(text, LocalDate::parse, "a date");
+    }
+
+    /**
+     * The time of day, from ISO 8601 text; text that is no time fails the test.
+     *
+     * @param text the text, e.g. {@code 02:00:01.5}
+     * @return the time
+     */
+    public static LocalTime toTime(final String text) {
+        return parse(text, LocalTime::parse, "a time");
+    }
+
+    /**
+     * The duration, from ISO 8601 text; text that is no duration fails the test.
+     *
+     * @param text the text, e.g. {@code PT1.5S} or {@code P1DT2H}
+     * @return the duration
+     */
+    public static Duration toDuration(final String text) {
+        return parse(text, Duration::parse, "a duration");
+    }
+
+    /**
+     * The duration of a number of seconds.
+     *
+     * @param value the number of seconds
+     * @return the duration
+     */
+    public static Duration toSeconds(final long value) {
+        return Duration.ofSeconds(value);
+    }
+
+    private static <T> T parse(final String text, final java.util.function.Function<CharSequence, T> parser,
+                               final String kind) {
+        try {
+            return parser.apply(Objects.requireNonNull(text, "text must not be null"));
+        } catch (final DateTimeParseException e) {
+            fail("'" + text + "' is no " + kind + " in ISO 8601: " + e.getMessage());
+            throw e;
+        }
     }
 
     private static void checkRange(final long start, final long end, final long length) {

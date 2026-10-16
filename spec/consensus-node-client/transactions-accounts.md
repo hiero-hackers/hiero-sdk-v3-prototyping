@@ -253,6 +253,15 @@ AccountAllowanceDeleteReceipt extends Receipt {
 }
 ```
 
+## Default Instances for Testing
+
+```
+// The expiration time of the account update tests of the Java SDK (AccountUpdateTransactionTest:
+// Instant.ofEpochSecond(1554158543)) and the Swift SDK (AccountUpdateTransactionUnitTests:
+// Timestamp(seconds: 1_554_158_543, subSecondNanos: 0)), whole seconds.
+values SDK_TEST_EXPIRATION_TIME: zonedDateTime = toZonedDateTime(text: "2019-04-01T22:42:23Z")
+```
+
 ## Examples
 
 ### Sender is the operator (single signature)
@@ -417,8 +426,9 @@ test "an account create transaction leaves out what is not given" {
 }
 
 // Source: the Java SDK (AccountCreateTransactionTest.propertiesTest: 450 tinybars, "some dumb memo", 100 automatic
-// associations, staked to 0.0.3, the EVM address alias 0x5c562e90feaf0eebd33ea75d21024f249d451417) and the Swift SDK
-// (AccountCreateTransactionUnitTests.test_Properties).
+// associations, an auto renew period of Duration.ofHours(10) = 36000 seconds, staked to 0.0.3, the EVM address alias
+// 0x5c562e90feaf0eebd33ea75d21024f249d451417) and the Swift SDK (AccountCreateTransactionUnitTests.test_Properties,
+// testAutoRenewPeriod = .hours(10)).
 test "an account create transaction keeps its attributes" {
     // given
     let initialBalance: NativeToken<ANY, ANY> = hedera.Hbar{amount: 450, unit: hedera.HbarUnit.TINYBAR}
@@ -427,13 +437,15 @@ test "an account create transaction keeps its attributes" {
     // when
     let transaction = AccountCreateTransaction{authority: DEFAULT(Authority), initialBalance: initialBalance,
             accountMemo: "some dumb memo", receiverSignatureRequired: true, maxAutomaticTokenAssociations: 100,
-            stakedAccountId: AccountId.fromString(value: "0.0.3"), declineStakingReward: true, alias: alias}
+            autoRenewPeriod: toSeconds(value: 36000), stakedAccountId: AccountId.fromString(value: "0.0.3"),
+            declineStakingReward: true, alias: alias}
 
     // then
     assertEquals(expected: initialBalance, actual: transaction.initialBalance)
     assertEquals(expected: "some dumb memo", actual: transaction.accountMemo)
     assertTrue(condition: transaction.receiverSignatureRequired)
     assertEquals(expected: 100, actual: transaction.maxAutomaticTokenAssociations)
+    assertEquals(expected: toSeconds(value: 36000), actual: transaction.autoRenewPeriod)
     assertEquals(expected: AccountId.fromString(value: "0.0.3"), actual: transaction.stakedAccountId)
     assertNull(actual: transaction.stakedNodeId)
     assertTrue(condition: transaction.declineStakingReward)
@@ -441,15 +453,16 @@ test "an account create transaction keeps its attributes" {
 }
 
 // Source: the Java SDK (AccountCreateTransactionTest.shouldBytes and shouldBytes2: staked to an account, staked to node
-// 4), the Swift SDK (test_ToFromBytes and test_ToFromBytes2) and the Python SDK
-// (test_serialization_round_trip_staked_node_id and ..._staked_account_id).
+// 4, both with an auto renew period of Duration.ofHours(10) = 36000 seconds), the Swift SDK (test_ToFromBytes and
+// test_ToFromBytes2) and the Python SDK (test_serialization_round_trip_staked_node_id and ..._staked_account_id).
 test "an account create transaction survives toBytes and fromBytes, staked to an account or to a node" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
     let nodes = [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")]
     let toAccount = AccountCreateTransaction{authority: DEFAULT(Authority), accountMemo: "Test Account",
-            stakedAccountId: AccountId.fromString(value: "0.0.8")}
-    let toNode = AccountCreateTransaction{authority: DEFAULT(Authority), accountMemo: "Test Account", stakedNodeId: 1}
+            autoRenewPeriod: toSeconds(value: 36000), stakedAccountId: AccountId.fromString(value: "0.0.8")}
+    let toNode = AccountCreateTransaction{authority: DEFAULT(Authority), accountMemo: "Test Account",
+            autoRenewPeriod: toSeconds(value: 36000), stakedNodeId: 1}
 
     for transaction in [toAccount, toNode] {
         // given
@@ -483,12 +496,28 @@ test "an account update transaction changes nothing but what it names" {
     assertNull(actual: transaction.declineStakingReward)
 }
 
-// Source: the Java SDK (AccountUpdateTransactionTest.shouldBytes) and the Swift SDK
+// Source: the Swift SDK (AccountUpdateTransactionUnitTests.test_GetSetAutoRenewPeriod and test_GetSetExpirationTime:
+// autoRenewPeriod = .hours(10) = 36000 seconds, expirationTime = Timestamp(seconds: 1_554_158_543) =
+// 2019-04-01T22:42:23Z) and the Java SDK (AccountUpdateTransactionTest: Duration.ofHours(10),
+// Instant.ofEpochSecond(1554158543)).
+test "an account update transaction keeps its auto renew period and expiration time" {
+    // when
+    let transaction = AccountUpdateTransaction{accountId: DEFAULT(AccountId), autoRenewPeriod: toSeconds(value: 36000),
+            expirationTime: SDK_TEST_EXPIRATION_TIME}
+
+    // then
+    assertEquals(expected: toSeconds(value: 36000), actual: transaction.autoRenewPeriod)
+    assertEquals(expected: SDK_TEST_EXPIRATION_TIME, actual: transaction.expirationTime)
+}
+
+// Source: the Java SDK (AccountUpdateTransactionTest.shouldBytes: Duration.ofHours(10) = 36000 seconds,
+// Instant.ofEpochSecond(1554158543) = 2019-04-01T22:42:23Z) and the Swift SDK
 // (AccountUpdateTransactionUnitTests.test_ToFromBytes).
 test "an account update transaction survives toBytes and fromBytes" {
     // given
     let packed = AccountUpdateTransaction{accountId: DEFAULT(AccountId), authority: DEFAULT(Authority),
             accountMemo: "Some memo", receiverSignatureRequired: true, maxAutomaticTokenAssociations: 100,
+            autoRenewPeriod: toSeconds(value: 36000), expirationTime: SDK_TEST_EXPIRATION_TIME,
             stakedNodeId: 4, declineStakingReward: true}
             .pack(payer: DEFAULT(consensusnode.client.Account), nodes: [AccountId.fromString(value: "0.0.3")])
 

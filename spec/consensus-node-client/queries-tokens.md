@@ -113,6 +113,14 @@ TokenNftInfoQuery extends PaidQuery<TokenNftInfo> {
 }
 ```
 
+## Default Instances for Testing
+
+```
+// The point in time of the token fixtures of the Java SDK (TokenInfoTest and TokenNftInfoTest):
+// Instant.ofEpochSecond(1554158542), i.e. 2019-04-01T22:42:22Z.
+values TOKEN_TEST_TIME: zonedDateTime = toZonedDateTime(text: "2019-04-01T22:42:22Z")
+```
+
 ## Examples
 
 ### Read token metadata, branch on deleted (paid)
@@ -262,6 +270,30 @@ test "an NFT info without allowance has no spender and empty metadata" {
     assertEquals(expected: 1, actual: info.serial)
     assertEquals(expected: 0, actual: length(value: info.metadata))
     assertNull(actual: info.spenderId)
+}
+
+// Source: the Java SDK (TokenInfoTest, the token info of its fixture): expiration time Instant.ofEpochSecond(1554158542),
+// i.e. 2019-04-01T22:42:22Z, and auto-renew period Duration.ofHours(10), i.e. 36000 seconds. Second precision.
+test "a token info keeps its expiration time and auto-renew period" {
+    // when
+    let info = TokenInfo{tokenId: DEFAULT, type: TokenType.FUNGIBLE_COMMON, name: "ffff", symbol: "F",
+            totalSupply: 1000, treasuryAccountId: DEFAULT, supplyType: TokenSupplyType.INFINITE,
+            expirationTime: TOKEN_TEST_TIME, autoRenewPeriod: toSeconds(value: 36000), autoRenewAccount: DEFAULT}
+
+    // then
+    assertEquals(expected: toZonedDateTime(text: "2019-04-01T22:42:22Z"), actual: info.expirationTime)
+    assertEquals(expected: toSeconds(value: 36000), actual: info.autoRenewPeriod)
+    assertEquals(expected: DEFAULT(AccountId), actual: info.autoRenewAccount)
+}
+
+// Source: the Java SDK (TokenNftInfoTest, the NFT info of its fixture): creation time Instant.ofEpochSecond(1554158542),
+// i.e. 2019-04-01T22:42:22Z. Second precision.
+test "an NFT info keeps the time at which its serial was minted" {
+    // when
+    let info = TokenNftInfo{tokenId: DEFAULT, serial: 1, accountId: DEFAULT, creationTime: TOKEN_TEST_TIME}
+
+    // then
+    assertEquals(expected: toZonedDateTime(text: "2019-04-01T22:42:22Z"), actual: info.creationTime)
 }
 ```
 

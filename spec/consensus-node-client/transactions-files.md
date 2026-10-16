@@ -115,6 +115,15 @@ FileDeleteReceipt extends Receipt {
 }
 ```
 
+## Default Instances for Testing
+
+```
+// The expiration time of the file create and update tests of the Java SDK (FileCreateTransactionTest and
+// FileUpdateTransactionTest: Instant.ofEpochSecond(1554158728)) and the Swift SDK (FileCreateTransactionUnitTests and
+// FileUpdateTransactionUnitTests: Timestamp(seconds: 1_554_158_728, subSecondNanos: 0)), whole seconds.
+values SDK_TEST_EXPIRATION_TIME: zonedDateTime = toZonedDateTime(text: "2019-04-01T22:45:28Z")
+```
+
 ## Examples
 
 ### Create a file (operator is the sole key)
@@ -188,28 +197,32 @@ test "a file create transaction without attributes has empty contents and nothin
 }
 
 // Source: the Python SDK (test_constructor_with_parameters of FileCreateTransaction: "Test file content",
-// "Test memo") and the Swift SDK (FileCreateTransactionUnitTests.test_GetSetContents).
-test "a file create transaction keeps its contents, authority and memo" {
+// "Test memo") and the Swift SDK (FileCreateTransactionUnitTests.test_GetSetContents and test_GetSetExpirationTime:
+// Timestamp(seconds: 1_554_158_728) = 2019-04-01T22:45:28Z).
+test "a file create transaction keeps its contents, authority, expiration time and memo" {
     // given
     let contents = utf8(text: "Test file content")
 
     // when
-    let transaction = FileCreateTransaction{contents: contents, authority: DEFAULT(Authority), fileMemo: "Test memo"}
+    let transaction = FileCreateTransaction{contents: contents, authority: DEFAULT(Authority),
+            expirationTime: SDK_TEST_EXPIRATION_TIME, fileMemo: "Test memo"}
 
     // then
     assertEquals(expected: contents, actual: transaction.contents)
     assertEquals(expected: DEFAULT(Authority), actual: transaction.authority)
+    assertEquals(expected: SDK_TEST_EXPIRATION_TIME, actual: transaction.expirationTime)
     assertEquals(expected: "Test memo", actual: transaction.fileMemo)
 }
 
-// Source: the Java SDK (FileCreateTransactionTest.shouldBytes and shouldBytesNoSetters) and the Swift SDK
+// Source: the Java SDK (FileCreateTransactionTest.shouldBytes and shouldBytesNoSetters; expiration time
+// Instant.ofEpochSecond(1554158728) = 2019-04-01T22:45:28Z) and the Swift SDK
 // (FileCreateTransactionUnitTests.test_ToFromBytes).
 test "a file create transaction survives toBytes and fromBytes" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
     let nodes = [ledger.AccountId.fromString(value: "0.0.3"), ledger.AccountId.fromString(value: "0.0.4")]
     let withAttributes = FileCreateTransaction{contents: utf8(text: "Test file content"), authority: DEFAULT(Authority),
-            fileMemo: "Test memo"}
+            expirationTime: SDK_TEST_EXPIRATION_TIME, fileMemo: "Test memo"}
 
     for transaction in [withAttributes, FileCreateTransaction{}] {
         // given
@@ -259,12 +272,31 @@ test "a file update transaction changes nothing but what it names" {
     assertNull(actual: transaction.fileMemo)
 }
 
+// Source: the Python SDK (test_constructor_with_parameters of FileUpdateTransaction: "Updated content", "Updated memo")
+// and the Swift SDK (FileUpdateTransactionUnitTests.test_GetSetExpirationTime); the expiration time of the Java SDK
+// (FileUpdateTransactionTest: Instant.ofEpochSecond(1554158728) = 2019-04-01T22:45:28Z).
+test "a file update transaction keeps its contents, authority, expiration time and memo" {
+    // given
+    let contents = utf8(text: "Updated content")
+
+    // when
+    let transaction = FileUpdateTransaction{fileId: DEFAULT(Address), contents: contents, authority: DEFAULT(Authority),
+            expirationTime: SDK_TEST_EXPIRATION_TIME, fileMemo: "Updated memo"}
+
+    // then
+    assertEquals(expected: contents, actual: transaction.contents)
+    assertEquals(expected: DEFAULT(Authority), actual: transaction.authority)
+    assertEquals(expected: SDK_TEST_EXPIRATION_TIME, actual: transaction.expirationTime)
+    assertEquals(expected: "Updated memo", actual: transaction.fileMemo)
+}
+
 // Source: the Python SDK (test_constructor_with_parameters of FileUpdateTransaction), the Java SDK
-// (FileUpdateTransactionTest.shouldBytes) and the Swift SDK (FileUpdateTransactionUnitTests.test_ToFromBytes).
+// (FileUpdateTransactionTest.shouldBytes: expiration time Instant.ofEpochSecond(1554158728) = 2019-04-01T22:45:28Z)
+// and the Swift SDK (FileUpdateTransactionUnitTests.test_ToFromBytes).
 test "a file update transaction survives toBytes and fromBytes" {
     // given
     let packed = FileUpdateTransaction{fileId: DEFAULT(Address), contents: utf8(text: "Updated content"),
-            authority: DEFAULT(Authority), fileMemo: "Updated memo"}
+            authority: DEFAULT(Authority), expirationTime: SDK_TEST_EXPIRATION_TIME, fileMemo: "Updated memo"}
             .pack(payer: DEFAULT(consensusnode.client.Account), nodes: [ledger.AccountId.fromString(value: "0.0.3")])
 
     // when

@@ -49,6 +49,23 @@ class QueriesFilesSpecTest {
         assertNull(info.fileMemo());
     }
 
+    /// `consensusnode.queries.files/a-file-info-keeps-its-expiration-time`
+    ///
+    /// Source: the Java SDK (FileInfoTest, the file info of its fixture): expiration time Instant.ofEpochMilli(3), i.e.
+    /// 1970-01-01T00:00:00.003Z. Millisecond precision.
+    @Test
+    @DisplayName("a file info keeps its expiration time")
+    void aFileInfoKeepsItsExpirationTime() {
+        // given
+        final ZonedDateTime expirationTime = toZonedDateTime("1970-01-01T00:00:00.003Z");
+
+        // when
+        final FileInfo info = new FileInfo(defaultAddress(), 0L, expirationTime, false, null, null);
+
+        // then
+        assertEquals(toZonedDateTime("1970-01-01T00:00:00.003Z"), info.expirationTime());
+    }
+
     private static Address defaultAddress() {
         return new Address(0L, 0L, "", 1001L);
     }

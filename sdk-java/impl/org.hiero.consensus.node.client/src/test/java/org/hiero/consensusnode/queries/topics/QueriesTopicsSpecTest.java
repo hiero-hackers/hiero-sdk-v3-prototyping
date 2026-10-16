@@ -52,6 +52,25 @@ class QueriesTopicsSpecTest {
         assertNull(info.autoRenewAccount());
     }
 
+    /// `consensusnode.queries.topics/a-topic-info-keeps-its-expiration-time-and-auto-renew-period`
+    ///
+    /// Source: the Java SDK (TopicInfoTest, the topic info of its fixture): expiration time Instant.ofEpochMilli(4), i.e.
+    /// 1970-01-01T00:00:00.004Z, and auto-renew period Duration.ofDays(5), i.e. 432000 seconds. Millisecond precision.
+    @Test
+    @DisplayName("a topic info keeps its expiration time and auto-renew period")
+    void aTopicInfoKeepsItsExpirationTimeAndAutoRenewPeriod() {
+        // given
+        final ZonedDateTime expirationTime = toZonedDateTime("1970-01-01T00:00:00.004Z");
+        final byte[] runningHash = repeat(hex("00"), 48L);
+
+        // when
+        final TopicInfo info = new TopicInfo(defaultAddress(), null, runningHash, 0L, expirationTime, null, null, toSeconds(432000L), null);
+
+        // then
+        assertEquals(expirationTime, info.expirationTime());
+        assertEquals(toSeconds(432000L), info.autoRenewPeriod());
+    }
+
     private static Address defaultAddress() {
         return new Address(0L, 0L, "", 1001L);
     }

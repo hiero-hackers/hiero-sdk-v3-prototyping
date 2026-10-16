@@ -164,17 +164,22 @@ test "token parameters with only name and symbol have the defaults of the spec" 
 // Source: the TokenCreateTransaction unit tests of the Java (TokenCreateTransactionTest), Go
 // (token_create_transaction_unit_test.go), C++ (TokenCreateTransactionUnitTests), Swift
 // (TokenCreateTransactionUnitTests) and Python (token_create_transaction_test.py) SDKs: every value that is set is
-// read back unchanged.
+// read back unchanged. The expiration time and the auto-renew period are those of the Java test (spawnTestTransactionFungible:
+// Instant.ofEpochSecond(1554158542) and Duration.ofHours(10), converted exactly to 2019-04-01T22:42:22Z and 36000
+// seconds).
 test "token parameters keep the values they are created with" {
     // given
     let authority = DEFAULT(Authority)
     let treasury = DEFAULT(AccountId)
     let metadata = utf8(text: "ipfs://bafkreigh2akiscaildc")
+    let expirationTime = toZonedDateTime(text: "2019-04-01T22:42:22Z")
+    let autoRenewPeriod = toSeconds(value: 36000)
 
     // when
     let params = TokenCreateParams{name: "USD Coin", symbol: "USDC", treasuryAccountId: treasury, decimals: 6,
             initialSupply: 1_000_000, supplyType: TokenSupplyType.FINITE, maxSupply: 10_000_000, freezeDefault: true,
-            tokenMemo: "memo", metadata: metadata, autoRenewAccount: treasury, adminAuthority: authority,
+            tokenMemo: "memo", metadata: metadata, expirationTime: expirationTime,
+            autoRenewPeriod: autoRenewPeriod, autoRenewAccount: treasury, adminAuthority: authority,
             supplyAuthority: authority, kycAuthority: authority, freezeAuthority: authority,
             wipeAuthority: authority, pauseAuthority: authority, feeScheduleAuthority: authority,
             metadataAuthority: authority}
@@ -190,6 +195,8 @@ test "token parameters keep the values they are created with" {
     assertTrue(condition: params.freezeDefault)
     assertEquals(expected: "memo", actual: params.tokenMemo)
     assertEquals(expected: metadata, actual: params.metadata)
+    assertEquals(expected: expirationTime, actual: params.expirationTime)
+    assertEquals(expected: autoRenewPeriod, actual: params.autoRenewPeriod)
     assertEquals(expected: treasury, actual: params.autoRenewAccount)
     assertEquals(expected: authority, actual: params.adminAuthority)
     assertEquals(expected: authority, actual: params.supplyAuthority)

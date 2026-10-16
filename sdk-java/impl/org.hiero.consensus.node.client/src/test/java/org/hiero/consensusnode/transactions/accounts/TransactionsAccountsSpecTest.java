@@ -2,6 +2,7 @@ package org.hiero.consensusnode.transactions.accounts;
 
 import static org.hiero.sdk.testing.Testing.*;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import org.hiero.authority.Authority;
 import org.hiero.authority.PublicKeyAuthority;
@@ -23,6 +24,13 @@ import org.junit.jupiter.api.Test;
 /// Tests of the spec `transactions-accounts`, generated from the `tests` blocks of its `## Testing` section.
 @DisplayName("transactions-accounts")
 class TransactionsAccountsSpecTest {
+
+    /// The expiration time of the account update tests of the Java SDK (AccountUpdateTransactionTest:
+    /// Instant.ofEpochSecond(1554158543)) and the Swift SDK (AccountUpdateTransactionUnitTests:
+    /// Timestamp(seconds: 1_554_158_543, subSecondNanos: 0)), whole seconds.
+    private static ZonedDateTime SDK_TEST_EXPIRATION_TIME() {
+        return toZonedDateTime("2019-04-01T22:42:23Z");
+    }
 
     /// `consensusnode.transactions.accounts/an-account-create-transaction-leaves-out-what-is-not-given`
     ///
@@ -51,8 +59,9 @@ class TransactionsAccountsSpecTest {
     /// `consensusnode.transactions.accounts/an-account-create-transaction-keeps-its-attributes`
     ///
     /// Source: the Java SDK (AccountCreateTransactionTest.propertiesTest: 450 tinybars, "some dumb memo", 100 automatic
-    /// associations, staked to 0.0.3, the EVM address alias 0x5c562e90feaf0eebd33ea75d21024f249d451417) and the Swift SDK
-    /// (AccountCreateTransactionUnitTests.test_Properties).
+    /// associations, an auto renew period of Duration.ofHours(10) = 36000 seconds, staked to 0.0.3, the EVM address alias
+    /// 0x5c562e90feaf0eebd33ea75d21024f249d451417) and the Swift SDK (AccountCreateTransactionUnitTests.test_Properties,
+    /// testAutoRenewPeriod = .hours(10)).
     @Test
     @DisplayName("an account create transaction keeps its attributes")
     void anAccountCreateTransactionKeepsItsAttributes() {
@@ -61,13 +70,14 @@ class TransactionsAccountsSpecTest {
         final byte[] alias = hex("5c562e90feaf0eebd33ea75d21024f249d451417");
 
         // when
-        final AccountCreateTransaction transaction = new AccountCreateTransaction(defaultAuthority(), initialBalance, "some dumb memo", true, 100, null, AccountId.fromString("0.0.3"), null, true, alias);
+        final AccountCreateTransaction transaction = new AccountCreateTransaction(defaultAuthority(), initialBalance, "some dumb memo", true, 100, toSeconds(36000L), AccountId.fromString("0.0.3"), null, true, alias);
 
         // then
         assertEquals(initialBalance, transaction.initialBalance());
         assertEquals("some dumb memo", transaction.accountMemo());
         assertTrue(transaction.receiverSignatureRequired());
         assertEquals(100, transaction.maxAutomaticTokenAssociations());
+        assertEquals(toSeconds(36000L), transaction.autoRenewPeriod());
         assertEquals(AccountId.fromString("0.0.3"), transaction.stakedAccountId());
         assertNull(transaction.stakedNodeId());
         assertTrue(transaction.declineStakingReward());
@@ -77,16 +87,16 @@ class TransactionsAccountsSpecTest {
     /// `consensusnode.transactions.accounts/an-account-create-transaction-survives-tobytes-and-frombytes-staked-to-an-account-or-to-a-node`
     ///
     /// Source: the Java SDK (AccountCreateTransactionTest.shouldBytes and shouldBytes2: staked to an account, staked to node
-    /// 4), the Swift SDK (test_ToFromBytes and test_ToFromBytes2) and the Python SDK
-    /// (test_serialization_round_trip_staked_node_id and ..._staked_account_id).
+    /// 4, both with an auto renew period of Duration.ofHours(10) = 36000 seconds), the Swift SDK (test_ToFromBytes and
+    /// test_ToFromBytes2) and the Python SDK (test_serialization_round_trip_staked_node_id and ..._staked_account_id).
     @Test
     @DisplayName("an account create transaction survives toBytes and fromBytes, staked to an account or to a node")
     void anAccountCreateTransactionSurvivesToBytesAndFromBytesStakedToAnAccountOrToANode() {
         // given
         final Account payer = defaultAccount();
         final List<AccountId> nodes = List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"));
-        final AccountCreateTransaction toAccount = new AccountCreateTransaction(defaultAuthority(), null, "Test Account", false, null, null, AccountId.fromString("0.0.8"), null, false, null);
-        final AccountCreateTransaction toNode = new AccountCreateTransaction(defaultAuthority(), null, "Test Account", false, null, null, null, 1L, false, null);
+        final AccountCreateTransaction toAccount = new AccountCreateTransaction(defaultAuthority(), null, "Test Account", false, null, toSeconds(36000L), AccountId.fromString("0.0.8"), null, false, null);
+        final AccountCreateTransaction toNode = new AccountCreateTransaction(defaultAuthority(), null, "Test Account", false, null, toSeconds(36000L), null, 1L, false, null);
         for (final AccountCreateTransaction transaction : List.of(toAccount, toNode)) {
             // given
             final PackedTransaction<AccountCreateReceipt, AccountCreateTransaction> packed = transaction.pack(payer, nodes);
@@ -123,15 +133,33 @@ class TransactionsAccountsSpecTest {
         assertNull(transaction.declineStakingReward());
     }
 
+    /// `consensusnode.transactions.accounts/an-account-update-transaction-keeps-its-auto-renew-period-and-expiration-time`
+    ///
+    /// Source: the Swift SDK (AccountUpdateTransactionUnitTests.test_GetSetAutoRenewPeriod and test_GetSetExpirationTime:
+    /// autoRenewPeriod = .hours(10) = 36000 seconds, expirationTime = Timestamp(seconds: 1_554_158_543) =
+    /// 2019-04-01T22:42:23Z) and the Java SDK (AccountUpdateTransactionTest: Duration.ofHours(10),
+    /// Instant.ofEpochSecond(1554158543)).
+    @Test
+    @DisplayName("an account update transaction keeps its auto renew period and expiration time")
+    void anAccountUpdateTransactionKeepsItsAutoRenewPeriodAndExpirationTime() {
+        // when
+        final AccountUpdateTransaction transaction = new AccountUpdateTransaction(defaultAccountId(), null, null, null, null, toSeconds(36000L), SDK_TEST_EXPIRATION_TIME(), null, null, null);
+
+        // then
+        assertEquals(toSeconds(36000L), transaction.autoRenewPeriod());
+        assertEquals(SDK_TEST_EXPIRATION_TIME(), transaction.expirationTime());
+    }
+
     /// `consensusnode.transactions.accounts/an-account-update-transaction-survives-tobytes-and-frombytes`
     ///
-    /// Source: the Java SDK (AccountUpdateTransactionTest.shouldBytes) and the Swift SDK
+    /// Source: the Java SDK (AccountUpdateTransactionTest.shouldBytes: Duration.ofHours(10) = 36000 seconds,
+    /// Instant.ofEpochSecond(1554158543) = 2019-04-01T22:42:23Z) and the Swift SDK
     /// (AccountUpdateTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("an account update transaction survives toBytes and fromBytes")
     void anAccountUpdateTransactionSurvivesToBytesAndFromBytes() {
         // given
-        final PackedTransaction<AccountUpdateReceipt, AccountUpdateTransaction> packed = new AccountUpdateTransaction(defaultAccountId(), defaultAuthority(), "Some memo", true, 100, null, null, null, 4L, true).pack(defaultAccount(), List.of(AccountId.fromString("0.0.3")));
+        final PackedTransaction<AccountUpdateReceipt, AccountUpdateTransaction> packed = new AccountUpdateTransaction(defaultAccountId(), defaultAuthority(), "Some memo", true, 100, toSeconds(36000L), SDK_TEST_EXPIRATION_TIME(), null, 4L, true).pack(defaultAccount(), List.of(AccountId.fromString("0.0.3")));
 
         // when
         final PackedTransaction<?, ?> restored = PackedTransaction.fromBytes(packed.toBytes());

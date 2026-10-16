@@ -1,6 +1,7 @@
 package org.hiero.http;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import java.util.Map;
@@ -10,6 +11,11 @@ import org.junit.jupiter.api.Test;
 /// Tests of the spec `http`, generated from the `tests` blocks of its `## Testing` section.
 @DisplayName("http")
 class HttpSpecTest {
+
+    /// The configuration of the first example of this spec: JSON is accepted, 5 seconds to connect, 10 seconds per request.
+    private static HttpConfiguration EXAMPLE_CONFIGURATION() {
+        return new HttpConfiguration(Map.of("accept", "application/json"), toDuration("PT5S"), toDuration("PT10S"));
+    }
 
     /// `http/the-cancellation-that-never-fires-is-not-cancelled`
     ///
@@ -89,5 +95,72 @@ class HttpSpecTest {
             assertNull(request.body());
             assertNull(request.timeout());
         }
+    }
+
+    /// `http/an-http-configuration-keeps-its-timeouts-and-default-headers`
+    ///
+    /// Source: this spec (the configuration of the first example: connectTimeout 5s, defaultRequestTimeout 10s and an
+    /// "accept" default header).
+    @Test
+    @DisplayName("an HTTP configuration keeps its timeouts and default headers")
+    void anHTTPConfigurationKeepsItsTimeoutsAndDefaultHeaders() {
+        // when
+        final HttpConfiguration configuration = new HttpConfiguration(Map.of("accept", "application/json"), toDuration("PT5S"), toDuration("PT10S"));
+
+        // then
+        assertEquals(toDuration("PT5S"), configuration.connectTimeout());
+        assertEquals(toDuration("PT10S"), configuration.defaultRequestTimeout());
+        assertEquals(Map.of("accept", "application/json"), configuration.defaultHeaders());
+    }
+
+    /// `http/a-request-keeps-its-own-timeout-and-headers`
+    ///
+    /// Source: this spec (the second example: a POST request with its own timeout of 30s and its own headers). The body is
+    /// a stand-in for the JSON payload of the example.
+    @Test
+    @DisplayName("a request keeps its own timeout and headers")
+    void aRequestKeepsItsOwnTimeoutAndHeaders() {
+        // given
+        final byte[] body = utf8("{}");
+
+        // when
+        final HttpRequest request = new HttpRequest(HttpMethod.POST, "https://example.org/api/v1/submit", body, toDuration("PT30S"), Map.of("content-type", "application/json"));
+
+        // then
+        assertEquals(toDuration("PT30S"), request.timeout());
+        assertEquals(Map.of("content-type", "application/json"), request.headers());
+        assertEquals(body, request.body());
+    }
+
+    /// `http/the-default-client-applies-the-configuration-it-was-created-with`
+    ///
+    /// Source: this spec (an HttpClient carries the configuration it applies to every exchange; createHttpClient creates
+    /// the default client for a configuration).
+    @Test
+    @DisplayName("the default client applies the configuration it was created with")
+    void theDefaultClientAppliesTheConfigurationItWasCreatedWith() {
+        // when
+        final HttpClient client = HttpFactory.createHttpClient(EXAMPLE_CONFIGURATION());
+
+        // then
+        assertEquals(EXAMPLE_CONFIGURATION(), client.configuration());
+        client.close().toCompletableFuture().join();
+    }
+
+    /// `http/a-client-closed-with-a-timeout-rejects-a-request`
+    ///
+    /// Source: this spec (client-closed-error: the client was closed before the request was submitted; close(closeTimeout)
+    /// completes normally and is idempotent like close(); the request and the 5s close timeout of the first example).
+    @Test
+    @DisplayName("a client closed with a timeout rejects a request")
+    void aClientClosedWithATimeoutRejectsARequest() throws Exception {
+        // given
+        final HttpClient client = HttpFactory.createHttpClient(EXAMPLE_CONFIGURATION());
+        final HttpRequest request = new HttpRequest(HttpMethod.GET, "https://mainnet.mirrornode.hedera.com/api/v1/accounts/0.0.1234", null, null, Map.of());
+        client.close(toDuration("PT5S")).toCompletableFuture().join();
+        client.close(toDuration("PT5S")).toCompletableFuture().join();
+
+        // when / then
+        assertThrows(ClientClosedException.class, () -> client.execute(request, Cancellation.none()).toCompletableFuture().join());
     }
 }

@@ -189,6 +189,28 @@ namespace testing
 
 // The exact value.
 @@static decimal toDecimal(value: double)
+
+// --- date, time and durations ----------------------------------------------------------------
+
+// The instant with its zone or offset, from ISO 8601 text (e.g. "2022-01-02T02:00:01.000000002Z"); text that is no
+// such instant fails the test.
+@@static zonedDateTime toZonedDateTime(text: string)
+
+// The local date and time, from ISO 8601 text (e.g. "2022-01-02T02:00:01"); text that is no such value fails the
+// test.
+@@static dateTime toDateTime(text: string)
+
+// The date, from ISO 8601 text (e.g. "2022-01-02"); text that is no date fails the test.
+@@static date toDate(text: string)
+
+// The time of day, from ISO 8601 text (e.g. "02:00:01.5"); text that is no time fails the test.
+@@static time toTime(text: string)
+
+// The duration, from ISO 8601 text (e.g. "PT1.5S", "P1DT2H"); text that is no duration fails the test.
+@@static duration toDuration(text: string)
+
+// The duration of the number of seconds.
+@@static seconds toSeconds(value: int64)
 ```
 
 ## Testing

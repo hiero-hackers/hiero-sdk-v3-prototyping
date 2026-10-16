@@ -2,6 +2,7 @@ package org.hiero.consensusnode.transactions.schedule;
 
 import static org.hiero.sdk.testing.Testing.*;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import org.hiero.authority.Authority;
 import org.hiero.authority.PublicKeyAuthority;
@@ -29,6 +30,14 @@ import org.junit.jupiter.api.Test;
 @DisplayName("transactions-schedule")
 class TransactionsScheduleSpecTest {
 
+    /// The expiration time of the schedule create tests of the Java SDK (ScheduleCreateTransactionTest: validStart =
+    /// Instant.ofEpochSecond(1554158542)), the Swift SDK (ScheduleCreateTransactionUnitTests: TestConstants.validStart =
+    /// Timestamp(seconds: 1_554_158_542, subSecondNanos: 0)) and the Rust SDK (schedule_create_transaction.rs:
+    /// EXPIRATION_TIME = VALID_START), whole seconds.
+    private static ZonedDateTime SDK_TEST_EXPIRATION_TIME() {
+        return toZonedDateTime("2019-04-01T22:42:22Z");
+    }
+
     /// `consensusnode.transactions.schedule/a-schedule-create-transaction-leaves-out-what-is-not-given`
     ///
     /// Source: this spec (@@nullable, @@default(false) of waitForExpiry); the Python SDK (test_constructor_default_values
@@ -54,7 +63,8 @@ class TransactionsScheduleSpecTest {
     ///
     /// Source: the Python SDK (test_constructor_with_parameters of ScheduleCreateTransaction: payer 0.0.123, "test memo",
     /// waitForExpiry true, a transfer as inner transaction) and the Swift SDK (ScheduleCreateTransactionUnitTests
-    /// .test_GetSetPayerAccountId and test_GetSetAdminKey).
+    /// .test_GetSetPayerAccountId, test_GetSetAdminKey and test_GetSetExpirationTime: TestConstants.validStart =
+    /// 2019-04-01T22:42:22Z).
     @Test
     @DisplayName("a schedule create transaction keeps its inner transaction and attributes")
     void aScheduleCreateTransactionKeepsItsInnerTransactionAndAttributes() {
@@ -62,26 +72,28 @@ class TransactionsScheduleSpecTest {
         final Transaction<?, ?> inner = new TransferTransaction(List.of(new HbarTransfer(AccountId.fromString("0.0.1001"), new Hbar(-1L, HbarUnit.HBAR), false), new HbarTransfer(AccountId.fromString("0.0.1002"), new Hbar(1L, HbarUnit.HBAR), false)), List.of(), List.of());
 
         // when
-        final ScheduleCreateTransaction transaction = new ScheduleCreateTransaction(inner, defaultAuthority(), AccountId.fromString("0.0.123"), "test memo", null, true);
+        final ScheduleCreateTransaction transaction = new ScheduleCreateTransaction(inner, defaultAuthority(), AccountId.fromString("0.0.123"), "test memo", SDK_TEST_EXPIRATION_TIME(), true);
 
         // then
         assertEquals(inner, transaction.scheduledTransaction());
         assertEquals(defaultAuthority(), transaction.adminKey());
         assertEquals(AccountId.fromString("0.0.123"), transaction.payerAccountId());
         assertEquals("test memo", transaction.scheduleMemo());
+        assertEquals(SDK_TEST_EXPIRATION_TIME(), transaction.expirationTime());
         assertTrue(transaction.waitForExpiry());
     }
 
     /// `consensusnode.transactions.schedule/a-schedule-create-transaction-survives-tobytes-and-frombytes`
     ///
-    /// Source: the Java SDK (ScheduleCreateTransactionTest.shouldBytes and shouldBytesNoSetters) and the Swift SDK
+    /// Source: the Java SDK (ScheduleCreateTransactionTest.shouldBytes and shouldBytesNoSetters; expiration time validStart
+    /// = Instant.ofEpochSecond(1554158542) = 2019-04-01T22:42:22Z) and the Swift SDK
     /// (ScheduleCreateTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("a schedule create transaction survives toBytes and fromBytes")
     void aScheduleCreateTransactionSurvivesToBytesAndFromBytes() {
         // given
         final Transaction<?, ?> inner = new TransferTransaction(List.of(new HbarTransfer(AccountId.fromString("0.0.1001"), new Hbar(-1L, HbarUnit.HBAR), false), new HbarTransfer(AccountId.fromString("0.0.1002"), new Hbar(1L, HbarUnit.HBAR), false)), List.of(), List.of());
-        final PackedTransaction<ScheduleCreateReceipt, ScheduleCreateTransaction> packed = new ScheduleCreateTransaction(inner, defaultAuthority(), AccountId.fromString("0.0.123"), "test memo", null, true).pack(defaultAccount(), List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4")));
+        final PackedTransaction<ScheduleCreateReceipt, ScheduleCreateTransaction> packed = new ScheduleCreateTransaction(inner, defaultAuthority(), AccountId.fromString("0.0.123"), "test memo", SDK_TEST_EXPIRATION_TIME(), true).pack(defaultAccount(), List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4")));
 
         // when
         final PackedTransaction<?, ?> restored = PackedTransaction.fromBytes(packed.toBytes());

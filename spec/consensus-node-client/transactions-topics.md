@@ -121,6 +121,15 @@ TopicDeleteReceipt extends Receipt {
 }
 ```
 
+## Default Instances for Testing
+
+```
+// The expiration time of the topic update tests of the Swift SDK (TopicUpdateTransactionUnitTests:
+// TestConstants.validStart = Timestamp(seconds: 1_554_158_542, subSecondNanos: 0)) and the Rust SDK
+// (topic_update_transaction.rs: TEST_EXPIRATION_TIME = VALID_START, 1554158542 seconds), whole seconds.
+values SDK_TEST_EXPIRATION_TIME: zonedDateTime = toZonedDateTime(text: "2019-04-01T22:42:22Z")
+```
+
 ## Examples
 
 ### Create a public, immutable topic
@@ -193,9 +202,9 @@ test "a topic create transaction without attributes creates a public, immutable 
 }
 
 // Source: the Python SDK (test_constructor of TopicCreateTransaction: "Test Topic", an admin and a submit key) and the
-// Swift SDK (TopicCreateTransactionUnitTests.test_GetSetSubmitKey, test_GetSetAdminKey and
-// test_GetSetAutoRenewAccountId).
-test "a topic create transaction keeps its authorities, memo and auto-renew account" {
+// Swift SDK (TopicCreateTransactionUnitTests.test_GetSetSubmitKey, test_GetSetAdminKey, test_GetSetAutoRenewAccountId
+// and test_GetSetAutoRenewPeriod: testAutoRenewPeriod = .days(1) = 86400 seconds).
+test "a topic create transaction keeps its authorities, memo, auto-renew period and auto-renew account" {
     // given
     let submitAuthority: Authority = authority.PublicKeyAuthority{publicKey: keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA,
             encoding: keys.ByteImportEncoding.HEX,
@@ -203,23 +212,26 @@ test "a topic create transaction keeps its authorities, memo and auto-renew acco
 
     // when
     let transaction = TopicCreateTransaction{adminAuthority: DEFAULT(Authority), submitAuthority: submitAuthority,
-            topicMemo: "Test Topic", autoRenewAccount: AccountId.fromString(value: "0.0.5678")}
+            topicMemo: "Test Topic", autoRenewPeriod: toSeconds(value: 86400),
+            autoRenewAccount: AccountId.fromString(value: "0.0.5678")}
 
     // then
     assertEquals(expected: DEFAULT(Authority), actual: transaction.adminAuthority)
     assertEquals(expected: submitAuthority, actual: transaction.submitAuthority)
     assertEquals(expected: "Test Topic", actual: transaction.topicMemo)
+    assertEquals(expected: toSeconds(value: 86400), actual: transaction.autoRenewPeriod)
     assertEquals(expected: AccountId.fromString(value: "0.0.5678"), actual: transaction.autoRenewAccount)
 }
 
-// Source: the Java SDK (TopicCreateTransactionTest.shouldBytes and shouldBytesNoSetters) and the Swift SDK
-// (TopicCreateTransactionUnitTests.test_ToFromBytes).
+// Source: the Java SDK (TopicCreateTransactionTest.shouldBytes and shouldBytesNoSetters; auto-renew period
+// Duration.ofHours(24) = 86400 seconds) and the Swift SDK (TopicCreateTransactionUnitTests.test_ToFromBytes).
 test "a topic create transaction survives toBytes and fromBytes" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
     let nodes = [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")]
     let withAttributes = TopicCreateTransaction{adminAuthority: DEFAULT(Authority), submitAuthority: DEFAULT(Authority),
-            topicMemo: "Test Topic", autoRenewAccount: AccountId.fromString(value: "0.0.5678")}
+            topicMemo: "Test Topic", autoRenewPeriod: toSeconds(value: 86400),
+            autoRenewAccount: AccountId.fromString(value: "0.0.5678")}
 
     for transaction in [withAttributes, TopicCreateTransaction{}] {
         // given
@@ -250,13 +262,28 @@ test "a topic update transaction changes nothing but what it names" {
     assertNull(actual: transaction.autoRenewAccount)
 }
 
+// Source: the Rust SDK (topic_update_transaction.rs get_set_expiration_time and get_set_auto_renew_period:
+// TEST_EXPIRATION_TIME = VALID_START = 2019-04-01T22:42:22Z, TEST_AUTO_RENEW_PERIOD = Duration::days(1) = 86400
+// seconds) and the Swift SDK (TopicUpdateTransactionUnitTests: the same values in makeTransaction2).
+test "a topic update transaction keeps its expiration time and auto-renew period" {
+    // when
+    let transaction = TopicUpdateTransaction{topicId: DEFAULT(Address), expirationTime: SDK_TEST_EXPIRATION_TIME,
+            autoRenewPeriod: toSeconds(value: 86400)}
+
+    // then
+    assertEquals(expected: SDK_TEST_EXPIRATION_TIME, actual: transaction.expirationTime)
+    assertEquals(expected: toSeconds(value: 86400), actual: transaction.autoRenewPeriod)
+}
+
 // Source: the Python SDK (test_topic_update_transaction_with_all_fields: "Comprehensive update", auto-renew account
 // 0.0.5678), the Java SDK (TopicUpdateTransactionTest.shouldBytes) and the Swift SDK
-// (TopicUpdateTransactionUnitTests.test_ToFromBytes).
+// (TopicUpdateTransactionUnitTests.test_ToFromBytes2: expiration time TestConstants.validStart = 2019-04-01T22:42:22Z,
+// auto-renew period .days(1) = 86400 seconds).
 test "a topic update transaction survives toBytes and fromBytes" {
     // given
     let packed = TopicUpdateTransaction{topicId: DEFAULT(Address), adminAuthority: DEFAULT(Authority),
             submitAuthority: DEFAULT(Authority), topicMemo: "Comprehensive update",
+            expirationTime: SDK_TEST_EXPIRATION_TIME, autoRenewPeriod: toSeconds(value: 86400),
             autoRenewAccount: AccountId.fromString(value: "0.0.5678")}
             .pack(payer: DEFAULT(consensusnode.client.Account), nodes: [AccountId.fromString(value: "0.0.3")])
 

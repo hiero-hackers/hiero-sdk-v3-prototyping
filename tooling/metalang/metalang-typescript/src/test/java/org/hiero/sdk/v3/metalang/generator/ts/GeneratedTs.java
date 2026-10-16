@@ -88,8 +88,10 @@ final class GeneratedTs {
         Files.createSymbolicLink(modules.resolve(scope).resolve("support"), support);
         Files.createSymbolicLink(modules.resolve(scope).resolve("test-support"), testSupport);
         // the test support package (beside the workspace) finds the Node.js type definitions in sdk-ts/node_modules
-        Files.createDirectories(directory.resolve("sdk-ts/node_modules"));
+        Files.createDirectories(directory.resolve("sdk-ts/node_modules/" + scope));
         Files.createSymbolicLink(directory.resolve("sdk-ts/node_modules/@types"), MODULES.resolve("@types"));
+        // ... and the support package it uses (Duration)
+        Files.createSymbolicLink(directory.resolve("sdk-ts/node_modules/" + scope + "/support"), support);
         try (var packages = Files.list(workspace.resolve("packages"))) {
             for (final Path pkg : packages.toList()) {
                 Files.createSymbolicLink(modules.resolve(scope).resolve(pkg.getFileName()), pkg);

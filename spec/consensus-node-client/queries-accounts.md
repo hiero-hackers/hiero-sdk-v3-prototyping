@@ -246,6 +246,22 @@ test "an account info has these defaults" {
     assertNull(actual: info.stakedNodeId)
 }
 
+// Source: the Java SDK (AccountInfoTest, the account info of its fixture): expiration time Instant.ofEpochMilli(6),
+// i.e. 1970-01-01T00:00:00.006Z, and auto-renew period Duration.ofDays(7), i.e. 604800 seconds. Millisecond precision.
+test "an account info keeps its expiration time and auto-renew period" {
+    // given
+    let expirationTime = toZonedDateTime(text: "1970-01-01T00:00:00.006Z")
+    let autoRenewPeriod = toSeconds(value: 604800)
+
+    // when
+    let info = AccountInfo{accountId: DEFAULT, balance: DEFAULT(hedera.Hbar), expirationTime: expirationTime,
+            autoRenewPeriod: autoRenewPeriod}
+
+    // then
+    assertEquals(expected: expirationTime, actual: info.expirationTime)
+    assertEquals(expected: toSeconds(value: 604800), actual: info.autoRenewPeriod)
+}
+
 // Source: this spec (an account without qualifying records yields an empty list); the Python SDK
 // (account_records_query_test.py, test_account_record_query_empty_records).
 test "account records without records have an empty list" {

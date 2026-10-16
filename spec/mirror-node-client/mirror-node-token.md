@@ -101,8 +101,7 @@ abstraction TokenRepository {
 
 ## Testing
 
-The queries of `TokenRepository` need a Mirror Node, and a `TokenInfo` cannot be created in a test because the test
-language has no literal for `zonedDateTime`.
+The queries of `TokenRepository` need a Mirror Node; only the value types are tested here.
 
 ```tests
 // Source: the Java SDK (CustomFixedFeeTest, CustomFractionalFeeTest and CustomRoyaltyFeeTest: collector 1.2.3, amount
@@ -137,6 +136,54 @@ test "custom fees without fees have three empty lists" {
     assertEquals(expected: 0, actual: length(value: fees.fixedFees))
     assertEquals(expected: 0, actual: length(value: fees.fractionalFees))
     assertEquals(expected: 0, actual: length(value: fees.royaltyFees))
+}
+
+// Source: the Hiero Enterprise Java test fixture token-info.json (token 0.0.1267, fungible, infinite supply, 10
+// decimals, initial supply 1000000, treasury 0.0.1245, deleted, created "1706816186.275486248", modified
+// "1706816444.138081003", expiry 1713816185275486248 ns); millisecond precision.
+test "a token info keeps its created, modified and expiry timestamps" {
+    // given
+    let created = toZonedDateTime(text: "2024-02-01T19:36:26.275Z")
+    let modified = toZonedDateTime(text: "2024-02-01T19:40:44.138Z")
+    let expiry = toZonedDateTime(text: "2024-04-22T20:03:05.275Z")
+    let fees = CustomFee{fixedFees: [], fractionalFees: [], royaltyFees: []}
+
+    // when
+    let info = TokenInfo{tokenId: Address.fromString(address: "0.0.1267"), type: TokenType.FUNGIBLE_COMMON,
+            name: "fungible_name", symbol: "fungible", decimals: 10, metadata: [], createdTimestamp: created,
+            modifiedTimestamp: modified, expiryTimestamp: expiry, supplyType: TokenSupplyType.INFINITE,
+            initialSupply: 1000000, totalSupply: 0, maxSupply: 0,
+            treasuryAccountId: AccountId.fromString(value: "0.0.1245"), deleted: true, customFees: fees}
+
+    // then
+    assertEquals(expected: toZonedDateTime(text: "2024-02-01T19:36:26.275Z"), actual: info.createdTimestamp)
+    assertEquals(expected: toZonedDateTime(text: "2024-02-01T19:40:44.138Z"), actual: info.modifiedTimestamp)
+    assertEquals(expected: toZonedDateTime(text: "2024-04-22T20:03:05.275Z"), actual: info.expiryTimestamp)
+    assertEquals(expected: TokenType.FUNGIBLE_COMMON, actual: info.type)
+    assertEquals(expected: TokenSupplyType.INFINITE, actual: info.supplyType)
+    assertEquals(expected: 1000000, actual: info.initialSupply)
+    assertEquals(expected: AccountId.fromString(value: "0.0.1245"), actual: info.treasuryAccountId)
+    assertTrue(condition: info.deleted)
+    assertEquals(expected: fees, actual: info.customFees)
+}
+
+// Source: this spec (`expiryTimestamp` and `memo` are nullable).
+test "a token info without expiry has no expiry timestamp and no memo" {
+    // given
+    let time = DEFAULT(zonedDateTime)
+
+    // when
+    let info = TokenInfo{tokenId: Address.fromString(address: "0.0.1267"), type: TokenType.NON_FUNGIBLE_UNIQUE,
+            name: "nft_name", symbol: "nft", decimals: 0, metadata: [], createdTimestamp: time,
+            modifiedTimestamp: time, supplyType: TokenSupplyType.FINITE, initialSupply: 0, totalSupply: 0,
+            maxSupply: 100, treasuryAccountId: DEFAULT(AccountId), deleted: false,
+            customFees: CustomFee{fixedFees: [], fractionalFees: [], royaltyFees: []}}
+
+    // then
+    assertNull(actual: info.expiryTimestamp)
+    assertNull(actual: info.memo)
+    assertEquals(expected: time, actual: info.createdTimestamp)
+    assertEquals(expected: time, actual: info.modifiedTimestamp)
 }
 ```
 

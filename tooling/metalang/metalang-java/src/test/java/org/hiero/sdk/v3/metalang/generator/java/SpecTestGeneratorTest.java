@@ -377,6 +377,17 @@ class SpecTestGeneratorTest {
                 assertFalse(condition: n.shape != n.shape)
             }
 
+            test "date, time and durations are read from ISO 8601" {
+                let first = toZonedDateTime(text: "2022-01-02T02:00:01.000000002Z")
+                let second = toZonedDateTime(text: "2022-01-02T02:00:02Z")
+                assertTrue(condition: first < second)
+                assertTrue(condition: toDate(text: "2022-01-02") < toDate(text: "2022-01-03"))
+                assertTrue(condition: toTime(text: "02:00:01") < toTime(text: "02:00:01.5"))
+                assertTrue(condition: toDateTime(text: "2022-01-02T02:00:01") < toDateTime(text: "2022-01-02T02:00:02"))
+                assertEquals(expected: toDuration(text: "PT90S"), actual: toDuration(text: "PT1M30S"))
+                assertTrue(condition: toSeconds(value: 90) > toSeconds(value: 89))
+            }
+
             test "a type literal is passed as class" {
                 assertEquals(expected: 1, actual: Numbers.count(kind: Circle))
             }
@@ -414,6 +425,7 @@ class SpecTestGeneratorTest {
                 .contains("assertTrue(n.m().multiply(n.m()).compareTo(n.m().negate()) >= 0);")
                 .contains("assertInstanceOf(Circle.class, n.shape());")
                 .contains("assertEquals(1, Numbers.count(Circle.class));")
+                .contains("assertEquals(toDuration(\"PT90S\"), toDuration(\"PT1M30S\"));")
                 .contains("Map.ofEntries(Map.entry(1L, 1L)")
                 .contains("    /// Deprecated: replaced\n")
                 .contains("    void test1CallALater() {\n")

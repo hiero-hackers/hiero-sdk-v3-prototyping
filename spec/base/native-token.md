@@ -50,3 +50,10 @@ abstraction ExchangeRate {
 - [@hendrikebbers](https://github.com/hendrikebbers): Should `ExchangeRate.exchangeRateInUsdCents` really be `double`
   instead of `decimal`?
   > [@oGranny](https://github.com/oGranny): I believe, for high precision money related variables `decimal` should be used instead of `double`.
+
+- **`ExchangeRate` cannot be obtained without a network, so it has no tests.** It is an abstraction without a
+  concrete subtype, factory or default instance (the validator reports `instance.missing`), so a test cannot create
+  one; the Java SDK checks it through protobuf decoding (`ExchangeRatesTest`: expiration times 1645714800 and
+  1645718400, i.e. 2022-02-24T15:00:00Z and 16:00:00Z), which V3 does not expose. In addition, `isExpired()` compares
+  with the current time, which a deterministic test cannot fix. Should `ExchangeRate` be a concrete type (it only holds
+  data), and should `isExpired` take the point in time to compare with (`isExpiredAt(time: zonedDateTime)`)?

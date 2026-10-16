@@ -271,7 +271,8 @@ test "a batch keeps its inner transactions in their order, each with its own pay
 }
 
 // Source: the Python SDK (test_round_trip_to_bytes_and_back_preserves_inner_transactions), the Java SDK
-// (BatchTransactionTest.shouldBytes) and the Swift SDK (BatchTransactionUnitTests.test_ToFromBytes).
+// (BatchTransactionTest.shouldBytes: the same transaction id, valid start included, after the round trip) and the
+// Swift SDK (BatchTransactionUnitTests.test_ToFromBytes).
 test "a signed batch survives toBytes and fromBytes" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
@@ -286,6 +287,7 @@ test "a signed batch survives toBytes and fromBytes" {
     // then
     assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
     assertEquals(expected: packed.transactionId.accountId, actual: restored.transactionId.accountId)
+    assertEquals(expected: packed.transactionId.validStart, actual: restored.transactionId.validStart)
     assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
     assertEquals(expected: 1, actual: length(value: restored.nodeSignatures))
 }

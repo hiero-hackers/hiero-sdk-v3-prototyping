@@ -111,4 +111,19 @@ class TestingTest {
         assertEquals(new BigInteger("-12"), Testing.toInt("-12"));
         assertThrows(AssertionFailedError.class, () -> Testing.toInt("x"));
     }
+
+    @Test
+    @DisplayName("date, time and durations are read from ISO 8601")
+    void dateAndTimeShouldBeReadFromIso8601() {
+        assertEquals(java.time.ZonedDateTime.of(2022, 1, 2, 2, 0, 1, 2, java.time.ZoneOffset.UTC),
+                Testing.toZonedDateTime("2022-01-02T02:00:01.000000002Z"));
+        assertEquals(java.time.LocalDateTime.of(2022, 1, 2, 2, 0, 1), Testing.toDateTime("2022-01-02T02:00:01"));
+        assertEquals(java.time.LocalDate.of(2022, 1, 2), Testing.toDate("2022-01-02"));
+        assertEquals(java.time.LocalTime.of(2, 0, 1, 500_000_000), Testing.toTime("02:00:01.5"));
+        assertEquals(java.time.Duration.ofMillis(1500), Testing.toDuration("PT1.5S"));
+        assertEquals(java.time.Duration.ofSeconds(7_776_000), Testing.toSeconds(7_776_000));
+        assertThrows(AssertionFailedError.class, () -> Testing.toZonedDateTime("2022-01-02T02:00:01"));
+        assertThrows(AssertionFailedError.class, () -> Testing.toDate("2022-13-01"));
+        assertThrows(AssertionFailedError.class, () -> Testing.toDuration("1.5 seconds"));
+    }
 }
