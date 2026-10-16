@@ -5,7 +5,6 @@ import org.jspecify.annotations.NullMarked;
 /// Packages:
 /// - `org.hiero.enterprise.service`
 /// - `org.hiero.enterprise.service.account`
-/// - `org.hiero.enterprise.service.common`
 /// - `org.hiero.enterprise.service.contract`
 /// - `org.hiero.enterprise.service.file`
 /// - `org.hiero.enterprise.service.nft`
@@ -20,7 +19,6 @@ module org.hiero.enterprise {
 
     exports org.hiero.enterprise.service;
     exports org.hiero.enterprise.service.account;
-    exports org.hiero.enterprise.service.common;
     exports org.hiero.enterprise.service.contract;
     exports org.hiero.enterprise.service.file;
     exports org.hiero.enterprise.service.nft;
