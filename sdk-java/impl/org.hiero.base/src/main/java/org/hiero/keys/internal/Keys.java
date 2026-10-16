@@ -119,8 +119,8 @@ public final class Keys {
         };
     }
 
-    /// Signs a message: Ed25519 over the message, ECDSA over its Keccak-256 hash with a deterministic nonce, as the
-    /// 64 bytes `r || s`.
+    /// Signs a message: Ed25519 over the message (RFC 8032), ECDSA over its Keccak-256 hash with the deterministic nonce of
+    /// RFC 6979 and `s` normalised to the lower half (low-s), as the 64 bytes `r || s`.
     ///
     /// @param key     the private key
     /// @param message the message
@@ -137,15 +137,18 @@ public final class Keys {
                 final ECDSASigner signer = Secp256k1.deterministicSigner();
                 signer.init(true, new ECPrivateKeyParameters(scalar(key), Secp256k1.DOMAIN));
                 final BigInteger[] rs = signer.generateSignature(Secp256k1.keccak256(message));
+                // low-s: of the two valid values s and n - s, the one in the lower half (the canonical form)
+                final BigInteger order = Secp256k1.DOMAIN.getN();
+                final BigInteger lowS = rs[1].compareTo(order.shiftRight(1)) > 0 ? order.subtract(rs[1]) : rs[1];
                 final byte[] signature = new byte[SIGNATURE_LENGTH];
                 System.arraycopy(Secp256k1.toFixedLength(rs[0], 32), 0, signature, 0, 32);
-                System.arraycopy(Secp256k1.toFixedLength(rs[1], 32), 0, signature, 32, 32);
+                System.arraycopy(Secp256k1.toFixedLength(lowS, 32), 0, signature, 32, 32);
                 yield signature;
             }
         };
     }
 
-    /// Verifies a signature made by [#sign(PrivateKey, byte[])].
+    /// Verifies a signature made by [#sign(PrivateKey, byte[])]. An ECDSA signature with a high `s` is valid too.
     ///
     /// @param key       the public key
     /// @param message   the message

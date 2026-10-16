@@ -207,10 +207,10 @@ the specs, not from the SDKs; the generated contract tests already cover their b
 
 | Question | SDKs | Recommendation |
 |---|---|---|
-| Must Ed25519 signing be deterministic (RFC 8032)? | Swift/CryptoKit randomises; all others are deterministic | Decide. `keys.md` currently asserts determinism, so the Swift SDK would fail that test. |
-| ECDSA signature: low-s or not; which hash | Go, Rust and Swift normalise to low-s (`…086e3717…`); Java does not (`…f791c8e8…`); the hash (Keccak-256) is stated nowhere | Specify Keccak-256, 64-byte r‖s and low-s; then adopt the known-answer signature. |
-| ECDSA private key "PKCS#8" | Six SDKs use `3030020100300706052b8104000a04220420<scalar>`. This is **no valid PKCS#8**: OpenSSL rejects it; the standard form is `303e020100301006072a8648ce3d020106052b8104000a0427302502010104…` (✔). Go exports SEC1. | Decide whether `PKCS8_WITH_DER` means standard PKCS#8 (and whether the legacy form is still read). |
-| ECDSA SPKI export | Go and Python: RFC 5480 (`3036…`); Rust, Swift, JS, C++: legacy curve-OID-only `302d…` | Decide; standard RFC 5480 is the obvious choice for export. |
+| Must Ed25519 signing be deterministic (RFC 8032)? | Swift/CryptoKit randomises; all others are deterministic | **Decided:** not required; `sign` must produce a signature that verifies (RFC 8032), the test checks only that. |
+| ECDSA signature: low-s or not; which hash | Go, Rust and Swift normalise to low-s (`…086e3717…`); Java does not (`…f791c8e8…`); the hash (Keccak-256) is stated nowhere | **Decided:** Keccak-256, RFC 6979, low-s, 64-byte r‖s when signing; `verify` accepts a high s. Both known answers are tests in `keys.md`. |
+| ECDSA private key "PKCS#8" | Six SDKs use `3030020100300706052b8104000a04220420<scalar>`. This is **no valid PKCS#8**: OpenSSL rejects it; the standard form is `303e020100301006072a8648ce3d020106052b8104000a0427302502010104…` (✔). Go exports SEC1. | **Decided:** standard PKCS#8 (RFC 5958, RFC 5915) only; the legacy form is rejected (test in `keys.md`). |
+| ECDSA SPKI export | Go and Python: RFC 5480 (`3036…`); Rust, Swift, JS, C++: legacy curve-OID-only `302d…` | **Decided:** RFC 5480 with the compressed point (test in `keys.md`). |
 | ECDSA public key `bytes` | All return the 33-byte compressed point | Specify it in `keys.md`. |
 | TransactionId nanos | Java, JS, Go, Python pad to 9 digits (`.000000005`); Rust, Swift, C++ do not (`.5` means 5 ns there) | Specify 9 zero-padded digits. Then adopt `0.0.3@1614997926.5` → `0.0.3@1614997926.000000005`. |
 | Hbar `toString` | Java, JS, Rust, Swift: `tℏ` below 10,000 tinybars, else decimal ℏ (`9999 tℏ`, `0.0001 ℏ`); Python: always 8 decimals | Add `toString` with the majority format; Rust's boundary values are the tests. |
@@ -227,7 +227,7 @@ the specs, not from the SDKs; the generated contract tests already cover their b
 - **`keys.md`: the SPKI examples are truncated.** The DER hex has 29 of 32 key bytes, and the PEM decodes to
   42 bytes. They belong to no known key; the test suite must not use them. This was also noted in the Q&C of
   `guidelines/test-language.md`.
-- **`keys.md`: "Ed25519 signatures are deterministic"** is asserted by a test, but CryptoKit does not guarantee it
+- **(resolved) `keys.md`: "Ed25519 signatures are deterministic"** was asserted by a test, but CryptoKit does not guarantee it
   (decision above).
 - **`ledger.md`:** `EvmAddress.toString()` says EIP-55 and the key alias says base32, but no SDK does either.
   `toStringWithChecksum()` cannot compute a checksum, because it has no ledger.

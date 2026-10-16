@@ -12,6 +12,9 @@ public enum ByteImportEncoding {
     /// base64 string representation of the bytes
     BASE64;
 
+    /// fails for text that is not in this encoding
+    ///
+    /// @throws IllegalArgumentException if an illegal format error occurs
     public byte[] decode(final String value) {
         final String text = value.strip();
         try {

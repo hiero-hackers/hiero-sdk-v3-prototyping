@@ -642,8 +642,6 @@ test "a signature verifies with the public key and only for its message" {
 
     // then
     assertEquals(expected: 64, actual: length(value: signature))
-    assertEquals(expected: signature, actual: DEFAULT(PrivateKey).sign(message: message),
-            message: "Ed25519 signatures are deterministic")
     assertTrue(condition: DEFAULT(PublicKey).verify(message: message, signature: signature))
     assertFalse(condition: DEFAULT(PublicKey).verify(message: utf8(text: "hello!"), signature: signature))
 }

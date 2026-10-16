@@ -39,6 +39,10 @@ public class PrivateKey extends Key {
 
     /// Sign a message with this private key
     /// returns the signature for the message
+    /// Ed25519: RFC 8032, 64 bytes. Whether the nonce is deterministic is left to the implementation (a platform library
+    /// may add randomness); only that the signature verifies is required.
+    /// ECDSA: the Keccak-256 hash of the message is signed with the deterministic nonce of RFC 6979, and s is normalised
+    /// to the lower half (s <= n/2, "low-s"); the result is the 64 bytes r || s.
     public byte[] sign(final byte[] message) {
         return Keys.sign(this, message);
     }

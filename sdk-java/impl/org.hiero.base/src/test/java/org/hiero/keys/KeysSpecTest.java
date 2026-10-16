@@ -68,9 +68,8 @@ class KeysSpecTest {
         // when
         final byte[] signature = defaultPrivateKey().sign(message);
 
-        // then
+        // then: RFC 8032 signatures may be randomised by the platform (Apple CryptoKit does), so only verification is checked
         assertEquals(64L, length(signature));
-        assertEquals(signature, defaultPrivateKey().sign(message), "Ed25519 signatures are deterministic");
         assertTrue(defaultPublicKey().verify(message, signature));
         assertFalse(defaultPublicKey().verify(utf8("hello!"), signature));
     }
@@ -317,6 +316,156 @@ class KeysSpecTest {
 
         // then
         assertNotEquals(ed25519, ecdsa);
+    }
+
+    /// `keys/a-secp256k1-signature-verifies-with-the-public-key-and-only-for-its-message`
+    ///
+    /// Source: the Go, C++ and Python SDKs (sign, verify, and a signature that no longer verifies for another message).
+    @Test
+    @DisplayName("a secp256k1 signature verifies with the public key and only for its message")
+    void aSecp256k1SignatureVerifiesWithThePublicKeyAndOnlyForItsMessage() {
+        // given
+        final PrivateKey privateKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
+        final byte[] message = utf8("hello world");
+
+        // when
+        final byte[] signature = privateKey.sign(message);
+
+        // then
+        assertEquals(64L, length(signature));
+        assertTrue(privateKey.createPublicKey().verify(message, signature));
+        assertFalse(privateKey.createPublicKey().verify(utf8("hello world!"), signature));
+    }
+
+    /// `keys/a-secp256k1-signature-is-the-rfc-6979-low-s-signature-of-the-keccak-256-hash`
+    ///
+    /// Source: the known answer of the Go, Rust and Swift SDKs (Keccak-256, RFC 6979, low-s); the Java SDK computes the same r
+    /// and the s of the upper half, n - s.
+    @Test
+    @DisplayName("a secp256k1 signature is the RFC 6979 low-s signature of the Keccak-256 hash")
+    void aSecp256k1SignatureIsTheRFC6979LowSSignatureOfTheKeccak256Hash() {
+        // given
+        final PrivateKey privateKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
+
+        // when
+        final byte[] signature = privateKey.sign(utf8("hello world"));
+
+        // then
+        assertEquals(hex("f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c" + "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851"), signature);
+    }
+
+    /// `keys/a-secp256k1-signature-with-a-high-s-verifies`
+    ///
+    /// Source: the known answer of the Java SDK, which does not normalise s; the signature differs from the low-s one only
+    /// in s (n - s).
+    @Test
+    @DisplayName("a secp256k1 signature with a high s verifies")
+    void aSecp256k1SignatureWithAHighSVerifies() {
+        // given
+        final PublicKey publicKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048").createPublicKey();
+        final byte[] highS = hex("f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c" + "f791c8e859afd3c12009ecf2cb20dacf01636d80823bcdbd9ec1ce59afe008f0");
+
+        // when / then
+        assertTrue(publicKey.verify(utf8("hello world"), highS));
+    }
+
+    /// `keys/a-secp256k1-key-survives-every-format-that-supports-its-type`
+    ///
+    /// Source: the Java, Go and Python SDKs (an ECDSA key read back from its own DER and PEM encoding).
+    @Test
+    @DisplayName("a secp256k1 key survives every format that supports its type")
+    void aSecp256k1KeySurvivesEveryFormatThatSupportsItsType() {
+        // given
+        final PrivateKey privateKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
+        final PublicKey publicKey = privateKey.createPublicKey();
+
+        // when / then: PKCS#8 holds the private key, SPKI the public key, each in DER and in PEM
+        assertEquals(privateKey, KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, privateKey.toBytes(KeyFormat.PKCS8_WITH_DER)));
+        assertEquals(privateKey, KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_PEM, privateKey.toString(KeyFormat.PKCS8_WITH_PEM)));
+        assertEquals(publicKey, KeysFactory.createPublicKey(KeyFormat.SPKI_WITH_DER, publicKey.toBytes(KeyFormat.SPKI_WITH_DER)));
+        assertEquals(publicKey, KeysFactory.createPublicKey(KeyFormat.SPKI_WITH_PEM, publicKey.toString(KeyFormat.SPKI_WITH_PEM)));
+    }
+
+    /// `keys/a-private-key-imported-from-base64-is-the-key-of-the-same-bytes-in-hex`
+    ///
+    /// Source: this spec (ByteImportEncoding.BASE64, RFC 4648); no SDK imports raw key bytes from Base64. The text is the
+    /// default key in Base64.
+    @Test
+    @DisplayName("a private key imported from Base64 is the key of the same bytes in hex")
+    void aPrivateKeyImportedFromBase64IsTheKeyOfTheSameBytesInHex() {
+        // given
+        final String base64Text = "02caHpi7IvARwOS89RJVkOFdjyGnAXMJu1WIUgObx1w=";
+
+        // when
+        final PrivateKey key = KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.BASE64, base64Text);
+
+        // then
+        assertEquals(defaultPrivateKey(), key);
+    }
+
+    /// `keys/a-secp256k1-public-key-is-written-as-rfc-5480-spki-with-the-compressed-point`
+    ///
+    /// Source: RFC 5480 (an EC key in an SPKI: id-ecPublicKey, the named curve secp256k1, the compressed point); the key
+    /// of the test "a secp256k1 private key derives its compressed public key". OpenSSL writes exactly these bytes.
+    @Test
+    @DisplayName("a secp256k1 public key is written as RFC 5480 SPKI with the compressed point")
+    void aSecp256k1PublicKeyIsWrittenAsRFC5480SPKIWithTheCompressedPoint() {
+        // given
+        final PublicKey publicKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048").createPublicKey();
+
+        // when
+        final byte[] der = publicKey.toBytes(KeyFormat.SPKI_WITH_DER);
+
+        // then
+        assertEquals(hex("3036301006072a8648ce3d020106052b8104000a032200" + "02703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"), der);
+    }
+
+    /// `keys/a-secp256k1-private-key-is-read-from-a-standard-pkcs-8-structure`
+    ///
+    /// Source: RFC 5958 and RFC 5915 (the smallest PKCS#8 of an EC key: no curve and no public key inside the
+    /// ECPrivateKey); read by OpenSSL.
+    @Test
+    @DisplayName("a secp256k1 private key is read from a standard PKCS#8 structure")
+    void aSecp256k1PrivateKeyIsReadFromAStandardPKCS8Structure() {
+        // given
+        final byte[] der = hex("303e020100301006072a8648ce3d020106052b8104000a042730250201010420" + "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
+
+        // when
+        final PrivateKey key = KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, der);
+
+        // then
+        assertEquals(KeyAlgorithm.ECDSA, key.algorithm());
+        assertEquals(hex("8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"), key.bytes());
+    }
+
+    /// `keys/the-legacy-ecdsa-key-form-of-earlier-sdks-is-no-pkcs-8-and-is-rejected`
+    ///
+    /// Source: the form that most current Hiero SDKs write and read (see "The standards of the containers"); it is no PKCS#8
+    /// structure, and OpenSSL rejects it as well.
+    @Test
+    @DisplayName("the legacy ECDSA key form of earlier SDKs is no PKCS#8 and is rejected")
+    void theLegacyECDSAKeyFormOfEarlierSDKsIsNoPKCS8AndIsRejected() {
+        // given
+        final byte[] der = hex("3030020100300706052b8104000a04220420" + "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
+
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, der));
+    }
+
+    /// `keys/a-hex-key-may-have-a-0x-prefix`
+    ///
+    /// Source: the Java and Go SDKs accept hex keys with a 0x prefix.
+    @Test
+    @DisplayName("a hex key may have a 0x prefix")
+    void aHexKeyMayHaveA0xPrefix() {
+        // given
+        final String hexText = "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c";
+
+        // when
+        final PrivateKey key = KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "0x" + hexText);
+
+        // then
+        assertEquals(defaultPrivateKey(), key);
     }
 
     private static PrivateKey defaultPrivateKey() {

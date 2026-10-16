@@ -68,6 +68,9 @@ PublicKey extends Key {
     
     // Verify a signature using this public key
     // returns true if the signature is valid for the message and the public key
+    // Ed25519: verification of RFC 8032 (a signature with a random nonce verifies as well).
+    // ECDSA: the 64 bytes r || s over the Keccak-256 hash of the message; a signature with a high s (s > n/2) is valid
+    // too, so that signatures of other software that does not normalise s verify.
     bool verify(message: bytes, signature: bytes)
 }
 
@@ -76,6 +79,10 @@ PrivateKey extends Key {
     
     // Sign a message with this private key
     // returns the signature for the message
+    // Ed25519: RFC 8032, 64 bytes. Whether the nonce is deterministic is left to the implementation (a platform library
+    // may add randomness); only that the signature verifies is required.
+    // ECDSA: the Keccak-256 hash of the message is signed with the deterministic nonce of RFC 6979, and s is normalised
+    // to the lower half (s <= n/2, "low-s"); the result is the 64 bytes r || s.
     bytes sign(message: bytes) 
     
     // Derive the corresponding public key
@@ -129,15 +136,15 @@ enum KeyEncoding(rawFormat: RawFormat) {
 
 // all supported container formats
 enum KeyContainer {
-    PKCS8, // PKCS#8 Private Key Specification
-    SPKI // Subject Public Key Info
+    PKCS8, // PKCS#8 private key (RFC 5958); an ECDSA key as id-ecPublicKey with the curve secp256k1 (RFC 5480, RFC 5915)
+    SPKI // SubjectPublicKeyInfo (RFC 5280); an ECDSA key as id-ecPublicKey with the curve secp256k1 and the compressed point (RFC 5480)
     
     bool supportsType(type: KeyType) // returns true if the container format supports the given key type
 }
 
 // encoding information for import / export
 enum ByteImportEncoding {
-    HEX, // hex string representation of the bytes
+    HEX, // hex string representation of the bytes, with or without a 0x prefix
     BASE64 // base64 string representation of the bytes
     
     @@throws(illegal-format) bytes decode(value : string) // fails for text that is not in this encoding
@@ -177,6 +184,20 @@ instance PublicKey = DEFAULT(PrivateKey).createPublicKey()
 Not all combinations of container and encoding are valid.
 For example, a PKCS8 container format can only be used with DER encoding.
 Here you can find the complete list of rules as a basic implementation of the enum:
+
+### The standards of the containers
+
+The containers follow their standards, and only them:
+
+- **PKCS#8** is the `PrivateKeyInfo` of RFC 5958. An Ed25519 key has the algorithm `id-Ed25519` (RFC 8410). An ECDSA
+  key has the algorithm `id-ecPublicKey` with the named curve `secp256k1` as parameter (RFC 5480), and its private key
+  is an `ECPrivateKey` (RFC 5915).
+- **SPKI** is the `SubjectPublicKeyInfo` of RFC 5280. An Ed25519 key has the algorithm `id-Ed25519` (RFC 8410). An
+  ECDSA key has the algorithm `id-ecPublicKey` with the named curve `secp256k1` (RFC 5480); the key is written with the
+  compressed point (33 bytes) and read with the compressed or the uncompressed point.
+
+Earlier Hiero SDKs wrote an ECDSA private key as `3030020100300706052b8104000a04220420` followed by the 32-byte scalar:
+the curve as algorithm and the bare scalar as key. That is no PKCS#8 structure, and it is not read.
 
 ### Key examples
 
@@ -275,10 +296,8 @@ test "a signature verifies with the public key and only for its message" {
     // when
     let signature = DEFAULT(PrivateKey).sign(message: message)
 
-    // then
+    // then: RFC 8032 signatures may be randomised by the platform (Apple CryptoKit does), so only verification is checked
     assertEquals(expected: 64, actual: length(value: signature))
-    assertEquals(expected: signature, actual: DEFAULT(PrivateKey).sign(message: message),
-            message: "Ed25519 signatures are deterministic")
     assertTrue(condition: DEFAULT(PublicKey).verify(message: message, signature: signature))
     assertFalse(condition: DEFAULT(PublicKey).verify(message: utf8(text: "hello!"), signature: signature))
 }
@@ -488,6 +507,135 @@ test "the same bytes as Ed25519 and as secp256k1 key are different keys" {
 
     // then
     assertNotEquals(unexpected: ed25519, actual: ecdsa)
+}
+
+// Source: the Go, C++ and Python SDKs (sign, verify, and a signature that no longer verifies for another message).
+test "a secp256k1 signature verifies with the public key and only for its message" {
+    // given
+    let privateKey = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX,
+            value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
+    let message = utf8(text: "hello world")
+
+    // when
+    let signature = privateKey.sign(message: message)
+
+    // then
+    assertEquals(expected: 64, actual: length(value: signature))
+    assertTrue(condition: privateKey.createPublicKey().verify(message: message, signature: signature))
+    assertFalse(condition: privateKey.createPublicKey().verify(message: utf8(text: "hello world!"), signature: signature))
+}
+
+// Source: the known answer of the Go, Rust and Swift SDKs (Keccak-256, RFC 6979, low-s); the Java SDK computes the same r
+// and the s of the upper half, n - s.
+test "a secp256k1 signature is the RFC 6979 low-s signature of the Keccak-256 hash" {
+    // given
+    let privateKey = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX,
+            value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
+
+    // when
+    let signature = privateKey.sign(message: utf8(text: "hello world"))
+
+    // then
+    assertEquals(expected: hex(text: "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c"
+            + "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851"), actual: signature)
+}
+
+// Source: the known answer of the Java SDK, which does not normalise s; the signature differs from the low-s one only
+// in s (n - s).
+test "a secp256k1 signature with a high s verifies" {
+    // given
+    let publicKey = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX,
+            value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048").createPublicKey()
+    let highS = hex(text: "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c"
+            + "f791c8e859afd3c12009ecf2cb20dacf01636d80823bcdbd9ec1ce59afe008f0")
+
+    // when / then
+    assertTrue(condition: publicKey.verify(message: utf8(text: "hello world"), signature: highS))
+}
+
+// Source: the Java, Go and Python SDKs (an ECDSA key read back from its own DER and PEM encoding).
+test "a secp256k1 key survives every format that supports its type" {
+    // given
+    let privateKey = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX,
+            value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
+    let publicKey = privateKey.createPublicKey()
+
+    // when / then: PKCS#8 holds the private key, SPKI the public key, each in DER and in PEM
+    assertEquals(expected: privateKey,
+            actual: createPrivateKey(container: KeyFormat.PKCS8_WITH_DER, value: privateKey.toBytes(container: KeyFormat.PKCS8_WITH_DER)))
+    assertEquals(expected: privateKey,
+            actual: createPrivateKey(container: KeyFormat.PKCS8_WITH_PEM, value: privateKey.toString(container: KeyFormat.PKCS8_WITH_PEM)))
+    assertEquals(expected: publicKey,
+            actual: createPublicKey(container: KeyFormat.SPKI_WITH_DER, value: publicKey.toBytes(container: KeyFormat.SPKI_WITH_DER)))
+    assertEquals(expected: publicKey,
+            actual: createPublicKey(container: KeyFormat.SPKI_WITH_PEM, value: publicKey.toString(container: KeyFormat.SPKI_WITH_PEM)))
+}
+
+// Source: this spec (ByteImportEncoding.BASE64, RFC 4648); no SDK imports raw key bytes from Base64. The text is the
+// default key in Base64.
+test "a private key imported from Base64 is the key of the same bytes in hex" {
+    // given
+    let base64Text = "02caHpi7IvARwOS89RJVkOFdjyGnAXMJu1WIUgObx1w="
+
+    // when
+    let key = createPrivateKey(algorithm: KeyAlgorithm.ED25519, encoding: ByteImportEncoding.BASE64, value: base64Text)
+
+    // then
+    assertEquals(expected: DEFAULT(PrivateKey), actual: key)
+}
+
+// Source: RFC 5480 (an EC key in an SPKI: id-ecPublicKey, the named curve secp256k1, the compressed point); the key
+// of the test "a secp256k1 private key derives its compressed public key". OpenSSL writes exactly these bytes.
+test "a secp256k1 public key is written as RFC 5480 SPKI with the compressed point" {
+    // given
+    let publicKey = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX,
+            value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048").createPublicKey()
+
+    // when
+    let der = publicKey.toBytes(container: KeyFormat.SPKI_WITH_DER)
+
+    // then
+    assertEquals(expected: hex(text: "3036301006072a8648ce3d020106052b8104000a032200"
+            + "02703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"), actual: der)
+}
+
+// Source: RFC 5958 and RFC 5915 (the smallest PKCS#8 of an EC key: no curve and no public key inside the
+// ECPrivateKey); read by OpenSSL.
+test "a secp256k1 private key is read from a standard PKCS#8 structure" {
+    // given
+    let der = hex(text: "303e020100301006072a8648ce3d020106052b8104000a042730250201010420"
+            + "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
+
+    // when
+    let key = createPrivateKey(container: KeyFormat.PKCS8_WITH_DER, value: der)
+
+    // then
+    assertEquals(expected: KeyAlgorithm.ECDSA, actual: key.algorithm)
+    assertEquals(expected: hex(text: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"), actual: key.bytes)
+}
+
+// Source: the form that most current Hiero SDKs write and read (see "The standards of the containers"); it is no PKCS#8
+// structure, and OpenSSL rejects it as well.
+test "the legacy ECDSA key form of earlier SDKs is no PKCS#8 and is rejected" {
+    // given
+    let der = hex(text: "3030020100300706052b8104000a04220420"
+            + "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
+
+    // when / then
+    @@expectThrows(illegal-format)
+    createPrivateKey(container: KeyFormat.PKCS8_WITH_DER, value: der)
+}
+
+// Source: the Java and Go SDKs accept hex keys with a 0x prefix.
+test "a hex key may have a 0x prefix" {
+    // given
+    let hexText = "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"
+
+    // when
+    let key = createPrivateKey(algorithm: KeyAlgorithm.ED25519, encoding: ByteImportEncoding.HEX, value: "0x" + hexText)
+
+    // then
+    assertEquals(expected: DEFAULT(PrivateKey), actual: key)
 }
 ```
 

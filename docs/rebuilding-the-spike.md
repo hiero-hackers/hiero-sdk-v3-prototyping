@@ -3,8 +3,8 @@
 How the V3 API is implemented today, how to build and verify it, and what cost time on the way. Written to be
 executed by an agent.
 
-- **Java:** `sdk-java/impl` is a **copy of the generated Java project** that is maintained by hand. All 41 tests of the
-  specs pass against it (keys 18, ledger 13, transactions 10).
+- **Java:** `sdk-java/impl` is a **copy of the generated Java project** that is maintained by hand. All 50 tests of the
+  specs pass against it (keys 27, ledger 13, transactions 10).
 - **TypeScript:** only the first spike, which was written into the generated code in place and exists in git
   history only (section 6).
 
@@ -108,7 +108,7 @@ In `sdk-java` (JDK 25, `sdk env`):
 
 **Done when:**
 
-- `KeysSpecTest` 18/18 and `LedgerSpecTest` 13/13 (`org.hiero.base`) and `TransactionsSpecTest` 10/10
+- `KeysSpecTest` 27/27 and `LedgerSpecTest` 13/13 (`org.hiero.base`) and `TransactionsSpecTest` 10/10
   (`org.hiero.consensus.node.client`) pass. The contract tests of methods nobody has implemented yet fail by design,
   hence `-Dmaven.test.failure.ignore=true`;
 - the conformance check still reports *provides the API of the specs*:

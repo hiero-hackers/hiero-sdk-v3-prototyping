@@ -7,7 +7,7 @@ import java.util.HexFormat;
 /// encoding information for import / export
 public enum ByteImportEncoding {
 
-    /// hex string representation of the bytes
+    /// hex string representation of the bytes, with or without a 0x prefix
     HEX,
     /// base64 string representation of the bytes
     BASE64;

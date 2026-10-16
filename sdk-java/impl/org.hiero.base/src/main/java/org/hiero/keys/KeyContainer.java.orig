@@ -1,0 +1,19 @@
+package org.hiero.keys;
+
+
+/// all supported container formats
+public enum KeyContainer {
+
+    /// PKCS#8 Private Key Specification
+    PKCS8,
+    /// Subject Public Key Info
+    SPKI;
+
+    /// returns true if the container format supports the given key type
+    public boolean supportsType(final KeyType type) {
+        return switch (this) {
+            case PKCS8 -> type == KeyType.PRIVATE;
+            case SPKI -> type == KeyType.PUBLIC;
+        };
+    }
+}

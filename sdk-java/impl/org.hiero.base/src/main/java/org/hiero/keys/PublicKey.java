@@ -39,6 +39,9 @@ public class PublicKey extends Key {
 
     /// Verify a signature using this public key
     /// returns true if the signature is valid for the message and the public key
+    /// Ed25519: verification of RFC 8032 (a signature with a random nonce verifies as well).
+    /// ECDSA: the 64 bytes r || s over the Keccak-256 hash of the message; a signature with a high s (s > n/2) is valid
+    /// too, so that signatures of other software that does not normalise s verify.
     public boolean verify(final byte[] message, final byte[] signature) {
         return Keys.verify(this, message, signature);
     }
