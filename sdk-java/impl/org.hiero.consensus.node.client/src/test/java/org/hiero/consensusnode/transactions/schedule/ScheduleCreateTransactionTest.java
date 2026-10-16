@@ -70,6 +70,50 @@ class ScheduleCreateTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Transaction<?, ?> scheduledTransaction = scheduledTransactionValue();
+        final @Nullable Authority adminKey = adminKeyValue();
+        final @Nullable AccountId payerAccountId = payerAccountIdValue();
+        final @Nullable String scheduleMemo = scheduleMemoValue();
+        final @Nullable ZonedDateTime expirationTime = expirationTimeValue();
+        final boolean waitForExpiry = waitForExpiryValue();
+        final ScheduleCreateTransaction subject = ScheduleCreateTransaction.builder()
+                .scheduledTransaction(scheduledTransaction)
+                .adminKey(adminKey)
+                .payerAccountId(payerAccountId)
+                .scheduleMemo(scheduleMemo)
+                .expirationTime(expirationTime)
+                .waitForExpiry(waitForExpiry)
+                .build();
+        assertValue(scheduledTransaction, subject.scheduledTransaction());
+        assertValue(adminKey, subject.adminKey());
+        assertValue(payerAccountId, subject.payerAccountId());
+        assertValue(scheduleMemo, subject.scheduleMemo());
+        assertValue(expirationTime, subject.expirationTime());
+        assertValue(waitForExpiry, subject.waitForExpiry());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final ScheduleCreateTransaction subject = ScheduleCreateTransaction.builder()
+                .scheduledTransaction(scheduledTransactionValue())
+                .build();
+        assertNull(subject.adminKey());
+        assertNull(subject.payerAccountId());
+        assertNull(subject.scheduleMemo());
+        assertNull(subject.expirationTime());
+        assertValue(false, subject.waitForExpiry());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> ScheduleCreateTransaction.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for scheduledTransaction")
     void shouldRejectNullScheduledTransaction() {
         assertThrows(NullPointerException.class, () -> new ScheduleCreateTransaction((Transaction<?, ?>) null, adminKeyValue(), payerAccountIdValue(), scheduleMemoValue(), expirationTimeValue(), waitForExpiryValue()));

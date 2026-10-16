@@ -97,4 +97,123 @@ public record NodeAddress(
     public String toString() {
         return "NodeAddress[nodeId=" + nodeId + ", accountId=" + accountId + ", serviceEndpoints=" + serviceEndpoints + ", description=" + description + ", gossipCaCertificate=" + "byte[" + gossipCaCertificate.length + "]" + ", grpcCertificateHash=" + "byte[" + grpcCertificateHash.length + "]" + ", rsaPublicKey=" + "byte[" + rsaPublicKey.length + "]" + "]";
     }
+
+    /// Returns a builder for a new `NodeAddress`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `NodeAddress`.
+    ///
+    /// `build()` creates the `NodeAddress` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Long nodeId;
+        private @Nullable AccountId accountId;
+        private List<ServiceEndpoint> serviceEndpoints = List.of();
+        private @Nullable String description;
+        private byte @Nullable [] gossipCaCertificate;
+        private byte @Nullable [] grpcCertificateHash;
+        private byte @Nullable [] rsaPublicKey;
+
+        private Builder() {
+            // created by NodeAddress.builder()
+        }
+
+        /// Sets the `nodeId`.
+        ///
+        /// stable HIP-869 identifier; survives account / endpoint rotation
+        ///
+        /// @param nodeId the value
+        /// @return this builder
+        public Builder nodeId(final long nodeId) {
+            this.nodeId = nodeId;
+            return this;
+        }
+
+        /// Sets the `accountId`.
+        ///
+        /// fee account that receives this node's per-transaction share
+        ///
+        /// @param accountId the value
+        /// @return this builder
+        public Builder accountId(final AccountId accountId) {
+            this.accountId = accountId;
+            return this;
+        }
+
+        /// Sets the `serviceEndpoints`.
+        ///
+        /// public gRPC endpoints (clients submit transactions here)
+        ///
+        /// @param serviceEndpoints the value
+        /// @return this builder
+        public Builder serviceEndpoints(final List<ServiceEndpoint> serviceEndpoints) {
+            this.serviceEndpoints = serviceEndpoints;
+            return this;
+        }
+
+        /// Sets the `description`.
+        ///
+        /// free-form description of the node (at most 100 characters)
+        ///
+        /// @param description the value
+        /// @return this builder
+        public Builder description(final @Nullable String description) {
+            this.description = description;
+            return this;
+        }
+
+        /// Sets the `gossipCaCertificate`.
+        ///
+        /// X.509 DER bytes of the certificate that terminates mutual TLS for gossip
+        ///
+        /// @param gossipCaCertificate the value
+        /// @return this builder
+        public Builder gossipCaCertificate(final byte[] gossipCaCertificate) {
+            this.gossipCaCertificate = gossipCaCertificate;
+            return this;
+        }
+
+        /// Sets the `grpcCertificateHash`.
+        ///
+        /// SHA-384 of the certificate served on serviceEndpoints; clients pin against this
+        ///
+        /// @param grpcCertificateHash the value
+        /// @return this builder
+        public Builder grpcCertificateHash(final byte[] grpcCertificateHash) {
+            this.grpcCertificateHash = grpcCertificateHash;
+            return this;
+        }
+
+        /// Sets the `rsaPublicKey`.
+        ///
+        /// legacy gossip RSA public key (DER); only for tooling that still reads the legacy address-book format — prefer gossipCaCertificate and grpcCertificateHash
+        ///
+        /// @param rsaPublicKey the value
+        /// @return this builder
+        public Builder rsaPublicKey(final byte[] rsaPublicKey) {
+            this.rsaPublicKey = rsaPublicKey;
+            return this;
+        }
+
+        /// Creates the `NodeAddress` of the values set.
+        ///
+        /// @return the new `NodeAddress`
+        /// @throws NullPointerException if a required value is not set
+        public NodeAddress build() {
+            return new NodeAddress(
+                    Objects.requireNonNull(nodeId, "nodeId must not be null"),
+                    Objects.requireNonNull(accountId, "accountId must not be null"),
+                    serviceEndpoints,
+                    description,
+                    Objects.requireNonNull(gossipCaCertificate, "gossipCaCertificate must not be null"),
+                    Objects.requireNonNull(grpcCertificateHash, "grpcCertificateHash must not be null"),
+                    Objects.requireNonNull(rsaPublicKey, "rsaPublicKey must not be null"));
+        }
+    }
 }

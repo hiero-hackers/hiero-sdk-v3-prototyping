@@ -150,6 +150,117 @@ public final class TopicUpdateTransaction extends Transaction<TopicUpdateReceipt
         throw new UnsupportedOperationException("Not implemented yet: TopicUpdateTransaction.signForBatch");
     }
 
+    /// Returns a builder for a new `TopicUpdateTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `TopicUpdateTransaction`.
+    ///
+    /// `build()` creates the `TopicUpdateTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Address topicId;
+        private @Nullable Authority adminAuthority;
+        private @Nullable Authority submitAuthority;
+        private @Nullable String topicMemo;
+        private @Nullable ZonedDateTime expirationTime;
+        private @Nullable Duration autoRenewPeriod;
+        private @Nullable AccountId autoRenewAccount;
+
+        private Builder() {
+            // created by TopicUpdateTransaction.builder()
+        }
+
+        /// Sets the `topicId`.
+        ///
+        /// @param topicId the value
+        /// @return this builder
+        public Builder topicId(final Address topicId) {
+            this.topicId = topicId;
+            return this;
+        }
+
+        /// Sets the `adminAuthority`.
+        ///
+        /// when set, replaces the admin key; the new key must also sign
+        ///
+        /// @param adminAuthority the value
+        /// @return this builder
+        public Builder adminAuthority(final @Nullable Authority adminAuthority) {
+            this.adminAuthority = adminAuthority;
+            return this;
+        }
+
+        /// Sets the `submitAuthority`.
+        ///
+        /// when set, replaces the submit key
+        ///
+        /// @param submitAuthority the value
+        /// @return this builder
+        public Builder submitAuthority(final @Nullable Authority submitAuthority) {
+            this.submitAuthority = submitAuthority;
+            return this;
+        }
+
+        /// Sets the `topicMemo`.
+        ///
+        /// @param topicMemo the value
+        /// @return this builder
+        public Builder topicMemo(final @Nullable String topicMemo) {
+            this.topicMemo = topicMemo;
+            return this;
+        }
+
+        /// Sets the `expirationTime`.
+        ///
+        /// @param expirationTime the value
+        /// @return this builder
+        public Builder expirationTime(final @Nullable ZonedDateTime expirationTime) {
+            this.expirationTime = expirationTime;
+            return this;
+        }
+
+        /// Sets the `autoRenewPeriod`.
+        ///
+        /// @param autoRenewPeriod the value
+        /// @return this builder
+        public Builder autoRenewPeriod(final @Nullable Duration autoRenewPeriod) {
+            this.autoRenewPeriod = autoRenewPeriod;
+            return this;
+        }
+
+        /// Sets the `autoRenewAccount`.
+        ///
+        /// when set, the new account must also sign
+        ///
+        /// @param autoRenewAccount the value
+        /// @return this builder
+        public Builder autoRenewAccount(final @Nullable AccountId autoRenewAccount) {
+            this.autoRenewAccount = autoRenewAccount;
+            return this;
+        }
+
+        /// Creates the `TopicUpdateTransaction` of the values set.
+        ///
+        /// @return the new `TopicUpdateTransaction`
+        /// @throws NullPointerException if a required value is not set
+        public TopicUpdateTransaction build() {
+            return new TopicUpdateTransaction(
+                    Objects.requireNonNull(topicId, "topicId must not be null"),
+                    adminAuthority,
+                    submitAuthority,
+                    topicMemo,
+                    expirationTime,
+                    autoRenewPeriod,
+                    autoRenewAccount);
+        }
+    }
+
     @Override
     public String toString() {
         return "TopicUpdateTransaction[maxTransactionFee=" + maxTransactionFee()

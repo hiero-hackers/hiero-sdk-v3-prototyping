@@ -55,6 +55,46 @@ class FileUpdateTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Address fileId = fileIdValue();
+        final byte @Nullable [] contents = contentsValue();
+        final @Nullable Authority authority = authorityValue();
+        final @Nullable ZonedDateTime expirationTime = expirationTimeValue();
+        final @Nullable String fileMemo = fileMemoValue();
+        final FileUpdateTransaction subject = FileUpdateTransaction.builder()
+                .fileId(fileId)
+                .contents(contents)
+                .authority(authority)
+                .expirationTime(expirationTime)
+                .fileMemo(fileMemo)
+                .build();
+        assertValue(fileId, subject.fileId());
+        assertValue(contents, subject.contents());
+        assertValue(authority, subject.authority());
+        assertValue(expirationTime, subject.expirationTime());
+        assertValue(fileMemo, subject.fileMemo());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final FileUpdateTransaction subject = FileUpdateTransaction.builder()
+                .fileId(fileIdValue())
+                .build();
+        assertNull(subject.contents());
+        assertNull(subject.authority());
+        assertNull(subject.expirationTime());
+        assertNull(subject.fileMemo());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> FileUpdateTransaction.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for fileId")
     void shouldRejectNullFileId() {
         assertThrows(NullPointerException.class, () -> new FileUpdateTransaction((Address) null, contentsValue(), authorityValue(), expirationTimeValue(), fileMemoValue()));

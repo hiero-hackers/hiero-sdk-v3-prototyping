@@ -69,6 +69,102 @@ class TransactionInfoTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final TransactionId transactionId = transactionIdValue();
+        final byte[] transactionHash = transactionHashValue();
+        final long chargedTxFee = chargedTxFeeValue();
+        final ZonedDateTime consensusTimestamp = consensusTimestampValue();
+        final @Nullable String entityId = entityIdValue();
+        final long maxFee = maxFeeValue();
+        final byte[] memo = memoValue();
+        final TransactionType name = nameValue();
+        final int nonce = nonceValue();
+        final @Nullable String node = nodeValue();
+        final @Nullable ZonedDateTime parentConsensusTimestamp = parentConsensusTimestampValue();
+        final TransactionResult result = resultValue();
+        final boolean scheduled = scheduledValue();
+        final Duration validDuration = validDurationValue();
+        final ZonedDateTime validStartTimestamp = validStartTimestampValue();
+        final List<Transfer> transfers = transfersValue();
+        final List<TokenTransfer> tokenTransfers = tokenTransfersValue();
+        final List<NftTransfer> nftTransfers = nftTransfersValue();
+        final List<StakingRewardTransfer> stakingRewardTransfers = stakingRewardTransfersValue();
+        final TransactionInfo subject = TransactionInfo.builder()
+                .transactionId(transactionId)
+                .transactionHash(transactionHash)
+                .chargedTxFee(chargedTxFee)
+                .consensusTimestamp(consensusTimestamp)
+                .entityId(entityId)
+                .maxFee(maxFee)
+                .memo(memo)
+                .name(name)
+                .nonce(nonce)
+                .node(node)
+                .parentConsensusTimestamp(parentConsensusTimestamp)
+                .result(result)
+                .scheduled(scheduled)
+                .validDuration(validDuration)
+                .validStartTimestamp(validStartTimestamp)
+                .transfers(transfers)
+                .tokenTransfers(tokenTransfers)
+                .nftTransfers(nftTransfers)
+                .stakingRewardTransfers(stakingRewardTransfers)
+                .build();
+        assertValue(transactionId, subject.transactionId());
+        assertValue(transactionHash, subject.transactionHash());
+        assertValue(chargedTxFee, subject.chargedTxFee());
+        assertValue(consensusTimestamp, subject.consensusTimestamp());
+        assertValue(entityId, subject.entityId());
+        assertValue(maxFee, subject.maxFee());
+        assertValue(memo, subject.memo());
+        assertValue(name, subject.name());
+        assertValue(nonce, subject.nonce());
+        assertValue(node, subject.node());
+        assertValue(parentConsensusTimestamp, subject.parentConsensusTimestamp());
+        assertValue(result, subject.result());
+        assertValue(scheduled, subject.scheduled());
+        assertValue(validDuration, subject.validDuration());
+        assertValue(validStartTimestamp, subject.validStartTimestamp());
+        assertValue(transfers, subject.transfers());
+        assertValue(tokenTransfers, subject.tokenTransfers());
+        assertValue(nftTransfers, subject.nftTransfers());
+        assertValue(stakingRewardTransfers, subject.stakingRewardTransfers());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TransactionInfo subject = TransactionInfo.builder()
+                .transactionId(transactionIdValue())
+                .transactionHash(transactionHashValue())
+                .chargedTxFee(chargedTxFeeValue())
+                .consensusTimestamp(consensusTimestampValue())
+                .maxFee(maxFeeValue())
+                .memo(memoValue())
+                .name(nameValue())
+                .nonce(nonceValue())
+                .result(resultValue())
+                .scheduled(scheduledValue())
+                .validDuration(validDurationValue())
+                .validStartTimestamp(validStartTimestampValue())
+                .transfers(transfersValue())
+                .tokenTransfers(tokenTransfersValue())
+                .nftTransfers(nftTransfersValue())
+                .stakingRewardTransfers(stakingRewardTransfersValue())
+                .build();
+        assertNull(subject.entityId());
+        assertNull(subject.node());
+        assertNull(subject.parentConsensusTimestamp());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TransactionInfo.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for transactionId")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new TransactionInfo((TransactionId) null, transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue()));

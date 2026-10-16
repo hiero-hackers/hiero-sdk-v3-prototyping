@@ -51,4 +51,98 @@ public record Token(
     public String toString() {
         return "Token[tokenId=" + tokenId + ", name=" + name + ", symbol=" + symbol + ", type=" + type + ", decimals=" + decimals + ", metadata=" + "byte[" + metadata.length + "]" + "]";
     }
+
+    /// Returns a builder for a new `Token`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `Token`.
+    ///
+    /// `build()` creates the `Token` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Address tokenId;
+        private @Nullable String name;
+        private @Nullable String symbol;
+        private @Nullable TokenType type;
+        private @Nullable Long decimals;
+        private byte @Nullable [] metadata;
+
+        private Builder() {
+            // created by Token.builder()
+        }
+
+        /// Sets the `tokenId`.
+        ///
+        /// @param tokenId the value
+        /// @return this builder
+        public Builder tokenId(final @Nullable Address tokenId) {
+            this.tokenId = tokenId;
+            return this;
+        }
+
+        /// Sets the `name`.
+        ///
+        /// @param name the value
+        /// @return this builder
+        public Builder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        /// Sets the `symbol`.
+        ///
+        /// @param symbol the value
+        /// @return this builder
+        public Builder symbol(final String symbol) {
+            this.symbol = symbol;
+            return this;
+        }
+
+        /// Sets the `type`.
+        ///
+        /// @param type the value
+        /// @return this builder
+        public Builder type(final TokenType type) {
+            this.type = type;
+            return this;
+        }
+
+        /// Sets the `decimals`.
+        ///
+        /// @param decimals the value
+        /// @return this builder
+        public Builder decimals(final long decimals) {
+            this.decimals = decimals;
+            return this;
+        }
+
+        /// Sets the `metadata`.
+        ///
+        /// @param metadata the value
+        /// @return this builder
+        public Builder metadata(final byte[] metadata) {
+            this.metadata = metadata;
+            return this;
+        }
+
+        /// Creates the `Token` of the values set.
+        ///
+        /// @return the new `Token`
+        /// @throws NullPointerException if a required value is not set
+        public Token build() {
+            return new Token(
+                    tokenId,
+                    Objects.requireNonNull(name, "name must not be null"),
+                    Objects.requireNonNull(symbol, "symbol must not be null"),
+                    Objects.requireNonNull(type, "type must not be null"),
+                    Objects.requireNonNull(decimals, "decimals must not be null"),
+                    Objects.requireNonNull(metadata, "metadata must not be null"));
+        }
+    }
 }

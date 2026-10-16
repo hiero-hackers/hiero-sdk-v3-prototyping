@@ -53,6 +53,42 @@ class FreezeTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final FreezeType freezeType = freezeTypeValue();
+        final @Nullable ZonedDateTime startTime = startTimeValue();
+        final @Nullable Address updateFile = updateFileValue();
+        final byte @Nullable [] fileHash = fileHashValue();
+        final FreezeTransaction subject = FreezeTransaction.builder()
+                .freezeType(freezeType)
+                .startTime(startTime)
+                .updateFile(updateFile)
+                .fileHash(fileHash)
+                .build();
+        assertValue(freezeType, subject.freezeType());
+        assertValue(startTime, subject.startTime());
+        assertValue(updateFile, subject.updateFile());
+        assertValue(fileHash, subject.fileHash());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final FreezeTransaction subject = FreezeTransaction.builder()
+                .freezeType(freezeTypeValue())
+                .build();
+        assertNull(subject.startTime());
+        assertNull(subject.updateFile());
+        assertNull(subject.fileHash());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> FreezeTransaction.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for freezeType")
     void shouldRejectNullFreezeType() {
         assertThrows(NullPointerException.class, () -> new FreezeTransaction((FreezeType) null, startTimeValue(), updateFileValue(), fileHashValue()));

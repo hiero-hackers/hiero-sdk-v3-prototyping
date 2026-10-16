@@ -30,7 +30,7 @@ class AccountBalanceQueryTest {
     @DisplayName("creates an AccountBalanceQuery and returns the values")
     void shouldCreateAndReturnTheValues() {
         final @Nullable AccountId accountId = accountIdValue();
-        final @Nullable ContractId contractId = contractIdValue();
+        final @Nullable ContractId contractId = (ContractId) null;
         final AccountBalanceQuery subject = new AccountBalanceQuery(accountId, contractId);
         assertValue(accountId, subject.accountId());
         assertValue(contractId, subject.contractId());
@@ -38,6 +38,41 @@ class AccountBalanceQueryTest {
         assertNull(subject.maxBackoff());
         assertNull(subject.minBackoff());
         assertNull(subject.attemptTimeout());
+    }
+
+    @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final @Nullable AccountId accountId = accountIdValue();
+        final @Nullable ContractId contractId = (ContractId) null;
+        final AccountBalanceQuery subject = AccountBalanceQuery.builder()
+                .accountId(accountId)
+                .contractId(contractId)
+                .build();
+        assertValue(accountId, subject.accountId());
+        assertValue(contractId, subject.contractId());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final AccountBalanceQuery subject = AccountBalanceQuery.builder()
+                .accountId(accountIdValue())
+                .build();
+        assertValue(accountIdValue(), subject.accountId());
+        assertNull(subject.contractId());
+    }
+
+    @Test
+    @DisplayName("rejects accountId and contractId together (@@oneOf)")
+    void shouldRejectTwoOfAccountIdOrContractId() {
+        assertThrows(IllegalArgumentException.class, () -> new AccountBalanceQuery(accountIdValue(), contractIdValue()));
+    }
+
+    @Test
+    @DisplayName("rejects none of accountId, contractId (@@oneOf)")
+    void shouldRejectNoneOfAccountIdOrContractId() {
+        assertThrows(IllegalArgumentException.class, () -> new AccountBalanceQuery((AccountId) null, (ContractId) null));
     }
 
     @Test
@@ -195,7 +230,7 @@ class AccountBalanceQueryTest {
     }
 
     private static AccountBalanceQuery create() {
-        return new AccountBalanceQuery(accountIdValue(), contractIdValue());
+        return new AccountBalanceQuery(accountIdValue(), (ContractId) null);
     }
 
     private static int maxAttemptsOtherValue() {

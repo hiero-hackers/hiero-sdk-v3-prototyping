@@ -79,6 +79,94 @@ class TokenUpdateTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Address tokenId = tokenIdValue();
+        final @Nullable String name = nameValue();
+        final @Nullable String symbol = symbolValue();
+        final @Nullable AccountId treasuryAccountId = treasuryAccountIdValue();
+        final @Nullable String tokenMemo = tokenMemoValue();
+        final byte @Nullable [] metadata = metadataValue();
+        final @Nullable ZonedDateTime expirationTime = expirationTimeValue();
+        final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
+        final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
+        final @Nullable Authority adminAuthority = adminAuthorityValue();
+        final @Nullable Authority supplyAuthority = supplyAuthorityValue();
+        final @Nullable Authority kycAuthority = kycAuthorityValue();
+        final @Nullable Authority freezeAuthority = freezeAuthorityValue();
+        final @Nullable Authority wipeAuthority = wipeAuthorityValue();
+        final @Nullable Authority pauseAuthority = pauseAuthorityValue();
+        final @Nullable Authority feeScheduleAuthority = feeScheduleAuthorityValue();
+        final @Nullable Authority metadataAuthority = metadataAuthorityValue();
+        final TokenUpdateTransaction subject = TokenUpdateTransaction.builder()
+                .tokenId(tokenId)
+                .name(name)
+                .symbol(symbol)
+                .treasuryAccountId(treasuryAccountId)
+                .tokenMemo(tokenMemo)
+                .metadata(metadata)
+                .expirationTime(expirationTime)
+                .autoRenewPeriod(autoRenewPeriod)
+                .autoRenewAccount(autoRenewAccount)
+                .adminAuthority(adminAuthority)
+                .supplyAuthority(supplyAuthority)
+                .kycAuthority(kycAuthority)
+                .freezeAuthority(freezeAuthority)
+                .wipeAuthority(wipeAuthority)
+                .pauseAuthority(pauseAuthority)
+                .feeScheduleAuthority(feeScheduleAuthority)
+                .metadataAuthority(metadataAuthority)
+                .build();
+        assertValue(tokenId, subject.tokenId());
+        assertValue(name, subject.name());
+        assertValue(symbol, subject.symbol());
+        assertValue(treasuryAccountId, subject.treasuryAccountId());
+        assertValue(tokenMemo, subject.tokenMemo());
+        assertValue(metadata, subject.metadata());
+        assertValue(expirationTime, subject.expirationTime());
+        assertValue(autoRenewPeriod, subject.autoRenewPeriod());
+        assertValue(autoRenewAccount, subject.autoRenewAccount());
+        assertValue(adminAuthority, subject.adminAuthority());
+        assertValue(supplyAuthority, subject.supplyAuthority());
+        assertValue(kycAuthority, subject.kycAuthority());
+        assertValue(freezeAuthority, subject.freezeAuthority());
+        assertValue(wipeAuthority, subject.wipeAuthority());
+        assertValue(pauseAuthority, subject.pauseAuthority());
+        assertValue(feeScheduleAuthority, subject.feeScheduleAuthority());
+        assertValue(metadataAuthority, subject.metadataAuthority());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TokenUpdateTransaction subject = TokenUpdateTransaction.builder()
+                .tokenId(tokenIdValue())
+                .build();
+        assertNull(subject.name());
+        assertNull(subject.symbol());
+        assertNull(subject.treasuryAccountId());
+        assertNull(subject.tokenMemo());
+        assertNull(subject.metadata());
+        assertNull(subject.expirationTime());
+        assertNull(subject.autoRenewPeriod());
+        assertNull(subject.autoRenewAccount());
+        assertNull(subject.adminAuthority());
+        assertNull(subject.supplyAuthority());
+        assertNull(subject.kycAuthority());
+        assertNull(subject.freezeAuthority());
+        assertNull(subject.wipeAuthority());
+        assertNull(subject.pauseAuthority());
+        assertNull(subject.feeScheduleAuthority());
+        assertNull(subject.metadataAuthority());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TokenUpdateTransaction.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for tokenId")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenUpdateTransaction((Address) null, nameValue(), symbolValue(), treasuryAccountIdValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));

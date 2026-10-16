@@ -448,6 +448,15 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
     `@@maxSize`/`@@pattern` (Java regex, `find` semantics like the validator)/`@@urlPattern` (`java.net.URI`, absolute
     with host) throwing `IllegalArgumentException`;
   - a second constructor without the `@@default` attributes;
+  - the checks of `@@oneOf` (exactly one attribute is set) and `@@oneOrNoneOf` (at most one) for groups of
+    `@@immutable` attributes (`JavaOneOf`, also in classes), throwing `IllegalArgumentException`; the attributes of a
+    mutable group are `null` after construction and set one by one, so it is not checked. Generated values and tests
+    set one attribute of a group, and the tests check that two (and, for `@@oneOf`, none) are rejected;
+  - a builder (`BuilderGenerator`, also for classes) if no type extends the type and its constructor takes more than
+    four values or at least two optional ones: `builder()` and a nested `Builder` whose `build()` calls the
+    constructor (see "Generated builders" in `guidelines/api-best-practices-java.md`); the generated tests check that
+    it builds the values of the constructor, leaves unset values `null` or at their default and rejects a missing
+    required value;
   - `bytes` components: accessors return copies, `equals`/`hashCode` compare the array content (records would
     compare the references), and `toString` prints only the length (`byte[32]`), because the content may be key
     material or a large body;
@@ -953,6 +962,7 @@ checks:
 - **Rust:** a type parameter that the specs use with `ANY` is erased everywhere (`HieroClient`, `dyn NativeToken`):
   concrete types keep their exact types in their inherent methods, but code that works with trait objects gets
   erased values (`Response<Arc<dyn Receipt>>`). `type<T>` is a `TypeId`, `@@default` values are no default arguments
-  (Rust has none), and `@@oneOf` is not checked (as in Java and TypeScript).
+  (Rust has none), and `@@oneOf` is not checked (as in TypeScript; Java checks groups of immutable attributes in the
+  constructor).
 - **Lexical scope:** identifiers are ASCII; number literals support digits, `_`, sign and decimals, but no exponent
   or hex notation. `@@pattern` values are evaluated with Java regular expressions (`find` semantics).

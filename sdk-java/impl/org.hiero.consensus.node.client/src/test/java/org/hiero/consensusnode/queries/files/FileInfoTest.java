@@ -38,6 +38,50 @@ class FileInfoTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Address fileId = fileIdValue();
+        final long size = sizeValue();
+        final ZonedDateTime expirationTime = expirationTimeValue();
+        final boolean deleted = deletedValue();
+        final @Nullable Authority authority = authorityValue();
+        final @Nullable String fileMemo = fileMemoValue();
+        final FileInfo subject = FileInfo.builder()
+                .fileId(fileId)
+                .size(size)
+                .expirationTime(expirationTime)
+                .deleted(deleted)
+                .authority(authority)
+                .fileMemo(fileMemo)
+                .build();
+        assertValue(fileId, subject.fileId());
+        assertValue(size, subject.size());
+        assertValue(expirationTime, subject.expirationTime());
+        assertValue(deleted, subject.deleted());
+        assertValue(authority, subject.authority());
+        assertValue(fileMemo, subject.fileMemo());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final FileInfo subject = FileInfo.builder()
+                .fileId(fileIdValue())
+                .size(sizeValue())
+                .expirationTime(expirationTimeValue())
+                .deleted(deletedValue())
+                .build();
+        assertNull(subject.authority());
+        assertNull(subject.fileMemo());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> FileInfo.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for fileId")
     void shouldRejectNullFileId() {
         assertThrows(NullPointerException.class, () -> new FileInfo((Address) null, sizeValue(), expirationTimeValue(), deletedValue(), authorityValue(), fileMemoValue()));

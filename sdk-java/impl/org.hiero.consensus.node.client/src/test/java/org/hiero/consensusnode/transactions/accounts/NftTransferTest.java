@@ -36,6 +36,46 @@ class NftTransferTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Address tokenId = tokenIdValue();
+        final long serial = serialValue();
+        final AccountId sender = senderValue();
+        final AccountId receiver = receiverValue();
+        final boolean approved = approvedValue();
+        final NftTransfer subject = NftTransfer.builder()
+                .tokenId(tokenId)
+                .serial(serial)
+                .sender(sender)
+                .receiver(receiver)
+                .approved(approved)
+                .build();
+        assertValue(tokenId, subject.tokenId());
+        assertValue(serial, subject.serial());
+        assertValue(sender, subject.sender());
+        assertValue(receiver, subject.receiver());
+        assertValue(approved, subject.approved());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final NftTransfer subject = NftTransfer.builder()
+                .tokenId(tokenIdValue())
+                .serial(serialValue())
+                .sender(senderValue())
+                .receiver(receiverValue())
+                .build();
+        assertValue(false, subject.approved());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> NftTransfer.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for tokenId")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new NftTransfer((Address) null, serialValue(), senderValue(), receiverValue(), approvedValue()));

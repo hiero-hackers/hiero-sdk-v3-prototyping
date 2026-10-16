@@ -46,6 +46,62 @@ class TopicInfoTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Address topicId = topicIdValue();
+        final @Nullable String topicMemo = topicMemoValue();
+        final byte[] runningHash = runningHashValue();
+        final long sequenceNumber = sequenceNumberValue();
+        final ZonedDateTime expirationTime = expirationTimeValue();
+        final @Nullable Authority adminAuthority = adminAuthorityValue();
+        final @Nullable Authority submitAuthority = submitAuthorityValue();
+        final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
+        final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
+        final TopicInfo subject = TopicInfo.builder()
+                .topicId(topicId)
+                .topicMemo(topicMemo)
+                .runningHash(runningHash)
+                .sequenceNumber(sequenceNumber)
+                .expirationTime(expirationTime)
+                .adminAuthority(adminAuthority)
+                .submitAuthority(submitAuthority)
+                .autoRenewPeriod(autoRenewPeriod)
+                .autoRenewAccount(autoRenewAccount)
+                .build();
+        assertValue(topicId, subject.topicId());
+        assertValue(topicMemo, subject.topicMemo());
+        assertValue(runningHash, subject.runningHash());
+        assertValue(sequenceNumber, subject.sequenceNumber());
+        assertValue(expirationTime, subject.expirationTime());
+        assertValue(adminAuthority, subject.adminAuthority());
+        assertValue(submitAuthority, subject.submitAuthority());
+        assertValue(autoRenewPeriod, subject.autoRenewPeriod());
+        assertValue(autoRenewAccount, subject.autoRenewAccount());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TopicInfo subject = TopicInfo.builder()
+                .topicId(topicIdValue())
+                .runningHash(runningHashValue())
+                .sequenceNumber(sequenceNumberValue())
+                .expirationTime(expirationTimeValue())
+                .build();
+        assertNull(subject.topicMemo());
+        assertNull(subject.adminAuthority());
+        assertNull(subject.submitAuthority());
+        assertNull(subject.autoRenewPeriod());
+        assertNull(subject.autoRenewAccount());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TopicInfo.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for topicId")
     void shouldRejectNullTopicId() {
         assertThrows(NullPointerException.class, () -> new TopicInfo((Address) null, topicMemoValue(), runningHashValue(), sequenceNumberValue(), expirationTimeValue(), adminAuthorityValue(), submitAuthorityValue(), autoRenewPeriodValue(), autoRenewAccountValue()));

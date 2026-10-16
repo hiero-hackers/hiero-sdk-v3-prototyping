@@ -128,6 +128,98 @@ public final class TopicCreateTransaction extends Transaction<TopicCreateReceipt
         throw new UnsupportedOperationException("Not implemented yet: TopicCreateTransaction.signForBatch");
     }
 
+    /// Returns a builder for a new `TopicCreateTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `TopicCreateTransaction`.
+    ///
+    /// `build()` creates the `TopicCreateTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Authority adminAuthority;
+        private @Nullable Authority submitAuthority;
+        private @Nullable String topicMemo;
+        private @Nullable Duration autoRenewPeriod;
+        private @Nullable AccountId autoRenewAccount;
+
+        private Builder() {
+            // created by TopicCreateTransaction.builder()
+        }
+
+        /// Sets the `adminAuthority`.
+        ///
+        /// controls update / delete; unset → immutable topic; must sign the create transaction when set (anti-spoofing)
+        ///
+        /// @param adminAuthority the value
+        /// @return this builder
+        public Builder adminAuthority(final @Nullable Authority adminAuthority) {
+            this.adminAuthority = adminAuthority;
+            return this;
+        }
+
+        /// Sets the `submitAuthority`.
+        ///
+        /// controls message submission; unset → public topic; does NOT need to sign creation
+        ///
+        /// @param submitAuthority the value
+        /// @return this builder
+        public Builder submitAuthority(final @Nullable Authority submitAuthority) {
+            this.submitAuthority = submitAuthority;
+            return this;
+        }
+
+        /// Sets the `topicMemo`.
+        ///
+        /// short human-readable label (max 100 chars)
+        ///
+        /// @param topicMemo the value
+        /// @return this builder
+        public Builder topicMemo(final @Nullable String topicMemo) {
+            this.topicMemo = topicMemo;
+            return this;
+        }
+
+        /// Sets the `autoRenewPeriod`.
+        ///
+        /// protocol default applies when unset
+        ///
+        /// @param autoRenewPeriod the value
+        /// @return this builder
+        public Builder autoRenewPeriod(final @Nullable Duration autoRenewPeriod) {
+            this.autoRenewPeriod = autoRenewPeriod;
+            return this;
+        }
+
+        /// Sets the `autoRenewAccount`.
+        ///
+        /// pays auto-renewal; must sign the create transaction if set
+        ///
+        /// @param autoRenewAccount the value
+        /// @return this builder
+        public Builder autoRenewAccount(final @Nullable AccountId autoRenewAccount) {
+            this.autoRenewAccount = autoRenewAccount;
+            return this;
+        }
+
+        /// Creates the `TopicCreateTransaction` of the values set.
+        ///
+        /// @return the new `TopicCreateTransaction`
+        public TopicCreateTransaction build() {
+            return new TopicCreateTransaction(
+                    adminAuthority,
+                    submitAuthority,
+                    topicMemo,
+                    autoRenewPeriod,
+                    autoRenewAccount);
+        }
+    }
+
     @Override
     public String toString() {
         return "TopicCreateTransaction[maxTransactionFee=" + maxTransactionFee()

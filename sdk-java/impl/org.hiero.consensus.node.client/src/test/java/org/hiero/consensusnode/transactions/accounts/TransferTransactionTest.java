@@ -60,6 +60,32 @@ class TransferTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final List<HbarTransfer> hbarTransfers = hbarTransfersValue();
+        final List<TokenTransfer> tokenTransfers = tokenTransfersValue();
+        final List<NftTransfer> nftTransfers = nftTransfersValue();
+        final TransferTransaction subject = TransferTransaction.builder()
+                .hbarTransfers(hbarTransfers)
+                .tokenTransfers(tokenTransfers)
+                .nftTransfers(nftTransfers)
+                .build();
+        assertValue(hbarTransfers, subject.hbarTransfers());
+        assertValue(tokenTransfers, subject.tokenTransfers());
+        assertValue(nftTransfers, subject.nftTransfers());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TransferTransaction subject = TransferTransaction.builder()
+                .build();
+        assertValue(List.of(), subject.hbarTransfers());
+        assertValue(List.of(), subject.tokenTransfers());
+        assertValue(List.of(), subject.nftTransfers());
+    }
+
+    @Test
     @DisplayName("rejects null for hbarTransfers")
     void shouldRejectNullHbarTransfers() {
         assertThrows(NullPointerException.class, () -> new TransferTransaction((List<HbarTransfer>) null, tokenTransfersValue(), nftTransfersValue()));

@@ -116,6 +116,8 @@ final class ClassGenerator {
                 constructorBody.append(checks(field, declarations.get(field.name()), imports, constants, indent));
             }
         }
+        // @@oneOf and @@oneOrNoneOf
+        constructorBody.append(JavaOneOf.checks(type, INDENT + INDENT));
         // always explicit: an implicit default constructor of an exported class is a javac lint warning
         final List<String> tags = new ArrayList<>();
         if (constructorBody.indexOf("requireNonNull") >= 0) {
@@ -192,6 +194,12 @@ final class ClassGenerator {
                     && !implementedBySuperclass(method, superDefinition)) {
                 members.add(JavaMembers.method(type.name(), method, context, imports, JavaMembers.Body.STUB));
             }
+        }
+
+        // a builder for many or optional constructor parameters
+        if (BuilderGenerator.hasBuilder(type, parameters, context)) {
+            members.addAll(BuilderGenerator.render(type, parameters, declarations, imports, context,
+                    constructorBody.indexOf("IllegalArgumentException") >= 0));
         }
 
         // value semantics and string representation of concrete classes

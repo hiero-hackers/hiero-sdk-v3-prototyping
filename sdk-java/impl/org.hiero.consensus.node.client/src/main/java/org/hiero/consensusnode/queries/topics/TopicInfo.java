@@ -69,4 +69,143 @@ public record TopicInfo(
     public String toString() {
         return "TopicInfo[topicId=" + topicId + ", topicMemo=" + topicMemo + ", runningHash=" + "byte[" + runningHash.length + "]" + ", sequenceNumber=" + sequenceNumber + ", expirationTime=" + expirationTime + ", adminAuthority=" + adminAuthority + ", submitAuthority=" + submitAuthority + ", autoRenewPeriod=" + autoRenewPeriod + ", autoRenewAccount=" + autoRenewAccount + "]";
     }
+
+    /// Returns a builder for a new `TopicInfo`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `TopicInfo`.
+    ///
+    /// `build()` creates the `TopicInfo` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Address topicId;
+        private @Nullable String topicMemo;
+        private byte @Nullable [] runningHash;
+        private @Nullable Long sequenceNumber;
+        private @Nullable ZonedDateTime expirationTime;
+        private @Nullable Authority adminAuthority;
+        private @Nullable Authority submitAuthority;
+        private @Nullable Duration autoRenewPeriod;
+        private @Nullable AccountId autoRenewAccount;
+
+        private Builder() {
+            // created by TopicInfo.builder()
+        }
+
+        /// Sets the `topicId`.
+        ///
+        /// @param topicId the value
+        /// @return this builder
+        public Builder topicId(final Address topicId) {
+            this.topicId = topicId;
+            return this;
+        }
+
+        /// Sets the `topicMemo`.
+        ///
+        /// short human-readable label
+        ///
+        /// @param topicMemo the value
+        /// @return this builder
+        public Builder topicMemo(final @Nullable String topicMemo) {
+            this.topicMemo = topicMemo;
+            return this;
+        }
+
+        /// Sets the `runningHash`.
+        ///
+        /// SHA-384 over all submitted messages so far
+        ///
+        /// @param runningHash the value
+        /// @return this builder
+        public Builder runningHash(final byte[] runningHash) {
+            this.runningHash = runningHash;
+            return this;
+        }
+
+        /// Sets the `sequenceNumber`.
+        ///
+        /// number of messages submitted so far
+        ///
+        /// @param sequenceNumber the value
+        /// @return this builder
+        public Builder sequenceNumber(final long sequenceNumber) {
+            this.sequenceNumber = sequenceNumber;
+            return this;
+        }
+
+        /// Sets the `expirationTime`.
+        ///
+        /// @param expirationTime the value
+        /// @return this builder
+        public Builder expirationTime(final ZonedDateTime expirationTime) {
+            this.expirationTime = expirationTime;
+            return this;
+        }
+
+        /// Sets the `adminAuthority`.
+        ///
+        /// absent → topic is immutable (no update / delete)
+        ///
+        /// @param adminAuthority the value
+        /// @return this builder
+        public Builder adminAuthority(final @Nullable Authority adminAuthority) {
+            this.adminAuthority = adminAuthority;
+            return this;
+        }
+
+        /// Sets the `submitAuthority`.
+        ///
+        /// absent → topic is public (any account may submit)
+        ///
+        /// @param submitAuthority the value
+        /// @return this builder
+        public Builder submitAuthority(final @Nullable Authority submitAuthority) {
+            this.submitAuthority = submitAuthority;
+            return this;
+        }
+
+        /// Sets the `autoRenewPeriod`.
+        ///
+        /// @param autoRenewPeriod the value
+        /// @return this builder
+        public Builder autoRenewPeriod(final @Nullable Duration autoRenewPeriod) {
+            this.autoRenewPeriod = autoRenewPeriod;
+            return this;
+        }
+
+        /// Sets the `autoRenewAccount`.
+        ///
+        /// pays auto-renewal; if absent, the topic itself pays
+        ///
+        /// @param autoRenewAccount the value
+        /// @return this builder
+        public Builder autoRenewAccount(final @Nullable AccountId autoRenewAccount) {
+            this.autoRenewAccount = autoRenewAccount;
+            return this;
+        }
+
+        /// Creates the `TopicInfo` of the values set.
+        ///
+        /// @return the new `TopicInfo`
+        /// @throws NullPointerException if a required value is not set
+        public TopicInfo build() {
+            return new TopicInfo(
+                    Objects.requireNonNull(topicId, "topicId must not be null"),
+                    topicMemo,
+                    Objects.requireNonNull(runningHash, "runningHash must not be null"),
+                    Objects.requireNonNull(sequenceNumber, "sequenceNumber must not be null"),
+                    Objects.requireNonNull(expirationTime, "expirationTime must not be null"),
+                    adminAuthority,
+                    submitAuthority,
+                    autoRenewPeriod,
+                    autoRenewAccount);
+        }
+    }
 }

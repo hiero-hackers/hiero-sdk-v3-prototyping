@@ -22,11 +22,37 @@ AccountInformation {
     @@immutable authority: Authority
 }
 
+// The definition of a new account: everything that can be set when an account is created. Only the authority is
+// required. An account is staked to another account or to a node, not to both.
+@@finalType
+@@oneOrNoneOf(stakedAccountId, stakedNodeId)
+AccountDef {
+    @@immutable authority: Authority
+    // Amount transferred from the payer to the new account. If absent, the account is created with a balance
+    // of 0 in the native token of the network.
+    @@immutable @@nullable initialBalance: NativeToken<ANY, ANY>
+    @@immutable @@nullable accountMemo: string
+    @@immutable @@default(false) receiverSignatureRequired: bool
+    @@immutable @@nullable maxAutomaticTokenAssociations: int32
+    @@immutable @@nullable autoRenewPeriod: seconds
+    @@immutable @@nullable stakedAccountId: AccountId
+    @@immutable @@nullable stakedNodeId: int64
+    @@immutable @@default(false) declineStakingReward: bool
+    @@immutable @@nullable alias: bytes
+}
+
 AccountService {
 
+  // Creates an account with the given authority; the same as createNewAccount with an AccountDef that has only
+  // the authority.
   @@throws(service-error) AccountId createNewAccount(authority: Authority)
 
+  // Creates an account with the given authority and initial balance; the same as createNewAccount with an
+  // AccountDef that has only these two values.
   @@throws(service-error) AccountId createNewAccount(authority: Authority, initialBalance: NativeToken<ANY, ANY>)
+
+  // Creates an account as defined: the general form of the methods above, for every option of a new account.
+  @@throws(service-error) AccountId createNewAccount(account: AccountDef)
 
   @@throws(service-error) void updateAccountAuthority(accountId: AccountId, newAuthority: Authority, oldAuthority: Authority)
 

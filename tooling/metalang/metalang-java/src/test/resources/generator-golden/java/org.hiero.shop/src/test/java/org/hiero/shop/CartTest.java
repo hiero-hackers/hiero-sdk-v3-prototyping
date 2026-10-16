@@ -56,6 +56,58 @@ class CartTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final List<String> items = itemsValue();
+        final Set<String> coupons = couponsValue();
+        final Map<String, String> notes = notesValue();
+        final int quantity = quantityValue();
+        final @Nullable Integer discount = discountValue();
+        final boolean legacy = legacyValue();
+        final Category category = categoryValue();
+        final Money total = totalValue();
+        final Cart<String> subject = Cart.<String>builder()
+                .items(items)
+                .coupons(coupons)
+                .notes(notes)
+                .quantity(quantity)
+                .discount(discount)
+                .legacy(legacy)
+                .category(category)
+                .total(total)
+                .build();
+        assertValue(items, subject.items());
+        assertValue(coupons, subject.coupons());
+        assertValue(notes, subject.notes());
+        assertValue(quantity, subject.quantity());
+        assertValue(discount, subject.discount());
+        assertValue(legacy, subject.legacy());
+        assertValue(category, subject.category());
+        assertValue(total, subject.total());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final Cart<String> subject = Cart.<String>builder()
+                .items(itemsValue())
+                .notes(notesValue())
+                .legacy(legacyValue())
+                .category(categoryValue())
+                .total(totalValue())
+                .build();
+        assertValue(Set.of(), subject.coupons());
+        assertValue(1, subject.quantity());
+        assertNull(subject.discount());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> Cart.<String>builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for items")
     void shouldRejectNullItems() {
         assertThrows(NullPointerException.class, () -> new Cart<>((List<String>) null, couponsValue(), notesValue(), quantityValue(), discountValue(), legacyValue(), categoryValue(), totalValue()));

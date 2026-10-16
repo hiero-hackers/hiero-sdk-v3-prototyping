@@ -33,6 +33,46 @@ class MirrorNodeHttpRequestTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final HttpMethod method = methodValue();
+        final String path = pathValue();
+        final byte @Nullable [] body = bodyValue();
+        final @Nullable Duration timeout = timeoutValue();
+        final Map<String, String> headers = headersValue();
+        final MirrorNodeHttpRequest subject = MirrorNodeHttpRequest.builder()
+                .method(method)
+                .path(path)
+                .body(body)
+                .timeout(timeout)
+                .headers(headers)
+                .build();
+        assertValue(method, subject.method());
+        assertValue(path, subject.path());
+        assertValue(body, subject.body());
+        assertValue(timeout, subject.timeout());
+        assertValue(headers, subject.headers());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final MirrorNodeHttpRequest subject = MirrorNodeHttpRequest.builder()
+                .method(methodValue())
+                .path(pathValue())
+                .headers(headersValue())
+                .build();
+        assertNull(subject.body());
+        assertNull(subject.timeout());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> MirrorNodeHttpRequest.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for method")
     void shouldRejectNullMethod() {
         assertThrows(NullPointerException.class, () -> new MirrorNodeHttpRequest((HttpMethod) null, pathValue(), bodyValue(), timeoutValue(), headersValue()));

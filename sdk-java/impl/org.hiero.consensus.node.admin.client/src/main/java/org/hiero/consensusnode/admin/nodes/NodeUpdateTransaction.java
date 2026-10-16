@@ -186,6 +186,164 @@ public final class NodeUpdateTransaction extends Transaction<NodeUpdateReceipt, 
         throw new UnsupportedOperationException("Not implemented yet: NodeUpdateTransaction.signForBatch");
     }
 
+    /// Returns a builder for a new `NodeUpdateTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `NodeUpdateTransaction`.
+    ///
+    /// `build()` creates the `NodeUpdateTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Long nodeId;
+        private @Nullable AccountId accountId;
+        private @Nullable String description;
+        private List<ServiceEndpoint> gossipEndpoints = List.of();
+        private List<ServiceEndpoint> serviceEndpoints = List.of();
+        private byte @Nullable [] gossipCaCertificate;
+        private byte @Nullable [] grpcCertificateHash;
+        private @Nullable Authority adminAuthority;
+        private @Nullable Boolean declineReward;
+        private @Nullable ServiceEndpoint grpcWebProxyEndpoint;
+
+        private Builder() {
+            // created by NodeUpdateTransaction.builder()
+        }
+
+        /// Sets the `nodeId`.
+        ///
+        /// the node to update
+        ///
+        /// @param nodeId the value
+        /// @return this builder
+        public Builder nodeId(final long nodeId) {
+            this.nodeId = nodeId;
+            return this;
+        }
+
+        /// Sets the `accountId`.
+        ///
+        /// when set, the new account's key must also sign
+        ///
+        /// @param accountId the value
+        /// @return this builder
+        public Builder accountId(final @Nullable AccountId accountId) {
+            this.accountId = accountId;
+            return this;
+        }
+
+        /// Sets the `description`.
+        ///
+        /// new free-form description
+        ///
+        /// @param description the value
+        /// @return this builder
+        public Builder description(final @Nullable String description) {
+            this.description = description;
+            return this;
+        }
+
+        /// Sets the `gossipEndpoints`.
+        ///
+        /// when not empty, replaces the entire list; empty leaves it unchanged
+        ///
+        /// @param gossipEndpoints the value
+        /// @return this builder
+        public Builder gossipEndpoints(final List<ServiceEndpoint> gossipEndpoints) {
+            this.gossipEndpoints = gossipEndpoints;
+            return this;
+        }
+
+        /// Sets the `serviceEndpoints`.
+        ///
+        /// when not empty, replaces the entire list; empty leaves it unchanged
+        ///
+        /// @param serviceEndpoints the value
+        /// @return this builder
+        public Builder serviceEndpoints(final List<ServiceEndpoint> serviceEndpoints) {
+            this.serviceEndpoints = serviceEndpoints;
+            return this;
+        }
+
+        /// Sets the `gossipCaCertificate`.
+        ///
+        /// new gossip CA certificate (X.509 DER bytes)
+        ///
+        /// @param gossipCaCertificate the value
+        /// @return this builder
+        public Builder gossipCaCertificate(final byte @Nullable [] gossipCaCertificate) {
+            this.gossipCaCertificate = gossipCaCertificate;
+            return this;
+        }
+
+        /// Sets the `grpcCertificateHash`.
+        ///
+        /// new SHA-384 hash of the gRPC certificate
+        ///
+        /// @param grpcCertificateHash the value
+        /// @return this builder
+        public Builder grpcCertificateHash(final byte @Nullable [] grpcCertificateHash) {
+            this.grpcCertificateHash = grpcCertificateHash;
+            return this;
+        }
+
+        /// Sets the `adminAuthority`.
+        ///
+        /// when set, the new key must also sign
+        ///
+        /// @param adminAuthority the value
+        /// @return this builder
+        public Builder adminAuthority(final @Nullable Authority adminAuthority) {
+            this.adminAuthority = adminAuthority;
+            return this;
+        }
+
+        /// Sets the `declineReward`.
+        ///
+        /// whether the node opts out of staking rewards
+        ///
+        /// @param declineReward the value
+        /// @return this builder
+        public Builder declineReward(final @Nullable Boolean declineReward) {
+            this.declineReward = declineReward;
+            return this;
+        }
+
+        /// Sets the `grpcWebProxyEndpoint`.
+        ///
+        /// new gRPC-web proxy endpoint (HIP-1046)
+        ///
+        /// @param grpcWebProxyEndpoint the value
+        /// @return this builder
+        public Builder grpcWebProxyEndpoint(final @Nullable ServiceEndpoint grpcWebProxyEndpoint) {
+            this.grpcWebProxyEndpoint = grpcWebProxyEndpoint;
+            return this;
+        }
+
+        /// Creates the `NodeUpdateTransaction` of the values set.
+        ///
+        /// @return the new `NodeUpdateTransaction`
+        /// @throws NullPointerException if a required value is not set
+        public NodeUpdateTransaction build() {
+            return new NodeUpdateTransaction(
+                    Objects.requireNonNull(nodeId, "nodeId must not be null"),
+                    accountId,
+                    description,
+                    gossipEndpoints,
+                    serviceEndpoints,
+                    gossipCaCertificate,
+                    grpcCertificateHash,
+                    adminAuthority,
+                    declineReward,
+                    grpcWebProxyEndpoint);
+        }
+    }
+
     @Override
     public String toString() {
         return "NodeUpdateTransaction[maxTransactionFee=" + maxTransactionFee()

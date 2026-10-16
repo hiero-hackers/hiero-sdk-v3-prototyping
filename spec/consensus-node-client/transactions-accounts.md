@@ -75,7 +75,9 @@ requires {Authority} from authority
 requires {NativeToken} from nativeToken
 requires {Receipt, Transaction} from consensusnode.transactions
 
+// An account is staked to another account or to a node, not to both.
 @@finalType
+@@oneOrNoneOf(stakedAccountId, stakedNodeId)
 AccountCreateTransaction extends Transaction<AccountCreateReceipt, AccountCreateTransaction> {
     @@immutable authority: Authority
     // Amount transferred from the payer to the new account. If absent, the account is created with a balance

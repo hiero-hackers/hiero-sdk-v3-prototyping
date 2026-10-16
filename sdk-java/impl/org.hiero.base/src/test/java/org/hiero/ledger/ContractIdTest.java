@@ -19,7 +19,7 @@ class ContractIdTest {
         final long realm = realmValue();
         final String checksum = checksumValue();
         final @Nullable Long num = numValue();
-        final @Nullable EvmAddress evmAddress = evmAddressValue();
+        final @Nullable EvmAddress evmAddress = (EvmAddress) null;
         final ContractId subject = new ContractId(shard, realm, checksum, num, evmAddress);
         assertValue(shard, subject.shard());
         assertValue(realm, subject.realm());
@@ -29,10 +29,51 @@ class ContractIdTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final long shard = shardValue();
+        final long realm = realmValue();
+        final String checksum = checksumValue();
+        final @Nullable Long num = numValue();
+        final @Nullable EvmAddress evmAddress = (EvmAddress) null;
+        final ContractId subject = ContractId.builder()
+                .shard(shard)
+                .realm(realm)
+                .checksum(checksum)
+                .num(num)
+                .evmAddress(evmAddress)
+                .build();
+        assertValue(shard, subject.shard());
+        assertValue(realm, subject.realm());
+        assertValue(checksum, subject.checksum());
+        assertValue(num, subject.num());
+        assertValue(evmAddress, subject.evmAddress());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final ContractId subject = ContractId.builder()
+                .shard(shardValue())
+                .realm(realmValue())
+                .checksum(checksumValue())
+                .num(numValue())
+                .build();
+        assertValue(numValue(), subject.num());
+        assertNull(subject.evmAddress());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> ContractId.builder().build());
+    }
+
+    @Test
     @DisplayName("shard: accepts the minimum (0)")
     void shouldAcceptShardAtMinimum() {
         final long value = 0L;
-        final ContractId subject = new ContractId(value, realmValue(), checksumValue(), numValue(), evmAddressValue());
+        final ContractId subject = new ContractId(value, realmValue(), checksumValue(), numValue(), (EvmAddress) null);
         assertValue(value, subject.shard());
     }
 
@@ -40,7 +81,7 @@ class ContractIdTest {
     @DisplayName("shard: accepts the maximum (18446744073709551615)")
     void shouldAcceptShardAtMaximum() {
         final long value = Long.parseUnsignedLong("18446744073709551615");
-        final ContractId subject = new ContractId(value, realmValue(), checksumValue(), numValue(), evmAddressValue());
+        final ContractId subject = new ContractId(value, realmValue(), checksumValue(), numValue(), (EvmAddress) null);
         assertValue(value, subject.shard());
     }
 
@@ -48,7 +89,7 @@ class ContractIdTest {
     @DisplayName("realm: accepts the minimum (0)")
     void shouldAcceptRealmAtMinimum() {
         final long value = 0L;
-        final ContractId subject = new ContractId(shardValue(), value, checksumValue(), numValue(), evmAddressValue());
+        final ContractId subject = new ContractId(shardValue(), value, checksumValue(), numValue(), (EvmAddress) null);
         assertValue(value, subject.realm());
     }
 
@@ -56,21 +97,21 @@ class ContractIdTest {
     @DisplayName("realm: accepts the maximum (18446744073709551615)")
     void shouldAcceptRealmAtMaximum() {
         final long value = Long.parseUnsignedLong("18446744073709551615");
-        final ContractId subject = new ContractId(shardValue(), value, checksumValue(), numValue(), evmAddressValue());
+        final ContractId subject = new ContractId(shardValue(), value, checksumValue(), numValue(), (EvmAddress) null);
         assertValue(value, subject.realm());
     }
 
     @Test
     @DisplayName("rejects null for checksum")
     void shouldRejectNullChecksum() {
-        assertThrows(NullPointerException.class, () -> new ContractId(shardValue(), realmValue(), (String) null, numValue(), evmAddressValue()));
+        assertThrows(NullPointerException.class, () -> new ContractId(shardValue(), realmValue(), (String) null, numValue(), (EvmAddress) null));
     }
 
     @Test
     @DisplayName("num: accepts the minimum (0)")
     void shouldAcceptNumAtMinimum() {
         final @Nullable Long value = 0L;
-        final ContractId subject = new ContractId(shardValue(), realmValue(), checksumValue(), value, evmAddressValue());
+        final ContractId subject = new ContractId(shardValue(), realmValue(), checksumValue(), value, (EvmAddress) null);
         assertValue(value, subject.num());
     }
 
@@ -78,8 +119,20 @@ class ContractIdTest {
     @DisplayName("num: accepts the maximum (18446744073709551615)")
     void shouldAcceptNumAtMaximum() {
         final @Nullable Long value = Long.parseUnsignedLong("18446744073709551615");
-        final ContractId subject = new ContractId(shardValue(), realmValue(), checksumValue(), value, evmAddressValue());
+        final ContractId subject = new ContractId(shardValue(), realmValue(), checksumValue(), value, (EvmAddress) null);
         assertValue(value, subject.num());
+    }
+
+    @Test
+    @DisplayName("rejects num and evmAddress together (@@oneOf)")
+    void shouldRejectTwoOfNumOrEvmAddress() {
+        assertThrows(IllegalArgumentException.class, () -> new ContractId(shardValue(), realmValue(), checksumValue(), numValue(), evmAddressValue()));
+    }
+
+    @Test
+    @DisplayName("rejects none of num, evmAddress (@@oneOf)")
+    void shouldRejectNoneOfNumOrEvmAddress() {
+        assertThrows(IllegalArgumentException.class, () -> new ContractId(shardValue(), realmValue(), checksumValue(), (Long) null, (EvmAddress) null));
     }
 
     @Test
@@ -148,7 +201,7 @@ class ContractIdTest {
     }
 
     private static ContractId create() {
-        return new ContractId(shardValue(), realmValue(), checksumValue(), numValue(), evmAddressValue());
+        return new ContractId(shardValue(), realmValue(), checksumValue(), numValue(), (EvmAddress) null);
     }
 
     private static ContractId defaultSubject() {

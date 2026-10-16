@@ -29,6 +29,46 @@ class ChunkInfoTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final TransactionId initialTransactionId = initialTransactionIdValue();
+        final int nonce = nonceValue();
+        final int number = numberValue();
+        final int total = totalValue();
+        final boolean scheduled = scheduledValue();
+        final ChunkInfo subject = ChunkInfo.builder()
+                .initialTransactionId(initialTransactionId)
+                .nonce(nonce)
+                .number(number)
+                .total(total)
+                .scheduled(scheduled)
+                .build();
+        assertValue(initialTransactionId, subject.initialTransactionId());
+        assertValue(nonce, subject.nonce());
+        assertValue(number, subject.number());
+        assertValue(total, subject.total());
+        assertValue(scheduled, subject.scheduled());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final ChunkInfo subject = ChunkInfo.builder()
+                .initialTransactionId(initialTransactionIdValue())
+                .nonce(nonceValue())
+                .number(numberValue())
+                .total(totalValue())
+                .scheduled(scheduledValue())
+                .build();
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> ChunkInfo.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for initialTransactionId")
     void shouldRejectNullInitialTransactionId() {
         assertThrows(NullPointerException.class, () -> new ChunkInfo((TransactionId) null, nonceValue(), numberValue(), totalValue(), scheduledValue()));

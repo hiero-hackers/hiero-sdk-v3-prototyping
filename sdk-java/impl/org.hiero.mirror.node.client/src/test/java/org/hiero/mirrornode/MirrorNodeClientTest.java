@@ -61,6 +61,58 @@ class MirrorNodeClientTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final AccountRepository accounts = accountsValue();
+        final ContractRepository contracts = contractsValue();
+        final NetworkRepository network = networkValue();
+        final NftRepository nft = nftValue();
+        final TokenRepository token = tokenValue();
+        final TopicRepository topic = topicValue();
+        final TransactionRepository transaction = transactionValue();
+        final MirrorNodeHttpClient mirrorNodeHttpClient = mirrorNodeHttpClientValue();
+        final MirrorNodeClient subject = MirrorNodeClient.builder()
+                .accounts(accounts)
+                .contracts(contracts)
+                .network(network)
+                .nft(nft)
+                .token(token)
+                .topic(topic)
+                .transaction(transaction)
+                .mirrorNodeHttpClient(mirrorNodeHttpClient)
+                .build();
+        assertValue(accounts, subject.accounts());
+        assertValue(contracts, subject.contracts());
+        assertValue(network, subject.network());
+        assertValue(nft, subject.nft());
+        assertValue(token, subject.token());
+        assertValue(topic, subject.topic());
+        assertValue(transaction, subject.transaction());
+        assertValue(mirrorNodeHttpClient, subject.mirrorNodeHttpClient());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final MirrorNodeClient subject = MirrorNodeClient.builder()
+                .accounts(accountsValue())
+                .contracts(contractsValue())
+                .network(networkValue())
+                .nft(nftValue())
+                .token(tokenValue())
+                .topic(topicValue())
+                .transaction(transactionValue())
+                .mirrorNodeHttpClient(mirrorNodeHttpClientValue())
+                .build();
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> MirrorNodeClient.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for accounts")
     void shouldRejectNullAccounts() {
         assertThrows(NullPointerException.class, () -> new MirrorNodeClient((AccountRepository) null, contractsValue(), networkValue(), nftValue(), tokenValue(), topicValue(), transactionValue(), mirrorNodeHttpClientValue()));

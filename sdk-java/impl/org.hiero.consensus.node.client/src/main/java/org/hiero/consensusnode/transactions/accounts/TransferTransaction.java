@@ -123,6 +123,63 @@ public final class TransferTransaction extends Transaction<TransferReceipt, Tran
         throw new UnsupportedOperationException("Not implemented yet: TransferTransaction.signForBatch");
     }
 
+    /// Returns a builder for a new `TransferTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `TransferTransaction`.
+    ///
+    /// `build()` creates the `TransferTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private List<HbarTransfer> hbarTransfers = List.of();
+        private List<TokenTransfer> tokenTransfers = List.of();
+        private List<NftTransfer> nftTransfers = List.of();
+
+        private Builder() {
+            // created by TransferTransaction.builder()
+        }
+
+        /// Sets the `hbarTransfers`.
+        ///
+        /// @param hbarTransfers the value
+        /// @return this builder
+        public Builder hbarTransfers(final List<HbarTransfer> hbarTransfers) {
+            this.hbarTransfers = hbarTransfers;
+            return this;
+        }
+
+        /// Sets the `tokenTransfers`.
+        ///
+        /// @param tokenTransfers the value
+        /// @return this builder
+        public Builder tokenTransfers(final List<TokenTransfer> tokenTransfers) {
+            this.tokenTransfers = tokenTransfers;
+            return this;
+        }
+
+        /// Sets the `nftTransfers`.
+        ///
+        /// @param nftTransfers the value
+        /// @return this builder
+        public Builder nftTransfers(final List<NftTransfer> nftTransfers) {
+            this.nftTransfers = nftTransfers;
+            return this;
+        }
+
+        /// Creates the `TransferTransaction` of the values set.
+        ///
+        /// @return the new `TransferTransaction`
+        public TransferTransaction build() {
+            return new TransferTransaction(hbarTransfers, tokenTransfers, nftTransfers);
+        }
+    }
+
     @Override
     public String toString() {
         return "TransferTransaction[maxTransactionFee=" + maxTransactionFee()

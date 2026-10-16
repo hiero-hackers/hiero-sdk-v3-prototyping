@@ -28,6 +28,42 @@ class FractionalFeeTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final long numeratorAmount = numeratorAmountValue();
+        final long denominatorAmount = denominatorAmountValue();
+        final @Nullable AccountId collectorAccountId = collectorAccountIdValue();
+        final @Nullable Address denominatingTokenId = denominatingTokenIdValue();
+        final FractionalFee subject = FractionalFee.builder()
+                .numeratorAmount(numeratorAmount)
+                .denominatorAmount(denominatorAmount)
+                .collectorAccountId(collectorAccountId)
+                .denominatingTokenId(denominatingTokenId)
+                .build();
+        assertValue(numeratorAmount, subject.numeratorAmount());
+        assertValue(denominatorAmount, subject.denominatorAmount());
+        assertValue(collectorAccountId, subject.collectorAccountId());
+        assertValue(denominatingTokenId, subject.denominatingTokenId());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final FractionalFee subject = FractionalFee.builder()
+                .numeratorAmount(numeratorAmountValue())
+                .denominatorAmount(denominatorAmountValue())
+                .build();
+        assertNull(subject.collectorAccountId());
+        assertNull(subject.denominatingTokenId());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> FractionalFee.builder().build());
+    }
+
+    @Test
     @DisplayName("numeratorAmount: accepts the minimum (-9223372036854775808)")
     void shouldAcceptNumeratorAmountAtMinimum() {
         final long value = -9223372036854775808L;

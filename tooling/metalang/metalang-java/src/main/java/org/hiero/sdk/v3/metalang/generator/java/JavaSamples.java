@@ -399,9 +399,25 @@ final class JavaSamples {
         deprecated |= definition.hasAnnotation("deprecated");
         final List<String> values = new ArrayList<>();
         final List<FieldDefinition> parameters = constructorParameters(definition);
+        // a @@oneOf group needs one attribute that is set: the first one that has a value
+        final Set<String> setInGroup = new HashSet<>();
+        for (final JavaOneOf.Group group : JavaOneOf.checked(definition)) {
+            if (!group.exactlyOne()) {
+                continue;
+            }
+            for (final String name : group.fields()) {
+                final Optional<FieldDefinition> field = parameters.stream().filter(p -> p.name().equals(name))
+                        .findFirst();
+                if (field.isPresent() && value(LinkedModel.substitute(field.get().type(), arguments.get()),
+                        field.get().annotations(), 0, nested).isPresent()) {
+                    setInGroup.add(name);
+                    break;
+                }
+            }
+        }
         for (int i = 0; i < parameters.size(); i++) {
             final FieldDefinition parameter = parameters.get(i);
-            if (parameter.hasAnnotation("nullable")) {
+            if (parameter.hasAnnotation("nullable") && !setInGroup.contains(parameter.name())) {
                 values.add("null");
                 continue;
             }

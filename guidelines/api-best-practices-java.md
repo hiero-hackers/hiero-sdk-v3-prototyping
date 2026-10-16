@@ -2539,6 +2539,48 @@ The Builder Pattern is **NOT required** for:
 - Internal implementation classes not exposed in public API
 - Immutable records with only required fields
 
+### `@@oneOf` and `@@oneOrNoneOf`
+
+The constructor of a record or class checks the groups of `@@immutable` attributes: `@@oneOf(a, b)` exactly one is
+not `null`, `@@oneOrNoneOf(a, b)` at most one; otherwise it throws `IllegalArgumentException`. A builder has the same
+check, because `build()` calls the constructor.
+
+```java
+if ((stakedAccountId != null ? 1 : 0) + (stakedNodeId != null ? 1 : 0) > 1) {
+    throw new IllegalArgumentException("at most one of stakedAccountId, stakedNodeId may be set");
+}
+```
+
+A group of mutable attributes is not checked: its attributes are `null` after construction and set one by one with
+setters, so the group can only hold when the object is used (e.g. submitted), which is where the implementation checks
+it.
+
+### Generated builders
+
+The specs do not ask for a builder: whether a type is easy to construct is a question of the language, and the
+meta-language keeps such a type immutable (`@@immutable` attributes) - a parameter object such as `AccountDef` is a
+value. The Java generator derives the builder from the rules above. A record or class gets one if it is concrete,
+**no other type extends it**, and its constructor takes **more than four values or at least two optional ones**
+(`@@nullable` or `@@default`). Generated:
+
+```java
+AccountDef account = AccountDef.builder()
+        .authority(authority)
+        .initialBalance(new Hbar(10, HbarUnit.HBAR))
+        .accountMemo("savings")
+        .build();
+```
+
+- `builder()` is a static method of the type, `Builder` a nested `static final` class with one method per constructor
+  parameter, named after the attribute, and `build()`.
+- `build()` calls the constructor, so the builder has exactly its checks (`NullPointerException` for a required value
+  that is not set, `IllegalArgumentException` for a constraint). A value that is not set is `null` or its
+  `@@default` value.
+- A type that another type extends gets no builder: the static `builder()` of a subclass cannot hide the one of its
+  superclass, because the two builders are unrelated types. A type whose names would clash (an attribute `build`, a
+  member `builder`, a type named `Builder`) gets none either.
+- The constructors stay public: a builder is an additional way to create the value, not the only one.
+
 ### Builder Pattern Implementation
 
 **Example - Transaction with Builder**:

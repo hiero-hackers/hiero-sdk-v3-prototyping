@@ -58,4 +58,77 @@ public record Attachment(
     public String toString() {
         return "Attachment[content=" + "byte[" + content.length + "]" + ", checksum=" + (checksum == null ? "null" : "byte[" + checksum.length + "]") + ", weight=" + weight + ", count=" + count + "]";
     }
+
+    /// Returns a builder for a new `Attachment`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `Attachment`.
+    ///
+    /// `build()` creates the `Attachment` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private byte @Nullable [] content;
+        private byte @Nullable [] checksum;
+        private @Nullable Double weight;
+        private @Nullable Integer count;
+
+        private Builder() {
+            // created by Attachment.builder()
+        }
+
+        /// Sets the `content`.
+        ///
+        /// @param content the value
+        /// @return this builder
+        public Builder content(final byte[] content) {
+            this.content = content;
+            return this;
+        }
+
+        /// Sets the `checksum`.
+        ///
+        /// @param checksum the value
+        /// @return this builder
+        public Builder checksum(final byte @Nullable [] checksum) {
+            this.checksum = checksum;
+            return this;
+        }
+
+        /// Sets the `weight`.
+        ///
+        /// @param weight the value
+        /// @return this builder
+        public Builder weight(final double weight) {
+            this.weight = weight;
+            return this;
+        }
+
+        /// Sets the `count`.
+        ///
+        /// @param count the value
+        /// @return this builder
+        public Builder count(final @Nullable Integer count) {
+            this.count = count;
+            return this;
+        }
+
+        /// Creates the `Attachment` of the values set.
+        ///
+        /// @return the new `Attachment`
+        /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
+        public Attachment build() {
+            return new Attachment(
+                    Objects.requireNonNull(content, "content must not be null"),
+                    checksum,
+                    Objects.requireNonNull(weight, "weight must not be null"),
+                    count);
+        }
+    }
 }

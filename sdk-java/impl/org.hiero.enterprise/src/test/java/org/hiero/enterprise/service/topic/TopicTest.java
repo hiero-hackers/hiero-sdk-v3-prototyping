@@ -36,6 +36,46 @@ class TopicTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Address topicId = topicIdValue();
+        final @Nullable Authority adminAuthority = adminAuthorityValue();
+        final @Nullable Authority submitAuthority = submitAuthorityValue();
+        final ZonedDateTime createdTimestamp = createdTimestampValue();
+        final String memo = memoValue();
+        final Topic subject = Topic.builder()
+                .topicId(topicId)
+                .adminAuthority(adminAuthority)
+                .submitAuthority(submitAuthority)
+                .createdTimestamp(createdTimestamp)
+                .memo(memo)
+                .build();
+        assertValue(topicId, subject.topicId());
+        assertValue(adminAuthority, subject.adminAuthority());
+        assertValue(submitAuthority, subject.submitAuthority());
+        assertValue(createdTimestamp, subject.createdTimestamp());
+        assertValue(memo, subject.memo());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final Topic subject = Topic.builder()
+                .topicId(topicIdValue())
+                .createdTimestamp(createdTimestampValue())
+                .memo(memoValue())
+                .build();
+        assertNull(subject.adminAuthority());
+        assertNull(subject.submitAuthority());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> Topic.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for topicId")
     void shouldRejectNullTopicId() {
         assertThrows(NullPointerException.class, () -> new Topic((Address) null, adminAuthorityValue(), submitAuthorityValue(), createdTimestampValue(), memoValue()));

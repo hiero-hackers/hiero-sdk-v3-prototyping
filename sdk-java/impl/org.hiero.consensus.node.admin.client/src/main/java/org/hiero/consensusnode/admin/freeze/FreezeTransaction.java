@@ -124,6 +124,86 @@ public final class FreezeTransaction extends Transaction<FreezeReceipt, FreezeTr
         throw new UnsupportedOperationException("Not implemented yet: FreezeTransaction.signForBatch");
     }
 
+    /// Returns a builder for a new `FreezeTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `FreezeTransaction`.
+    ///
+    /// `build()` creates the `FreezeTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable FreezeType freezeType;
+        private @Nullable ZonedDateTime startTime;
+        private @Nullable Address updateFile;
+        private byte @Nullable [] fileHash;
+
+        private Builder() {
+            // created by FreezeTransaction.builder()
+        }
+
+        /// Sets the `freezeType`.
+        ///
+        /// the operation to perform
+        ///
+        /// @param freezeType the value
+        /// @return this builder
+        public Builder freezeType(final FreezeType freezeType) {
+            this.freezeType = freezeType;
+            return this;
+        }
+
+        /// Sets the `startTime`.
+        ///
+        /// wall-clock time at which the network freezes; required for FREEZE_ONLY, FREEZE_UPGRADE, TELEMETRY_UPGRADE; ignored for PREPARE_UPGRADE, FREEZE_ABORT
+        ///
+        /// @param startTime the value
+        /// @return this builder
+        public Builder startTime(final @Nullable ZonedDateTime startTime) {
+            this.startTime = startTime;
+            return this;
+        }
+
+        /// Sets the `updateFile`.
+        ///
+        /// id of a file holding the upgrade payload; required for PREPARE_UPGRADE, FREEZE_UPGRADE, TELEMETRY_UPGRADE
+        ///
+        /// @param updateFile the value
+        /// @return this builder
+        public Builder updateFile(final @Nullable Address updateFile) {
+            this.updateFile = updateFile;
+            return this;
+        }
+
+        /// Sets the `fileHash`.
+        ///
+        /// SHA-384 of the upgrade file's contents; required whenever updateFile is set; the consensus node rejects with FREEZE_UPDATE_FILE_HASH_DOES_NOT_MATCH on mismatch
+        ///
+        /// @param fileHash the value
+        /// @return this builder
+        public Builder fileHash(final byte @Nullable [] fileHash) {
+            this.fileHash = fileHash;
+            return this;
+        }
+
+        /// Creates the `FreezeTransaction` of the values set.
+        ///
+        /// @return the new `FreezeTransaction`
+        /// @throws NullPointerException if a required value is not set
+        public FreezeTransaction build() {
+            return new FreezeTransaction(
+                    Objects.requireNonNull(freezeType, "freezeType must not be null"),
+                    startTime,
+                    updateFile,
+                    fileHash);
+        }
+    }
+
     @Override
     public String toString() {
         return "FreezeTransaction[maxTransactionFee=" + maxTransactionFee()

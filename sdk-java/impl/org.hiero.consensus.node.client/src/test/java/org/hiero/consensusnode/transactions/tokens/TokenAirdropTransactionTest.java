@@ -59,6 +59,28 @@ class TokenAirdropTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final List<TokenTransfer> tokenTransfers = tokenTransfersValue();
+        final List<NftTransfer> nftTransfers = nftTransfersValue();
+        final TokenAirdropTransaction subject = TokenAirdropTransaction.builder()
+                .tokenTransfers(tokenTransfers)
+                .nftTransfers(nftTransfers)
+                .build();
+        assertValue(tokenTransfers, subject.tokenTransfers());
+        assertValue(nftTransfers, subject.nftTransfers());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TokenAirdropTransaction subject = TokenAirdropTransaction.builder()
+                .build();
+        assertValue(List.of(), subject.tokenTransfers());
+        assertValue(List.of(), subject.nftTransfers());
+    }
+
+    @Test
     @DisplayName("rejects null for tokenTransfers")
     void shouldRejectNullTokenTransfers() {
         assertThrows(NullPointerException.class, () -> new TokenAirdropTransaction((List<TokenTransfer>) null, nftTransfersValue()));

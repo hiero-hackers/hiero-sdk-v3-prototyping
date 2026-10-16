@@ -30,6 +30,46 @@ class NftAllowanceTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Address tokenId = tokenIdValue();
+        final AccountId ownerAccountId = ownerAccountIdValue();
+        final AccountId spenderAccountId = spenderAccountIdValue();
+        final NftGrant grant = grantValue();
+        final @Nullable AccountId delegatingSpender = delegatingSpenderValue();
+        final NftAllowance subject = NftAllowance.builder()
+                .tokenId(tokenId)
+                .ownerAccountId(ownerAccountId)
+                .spenderAccountId(spenderAccountId)
+                .grant(grant)
+                .delegatingSpender(delegatingSpender)
+                .build();
+        assertValue(tokenId, subject.tokenId());
+        assertValue(ownerAccountId, subject.ownerAccountId());
+        assertValue(spenderAccountId, subject.spenderAccountId());
+        assertValue(grant, subject.grant());
+        assertValue(delegatingSpender, subject.delegatingSpender());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final NftAllowance subject = NftAllowance.builder()
+                .tokenId(tokenIdValue())
+                .ownerAccountId(ownerAccountIdValue())
+                .spenderAccountId(spenderAccountIdValue())
+                .grant(grantValue())
+                .build();
+        assertNull(subject.delegatingSpender());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> NftAllowance.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for tokenId")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new NftAllowance((Address) null, ownerAccountIdValue(), spenderAccountIdValue(), grantValue(), delegatingSpenderValue()));

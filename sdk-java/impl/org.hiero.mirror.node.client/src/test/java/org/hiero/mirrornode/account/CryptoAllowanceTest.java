@@ -30,6 +30,46 @@ class CryptoAllowanceTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final AccountId owner = ownerValue();
+        final AccountId spender = spenderValue();
+        final long amount = amountValue();
+        final long amountGranted = amountGrantedValue();
+        final ZonedDateTime timestamp = timestampValue();
+        final CryptoAllowance subject = CryptoAllowance.builder()
+                .owner(owner)
+                .spender(spender)
+                .amount(amount)
+                .amountGranted(amountGranted)
+                .timestamp(timestamp)
+                .build();
+        assertValue(owner, subject.owner());
+        assertValue(spender, subject.spender());
+        assertValue(amount, subject.amount());
+        assertValue(amountGranted, subject.amountGranted());
+        assertValue(timestamp, subject.timestamp());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final CryptoAllowance subject = CryptoAllowance.builder()
+                .owner(ownerValue())
+                .spender(spenderValue())
+                .amount(amountValue())
+                .amountGranted(amountGrantedValue())
+                .timestamp(timestampValue())
+                .build();
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> CryptoAllowance.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for owner")
     void shouldRejectNullOwner() {
         assertThrows(NullPointerException.class, () -> new CryptoAllowance((AccountId) null, spenderValue(), amountValue(), amountGrantedValue(), timestampValue()));

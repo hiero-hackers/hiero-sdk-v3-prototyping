@@ -152,6 +152,112 @@ public final class ScheduleCreateTransaction extends Transaction<ScheduleCreateR
         throw new UnsupportedOperationException("Not implemented yet: ScheduleCreateTransaction.signForBatch");
     }
 
+    /// Returns a builder for a new `ScheduleCreateTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `ScheduleCreateTransaction`.
+    ///
+    /// `build()` creates the `ScheduleCreateTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Transaction<?, ?> scheduledTransaction;
+        private @Nullable Authority adminKey;
+        private @Nullable AccountId payerAccountId;
+        private @Nullable String scheduleMemo;
+        private @Nullable ZonedDateTime expirationTime;
+        private boolean waitForExpiry = false;
+
+        private Builder() {
+            // created by ScheduleCreateTransaction.builder()
+        }
+
+        /// Sets the `scheduledTransaction`.
+        ///
+        /// the inner transaction to execute later; only its body is captured (never packed/signed)
+        ///
+        /// @param scheduledTransaction the value
+        /// @return this builder
+        public Builder scheduledTransaction(final Transaction<?, ?> scheduledTransaction) {
+            this.scheduledTransaction = scheduledTransaction;
+            return this;
+        }
+
+        /// Sets the `adminKey`.
+        ///
+        /// may delete the schedule before execution; unset → schedule is immutable and cannot be deleted
+        ///
+        /// @param adminKey the value
+        /// @return this builder
+        public Builder adminKey(final @Nullable Authority adminKey) {
+            this.adminKey = adminKey;
+            return this;
+        }
+
+        /// Sets the `payerAccountId`.
+        ///
+        /// pays the fee of the inner transaction when it executes; null → the payer of this ScheduleCreate pays it
+        ///
+        /// @param payerAccountId the value
+        /// @return this builder
+        public Builder payerAccountId(final @Nullable AccountId payerAccountId) {
+            this.payerAccountId = payerAccountId;
+            return this;
+        }
+
+        /// Sets the `scheduleMemo`.
+        ///
+        /// free-form memo on the schedule entity
+        ///
+        /// @param scheduleMemo the value
+        /// @return this builder
+        public Builder scheduleMemo(final @Nullable String scheduleMemo) {
+            this.scheduleMemo = scheduleMemo;
+            return this;
+        }
+
+        /// Sets the `expirationTime`.
+        ///
+        /// HIP-423 long-term: when the schedule expires
+        ///
+        /// @param expirationTime the value
+        /// @return this builder
+        public Builder expirationTime(final @Nullable ZonedDateTime expirationTime) {
+            this.expirationTime = expirationTime;
+            return this;
+        }
+
+        /// Sets the `waitForExpiry`.
+        ///
+        /// HIP-423 long-term: when true, execute only at expirationTime even if the required signatures are collected earlier
+        ///
+        /// @param waitForExpiry the value
+        /// @return this builder
+        public Builder waitForExpiry(final boolean waitForExpiry) {
+            this.waitForExpiry = waitForExpiry;
+            return this;
+        }
+
+        /// Creates the `ScheduleCreateTransaction` of the values set.
+        ///
+        /// @return the new `ScheduleCreateTransaction`
+        /// @throws NullPointerException if a required value is not set
+        public ScheduleCreateTransaction build() {
+            return new ScheduleCreateTransaction(
+                    Objects.requireNonNull(scheduledTransaction, "scheduledTransaction must not be null"),
+                    adminKey,
+                    payerAccountId,
+                    scheduleMemo,
+                    expirationTime,
+                    waitForExpiry);
+        }
+    }
+
     @Override
     public String toString() {
         return "ScheduleCreateTransaction[maxTransactionFee=" + maxTransactionFee()

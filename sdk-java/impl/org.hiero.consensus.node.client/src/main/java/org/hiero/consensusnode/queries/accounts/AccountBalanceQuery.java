@@ -16,10 +16,15 @@ public final class AccountBalanceQuery extends FreeQuery<AccountBalance> {
     private final @Nullable ContractId contractId;
 
     /// Creates a new `AccountBalanceQuery`.
+    ///
+    /// @throws IllegalArgumentException if a value violates its constraints
     public AccountBalanceQuery(final @Nullable AccountId accountId, final @Nullable ContractId contractId) {
         super();
         this.accountId = accountId;
         this.contractId = contractId;
+        if ((accountId != null ? 1 : 0) + (contractId != null ? 1 : 0) != 1) {
+            throw new IllegalArgumentException("exactly one of accountId, contractId must be set");
+        }
     }
 
     /// Returns the `accountId`.
@@ -78,6 +83,54 @@ public final class AccountBalanceQuery extends FreeQuery<AccountBalance> {
     @Override
     public CompletionStage<QueryResponse<AccountBalance>> submit(final HieroClient<?> client) {
         throw new UnsupportedOperationException("Not implemented yet: AccountBalanceQuery.submit");
+    }
+
+    /// Returns a builder for a new `AccountBalanceQuery`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `AccountBalanceQuery`.
+    ///
+    /// `build()` creates the `AccountBalanceQuery` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable AccountId accountId;
+        private @Nullable ContractId contractId;
+
+        private Builder() {
+            // created by AccountBalanceQuery.builder()
+        }
+
+        /// Sets the `accountId`.
+        ///
+        /// @param accountId the value
+        /// @return this builder
+        public Builder accountId(final @Nullable AccountId accountId) {
+            this.accountId = accountId;
+            return this;
+        }
+
+        /// Sets the `contractId`.
+        ///
+        /// @param contractId the value
+        /// @return this builder
+        public Builder contractId(final @Nullable ContractId contractId) {
+            this.contractId = contractId;
+            return this;
+        }
+
+        /// Creates the `AccountBalanceQuery` of the values set.
+        ///
+        /// @return the new `AccountBalanceQuery`
+        /// @throws IllegalArgumentException if a value violates its constraints
+        public AccountBalanceQuery build() {
+            return new AccountBalanceQuery(accountId, contractId);
+        }
     }
 
     @Override

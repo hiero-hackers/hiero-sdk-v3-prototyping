@@ -34,6 +34,50 @@ class TokenAirdropTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final AccountId senderId = senderIdValue();
+        final AccountId receiverId = receiverIdValue();
+        final Address tokenId = tokenIdValue();
+        final @Nullable Long amount = amountValue();
+        final @Nullable Long serialNumber = serialNumberValue();
+        final ZonedDateTime timestamp = timestampValue();
+        final TokenAirdrop subject = TokenAirdrop.builder()
+                .senderId(senderId)
+                .receiverId(receiverId)
+                .tokenId(tokenId)
+                .amount(amount)
+                .serialNumber(serialNumber)
+                .timestamp(timestamp)
+                .build();
+        assertValue(senderId, subject.senderId());
+        assertValue(receiverId, subject.receiverId());
+        assertValue(tokenId, subject.tokenId());
+        assertValue(amount, subject.amount());
+        assertValue(serialNumber, subject.serialNumber());
+        assertValue(timestamp, subject.timestamp());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TokenAirdrop subject = TokenAirdrop.builder()
+                .senderId(senderIdValue())
+                .receiverId(receiverIdValue())
+                .tokenId(tokenIdValue())
+                .timestamp(timestampValue())
+                .build();
+        assertNull(subject.amount());
+        assertNull(subject.serialNumber());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TokenAirdrop.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for senderId")
     void shouldRejectNullSenderId() {
         assertThrows(NullPointerException.class, () -> new TokenAirdrop((AccountId) null, receiverIdValue(), tokenIdValue(), amountValue(), serialNumberValue(), timestampValue()));

@@ -130,6 +130,81 @@ public final class FileCreateTransaction extends Transaction<FileCreateReceipt, 
         throw new UnsupportedOperationException("Not implemented yet: FileCreateTransaction.signForBatch");
     }
 
+    /// Returns a builder for a new `FileCreateTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `FileCreateTransaction`.
+    ///
+    /// `build()` creates the `FileCreateTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private byte[] contents = new byte[0];
+        private @Nullable Authority authority;
+        private @Nullable ZonedDateTime expirationTime;
+        private @Nullable String fileMemo;
+
+        private Builder() {
+            // created by FileCreateTransaction.builder()
+        }
+
+        /// Sets the `contents`.
+        ///
+        /// initial content; further bytes via FileAppend
+        ///
+        /// @param contents the value
+        /// @return this builder
+        public Builder contents(final byte[] contents) {
+            this.contents = contents;
+            return this;
+        }
+
+        /// Sets the `authority`.
+        ///
+        /// write-access authorization; an all-must-sign rule is an AuthorityList
+        ///
+        /// @param authority the value
+        /// @return this builder
+        public Builder authority(final @Nullable Authority authority) {
+            this.authority = authority;
+            return this;
+        }
+
+        /// Sets the `expirationTime`.
+        ///
+        /// when the file expires; SDK default if unset
+        ///
+        /// @param expirationTime the value
+        /// @return this builder
+        public Builder expirationTime(final @Nullable ZonedDateTime expirationTime) {
+            this.expirationTime = expirationTime;
+            return this;
+        }
+
+        /// Sets the `fileMemo`.
+        ///
+        /// short, human-readable label (max 100 chars)
+        ///
+        /// @param fileMemo the value
+        /// @return this builder
+        public Builder fileMemo(final @Nullable String fileMemo) {
+            this.fileMemo = fileMemo;
+            return this;
+        }
+
+        /// Creates the `FileCreateTransaction` of the values set.
+        ///
+        /// @return the new `FileCreateTransaction`
+        public FileCreateTransaction build() {
+            return new FileCreateTransaction(contents, authority, expirationTime, fileMemo);
+        }
+    }
+
     @Override
     public String toString() {
         return "FileCreateTransaction[maxTransactionFee=" + maxTransactionFee()

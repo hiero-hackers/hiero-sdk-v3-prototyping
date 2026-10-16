@@ -30,6 +30,42 @@ class AttachmentTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final byte[] content = contentValue();
+        final byte @Nullable [] checksum = checksumValue();
+        final double weight = weightValue();
+        final @Nullable Integer count = countValue();
+        final Attachment subject = Attachment.builder()
+                .content(content)
+                .checksum(checksum)
+                .weight(weight)
+                .count(count)
+                .build();
+        assertValue(content, subject.content());
+        assertValue(checksum, subject.checksum());
+        assertValue(weight, subject.weight());
+        assertValue(count, subject.count());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final Attachment subject = Attachment.builder()
+                .content(contentValue())
+                .weight(weightValue())
+                .build();
+        assertNull(subject.checksum());
+        assertNull(subject.count());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> Attachment.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for content")
     void shouldRejectNullContent() {
         assertThrows(NullPointerException.class, () -> new Attachment((byte[]) null, checksumValue(), weightValue(), countValue()));

@@ -58,6 +58,78 @@ class TopicTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Address topicId = topicIdValue();
+        final @Nullable Authority adminAuthority = adminAuthorityValue();
+        final @Nullable Authority submitAuthority = submitAuthorityValue();
+        final @Nullable Authority feeScheduleAuthority = feeScheduleAuthorityValue();
+        final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
+        final Duration autoRenewPeriod = autoRenewPeriodValue();
+        final ZonedDateTime createdTimestamp = createdTimestampValue();
+        final boolean deleted = deletedValue();
+        final String memo = memoValue();
+        final List<FixedFee> fixedFees = fixedFeesValue();
+        final List<Authority> feeExemptAuthorities = feeExemptAuthoritiesValue();
+        final ZonedDateTime fromTimestamp = fromTimestampValue();
+        final ZonedDateTime toTimestamp = toTimestampValue();
+        final Topic subject = Topic.builder()
+                .topicId(topicId)
+                .adminAuthority(adminAuthority)
+                .submitAuthority(submitAuthority)
+                .feeScheduleAuthority(feeScheduleAuthority)
+                .autoRenewAccount(autoRenewAccount)
+                .autoRenewPeriod(autoRenewPeriod)
+                .createdTimestamp(createdTimestamp)
+                .deleted(deleted)
+                .memo(memo)
+                .fixedFees(fixedFees)
+                .feeExemptAuthorities(feeExemptAuthorities)
+                .fromTimestamp(fromTimestamp)
+                .toTimestamp(toTimestamp)
+                .build();
+        assertValue(topicId, subject.topicId());
+        assertValue(adminAuthority, subject.adminAuthority());
+        assertValue(submitAuthority, subject.submitAuthority());
+        assertValue(feeScheduleAuthority, subject.feeScheduleAuthority());
+        assertValue(autoRenewAccount, subject.autoRenewAccount());
+        assertValue(autoRenewPeriod, subject.autoRenewPeriod());
+        assertValue(createdTimestamp, subject.createdTimestamp());
+        assertValue(deleted, subject.deleted());
+        assertValue(memo, subject.memo());
+        assertValue(fixedFees, subject.fixedFees());
+        assertValue(feeExemptAuthorities, subject.feeExemptAuthorities());
+        assertValue(fromTimestamp, subject.fromTimestamp());
+        assertValue(toTimestamp, subject.toTimestamp());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final Topic subject = Topic.builder()
+                .topicId(topicIdValue())
+                .autoRenewPeriod(autoRenewPeriodValue())
+                .createdTimestamp(createdTimestampValue())
+                .deleted(deletedValue())
+                .memo(memoValue())
+                .fixedFees(fixedFeesValue())
+                .feeExemptAuthorities(feeExemptAuthoritiesValue())
+                .fromTimestamp(fromTimestampValue())
+                .toTimestamp(toTimestampValue())
+                .build();
+        assertNull(subject.adminAuthority());
+        assertNull(subject.submitAuthority());
+        assertNull(subject.feeScheduleAuthority());
+        assertNull(subject.autoRenewAccount());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> Topic.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for topicId")
     void shouldRejectNullTopicId() {
         assertThrows(NullPointerException.class, () -> new Topic((Address) null, adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue()));

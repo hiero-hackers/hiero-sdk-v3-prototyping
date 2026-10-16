@@ -126,6 +126,63 @@ public final class AccountAllowanceApproveTransaction extends Transaction<Accoun
         throw new UnsupportedOperationException("Not implemented yet: AccountAllowanceApproveTransaction.signForBatch");
     }
 
+    /// Returns a builder for a new `AccountAllowanceApproveTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `AccountAllowanceApproveTransaction`.
+    ///
+    /// `build()` creates the `AccountAllowanceApproveTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private List<HbarAllowance> hbarAllowances = List.of();
+        private List<TokenAllowance> tokenAllowances = List.of();
+        private List<NftAllowance> nftAllowances = List.of();
+
+        private Builder() {
+            // created by AccountAllowanceApproveTransaction.builder()
+        }
+
+        /// Sets the `hbarAllowances`.
+        ///
+        /// @param hbarAllowances the value
+        /// @return this builder
+        public Builder hbarAllowances(final List<HbarAllowance> hbarAllowances) {
+            this.hbarAllowances = hbarAllowances;
+            return this;
+        }
+
+        /// Sets the `tokenAllowances`.
+        ///
+        /// @param tokenAllowances the value
+        /// @return this builder
+        public Builder tokenAllowances(final List<TokenAllowance> tokenAllowances) {
+            this.tokenAllowances = tokenAllowances;
+            return this;
+        }
+
+        /// Sets the `nftAllowances`.
+        ///
+        /// @param nftAllowances the value
+        /// @return this builder
+        public Builder nftAllowances(final List<NftAllowance> nftAllowances) {
+            this.nftAllowances = nftAllowances;
+            return this;
+        }
+
+        /// Creates the `AccountAllowanceApproveTransaction` of the values set.
+        ///
+        /// @return the new `AccountAllowanceApproveTransaction`
+        public AccountAllowanceApproveTransaction build() {
+            return new AccountAllowanceApproveTransaction(hbarAllowances, tokenAllowances, nftAllowances);
+        }
+    }
+
     @Override
     public String toString() {
         return "AccountAllowanceApproveTransaction[maxTransactionFee=" + maxTransactionFee()

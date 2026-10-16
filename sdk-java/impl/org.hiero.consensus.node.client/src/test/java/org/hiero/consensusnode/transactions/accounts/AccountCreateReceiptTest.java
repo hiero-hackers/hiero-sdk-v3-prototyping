@@ -42,6 +42,46 @@ class AccountCreateReceiptTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final TransactionId transactionId = transactionIdValue();
+        final TransactionStatus status = statusValue();
+        final ExchangeRate exchangeRate = exchangeRateValue();
+        final ExchangeRate nextExchangeRate = nextExchangeRateValue();
+        final AccountId accountId = accountIdValue();
+        final AccountCreateReceipt subject = AccountCreateReceipt.builder()
+                .transactionId(transactionId)
+                .status(status)
+                .exchangeRate(exchangeRate)
+                .nextExchangeRate(nextExchangeRate)
+                .accountId(accountId)
+                .build();
+        assertValue(transactionId, subject.transactionId());
+        assertValue(status, subject.status());
+        assertValue(exchangeRate, subject.exchangeRate());
+        assertValue(nextExchangeRate, subject.nextExchangeRate());
+        assertValue(accountId, subject.accountId());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final AccountCreateReceipt subject = AccountCreateReceipt.builder()
+                .transactionId(transactionIdValue())
+                .status(statusValue())
+                .exchangeRate(exchangeRateValue())
+                .nextExchangeRate(nextExchangeRateValue())
+                .accountId(accountIdValue())
+                .build();
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> AccountCreateReceipt.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for transactionId")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new AccountCreateReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue(), accountIdValue()));

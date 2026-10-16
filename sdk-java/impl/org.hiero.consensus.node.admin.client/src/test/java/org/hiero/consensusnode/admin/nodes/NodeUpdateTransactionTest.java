@@ -72,6 +72,66 @@ class NodeUpdateTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final long nodeId = nodeIdValue();
+        final @Nullable AccountId accountId = accountIdValue();
+        final @Nullable String description = descriptionValue();
+        final List<ServiceEndpoint> gossipEndpoints = gossipEndpointsValue();
+        final List<ServiceEndpoint> serviceEndpoints = serviceEndpointsValue();
+        final byte @Nullable [] gossipCaCertificate = gossipCaCertificateValue();
+        final byte @Nullable [] grpcCertificateHash = grpcCertificateHashValue();
+        final @Nullable Authority adminAuthority = adminAuthorityValue();
+        final @Nullable Boolean declineReward = declineRewardValue();
+        final @Nullable ServiceEndpoint grpcWebProxyEndpoint = grpcWebProxyEndpointValue();
+        final NodeUpdateTransaction subject = NodeUpdateTransaction.builder()
+                .nodeId(nodeId)
+                .accountId(accountId)
+                .description(description)
+                .gossipEndpoints(gossipEndpoints)
+                .serviceEndpoints(serviceEndpoints)
+                .gossipCaCertificate(gossipCaCertificate)
+                .grpcCertificateHash(grpcCertificateHash)
+                .adminAuthority(adminAuthority)
+                .declineReward(declineReward)
+                .grpcWebProxyEndpoint(grpcWebProxyEndpoint)
+                .build();
+        assertValue(nodeId, subject.nodeId());
+        assertValue(accountId, subject.accountId());
+        assertValue(description, subject.description());
+        assertValue(gossipEndpoints, subject.gossipEndpoints());
+        assertValue(serviceEndpoints, subject.serviceEndpoints());
+        assertValue(gossipCaCertificate, subject.gossipCaCertificate());
+        assertValue(grpcCertificateHash, subject.grpcCertificateHash());
+        assertValue(adminAuthority, subject.adminAuthority());
+        assertValue(declineReward, subject.declineReward());
+        assertValue(grpcWebProxyEndpoint, subject.grpcWebProxyEndpoint());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final NodeUpdateTransaction subject = NodeUpdateTransaction.builder()
+                .nodeId(nodeIdValue())
+                .build();
+        assertNull(subject.accountId());
+        assertNull(subject.description());
+        assertValue(List.of(), subject.gossipEndpoints());
+        assertValue(List.of(), subject.serviceEndpoints());
+        assertNull(subject.gossipCaCertificate());
+        assertNull(subject.grpcCertificateHash());
+        assertNull(subject.adminAuthority());
+        assertNull(subject.declineReward());
+        assertNull(subject.grpcWebProxyEndpoint());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> NodeUpdateTransaction.builder().build());
+    }
+
+    @Test
     @DisplayName("nodeId: accepts the minimum (-9223372036854775808)")
     void shouldAcceptNodeIdAtMinimum() {
         final long value = -9223372036854775808L;
@@ -267,11 +327,11 @@ class NodeUpdateTransactionTest {
     }
 
     private static List<ServiceEndpoint> gossipEndpointsValue() {
-        return List.of(new ServiceEndpoint(null, null, 1));
+        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
     }
 
     private static List<ServiceEndpoint> serviceEndpointsValue() {
-        return List.of(new ServiceEndpoint(null, null, 1));
+        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
     }
 
     private static byte[] gossipCaCertificateValue() {
@@ -291,7 +351,7 @@ class NodeUpdateTransactionTest {
     }
 
     private static ServiceEndpoint grpcWebProxyEndpointValue() {
-        return new ServiceEndpoint(null, null, 1);
+        return new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1);
     }
 
     private static NodeUpdateTransaction create() {

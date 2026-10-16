@@ -170,6 +170,152 @@ public final class AccountUpdateTransaction extends Transaction<AccountUpdateRec
         throw new UnsupportedOperationException("Not implemented yet: AccountUpdateTransaction.signForBatch");
     }
 
+    /// Returns a builder for a new `AccountUpdateTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `AccountUpdateTransaction`.
+    ///
+    /// `build()` creates the `AccountUpdateTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable AccountId accountId;
+        private @Nullable Authority authority;
+        private @Nullable String accountMemo;
+        private @Nullable Boolean receiverSignatureRequired;
+        private @Nullable Integer maxAutomaticTokenAssociations;
+        private @Nullable Duration autoRenewPeriod;
+        private @Nullable ZonedDateTime expirationTime;
+        private @Nullable AccountId stakedAccountId;
+        private @Nullable Long stakedNodeId;
+        private @Nullable Boolean declineStakingReward;
+
+        private Builder() {
+            // created by AccountUpdateTransaction.builder()
+        }
+
+        /// Sets the `accountId`.
+        ///
+        /// the account that is being updated
+        ///
+        /// @param accountId the value
+        /// @return this builder
+        public Builder accountId(final AccountId accountId) {
+            this.accountId = accountId;
+            return this;
+        }
+
+        /// Sets the `authority`.
+        ///
+        /// the new key (requires signatures with both old and new keys)
+        ///
+        /// @param authority the value
+        /// @return this builder
+        public Builder authority(final @Nullable Authority authority) {
+            this.authority = authority;
+            return this;
+        }
+
+        /// Sets the `accountMemo`.
+        ///
+        /// @param accountMemo the value
+        /// @return this builder
+        public Builder accountMemo(final @Nullable String accountMemo) {
+            this.accountMemo = accountMemo;
+            return this;
+        }
+
+        /// Sets the `receiverSignatureRequired`.
+        ///
+        /// @param receiverSignatureRequired the value
+        /// @return this builder
+        public Builder receiverSignatureRequired(final @Nullable Boolean receiverSignatureRequired) {
+            this.receiverSignatureRequired = receiverSignatureRequired;
+            return this;
+        }
+
+        /// Sets the `maxAutomaticTokenAssociations`.
+        ///
+        /// @param maxAutomaticTokenAssociations the value
+        /// @return this builder
+        public Builder maxAutomaticTokenAssociations(final @Nullable Integer maxAutomaticTokenAssociations) {
+            this.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations;
+            return this;
+        }
+
+        /// Sets the `autoRenewPeriod`.
+        ///
+        /// @param autoRenewPeriod the value
+        /// @return this builder
+        public Builder autoRenewPeriod(final @Nullable Duration autoRenewPeriod) {
+            this.autoRenewPeriod = autoRenewPeriod;
+            return this;
+        }
+
+        /// Sets the `expirationTime`.
+        ///
+        /// @param expirationTime the value
+        /// @return this builder
+        public Builder expirationTime(final @Nullable ZonedDateTime expirationTime) {
+            this.expirationTime = expirationTime;
+            return this;
+        }
+
+        /// Sets the `stakedAccountId`.
+        ///
+        /// mutually exclusive with stakedNodeId
+        ///
+        /// @param stakedAccountId the value
+        /// @return this builder
+        public Builder stakedAccountId(final @Nullable AccountId stakedAccountId) {
+            this.stakedAccountId = stakedAccountId;
+            return this;
+        }
+
+        /// Sets the `stakedNodeId`.
+        ///
+        /// mutually exclusive with stakedAccountId
+        ///
+        /// @param stakedNodeId the value
+        /// @return this builder
+        public Builder stakedNodeId(final @Nullable Long stakedNodeId) {
+            this.stakedNodeId = stakedNodeId;
+            return this;
+        }
+
+        /// Sets the `declineStakingReward`.
+        ///
+        /// @param declineStakingReward the value
+        /// @return this builder
+        public Builder declineStakingReward(final @Nullable Boolean declineStakingReward) {
+            this.declineStakingReward = declineStakingReward;
+            return this;
+        }
+
+        /// Creates the `AccountUpdateTransaction` of the values set.
+        ///
+        /// @return the new `AccountUpdateTransaction`
+        /// @throws NullPointerException if a required value is not set
+        public AccountUpdateTransaction build() {
+            return new AccountUpdateTransaction(
+                    Objects.requireNonNull(accountId, "accountId must not be null"),
+                    authority,
+                    accountMemo,
+                    receiverSignatureRequired,
+                    maxAutomaticTokenAssociations,
+                    autoRenewPeriod,
+                    expirationTime,
+                    stakedAccountId,
+                    stakedNodeId,
+                    declineStakingReward);
+        }
+    }
+
     @Override
     public String toString() {
         return "AccountUpdateTransaction[maxTransactionFee=" + maxTransactionFee()

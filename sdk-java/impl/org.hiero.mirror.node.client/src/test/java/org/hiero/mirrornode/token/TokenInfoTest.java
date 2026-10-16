@@ -61,6 +61,94 @@ class TokenInfoTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Address tokenId = tokenIdValue();
+        final TokenType type = typeValue();
+        final String name = nameValue();
+        final String symbol = symbolValue();
+        final @Nullable String memo = memoValue();
+        final long decimals = decimalsValue();
+        final byte[] metadata = metadataValue();
+        final ZonedDateTime createdTimestamp = createdTimestampValue();
+        final ZonedDateTime modifiedTimestamp = modifiedTimestampValue();
+        final @Nullable ZonedDateTime expiryTimestamp = expiryTimestampValue();
+        final TokenSupplyType supplyType = supplyTypeValue();
+        final BigInteger initialSupply = initialSupplyValue();
+        final BigInteger totalSupply = totalSupplyValue();
+        final BigInteger maxSupply = maxSupplyValue();
+        final AccountId treasuryAccountId = treasuryAccountIdValue();
+        final boolean deleted = deletedValue();
+        final CustomFee customFees = customFeesValue();
+        final TokenInfo subject = TokenInfo.builder()
+                .tokenId(tokenId)
+                .type(type)
+                .name(name)
+                .symbol(symbol)
+                .memo(memo)
+                .decimals(decimals)
+                .metadata(metadata)
+                .createdTimestamp(createdTimestamp)
+                .modifiedTimestamp(modifiedTimestamp)
+                .expiryTimestamp(expiryTimestamp)
+                .supplyType(supplyType)
+                .initialSupply(initialSupply)
+                .totalSupply(totalSupply)
+                .maxSupply(maxSupply)
+                .treasuryAccountId(treasuryAccountId)
+                .deleted(deleted)
+                .customFees(customFees)
+                .build();
+        assertValue(tokenId, subject.tokenId());
+        assertValue(type, subject.type());
+        assertValue(name, subject.name());
+        assertValue(symbol, subject.symbol());
+        assertValue(memo, subject.memo());
+        assertValue(decimals, subject.decimals());
+        assertValue(metadata, subject.metadata());
+        assertValue(createdTimestamp, subject.createdTimestamp());
+        assertValue(modifiedTimestamp, subject.modifiedTimestamp());
+        assertValue(expiryTimestamp, subject.expiryTimestamp());
+        assertValue(supplyType, subject.supplyType());
+        assertValue(initialSupply, subject.initialSupply());
+        assertValue(totalSupply, subject.totalSupply());
+        assertValue(maxSupply, subject.maxSupply());
+        assertValue(treasuryAccountId, subject.treasuryAccountId());
+        assertValue(deleted, subject.deleted());
+        assertValue(customFees, subject.customFees());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TokenInfo subject = TokenInfo.builder()
+                .tokenId(tokenIdValue())
+                .type(typeValue())
+                .name(nameValue())
+                .symbol(symbolValue())
+                .decimals(decimalsValue())
+                .metadata(metadataValue())
+                .createdTimestamp(createdTimestampValue())
+                .modifiedTimestamp(modifiedTimestampValue())
+                .supplyType(supplyTypeValue())
+                .initialSupply(initialSupplyValue())
+                .totalSupply(totalSupplyValue())
+                .maxSupply(maxSupplyValue())
+                .treasuryAccountId(treasuryAccountIdValue())
+                .deleted(deletedValue())
+                .customFees(customFeesValue())
+                .build();
+        assertNull(subject.memo());
+        assertNull(subject.expiryTimestamp());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TokenInfo.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for tokenId")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenInfo((Address) null, typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));

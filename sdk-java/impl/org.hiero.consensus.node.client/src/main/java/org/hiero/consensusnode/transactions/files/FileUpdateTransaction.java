@@ -134,6 +134,97 @@ public final class FileUpdateTransaction extends Transaction<FileUpdateReceipt, 
         throw new UnsupportedOperationException("Not implemented yet: FileUpdateTransaction.signForBatch");
     }
 
+    /// Returns a builder for a new `FileUpdateTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `FileUpdateTransaction`.
+    ///
+    /// `build()` creates the `FileUpdateTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Address fileId;
+        private byte @Nullable [] contents;
+        private @Nullable Authority authority;
+        private @Nullable ZonedDateTime expirationTime;
+        private @Nullable String fileMemo;
+
+        private Builder() {
+            // created by FileUpdateTransaction.builder()
+        }
+
+        /// Sets the `fileId`.
+        ///
+        /// @param fileId the value
+        /// @return this builder
+        public Builder fileId(final Address fileId) {
+            this.fileId = fileId;
+            return this;
+        }
+
+        /// Sets the `contents`.
+        ///
+        /// when set, replaces the entire file contents
+        ///
+        /// @param contents the value
+        /// @return this builder
+        public Builder contents(final byte @Nullable [] contents) {
+            this.contents = contents;
+            return this;
+        }
+
+        /// Sets the `authority`.
+        ///
+        /// write-access authorization; an all-must-sign rule is an AuthorityList
+        ///
+        /// @param authority the value
+        /// @return this builder
+        public Builder authority(final @Nullable Authority authority) {
+            this.authority = authority;
+            return this;
+        }
+
+        /// Sets the `expirationTime`.
+        ///
+        /// when set, extends (or sets) the expiration time
+        ///
+        /// @param expirationTime the value
+        /// @return this builder
+        public Builder expirationTime(final @Nullable ZonedDateTime expirationTime) {
+            this.expirationTime = expirationTime;
+            return this;
+        }
+
+        /// Sets the `fileMemo`.
+        ///
+        /// when set, replaces the memo
+        ///
+        /// @param fileMemo the value
+        /// @return this builder
+        public Builder fileMemo(final @Nullable String fileMemo) {
+            this.fileMemo = fileMemo;
+            return this;
+        }
+
+        /// Creates the `FileUpdateTransaction` of the values set.
+        ///
+        /// @return the new `FileUpdateTransaction`
+        /// @throws NullPointerException if a required value is not set
+        public FileUpdateTransaction build() {
+            return new FileUpdateTransaction(
+                    Objects.requireNonNull(fileId, "fileId must not be null"),
+                    contents,
+                    authority,
+                    expirationTime,
+                    fileMemo);
+        }
+    }
+
     @Override
     public String toString() {
         return "FileUpdateTransaction[maxTransactionFee=" + maxTransactionFee()

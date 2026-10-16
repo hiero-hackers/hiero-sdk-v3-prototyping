@@ -60,6 +60,32 @@ class AccountAllowanceApproveTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final List<HbarAllowance> hbarAllowances = hbarAllowancesValue();
+        final List<TokenAllowance> tokenAllowances = tokenAllowancesValue();
+        final List<NftAllowance> nftAllowances = nftAllowancesValue();
+        final AccountAllowanceApproveTransaction subject = AccountAllowanceApproveTransaction.builder()
+                .hbarAllowances(hbarAllowances)
+                .tokenAllowances(tokenAllowances)
+                .nftAllowances(nftAllowances)
+                .build();
+        assertValue(hbarAllowances, subject.hbarAllowances());
+        assertValue(tokenAllowances, subject.tokenAllowances());
+        assertValue(nftAllowances, subject.nftAllowances());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final AccountAllowanceApproveTransaction subject = AccountAllowanceApproveTransaction.builder()
+                .build();
+        assertValue(List.of(), subject.hbarAllowances());
+        assertValue(List.of(), subject.tokenAllowances());
+        assertValue(List.of(), subject.nftAllowances());
+    }
+
+    @Test
     @DisplayName("rejects null for hbarAllowances")
     void shouldRejectNullHbarAllowances() {
         assertThrows(NullPointerException.class, () -> new AccountAllowanceApproveTransaction((List<HbarAllowance>) null, tokenAllowancesValue(), nftAllowancesValue()));

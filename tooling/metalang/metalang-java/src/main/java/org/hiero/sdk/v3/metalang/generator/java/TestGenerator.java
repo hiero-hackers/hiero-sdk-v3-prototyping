@@ -269,6 +269,30 @@ public final class TestGenerator {
                 }
                 arguments.add(helper.map(h -> h + "()").orElseGet(() -> nullOf(parameter)));
             }
+            // @@oneOf and @@oneOrNoneOf: the first attribute of a group that has a value is set, the others are null
+            final List<String> values = new ArrayList<>(arguments);
+            final Set<String> kept = new HashSet<>();
+            for (final JavaOneOf.Group group : JavaOneOf.checked(type)) {
+                boolean chosen = false;
+                for (final String name : group.fields()) {
+                    for (int i = 0; i < parameters.size(); i++) {
+                        if (parameters.get(i).name().equals(name)) {
+                            if (!chosen && !arguments.get(i).equals(nullOf(parameters.get(i)))) {
+                                chosen = true;
+                                kept.add(name);
+                            } else {
+                                arguments.set(i, nullOf(parameters.get(i)));
+                            }
+                        }
+                    }
+                }
+                if (group.exactlyOne() && !chosen) {
+                    notes.add("no valid value for any of " + String.join(", ", group.fields()) + " of "
+                            + type.name().name() + ": constructor, attribute and method tests");
+                    staticMethodTests(type);
+                    return true;
+                }
+            }
             helpers.put("create", INDENT + "private static " + typeName + " create() {\n" + INDENT + INDENT
                     + "return " + constructor + "(" + String.join(", ", arguments) + ");\n" + INDENT + "}\n");
 
@@ -294,12 +318,15 @@ public final class TestGenerator {
             }
             test("shouldCreateAndReturnTheValues", "creates " + article(type.name().name())
                     + " and returns the values", "", create.toString());
-            defaultConstructorTest(type, parameters, definitions, constructor, typeName);
+            defaultConstructorTest(type, parameters, arguments, definitions, constructor, typeName);
+            if (BuilderGenerator.hasBuilder(type, samples.constructorParameters(type), context)) {
+                builderTests(type, parameters, arguments, definitions, rawName, typeName, kept);
+            }
             for (int i = 0; i < parameters.size(); i++) {
                 final Input parameter = parameters.get(i);
                 final int index = i;
                 final java.util.function.Function<String, String> call = value -> constructor + "("
-                        + replace(arguments, index, value) + ")";
+                        + exclusive(type, parameters, arguments, index, value) + ")";
                 if (!parameter.nullable() && !JavaTypes.isPrimitive(parameter.declaration())) {
                     test("shouldRejectNull" + parameter.capitalized(), "rejects null for " + parameter.name(), "",
                             INDENT + INDENT
@@ -321,8 +348,40 @@ public final class TestGenerator {
                                 + call.apply(c.expression()) + ");\n");
                     }
                 }
-                copyTest(parameter, arguments.get(i), "In", local -> call.apply(local), "subject."
+                // the value of the attribute, also of one that create() leaves null for its group
+                copyTest(parameter, values.get(i), "In", local -> call.apply(local), "subject."
                         + parameter.identifier() + "()", typeName);
+            }
+
+            // @@oneOf and @@oneOrNoneOf: two attributes of a group are rejected, none only for @@oneOf
+            for (final JavaOneOf.Group group : JavaOneOf.checked(type)) {
+                final List<Integer> members = new ArrayList<>();
+                for (int i = 0; i < parameters.size(); i++) {
+                    if (group.fields().contains(parameters.get(i).name())) {
+                        members.add(i);
+                    }
+                }
+                final String label = group.fields().stream().map(f -> capitalize(f))
+                        .collect(java.util.stream.Collectors.joining("Or"));
+                final List<Integer> withValue = members.stream()
+                        .filter(i -> !values.get(i).equals(nullOf(parameters.get(i)))).toList();
+                if (withValue.size() >= 2) {
+                    final List<String> two = new ArrayList<>(arguments);
+                    two.set(withValue.get(0), values.get(withValue.get(0)));
+                    two.set(withValue.get(1), values.get(withValue.get(1)));
+                    test("shouldRejectTwoOf" + label, "rejects " + parameters.get(withValue.get(0)).name() + " and "
+                            + parameters.get(withValue.get(1)).name() + " together (" + (group.exactlyOne()
+                            ? "@@oneOf" : "@@oneOrNoneOf") + ")", "", INDENT + INDENT
+                            + "assertThrows(IllegalArgumentException.class, () -> " + constructor + "("
+                            + String.join(", ", two) + "));\n");
+                }
+                if (group.exactlyOne()) {
+                    final List<String> none = new ArrayList<>(arguments);
+                    members.forEach(i -> none.set(i, nullOf(parameters.get(i))));
+                    test("shouldRejectNoneOf" + label, "rejects none of " + String.join(", ", group.fields())
+                            + " (@@oneOf)", "", INDENT + INDENT + "assertThrows(IllegalArgumentException.class, () -> "
+                            + constructor + "(" + String.join(", ", none) + "));\n");
+                }
             }
 
             // setters of the mutable attributes
@@ -372,21 +431,18 @@ public final class TestGenerator {
         }
 
         private void defaultConstructorTest(final TypeDefinition.ComplexTypeDefinition type,
-                                            final List<Input> parameters,
+                                            final List<Input> parameters, final List<String> values,
                                             final Map<String, FieldDefinition> definitions, final String constructor,
                                             final String typeName) {
-            final List<Input> required = parameters.stream()
-                    .filter(p -> !definitions.get(p.name()).hasAnnotation("default")).toList();
-            if (required.size() == parameters.size()) {
+            if (parameters.stream().noneMatch(p -> definitions.get(p.name()).hasAnnotation("default"))) {
                 return;
             }
+            // the values of create(), which respect the @@oneOf and @@oneOrNoneOf groups, without the defaults
             final List<String> arguments = new ArrayList<>();
-            for (final Input parameter : required) {
-                final Optional<String> helper = helper(parameter, 0, true);
-                if (helper.isEmpty() && !parameter.nullable()) {
-                    return;
+            for (int i = 0; i < parameters.size(); i++) {
+                if (!definitions.get(parameters.get(i).name()).hasAnnotation("default")) {
+                    arguments.add(values.get(i));
                 }
-                arguments.add(helper.map(h -> h + "()").orElseGet(() -> nullOf(parameter)));
             }
             final StringBuilder body = new StringBuilder(INDENT + INDENT + "final " + typeName + " subject = "
                     + constructor + "(" + String.join(", ", arguments) + ");\n");
@@ -399,6 +455,67 @@ public final class TestGenerator {
             }
             test("shouldCreateWithTheDefaultValues", "creates " + article(type.name().name())
                     + " with the default values", "", body.toString());
+        }
+
+        /**
+         * The tests of the builder: it builds the values of the constructor, a value that is not set is {@code null} or
+         * its default value, and a required value that is not set is rejected.
+         */
+        private void builderTests(final TypeDefinition.ComplexTypeDefinition type, final List<Input> parameters,
+                                  final List<String> arguments, final Map<String, FieldDefinition> definitions,
+                                  final String rawName, final String typeName, final Set<String> kept) {
+            final String builder = rawName + "." + (typeName.contains("<") ? typeName.substring(typeName.indexOf('<'))
+                    : "") + "builder()";
+            final StringBuilder all = new StringBuilder();
+            final List<String> locals = new ArrayList<>();
+            for (int i = 0; i < parameters.size(); i++) {
+                final String local = local(parameters.get(i).identifier());
+                all.append(INDENT).append(INDENT).append("final ").append(parameters.get(i).declaration()).append(' ')
+                        .append(local).append(" = ").append(arguments.get(i)).append(";\n");
+                locals.add(local);
+            }
+            all.append(INDENT).append(INDENT).append("final ").append(typeName).append(" subject = ").append(builder);
+            for (int i = 0; i < parameters.size(); i++) {
+                all.append("\n").append(INDENT.repeat(4)).append('.').append(parameters.get(i).identifier())
+                        .append('(').append(locals.get(i)).append(')');
+            }
+            all.append("\n").append(INDENT.repeat(4)).append(".build();\n");
+            for (int i = 0; i < parameters.size(); i++) {
+                all.append(assertValue(locals.get(i), "subject." + parameters.get(i).identifier() + "()"));
+            }
+            test("shouldBuildTheValuesOfTheConstructor", "the builder builds the values of the constructor", "",
+                    all.toString());
+
+            // only the required values
+            final StringBuilder required = new StringBuilder(INDENT + INDENT + "final " + typeName + " subject = "
+                    + builder);
+            boolean anyRequired = false;
+            for (int i = 0; i < parameters.size(); i++) {
+                final boolean optional = BuilderGenerator.optional(definitions.get(parameters.get(i).name()));
+                anyRequired |= !optional;
+                // the attribute of a @@oneOf group that is set (the value is not optional then)
+                if (!optional || kept.contains(parameters.get(i).name())) {
+                    required.append("\n").append(INDENT.repeat(4)).append('.').append(parameters.get(i).identifier())
+                            .append('(').append(arguments.get(i)).append(')');
+                }
+            }
+            required.append("\n").append(INDENT.repeat(4)).append(".build();\n");
+            for (int i = 0; i < parameters.size(); i++) {
+                final Input parameter = parameters.get(i);
+                final FieldDefinition definition = definitions.get(parameter.name());
+                if (kept.contains(parameter.name())) {
+                    required.append(assertValue(arguments.get(i), "subject." + parameter.identifier() + "()"));
+                } else if (BuilderGenerator.optional(definition)) {
+                    required.append(initialValue(definition, parameter));
+                }
+            }
+            test("shouldBuildWithoutTheOptionalValues", "a value that is not set is null or its default value", "",
+                    required.toString());
+            if (anyRequired) {
+                test("shouldRejectAMissingRequiredValue", "the builder rejects a missing required value", "",
+                        INDENT + INDENT + "assertThrows(NullPointerException.class, () -> " + builder
+                                + ".build());\n");
+            }
         }
 
         /** The assertion of the initial value of an attribute that the constructor does not take. */
@@ -1005,6 +1122,29 @@ public final class TestGenerator {
                 case "subject", "value", "expected", "other", "returned" -> identifier + "Argument";
                 default -> identifier;
             };
+        }
+
+        /**
+         * The arguments with one replaced; a value (not {@code null}) for an attribute of a {@code @@oneOf} or
+         * {@code @@oneOrNoneOf} group makes the other attributes of the group {@code null}.
+         */
+        private String exclusive(final TypeDefinition.ComplexTypeDefinition type, final List<Input> parameters,
+                                 final List<String> arguments, final int index, final String value) {
+            final List<String> result = new ArrayList<>(arguments);
+            result.set(index, value);
+            final Input parameter = parameters.get(index);
+            if (!value.equals(nullOf(parameter))) {
+                for (final JavaOneOf.Group group : JavaOneOf.checked(type)) {
+                    if (group.fields().contains(parameter.name())) {
+                        for (int i = 0; i < parameters.size(); i++) {
+                            if (i != index && group.fields().contains(parameters.get(i).name())) {
+                                result.set(i, nullOf(parameters.get(i)));
+                            }
+                        }
+                    }
+                }
+            }
+            return String.join(", ", result);
         }
 
         private static String replace(final List<String> arguments, final int index, final String value) {

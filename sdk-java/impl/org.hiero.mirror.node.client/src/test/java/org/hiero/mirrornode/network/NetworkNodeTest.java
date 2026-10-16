@@ -54,6 +54,62 @@ class NetworkNodeTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final long nodeId = nodeIdValue();
+        final AccountId accountId = accountIdValue();
+        final @Nullable String description = descriptionValue();
+        final @Nullable String publicKey = publicKeyValue();
+        final @Nullable String nodeCertHash = nodeCertHashValue();
+        final List<ServiceEndpoint> serviceEndpoints = serviceEndpointsValue();
+        final @Nullable Authority adminKey = adminKeyValue();
+        final long stake = stakeValue();
+        final @Nullable ZonedDateTime timestamp = timestampValue();
+        final NetworkNode subject = NetworkNode.builder()
+                .nodeId(nodeId)
+                .accountId(accountId)
+                .description(description)
+                .publicKey(publicKey)
+                .nodeCertHash(nodeCertHash)
+                .serviceEndpoints(serviceEndpoints)
+                .adminKey(adminKey)
+                .stake(stake)
+                .timestamp(timestamp)
+                .build();
+        assertValue(nodeId, subject.nodeId());
+        assertValue(accountId, subject.accountId());
+        assertValue(description, subject.description());
+        assertValue(publicKey, subject.publicKey());
+        assertValue(nodeCertHash, subject.nodeCertHash());
+        assertValue(serviceEndpoints, subject.serviceEndpoints());
+        assertValue(adminKey, subject.adminKey());
+        assertValue(stake, subject.stake());
+        assertValue(timestamp, subject.timestamp());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final NetworkNode subject = NetworkNode.builder()
+                .nodeId(nodeIdValue())
+                .accountId(accountIdValue())
+                .stake(stakeValue())
+                .build();
+        assertNull(subject.description());
+        assertNull(subject.publicKey());
+        assertNull(subject.nodeCertHash());
+        assertValue(List.of(), subject.serviceEndpoints());
+        assertNull(subject.adminKey());
+        assertNull(subject.timestamp());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> NetworkNode.builder().build());
+    }
+
+    @Test
     @DisplayName("nodeId: accepts the minimum (-9223372036854775808)")
     void shouldAcceptNodeIdAtMinimum() {
         final long value = -9223372036854775808L;

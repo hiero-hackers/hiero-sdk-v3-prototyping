@@ -59,6 +59,36 @@ class FileCreateTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final byte[] contents = contentsValue();
+        final @Nullable Authority authority = authorityValue();
+        final @Nullable ZonedDateTime expirationTime = expirationTimeValue();
+        final @Nullable String fileMemo = fileMemoValue();
+        final FileCreateTransaction subject = FileCreateTransaction.builder()
+                .contents(contents)
+                .authority(authority)
+                .expirationTime(expirationTime)
+                .fileMemo(fileMemo)
+                .build();
+        assertValue(contents, subject.contents());
+        assertValue(authority, subject.authority());
+        assertValue(expirationTime, subject.expirationTime());
+        assertValue(fileMemo, subject.fileMemo());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final FileCreateTransaction subject = FileCreateTransaction.builder()
+                .build();
+        assertValue(new byte[0], subject.contents());
+        assertNull(subject.authority());
+        assertNull(subject.expirationTime());
+        assertNull(subject.fileMemo());
+    }
+
+    @Test
     @DisplayName("rejects null for contents")
     void shouldRejectNullContents() {
         assertThrows(NullPointerException.class, () -> new FileCreateTransaction((byte[]) null, authorityValue(), expirationTimeValue(), fileMemoValue()));

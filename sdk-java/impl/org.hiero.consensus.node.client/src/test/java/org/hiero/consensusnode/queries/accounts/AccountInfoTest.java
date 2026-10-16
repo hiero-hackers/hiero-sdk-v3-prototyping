@@ -70,6 +70,82 @@ class AccountInfoTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final AccountId accountId = accountIdValue();
+        final @Nullable EvmAddress evmAddress = evmAddressValue();
+        final NativeToken<?, ?> balance = balanceValue();
+        final @Nullable Authority authority = authorityValue();
+        final @Nullable String accountMemo = accountMemoValue();
+        final ZonedDateTime expirationTime = expirationTimeValue();
+        final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
+        final int maxAutomaticTokenAssociations = maxAutomaticTokenAssociationsValue();
+        final boolean receiverSignatureRequired = receiverSignatureRequiredValue();
+        final long ownedNfts = ownedNftsValue();
+        final boolean deleted = deletedValue();
+        final @Nullable AccountId stakedAccountId = stakedAccountIdValue();
+        final @Nullable Long stakedNodeId = stakedNodeIdValue();
+        final boolean declineStakingReward = declineStakingRewardValue();
+        final AccountInfo subject = AccountInfo.builder()
+                .accountId(accountId)
+                .evmAddress(evmAddress)
+                .balance(balance)
+                .authority(authority)
+                .accountMemo(accountMemo)
+                .expirationTime(expirationTime)
+                .autoRenewPeriod(autoRenewPeriod)
+                .maxAutomaticTokenAssociations(maxAutomaticTokenAssociations)
+                .receiverSignatureRequired(receiverSignatureRequired)
+                .ownedNfts(ownedNfts)
+                .deleted(deleted)
+                .stakedAccountId(stakedAccountId)
+                .stakedNodeId(stakedNodeId)
+                .declineStakingReward(declineStakingReward)
+                .build();
+        assertValue(accountId, subject.accountId());
+        assertValue(evmAddress, subject.evmAddress());
+        assertValue(balance, subject.balance());
+        assertValue(authority, subject.authority());
+        assertValue(accountMemo, subject.accountMemo());
+        assertValue(expirationTime, subject.expirationTime());
+        assertValue(autoRenewPeriod, subject.autoRenewPeriod());
+        assertValue(maxAutomaticTokenAssociations, subject.maxAutomaticTokenAssociations());
+        assertValue(receiverSignatureRequired, subject.receiverSignatureRequired());
+        assertValue(ownedNfts, subject.ownedNfts());
+        assertValue(deleted, subject.deleted());
+        assertValue(stakedAccountId, subject.stakedAccountId());
+        assertValue(stakedNodeId, subject.stakedNodeId());
+        assertValue(declineStakingReward, subject.declineStakingReward());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final AccountInfo subject = AccountInfo.builder()
+                .accountId(accountIdValue())
+                .balance(balanceValue())
+                .expirationTime(expirationTimeValue())
+                .build();
+        assertNull(subject.evmAddress());
+        assertNull(subject.authority());
+        assertNull(subject.accountMemo());
+        assertNull(subject.autoRenewPeriod());
+        assertValue(0, subject.maxAutomaticTokenAssociations());
+        assertValue(false, subject.receiverSignatureRequired());
+        assertValue(0L, subject.ownedNfts());
+        assertValue(false, subject.deleted());
+        assertNull(subject.stakedAccountId());
+        assertNull(subject.stakedNodeId());
+        assertValue(false, subject.declineStakingReward());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> AccountInfo.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for accountId")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new AccountInfo((AccountId) null, evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue()));

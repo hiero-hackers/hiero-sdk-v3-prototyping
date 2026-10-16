@@ -67,6 +67,102 @@ class ContractTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final ContractId contractId = contractIdValue();
+        final @Nullable Authority adminAuthority = adminAuthorityValue();
+        final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
+        final Duration autoRenewPeriod = autoRenewPeriodValue();
+        final ZonedDateTime createdTimestamp = createdTimestampValue();
+        final boolean deleted = deletedValue();
+        final @Nullable ZonedDateTime expirationTimestamp = expirationTimestampValue();
+        final @Nullable String fileId = fileIdValue();
+        final @Nullable EvmAddress evmAddress = evmAddressValue();
+        final @Nullable String memo = memoValue();
+        final @Nullable Integer maxAutomaticTokenAssociations = maxAutomaticTokenAssociationsValue();
+        final @Nullable Long nonce = nonceValue();
+        final @Nullable String obtainerId = obtainerIdValue();
+        final boolean permanentRemoval = permanentRemovalValue();
+        final @Nullable String proxyAccountId = proxyAccountIdValue();
+        final ZonedDateTime fromTimestamp = fromTimestampValue();
+        final ZonedDateTime toTimestamp = toTimestampValue();
+        final @Nullable String bytecode = bytecodeValue();
+        final @Nullable String runtimeBytecode = runtimeBytecodeValue();
+        final Contract subject = Contract.builder()
+                .contractId(contractId)
+                .adminAuthority(adminAuthority)
+                .autoRenewAccount(autoRenewAccount)
+                .autoRenewPeriod(autoRenewPeriod)
+                .createdTimestamp(createdTimestamp)
+                .deleted(deleted)
+                .expirationTimestamp(expirationTimestamp)
+                .fileId(fileId)
+                .evmAddress(evmAddress)
+                .memo(memo)
+                .maxAutomaticTokenAssociations(maxAutomaticTokenAssociations)
+                .nonce(nonce)
+                .obtainerId(obtainerId)
+                .permanentRemoval(permanentRemoval)
+                .proxyAccountId(proxyAccountId)
+                .fromTimestamp(fromTimestamp)
+                .toTimestamp(toTimestamp)
+                .bytecode(bytecode)
+                .runtimeBytecode(runtimeBytecode)
+                .build();
+        assertValue(contractId, subject.contractId());
+        assertValue(adminAuthority, subject.adminAuthority());
+        assertValue(autoRenewAccount, subject.autoRenewAccount());
+        assertValue(autoRenewPeriod, subject.autoRenewPeriod());
+        assertValue(createdTimestamp, subject.createdTimestamp());
+        assertValue(deleted, subject.deleted());
+        assertValue(expirationTimestamp, subject.expirationTimestamp());
+        assertValue(fileId, subject.fileId());
+        assertValue(evmAddress, subject.evmAddress());
+        assertValue(memo, subject.memo());
+        assertValue(maxAutomaticTokenAssociations, subject.maxAutomaticTokenAssociations());
+        assertValue(nonce, subject.nonce());
+        assertValue(obtainerId, subject.obtainerId());
+        assertValue(permanentRemoval, subject.permanentRemoval());
+        assertValue(proxyAccountId, subject.proxyAccountId());
+        assertValue(fromTimestamp, subject.fromTimestamp());
+        assertValue(toTimestamp, subject.toTimestamp());
+        assertValue(bytecode, subject.bytecode());
+        assertValue(runtimeBytecode, subject.runtimeBytecode());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final Contract subject = Contract.builder()
+                .contractId(contractIdValue())
+                .autoRenewPeriod(autoRenewPeriodValue())
+                .createdTimestamp(createdTimestampValue())
+                .deleted(deletedValue())
+                .permanentRemoval(permanentRemovalValue())
+                .fromTimestamp(fromTimestampValue())
+                .toTimestamp(toTimestampValue())
+                .build();
+        assertNull(subject.adminAuthority());
+        assertNull(subject.autoRenewAccount());
+        assertNull(subject.expirationTimestamp());
+        assertNull(subject.fileId());
+        assertNull(subject.evmAddress());
+        assertNull(subject.memo());
+        assertNull(subject.maxAutomaticTokenAssociations());
+        assertNull(subject.nonce());
+        assertNull(subject.obtainerId());
+        assertNull(subject.proxyAccountId());
+        assertNull(subject.bytecode());
+        assertNull(subject.runtimeBytecode());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> Contract.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for contractId")
     void shouldRejectNullContractId() {
         assertThrows(NullPointerException.class, () -> new Contract((ContractId) null, adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue()));

@@ -52,6 +52,40 @@ class TopicCreateTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final @Nullable Authority adminAuthority = adminAuthorityValue();
+        final @Nullable Authority submitAuthority = submitAuthorityValue();
+        final @Nullable String topicMemo = topicMemoValue();
+        final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
+        final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
+        final TopicCreateTransaction subject = TopicCreateTransaction.builder()
+                .adminAuthority(adminAuthority)
+                .submitAuthority(submitAuthority)
+                .topicMemo(topicMemo)
+                .autoRenewPeriod(autoRenewPeriod)
+                .autoRenewAccount(autoRenewAccount)
+                .build();
+        assertValue(adminAuthority, subject.adminAuthority());
+        assertValue(submitAuthority, subject.submitAuthority());
+        assertValue(topicMemo, subject.topicMemo());
+        assertValue(autoRenewPeriod, subject.autoRenewPeriod());
+        assertValue(autoRenewAccount, subject.autoRenewAccount());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TopicCreateTransaction subject = TopicCreateTransaction.builder()
+                .build();
+        assertNull(subject.adminAuthority());
+        assertNull(subject.submitAuthority());
+        assertNull(subject.topicMemo());
+        assertNull(subject.autoRenewPeriod());
+        assertNull(subject.autoRenewAccount());
+    }
+
+    @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
     void shouldSetMaxTransactionFee() {
         final TopicCreateTransaction subject = create();

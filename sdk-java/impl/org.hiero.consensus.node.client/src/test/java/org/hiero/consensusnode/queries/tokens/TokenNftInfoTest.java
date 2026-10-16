@@ -41,6 +41,50 @@ class TokenNftInfoTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Address tokenId = tokenIdValue();
+        final long serial = serialValue();
+        final AccountId accountId = accountIdValue();
+        final ZonedDateTime creationTime = creationTimeValue();
+        final byte[] metadata = metadataValue();
+        final @Nullable AccountId spenderId = spenderIdValue();
+        final TokenNftInfo subject = TokenNftInfo.builder()
+                .tokenId(tokenId)
+                .serial(serial)
+                .accountId(accountId)
+                .creationTime(creationTime)
+                .metadata(metadata)
+                .spenderId(spenderId)
+                .build();
+        assertValue(tokenId, subject.tokenId());
+        assertValue(serial, subject.serial());
+        assertValue(accountId, subject.accountId());
+        assertValue(creationTime, subject.creationTime());
+        assertValue(metadata, subject.metadata());
+        assertValue(spenderId, subject.spenderId());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TokenNftInfo subject = TokenNftInfo.builder()
+                .tokenId(tokenIdValue())
+                .serial(serialValue())
+                .accountId(accountIdValue())
+                .creationTime(creationTimeValue())
+                .build();
+        assertValue(new byte[0], subject.metadata());
+        assertNull(subject.spenderId());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TokenNftInfo.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for tokenId")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenNftInfo((Address) null, serialValue(), accountIdValue(), creationTimeValue(), metadataValue(), spenderIdValue()));

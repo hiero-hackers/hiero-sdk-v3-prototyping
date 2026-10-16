@@ -30,6 +30,46 @@ class RoyaltyFeeTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final long numeratorAmount = numeratorAmountValue();
+        final long denominatorAmount = denominatorAmountValue();
+        final long fallbackFeeAmount = fallbackFeeAmountValue();
+        final @Nullable AccountId collectorAccountId = collectorAccountIdValue();
+        final @Nullable Address denominatingTokenId = denominatingTokenIdValue();
+        final RoyaltyFee subject = RoyaltyFee.builder()
+                .numeratorAmount(numeratorAmount)
+                .denominatorAmount(denominatorAmount)
+                .fallbackFeeAmount(fallbackFeeAmount)
+                .collectorAccountId(collectorAccountId)
+                .denominatingTokenId(denominatingTokenId)
+                .build();
+        assertValue(numeratorAmount, subject.numeratorAmount());
+        assertValue(denominatorAmount, subject.denominatorAmount());
+        assertValue(fallbackFeeAmount, subject.fallbackFeeAmount());
+        assertValue(collectorAccountId, subject.collectorAccountId());
+        assertValue(denominatingTokenId, subject.denominatingTokenId());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final RoyaltyFee subject = RoyaltyFee.builder()
+                .numeratorAmount(numeratorAmountValue())
+                .denominatorAmount(denominatorAmountValue())
+                .fallbackFeeAmount(fallbackFeeAmountValue())
+                .build();
+        assertNull(subject.collectorAccountId());
+        assertNull(subject.denominatingTokenId());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> RoyaltyFee.builder().build());
+    }
+
+    @Test
     @DisplayName("numeratorAmount: accepts the minimum (-9223372036854775808)")
     void shouldAcceptNumeratorAmountAtMinimum() {
         final long value = -9223372036854775808L;

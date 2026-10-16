@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import org.hiero.consensusnode.admin.nodes.ServiceEndpoint;
 import org.hiero.ledger.AccountId;
+import org.hiero.ledger.IpAddress;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,54 @@ class NodeAddressTest {
     void shouldCreateWithTheDefaultValues() {
         final NodeAddress subject = new NodeAddress(nodeIdValue(), accountIdValue(), descriptionValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), rsaPublicKeyValue());
         assertValue(List.of(), subject.serviceEndpoints());
+    }
+
+    @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final long nodeId = nodeIdValue();
+        final AccountId accountId = accountIdValue();
+        final List<ServiceEndpoint> serviceEndpoints = serviceEndpointsValue();
+        final @Nullable String description = descriptionValue();
+        final byte[] gossipCaCertificate = gossipCaCertificateValue();
+        final byte[] grpcCertificateHash = grpcCertificateHashValue();
+        final byte[] rsaPublicKey = rsaPublicKeyValue();
+        final NodeAddress subject = NodeAddress.builder()
+                .nodeId(nodeId)
+                .accountId(accountId)
+                .serviceEndpoints(serviceEndpoints)
+                .description(description)
+                .gossipCaCertificate(gossipCaCertificate)
+                .grpcCertificateHash(grpcCertificateHash)
+                .rsaPublicKey(rsaPublicKey)
+                .build();
+        assertValue(nodeId, subject.nodeId());
+        assertValue(accountId, subject.accountId());
+        assertValue(serviceEndpoints, subject.serviceEndpoints());
+        assertValue(description, subject.description());
+        assertValue(gossipCaCertificate, subject.gossipCaCertificate());
+        assertValue(grpcCertificateHash, subject.grpcCertificateHash());
+        assertValue(rsaPublicKey, subject.rsaPublicKey());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final NodeAddress subject = NodeAddress.builder()
+                .nodeId(nodeIdValue())
+                .accountId(accountIdValue())
+                .gossipCaCertificate(gossipCaCertificateValue())
+                .grpcCertificateHash(grpcCertificateHashValue())
+                .rsaPublicKey(rsaPublicKeyValue())
+                .build();
+        assertValue(List.of(), subject.serviceEndpoints());
+        assertNull(subject.description());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> NodeAddress.builder().build());
     }
 
     @Test
@@ -160,7 +209,7 @@ class NodeAddressTest {
     }
 
     private static List<ServiceEndpoint> serviceEndpointsValue() {
-        return List.of(new ServiceEndpoint(null, null, 1));
+        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
     }
 
     private static String descriptionValue() {

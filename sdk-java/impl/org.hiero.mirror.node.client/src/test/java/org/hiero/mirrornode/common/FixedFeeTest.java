@@ -26,6 +26,38 @@ class FixedFeeTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final long amount = amountValue();
+        final @Nullable AccountId collectorAccountId = collectorAccountIdValue();
+        final @Nullable Address denominatingTokenId = denominatingTokenIdValue();
+        final FixedFee subject = FixedFee.builder()
+                .amount(amount)
+                .collectorAccountId(collectorAccountId)
+                .denominatingTokenId(denominatingTokenId)
+                .build();
+        assertValue(amount, subject.amount());
+        assertValue(collectorAccountId, subject.collectorAccountId());
+        assertValue(denominatingTokenId, subject.denominatingTokenId());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final FixedFee subject = FixedFee.builder()
+                .amount(amountValue())
+                .build();
+        assertNull(subject.collectorAccountId());
+        assertNull(subject.denominatingTokenId());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> FixedFee.builder().build());
+    }
+
+    @Test
     @DisplayName("amount: accepts the minimum (-9223372036854775808)")
     void shouldAcceptAmountAtMinimum() {
         final long value = -9223372036854775808L;

@@ -39,6 +39,58 @@ class TopicMessageTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final @Nullable ChunkInfo chunkInfo = chunkInfoValue();
+        final ZonedDateTime consensusTimestamp = consensusTimestampValue();
+        final String message = messageValue();
+        final AccountId payerAccountId = payerAccountIdValue();
+        final byte[] runningHash = runningHashValue();
+        final int runningHashVersion = runningHashVersionValue();
+        final long sequenceNumber = sequenceNumberValue();
+        final Address topicId = topicIdValue();
+        final TopicMessage subject = TopicMessage.builder()
+                .chunkInfo(chunkInfo)
+                .consensusTimestamp(consensusTimestamp)
+                .message(message)
+                .payerAccountId(payerAccountId)
+                .runningHash(runningHash)
+                .runningHashVersion(runningHashVersion)
+                .sequenceNumber(sequenceNumber)
+                .topicId(topicId)
+                .build();
+        assertValue(chunkInfo, subject.chunkInfo());
+        assertValue(consensusTimestamp, subject.consensusTimestamp());
+        assertValue(message, subject.message());
+        assertValue(payerAccountId, subject.payerAccountId());
+        assertValue(runningHash, subject.runningHash());
+        assertValue(runningHashVersion, subject.runningHashVersion());
+        assertValue(sequenceNumber, subject.sequenceNumber());
+        assertValue(topicId, subject.topicId());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TopicMessage subject = TopicMessage.builder()
+                .consensusTimestamp(consensusTimestampValue())
+                .message(messageValue())
+                .payerAccountId(payerAccountIdValue())
+                .runningHash(runningHashValue())
+                .runningHashVersion(runningHashVersionValue())
+                .sequenceNumber(sequenceNumberValue())
+                .topicId(topicIdValue())
+                .build();
+        assertNull(subject.chunkInfo());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TopicMessage.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for consensusTimestamp")
     void shouldRejectNullConsensusTimestamp() {
         assertThrows(NullPointerException.class, () -> new TopicMessage(chunkInfoValue(), (ZonedDateTime) null, messageValue(), payerAccountIdValue(), runningHashValue(), runningHashVersionValue(), sequenceNumberValue(), topicIdValue()));

@@ -41,6 +41,46 @@ class FileCreateReceiptTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final TransactionId transactionId = transactionIdValue();
+        final TransactionStatus status = statusValue();
+        final ExchangeRate exchangeRate = exchangeRateValue();
+        final ExchangeRate nextExchangeRate = nextExchangeRateValue();
+        final Address fileId = fileIdValue();
+        final FileCreateReceipt subject = FileCreateReceipt.builder()
+                .transactionId(transactionId)
+                .status(status)
+                .exchangeRate(exchangeRate)
+                .nextExchangeRate(nextExchangeRate)
+                .fileId(fileId)
+                .build();
+        assertValue(transactionId, subject.transactionId());
+        assertValue(status, subject.status());
+        assertValue(exchangeRate, subject.exchangeRate());
+        assertValue(nextExchangeRate, subject.nextExchangeRate());
+        assertValue(fileId, subject.fileId());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final FileCreateReceipt subject = FileCreateReceipt.builder()
+                .transactionId(transactionIdValue())
+                .status(statusValue())
+                .exchangeRate(exchangeRateValue())
+                .nextExchangeRate(nextExchangeRateValue())
+                .fileId(fileIdValue())
+                .build();
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> FileCreateReceipt.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for transactionId")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new FileCreateReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue(), fileIdValue()));

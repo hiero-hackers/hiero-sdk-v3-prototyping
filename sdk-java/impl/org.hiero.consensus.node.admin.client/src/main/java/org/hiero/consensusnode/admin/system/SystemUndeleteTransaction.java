@@ -25,10 +25,15 @@ public final class SystemUndeleteTransaction extends Transaction<SystemUndeleteR
     private final @Nullable ContractId contractId;
 
     /// Creates a new `SystemUndeleteTransaction`.
+    ///
+    /// @throws IllegalArgumentException if a value violates its constraints
     public SystemUndeleteTransaction(final @Nullable Address fileId, final @Nullable ContractId contractId) {
         super();
         this.fileId = fileId;
         this.contractId = contractId;
+        if ((fileId != null ? 1 : 0) + (contractId != null ? 1 : 0) != 1) {
+            throw new IllegalArgumentException("exactly one of fileId, contractId must be set");
+        }
     }
 
     /// the file to restore; absent when contractId is set
@@ -102,6 +107,58 @@ public final class SystemUndeleteTransaction extends Transaction<SystemUndeleteR
     @Override
     public PackedTransaction<SystemUndeleteReceipt, SystemUndeleteTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
         throw new UnsupportedOperationException("Not implemented yet: SystemUndeleteTransaction.signForBatch");
+    }
+
+    /// Returns a builder for a new `SystemUndeleteTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `SystemUndeleteTransaction`.
+    ///
+    /// `build()` creates the `SystemUndeleteTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Address fileId;
+        private @Nullable ContractId contractId;
+
+        private Builder() {
+            // created by SystemUndeleteTransaction.builder()
+        }
+
+        /// Sets the `fileId`.
+        ///
+        /// the file to restore; absent when contractId is set
+        ///
+        /// @param fileId the value
+        /// @return this builder
+        public Builder fileId(final @Nullable Address fileId) {
+            this.fileId = fileId;
+            return this;
+        }
+
+        /// Sets the `contractId`.
+        ///
+        /// the contract to restore; absent when fileId is set
+        ///
+        /// @param contractId the value
+        /// @return this builder
+        public Builder contractId(final @Nullable ContractId contractId) {
+            this.contractId = contractId;
+            return this;
+        }
+
+        /// Creates the `SystemUndeleteTransaction` of the values set.
+        ///
+        /// @return the new `SystemUndeleteTransaction`
+        /// @throws IllegalArgumentException if a value violates its constraints
+        public SystemUndeleteTransaction build() {
+            return new SystemUndeleteTransaction(fileId, contractId);
+        }
     }
 
     @Override

@@ -41,6 +41,46 @@ class ScheduleSignReceiptTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final TransactionId transactionId = transactionIdValue();
+        final TransactionStatus status = statusValue();
+        final ExchangeRate exchangeRate = exchangeRateValue();
+        final ExchangeRate nextExchangeRate = nextExchangeRateValue();
+        final TransactionId scheduledTransactionId = scheduledTransactionIdValue();
+        final ScheduleSignReceipt subject = ScheduleSignReceipt.builder()
+                .transactionId(transactionId)
+                .status(status)
+                .exchangeRate(exchangeRate)
+                .nextExchangeRate(nextExchangeRate)
+                .scheduledTransactionId(scheduledTransactionId)
+                .build();
+        assertValue(transactionId, subject.transactionId());
+        assertValue(status, subject.status());
+        assertValue(exchangeRate, subject.exchangeRate());
+        assertValue(nextExchangeRate, subject.nextExchangeRate());
+        assertValue(scheduledTransactionId, subject.scheduledTransactionId());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final ScheduleSignReceipt subject = ScheduleSignReceipt.builder()
+                .transactionId(transactionIdValue())
+                .status(statusValue())
+                .exchangeRate(exchangeRateValue())
+                .nextExchangeRate(nextExchangeRateValue())
+                .scheduledTransactionId(scheduledTransactionIdValue())
+                .build();
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> ScheduleSignReceipt.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for transactionId")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new ScheduleSignReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue(), scheduledTransactionIdValue()));

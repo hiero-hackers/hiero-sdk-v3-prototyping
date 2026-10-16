@@ -40,7 +40,7 @@ class SystemDeleteTransactionTest {
     @DisplayName("creates a SystemDeleteTransaction and returns the values")
     void shouldCreateAndReturnTheValues() {
         final @Nullable Address fileId = fileIdValue();
-        final @Nullable ContractId contractId = contractIdValue();
+        final @Nullable ContractId contractId = (ContractId) null;
         final @Nullable ZonedDateTime expirationTime = expirationTimeValue();
         final SystemDeleteTransaction subject = new SystemDeleteTransaction(fileId, contractId, expirationTime);
         assertValue(fileId, subject.fileId());
@@ -49,6 +49,45 @@ class SystemDeleteTransactionTest {
         assertNull(subject.maxTransactionFee());
         assertNull(subject.validDuration());
         assertNull(subject.memo());
+    }
+
+    @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final @Nullable Address fileId = fileIdValue();
+        final @Nullable ContractId contractId = (ContractId) null;
+        final @Nullable ZonedDateTime expirationTime = expirationTimeValue();
+        final SystemDeleteTransaction subject = SystemDeleteTransaction.builder()
+                .fileId(fileId)
+                .contractId(contractId)
+                .expirationTime(expirationTime)
+                .build();
+        assertValue(fileId, subject.fileId());
+        assertValue(contractId, subject.contractId());
+        assertValue(expirationTime, subject.expirationTime());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final SystemDeleteTransaction subject = SystemDeleteTransaction.builder()
+                .fileId(fileIdValue())
+                .build();
+        assertValue(fileIdValue(), subject.fileId());
+        assertNull(subject.contractId());
+        assertNull(subject.expirationTime());
+    }
+
+    @Test
+    @DisplayName("rejects fileId and contractId together (@@oneOf)")
+    void shouldRejectTwoOfFileIdOrContractId() {
+        assertThrows(IllegalArgumentException.class, () -> new SystemDeleteTransaction(fileIdValue(), contractIdValue(), expirationTimeValue()));
+    }
+
+    @Test
+    @DisplayName("rejects none of fileId, contractId (@@oneOf)")
+    void shouldRejectNoneOfFileIdOrContractId() {
+        assertThrows(IllegalArgumentException.class, () -> new SystemDeleteTransaction((Address) null, (ContractId) null, expirationTimeValue()));
     }
 
     @Test
@@ -169,7 +208,7 @@ class SystemDeleteTransactionTest {
     }
 
     private static SystemDeleteTransaction create() {
-        return new SystemDeleteTransaction(fileIdValue(), contractIdValue(), expirationTimeValue());
+        return new SystemDeleteTransaction(fileIdValue(), (ContractId) null, expirationTimeValue());
     }
 
     private static NativeToken<?, ?> maxTransactionFeeOtherValue() {

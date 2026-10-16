@@ -37,6 +37,46 @@ class TokenTransferTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Address tokenId = tokenIdValue();
+        final AccountId accountId = accountIdValue();
+        final long amount = amountValue();
+        final @Nullable Integer expectedDecimals = expectedDecimalsValue();
+        final boolean approved = approvedValue();
+        final TokenTransfer subject = TokenTransfer.builder()
+                .tokenId(tokenId)
+                .accountId(accountId)
+                .amount(amount)
+                .expectedDecimals(expectedDecimals)
+                .approved(approved)
+                .build();
+        assertValue(tokenId, subject.tokenId());
+        assertValue(accountId, subject.accountId());
+        assertValue(amount, subject.amount());
+        assertValue(expectedDecimals, subject.expectedDecimals());
+        assertValue(approved, subject.approved());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TokenTransfer subject = TokenTransfer.builder()
+                .tokenId(tokenIdValue())
+                .accountId(accountIdValue())
+                .amount(amountValue())
+                .build();
+        assertNull(subject.expectedDecimals());
+        assertValue(false, subject.approved());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TokenTransfer.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for tokenId")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenTransfer((Address) null, accountIdValue(), amountValue(), expectedDecimalsValue(), approvedValue()));

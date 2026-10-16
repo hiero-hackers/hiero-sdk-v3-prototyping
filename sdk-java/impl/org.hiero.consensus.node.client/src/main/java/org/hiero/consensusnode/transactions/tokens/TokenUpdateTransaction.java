@@ -246,6 +246,233 @@ public final class TokenUpdateTransaction extends Transaction<TokenUpdateReceipt
         throw new UnsupportedOperationException("Not implemented yet: TokenUpdateTransaction.signForBatch");
     }
 
+    /// Returns a builder for a new `TokenUpdateTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `TokenUpdateTransaction`.
+    ///
+    /// `build()` creates the `TokenUpdateTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Address tokenId;
+        private @Nullable String name;
+        private @Nullable String symbol;
+        private @Nullable AccountId treasuryAccountId;
+        private @Nullable String tokenMemo;
+        private byte @Nullable [] metadata;
+        private @Nullable ZonedDateTime expirationTime;
+        private @Nullable Duration autoRenewPeriod;
+        private @Nullable AccountId autoRenewAccount;
+        private @Nullable Authority adminAuthority;
+        private @Nullable Authority supplyAuthority;
+        private @Nullable Authority kycAuthority;
+        private @Nullable Authority freezeAuthority;
+        private @Nullable Authority wipeAuthority;
+        private @Nullable Authority pauseAuthority;
+        private @Nullable Authority feeScheduleAuthority;
+        private @Nullable Authority metadataAuthority;
+
+        private Builder() {
+            // created by TokenUpdateTransaction.builder()
+        }
+
+        /// Sets the `tokenId`.
+        ///
+        /// the token being updated
+        ///
+        /// @param tokenId the value
+        /// @return this builder
+        public Builder tokenId(final Address tokenId) {
+            this.tokenId = tokenId;
+            return this;
+        }
+
+        /// Sets the `name`.
+        ///
+        /// @param name the value
+        /// @return this builder
+        public Builder name(final @Nullable String name) {
+            this.name = name;
+            return this;
+        }
+
+        /// Sets the `symbol`.
+        ///
+        /// @param symbol the value
+        /// @return this builder
+        public Builder symbol(final @Nullable String symbol) {
+            this.symbol = symbol;
+            return this;
+        }
+
+        /// Sets the `treasuryAccountId`.
+        ///
+        /// when set, replaces the treasury; both the OLD and the NEW treasury MUST sign
+        ///
+        /// @param treasuryAccountId the value
+        /// @return this builder
+        public Builder treasuryAccountId(final @Nullable AccountId treasuryAccountId) {
+            this.treasuryAccountId = treasuryAccountId;
+            return this;
+        }
+
+        /// Sets the `tokenMemo`.
+        ///
+        /// @param tokenMemo the value
+        /// @return this builder
+        public Builder tokenMemo(final @Nullable String tokenMemo) {
+            this.tokenMemo = tokenMemo;
+            return this;
+        }
+
+        /// Sets the `metadata`.
+        ///
+        /// when set, replaces the token-level metadata
+        ///
+        /// @param metadata the value
+        /// @return this builder
+        public Builder metadata(final byte @Nullable [] metadata) {
+            this.metadata = metadata;
+            return this;
+        }
+
+        /// Sets the `expirationTime`.
+        ///
+        /// @param expirationTime the value
+        /// @return this builder
+        public Builder expirationTime(final @Nullable ZonedDateTime expirationTime) {
+            this.expirationTime = expirationTime;
+            return this;
+        }
+
+        /// Sets the `autoRenewPeriod`.
+        ///
+        /// @param autoRenewPeriod the value
+        /// @return this builder
+        public Builder autoRenewPeriod(final @Nullable Duration autoRenewPeriod) {
+            this.autoRenewPeriod = autoRenewPeriod;
+            return this;
+        }
+
+        /// Sets the `autoRenewAccount`.
+        ///
+        /// when set, replaces the auto-renew account; the new account MUST also sign
+        ///
+        /// @param autoRenewAccount the value
+        /// @return this builder
+        public Builder autoRenewAccount(final @Nullable AccountId autoRenewAccount) {
+            this.autoRenewAccount = autoRenewAccount;
+            return this;
+        }
+
+        /// Sets the `adminAuthority`.
+        ///
+        /// Key rotations — each requires the new key to also sign (anti-spoofing). A key that was
+        /// unset at create cannot be set here.
+        ///
+        /// @param adminAuthority the value
+        /// @return this builder
+        public Builder adminAuthority(final @Nullable Authority adminAuthority) {
+            this.adminAuthority = adminAuthority;
+            return this;
+        }
+
+        /// Sets the `supplyAuthority`.
+        ///
+        /// @param supplyAuthority the value
+        /// @return this builder
+        public Builder supplyAuthority(final @Nullable Authority supplyAuthority) {
+            this.supplyAuthority = supplyAuthority;
+            return this;
+        }
+
+        /// Sets the `kycAuthority`.
+        ///
+        /// @param kycAuthority the value
+        /// @return this builder
+        public Builder kycAuthority(final @Nullable Authority kycAuthority) {
+            this.kycAuthority = kycAuthority;
+            return this;
+        }
+
+        /// Sets the `freezeAuthority`.
+        ///
+        /// @param freezeAuthority the value
+        /// @return this builder
+        public Builder freezeAuthority(final @Nullable Authority freezeAuthority) {
+            this.freezeAuthority = freezeAuthority;
+            return this;
+        }
+
+        /// Sets the `wipeAuthority`.
+        ///
+        /// @param wipeAuthority the value
+        /// @return this builder
+        public Builder wipeAuthority(final @Nullable Authority wipeAuthority) {
+            this.wipeAuthority = wipeAuthority;
+            return this;
+        }
+
+        /// Sets the `pauseAuthority`.
+        ///
+        /// @param pauseAuthority the value
+        /// @return this builder
+        public Builder pauseAuthority(final @Nullable Authority pauseAuthority) {
+            this.pauseAuthority = pauseAuthority;
+            return this;
+        }
+
+        /// Sets the `feeScheduleAuthority`.
+        ///
+        /// @param feeScheduleAuthority the value
+        /// @return this builder
+        public Builder feeScheduleAuthority(final @Nullable Authority feeScheduleAuthority) {
+            this.feeScheduleAuthority = feeScheduleAuthority;
+            return this;
+        }
+
+        /// Sets the `metadataAuthority`.
+        ///
+        /// @param metadataAuthority the value
+        /// @return this builder
+        public Builder metadataAuthority(final @Nullable Authority metadataAuthority) {
+            this.metadataAuthority = metadataAuthority;
+            return this;
+        }
+
+        /// Creates the `TokenUpdateTransaction` of the values set.
+        ///
+        /// @return the new `TokenUpdateTransaction`
+        /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
+        public TokenUpdateTransaction build() {
+            return new TokenUpdateTransaction(
+                    Objects.requireNonNull(tokenId, "tokenId must not be null"),
+                    name,
+                    symbol,
+                    treasuryAccountId,
+                    tokenMemo,
+                    metadata,
+                    expirationTime,
+                    autoRenewPeriod,
+                    autoRenewAccount,
+                    adminAuthority,
+                    supplyAuthority,
+                    kycAuthority,
+                    freezeAuthority,
+                    wipeAuthority,
+                    pauseAuthority,
+                    feeScheduleAuthority,
+                    metadataAuthority);
+        }
+    }
+
     @Override
     public String toString() {
         return "TokenUpdateTransaction[maxTransactionFee=" + maxTransactionFee()

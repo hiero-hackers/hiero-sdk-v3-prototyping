@@ -59,6 +59,54 @@ class TopicUpdateTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Address topicId = topicIdValue();
+        final @Nullable Authority adminAuthority = adminAuthorityValue();
+        final @Nullable Authority submitAuthority = submitAuthorityValue();
+        final @Nullable String topicMemo = topicMemoValue();
+        final @Nullable ZonedDateTime expirationTime = expirationTimeValue();
+        final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
+        final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
+        final TopicUpdateTransaction subject = TopicUpdateTransaction.builder()
+                .topicId(topicId)
+                .adminAuthority(adminAuthority)
+                .submitAuthority(submitAuthority)
+                .topicMemo(topicMemo)
+                .expirationTime(expirationTime)
+                .autoRenewPeriod(autoRenewPeriod)
+                .autoRenewAccount(autoRenewAccount)
+                .build();
+        assertValue(topicId, subject.topicId());
+        assertValue(adminAuthority, subject.adminAuthority());
+        assertValue(submitAuthority, subject.submitAuthority());
+        assertValue(topicMemo, subject.topicMemo());
+        assertValue(expirationTime, subject.expirationTime());
+        assertValue(autoRenewPeriod, subject.autoRenewPeriod());
+        assertValue(autoRenewAccount, subject.autoRenewAccount());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TopicUpdateTransaction subject = TopicUpdateTransaction.builder()
+                .topicId(topicIdValue())
+                .build();
+        assertNull(subject.adminAuthority());
+        assertNull(subject.submitAuthority());
+        assertNull(subject.topicMemo());
+        assertNull(subject.expirationTime());
+        assertNull(subject.autoRenewPeriod());
+        assertNull(subject.autoRenewAccount());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TopicUpdateTransaction.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for topicId")
     void shouldRejectNullTopicId() {
         assertThrows(NullPointerException.class, () -> new TopicUpdateTransaction((Address) null, adminAuthorityValue(), submitAuthorityValue(), topicMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue()));

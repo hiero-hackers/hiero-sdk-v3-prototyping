@@ -115,6 +115,57 @@ public final class TokenAirdropTransaction extends Transaction<TokenAirdropRecei
         throw new UnsupportedOperationException("Not implemented yet: TokenAirdropTransaction.signForBatch");
     }
 
+    /// Returns a builder for a new `TokenAirdropTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `TokenAirdropTransaction`.
+    ///
+    /// `build()` creates the `TokenAirdropTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private List<TokenTransfer> tokenTransfers = List.of();
+        private List<NftTransfer> nftTransfers = List.of();
+
+        private Builder() {
+            // created by TokenAirdropTransaction.builder()
+        }
+
+        /// Sets the `tokenTransfers`.
+        ///
+        /// fungible legs (sum per token must be zero)
+        ///
+        /// @param tokenTransfers the value
+        /// @return this builder
+        public Builder tokenTransfers(final List<TokenTransfer> tokenTransfers) {
+            this.tokenTransfers = tokenTransfers;
+            return this;
+        }
+
+        /// Sets the `nftTransfers`.
+        ///
+        /// NFT legs
+        ///
+        /// @param nftTransfers the value
+        /// @return this builder
+        public Builder nftTransfers(final List<NftTransfer> nftTransfers) {
+            this.nftTransfers = nftTransfers;
+            return this;
+        }
+
+        /// Creates the `TokenAirdropTransaction` of the values set.
+        ///
+        /// @return the new `TokenAirdropTransaction`
+        public TokenAirdropTransaction build() {
+            return new TokenAirdropTransaction(tokenTransfers, nftTransfers);
+        }
+    }
+
     @Override
     public String toString() {
         return "TokenAirdropTransaction[maxTransactionFee=" + maxTransactionFee()

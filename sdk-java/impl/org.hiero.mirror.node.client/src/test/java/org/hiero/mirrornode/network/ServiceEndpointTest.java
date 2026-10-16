@@ -24,6 +24,38 @@ class ServiceEndpointTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final @Nullable String ipAddressV4 = ipAddressV4Value();
+        final int port = portValue();
+        final @Nullable String domainName = domainNameValue();
+        final ServiceEndpoint subject = ServiceEndpoint.builder()
+                .ipAddressV4(ipAddressV4)
+                .port(port)
+                .domainName(domainName)
+                .build();
+        assertValue(ipAddressV4, subject.ipAddressV4());
+        assertValue(port, subject.port());
+        assertValue(domainName, subject.domainName());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final ServiceEndpoint subject = ServiceEndpoint.builder()
+                .port(portValue())
+                .build();
+        assertNull(subject.ipAddressV4());
+        assertNull(subject.domainName());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> ServiceEndpoint.builder().build());
+    }
+
+    @Test
     @DisplayName("port: accepts the minimum (-2147483648)")
     void shouldAcceptPortAtMinimum() {
         final int value = Integer.MIN_VALUE;

@@ -52,4 +52,79 @@ public record Address(String street, @Nullable String zip, @Nullable String webs
             throw new IllegalArgumentException("map must be a valid URL: " + map, e);
         }
     }
+
+    /// Returns a builder for a new `Address`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `Address`.
+    ///
+    /// `build()` creates the `Address` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable String street;
+        private @Nullable String zip;
+        private @Nullable String website;
+        private @Nullable String map;
+
+        private Builder() {
+            // created by Address.builder()
+        }
+
+        /// Sets the `street`.
+        ///
+        /// street and house number
+        ///
+        /// @param street the value
+        /// @return this builder
+        public Builder street(final String street) {
+            this.street = street;
+            return this;
+        }
+
+        /// Sets the `zip`.
+        ///
+        /// @param zip the value
+        /// @return this builder
+        public Builder zip(final @Nullable String zip) {
+            this.zip = zip;
+            return this;
+        }
+
+        /// Sets the `website`.
+        ///
+        /// @param website the value
+        /// @return this builder
+        public Builder website(final @Nullable String website) {
+            this.website = website;
+            return this;
+        }
+
+        /// Sets the `map`.
+        ///
+        /// @param map the value
+        /// @return this builder
+        public Builder map(final String map) {
+            this.map = map;
+            return this;
+        }
+
+        /// Creates the `Address` of the values set.
+        ///
+        /// @return the new `Address`
+        /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
+        public Address build() {
+            return new Address(
+                    Objects.requireNonNull(street, "street must not be null"),
+                    zip,
+                    website,
+                    Objects.requireNonNull(map, "map must not be null"));
+        }
+    }
 }

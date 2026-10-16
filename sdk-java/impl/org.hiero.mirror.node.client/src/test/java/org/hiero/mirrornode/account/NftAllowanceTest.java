@@ -31,6 +31,46 @@ class NftAllowanceTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final AccountId owner = ownerValue();
+        final AccountId spender = spenderValue();
+        final Address tokenId = tokenIdValue();
+        final boolean approvedForAll = approvedForAllValue();
+        final ZonedDateTime timestamp = timestampValue();
+        final NftAllowance subject = NftAllowance.builder()
+                .owner(owner)
+                .spender(spender)
+                .tokenId(tokenId)
+                .approvedForAll(approvedForAll)
+                .timestamp(timestamp)
+                .build();
+        assertValue(owner, subject.owner());
+        assertValue(spender, subject.spender());
+        assertValue(tokenId, subject.tokenId());
+        assertValue(approvedForAll, subject.approvedForAll());
+        assertValue(timestamp, subject.timestamp());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final NftAllowance subject = NftAllowance.builder()
+                .owner(ownerValue())
+                .spender(spenderValue())
+                .tokenId(tokenIdValue())
+                .approvedForAll(approvedForAllValue())
+                .timestamp(timestampValue())
+                .build();
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> NftAllowance.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for owner")
     void shouldRejectNullOwner() {
         assertThrows(NullPointerException.class, () -> new NftAllowance((AccountId) null, spenderValue(), tokenIdValue(), approvedForAllValue(), timestampValue()));

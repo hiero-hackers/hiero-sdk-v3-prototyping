@@ -53,6 +53,50 @@ class TokenMintNftReceiptTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final TransactionId transactionId = transactionIdValue();
+        final TransactionStatus status = statusValue();
+        final ExchangeRate exchangeRate = exchangeRateValue();
+        final ExchangeRate nextExchangeRate = nextExchangeRateValue();
+        final long totalSupply = totalSupplyValue();
+        final List<Long> serials = serialsValue();
+        final TokenMintNftReceipt subject = TokenMintNftReceipt.builder()
+                .transactionId(transactionId)
+                .status(status)
+                .exchangeRate(exchangeRate)
+                .nextExchangeRate(nextExchangeRate)
+                .totalSupply(totalSupply)
+                .serials(serials)
+                .build();
+        assertValue(transactionId, subject.transactionId());
+        assertValue(status, subject.status());
+        assertValue(exchangeRate, subject.exchangeRate());
+        assertValue(nextExchangeRate, subject.nextExchangeRate());
+        assertValue(totalSupply, subject.totalSupply());
+        assertValue(serials, subject.serials());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TokenMintNftReceipt subject = TokenMintNftReceipt.builder()
+                .transactionId(transactionIdValue())
+                .status(statusValue())
+                .exchangeRate(exchangeRateValue())
+                .nextExchangeRate(nextExchangeRateValue())
+                .totalSupply(totalSupplyValue())
+                .build();
+        assertValue(List.of(), subject.serials());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TokenMintNftReceipt.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for transactionId")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new TokenMintNftReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue(), totalSupplyValue(), serialsValue()));

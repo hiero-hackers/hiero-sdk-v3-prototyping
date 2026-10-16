@@ -31,6 +31,46 @@ class TopicMessageTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final ZonedDateTime consensusTimestamp = consensusTimestampValue();
+        final String message = messageValue();
+        final AccountId payerAccountId = payerAccountIdValue();
+        final long sequenceNumber = sequenceNumberValue();
+        final Address topicId = topicIdValue();
+        final TopicMessage subject = TopicMessage.builder()
+                .consensusTimestamp(consensusTimestamp)
+                .message(message)
+                .payerAccountId(payerAccountId)
+                .sequenceNumber(sequenceNumber)
+                .topicId(topicId)
+                .build();
+        assertValue(consensusTimestamp, subject.consensusTimestamp());
+        assertValue(message, subject.message());
+        assertValue(payerAccountId, subject.payerAccountId());
+        assertValue(sequenceNumber, subject.sequenceNumber());
+        assertValue(topicId, subject.topicId());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TopicMessage subject = TopicMessage.builder()
+                .consensusTimestamp(consensusTimestampValue())
+                .message(messageValue())
+                .payerAccountId(payerAccountIdValue())
+                .sequenceNumber(sequenceNumberValue())
+                .topicId(topicIdValue())
+                .build();
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TopicMessage.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for consensusTimestamp")
     void shouldRejectNullConsensusTimestamp() {
         assertThrows(NullPointerException.class, () -> new TopicMessage((ZonedDateTime) null, messageValue(), payerAccountIdValue(), sequenceNumberValue(), topicIdValue()));

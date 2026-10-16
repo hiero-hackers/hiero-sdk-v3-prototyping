@@ -312,6 +312,321 @@ public final class TokenCreateTransaction extends Transaction<TokenCreateReceipt
         throw new UnsupportedOperationException("Not implemented yet: TokenCreateTransaction.signForBatch");
     }
 
+    /// Returns a builder for a new `TokenCreateTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `TokenCreateTransaction`.
+    ///
+    /// `build()` creates the `TokenCreateTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable String name;
+        private @Nullable String symbol;
+        private @Nullable TokenType tokenType;
+        private int decimals = 0;
+        private long initialSupply = 0L;
+        private @Nullable AccountId treasuryAccountId;
+        private TokenSupplyType supplyType = TokenSupplyType.INFINITE;
+        private @Nullable Long maxSupply;
+        private boolean freezeDefault = false;
+        private @Nullable String tokenMemo;
+        private byte[] metadata = new byte[0];
+        private @Nullable ZonedDateTime expirationTime;
+        private @Nullable Duration autoRenewPeriod;
+        private @Nullable AccountId autoRenewAccount;
+        private @Nullable Authority adminAuthority;
+        private @Nullable Authority supplyAuthority;
+        private @Nullable Authority kycAuthority;
+        private @Nullable Authority freezeAuthority;
+        private @Nullable Authority wipeAuthority;
+        private @Nullable Authority pauseAuthority;
+        private @Nullable Authority feeScheduleAuthority;
+        private @Nullable Authority metadataAuthority;
+
+        private Builder() {
+            // created by TokenCreateTransaction.builder()
+        }
+
+        /// Sets the `name`.
+        ///
+        /// human-readable token name
+        ///
+        /// @param name the value
+        /// @return this builder
+        public Builder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        /// Sets the `symbol`.
+        ///
+        /// short ticker / symbol
+        ///
+        /// @param symbol the value
+        /// @return this builder
+        public Builder symbol(final String symbol) {
+            this.symbol = symbol;
+            return this;
+        }
+
+        /// Sets the `tokenType`.
+        ///
+        /// FUNGIBLE_COMMON | NON_FUNGIBLE_UNIQUE; cannot be changed later
+        ///
+        /// @param tokenType the value
+        /// @return this builder
+        public Builder tokenType(final TokenType tokenType) {
+            this.tokenType = tokenType;
+            return this;
+        }
+
+        /// Sets the `decimals`.
+        ///
+        /// FUNGIBLE_COMMON only: precision of the smallest indivisible unit (e.g. 6 for USDC); MUST be 0 for NON_FUNGIBLE_UNIQUE
+        ///
+        /// @param decimals the value
+        /// @return this builder
+        public Builder decimals(final int decimals) {
+            this.decimals = decimals;
+            return this;
+        }
+
+        /// Sets the `initialSupply`.
+        ///
+        /// FUNGIBLE_COMMON only: amount minted to the treasury at create (in smallest unit); MUST be 0 for NON_FUNGIBLE_UNIQUE
+        ///
+        /// @param initialSupply the value
+        /// @return this builder
+        public Builder initialSupply(final long initialSupply) {
+            this.initialSupply = initialSupply;
+            return this;
+        }
+
+        /// Sets the `treasuryAccountId`.
+        ///
+        /// account receiving `initialSupply` and all subsequent mints; MUST sign the create transaction
+        ///
+        /// @param treasuryAccountId the value
+        /// @return this builder
+        public Builder treasuryAccountId(final AccountId treasuryAccountId) {
+            this.treasuryAccountId = treasuryAccountId;
+            return this;
+        }
+
+        /// Sets the `supplyType`.
+        ///
+        /// INFINITE | FINITE; cannot be changed later
+        ///
+        /// @param supplyType the value
+        /// @return this builder
+        public Builder supplyType(final TokenSupplyType supplyType) {
+            this.supplyType = supplyType;
+            return this;
+        }
+
+        /// Sets the `maxSupply`.
+        ///
+        /// FINITE only: protocol-enforced ceiling on totalSupply; unset (and only valid) when supplyType is INFINITE
+        ///
+        /// @param maxSupply the value
+        /// @return this builder
+        public Builder maxSupply(final @Nullable Long maxSupply) {
+            this.maxSupply = maxSupply;
+            return this;
+        }
+
+        /// Sets the `freezeDefault`.
+        ///
+        /// when true, newly associated accounts start in the FROZEN state (require an explicit TokenUnfreeze before they can move balances); requires freezeAuthority to be set
+        ///
+        /// @param freezeDefault the value
+        /// @return this builder
+        public Builder freezeDefault(final boolean freezeDefault) {
+            this.freezeDefault = freezeDefault;
+            return this;
+        }
+
+        /// Sets the `tokenMemo`.
+        ///
+        /// short, human-readable label
+        ///
+        /// @param tokenMemo the value
+        /// @return this builder
+        public Builder tokenMemo(final @Nullable String tokenMemo) {
+            this.tokenMemo = tokenMemo;
+            return this;
+        }
+
+        /// Sets the `metadata`.
+        ///
+        /// opaque token-level metadata (e.g. IPFS CID, HTTPS URL, JSON manifest)
+        ///
+        /// @param metadata the value
+        /// @return this builder
+        public Builder metadata(final byte[] metadata) {
+            this.metadata = metadata;
+            return this;
+        }
+
+        /// Sets the `expirationTime`.
+        ///
+        /// when the token expires; SDK default applies when unset
+        ///
+        /// @param expirationTime the value
+        /// @return this builder
+        public Builder expirationTime(final @Nullable ZonedDateTime expirationTime) {
+            this.expirationTime = expirationTime;
+            return this;
+        }
+
+        /// Sets the `autoRenewPeriod`.
+        ///
+        /// renewal window applied when expiration approaches; protocol default applies when unset
+        ///
+        /// @param autoRenewPeriod the value
+        /// @return this builder
+        public Builder autoRenewPeriod(final @Nullable Duration autoRenewPeriod) {
+            this.autoRenewPeriod = autoRenewPeriod;
+            return this;
+        }
+
+        /// Sets the `autoRenewAccount`.
+        ///
+        /// account paying for auto-renewal; MUST sign the create transaction if set and not equal to the treasury / payer
+        ///
+        /// @param autoRenewAccount the value
+        /// @return this builder
+        public Builder autoRenewAccount(final @Nullable AccountId autoRenewAccount) {
+            this.autoRenewAccount = autoRenewAccount;
+            return this;
+        }
+
+        /// Sets the `adminAuthority`.
+        ///
+        /// controls update / delete; unset → immutable token; MUST sign the create transaction when set (anti-spoofing)
+        ///
+        /// @param adminAuthority the value
+        /// @return this builder
+        public Builder adminAuthority(final @Nullable Authority adminAuthority) {
+            this.adminAuthority = adminAuthority;
+            return this;
+        }
+
+        /// Sets the `supplyAuthority`.
+        ///
+        /// controls mint / burn; unset → fixed supply after creation
+        ///
+        /// @param supplyAuthority the value
+        /// @return this builder
+        public Builder supplyAuthority(final @Nullable Authority supplyAuthority) {
+            this.supplyAuthority = supplyAuthority;
+            return this;
+        }
+
+        /// Sets the `kycAuthority`.
+        ///
+        /// controls KYC grant / revoke; unset → KYC disabled
+        ///
+        /// @param kycAuthority the value
+        /// @return this builder
+        public Builder kycAuthority(final @Nullable Authority kycAuthority) {
+            this.kycAuthority = kycAuthority;
+            return this;
+        }
+
+        /// Sets the `freezeAuthority`.
+        ///
+        /// controls freeze / unfreeze; unset → no freeze
+        ///
+        /// @param freezeAuthority the value
+        /// @return this builder
+        public Builder freezeAuthority(final @Nullable Authority freezeAuthority) {
+            this.freezeAuthority = freezeAuthority;
+            return this;
+        }
+
+        /// Sets the `wipeAuthority`.
+        ///
+        /// controls wipe of non-treasury balances; unset → wipe disabled
+        ///
+        /// @param wipeAuthority the value
+        /// @return this builder
+        public Builder wipeAuthority(final @Nullable Authority wipeAuthority) {
+            this.wipeAuthority = wipeAuthority;
+            return this;
+        }
+
+        /// Sets the `pauseAuthority`.
+        ///
+        /// controls pause / unpause; unset → unpausable
+        ///
+        /// @param pauseAuthority the value
+        /// @return this builder
+        public Builder pauseAuthority(final @Nullable Authority pauseAuthority) {
+            this.pauseAuthority = pauseAuthority;
+            return this;
+        }
+
+        /// Sets the `feeScheduleAuthority`.
+        ///
+        /// controls custom-fee schedule updates; unset → fees immutable
+        ///
+        /// @param feeScheduleAuthority the value
+        /// @return this builder
+        public Builder feeScheduleAuthority(final @Nullable Authority feeScheduleAuthority) {
+            this.feeScheduleAuthority = feeScheduleAuthority;
+            return this;
+        }
+
+        /// Sets the `metadataAuthority`.
+        ///
+        /// controls per-serial NFT metadata updates (HIP-657); unset → metadata immutable
+        ///
+        /// @param metadataAuthority the value
+        /// @return this builder
+        public Builder metadataAuthority(final @Nullable Authority metadataAuthority) {
+            this.metadataAuthority = metadataAuthority;
+            return this;
+        }
+
+        /// Creates the `TokenCreateTransaction` of the values set.
+        ///
+        /// @return the new `TokenCreateTransaction`
+        /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
+        public TokenCreateTransaction build() {
+            return new TokenCreateTransaction(
+                    Objects.requireNonNull(name, "name must not be null"),
+                    Objects.requireNonNull(symbol, "symbol must not be null"),
+                    Objects.requireNonNull(tokenType, "tokenType must not be null"),
+                    decimals,
+                    initialSupply,
+                    Objects.requireNonNull(treasuryAccountId, "treasuryAccountId must not be null"),
+                    supplyType,
+                    maxSupply,
+                    freezeDefault,
+                    tokenMemo,
+                    metadata,
+                    expirationTime,
+                    autoRenewPeriod,
+                    autoRenewAccount,
+                    adminAuthority,
+                    supplyAuthority,
+                    kycAuthority,
+                    freezeAuthority,
+                    wipeAuthority,
+                    pauseAuthority,
+                    feeScheduleAuthority,
+                    metadataAuthority);
+        }
+    }
+
     @Override
     public String toString() {
         return "TokenCreateTransaction[maxTransactionFee=" + maxTransactionFee()

@@ -30,6 +30,42 @@ class AddressTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final String street = streetValue();
+        final @Nullable String zip = zipValue();
+        final @Nullable String website = websiteValue();
+        final String map = mapValue();
+        final Address subject = Address.builder()
+                .street(street)
+                .zip(zip)
+                .website(website)
+                .map(map)
+                .build();
+        assertValue(street, subject.street());
+        assertValue(zip, subject.zip());
+        assertValue(website, subject.website());
+        assertValue(map, subject.map());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final Address subject = Address.builder()
+                .street(streetValue())
+                .map(mapValue())
+                .build();
+        assertNull(subject.zip());
+        assertNull(subject.website());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> Address.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for street")
     void shouldRejectNullStreet() {
         assertThrows(NullPointerException.class, () -> new Address((String) null, zipValue(), websiteValue(), mapValue()));

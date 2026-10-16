@@ -11,6 +11,8 @@ import org.jspecify.annotations.Nullable;
 public final class ContractId extends EvmCapableAddress {
 
     /// Creates a new `ContractId`.
+    ///
+    /// @throws IllegalArgumentException if a value violates its constraints
     public ContractId(
             final long shard,
             final long realm,
@@ -18,6 +20,9 @@ public final class ContractId extends EvmCapableAddress {
             final @Nullable Long num,
             final @Nullable EvmAddress evmAddress) {
         super(shard, realm, checksum, num, evmAddress);
+        if ((num != null ? 1 : 0) + (evmAddress != null ? 1 : 0) != 1) {
+            throw new IllegalArgumentException("exactly one of num, evmAddress must be set");
+        }
     }
 
     /// Validates the checksum against the given network's checksum scheme.
@@ -53,6 +58,100 @@ public final class ContractId extends EvmCapableAddress {
     /// Builds a ContractId from a 20-byte EVM address.
     public static ContractId fromEvmAddress(final long shard, final long realm, final EvmAddress address) {
         return new ContractId(shard, realm, "", null, address);
+    }
+
+    /// Returns a builder for a new `ContractId`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `ContractId`.
+    ///
+    /// `build()` creates the `ContractId` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Long shard;
+        private @Nullable Long realm;
+        private @Nullable String checksum;
+        private @Nullable Long num;
+        private @Nullable EvmAddress evmAddress;
+
+        private Builder() {
+            // created by ContractId.builder()
+        }
+
+        /// Sets the `shard`.
+        ///
+        /// shard number
+        ///
+        /// @param shard the value
+        /// @return this builder
+        public Builder shard(final long shard) {
+            this.shard = shard;
+            return this;
+        }
+
+        /// Sets the `realm`.
+        ///
+        /// realm number
+        ///
+        /// @param realm the value
+        /// @return this builder
+        public Builder realm(final long realm) {
+            this.realm = realm;
+            return this;
+        }
+
+        /// Sets the `checksum`.
+        ///
+        /// protocol-side checksum over the (shard, realm, selector) form; empty string when no checksum applies (e.g. an EVM-address-only ContractId / AccountId before materialisation)
+        ///
+        /// @param checksum the value
+        /// @return this builder
+        public Builder checksum(final String checksum) {
+            this.checksum = checksum;
+            return this;
+        }
+
+        /// Sets the `num`.
+        ///
+        /// Hiero entity number. May be absent here because a ContractId / AccountId can be addressed by EVM address or alias without a num; always set on `Address`.
+        ///
+        /// @param num the value
+        /// @return this builder
+        public Builder num(final @Nullable Long num) {
+            this.num = num;
+            return this;
+        }
+
+        /// Sets the `evmAddress`.
+        ///
+        /// 20-byte EVM-side address; absent when addressed by Hiero number only
+        ///
+        /// @param evmAddress the value
+        /// @return this builder
+        public Builder evmAddress(final @Nullable EvmAddress evmAddress) {
+            this.evmAddress = evmAddress;
+            return this;
+        }
+
+        /// Creates the `ContractId` of the values set.
+        ///
+        /// @return the new `ContractId`
+        /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
+        public ContractId build() {
+            return new ContractId(
+                    Objects.requireNonNull(shard, "shard must not be null"),
+                    Objects.requireNonNull(realm, "realm must not be null"),
+                    Objects.requireNonNull(checksum, "checksum must not be null"),
+                    num,
+                    evmAddress);
+        }
     }
 
     @Override

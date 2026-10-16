@@ -91,6 +91,130 @@ class TokenInfoTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final Address tokenId = tokenIdValue();
+        final TokenType type = typeValue();
+        final String name = nameValue();
+        final String symbol = symbolValue();
+        final int decimals = decimalsValue();
+        final long totalSupply = totalSupplyValue();
+        final AccountId treasuryAccountId = treasuryAccountIdValue();
+        final TokenSupplyType supplyType = supplyTypeValue();
+        final @Nullable Long maxSupply = maxSupplyValue();
+        final @Nullable String tokenMemo = tokenMemoValue();
+        final byte[] metadata = metadataValue();
+        final ZonedDateTime expirationTime = expirationTimeValue();
+        final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
+        final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
+        final boolean deleted = deletedValue();
+        final @Nullable Authority adminAuthority = adminAuthorityValue();
+        final @Nullable Authority supplyAuthority = supplyAuthorityValue();
+        final @Nullable Authority kycAuthority = kycAuthorityValue();
+        final @Nullable Authority freezeAuthority = freezeAuthorityValue();
+        final @Nullable Authority wipeAuthority = wipeAuthorityValue();
+        final @Nullable Authority pauseAuthority = pauseAuthorityValue();
+        final @Nullable Authority feeScheduleAuthority = feeScheduleAuthorityValue();
+        final @Nullable Authority metadataAuthority = metadataAuthorityValue();
+        final @Nullable Boolean defaultFreezeStatus = defaultFreezeStatusValue();
+        final @Nullable Boolean defaultKycStatus = defaultKycStatusValue();
+        final @Nullable Boolean paused = pausedValue();
+        final TokenInfo subject = TokenInfo.builder()
+                .tokenId(tokenId)
+                .type(type)
+                .name(name)
+                .symbol(symbol)
+                .decimals(decimals)
+                .totalSupply(totalSupply)
+                .treasuryAccountId(treasuryAccountId)
+                .supplyType(supplyType)
+                .maxSupply(maxSupply)
+                .tokenMemo(tokenMemo)
+                .metadata(metadata)
+                .expirationTime(expirationTime)
+                .autoRenewPeriod(autoRenewPeriod)
+                .autoRenewAccount(autoRenewAccount)
+                .deleted(deleted)
+                .adminAuthority(adminAuthority)
+                .supplyAuthority(supplyAuthority)
+                .kycAuthority(kycAuthority)
+                .freezeAuthority(freezeAuthority)
+                .wipeAuthority(wipeAuthority)
+                .pauseAuthority(pauseAuthority)
+                .feeScheduleAuthority(feeScheduleAuthority)
+                .metadataAuthority(metadataAuthority)
+                .defaultFreezeStatus(defaultFreezeStatus)
+                .defaultKycStatus(defaultKycStatus)
+                .paused(paused)
+                .build();
+        assertValue(tokenId, subject.tokenId());
+        assertValue(type, subject.type());
+        assertValue(name, subject.name());
+        assertValue(symbol, subject.symbol());
+        assertValue(decimals, subject.decimals());
+        assertValue(totalSupply, subject.totalSupply());
+        assertValue(treasuryAccountId, subject.treasuryAccountId());
+        assertValue(supplyType, subject.supplyType());
+        assertValue(maxSupply, subject.maxSupply());
+        assertValue(tokenMemo, subject.tokenMemo());
+        assertValue(metadata, subject.metadata());
+        assertValue(expirationTime, subject.expirationTime());
+        assertValue(autoRenewPeriod, subject.autoRenewPeriod());
+        assertValue(autoRenewAccount, subject.autoRenewAccount());
+        assertValue(deleted, subject.deleted());
+        assertValue(adminAuthority, subject.adminAuthority());
+        assertValue(supplyAuthority, subject.supplyAuthority());
+        assertValue(kycAuthority, subject.kycAuthority());
+        assertValue(freezeAuthority, subject.freezeAuthority());
+        assertValue(wipeAuthority, subject.wipeAuthority());
+        assertValue(pauseAuthority, subject.pauseAuthority());
+        assertValue(feeScheduleAuthority, subject.feeScheduleAuthority());
+        assertValue(metadataAuthority, subject.metadataAuthority());
+        assertValue(defaultFreezeStatus, subject.defaultFreezeStatus());
+        assertValue(defaultKycStatus, subject.defaultKycStatus());
+        assertValue(paused, subject.paused());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TokenInfo subject = TokenInfo.builder()
+                .tokenId(tokenIdValue())
+                .type(typeValue())
+                .name(nameValue())
+                .symbol(symbolValue())
+                .totalSupply(totalSupplyValue())
+                .treasuryAccountId(treasuryAccountIdValue())
+                .supplyType(supplyTypeValue())
+                .expirationTime(expirationTimeValue())
+                .build();
+        assertValue(0, subject.decimals());
+        assertNull(subject.maxSupply());
+        assertNull(subject.tokenMemo());
+        assertValue(new byte[0], subject.metadata());
+        assertNull(subject.autoRenewPeriod());
+        assertNull(subject.autoRenewAccount());
+        assertValue(false, subject.deleted());
+        assertNull(subject.adminAuthority());
+        assertNull(subject.supplyAuthority());
+        assertNull(subject.kycAuthority());
+        assertNull(subject.freezeAuthority());
+        assertNull(subject.wipeAuthority());
+        assertNull(subject.pauseAuthority());
+        assertNull(subject.feeScheduleAuthority());
+        assertNull(subject.metadataAuthority());
+        assertNull(subject.defaultFreezeStatus());
+        assertNull(subject.defaultKycStatus());
+        assertNull(subject.paused());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TokenInfo.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for tokenId")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenInfo((Address) null, typeValue(), nameValue(), symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));

@@ -41,6 +41,46 @@ class TopicCreateReceiptTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final TransactionId transactionId = transactionIdValue();
+        final TransactionStatus status = statusValue();
+        final ExchangeRate exchangeRate = exchangeRateValue();
+        final ExchangeRate nextExchangeRate = nextExchangeRateValue();
+        final Address topicId = topicIdValue();
+        final TopicCreateReceipt subject = TopicCreateReceipt.builder()
+                .transactionId(transactionId)
+                .status(status)
+                .exchangeRate(exchangeRate)
+                .nextExchangeRate(nextExchangeRate)
+                .topicId(topicId)
+                .build();
+        assertValue(transactionId, subject.transactionId());
+        assertValue(status, subject.status());
+        assertValue(exchangeRate, subject.exchangeRate());
+        assertValue(nextExchangeRate, subject.nextExchangeRate());
+        assertValue(topicId, subject.topicId());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TopicCreateReceipt subject = TopicCreateReceipt.builder()
+                .transactionId(transactionIdValue())
+                .status(statusValue())
+                .exchangeRate(exchangeRateValue())
+                .nextExchangeRate(nextExchangeRateValue())
+                .topicId(topicIdValue())
+                .build();
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TopicCreateReceipt.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for transactionId")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new TopicCreateReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue(), topicIdValue()));

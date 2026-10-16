@@ -101,6 +101,114 @@ class TokenCreateTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final String name = nameValue();
+        final String symbol = symbolValue();
+        final TokenType tokenType = tokenTypeValue();
+        final int decimals = decimalsValue();
+        final long initialSupply = initialSupplyValue();
+        final AccountId treasuryAccountId = treasuryAccountIdValue();
+        final TokenSupplyType supplyType = supplyTypeValue();
+        final @Nullable Long maxSupply = maxSupplyValue();
+        final boolean freezeDefault = freezeDefaultValue();
+        final @Nullable String tokenMemo = tokenMemoValue();
+        final byte[] metadata = metadataValue();
+        final @Nullable ZonedDateTime expirationTime = expirationTimeValue();
+        final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
+        final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
+        final @Nullable Authority adminAuthority = adminAuthorityValue();
+        final @Nullable Authority supplyAuthority = supplyAuthorityValue();
+        final @Nullable Authority kycAuthority = kycAuthorityValue();
+        final @Nullable Authority freezeAuthority = freezeAuthorityValue();
+        final @Nullable Authority wipeAuthority = wipeAuthorityValue();
+        final @Nullable Authority pauseAuthority = pauseAuthorityValue();
+        final @Nullable Authority feeScheduleAuthority = feeScheduleAuthorityValue();
+        final @Nullable Authority metadataAuthority = metadataAuthorityValue();
+        final TokenCreateTransaction subject = TokenCreateTransaction.builder()
+                .name(name)
+                .symbol(symbol)
+                .tokenType(tokenType)
+                .decimals(decimals)
+                .initialSupply(initialSupply)
+                .treasuryAccountId(treasuryAccountId)
+                .supplyType(supplyType)
+                .maxSupply(maxSupply)
+                .freezeDefault(freezeDefault)
+                .tokenMemo(tokenMemo)
+                .metadata(metadata)
+                .expirationTime(expirationTime)
+                .autoRenewPeriod(autoRenewPeriod)
+                .autoRenewAccount(autoRenewAccount)
+                .adminAuthority(adminAuthority)
+                .supplyAuthority(supplyAuthority)
+                .kycAuthority(kycAuthority)
+                .freezeAuthority(freezeAuthority)
+                .wipeAuthority(wipeAuthority)
+                .pauseAuthority(pauseAuthority)
+                .feeScheduleAuthority(feeScheduleAuthority)
+                .metadataAuthority(metadataAuthority)
+                .build();
+        assertValue(name, subject.name());
+        assertValue(symbol, subject.symbol());
+        assertValue(tokenType, subject.tokenType());
+        assertValue(decimals, subject.decimals());
+        assertValue(initialSupply, subject.initialSupply());
+        assertValue(treasuryAccountId, subject.treasuryAccountId());
+        assertValue(supplyType, subject.supplyType());
+        assertValue(maxSupply, subject.maxSupply());
+        assertValue(freezeDefault, subject.freezeDefault());
+        assertValue(tokenMemo, subject.tokenMemo());
+        assertValue(metadata, subject.metadata());
+        assertValue(expirationTime, subject.expirationTime());
+        assertValue(autoRenewPeriod, subject.autoRenewPeriod());
+        assertValue(autoRenewAccount, subject.autoRenewAccount());
+        assertValue(adminAuthority, subject.adminAuthority());
+        assertValue(supplyAuthority, subject.supplyAuthority());
+        assertValue(kycAuthority, subject.kycAuthority());
+        assertValue(freezeAuthority, subject.freezeAuthority());
+        assertValue(wipeAuthority, subject.wipeAuthority());
+        assertValue(pauseAuthority, subject.pauseAuthority());
+        assertValue(feeScheduleAuthority, subject.feeScheduleAuthority());
+        assertValue(metadataAuthority, subject.metadataAuthority());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TokenCreateTransaction subject = TokenCreateTransaction.builder()
+                .name(nameValue())
+                .symbol(symbolValue())
+                .tokenType(tokenTypeValue())
+                .treasuryAccountId(treasuryAccountIdValue())
+                .build();
+        assertValue(0, subject.decimals());
+        assertValue(0L, subject.initialSupply());
+        assertValue(TokenSupplyType.INFINITE, subject.supplyType());
+        assertNull(subject.maxSupply());
+        assertValue(false, subject.freezeDefault());
+        assertNull(subject.tokenMemo());
+        assertValue(new byte[0], subject.metadata());
+        assertNull(subject.expirationTime());
+        assertNull(subject.autoRenewPeriod());
+        assertNull(subject.autoRenewAccount());
+        assertNull(subject.adminAuthority());
+        assertNull(subject.supplyAuthority());
+        assertNull(subject.kycAuthority());
+        assertNull(subject.freezeAuthority());
+        assertNull(subject.wipeAuthority());
+        assertNull(subject.pauseAuthority());
+        assertNull(subject.feeScheduleAuthority());
+        assertNull(subject.metadataAuthority());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TokenCreateTransaction.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for name")
     void shouldRejectNullName() {
         assertThrows(NullPointerException.class, () -> new TokenCreateTransaction((String) null, symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));

@@ -64,6 +64,66 @@ class AccountUpdateTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final AccountId accountId = accountIdValue();
+        final @Nullable Authority authority = authorityValue();
+        final @Nullable String accountMemo = accountMemoValue();
+        final @Nullable Boolean receiverSignatureRequired = receiverSignatureRequiredValue();
+        final @Nullable Integer maxAutomaticTokenAssociations = maxAutomaticTokenAssociationsValue();
+        final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
+        final @Nullable ZonedDateTime expirationTime = expirationTimeValue();
+        final @Nullable AccountId stakedAccountId = stakedAccountIdValue();
+        final @Nullable Long stakedNodeId = stakedNodeIdValue();
+        final @Nullable Boolean declineStakingReward = declineStakingRewardValue();
+        final AccountUpdateTransaction subject = AccountUpdateTransaction.builder()
+                .accountId(accountId)
+                .authority(authority)
+                .accountMemo(accountMemo)
+                .receiverSignatureRequired(receiverSignatureRequired)
+                .maxAutomaticTokenAssociations(maxAutomaticTokenAssociations)
+                .autoRenewPeriod(autoRenewPeriod)
+                .expirationTime(expirationTime)
+                .stakedAccountId(stakedAccountId)
+                .stakedNodeId(stakedNodeId)
+                .declineStakingReward(declineStakingReward)
+                .build();
+        assertValue(accountId, subject.accountId());
+        assertValue(authority, subject.authority());
+        assertValue(accountMemo, subject.accountMemo());
+        assertValue(receiverSignatureRequired, subject.receiverSignatureRequired());
+        assertValue(maxAutomaticTokenAssociations, subject.maxAutomaticTokenAssociations());
+        assertValue(autoRenewPeriod, subject.autoRenewPeriod());
+        assertValue(expirationTime, subject.expirationTime());
+        assertValue(stakedAccountId, subject.stakedAccountId());
+        assertValue(stakedNodeId, subject.stakedNodeId());
+        assertValue(declineStakingReward, subject.declineStakingReward());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final AccountUpdateTransaction subject = AccountUpdateTransaction.builder()
+                .accountId(accountIdValue())
+                .build();
+        assertNull(subject.authority());
+        assertNull(subject.accountMemo());
+        assertNull(subject.receiverSignatureRequired());
+        assertNull(subject.maxAutomaticTokenAssociations());
+        assertNull(subject.autoRenewPeriod());
+        assertNull(subject.expirationTime());
+        assertNull(subject.stakedAccountId());
+        assertNull(subject.stakedNodeId());
+        assertNull(subject.declineStakingReward());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> AccountUpdateTransaction.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for accountId")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new AccountUpdateTransaction((AccountId) null, authorityValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), expirationTimeValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue()));

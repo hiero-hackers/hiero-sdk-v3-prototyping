@@ -21,6 +21,8 @@ public final class AccountId extends EvmCapableAddress {
     private final byte @Nullable [] alias;
 
     /// Creates a new `AccountId`.
+    ///
+    /// @throws IllegalArgumentException if a value violates its constraints
     public AccountId(
             final long shard,
             final long realm,
@@ -30,6 +32,9 @@ public final class AccountId extends EvmCapableAddress {
             final byte @Nullable [] alias) {
         super(shard, realm, checksum, num, evmAddress);
         this.alias = alias == null ? null : alias.clone();
+        if ((num != null ? 1 : 0) + (evmAddress != null ? 1 : 0) + (alias != null ? 1 : 0) != 1) {
+            throw new IllegalArgumentException("exactly one of num, evmAddress, alias must be set");
+        }
     }
 
     /// serialised public-key alias (HIP-32); absent when addressed by Hiero number or by EVM address
@@ -71,6 +76,113 @@ public final class AccountId extends EvmCapableAddress {
     /// Builds an AccountId from a 20-byte EVM address (HIP-583 auto-create form).
     public static AccountId fromEvmAddress(final long shard, final long realm, final EvmAddress address) {
         return new AccountId(shard, realm, "", null, address, null);
+    }
+
+    /// Returns a builder for a new `AccountId`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `AccountId`.
+    ///
+    /// `build()` creates the `AccountId` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Long shard;
+        private @Nullable Long realm;
+        private @Nullable String checksum;
+        private @Nullable Long num;
+        private @Nullable EvmAddress evmAddress;
+        private byte @Nullable [] alias;
+
+        private Builder() {
+            // created by AccountId.builder()
+        }
+
+        /// Sets the `shard`.
+        ///
+        /// shard number
+        ///
+        /// @param shard the value
+        /// @return this builder
+        public Builder shard(final long shard) {
+            this.shard = shard;
+            return this;
+        }
+
+        /// Sets the `realm`.
+        ///
+        /// realm number
+        ///
+        /// @param realm the value
+        /// @return this builder
+        public Builder realm(final long realm) {
+            this.realm = realm;
+            return this;
+        }
+
+        /// Sets the `checksum`.
+        ///
+        /// protocol-side checksum over the (shard, realm, selector) form; empty string when no checksum applies (e.g. an EVM-address-only ContractId / AccountId before materialisation)
+        ///
+        /// @param checksum the value
+        /// @return this builder
+        public Builder checksum(final String checksum) {
+            this.checksum = checksum;
+            return this;
+        }
+
+        /// Sets the `num`.
+        ///
+        /// Hiero entity number. May be absent here because a ContractId / AccountId can be addressed by EVM address or alias without a num; always set on `Address`.
+        ///
+        /// @param num the value
+        /// @return this builder
+        public Builder num(final @Nullable Long num) {
+            this.num = num;
+            return this;
+        }
+
+        /// Sets the `evmAddress`.
+        ///
+        /// 20-byte EVM-side address; absent when addressed by Hiero number only
+        ///
+        /// @param evmAddress the value
+        /// @return this builder
+        public Builder evmAddress(final @Nullable EvmAddress evmAddress) {
+            this.evmAddress = evmAddress;
+            return this;
+        }
+
+        /// Sets the `alias`.
+        ///
+        /// serialised public-key alias (HIP-32); absent when addressed by Hiero number or by EVM address
+        ///
+        /// @param alias the value
+        /// @return this builder
+        public Builder alias(final byte @Nullable [] alias) {
+            this.alias = alias;
+            return this;
+        }
+
+        /// Creates the `AccountId` of the values set.
+        ///
+        /// @return the new `AccountId`
+        /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
+        public AccountId build() {
+            return new AccountId(
+                    Objects.requireNonNull(shard, "shard must not be null"),
+                    Objects.requireNonNull(realm, "realm must not be null"),
+                    Objects.requireNonNull(checksum, "checksum must not be null"),
+                    num,
+                    evmAddress,
+                    alias);
+        }
     }
 
     @Override

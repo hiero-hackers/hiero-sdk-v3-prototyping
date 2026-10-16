@@ -83,4 +83,126 @@ public record Cart<Item>(
     public static Cart<String> empty() {
         throw new UnsupportedOperationException("Not implemented yet: Cart.empty");
     }
+
+    /// Returns a builder for a new `Cart`.
+    ///
+    /// @return the builder
+    public static <Item> Builder<Item> builder() {
+        return new Builder<>();
+    }
+
+    /// The builder of `Cart`.
+    ///
+    /// `build()` creates the `Cart` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder<Item> {
+
+        private @Nullable List<Item> items;
+        private Set<String> coupons = Set.of();
+        private @Nullable Map<String, String> notes;
+        private int quantity = 1;
+        private @Nullable Integer discount;
+        private @Nullable Boolean legacy;
+        private @Nullable Category category;
+        private @Nullable Money total;
+
+        private Builder() {
+            // created by Cart.builder()
+        }
+
+        /// Sets the `items`.
+        ///
+        /// the items in the cart;
+        /// never more than 100
+        ///
+        /// @param items the value
+        /// @return this builder
+        public Builder<Item> items(final List<Item> items) {
+            this.items = items;
+            return this;
+        }
+
+        /// Sets the `coupons`.
+        ///
+        /// @param coupons the value
+        /// @return this builder
+        public Builder<Item> coupons(final Set<String> coupons) {
+            this.coupons = coupons;
+            return this;
+        }
+
+        /// Sets the `notes`.
+        ///
+        /// @param notes the value
+        /// @return this builder
+        public Builder<Item> notes(final Map<String, String> notes) {
+            this.notes = notes;
+            return this;
+        }
+
+        /// Sets the `quantity`.
+        ///
+        /// @param quantity the value
+        /// @return this builder
+        public Builder<Item> quantity(final int quantity) {
+            this.quantity = quantity;
+            return this;
+        }
+
+        /// Sets the `discount`.
+        ///
+        /// @param discount the value
+        /// @return this builder
+        public Builder<Item> discount(final @Nullable Integer discount) {
+            this.discount = discount;
+            return this;
+        }
+
+        /// Sets the `legacy`.
+        ///
+        /// @param legacy the value
+        /// @return this builder
+        /// @deprecated Retained for compatibility; do not use it in new code.
+        @Deprecated
+        public Builder<Item> legacy(final boolean legacy) {
+            this.legacy = legacy;
+            return this;
+        }
+
+        /// Sets the `category`.
+        ///
+        /// @param category the value
+        /// @return this builder
+        public Builder<Item> category(final Category category) {
+            this.category = category;
+            return this;
+        }
+
+        /// Sets the `total`.
+        ///
+        /// @param total the value
+        /// @return this builder
+        public Builder<Item> total(final Money total) {
+            this.total = total;
+            return this;
+        }
+
+        /// Creates the `Cart` of the values set.
+        ///
+        /// @return the new `Cart`
+        /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
+        public Cart<Item> build() {
+            return new Cart<>(
+                    Objects.requireNonNull(items, "items must not be null"),
+                    coupons,
+                    Objects.requireNonNull(notes, "notes must not be null"),
+                    quantity,
+                    discount,
+                    Objects.requireNonNull(legacy, "legacy must not be null"),
+                    Objects.requireNonNull(category, "category must not be null"),
+                    Objects.requireNonNull(total, "total must not be null"));
+        }
+    }
 }

@@ -107,4 +107,253 @@ public record AccountInfo(
     public String toString() {
         return "AccountInfo[accountId=" + accountId + ", evmAddress=" + evmAddress + ", balance=" + balance + ", balanceTimestamp=" + balanceTimestamp + ", ethereumNonce=" + ethereumNonce + ", pendingReward=" + pendingReward + ", alias=" + (alias == null ? "null" : "byte[" + alias.length + "]") + ", authority=" + authority + ", accountMemo=" + accountMemo + ", createdTimestamp=" + createdTimestamp + ", expiryTimestamp=" + expiryTimestamp + ", autoRenewPeriod=" + autoRenewPeriod + ", maxAutomaticTokenAssociations=" + maxAutomaticTokenAssociations + ", receiverSignatureRequired=" + receiverSignatureRequired + ", declineReward=" + declineReward + ", deleted=" + deleted + ", stakedAccountId=" + stakedAccountId + ", stakedNodeId=" + stakedNodeId + ", stakePeriodStart=" + stakePeriodStart + "]";
     }
+
+    /// Returns a builder for a new `AccountInfo`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `AccountInfo`.
+    ///
+    /// `build()` creates the `AccountInfo` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable AccountId accountId;
+        private @Nullable EvmAddress evmAddress;
+        private @Nullable Long balance;
+        private @Nullable ZonedDateTime balanceTimestamp;
+        private @Nullable Long ethereumNonce;
+        private @Nullable Long pendingReward;
+        private byte @Nullable [] alias;
+        private @Nullable Authority authority;
+        private @Nullable String accountMemo;
+        private @Nullable ZonedDateTime createdTimestamp;
+        private @Nullable ZonedDateTime expiryTimestamp;
+        private @Nullable Duration autoRenewPeriod;
+        private @Nullable Integer maxAutomaticTokenAssociations;
+        private @Nullable Boolean receiverSignatureRequired;
+        private boolean declineReward = false;
+        private boolean deleted = false;
+        private @Nullable AccountId stakedAccountId;
+        private @Nullable Long stakedNodeId;
+        private @Nullable ZonedDateTime stakePeriodStart;
+
+        private Builder() {
+            // created by AccountInfo.builder()
+        }
+
+        /// Sets the `accountId`.
+        ///
+        /// @param accountId the value
+        /// @return this builder
+        public Builder accountId(final AccountId accountId) {
+            this.accountId = accountId;
+            return this;
+        }
+
+        /// Sets the `evmAddress`.
+        ///
+        /// @param evmAddress the value
+        /// @return this builder
+        public Builder evmAddress(final @Nullable EvmAddress evmAddress) {
+            this.evmAddress = evmAddress;
+            return this;
+        }
+
+        /// Sets the `balance`.
+        ///
+        /// hbar balance in tinybars
+        ///
+        /// @param balance the value
+        /// @return this builder
+        public Builder balance(final long balance) {
+            this.balance = balance;
+            return this;
+        }
+
+        /// Sets the `balanceTimestamp`.
+        ///
+        /// timestamp of the reported balance
+        ///
+        /// @param balanceTimestamp the value
+        /// @return this builder
+        public Builder balanceTimestamp(final @Nullable ZonedDateTime balanceTimestamp) {
+            this.balanceTimestamp = balanceTimestamp;
+            return this;
+        }
+
+        /// Sets the `ethereumNonce`.
+        ///
+        /// @param ethereumNonce the value
+        /// @return this builder
+        public Builder ethereumNonce(final long ethereumNonce) {
+            this.ethereumNonce = ethereumNonce;
+            return this;
+        }
+
+        /// Sets the `pendingReward`.
+        ///
+        /// tinybars receivable in the next staking payout
+        ///
+        /// @param pendingReward the value
+        /// @return this builder
+        public Builder pendingReward(final long pendingReward) {
+            this.pendingReward = pendingReward;
+            return this;
+        }
+
+        /// Sets the `alias`.
+        ///
+        /// HIP-32 public-key alias (serialised protobuf Key bytes)
+        ///
+        /// @param alias the value
+        /// @return this builder
+        public Builder alias(final byte @Nullable [] alias) {
+            this.alias = alias;
+            return this;
+        }
+
+        /// Sets the `authority`.
+        ///
+        /// @param authority the value
+        /// @return this builder
+        public Builder authority(final @Nullable Authority authority) {
+            this.authority = authority;
+            return this;
+        }
+
+        /// Sets the `accountMemo`.
+        ///
+        /// @param accountMemo the value
+        /// @return this builder
+        public Builder accountMemo(final @Nullable String accountMemo) {
+            this.accountMemo = accountMemo;
+            return this;
+        }
+
+        /// Sets the `createdTimestamp`.
+        ///
+        /// @param createdTimestamp the value
+        /// @return this builder
+        public Builder createdTimestamp(final @Nullable ZonedDateTime createdTimestamp) {
+            this.createdTimestamp = createdTimestamp;
+            return this;
+        }
+
+        /// Sets the `expiryTimestamp`.
+        ///
+        /// @param expiryTimestamp the value
+        /// @return this builder
+        public Builder expiryTimestamp(final @Nullable ZonedDateTime expiryTimestamp) {
+            this.expiryTimestamp = expiryTimestamp;
+            return this;
+        }
+
+        /// Sets the `autoRenewPeriod`.
+        ///
+        /// @param autoRenewPeriod the value
+        /// @return this builder
+        public Builder autoRenewPeriod(final @Nullable Duration autoRenewPeriod) {
+            this.autoRenewPeriod = autoRenewPeriod;
+            return this;
+        }
+
+        /// Sets the `maxAutomaticTokenAssociations`.
+        ///
+        /// @param maxAutomaticTokenAssociations the value
+        /// @return this builder
+        public Builder maxAutomaticTokenAssociations(final @Nullable Integer maxAutomaticTokenAssociations) {
+            this.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations;
+            return this;
+        }
+
+        /// Sets the `receiverSignatureRequired`.
+        ///
+        /// @param receiverSignatureRequired the value
+        /// @return this builder
+        public Builder receiverSignatureRequired(final @Nullable Boolean receiverSignatureRequired) {
+            this.receiverSignatureRequired = receiverSignatureRequired;
+            return this;
+        }
+
+        /// Sets the `declineReward`.
+        ///
+        /// @param declineReward the value
+        /// @return this builder
+        public Builder declineReward(final boolean declineReward) {
+            this.declineReward = declineReward;
+            return this;
+        }
+
+        /// Sets the `deleted`.
+        ///
+        /// @param deleted the value
+        /// @return this builder
+        public Builder deleted(final boolean deleted) {
+            this.deleted = deleted;
+            return this;
+        }
+
+        /// Sets the `stakedAccountId`.
+        ///
+        /// mutually exclusive with stakedNodeId
+        ///
+        /// @param stakedAccountId the value
+        /// @return this builder
+        public Builder stakedAccountId(final @Nullable AccountId stakedAccountId) {
+            this.stakedAccountId = stakedAccountId;
+            return this;
+        }
+
+        /// Sets the `stakedNodeId`.
+        ///
+        /// mutually exclusive with stakedAccountId
+        ///
+        /// @param stakedNodeId the value
+        /// @return this builder
+        public Builder stakedNodeId(final @Nullable Long stakedNodeId) {
+            this.stakedNodeId = stakedNodeId;
+            return this;
+        }
+
+        /// Sets the `stakePeriodStart`.
+        ///
+        /// @param stakePeriodStart the value
+        /// @return this builder
+        public Builder stakePeriodStart(final @Nullable ZonedDateTime stakePeriodStart) {
+            this.stakePeriodStart = stakePeriodStart;
+            return this;
+        }
+
+        /// Creates the `AccountInfo` of the values set.
+        ///
+        /// @return the new `AccountInfo`
+        /// @throws NullPointerException if a required value is not set
+        public AccountInfo build() {
+            return new AccountInfo(
+                    Objects.requireNonNull(accountId, "accountId must not be null"),
+                    evmAddress,
+                    Objects.requireNonNull(balance, "balance must not be null"),
+                    balanceTimestamp,
+                    Objects.requireNonNull(ethereumNonce, "ethereumNonce must not be null"),
+                    Objects.requireNonNull(pendingReward, "pendingReward must not be null"),
+                    alias,
+                    authority,
+                    accountMemo,
+                    createdTimestamp,
+                    expiryTimestamp,
+                    autoRenewPeriod,
+                    maxAutomaticTokenAssociations,
+                    receiverSignatureRequired,
+                    declineReward,
+                    deleted,
+                    stakedAccountId,
+                    stakedNodeId,
+                    stakePeriodStart);
+        }
+    }
 }

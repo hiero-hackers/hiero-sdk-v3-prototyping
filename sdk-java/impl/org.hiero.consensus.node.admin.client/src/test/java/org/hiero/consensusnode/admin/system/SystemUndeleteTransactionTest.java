@@ -38,13 +38,48 @@ class SystemUndeleteTransactionTest {
     @DisplayName("creates a SystemUndeleteTransaction and returns the values")
     void shouldCreateAndReturnTheValues() {
         final @Nullable Address fileId = fileIdValue();
-        final @Nullable ContractId contractId = contractIdValue();
+        final @Nullable ContractId contractId = (ContractId) null;
         final SystemUndeleteTransaction subject = new SystemUndeleteTransaction(fileId, contractId);
         assertValue(fileId, subject.fileId());
         assertValue(contractId, subject.contractId());
         assertNull(subject.maxTransactionFee());
         assertNull(subject.validDuration());
         assertNull(subject.memo());
+    }
+
+    @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final @Nullable Address fileId = fileIdValue();
+        final @Nullable ContractId contractId = (ContractId) null;
+        final SystemUndeleteTransaction subject = SystemUndeleteTransaction.builder()
+                .fileId(fileId)
+                .contractId(contractId)
+                .build();
+        assertValue(fileId, subject.fileId());
+        assertValue(contractId, subject.contractId());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final SystemUndeleteTransaction subject = SystemUndeleteTransaction.builder()
+                .fileId(fileIdValue())
+                .build();
+        assertValue(fileIdValue(), subject.fileId());
+        assertNull(subject.contractId());
+    }
+
+    @Test
+    @DisplayName("rejects fileId and contractId together (@@oneOf)")
+    void shouldRejectTwoOfFileIdOrContractId() {
+        assertThrows(IllegalArgumentException.class, () -> new SystemUndeleteTransaction(fileIdValue(), contractIdValue()));
+    }
+
+    @Test
+    @DisplayName("rejects none of fileId, contractId (@@oneOf)")
+    void shouldRejectNoneOfFileIdOrContractId() {
+        assertThrows(IllegalArgumentException.class, () -> new SystemUndeleteTransaction((Address) null, (ContractId) null));
     }
 
     @Test
@@ -161,7 +196,7 @@ class SystemUndeleteTransactionTest {
     }
 
     private static SystemUndeleteTransaction create() {
-        return new SystemUndeleteTransaction(fileIdValue(), contractIdValue());
+        return new SystemUndeleteTransaction(fileIdValue(), (ContractId) null);
     }
 
     private static NativeToken<?, ?> maxTransactionFeeOtherValue() {

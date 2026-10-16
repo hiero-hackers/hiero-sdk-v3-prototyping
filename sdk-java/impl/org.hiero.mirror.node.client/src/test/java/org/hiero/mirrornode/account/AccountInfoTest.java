@@ -74,6 +74,102 @@ class AccountInfoTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final AccountId accountId = accountIdValue();
+        final @Nullable EvmAddress evmAddress = evmAddressValue();
+        final long balance = balanceValue();
+        final @Nullable ZonedDateTime balanceTimestamp = balanceTimestampValue();
+        final long ethereumNonce = ethereumNonceValue();
+        final long pendingReward = pendingRewardValue();
+        final byte @Nullable [] alias = aliasValue();
+        final @Nullable Authority authority = authorityValue();
+        final @Nullable String accountMemo = accountMemoValue();
+        final @Nullable ZonedDateTime createdTimestamp = createdTimestampValue();
+        final @Nullable ZonedDateTime expiryTimestamp = expiryTimestampValue();
+        final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
+        final @Nullable Integer maxAutomaticTokenAssociations = maxAutomaticTokenAssociationsValue();
+        final @Nullable Boolean receiverSignatureRequired = receiverSignatureRequiredValue();
+        final boolean declineReward = declineRewardValue();
+        final boolean deleted = deletedValue();
+        final @Nullable AccountId stakedAccountId = stakedAccountIdValue();
+        final @Nullable Long stakedNodeId = stakedNodeIdValue();
+        final @Nullable ZonedDateTime stakePeriodStart = stakePeriodStartValue();
+        final AccountInfo subject = AccountInfo.builder()
+                .accountId(accountId)
+                .evmAddress(evmAddress)
+                .balance(balance)
+                .balanceTimestamp(balanceTimestamp)
+                .ethereumNonce(ethereumNonce)
+                .pendingReward(pendingReward)
+                .alias(alias)
+                .authority(authority)
+                .accountMemo(accountMemo)
+                .createdTimestamp(createdTimestamp)
+                .expiryTimestamp(expiryTimestamp)
+                .autoRenewPeriod(autoRenewPeriod)
+                .maxAutomaticTokenAssociations(maxAutomaticTokenAssociations)
+                .receiverSignatureRequired(receiverSignatureRequired)
+                .declineReward(declineReward)
+                .deleted(deleted)
+                .stakedAccountId(stakedAccountId)
+                .stakedNodeId(stakedNodeId)
+                .stakePeriodStart(stakePeriodStart)
+                .build();
+        assertValue(accountId, subject.accountId());
+        assertValue(evmAddress, subject.evmAddress());
+        assertValue(balance, subject.balance());
+        assertValue(balanceTimestamp, subject.balanceTimestamp());
+        assertValue(ethereumNonce, subject.ethereumNonce());
+        assertValue(pendingReward, subject.pendingReward());
+        assertValue(alias, subject.alias());
+        assertValue(authority, subject.authority());
+        assertValue(accountMemo, subject.accountMemo());
+        assertValue(createdTimestamp, subject.createdTimestamp());
+        assertValue(expiryTimestamp, subject.expiryTimestamp());
+        assertValue(autoRenewPeriod, subject.autoRenewPeriod());
+        assertValue(maxAutomaticTokenAssociations, subject.maxAutomaticTokenAssociations());
+        assertValue(receiverSignatureRequired, subject.receiverSignatureRequired());
+        assertValue(declineReward, subject.declineReward());
+        assertValue(deleted, subject.deleted());
+        assertValue(stakedAccountId, subject.stakedAccountId());
+        assertValue(stakedNodeId, subject.stakedNodeId());
+        assertValue(stakePeriodStart, subject.stakePeriodStart());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final AccountInfo subject = AccountInfo.builder()
+                .accountId(accountIdValue())
+                .balance(balanceValue())
+                .ethereumNonce(ethereumNonceValue())
+                .pendingReward(pendingRewardValue())
+                .build();
+        assertNull(subject.evmAddress());
+        assertNull(subject.balanceTimestamp());
+        assertNull(subject.alias());
+        assertNull(subject.authority());
+        assertNull(subject.accountMemo());
+        assertNull(subject.createdTimestamp());
+        assertNull(subject.expiryTimestamp());
+        assertNull(subject.autoRenewPeriod());
+        assertNull(subject.maxAutomaticTokenAssociations());
+        assertNull(subject.receiverSignatureRequired());
+        assertValue(false, subject.declineReward());
+        assertValue(false, subject.deleted());
+        assertNull(subject.stakedAccountId());
+        assertNull(subject.stakedNodeId());
+        assertNull(subject.stakePeriodStart());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> AccountInfo.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for accountId")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new AccountInfo((AccountId) null, evmAddressValue(), balanceValue(), balanceTimestampValue(), ethereumNonceValue(), pendingRewardValue(), aliasValue(), authorityValue(), accountMemoValue(), createdTimestampValue(), expiryTimestampValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), declineRewardValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), stakePeriodStartValue()));

@@ -61,6 +61,8 @@ final class RecordGenerator {
             checks.append(constraints.statements());
             constants.addAll(constraints.constants());
         }
+        // @@oneOf and @@oneOrNoneOf
+        checks.append(JavaOneOf.checks(type, INDENT + INDENT));
         if (!checks.isEmpty()) {
             final List<String> tags = new ArrayList<>();
             if (checks.indexOf("requireNonNull") >= 0) {
@@ -122,6 +124,14 @@ final class RecordGenerator {
         // methods
         for (final MethodDefinition method : type.methods()) {
             body.append(body.isEmpty() ? "" : "\n").append(JavaMembers.method(type.name(), method, context, imports, JavaMembers.Body.STUB));
+        }
+
+        // a builder for many or optional components
+        if (BuilderGenerator.hasBuilder(type, fields, context)) {
+            for (final String member : BuilderGenerator.render(type, fields, declarations, imports, context,
+                    checks.indexOf("IllegalArgumentException") >= 0)) {
+                body.append(body.isEmpty() ? "" : "\n").append(member);
+            }
         }
 
         // before rendering the imports: the header registers imports too

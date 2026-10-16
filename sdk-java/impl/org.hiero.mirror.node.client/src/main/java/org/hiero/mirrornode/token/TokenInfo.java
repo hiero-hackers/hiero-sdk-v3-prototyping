@@ -103,4 +103,220 @@ public record TokenInfo(
     public String toString() {
         return "TokenInfo[tokenId=" + tokenId + ", type=" + type + ", name=" + name + ", symbol=" + symbol + ", memo=" + memo + ", decimals=" + decimals + ", metadata=" + "byte[" + metadata.length + "]" + ", createdTimestamp=" + createdTimestamp + ", modifiedTimestamp=" + modifiedTimestamp + ", expiryTimestamp=" + expiryTimestamp + ", supplyType=" + supplyType + ", initialSupply=" + initialSupply + ", totalSupply=" + totalSupply + ", maxSupply=" + maxSupply + ", treasuryAccountId=" + treasuryAccountId + ", deleted=" + deleted + ", customFees=" + customFees + "]";
     }
+
+    /// Returns a builder for a new `TokenInfo`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `TokenInfo`.
+    ///
+    /// `build()` creates the `TokenInfo` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Address tokenId;
+        private @Nullable TokenType type;
+        private @Nullable String name;
+        private @Nullable String symbol;
+        private @Nullable String memo;
+        private @Nullable Long decimals;
+        private byte @Nullable [] metadata;
+        private @Nullable ZonedDateTime createdTimestamp;
+        private @Nullable ZonedDateTime modifiedTimestamp;
+        private @Nullable ZonedDateTime expiryTimestamp;
+        private @Nullable TokenSupplyType supplyType;
+        private @Nullable BigInteger initialSupply;
+        private @Nullable BigInteger totalSupply;
+        private @Nullable BigInteger maxSupply;
+        private @Nullable AccountId treasuryAccountId;
+        private @Nullable Boolean deleted;
+        private @Nullable CustomFee customFees;
+
+        private Builder() {
+            // created by TokenInfo.builder()
+        }
+
+        /// Sets the `tokenId`.
+        ///
+        /// @param tokenId the value
+        /// @return this builder
+        public Builder tokenId(final Address tokenId) {
+            this.tokenId = tokenId;
+            return this;
+        }
+
+        /// Sets the `type`.
+        ///
+        /// @param type the value
+        /// @return this builder
+        public Builder type(final TokenType type) {
+            this.type = type;
+            return this;
+        }
+
+        /// Sets the `name`.
+        ///
+        /// @param name the value
+        /// @return this builder
+        public Builder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        /// Sets the `symbol`.
+        ///
+        /// @param symbol the value
+        /// @return this builder
+        public Builder symbol(final String symbol) {
+            this.symbol = symbol;
+            return this;
+        }
+
+        /// Sets the `memo`.
+        ///
+        /// @param memo the value
+        /// @return this builder
+        public Builder memo(final @Nullable String memo) {
+            this.memo = memo;
+            return this;
+        }
+
+        /// Sets the `decimals`.
+        ///
+        /// @param decimals the value
+        /// @return this builder
+        public Builder decimals(final long decimals) {
+            this.decimals = decimals;
+            return this;
+        }
+
+        /// Sets the `metadata`.
+        ///
+        /// @param metadata the value
+        /// @return this builder
+        public Builder metadata(final byte[] metadata) {
+            this.metadata = metadata;
+            return this;
+        }
+
+        /// Sets the `createdTimestamp`.
+        ///
+        /// @param createdTimestamp the value
+        /// @return this builder
+        public Builder createdTimestamp(final ZonedDateTime createdTimestamp) {
+            this.createdTimestamp = createdTimestamp;
+            return this;
+        }
+
+        /// Sets the `modifiedTimestamp`.
+        ///
+        /// @param modifiedTimestamp the value
+        /// @return this builder
+        public Builder modifiedTimestamp(final ZonedDateTime modifiedTimestamp) {
+            this.modifiedTimestamp = modifiedTimestamp;
+            return this;
+        }
+
+        /// Sets the `expiryTimestamp`.
+        ///
+        /// @param expiryTimestamp the value
+        /// @return this builder
+        public Builder expiryTimestamp(final @Nullable ZonedDateTime expiryTimestamp) {
+            this.expiryTimestamp = expiryTimestamp;
+            return this;
+        }
+
+        /// Sets the `supplyType`.
+        ///
+        /// @param supplyType the value
+        /// @return this builder
+        public Builder supplyType(final TokenSupplyType supplyType) {
+            this.supplyType = supplyType;
+            return this;
+        }
+
+        /// Sets the `initialSupply`.
+        ///
+        /// @param initialSupply the value
+        /// @return this builder
+        public Builder initialSupply(final BigInteger initialSupply) {
+            this.initialSupply = initialSupply;
+            return this;
+        }
+
+        /// Sets the `totalSupply`.
+        ///
+        /// @param totalSupply the value
+        /// @return this builder
+        public Builder totalSupply(final BigInteger totalSupply) {
+            this.totalSupply = totalSupply;
+            return this;
+        }
+
+        /// Sets the `maxSupply`.
+        ///
+        /// @param maxSupply the value
+        /// @return this builder
+        public Builder maxSupply(final BigInteger maxSupply) {
+            this.maxSupply = maxSupply;
+            return this;
+        }
+
+        /// Sets the `treasuryAccountId`.
+        ///
+        /// @param treasuryAccountId the value
+        /// @return this builder
+        public Builder treasuryAccountId(final AccountId treasuryAccountId) {
+            this.treasuryAccountId = treasuryAccountId;
+            return this;
+        }
+
+        /// Sets the `deleted`.
+        ///
+        /// @param deleted the value
+        /// @return this builder
+        public Builder deleted(final boolean deleted) {
+            this.deleted = deleted;
+            return this;
+        }
+
+        /// Sets the `customFees`.
+        ///
+        /// @param customFees the value
+        /// @return this builder
+        public Builder customFees(final CustomFee customFees) {
+            this.customFees = customFees;
+            return this;
+        }
+
+        /// Creates the `TokenInfo` of the values set.
+        ///
+        /// @return the new `TokenInfo`
+        /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
+        public TokenInfo build() {
+            return new TokenInfo(
+                    Objects.requireNonNull(tokenId, "tokenId must not be null"),
+                    Objects.requireNonNull(type, "type must not be null"),
+                    Objects.requireNonNull(name, "name must not be null"),
+                    Objects.requireNonNull(symbol, "symbol must not be null"),
+                    memo,
+                    Objects.requireNonNull(decimals, "decimals must not be null"),
+                    Objects.requireNonNull(metadata, "metadata must not be null"),
+                    Objects.requireNonNull(createdTimestamp, "createdTimestamp must not be null"),
+                    Objects.requireNonNull(modifiedTimestamp, "modifiedTimestamp must not be null"),
+                    expiryTimestamp,
+                    Objects.requireNonNull(supplyType, "supplyType must not be null"),
+                    Objects.requireNonNull(initialSupply, "initialSupply must not be null"),
+                    Objects.requireNonNull(totalSupply, "totalSupply must not be null"),
+                    Objects.requireNonNull(maxSupply, "maxSupply must not be null"),
+                    Objects.requireNonNull(treasuryAccountId, "treasuryAccountId must not be null"),
+                    Objects.requireNonNull(deleted, "deleted must not be null"),
+                    Objects.requireNonNull(customFees, "customFees must not be null"));
+        }
+    }
 }

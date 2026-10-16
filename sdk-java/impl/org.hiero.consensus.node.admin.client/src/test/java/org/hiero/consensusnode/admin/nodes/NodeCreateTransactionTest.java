@@ -69,6 +69,62 @@ class NodeCreateTransactionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final AccountId accountId = accountIdValue();
+        final @Nullable String description = descriptionValue();
+        final List<ServiceEndpoint> gossipEndpoints = gossipEndpointsValue();
+        final List<ServiceEndpoint> serviceEndpoints = serviceEndpointsValue();
+        final byte[] gossipCaCertificate = gossipCaCertificateValue();
+        final byte[] grpcCertificateHash = grpcCertificateHashValue();
+        final Authority adminAuthority = adminAuthorityValue();
+        final boolean declineReward = declineRewardValue();
+        final @Nullable ServiceEndpoint grpcWebProxyEndpoint = grpcWebProxyEndpointValue();
+        final NodeCreateTransaction subject = NodeCreateTransaction.builder()
+                .accountId(accountId)
+                .description(description)
+                .gossipEndpoints(gossipEndpoints)
+                .serviceEndpoints(serviceEndpoints)
+                .gossipCaCertificate(gossipCaCertificate)
+                .grpcCertificateHash(grpcCertificateHash)
+                .adminAuthority(adminAuthority)
+                .declineReward(declineReward)
+                .grpcWebProxyEndpoint(grpcWebProxyEndpoint)
+                .build();
+        assertValue(accountId, subject.accountId());
+        assertValue(description, subject.description());
+        assertValue(gossipEndpoints, subject.gossipEndpoints());
+        assertValue(serviceEndpoints, subject.serviceEndpoints());
+        assertValue(gossipCaCertificate, subject.gossipCaCertificate());
+        assertValue(grpcCertificateHash, subject.grpcCertificateHash());
+        assertValue(adminAuthority, subject.adminAuthority());
+        assertValue(declineReward, subject.declineReward());
+        assertValue(grpcWebProxyEndpoint, subject.grpcWebProxyEndpoint());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final NodeCreateTransaction subject = NodeCreateTransaction.builder()
+                .accountId(accountIdValue())
+                .gossipEndpoints(gossipEndpointsValue())
+                .serviceEndpoints(serviceEndpointsValue())
+                .gossipCaCertificate(gossipCaCertificateValue())
+                .grpcCertificateHash(grpcCertificateHashValue())
+                .adminAuthority(adminAuthorityValue())
+                .build();
+        assertNull(subject.description());
+        assertValue(false, subject.declineReward());
+        assertNull(subject.grpcWebProxyEndpoint());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> NodeCreateTransaction.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for accountId")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new NodeCreateTransaction((AccountId) null, descriptionValue(), gossipEndpointsValue(), serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
@@ -83,7 +139,7 @@ class NodeCreateTransactionTest {
     @Test
     @DisplayName("gossipEndpoints: accepts the minimum number of elements")
     void shouldAcceptGossipEndpointsAtMinimumSize() {
-        final List<ServiceEndpoint> value = List.of(new ServiceEndpoint(null, null, 1));
+        final List<ServiceEndpoint> value = List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
         final NodeCreateTransaction subject = new NodeCreateTransaction(accountIdValue(), descriptionValue(), value, serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue());
         assertValue(value, subject.gossipEndpoints());
     }
@@ -114,7 +170,7 @@ class NodeCreateTransactionTest {
     @Test
     @DisplayName("serviceEndpoints: accepts the minimum number of elements")
     void shouldAcceptServiceEndpointsAtMinimumSize() {
-        final List<ServiceEndpoint> value = List.of(new ServiceEndpoint(null, null, 1));
+        final List<ServiceEndpoint> value = List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
         final NodeCreateTransaction subject = new NodeCreateTransaction(accountIdValue(), descriptionValue(), gossipEndpointsValue(), value, gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue());
         assertValue(value, subject.serviceEndpoints());
     }
@@ -296,11 +352,11 @@ class NodeCreateTransactionTest {
     }
 
     private static List<ServiceEndpoint> gossipEndpointsValue() {
-        return List.of(new ServiceEndpoint(null, null, 1));
+        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
     }
 
     private static List<ServiceEndpoint> serviceEndpointsValue() {
-        return List.of(new ServiceEndpoint(null, null, 1));
+        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
     }
 
     private static byte[] gossipCaCertificateValue() {
@@ -320,7 +376,7 @@ class NodeCreateTransactionTest {
     }
 
     private static ServiceEndpoint grpcWebProxyEndpointValue() {
-        return new ServiceEndpoint(null, null, 1);
+        return new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1);
     }
 
     private static NodeCreateTransaction create() {

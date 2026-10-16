@@ -44,6 +44,78 @@ class NetworkStakeTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final long maxStakeReward = maxStakeRewardValue();
+        final long maxStakeRewardPerHbar = maxStakeRewardPerHbarValue();
+        final long maxTotalReward = maxTotalRewardValue();
+        final double nodeRewardFeeFraction = nodeRewardFeeFractionValue();
+        final long reservedStakingRewards = reservedStakingRewardsValue();
+        final long rewardBalanceThreshold = rewardBalanceThresholdValue();
+        final long stakeTotal = stakeTotalValue();
+        final Duration stakingPeriod = stakingPeriodValue();
+        final long stakingPeriodsStored = stakingPeriodsStoredValue();
+        final double stakingRewardFeeFraction = stakingRewardFeeFractionValue();
+        final long stakingRewardRate = stakingRewardRateValue();
+        final long stakingStartThreshold = stakingStartThresholdValue();
+        final long unreservedStakingRewardBalance = unreservedStakingRewardBalanceValue();
+        final NetworkStake subject = NetworkStake.builder()
+                .maxStakeReward(maxStakeReward)
+                .maxStakeRewardPerHbar(maxStakeRewardPerHbar)
+                .maxTotalReward(maxTotalReward)
+                .nodeRewardFeeFraction(nodeRewardFeeFraction)
+                .reservedStakingRewards(reservedStakingRewards)
+                .rewardBalanceThreshold(rewardBalanceThreshold)
+                .stakeTotal(stakeTotal)
+                .stakingPeriod(stakingPeriod)
+                .stakingPeriodsStored(stakingPeriodsStored)
+                .stakingRewardFeeFraction(stakingRewardFeeFraction)
+                .stakingRewardRate(stakingRewardRate)
+                .stakingStartThreshold(stakingStartThreshold)
+                .unreservedStakingRewardBalance(unreservedStakingRewardBalance)
+                .build();
+        assertValue(maxStakeReward, subject.maxStakeReward());
+        assertValue(maxStakeRewardPerHbar, subject.maxStakeRewardPerHbar());
+        assertValue(maxTotalReward, subject.maxTotalReward());
+        assertValue(nodeRewardFeeFraction, subject.nodeRewardFeeFraction());
+        assertValue(reservedStakingRewards, subject.reservedStakingRewards());
+        assertValue(rewardBalanceThreshold, subject.rewardBalanceThreshold());
+        assertValue(stakeTotal, subject.stakeTotal());
+        assertValue(stakingPeriod, subject.stakingPeriod());
+        assertValue(stakingPeriodsStored, subject.stakingPeriodsStored());
+        assertValue(stakingRewardFeeFraction, subject.stakingRewardFeeFraction());
+        assertValue(stakingRewardRate, subject.stakingRewardRate());
+        assertValue(stakingStartThreshold, subject.stakingStartThreshold());
+        assertValue(unreservedStakingRewardBalance, subject.unreservedStakingRewardBalance());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final NetworkStake subject = NetworkStake.builder()
+                .maxStakeReward(maxStakeRewardValue())
+                .maxStakeRewardPerHbar(maxStakeRewardPerHbarValue())
+                .maxTotalReward(maxTotalRewardValue())
+                .nodeRewardFeeFraction(nodeRewardFeeFractionValue())
+                .reservedStakingRewards(reservedStakingRewardsValue())
+                .rewardBalanceThreshold(rewardBalanceThresholdValue())
+                .stakeTotal(stakeTotalValue())
+                .stakingPeriod(stakingPeriodValue())
+                .stakingPeriodsStored(stakingPeriodsStoredValue())
+                .stakingRewardFeeFraction(stakingRewardFeeFractionValue())
+                .stakingRewardRate(stakingRewardRateValue())
+                .stakingStartThreshold(stakingStartThresholdValue())
+                .unreservedStakingRewardBalance(unreservedStakingRewardBalanceValue())
+                .build();
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> NetworkStake.builder().build());
+    }
+
+    @Test
     @DisplayName("maxStakeReward: accepts the minimum (-9223372036854775808)")
     void shouldAcceptMaxStakeRewardAtMinimum() {
         final long value = -9223372036854775808L;

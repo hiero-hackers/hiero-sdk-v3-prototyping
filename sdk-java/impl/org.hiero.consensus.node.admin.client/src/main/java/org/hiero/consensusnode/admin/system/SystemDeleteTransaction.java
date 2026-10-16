@@ -28,6 +28,8 @@ public final class SystemDeleteTransaction extends Transaction<SystemDeleteRecei
     private final @Nullable ZonedDateTime expirationTime;
 
     /// Creates a new `SystemDeleteTransaction`.
+    ///
+    /// @throws IllegalArgumentException if a value violates its constraints
     public SystemDeleteTransaction(
             final @Nullable Address fileId,
             final @Nullable ContractId contractId,
@@ -36,6 +38,9 @@ public final class SystemDeleteTransaction extends Transaction<SystemDeleteRecei
         this.fileId = fileId;
         this.contractId = contractId;
         this.expirationTime = expirationTime;
+        if ((fileId != null ? 1 : 0) + (contractId != null ? 1 : 0) != 1) {
+            throw new IllegalArgumentException("exactly one of fileId, contractId must be set");
+        }
     }
 
     /// the file to delete; absent when contractId is set
@@ -114,6 +119,70 @@ public final class SystemDeleteTransaction extends Transaction<SystemDeleteRecei
     @Override
     public PackedTransaction<SystemDeleteReceipt, SystemDeleteTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
         throw new UnsupportedOperationException("Not implemented yet: SystemDeleteTransaction.signForBatch");
+    }
+
+    /// Returns a builder for a new `SystemDeleteTransaction`.
+    ///
+    /// @return the builder
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /// The builder of `SystemDeleteTransaction`.
+    ///
+    /// `build()` creates the `SystemDeleteTransaction` of the values set one by one.
+    ///
+    /// A value that is not set is `null`, or has its default value.
+    public static final class Builder {
+
+        private @Nullable Address fileId;
+        private @Nullable ContractId contractId;
+        private @Nullable ZonedDateTime expirationTime;
+
+        private Builder() {
+            // created by SystemDeleteTransaction.builder()
+        }
+
+        /// Sets the `fileId`.
+        ///
+        /// the file to delete; absent when contractId is set
+        ///
+        /// @param fileId the value
+        /// @return this builder
+        public Builder fileId(final @Nullable Address fileId) {
+            this.fileId = fileId;
+            return this;
+        }
+
+        /// Sets the `contractId`.
+        ///
+        /// the contract to delete; absent when fileId is set
+        ///
+        /// @param contractId the value
+        /// @return this builder
+        public Builder contractId(final @Nullable ContractId contractId) {
+            this.contractId = contractId;
+            return this;
+        }
+
+        /// Sets the `expirationTime`.
+        ///
+        /// when a system-deleted file becomes permanently unrecoverable; required when fileId is set, ignored when contractId is set
+        ///
+        /// @param expirationTime the value
+        /// @return this builder
+        public Builder expirationTime(final @Nullable ZonedDateTime expirationTime) {
+            this.expirationTime = expirationTime;
+            return this;
+        }
+
+        /// Creates the `SystemDeleteTransaction` of the values set.
+        ///
+        /// @return the new `SystemDeleteTransaction`
+        /// @throws IllegalArgumentException if a value violates its constraints
+        public SystemDeleteTransaction build() {
+            return new SystemDeleteTransaction(fileId, contractId, expirationTime);
+        }
     }
 
     @Override

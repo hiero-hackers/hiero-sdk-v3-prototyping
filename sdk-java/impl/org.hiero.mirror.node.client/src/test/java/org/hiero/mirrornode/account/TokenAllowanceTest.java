@@ -33,6 +33,50 @@ class TokenAllowanceTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final AccountId owner = ownerValue();
+        final AccountId spender = spenderValue();
+        final Address tokenId = tokenIdValue();
+        final long amount = amountValue();
+        final long amountGranted = amountGrantedValue();
+        final ZonedDateTime timestamp = timestampValue();
+        final TokenAllowance subject = TokenAllowance.builder()
+                .owner(owner)
+                .spender(spender)
+                .tokenId(tokenId)
+                .amount(amount)
+                .amountGranted(amountGranted)
+                .timestamp(timestamp)
+                .build();
+        assertValue(owner, subject.owner());
+        assertValue(spender, subject.spender());
+        assertValue(tokenId, subject.tokenId());
+        assertValue(amount, subject.amount());
+        assertValue(amountGranted, subject.amountGranted());
+        assertValue(timestamp, subject.timestamp());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final TokenAllowance subject = TokenAllowance.builder()
+                .owner(ownerValue())
+                .spender(spenderValue())
+                .tokenId(tokenIdValue())
+                .amount(amountValue())
+                .amountGranted(amountGrantedValue())
+                .timestamp(timestampValue())
+                .build();
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> TokenAllowance.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for owner")
     void shouldRejectNullOwner() {
         assertThrows(NullPointerException.class, () -> new TokenAllowance((AccountId) null, spenderValue(), tokenIdValue(), amountValue(), amountGrantedValue(), timestampValue()));

@@ -32,6 +32,50 @@ class TokenTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final @Nullable Address tokenId = tokenIdValue();
+        final String name = nameValue();
+        final String symbol = symbolValue();
+        final TokenType type = typeValue();
+        final long decimals = decimalsValue();
+        final byte[] metadata = metadataValue();
+        final Token subject = Token.builder()
+                .tokenId(tokenId)
+                .name(name)
+                .symbol(symbol)
+                .type(type)
+                .decimals(decimals)
+                .metadata(metadata)
+                .build();
+        assertValue(tokenId, subject.tokenId());
+        assertValue(name, subject.name());
+        assertValue(symbol, subject.symbol());
+        assertValue(type, subject.type());
+        assertValue(decimals, subject.decimals());
+        assertValue(metadata, subject.metadata());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final Token subject = Token.builder()
+                .name(nameValue())
+                .symbol(symbolValue())
+                .type(typeValue())
+                .decimals(decimalsValue())
+                .metadata(metadataValue())
+                .build();
+        assertNull(subject.tokenId());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> Token.builder().build());
+    }
+
+    @Test
     @DisplayName("rejects null for name")
     void shouldRejectNullName() {
         assertThrows(NullPointerException.class, () -> new Token(tokenIdValue(), (String) null, symbolValue(), typeValue(), decimalsValue(), metadataValue()));

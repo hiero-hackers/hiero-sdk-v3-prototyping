@@ -19,8 +19,8 @@ class AccountIdTest {
         final long realm = realmValue();
         final String checksum = checksumValue();
         final @Nullable Long num = numValue();
-        final @Nullable EvmAddress evmAddress = evmAddressValue();
-        final byte @Nullable [] alias = aliasValue();
+        final @Nullable EvmAddress evmAddress = (EvmAddress) null;
+        final byte @Nullable [] alias = (byte[]) null;
         final AccountId subject = new AccountId(shard, realm, checksum, num, evmAddress, alias);
         assertValue(shard, subject.shard());
         assertValue(realm, subject.realm());
@@ -31,10 +31,55 @@ class AccountIdTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final long shard = shardValue();
+        final long realm = realmValue();
+        final String checksum = checksumValue();
+        final @Nullable Long num = numValue();
+        final @Nullable EvmAddress evmAddress = (EvmAddress) null;
+        final byte @Nullable [] alias = (byte[]) null;
+        final AccountId subject = AccountId.builder()
+                .shard(shard)
+                .realm(realm)
+                .checksum(checksum)
+                .num(num)
+                .evmAddress(evmAddress)
+                .alias(alias)
+                .build();
+        assertValue(shard, subject.shard());
+        assertValue(realm, subject.realm());
+        assertValue(checksum, subject.checksum());
+        assertValue(num, subject.num());
+        assertValue(evmAddress, subject.evmAddress());
+        assertValue(alias, subject.alias());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final AccountId subject = AccountId.builder()
+                .shard(shardValue())
+                .realm(realmValue())
+                .checksum(checksumValue())
+                .num(numValue())
+                .build();
+        assertValue(numValue(), subject.num());
+        assertNull(subject.evmAddress());
+        assertNull(subject.alias());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> AccountId.builder().build());
+    }
+
+    @Test
     @DisplayName("shard: accepts the minimum (0)")
     void shouldAcceptShardAtMinimum() {
         final long value = 0L;
-        final AccountId subject = new AccountId(value, realmValue(), checksumValue(), numValue(), evmAddressValue(), aliasValue());
+        final AccountId subject = new AccountId(value, realmValue(), checksumValue(), numValue(), (EvmAddress) null, (byte[]) null);
         assertValue(value, subject.shard());
     }
 
@@ -42,7 +87,7 @@ class AccountIdTest {
     @DisplayName("shard: accepts the maximum (18446744073709551615)")
     void shouldAcceptShardAtMaximum() {
         final long value = Long.parseUnsignedLong("18446744073709551615");
-        final AccountId subject = new AccountId(value, realmValue(), checksumValue(), numValue(), evmAddressValue(), aliasValue());
+        final AccountId subject = new AccountId(value, realmValue(), checksumValue(), numValue(), (EvmAddress) null, (byte[]) null);
         assertValue(value, subject.shard());
     }
 
@@ -50,7 +95,7 @@ class AccountIdTest {
     @DisplayName("realm: accepts the minimum (0)")
     void shouldAcceptRealmAtMinimum() {
         final long value = 0L;
-        final AccountId subject = new AccountId(shardValue(), value, checksumValue(), numValue(), evmAddressValue(), aliasValue());
+        final AccountId subject = new AccountId(shardValue(), value, checksumValue(), numValue(), (EvmAddress) null, (byte[]) null);
         assertValue(value, subject.realm());
     }
 
@@ -58,21 +103,21 @@ class AccountIdTest {
     @DisplayName("realm: accepts the maximum (18446744073709551615)")
     void shouldAcceptRealmAtMaximum() {
         final long value = Long.parseUnsignedLong("18446744073709551615");
-        final AccountId subject = new AccountId(shardValue(), value, checksumValue(), numValue(), evmAddressValue(), aliasValue());
+        final AccountId subject = new AccountId(shardValue(), value, checksumValue(), numValue(), (EvmAddress) null, (byte[]) null);
         assertValue(value, subject.realm());
     }
 
     @Test
     @DisplayName("rejects null for checksum")
     void shouldRejectNullChecksum() {
-        assertThrows(NullPointerException.class, () -> new AccountId(shardValue(), realmValue(), (String) null, numValue(), evmAddressValue(), aliasValue()));
+        assertThrows(NullPointerException.class, () -> new AccountId(shardValue(), realmValue(), (String) null, numValue(), (EvmAddress) null, (byte[]) null));
     }
 
     @Test
     @DisplayName("num: accepts the minimum (0)")
     void shouldAcceptNumAtMinimum() {
         final @Nullable Long value = 0L;
-        final AccountId subject = new AccountId(shardValue(), realmValue(), checksumValue(), value, evmAddressValue(), aliasValue());
+        final AccountId subject = new AccountId(shardValue(), realmValue(), checksumValue(), value, (EvmAddress) null, (byte[]) null);
         assertValue(value, subject.num());
     }
 
@@ -80,7 +125,7 @@ class AccountIdTest {
     @DisplayName("num: accepts the maximum (18446744073709551615)")
     void shouldAcceptNumAtMaximum() {
         final @Nullable Long value = Long.parseUnsignedLong("18446744073709551615");
-        final AccountId subject = new AccountId(shardValue(), realmValue(), checksumValue(), value, evmAddressValue(), aliasValue());
+        final AccountId subject = new AccountId(shardValue(), realmValue(), checksumValue(), value, (EvmAddress) null, (byte[]) null);
         assertValue(value, subject.num());
     }
 
@@ -89,13 +134,25 @@ class AccountIdTest {
     void shouldCopyAliasIn() {
         final byte[] value = aliasValue();
         final byte[] expected = value.clone();
-        final AccountId subject = new AccountId(shardValue(), realmValue(), checksumValue(), numValue(), evmAddressValue(), value);
+        final AccountId subject = new AccountId(shardValue(), realmValue(), checksumValue(), (Long) null, (EvmAddress) null, value);
         value[0] = (byte) (value[0] + 1);
         assertValue(expected, subject.alias());
         final byte[] returned = subject.alias();
         assertNotNull(returned);
         returned[0] = (byte) (returned[0] + 1);
         assertValue(expected, subject.alias());
+    }
+
+    @Test
+    @DisplayName("rejects num and evmAddress together (@@oneOf)")
+    void shouldRejectTwoOfNumOrEvmAddressOrAlias() {
+        assertThrows(IllegalArgumentException.class, () -> new AccountId(shardValue(), realmValue(), checksumValue(), numValue(), evmAddressValue(), (byte[]) null));
+    }
+
+    @Test
+    @DisplayName("rejects none of num, evmAddress, alias (@@oneOf)")
+    void shouldRejectNoneOfNumOrEvmAddressOrAlias() {
+        assertThrows(IllegalArgumentException.class, () -> new AccountId(shardValue(), realmValue(), checksumValue(), (Long) null, (EvmAddress) null, (byte[]) null));
     }
 
     @Test
@@ -168,7 +225,7 @@ class AccountIdTest {
     }
 
     private static AccountId create() {
-        return new AccountId(shardValue(), realmValue(), checksumValue(), numValue(), evmAddressValue(), aliasValue());
+        return new AccountId(shardValue(), realmValue(), checksumValue(), numValue(), (EvmAddress) null, (byte[]) null);
     }
 
     private static AccountId defaultSubject() {

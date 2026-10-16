@@ -28,6 +28,46 @@ class SemanticVersionTest {
     }
 
     @Test
+    @DisplayName("the builder builds the values of the constructor")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final int major = majorValue();
+        final int minor = minorValue();
+        final int patch = patchValue();
+        final @Nullable String preReleaseLabel = preReleaseLabelValue();
+        final @Nullable String buildMetadata = buildMetadataValue();
+        final SemanticVersion subject = SemanticVersion.builder()
+                .major(major)
+                .minor(minor)
+                .patch(patch)
+                .preReleaseLabel(preReleaseLabel)
+                .buildMetadata(buildMetadata)
+                .build();
+        assertValue(major, subject.major());
+        assertValue(minor, subject.minor());
+        assertValue(patch, subject.patch());
+        assertValue(preReleaseLabel, subject.preReleaseLabel());
+        assertValue(buildMetadata, subject.buildMetadata());
+    }
+
+    @Test
+    @DisplayName("a value that is not set is null or its default value")
+    void shouldBuildWithoutTheOptionalValues() {
+        final SemanticVersion subject = SemanticVersion.builder()
+                .major(majorValue())
+                .minor(minorValue())
+                .patch(patchValue())
+                .build();
+        assertNull(subject.preReleaseLabel());
+        assertNull(subject.buildMetadata());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> SemanticVersion.builder().build());
+    }
+
+    @Test
     @DisplayName("major: accepts the minimum (-2147483648)")
     void shouldAcceptMajorAtMinimum() {
         final int value = Integer.MIN_VALUE;
