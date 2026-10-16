@@ -1,0 +1,16 @@
+package org.hiero.mirrornode.common;
+
+import java.util.Objects;
+import org.hiero.ledger.AccountId;
+import org.hiero.ledger.Address;
+
+public record TokenTransfer(Address tokenId, AccountId account, long amount, boolean isApproval) {
+
+    /// Creates a new `TokenTransfer`.
+    ///
+    /// @throws NullPointerException if a required value is `null`
+    public TokenTransfer {
+        Objects.requireNonNull(tokenId, "tokenId must not be null");
+        Objects.requireNonNull(account, "account must not be null");
+    }
+}

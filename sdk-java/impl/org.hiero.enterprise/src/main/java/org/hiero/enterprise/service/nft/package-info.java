@@ -1,0 +1,5 @@
+/// `NftService` creates and manages non-fungible tokens (NFTs): creating an NFT type (collection), account association,
+/// minting NFTs with metadata, burning, transfers and lookups. An NFT type is identified by an `Address`
+/// (shard.realm.num), accounts by an `AccountId`. An individual NFT is identified by its type plus its serial number.
+/// NFT metadata is an opaque byte payload.
+package org.hiero.enterprise.service.nft;

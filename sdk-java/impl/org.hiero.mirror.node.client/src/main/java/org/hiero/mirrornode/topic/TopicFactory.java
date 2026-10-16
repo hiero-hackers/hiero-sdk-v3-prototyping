@@ -1,0 +1,15 @@
+package org.hiero.mirrornode.topic;
+
+import org.hiero.ledger.MirrorNode;
+
+/// Factory methods of the package `org.hiero.mirrornode.topic`.
+public final class TopicFactory {
+
+    public static TopicRepository createRepository(final MirrorNode mirrorNode) {
+        throw new UnsupportedOperationException("Not implemented yet: TopicFactory.createRepository");
+    }
+
+    private TopicFactory() {
+        throw new UnsupportedOperationException("Factory class cannot be instantiated");
+    }
+}

@@ -1,0 +1,15 @@
+package org.hiero.mirrornode.contract;
+
+import org.hiero.ledger.MirrorNode;
+
+/// Factory methods of the package `org.hiero.mirrornode.contract`.
+public final class ContractFactory {
+
+    public static ContractRepository createRepository(final MirrorNode mirrorNode) {
+        throw new UnsupportedOperationException("Not implemented yet: ContractFactory.createRepository");
+    }
+
+    private ContractFactory() {
+        throw new UnsupportedOperationException("Factory class cannot be instantiated");
+    }
+}

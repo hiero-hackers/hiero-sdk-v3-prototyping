@@ -97,7 +97,7 @@ AuthorityList extends Authority {
 @@static Authority of(children: Authority...)
 
 // m-of-n composition (multi-signature): at least `threshold` of `children` must be satisfied.
-@@static Authority of(threshold: int32, children: Authority...)
+@@static Authority of(@@min(1) threshold: int32, children: Authority...)
 
 // Single-key leaf.
 @@static Authority of(publicKey: PublicKey)
@@ -107,6 +107,13 @@ AuthorityList extends Authority {
 
 // Delegatable contract leaf (HAPI DelegatableContractID): authority usable via delegatecall.
 @@static Authority ofDelegatable(contractId: ContractId)
+```
+
+## Default Instances for Testing
+
+```
+// The authority of a single key: the default public key.
+instance Authority = PublicKeyAuthority{publicKey: DEFAULT}
 ```
 
 ## Examples
@@ -197,3 +204,9 @@ String describe(Authority e) {
   `createAccount` and `getAccountInfo`, see [`tck-binding.md`](../../docs/tck-binding.md)). Should
   `Authority` get `toBytes()` and `@@static fromBytes(bytes)`, and how do `ContractAuthority` and the
   delegatable contract form map to it?
+
+- **The upper bound of `threshold` cannot be expressed.** `AuthorityList.threshold` and the `threshold` parameter of
+  `of(threshold, children)` carry `@@min(1)`, but "at most `children.size()`" relates two values, and the
+  meta-language has no annotation for that. Implementations therefore do not reject a threshold above the number of
+  children (the network does), and the generated tests even expect `of(2147483647, child)` to succeed. Open: a
+  cross-field constraint in the meta-language, or a documented "not checked by the SDK".

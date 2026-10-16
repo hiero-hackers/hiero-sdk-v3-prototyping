@@ -15,6 +15,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.hiero.sdk.v3.metalang.ast.Annotation;
+import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.generator.Constraints;
 import org.hiero.sdk.v3.metalang.generator.IntegerRange;
 import org.hiero.sdk.v3.metalang.model.EnumValueDefinition;
@@ -618,7 +619,11 @@ final class RustSamples {
             final RustType expected = RustMembers.storage(field, scope, context);
             final InstanceExpression value = construct.values().get(field.name());
             final Optional<String> rendered;
-            if (value != null) {
+            if (value instanceof InstanceExpression.Value literal && literal.literal() instanceof Literal.NameLiteral name
+                    && name.text().equals("null")) {
+                // an explicit null of a @@nullable field is None, not Some(None)
+                rendered = Optional.of("None");
+            } else if (value != null) {
                 rendered = render(value, expected, visiting);
             } else if (field.hasAnnotation("default")) {
                 rendered = Optional.of(RustLiterals.expression(field.annotation("default").orElseThrow().arguments()

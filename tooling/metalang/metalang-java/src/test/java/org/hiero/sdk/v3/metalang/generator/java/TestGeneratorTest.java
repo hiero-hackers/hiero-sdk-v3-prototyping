@@ -419,7 +419,9 @@ class TestGeneratorTest {
                     .contains(", 3).setNote(\"n\");")
                     .contains("return new Client(AFactory.openSession(AFactory.createKey(new byte[] {(byte) 1, "
                             + "(byte) 2, (byte) 3})), List.of(\"x\"), Kind.BIG).session().signer();")
-                    .contains("create().send(signerValue(), commentValue());")
+                    // methods are called on the default instance, not on the constructor values of create()
+                    .contains("defaultSubject().send(signerValue(), commentValue());")
+                    .contains("    private static Client defaultSubject() {\n        return new Client(AFactory.openSession(")
                     .contains("@DisplayName(\"Client\")\nclass ClientTest {")
                     .contains("@DisplayName(\"creates a Client and returns the values\")")
                     .contains("@DisplayName(\"send(signer, comment) can be called\")");

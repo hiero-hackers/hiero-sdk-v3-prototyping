@@ -1,0 +1,8 @@
+/// Query accounts from the Mirror Node. Use the `AccountRepository` (available as `MirrorNodeClient.accounts`) to look
+/// up an account (`findById`, `findAll`) and to read data related to it: the staking rewards it received, the HBAR,
+/// fungible-token and NFT allowances it has granted, and its pending airdrops (HIP-904) — both the ones it sent that are
+/// not yet claimed (outstanding) and the ones it can still claim (pending). `getBalances` returns a snapshot of account
+/// balances across the whole network.
+///
+/// HBAR amounts are given in tinybars, token amounts in the token's smallest unit.
+package org.hiero.mirrornode.account;

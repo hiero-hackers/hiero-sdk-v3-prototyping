@@ -1,0 +1,19 @@
+package org.hiero.mirrornode.topic;
+
+import java.util.Objects;
+import org.hiero.ledger.TransactionId;
+
+public record ChunkInfo(
+        TransactionId initialTransactionId,
+        int nonce,
+        int number,
+        int total,
+        boolean scheduled) {
+
+    /// Creates a new `ChunkInfo`.
+    ///
+    /// @throws NullPointerException if a required value is `null`
+    public ChunkInfo {
+        Objects.requireNonNull(initialTransactionId, "initialTransactionId must not be null");
+    }
+}

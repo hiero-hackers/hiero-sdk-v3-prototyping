@@ -1,0 +1,5 @@
+/// The SDK communicates with the consensus nodes of a network via gRPC and Protobuf. This package holds
+/// the gRPC-related types that are part of the public API, such as `MethodDescriptor`, which identifies
+/// a single gRPC method; it is mainly relevant when extending the SDK with custom services or
+/// transaction types.
+package org.hiero.grpc;

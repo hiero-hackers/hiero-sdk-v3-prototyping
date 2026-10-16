@@ -201,9 +201,9 @@ them by the `metalang` generator, and the generated trees are **not** part of th
 demand, and the output is reproducible — a diff of two runs shows exactly what a spec or generator change did.
 
 The generators produce the **API only**: every method body is a stub that throws "Not implemented yet", which is why
-the generated tests fail for each method that is not implemented. The `AccountCreateTransaction` spike that filled
-those bodies in Java and TypeScript by hand lives in the git history; [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md)
-is the runbook for it.
+the generated tests fail for each method that is not implemented. The Java SDK is [`sdk-java/impl`](sdk-java/impl): a
+copy of the generated project that is maintained by hand from then on, and against which all tests of the specs pass;
+[`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is its runbook.
 
 ### Run a script
 

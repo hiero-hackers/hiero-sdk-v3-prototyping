@@ -1,0 +1,15 @@
+package org.hiero.mirrornode.transaction;
+
+import org.hiero.ledger.MirrorNode;
+
+/// Factory methods of the package `org.hiero.mirrornode.transaction`.
+public final class TransactionFactory {
+
+    public static TransactionRepository createRepository(final MirrorNode mirrorNode) {
+        throw new UnsupportedOperationException("Not implemented yet: TransactionFactory.createRepository");
+    }
+
+    private TransactionFactory() {
+        throw new UnsupportedOperationException("Factory class cannot be instantiated");
+    }
+}

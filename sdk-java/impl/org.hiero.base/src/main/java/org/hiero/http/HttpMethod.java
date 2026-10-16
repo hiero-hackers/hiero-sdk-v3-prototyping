@@ -1,0 +1,18 @@
+package org.hiero.http;
+
+
+/// The complete set of HTTP methods: the eight defined by RFC 9110 plus PATCH (RFC 5789).
+/// The set is complete and will not grow.
+public enum HttpMethod {
+
+    GET,
+    HEAD,
+    POST,
+    PUT,
+    PATCH,
+    DELETE,
+    OPTIONS,
+    TRACE,
+    /// proxy tunnelling; normally issued by the HTTP stack itself, not by a caller
+    CONNECT;
+}

@@ -1,0 +1,88 @@
+package org.hiero.consensusnode.transactions.accounts;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.Arrays;
+import org.hiero.ledger.AccountId;
+import org.hiero.ledger.Address;
+import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+/// Tests of `NftAllowance`, generated from the specs.
+@DisplayName("NftAllowance")
+class NftAllowanceTest {
+
+    @Test
+    @DisplayName("creates a NftAllowance and returns the values")
+    void shouldCreateAndReturnTheValues() {
+        final Address tokenId = tokenIdValue();
+        final AccountId ownerAccountId = ownerAccountIdValue();
+        final AccountId spenderAccountId = spenderAccountIdValue();
+        final NftGrant grant = grantValue();
+        final @Nullable AccountId delegatingSpender = delegatingSpenderValue();
+        final NftAllowance subject = new NftAllowance(tokenId, ownerAccountId, spenderAccountId, grant, delegatingSpender);
+        assertValue(tokenId, subject.tokenId());
+        assertValue(ownerAccountId, subject.ownerAccountId());
+        assertValue(spenderAccountId, subject.spenderAccountId());
+        assertValue(grant, subject.grant());
+        assertValue(delegatingSpender, subject.delegatingSpender());
+    }
+
+    @Test
+    @DisplayName("rejects null for tokenId")
+    void shouldRejectNullTokenId() {
+        assertThrows(NullPointerException.class, () -> new NftAllowance((Address) null, ownerAccountIdValue(), spenderAccountIdValue(), grantValue(), delegatingSpenderValue()));
+    }
+
+    @Test
+    @DisplayName("rejects null for ownerAccountId")
+    void shouldRejectNullOwnerAccountId() {
+        assertThrows(NullPointerException.class, () -> new NftAllowance(tokenIdValue(), (AccountId) null, spenderAccountIdValue(), grantValue(), delegatingSpenderValue()));
+    }
+
+    @Test
+    @DisplayName("rejects null for spenderAccountId")
+    void shouldRejectNullSpenderAccountId() {
+        assertThrows(NullPointerException.class, () -> new NftAllowance(tokenIdValue(), ownerAccountIdValue(), (AccountId) null, grantValue(), delegatingSpenderValue()));
+    }
+
+    @Test
+    @DisplayName("rejects null for grant")
+    void shouldRejectNullGrant() {
+        assertThrows(NullPointerException.class, () -> new NftAllowance(tokenIdValue(), ownerAccountIdValue(), spenderAccountIdValue(), (NftGrant) null, delegatingSpenderValue()));
+    }
+
+    private static Address tokenIdValue() {
+        return new Address(0L, 0L, "", 1001L);
+    }
+
+    private static AccountId ownerAccountIdValue() {
+        return new AccountId(0L, 0L, "", 1001L, null, null);
+    }
+
+    private static AccountId spenderAccountIdValue() {
+        return new AccountId(0L, 0L, "", 1001L, null, null);
+    }
+
+    private static NftGrant grantValue() {
+        return new NftCollectionGrant(true);
+    }
+
+    private static AccountId delegatingSpenderValue() {
+        return new AccountId(0L, 0L, "", 1001L, null, null);
+    }
+
+    private static NftAllowance create() {
+        return new NftAllowance(tokenIdValue(), ownerAccountIdValue(), spenderAccountIdValue(), grantValue(), delegatingSpenderValue());
+    }
+
+    /// Asserts that two values are equal; arrays by their content.
+    private static void assertValue(final @Nullable Object expected, final @Nullable Object actual) {
+        if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
+            assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was " + Arrays.toString(other));
+        } else {
+            assertEquals(expected, actual);
+        }
+    }
+}

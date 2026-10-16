@@ -1,0 +1,4 @@
+/// `FileService` stores and retrieves files on a Hiero network (the File Service). A file holds an arbitrary byte payload
+/// on the ledger together with an expiration time. The service takes care of splitting payloads that are larger than a
+/// single transaction into chunks. Files are identified by an `Address`.
+package org.hiero.enterprise.service.file;

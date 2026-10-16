@@ -1,0 +1,14 @@
+package org.hiero.mirrornode.token;
+
+import java.util.Objects;
+import org.hiero.ledger.AccountId;
+
+public record Balance(AccountId accountId, long balance, long decimals) {
+
+    /// Creates a new `Balance`.
+    ///
+    /// @throws NullPointerException if a required value is `null`
+    public Balance {
+        Objects.requireNonNull(accountId, "accountId must not be null");
+    }
+}

@@ -35,6 +35,11 @@ module org.hiero.sdk.protobuf {
             org.hiero.consensus.node.client,
             org.hiero.consensus.node.admin.client;
 
+    // The SDK-defined messages: TransactionList is the byte form of a packed transaction with one signed
+    // transaction per node, as all Hiero SDKs write it.
+    exports com.hedera.hashgraph.sdk.proto to
+            org.hiero.consensus.node.client;
+
     // The mirror node's gRPC API.
     exports com.hedera.mirror.api.proto to
             org.hiero.mirror.node.client;

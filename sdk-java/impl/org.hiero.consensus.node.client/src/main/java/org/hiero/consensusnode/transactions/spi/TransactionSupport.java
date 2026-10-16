@@ -1,0 +1,37 @@
+package org.hiero.consensusnode.transactions.spi;
+
+import com.hederahashgraph.api.proto.java.TransactionBody;
+import com.hederahashgraph.api.proto.java.TransactionReceipt;
+import com.hederahashgraph.api.proto.java.TransactionRecord;
+import com.hederahashgraph.api.proto.java.TransactionResponse;
+import org.hiero.consensusnode.transactions.Receipt;
+import org.hiero.consensusnode.transactions.Record;
+import org.hiero.consensusnode.transactions.Response;
+import org.hiero.consensusnode.transactions.Transaction;
+import org.hiero.grpc.MethodDescriptor;
+
+/// Adds support for one concrete transaction type: converts between the transaction and its result
+/// types and their protobuf representations.
+public interface TransactionSupport<ReceiptT extends Receipt, TransactionT extends Transaction<ReceiptT, TransactionT>> {
+
+    /// the concrete transaction type this support handles
+    Class<?> getTransactionType();
+
+    /// the gRPC method used to submit the transaction
+    MethodDescriptor getMethodDescriptor();
+
+    /// updates the proto TransactionBody with the fields from the Transaction
+    TransactionBody updateBody(final TransactionT transaction, final TransactionBody protoBody);
+
+    /// creates a Transaction from a proto TransactionBody
+    TransactionT create(final TransactionBody protoBody);
+
+    /// creates a Response from a proto TransactionResponse
+    Response<ReceiptT> create(final TransactionResponse protoResponse);
+
+    /// creates a Receipt from a proto TransactionReceipt
+    ReceiptT create(final TransactionReceipt protoReceipt);
+
+    /// creates a Record from a proto TransactionRecord
+    Record<ReceiptT> create(final TransactionRecord protoRecord);
+}

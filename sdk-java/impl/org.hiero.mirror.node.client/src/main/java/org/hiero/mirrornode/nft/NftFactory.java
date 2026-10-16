@@ -1,0 +1,15 @@
+package org.hiero.mirrornode.nft;
+
+import org.hiero.ledger.MirrorNode;
+
+/// Factory methods of the package `org.hiero.mirrornode.nft`.
+public final class NftFactory {
+
+    public static NftRepository createRepository(final MirrorNode mirrorNode) {
+        throw new UnsupportedOperationException("Not implemented yet: NftFactory.createRepository");
+    }
+
+    private NftFactory() {
+        throw new UnsupportedOperationException("Factory class cannot be instantiated");
+    }
+}

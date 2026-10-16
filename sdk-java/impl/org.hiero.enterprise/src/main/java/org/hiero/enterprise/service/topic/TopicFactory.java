@@ -1,0 +1,17 @@
+package org.hiero.enterprise.service.topic;
+
+import org.hiero.enterprise.service.Session;
+
+/// Factory methods of the package `org.hiero.enterprise.service.topic`.
+public final class TopicFactory {
+
+    /// Creates the service for the given session. With a framework integration the service is usually obtained via
+    /// dependency injection instead.
+    public static TopicService createService(final Session session) {
+        throw new UnsupportedOperationException("Not implemented yet: TopicFactory.createService");
+    }
+
+    private TopicFactory() {
+        throw new UnsupportedOperationException("Factory class cannot be instantiated");
+    }
+}

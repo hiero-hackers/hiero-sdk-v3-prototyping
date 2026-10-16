@@ -1,0 +1,11 @@
+package org.hiero.keys;
+
+
+/// all supported algorithms
+public enum KeyAlgorithm {
+
+    /// Edwards-curve Digital Signature Algorithm
+    ED25519,
+    /// Elliptic Curve Digital Signature Algorithm (secp256k1 curve)
+    ECDSA;
+}

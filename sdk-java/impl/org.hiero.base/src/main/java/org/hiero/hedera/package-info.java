@@ -1,0 +1,4 @@
+/// Support for the Hedera network, the public network built on Hiero. It provides the identifiers of
+/// the Hedera mainnet and testnet, which can be used to look up their network settings, and `Hbar`,
+/// the native token of Hedera, together with its units (`HbarUnit`) from tinybar up to gigabar.
+package org.hiero.hedera;

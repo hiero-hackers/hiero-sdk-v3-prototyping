@@ -248,7 +248,7 @@ abstraction PackedTransaction<$$Receipt extends Receipt, $$Transaction extends T
 
   // Loads a PackedTransaction from its serialized form (see toBytes()). The concrete transaction type is only known
   // at runtime, so the result is typed with wildcards; callers check the concrete type themselves.
-  @@static PackedTransaction<ANY, ANY> fromBytes(bytes: bytes)
+  @@throws(illegal-format) @@static PackedTransaction<ANY, ANY> fromBytes(bytes: bytes)
 }
 
 Response<$$Receipt extends Receipt> {

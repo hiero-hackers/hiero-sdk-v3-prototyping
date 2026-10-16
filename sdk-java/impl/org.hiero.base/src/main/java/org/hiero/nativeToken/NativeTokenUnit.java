@@ -1,0 +1,12 @@
+package org.hiero.nativeToken;
+
+
+/// A unit of a native token, either the smallest indivisible unit or a named multiple of it.
+public interface NativeTokenUnit {
+
+    /// display symbol of the unit (e.g. "ℏ")
+    String symbol();
+
+    /// number of base (smallest) units contained in one of this unit
+    long baseUnitFactor();
+}

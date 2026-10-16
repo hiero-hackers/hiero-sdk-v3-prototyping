@@ -1,0 +1,3 @@
+/// Support for local networks created with Solo, the tool to run a Hiero network locally (e.g. for
+/// development and testing). Use `SOLO_IDENTIFIER` to look up the network setting of a Solo network.
+package org.hiero.solo;

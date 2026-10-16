@@ -1,0 +1,18 @@
+package org.hiero.consensusnode.admin.network;
+
+import java.util.List;
+import java.util.Objects;
+
+/// Snapshot of the entire address book at consensus time. Nodes are listed by ascending `nodeId`.
+///
+/// @param nodes all consensus nodes of the network
+public record NodeAddressBook(List<NodeAddress> nodes) {
+
+    /// Creates a new `NodeAddressBook`.
+    ///
+    /// @throws NullPointerException if a required value is `null`
+    public NodeAddressBook {
+        Objects.requireNonNull(nodes, "nodes must not be null");
+        nodes = List.copyOf(nodes);
+    }
+}

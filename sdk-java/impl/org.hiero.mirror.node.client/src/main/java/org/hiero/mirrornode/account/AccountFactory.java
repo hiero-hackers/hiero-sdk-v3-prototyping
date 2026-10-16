@@ -1,0 +1,15 @@
+package org.hiero.mirrornode.account;
+
+import org.hiero.ledger.MirrorNode;
+
+/// Factory methods of the package `org.hiero.mirrornode.account`.
+public final class AccountFactory {
+
+    public static AccountRepository createRepository(final MirrorNode mirrorNode) {
+        throw new UnsupportedOperationException("Not implemented yet: AccountFactory.createRepository");
+    }
+
+    private AccountFactory() {
+        throw new UnsupportedOperationException("Factory class cannot be instantiated");
+    }
+}

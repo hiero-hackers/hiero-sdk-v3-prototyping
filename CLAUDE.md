@@ -64,6 +64,10 @@ sdk-java/
                                 #   the generated JUnit tests: the contract tests per type (<Type>Test) and the tests
                                 #   of the specs' `tests` blocks (<Spec>SpecTest); tests of method stubs fail until
                                 #   the methods are implemented.
+  impl/                         # THE Java SDK: a copy of sdk-java/generated (same Maven coordinates and JPMS modules,
+                                #   tests included) without generator header and @Generated, maintained BY HAND -
+                                #   stub bodies are filled in place, helpers live in non-exported `internal`
+                                #   packages. Tracked in git. See docs/rebuilding-the-spike.md.
   tck/generated/                # Generated from tooling/tck/bindings and the converter catalogue (`metalang tck
                                 #   generate`, scripts/tck-java.sh). contract/: interfaces the runtime implements;
                                 #   server/: the TCK server, compiled against API + contract only.
@@ -260,22 +264,28 @@ generate the placeholders. See [ADR-0009](docs/adr/0009-protobuf-messages-in-the
 `rust.protobuf` in the three `generator.properties` list the spec folders that need it (Rust also has
 `rust.protobufRoot`). Without the key nothing protobuf-related is generated.
 
-## The AccountCreateTransaction spike (git history only)
+## The Java implementation (`sdk-java/impl`)
 
-To find out what implementing the V3 API actually costs, the `createAccount` path of the Hiero TCK was implemented
-end to end (keys -> protobuf -> gRPC -> signing -> receipt polling) in **Java and TypeScript**, by filling the method
-bodies of the generated code by hand. Both passed 34 of the 42 tests of `test-account-create-transaction.ts` against a
-local Solo network, with the same eight failures.
+The generators produce the API only (stub bodies). The Java SDK itself is `sdk-java/impl`: the generated project was
+copied once, the generator header and `@Generated` were removed, and since then it is ordinary hand-written code -
+including the copied tests. Generation is an aid to bring spec changes correctly into the API, not the SDK. **How
+later spec changes reach `impl` is not decided yet** (today: regenerate, compare, carry over by hand;
+`metalang check --project=sdk-java/impl` reports where `impl` no longer provides the API of the specs). Do not edit
+`sdk-java/generated` to implement something, and do not resolve the update workflow silently.
 
-The spike is **no longer in the working tree**: commit `3b5305d` removed all generated code, and `generated/` is
-git-ignored since. Its last state is `3b5305d~1` (introduced in `3caad63 "Durchstich :)"`). To use it - e.g. to run
-generated tests against a real implementation - extract it into a scratch directory instead of the working tree:
-`git archive 3b5305d~1 sdk-java/generated | tar -x -C <scratch>`. [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md)
-is the runbook for restoring it on top of freshly generated code (file inventory, stubs to fill, build order, traps).
-`KeysSpecTest`, generated from `spec/base/keys.md`, passes against the Java spike that way.
+`impl` started from the `createAccount` spike of the Hiero TCK (keys -> protobuf -> gRPC -> signing -> receipt
+polling), which had been written into the generated code in place and reached 34 of the 42 tests of
+`test-account-create-transaction.ts` against a local Solo network, in Java and TypeScript; that spike exists only in
+git history (`3b5305d~1`, introduced in `3caad63 "Durchstich :)"`), and the TypeScript one has not been ported. Today
+`impl` implements keys, the ledger ids, `Hbar`, `AuthorityFactory`, `ClientFactory`, `Response.queryReceipt`,
+`PackedTransaction`, `PrngTransaction` and `AccountCreateTransaction`; **all 41 spec tests pass** (keys 18, ledger 13,
+transactions 10), the contract tests of unimplemented methods fail by design. It has the same Maven coordinates as
+`generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The TCK has not been run
+against it yet (it needs Solo, i.e. Docker). [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is the
+runbook: how the copy was made, file inventory, filled stubs, build and verify, the TCK, and the traps.
 
-Four spec problems made the spike harder than it should be; they are recorded in the `## Questions & Comments` of the
-respective spec files and are its real output:
+Four spec problems made the implementation harder than it should be; they are recorded in the `## Questions &
+Comments` of the respective spec files and are its real output:
 
 1. `HieroClient` is a record and `Network` carries no consensus nodes, so a client cannot reach its
    network - the `NetworkSetting` passed to `ClientFactory` is dropped.
@@ -283,9 +293,7 @@ respective spec files and are its real output:
 3. `TransactionId.generateTransactionId` takes an `Address`, but `TransactionId` holds an `AccountId`.
 4. `BasicTransactionStatus` has no `SUCCESS`; the protocol value is 22.
 
-The spike bridged (1) and (2) with a process-wide registry - a workaround, not a design. ADR-0007 leaves open where an
-implementation of the API may live; the generated shapes (`final` classes with stubbed methods, factories with private
-constructors) left the spike no option but editing in place.
+`ClientRuntime` (in `impl`) bridges (1) and (2) with process-wide registries - a workaround, not a design.
 
 ## How to make changes
 

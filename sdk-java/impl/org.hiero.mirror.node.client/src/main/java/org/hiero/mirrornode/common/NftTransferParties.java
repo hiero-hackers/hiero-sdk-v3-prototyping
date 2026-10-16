@@ -1,0 +1,18 @@
+package org.hiero.mirrornode.common;
+
+import java.util.Objects;
+import org.hiero.ledger.AccountId;
+import org.hiero.ledger.Address;
+
+/// Grouping of sender, receiver, and token for an NFT transfer
+public record NftTransferParties(AccountId senderAccountId, AccountId receiverAccountId, Address tokenId) {
+
+    /// Creates a new `NftTransferParties`.
+    ///
+    /// @throws NullPointerException if a required value is `null`
+    public NftTransferParties {
+        Objects.requireNonNull(senderAccountId, "senderAccountId must not be null");
+        Objects.requireNonNull(receiverAccountId, "receiverAccountId must not be null");
+        Objects.requireNonNull(tokenId, "tokenId must not be null");
+    }
+}

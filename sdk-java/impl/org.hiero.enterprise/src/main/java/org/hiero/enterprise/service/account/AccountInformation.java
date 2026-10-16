@@ -1,0 +1,18 @@
+package org.hiero.enterprise.service.account;
+
+import java.util.Objects;
+import org.hiero.authority.Authority;
+import org.hiero.ledger.AccountId;
+import org.hiero.nativeToken.NativeToken;
+
+public record AccountInformation(AccountId accountId, NativeToken<?, ?> balance, Authority authority) {
+
+    /// Creates a new `AccountInformation`.
+    ///
+    /// @throws NullPointerException if a required value is `null`
+    public AccountInformation {
+        Objects.requireNonNull(accountId, "accountId must not be null");
+        Objects.requireNonNull(balance, "balance must not be null");
+        Objects.requireNonNull(authority, "authority must not be null");
+    }
+}

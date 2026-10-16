@@ -1,0 +1,17 @@
+package org.hiero.enterprise.service.nft;
+
+import org.hiero.enterprise.service.Session;
+
+/// Factory methods of the package `org.hiero.enterprise.service.nft`.
+public final class NftFactory {
+
+    /// Creates the service for the given session. With a framework integration the service is usually obtained via
+    /// dependency injection instead.
+    public static NftService createService(final Session session) {
+        throw new UnsupportedOperationException("Not implemented yet: NftFactory.createService");
+    }
+
+    private NftFactory() {
+        throw new UnsupportedOperationException("Factory class cannot be instantiated");
+    }
+}

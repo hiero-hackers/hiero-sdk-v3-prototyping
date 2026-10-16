@@ -1,0 +1,17 @@
+package org.hiero.enterprise.service.file;
+
+import org.hiero.enterprise.service.Session;
+
+/// Factory methods of the package `org.hiero.enterprise.service.file`.
+public final class FileFactory {
+
+    /// Creates the service for the given session. With a framework integration the service is usually obtained via
+    /// dependency injection instead.
+    public static FileService createService(final Session session) {
+        throw new UnsupportedOperationException("Not implemented yet: FileFactory.createService");
+    }
+
+    private FileFactory() {
+        throw new UnsupportedOperationException("Factory class cannot be instantiated");
+    }
+}

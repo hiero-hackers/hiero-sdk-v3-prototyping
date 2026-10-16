@@ -1,0 +1,10 @@
+package org.hiero.authority;
+
+
+/// Authorization requirement (HAPI `Key`). Pure data sum type — no behavior methods. Immutable
+/// value type with structural equality (provided idiomatically per language: Java records,
+/// Rust derive(PartialEq), …): two Authorities are equal iff their trees match. The set of
+/// variants (PublicKeyAuthority, ContractAuthority, AuthorityList) is closed, so consumers can
+/// match exhaustively.
+public sealed interface Authority permits PublicKeyAuthority, ContractAuthority, AuthorityList {
+}

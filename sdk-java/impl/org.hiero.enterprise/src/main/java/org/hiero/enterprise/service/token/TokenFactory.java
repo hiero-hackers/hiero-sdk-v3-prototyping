@@ -1,0 +1,17 @@
+package org.hiero.enterprise.service.token;
+
+import org.hiero.enterprise.service.Session;
+
+/// Factory methods of the package `org.hiero.enterprise.service.token`.
+public final class TokenFactory {
+
+    /// Creates the service for the given session. With a framework integration the service is usually obtained via
+    /// dependency injection instead.
+    public static FungibleTokenService createService(final Session session) {
+        throw new UnsupportedOperationException("Not implemented yet: TokenFactory.createService");
+    }
+
+    private TokenFactory() {
+        throw new UnsupportedOperationException("Factory class cannot be instantiated");
+    }
+}

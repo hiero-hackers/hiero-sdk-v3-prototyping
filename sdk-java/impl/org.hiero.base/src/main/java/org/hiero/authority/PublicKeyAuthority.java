@@ -1,0 +1,15 @@
+package org.hiero.authority;
+
+import java.util.Objects;
+import org.hiero.keys.PublicKey;
+
+/// Leaf: satisfied by a signature from this public key.
+public record PublicKeyAuthority(PublicKey publicKey) implements Authority {
+
+    /// Creates a new `PublicKeyAuthority`.
+    ///
+    /// @throws NullPointerException if a required value is `null`
+    public PublicKeyAuthority {
+        Objects.requireNonNull(publicKey, "publicKey must not be null");
+    }
+}

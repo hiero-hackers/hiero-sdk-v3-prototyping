@@ -1,0 +1,17 @@
+package org.hiero.http;
+
+import org.hiero.sdk.annotation.ThreadSafe;
+
+/// The handle of a registered callback, so that an observer can stop observing.
+public final class CancellationRegistration {
+
+    /// Creates a new `CancellationRegistration`.
+    public CancellationRegistration() {
+    }
+
+    /// Removes the callback. Idempotent.
+    @ThreadSafe(group = "cancellation")
+    public void release() {
+        throw new UnsupportedOperationException("Not implemented yet: CancellationRegistration.release");
+    }
+}

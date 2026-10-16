@@ -1,0 +1,18 @@
+package org.hiero.mirrornode.nft;
+
+import java.util.Objects;
+import org.hiero.ledger.AccountId;
+import org.hiero.ledger.Address;
+
+public record NftMetadata(Address tokenId, String name, String symbol, AccountId treasuryAccountId) {
+
+    /// Creates a new `NftMetadata`.
+    ///
+    /// @throws NullPointerException if a required value is `null`
+    public NftMetadata {
+        Objects.requireNonNull(tokenId, "tokenId must not be null");
+        Objects.requireNonNull(name, "name must not be null");
+        Objects.requireNonNull(symbol, "symbol must not be null");
+        Objects.requireNonNull(treasuryAccountId, "treasuryAccountId must not be null");
+    }
+}

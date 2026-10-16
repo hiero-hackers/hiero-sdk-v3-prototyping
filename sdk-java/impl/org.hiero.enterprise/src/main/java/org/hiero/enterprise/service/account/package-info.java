@@ -1,0 +1,4 @@
+/// `AccountService` creates, updates and deletes accounts and looks them up. A new account is controlled by the given
+/// `Authority` and can be funded with an initial balance; the operator account of the `Session` pays for the
+/// transactions. `AccountInformation` describes an account with its balance and its current authority.
+package org.hiero.enterprise.service.account;

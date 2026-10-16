@@ -284,7 +284,12 @@ class RustEdgeCasesTest {
                 @@nullable next: $$Self
                 @@immutable head: $$Self
             }
+            Note {
+                @@immutable text: string
+                @@nullable memo: string
+            }
             Holder {
+                @@immutable note: Note
                 @@immutable sealed: Sealed
                 @@immutable base: Base
                 @@immutable pocket: Pocket<ANY>
@@ -300,7 +305,8 @@ class RustEdgeCasesTest {
 
     private static final String CONVERSIONS_INSTANCES = """
             instance Item = Thing{label: "t"}
-            instance Holder = Holder{sealed: DEFAULT, base: DEFAULT, pocket: DEFAULT, texts: DEFAULT, label: DEFAULT(Item).label, maybe: DEFAULT(Base).maybe, data: DEFAULT(Base).maybeData, numbers: DEFAULT(Base).maybeNumbers, thing: DEFAULT(Base).maybeThing, item: DEFAULT(Base).item}
+            instance Note = Note{text: "b", memo: null}
+            instance Holder = Holder{note: DEFAULT, sealed: DEFAULT, base: DEFAULT, pocket: DEFAULT, texts: DEFAULT, label: DEFAULT(Item).label, maybe: DEFAULT(Base).maybe, data: DEFAULT(Base).maybeData, numbers: DEFAULT(Base).maybeNumbers, thing: DEFAULT(Base).maybeThing, item: DEFAULT(Base).item}
             """;
 
     @TempDir
@@ -395,6 +401,9 @@ class RustEdgeCasesTest {
         assertThat(RustGeneratorTest.file(files, "/src/d/thing_pocket.rs"))
                 .contains("self.content().map(|v| Arc::new(v.clone()) as Arc<dyn Item>)");
         assertThat(RustGeneratorTest.file(files, "/src/d/chain.rs")).contains("fn head(&self) -> Self where Self: Sized;");
+        // an explicit null of a @@nullable field in a default instance is None, not Some(None)
+        assertThat(files).anyMatch(f -> f.content().contains("Note::new(\"b\".to_string(), None)"))
+                .noneMatch(f -> f.content().contains("Some(None)"));
         buildAndRun(files);
     }
 

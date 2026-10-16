@@ -343,11 +343,32 @@ public final class TestGenerator {
                         + INDENT + INDENT + "assertEquals(subject.hashCode(), other.hashCode());\n");
             }
 
-            // methods
+            // methods: on the default instance of the specs if the type has one - the constructor values of create() only
+            // have to satisfy the declared constraints, so they may be no meaningful object (3 bytes as an Ed25519 key)
+            final String subject = defaultSubject(self, typeName).orElse("create()");
             for (final MethodDefinition method : type.methods()) {
-                methodTest(method, method.isStatic() ? rawName : "create()", variables.get());
+                methodTest(method, method.isStatic() ? rawName : subject, variables.get());
             }
             return true;
+        }
+
+        /**
+         * The helper that returns the default instance of a type (`## Default Instances for Testing`), if the type has
+         * one and it can be built.
+         *
+         * @param self     the type with its type arguments
+         * @param typeName the Java type
+         * @return the call of the helper
+         */
+        private Optional<String> defaultSubject(final Type.DeclaredType self, final String typeName) {
+            if (context.model().instance(self.name()).isEmpty()) {
+                return Optional.empty();
+            }
+            return samples.value(self, List.of(), 0).map(value -> {
+                helpers.put("defaultSubject", INDENT + "private static " + typeName + " defaultSubject() {\n"
+                        + INDENT + INDENT + "return " + value + ";\n" + INDENT + "}\n");
+                return "defaultSubject()";
+            });
         }
 
         private void defaultConstructorTest(final TypeDefinition.ComplexTypeDefinition type,

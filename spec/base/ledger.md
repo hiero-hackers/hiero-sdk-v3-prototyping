@@ -343,10 +343,11 @@ constant ZERO_CONTRACT_ID: ContractId = ContractId{shard: 0, realm: 0, num: 0, c
 ## Default Instances for Testing
 
 ```
-// The Hedera testnet with HBAR as native token.
-instance Network<ANY> = Network<hedera.HbarUnit>{id: [1], name: "testnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
+// A local network (Solo, ledger id 3) with HBAR as native token. Tests run against a local network, never against a
+// public one: a test that submits must not reach testnet or mainnet.
+instance Network<ANY> = Network<hedera.HbarUnit>{id: [3], name: "local", nativeTokenUnit: hedera.HbarUnit.HBAR}
 
-// An account address of the testnet.
+// An account address.
 instance Address = Address{shard: 0, realm: 0, num: 1001, checksum: ""}
 
 // An account addressed by its number.
@@ -355,15 +356,18 @@ instance AccountId = AccountId{shard: 0, realm: 0, num: 1001, checksum: ""}
 // A new transaction id of the default account.
 instance TransactionId = TransactionId.generateTransactionId(accountId: DEFAULT)
 
-// The IPv4 address of a testnet consensus node.
-instance IpAddress = IpAddress{bytes: [34, 94, 106, 61]}
+// A contract addressed by its number.
+instance ContractId = ContractId{shard: 0, realm: 0, num: 1001, checksum: "", evmAddress: null}
 
-// A consensus node of the testnet.
-instance ConsensusNode = ConsensusNode{ip: DEFAULT, port: 50211,
+// The IPv4 address of the local host.
+instance IpAddress = IpAddress{bytes: [127, 0, 0, 1]}
+
+// The consensus node of a local Solo network (`solo one-shot single deploy`).
+instance ConsensusNode = ConsensusNode{ip: DEFAULT, port: 35211,
         account: AccountId{shard: 0, realm: 0, num: 3, checksum: ""}}
 
-// The mirror node of the testnet.
-instance MirrorNode = MirrorNode{restBaseUrl: "https://testnet.mirrornode.hedera.com"}
+// The mirror node of a local Solo network.
+instance MirrorNode = MirrorNode{restBaseUrl: "http://127.0.0.1:38081"}
 ```
 
 ## Testing

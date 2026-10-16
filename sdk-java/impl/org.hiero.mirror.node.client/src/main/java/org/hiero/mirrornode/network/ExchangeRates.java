@@ -1,0 +1,14 @@
+package org.hiero.mirrornode.network;
+
+import java.util.Objects;
+
+public record ExchangeRates(ExchangeRate currentRate, ExchangeRate nextRate) {
+
+    /// Creates a new `ExchangeRates`.
+    ///
+    /// @throws NullPointerException if a required value is `null`
+    public ExchangeRates {
+        Objects.requireNonNull(currentRate, "currentRate must not be null");
+        Objects.requireNonNull(nextRate, "nextRate must not be null");
+    }
+}

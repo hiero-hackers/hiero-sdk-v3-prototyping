@@ -1,0 +1,16 @@
+package org.hiero.mirrornode;
+
+import org.hiero.ledger.MirrorNode;
+
+/// Factory methods of the package `org.hiero.mirrornode`.
+public final class MirrornodeFactory {
+
+    /// @throws MirrorNodeException if a mirror node error occurs
+    public static MirrorNodeClient createMirrorNodeClient(final MirrorNode mirrorNode) {
+        throw new UnsupportedOperationException("Not implemented yet: MirrornodeFactory.createMirrorNodeClient");
+    }
+
+    private MirrornodeFactory() {
+        throw new UnsupportedOperationException("Factory class cannot be instantiated");
+    }
+}

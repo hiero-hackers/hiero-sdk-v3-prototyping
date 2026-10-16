@@ -1,0 +1,22 @@
+package org.hiero.mirrornode.token;
+
+import java.util.concurrent.CompletionStage;
+import org.hiero.common.Page;
+import org.hiero.ledger.AccountId;
+import org.hiero.ledger.Address;
+import org.jspecify.annotations.Nullable;
+
+public interface TokenRepository {
+
+    /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
+    CompletionStage<Page<Token>> findByAccount(final AccountId accountId);
+
+    /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
+    CompletionStage<@Nullable TokenInfo> findById(final Address tokenId);
+
+    /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
+    CompletionStage<Page<Balance>> getBalances(final Address tokenId);
+
+    /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
+    CompletionStage<Page<Balance>> getBalancesForAccount(final Address tokenId, final AccountId accountId);
+}

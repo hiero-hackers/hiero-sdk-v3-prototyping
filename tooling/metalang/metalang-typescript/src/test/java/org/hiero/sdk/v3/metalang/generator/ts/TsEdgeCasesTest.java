@@ -354,4 +354,11 @@ class TsEdgeCasesTest {
         assertThat(GeneratedTs.build(files, temp, "@hiero")).isEmpty();
         assertThat(GeneratedTs.test(temp).failures()).isEmpty();
     }
+
+    @Test
+    void errorClassNamesShouldIgnoreEmptyPartsOfTheErrorId() {
+        // WHEN / THEN an id with a doubled or trailing hyphen gets no empty name part
+        assertThat(TsNames.errorClass("illegal--format")).isEqualTo("IllegalFormatError");
+        assertThat(TsNames.errorClass("not-found-error")).isEqualTo("NotFoundError");
+    }
 }

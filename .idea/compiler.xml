@@ -7,13 +7,27 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="metalang-go" />
+        <module name="hiero-mirror-node-client" />
+        <module name="hiero-consensus-node-client" />
         <module name="metalang-cli" />
         <module name="metalang-python" />
         <module name="metalang-typescript" />
         <module name="metalang-core" />
+        <module name="hiero-enterprise" />
         <module name="metalang-rust" />
+        <module name="hiero-base" />
         <module name="metalang-java" />
+        <module name="hiero-consensus-node-admin-client" />
       </profile>
     </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="hiero-base" options="-Xlint:all -Werror" />
+      <module name="hiero-consensus-node-admin-client" options="-Xlint:all -Werror" />
+      <module name="hiero-consensus-node-client" options="-Xlint:all -Werror" />
+      <module name="hiero-enterprise" options="-Xlint:all -Werror" />
+      <module name="hiero-mirror-node-client" options="-Xlint:all -Werror" />
+    </option>
   </component>
 </project>

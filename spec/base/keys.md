@@ -122,7 +122,9 @@ enum KeyEncoding(rawFormat: RawFormat) {
     DER(BYTES), // Distinguished Encoding Rules (binary)
     PEM(STRING) // Privacy Enhanced Mail (Base64 text)
 
-    bytes decode(keyType : KeyType, value : string)
+    // decodes the given text into the DER bytes of a key of the given type; fails for a binary encoding and for text
+    // that is not in this encoding
+    @@throws(illegal-format) bytes decode(keyType : KeyType, value : string)
 }
 
 // all supported container formats
@@ -138,7 +140,7 @@ enum ByteImportEncoding {
     HEX, // hex string representation of the bytes
     BASE64 // base64 string representation of the bytes
     
-    bytes decode(value : string)
+    @@throws(illegal-format) bytes decode(value : string) // fails for text that is not in this encoding
 }
 
 // combined container format and encoding
@@ -150,7 +152,9 @@ enum KeyFormat(container: KeyContainer, encoding: KeyEncoding) {
     SPKI_WITH_PEM(SPKI, PEM)
     
     bool supportsType(type: KeyType) // returns true if the internal container format supports the given key type
-    bytes decode(keyType : KeyType, value : string) // decodes the given string value into raw bytes for the given key type
+    // decodes the given string value into raw bytes for the given key type; fails if the container cannot hold the key
+    // type or the text is not in the encoding
+    @@throws(illegal-format) bytes decode(keyType : KeyType, value : string)
   
 }
 

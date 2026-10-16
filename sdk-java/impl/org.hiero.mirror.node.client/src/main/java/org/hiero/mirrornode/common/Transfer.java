@@ -1,0 +1,14 @@
+package org.hiero.mirrornode.common;
+
+import java.util.Objects;
+import org.hiero.ledger.AccountId;
+
+public record Transfer(AccountId account, long amount, boolean isApproval) {
+
+    /// Creates a new `Transfer`.
+    ///
+    /// @throws NullPointerException if a required value is `null`
+    public Transfer {
+        Objects.requireNonNull(account, "account must not be null");
+    }
+}

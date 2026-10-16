@@ -1,0 +1,10 @@
+package org.hiero.mirrornode.transaction;
+
+
+/// The type of a transaction as reported by the Mirror Node. Open for types unknown to the SDK, so that new
+/// services stay usable without an SDK update.
+public interface TransactionType {
+
+    /// the REST API wire value, e.g. "CRYPTOTRANSFER"
+    String protocolName();
+}

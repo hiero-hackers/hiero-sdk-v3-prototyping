@@ -43,6 +43,10 @@ if (( ! skip_build )); then
   export JAVA_HOME
   cd "$repository/sdk-java"
 
+  # sdk-java/impl has the coordinates of the generated modules; installed after them, it replaces the stubs
+  log "building the implementation (sdk-java/impl)"
+  ./mvnw -f impl install -DskipTests
+
   log "building the TCK contract, the runtime and the server"
   ./mvnw -f tck/generated/contract install
   ./mvnw -f tck/runtime install

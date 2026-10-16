@@ -380,7 +380,9 @@ class JavaGeneratorTest {
             assertThat(tests.diagnostics()).isEmpty();
             assertThat(run.unexpected()).isEmpty();
             assertThat(run.tests()).isGreaterThan(2000);
-            assertThat(run.tests() - run.failures().size()).isGreaterThan(1300);
+            // the default instances build their values through the API (e.g. the default key through
+            // KeysFactory.createPrivateKey), so against the stubs every test that needs such a value fails as well
+            assertThat(run.tests() - run.failures().size()).isGreaterThan(1100);
             assertThat(run.stubs()).isNotEmpty();
         }
 

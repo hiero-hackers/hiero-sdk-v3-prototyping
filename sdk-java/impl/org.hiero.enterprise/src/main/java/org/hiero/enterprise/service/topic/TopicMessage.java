@@ -1,0 +1,24 @@
+package org.hiero.enterprise.service.topic;
+
+import java.time.ZonedDateTime;
+import java.util.Objects;
+import org.hiero.ledger.AccountId;
+import org.hiero.ledger.Address;
+
+public record TopicMessage(
+        ZonedDateTime consensusTimestamp,
+        String message,
+        AccountId payerAccountId,
+        long sequenceNumber,
+        Address topicId) {
+
+    /// Creates a new `TopicMessage`.
+    ///
+    /// @throws NullPointerException if a required value is `null`
+    public TopicMessage {
+        Objects.requireNonNull(consensusTimestamp, "consensusTimestamp must not be null");
+        Objects.requireNonNull(message, "message must not be null");
+        Objects.requireNonNull(payerAccountId, "payerAccountId must not be null");
+        Objects.requireNonNull(topicId, "topicId must not be null");
+    }
+}
