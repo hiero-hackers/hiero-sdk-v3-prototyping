@@ -637,6 +637,243 @@ test "a hex key may have a 0x prefix" {
     // then
     assertEquals(expected: DEFAULT(PrivateKey), actual: key)
 }
+
+// Source: the Java, Go and JavaScript SDKs (the key of their Ed25519 serialization tests and its public key).
+test "the Ed25519 key db48… derives the public key e0c8ec…" {
+    // given
+    let privateKey = createPrivateKey(algorithm: KeyAlgorithm.ED25519, encoding: ByteImportEncoding.HEX,
+            value: "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10")
+
+    // when
+    let publicKey = privateKey.createPublicKey()
+
+    // then
+    assertEquals(expected: hex(text: "e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"), actual: publicKey.bytes)
+}
+
+// Source: the known answers of the Rust, Swift and JavaScript SDKs ("hello, world") and of the Java SDK ("This is a
+// message about the world."); checked by verification, since a deterministic Ed25519 nonce is not required.
+test "the Ed25519 signatures of other SDKs verify" {
+    // given
+    let publicKey = createPublicKey(algorithm: KeyAlgorithm.ED25519, rawBytes: hex(text: "e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"))
+    let first = hex(text: "9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef"
+            + "062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f07")
+    let second = hex(text: "73bea53f31ca9c42a422ecb7516ec08d0bbd1a6bfd630ccf10ec1872454814d2"
+            + "9f4a8011129cd007eab544af01a75f508285b591e5bed24b68f927751e49e30e")
+
+    // when / then
+    assertTrue(condition: publicKey.verify(message: utf8(text: "hello, world"), signature: first))
+    assertTrue(condition: publicKey.verify(message: utf8(text: "This is a message about the world."), signature: second))
+}
+
+// Source: RFC 8032, section 7.1, TEST 1 (the empty message) and TEST 3; the C++ SDK runs these vectors.
+test "the RFC 8032 signatures of TEST 1 and TEST 3 verify" {
+    // given
+    let test1 = createPrivateKey(algorithm: KeyAlgorithm.ED25519,
+            rawBytes: hex(text: "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60")).createPublicKey()
+    let test3 = createPrivateKey(algorithm: KeyAlgorithm.ED25519,
+            rawBytes: hex(text: "c5aa8df43f9f837bedb7442f31dcb7b166d38535076f094b85ce3a2e0b4458f7")).createPublicKey()
+
+    // when / then
+    assertEquals(expected: hex(text: "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025"), actual: test3.bytes)
+    assertTrue(condition: test1.verify(message: hex(text: ""),
+            signature: hex(text: "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd2"
+            + "5bf5f0595bbe24655141438e7a100b")))
+    assertTrue(condition: test3.verify(message: hex(text: "af82"),
+            signature: hex(text: "6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a"
+            + "7c15e9716ed28dc027beceea1ec40a")))
+}
+
+// Source: the known answer of the JavaScript SDK for a transaction body (Keccak-256, RFC 6979, low-s).
+test "a secp256k1 signature of a transaction body is the RFC 6979 low-s signature" {
+    // given
+    let privateKey = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX, value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
+    let body = hex(text: "0a0e0a0408011001120608001000180412060800100018031880c2d72f220208783200721a0a180a0a0a0608001000180410130a0a0a060800100018051014")
+
+    // when
+    let signature = privateKey.sign(message: body)
+
+    // then
+    assertEquals(expected: hex(text: "63201532040178a60e2738bdaaa00d628004b15d109162fa42e066fcb67201"
+            + "90438473bbf155fd7ff6bfb2a94141157f1e1a080aa84473d7f4c68f8025275a0a"), actual: signature)
+}
+
+// Source: the Java, Go, Python and Rust SDKs (a signature with one changed byte no longer verifies). The signatures are
+// the known answers above with byte 5 increased by one.
+test "a signature with a changed byte does not verify" {
+    // given
+    let ed25519 = createPublicKey(algorithm: KeyAlgorithm.ED25519, rawBytes: hex(text: "e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"))
+    let ecdsa = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX, value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
+            .createPublicKey()
+
+    // when / then
+    assertFalse(condition: ed25519.verify(message: utf8(text: "hello, world"),
+            signature: hex(text: "9d04bfed7bab97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef"
+            + "062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f07")))
+    assertFalse(condition: ecdsa.verify(message: utf8(text: "hello world"),
+            signature: hex(text: "f3a13a555f208cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c"
+            + "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851")))
+}
+
+// Source: the C++ and Go SDKs (a signature of the wrong length is invalid, not an error).
+test "a signature of the wrong length does not verify" {
+    // given
+    let publicKey = DEFAULT(PublicKey)
+
+    for signature in [hex(text: "01020304"), hex(text: ""), repeat(value: hex(text: "00"), count: 65)] {
+        // when / then
+        assertFalse(condition: publicKey.verify(message: utf8(text: "hello"), signature: signature))
+    }
+}
+
+// Source: the C++ SDK (sign and verify the empty message).
+test "the empty message can be signed and verified" {
+    for privateKey in [DEFAULT(PrivateKey), createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX,
+            value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")] {
+        // when
+        let signature = privateKey.sign(message: hex(text: ""))
+
+        // then
+        assertTrue(condition: privateKey.createPublicKey().verify(message: hex(text: ""), signature: signature))
+    }
+}
+
+// Source: the Rust, Swift and Python SDKs (a signature of one algorithm does not verify with a key of the other).
+test "a signature does not verify with a key of the other algorithm" {
+    // given
+    let ed25519 = createPublicKey(algorithm: KeyAlgorithm.ED25519, rawBytes: hex(text: "e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"))
+    let ecdsa = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX, value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
+            .createPublicKey()
+    let ed25519Signature = hex(text: "9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef"
+            + "062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f07")
+    let ecdsaSignature = hex(text: "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c"
+            + "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851")
+
+    // when / then
+    assertFalse(condition: ecdsa.verify(message: utf8(text: "hello, world"), signature: ed25519Signature))
+    assertFalse(condition: ed25519.verify(message: utf8(text: "hello world"), signature: ecdsaSignature))
+}
+
+// Source: RFC 5958 (OneAsymmetricKey, version 1, with the public key); the Swift SDK reads it and writes version 0.
+test "a PKCS#8 version 2 key with its public key is read and written as version 1" {
+    // given
+    let der = hex(text: "3053020101300506032b65700422042092a736a341feb460a3906dec5b7eeaaf64111e6d9769e06b543986968465802f"
+            + "a123032100b8485a5584725595e5b856f8b361ed84571ccb58e00447b307f9df608acef1f7")
+
+    // when
+    let key = createPrivateKey(container: KeyFormat.PKCS8_WITH_DER, value: der)
+
+    // then
+    assertEquals(expected: hex(text: "92a736a341feb460a3906dec5b7eeaaf64111e6d9769e06b543986968465802f"), actual: key.bytes)
+    assertEquals(expected: hex(text: "302e020100300506032b65700422042092a736a341feb460a3906dec5b7eeaaf64111e6d9769e06b543986968465802f"),
+            actual: key.toBytes(container: KeyFormat.PKCS8_WITH_DER))
+}
+
+// Source: the C++, Go and Swift SDKs (hex digits in upper case).
+test "hex digits may be upper case" {
+    // when
+    let key = createPrivateKey(algorithm: KeyAlgorithm.ED25519, encoding: ByteImportEncoding.HEX,
+            value: "D3671A1E98BB22F011C0E4BCF5125590E15D8F21A7017309BB558852039BC75C")
+
+    // then
+    assertEquals(expected: DEFAULT(PrivateKey), actual: key)
+}
+
+// Source: the JavaScript and Go SDKs (a secp256k1 scalar with leading zero bytes keeps its 32 bytes).
+test "a secp256k1 private key with leading zero bytes keeps 32 bytes" {
+    // given
+    let hexText = "0000000000000000fd2fe3d732d3412140accab21b4b7303ff05f9c9127542cd"
+
+    // when
+    let key = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX, value: hexText)
+
+    // then
+    assertEquals(expected: hex(text: hexText), actual: key.bytes)
+    assertEquals(expected: key, actual: createPrivateKey(container: KeyFormat.PKCS8_WITH_DER,
+            value: key.toBytes(container: KeyFormat.PKCS8_WITH_DER)))
+}
+
+// Source: the Go SDK (the range check uses the order of secp256k1: the order of P-256 plus one is a valid secp256k1
+// scalar, because it is below the order of secp256k1).
+test "a secp256k1 private key is checked against the order of secp256k1" {
+    // given
+    let hexText = "ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632552"
+
+    // when
+    let key = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX, value: hexText)
+
+    // then
+    assertEquals(expected: hex(text: hexText), actual: key.bytes)
+}
+
+// Source: the Go, Java, Python and C++ SDKs (a generated key has its algorithm and 32 bytes, and signs).
+test "a generated key of each algorithm signs and verifies" {
+    for algorithm in [KeyAlgorithm.ED25519, KeyAlgorithm.ECDSA] {
+        // when
+        let key = generatePrivateKey(algorithm: algorithm)
+        let signature = key.sign(message: utf8(text: "hello"))
+
+        // then
+        assertEquals(expected: algorithm, actual: key.algorithm)
+        assertEquals(expected: KeyType.PRIVATE, actual: key.type)
+        assertEquals(expected: 32, actual: length(value: key.bytes))
+        assertTrue(condition: key.createPublicKey().verify(message: utf8(text: "hello"), signature: signature))
+    }
+}
+
+// Source: the Go and Python SDKs (an EC key of another curve), the Go SDK (bytes after the DER structure).
+test "an SPKI key of another curve or with trailing bytes is rejected" {
+    // given: the RFC 5480 SPKI of the test "a secp256k1 public key is written as RFC 5480 SPKI with the compressed point"
+    // with the curve 1.3.132.0.11 instead of 1.3.132.0.10, and the same SPKI followed by one byte
+    let otherCurve = hex(text: "3036301006072a8648ce3d020106052b8104000b032200"
+            + "02703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588")
+    let trailing = hex(text: "3036301006072a8648ce3d020106052b8104000a032200"
+            + "02703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa658800")
+
+    for der in [otherCurve, trailing] {
+        // when / then
+        @@expectThrows(illegal-format)
+        createPublicKey(container: KeyFormat.SPKI_WITH_DER, value: der)
+    }
+}
+
+// Source: the Go, Java and Python SDKs (raw keys of the wrong length), the Python SDK (an unknown point prefix).
+test "raw key bytes of the wrong length or with an unknown point prefix are rejected" {
+    // when / then: an Ed25519 public key has 32 bytes
+    @@expectThrows(illegal-format)
+    createPublicKey(algorithm: KeyAlgorithm.ED25519, rawBytes: repeat(value: hex(text: "01"), count: 33))
+
+    // when / then: a secp256k1 private key has 32 bytes
+    @@expectThrows(illegal-format)
+    createPrivateKey(algorithm: KeyAlgorithm.ECDSA, rawBytes: repeat(value: hex(text: "01"), count: 31))
+
+    // when / then: a compressed SEC 1 point starts with 02 or 03
+    @@expectThrows(illegal-format)
+    createPublicKey(algorithm: KeyAlgorithm.ECDSA,
+            rawBytes: hex(text: "05703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"))
+}
+
+// Source: RFC 7468 (the labels of BEGIN and END must match); rejected by the Swift SDK.
+test "a PEM key whose END label differs from its BEGIN label is rejected" {
+    // given
+    let pem = "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEINNnGh6YuyLwEcDkvPUSVZDhXY8hpwFzCbtViFIDm8dc\n-----END PUBLIC KEY-----\n"
+
+    // when / then
+    @@expectThrows(illegal-format)
+    createPrivateKey(value: pem)
+}
+
+// Source: RFC 7468, section 2 (parsers ignore whitespace around the lines); the JavaScript SDK.
+test "a PEM key with extra whitespace and blank lines is read" {
+    // given: the default key in PEM (see "Key examples") with tabs, spaces and blank lines
+    let pem = "\n-----BEGIN PRIVATE KEY-----  \n\t MC4CAQAwBQYDK2VwBCIEINNnGh6YuyLwEcDkvPUSVZDhXY8hpwFzCbtViFIDm8dc \t\n\n-----END PRIVATE KEY-----\n\n"
+
+    // when
+    let key = createPrivateKey(value: pem)
+
+    // then
+    assertEquals(expected: DEFAULT(PrivateKey), actual: key)
+}
 ```
 
 ## Questions & Comments

@@ -468,6 +468,278 @@ class KeysSpecTest {
         assertEquals(defaultPrivateKey(), key);
     }
 
+    /// `keys/the-ed25519-key-db48-derives-the-public-key-e0c8ec`
+    ///
+    /// Source: the Java, Go and JavaScript SDKs (the key of their Ed25519 serialization tests and its public key).
+    @Test
+    @DisplayName("the Ed25519 key db48… derives the public key e0c8ec…")
+    void theEd25519KeyDb48DerivesThePublicKeyE0c8ec() {
+        // given
+        final PrivateKey privateKey = KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10");
+
+        // when
+        final PublicKey publicKey = privateKey.createPublicKey();
+
+        // then
+        assertEquals(hex("e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"), publicKey.bytes());
+    }
+
+    /// `keys/the-ed25519-signatures-of-other-sdks-verify`
+    ///
+    /// Source: the known answers of the Rust, Swift and JavaScript SDKs ("hello, world") and of the Java SDK ("This is a
+    /// message about the world."); checked by verification, since a deterministic Ed25519 nonce is not required.
+    @Test
+    @DisplayName("the Ed25519 signatures of other SDKs verify")
+    void theEd25519SignaturesOfOtherSDKsVerify() {
+        // given
+        final PublicKey publicKey = KeysFactory.createPublicKey(KeyAlgorithm.ED25519, hex("e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"));
+        final byte[] first = hex("9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef" + "062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f07");
+        final byte[] second = hex("73bea53f31ca9c42a422ecb7516ec08d0bbd1a6bfd630ccf10ec1872454814d2" + "9f4a8011129cd007eab544af01a75f508285b591e5bed24b68f927751e49e30e");
+
+        // when / then
+        assertTrue(publicKey.verify(utf8("hello, world"), first));
+        assertTrue(publicKey.verify(utf8("This is a message about the world."), second));
+    }
+
+    /// `keys/the-rfc-8032-signatures-of-test-1-and-test-3-verify`
+    ///
+    /// Source: RFC 8032, section 7.1, TEST 1 (the empty message) and TEST 3; the C++ SDK runs these vectors.
+    @Test
+    @DisplayName("the RFC 8032 signatures of TEST 1 and TEST 3 verify")
+    void theRFC8032SignaturesOfTEST1AndTEST3Verify() {
+        // given
+        final PublicKey test1 = KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, hex("9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60")).createPublicKey();
+        final PublicKey test3 = KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, hex("c5aa8df43f9f837bedb7442f31dcb7b166d38535076f094b85ce3a2e0b4458f7")).createPublicKey();
+
+        // when / then
+        assertEquals(hex("fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025"), test3.bytes());
+        assertTrue(test1.verify(hex(""), hex("e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd2" + "5bf5f0595bbe24655141438e7a100b")));
+        assertTrue(test3.verify(hex("af82"), hex("6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a" + "7c15e9716ed28dc027beceea1ec40a")));
+    }
+
+    /// `keys/a-secp256k1-signature-of-a-transaction-body-is-the-rfc-6979-low-s-signature`
+    ///
+    /// Source: the known answer of the JavaScript SDK for a transaction body (Keccak-256, RFC 6979, low-s).
+    @Test
+    @DisplayName("a secp256k1 signature of a transaction body is the RFC 6979 low-s signature")
+    void aSecp256k1SignatureOfATransactionBodyIsTheRFC6979LowSSignature() {
+        // given
+        final PrivateKey privateKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
+        final byte[] body = hex("0a0e0a0408011001120608001000180412060800100018031880c2d72f220208783200721a0a180a0a0a0608001000180410130a0a0a060800100018051014");
+
+        // when
+        final byte[] signature = privateKey.sign(body);
+
+        // then
+        assertEquals(hex("63201532040178a60e2738bdaaa00d628004b15d109162fa42e066fcb67201" + "90438473bbf155fd7ff6bfb2a94141157f1e1a080aa84473d7f4c68f8025275a0a"), signature);
+    }
+
+    /// `keys/a-signature-with-a-changed-byte-does-not-verify`
+    ///
+    /// Source: the Java, Go, Python and Rust SDKs (a signature with one changed byte no longer verifies). The signatures are
+    /// the known answers above with byte 5 increased by one.
+    @Test
+    @DisplayName("a signature with a changed byte does not verify")
+    void aSignatureWithAChangedByteDoesNotVerify() {
+        // given
+        final PublicKey ed25519 = KeysFactory.createPublicKey(KeyAlgorithm.ED25519, hex("e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"));
+        final PublicKey ecdsa = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048").createPublicKey();
+
+        // when / then
+        assertFalse(ed25519.verify(utf8("hello, world"), hex("9d04bfed7bab97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef" + "062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f07")));
+        assertFalse(ecdsa.verify(utf8("hello world"), hex("f3a13a555f208cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c" + "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851")));
+    }
+
+    /// `keys/a-signature-of-the-wrong-length-does-not-verify`
+    ///
+    /// Source: the C++ and Go SDKs (a signature of the wrong length is invalid, not an error).
+    @Test
+    @DisplayName("a signature of the wrong length does not verify")
+    void aSignatureOfTheWrongLengthDoesNotVerify() {
+        // given
+        final PublicKey publicKey = defaultPublicKey();
+        for (final byte[] signature : List.of(hex("01020304"), hex(""), repeat(hex("00"), 65L))) {
+            // when / then
+            assertFalse(publicKey.verify(utf8("hello"), signature));
+        }
+    }
+
+    /// `keys/the-empty-message-can-be-signed-and-verified`
+    ///
+    /// Source: the C++ SDK (sign and verify the empty message).
+    @Test
+    @DisplayName("the empty message can be signed and verified")
+    void theEmptyMessageCanBeSignedAndVerified() {
+        for (final PrivateKey privateKey : List.of(defaultPrivateKey(), KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"))) {
+            // when
+            final byte[] signature = privateKey.sign(hex(""));
+
+            // then
+            assertTrue(privateKey.createPublicKey().verify(hex(""), signature));
+        }
+    }
+
+    /// `keys/a-signature-does-not-verify-with-a-key-of-the-other-algorithm`
+    ///
+    /// Source: the Rust, Swift and Python SDKs (a signature of one algorithm does not verify with a key of the other).
+    @Test
+    @DisplayName("a signature does not verify with a key of the other algorithm")
+    void aSignatureDoesNotVerifyWithAKeyOfTheOtherAlgorithm() {
+        // given
+        final PublicKey ed25519 = KeysFactory.createPublicKey(KeyAlgorithm.ED25519, hex("e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"));
+        final PublicKey ecdsa = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048").createPublicKey();
+        final byte[] ed25519Signature = hex("9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef" + "062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f07");
+        final byte[] ecdsaSignature = hex("f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c" + "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851");
+
+        // when / then
+        assertFalse(ecdsa.verify(utf8("hello, world"), ed25519Signature));
+        assertFalse(ed25519.verify(utf8("hello world"), ecdsaSignature));
+    }
+
+    /// `keys/a-pkcs-8-version-2-key-with-its-public-key-is-read-and-written-as-version-1`
+    ///
+    /// Source: RFC 5958 (OneAsymmetricKey, version 1, with the public key); the Swift SDK reads it and writes version 0.
+    @Test
+    @DisplayName("a PKCS#8 version 2 key with its public key is read and written as version 1")
+    void aPKCS8Version2KeyWithItsPublicKeyIsReadAndWrittenAsVersion1() {
+        // given
+        final byte[] der = hex("3053020101300506032b65700422042092a736a341feb460a3906dec5b7eeaaf64111e6d9769e06b543986968465802f" + "a123032100b8485a5584725595e5b856f8b361ed84571ccb58e00447b307f9df608acef1f7");
+
+        // when
+        final PrivateKey key = KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, der);
+
+        // then
+        assertEquals(hex("92a736a341feb460a3906dec5b7eeaaf64111e6d9769e06b543986968465802f"), key.bytes());
+        assertEquals(hex("302e020100300506032b65700422042092a736a341feb460a3906dec5b7eeaaf64111e6d9769e06b543986968465802f"), key.toBytes(KeyFormat.PKCS8_WITH_DER));
+    }
+
+    /// `keys/hex-digits-may-be-upper-case`
+    ///
+    /// Source: the C++, Go and Swift SDKs (hex digits in upper case).
+    @Test
+    @DisplayName("hex digits may be upper case")
+    void hexDigitsMayBeUpperCase() {
+        // when
+        final PrivateKey key = KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "D3671A1E98BB22F011C0E4BCF5125590E15D8F21A7017309BB558852039BC75C");
+
+        // then
+        assertEquals(defaultPrivateKey(), key);
+    }
+
+    /// `keys/a-secp256k1-private-key-with-leading-zero-bytes-keeps-32-bytes`
+    ///
+    /// Source: the JavaScript and Go SDKs (a secp256k1 scalar with leading zero bytes keeps its 32 bytes).
+    @Test
+    @DisplayName("a secp256k1 private key with leading zero bytes keeps 32 bytes")
+    void aSecp256k1PrivateKeyWithLeadingZeroBytesKeeps32Bytes() {
+        // given
+        final String hexText = "0000000000000000fd2fe3d732d3412140accab21b4b7303ff05f9c9127542cd";
+
+        // when
+        final PrivateKey key = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, hexText);
+
+        // then
+        assertEquals(hex(hexText), key.bytes());
+        assertEquals(key, KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, key.toBytes(KeyFormat.PKCS8_WITH_DER)));
+    }
+
+    /// `keys/a-secp256k1-private-key-is-checked-against-the-order-of-secp256k1`
+    ///
+    /// Source: the Go SDK (the range check uses the order of secp256k1: the order of P-256 plus one is a valid secp256k1
+    /// scalar, because it is below the order of secp256k1).
+    @Test
+    @DisplayName("a secp256k1 private key is checked against the order of secp256k1")
+    void aSecp256k1PrivateKeyIsCheckedAgainstTheOrderOfSecp256k1() {
+        // given
+        final String hexText = "ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632552";
+
+        // when
+        final PrivateKey key = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, hexText);
+
+        // then
+        assertEquals(hex(hexText), key.bytes());
+    }
+
+    /// `keys/a-generated-key-of-each-algorithm-signs-and-verifies`
+    ///
+    /// Source: the Go, Java, Python and C++ SDKs (a generated key has its algorithm and 32 bytes, and signs).
+    @Test
+    @DisplayName("a generated key of each algorithm signs and verifies")
+    void aGeneratedKeyOfEachAlgorithmSignsAndVerifies() {
+        for (final KeyAlgorithm algorithm : List.of(KeyAlgorithm.ED25519, KeyAlgorithm.ECDSA)) {
+            // when
+            final PrivateKey key = KeysFactory.generatePrivateKey(algorithm);
+            final byte[] signature = key.sign(utf8("hello"));
+
+            // then
+            assertEquals(algorithm, key.algorithm());
+            assertEquals(KeyType.PRIVATE, key.type());
+            assertEquals(32L, length(key.bytes()));
+            assertTrue(key.createPublicKey().verify(utf8("hello"), signature));
+        }
+    }
+
+    /// `keys/an-spki-key-of-another-curve-or-with-trailing-bytes-is-rejected`
+    ///
+    /// Source: the Go and Python SDKs (an EC key of another curve), the Go SDK (bytes after the DER structure).
+    @Test
+    @DisplayName("an SPKI key of another curve or with trailing bytes is rejected")
+    void anSPKIKeyOfAnotherCurveOrWithTrailingBytesIsRejected() {
+        // given: the RFC 5480 SPKI of the test "a secp256k1 public key is written as RFC 5480 SPKI with the compressed point"
+        // with the curve 1.3.132.0.11 instead of 1.3.132.0.10, and the same SPKI followed by one byte
+        final byte[] otherCurve = hex("3036301006072a8648ce3d020106052b8104000b032200" + "02703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588");
+        final byte[] trailing = hex("3036301006072a8648ce3d020106052b8104000a032200" + "02703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa658800");
+        for (final byte[] der : List.of(otherCurve, trailing)) {
+            // when / then
+            assertThrows(IllegalArgumentException.class, () -> KeysFactory.createPublicKey(KeyFormat.SPKI_WITH_DER, der));
+        }
+    }
+
+    /// `keys/raw-key-bytes-of-the-wrong-length-or-with-an-unknown-point-prefix-are-rejected`
+    ///
+    /// Source: the Go, Java and Python SDKs (raw keys of the wrong length), the Python SDK (an unknown point prefix).
+    @Test
+    @DisplayName("raw key bytes of the wrong length or with an unknown point prefix are rejected")
+    void rawKeyBytesOfTheWrongLengthOrWithAnUnknownPointPrefixAreRejected() {
+        // when / then: an Ed25519 public key has 32 bytes
+        assertThrows(IllegalArgumentException.class, () -> KeysFactory.createPublicKey(KeyAlgorithm.ED25519, repeat(hex("01"), 33L)));
+
+        // when / then: a secp256k1 private key has 32 bytes
+        assertThrows(IllegalArgumentException.class, () -> KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, repeat(hex("01"), 31L)));
+
+        // when / then: a compressed SEC 1 point starts with 02 or 03
+        assertThrows(IllegalArgumentException.class, () -> KeysFactory.createPublicKey(KeyAlgorithm.ECDSA, hex("05703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588")));
+    }
+
+    /// `keys/a-pem-key-whose-end-label-differs-from-its-begin-label-is-rejected`
+    ///
+    /// Source: RFC 7468 (the labels of BEGIN and END must match); rejected by the Swift SDK.
+    @Test
+    @DisplayName("a PEM key whose END label differs from its BEGIN label is rejected")
+    void aPEMKeyWhoseENDLabelDiffersFromItsBEGINLabelIsRejected() {
+        // given
+        final String pem = "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEINNnGh6YuyLwEcDkvPUSVZDhXY8hpwFzCbtViFIDm8dc\n-----END PUBLIC KEY-----\n";
+
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> KeysFactory.createPrivateKey(pem));
+    }
+
+    /// `keys/a-pem-key-with-extra-whitespace-and-blank-lines-is-read`
+    ///
+    /// Source: RFC 7468, section 2 (parsers ignore whitespace around the lines); the JavaScript SDK.
+    @Test
+    @DisplayName("a PEM key with extra whitespace and blank lines is read")
+    void aPEMKeyWithExtraWhitespaceAndBlankLinesIsRead() {
+        // given: the default key in PEM (see "Key examples") with tabs, spaces and blank lines
+        final String pem = "\n-----BEGIN PRIVATE KEY-----  \n\t MC4CAQAwBQYDK2VwBCIEINNnGh6YuyLwEcDkvPUSVZDhXY8hpwFzCbtViFIDm8dc \t\n\n-----END PRIVATE KEY-----\n\n";
+
+        // when
+        final PrivateKey key = KeysFactory.createPrivateKey(pem);
+
+        // then
+        assertEquals(defaultPrivateKey(), key);
+    }
+
     private static PrivateKey defaultPrivateKey() {
         return KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c");
     }

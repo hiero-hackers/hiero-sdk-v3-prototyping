@@ -278,7 +278,7 @@ polling), which had been written into the generated code in place and reached 34
 `test-account-create-transaction.ts` against a local Solo network, in Java and TypeScript; that spike exists only in
 git history (`3b5305d~1`, introduced in `3caad63 "Durchstich :)"`), and the TypeScript one has not been ported. Today
 `impl` implements keys, the ledger ids, `Hbar`, `AuthorityFactory`, `ClientFactory`, `Response.queryReceipt`,
-`PackedTransaction`, `PrngTransaction` and `AccountCreateTransaction`; **all 50 spec tests pass** (keys 27, ledger 13,
+`PackedTransaction`, `PrngTransaction` and `AccountCreateTransaction`; **all 67 spec tests pass** (keys 44, ledger 13,
 transactions 10), the contract tests of unimplemented methods fail by design. It has the same Maven coordinates as
 `generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The TCK has not been run
 against it yet (it needs Solo, i.e. Docker). [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is the
