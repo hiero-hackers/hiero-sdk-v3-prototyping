@@ -172,9 +172,10 @@ abstraction BaseAddress {
     // Validates the checksum against the given network's checksum scheme.
     bool validateChecksum(network: Network<ANY>)
 
-    // Canonical string form. Subtype-specific: "shard.realm.num" for Address / numeric-form
-    // ContractId / numeric-form AccountId; "shard.realm.0x<hex>" for EVM-form ContractId /
-    // AccountId; "shard.realm.<base32-hex>" for key-alias-form AccountId.
+    // Canonical string form, without checksum. Subtype-specific: "shard.realm.num" for Address /
+    // numeric-form ContractId / numeric-form AccountId, each number in decimal without leading
+    // zeros (HIP-15); "shard.realm.<40 lowercase hex digits>" without "0x" for EVM-form ContractId /
+    // AccountId (HIP-583); "shard.realm.<base32>" for key-alias-form AccountId (HIP-32).
     string toString()
 
     // toString() with an appended "-<checksum>" suffix when a non-empty checksum is set.
@@ -190,8 +191,10 @@ Address extends BaseAddress {
     @@immutable @@override num: uint64                        // Hiero entity number; always set on an Address
 
     // Parses Address from string format: "shard.realm.num" or "shard.realm.num-checksum"
-    // (optional checksum suffix after the dash). Throws if the format is invalid, values are
-    // negative, or parsing fails.
+    // (optional checksum suffix after the dash), exactly as HIP-15 defines it: decimal numbers
+    // without leading zeros, a checksum of five lowercase letters, no whitespace or other
+    // characters. Throws if the format is invalid, values are negative, or parsing fails. The
+    // checksum is not validated here (see validateChecksum).
     @@throws(illegal-format) @@static Address fromString(address: string)
 }
 
@@ -202,11 +205,14 @@ Address extends BaseAddress {
 type EvmAddress {
     @@immutable @@minSize(20) @@maxSize(20) bytes: bytes   // 20 raw bytes (network byte order)
 
-    // Canonical EIP-55-style "0x<40 hex chars>" form.
+    // The EIP-55 form: "0x" and the 40 hex digits, a letter in upper case where EIP-55's
+    // checksum (the Keccak-256 hash of the lowercase digits) asks for it.
     string toString()
 
     // Parses an EvmAddress from its hex-string form. Accepts both "0xabc…" and bare "abc…"
-    // (40 hex chars). Throws on anything else (wrong length, non-hex characters).
+    // (40 hex chars). Digits all in lower or all in upper case are accepted as they are; digits
+    // in mixed case must be the EIP-55 form, otherwise the text is rejected as mistyped. Throws
+    // on anything else (wrong length, non-hex characters).
     @@throws(illegal-format) @@static EvmAddress fromString(value: string)
 
     // Wraps raw bytes. `value.length` must equal 20; otherwise throws.
@@ -231,8 +237,8 @@ ContractId extends EvmCapableAddress {
     // Structurally empty — `num` and `evmAddress` are inherited from EvmCapableAddress.
     // ContractId's only contribution over its parent is the @@oneOf constraint.
 
-    // Parses "shard.realm.num" or "shard.realm.0x<40-hex>" (with optional "-<checksum>" suffix).
-    // Throws if the format is invalid.
+    // Parses "shard.realm.num" (with optional "-<checksum>" suffix) or "shard.realm.<40 lowercase
+    // hex digits>" (HIP-583: the EVM address without "0x"). Throws if the format is invalid.
     @@throws(illegal-format) @@static ContractId fromString(value: string)
 
     // Builds a ContractId from a 20-byte EVM address.
@@ -255,8 +261,9 @@ ContractId extends EvmCapableAddress {
 AccountId extends EvmCapableAddress {
     @@immutable @@nullable alias: bytes                       // serialised public-key alias (HIP-32); absent when addressed by Hiero number or by EVM address
 
-    // Parses "shard.realm.num", "shard.realm.0x<40-hex>", or "shard.realm.<base32 key alias>"
-    // (with optional "-<checksum>" suffix). Throws if the format is invalid.
+    // Parses "shard.realm.num" (with optional "-<checksum>" suffix), "shard.realm.<40 lowercase hex
+    // digits>" (HIP-583: the EVM address without "0x"), or "shard.realm.<base32 key alias>"
+    // (HIP-32). Throws if the format is invalid.
     @@throws(illegal-format) @@static AccountId fromString(value: string)
 
     // Builds an AccountId from a 20-byte EVM address (HIP-583 auto-create form).
@@ -269,13 +276,16 @@ abstraction TransactionId {
   @@immutable validStart:zonedDateTime // the start time of the transaction
   @@immutable @@nullable nonce:int32 // nonce of an internal transaction
 
-  string toString() // returns the transaction id as a string
+  // returns the transaction id as "account@seconds.nanos", followed by "/nonce" if there is a
+  // nonce; the nanoseconds are always written with 9 digits ("…@1641088801.000000002")
+  string toString()
   string toStringWithChecksum() // returns the transaction id as a string with a checksum
 
   // Generates a new TransactionId for the given payer account.
   @@static TransactionId generateTransactionId(accountId:Address)
 
-  // Parses a TransactionId from its string form. Throws if the format is invalid.
+  // Parses a TransactionId from its string form (see toString). The digits after the dot are the
+  // nanoseconds as a number, so "…@1641088801.2" is 2 nanoseconds. Throws if the format is invalid.
   @@throws(illegal-format) @@static TransactionId fromString(transactionId:string)
 }
 
@@ -368,6 +378,21 @@ instance ConsensusNode = ConsensusNode{ip: DEFAULT, port: 35211,
 
 // The mirror node of a local Solo network.
 instance MirrorNode = MirrorNode{restBaseUrl: "http://127.0.0.1:38081"}
+
+// HIP-15, section "Specification": the inputs that must be rejected (all but "0.0.123-abcde", which is well formed and
+// fails only the checksum validation), checked against its regex.
+values HIP15_REJECTED_IDS: list<string> = ["0.00.123", "0.0.0123-vfmkw", "0.0.123-VFMKW", "0.0.123-vFmKw",
+        "0.0.123#vfmkw", "0.0.123vfmkw", "0.0.123 - vfmkw", "0.123", "0.0.123.", "0.0.123-vf", "0.0.123-vfm-kw",
+        "0.0.123-vfmkwxxxx"]
+
+// Checksums that are not five lowercase letters (HIP-15); rejected by the Java, Go, Rust and Swift SDKs.
+values MALFORMED_CHECKSUMS: list<string> = ["0.0.123-ntjl", "0.0.123-ntjl1", "0.0.123-"]
+
+// Text that is no entity id: from the JavaScript, Python, C++, Java, Rust and Swift SDKs, the C++ SDK (misplaced dots
+// and characters) and the Python SDK (malformed checksum separators, whitespace).
+values MALFORMED_ENTITY_IDS: list<string> = ["", "0.0", "0.0.", "0.0.a", "a.b.c", "0.0.-1", "-1.-1.-1", "1.2.3.4",
+        "8901000", "8.901000", ".8.90.1000.", "8..901000", "890.1000.", "0.0.1!", "o.o.e", "abc", "0.0.123#vfmkw",
+        "0.0.123 - vfmkw", "0.0.123vfmkw", "0.0.123-vfm-kw", " 0.0.100 "]
 ```
 
 ## Testing
@@ -417,19 +442,27 @@ test "the HIP-15 checksum depends on every byte of the ledger id" {
 
 // Source: HIP-15 (five lowercase letters); rejected by the Java, Go, Rust and Swift SDKs.
 test "a malformed checksum is rejected" {
-    for text in ["0.0.123-ntjl", "0.0.123-ntjl1", "0.0.123-"] {
+    for text in MALFORMED_CHECKSUMS {
         // when / then
         @@expectThrows(illegal-format)
+        Address.fromString(address: text)
+        @@expectThrows(illegal-format)
         AccountId.fromString(value: text)
+        @@expectThrows(illegal-format)
+        ContractId.fromString(value: text)
     }
 }
 
-// Source: the JavaScript, Python, C++, Java, Rust and Swift SDKs.
-test "text that is no account id is rejected" {
-    for text in ["", "0.0", "0.0.", "0.0.a", "a.b.c", "0.0.-1", "-1.-1.-1", "1.2.3.4"] {
+// Source: the JavaScript, Python, C++, Java, Rust and Swift SDKs; the C++ and Python SDKs.
+test "text that is no entity id is rejected" {
+    for text in MALFORMED_ENTITY_IDS {
         // when / then
         @@expectThrows(illegal-format)
+        Address.fromString(address: text)
+        @@expectThrows(illegal-format)
         AccountId.fromString(value: text)
+        @@expectThrows(illegal-format)
+        ContractId.fromString(value: text)
     }
 }
 
@@ -551,6 +584,232 @@ test "text that is no transaction id is rejected" {
         // when / then
         @@expectThrows(illegal-format)
         TransactionId.fromString(transactionId: text)
+    }
+}
+
+// Source: HIP-15; the checksum tables of the Rust and Swift SDKs (0.0.0 to 0.0.255 per ledger, here the first, second
+// and last entry and the entries for a ledger id of four bytes), and the vectors of the Swift (0.0.1126123), Python
+// (0.0.100), JavaScript (0.0.321) and Go (0.0.3) SDKs.
+test "the HIP-15 checksums of the SDK tables are valid on their ledger" {
+    // given
+    let mainnet = Network<hedera.HbarUnit>{id: [0], name: "mainnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
+    let testnet = Network<hedera.HbarUnit>{id: [1], name: "testnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
+    let previewnet = Network<hedera.HbarUnit>{id: [2], name: "previewnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
+    let custom = Network<hedera.HbarUnit>{id: [12, 31, 0, 2], name: "custom", nativeTokenUnit: hedera.HbarUnit.HBAR}
+
+    // when / then
+    for onMainnet in ["0.0.0-uvnqa", "0.0.1-dfkxr", "0.0.255-hpphi", "0.0.100-hhghj", "0.0.1126123-ycfte"] {
+        assertTrue(condition: AccountId.fromString(value: onMainnet).validateChecksum(network: mainnet), message: onMainnet)
+    }
+    for onTestnet in ["0.0.0-eiyxj", "0.0.1-mswfa", "0.0.3-dmqui", "0.0.255-rdaor", "0.0.321-uhcxp"] {
+        assertTrue(condition: AccountId.fromString(value: onTestnet).validateChecksum(network: testnet), message: onTestnet)
+    }
+    for onPreviewnet in ["0.0.0-nwkes", "0.0.1-wghmj", "0.0.255-aqlwa"] {
+        assertTrue(condition: AccountId.fromString(value: onPreviewnet).validateChecksum(network: previewnet), message: onPreviewnet)
+    }
+    for onCustom in ["0.0.1-solcw", "0.0.255-wypmn"] {
+        assertTrue(condition: AccountId.fromString(value: onCustom).validateChecksum(network: custom), message: onCustom)
+    }
+}
+
+// Source: HIP-15 (the checksum belongs to every entity id); the token, topic, schedule and contract id tests of all SDKs.
+test "the HIP-15 checksum of an address and a contract id is valid only on its ledger" {
+    // given
+    let mainnet = Network<hedera.HbarUnit>{id: [0], name: "mainnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
+    let previewnet = Network<hedera.HbarUnit>{id: [2], name: "previewnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
+
+    // when
+    let address = Address.fromString(address: "0.0.123-vfmkw")
+    let contract = ContractId.fromString(value: "0.0.123-ogizo")
+
+    // then
+    assertTrue(condition: address.validateChecksum(network: mainnet))
+    assertFalse(condition: address.validateChecksum(network: previewnet))
+    assertTrue(condition: contract.validateChecksum(network: previewnet))
+    assertFalse(condition: contract.validateChecksum(network: mainnet))
+}
+
+// Source: the Java, Rust, Swift, JavaScript and Python SDKs (the canonical string form carries no checksum).
+test "toString omits the checksum and toStringWithChecksum keeps it" {
+    // given
+    let id = AccountId.fromString(value: "0.0.123-esxsf")
+
+    // when / then
+    assertEquals(expected: "0.0.123", actual: id.toString())
+    assertEquals(expected: "0.0.123-esxsf", actual: id.toStringWithChecksum())
+}
+
+// Source: the Swift, Java, Rust and Go SDKs (hex digits in either case denote the same address).
+test "an EVM address is the same in upper and lower case" {
+    // when
+    let upper = EvmAddress.fromString(value: "0x1234567890ABCDEF1234567890ABCDEF12345678")
+    let lower = EvmAddress.fromString(value: "1234567890abcdef1234567890abcdef12345678")
+
+    // then
+    assertEquals(expected: lower, actual: upper)
+}
+
+// Source: the C++ SDK (39 digits, 0x inside the digits, 22 bytes) and the Python SDK (42 digits).
+test "an EVM address of 39 or 42 digits, with a misplaced or doubled 0x, or of 22 bytes is rejected" {
+    for text in ["303132333435363738396162636465666768696", "1234567890abcdef1234567890abcdef1234567890",
+            "3031323334353637383961626364650x66676869", "0x0x1234567890abcdef1234567890abcdef12345678"] {
+        // when / then
+        @@expectThrows(illegal-format)
+        EvmAddress.fromString(value: text)
+    }
+
+    // when / then
+    @@expectThrows(illegal-format)
+    EvmAddress.fromBytes(value: repeat(value: hex(text: "00"), count: 22))
+}
+
+// Source: HIP-583 (the EVM-address form of an id is shard.realm and the address without "0x", in lower case:
+// 0.0.b794f5ea0ba39494ce839613fffba74279579268); the Java, Rust, JavaScript, Go and Python SDKs write it so.
+test "a contract id and an account id of an EVM address are read from and written as shard.realm.<address>" {
+    // given
+    let address = EvmAddress.fromString(value: "b794f5ea0ba39494ce839613fffba74279579268")
+
+    // when
+    let contract = ContractId.fromString(value: "1.2.b794f5ea0ba39494ce839613fffba74279579268")
+    let account = AccountId.fromString(value: "0.0.b794f5ea0ba39494ce839613fffba74279579268")
+
+    // then
+    assertEquals(expected: ContractId.fromEvmAddress(shard: 1, realm: 2, address: address), actual: contract)
+    assertEquals(expected: "1.2.b794f5ea0ba39494ce839613fffba74279579268", actual: contract.toString())
+    assertEquals(expected: address, actual: account.evmAddress)
+    assertNull(actual: account.num)
+    assertEquals(expected: "0.0.b794f5ea0ba39494ce839613fffba74279579268", actual: account.toString())
+}
+
+// Source: HIP-583 and HIP-15 (no other formats are accepted): the "0x" belongs to the stand-alone Ethereum address,
+// not to an id, and an id is written in lower case.
+test "an id with 0x or upper case hex digits in its EVM-address form is rejected" {
+    for text in ["1.2.0xb794f5ea0ba39494ce839613fffba74279579268", "1.2.B794F5EA0BA39494CE839613FFFBA74279579268"] {
+        // when / then
+        @@expectThrows(illegal-format)
+        ContractId.fromString(value: text)
+    }
+}
+
+// Source: the Java, Go and Swift SDKs (an account id built from an EVM address keeps that address, even a long-zero
+// one, and has no number; the JavaScript SDK decodes a long-zero address to its number instead). Exactly one of num,
+// evmAddress and alias is set.
+test "an account id of a long-zero EVM address keeps the address and has no number" {
+    // given
+    let address = EvmAddress.fromString(value: "0x00000000000000000000000000000000000004d2")
+
+    // when
+    let id = AccountId.fromEvmAddress(shard: 1, realm: 2, address: address)
+
+    // then
+    assertNull(actual: id.num)
+    assertEquals(expected: address, actual: id.evmAddress)
+    assertEquals(expected: 1, actual: id.shard)
+    assertEquals(expected: 2, actual: id.realm)
+}
+
+// Source: the Rust and Swift SDKs (the digits after the dot are the nanoseconds as a number) and the Java and Go SDKs
+// (nanoseconds with a leading zero).
+test "the nanoseconds of a transaction id are a number of nanoseconds" {
+    // when
+    let short = TransactionId.fromString(transactionId: "0.0.31415@1641088801.2")
+    let padded = TransactionId.fromString(transactionId: "0.0.31415@1641088801.000000002")
+    let leadingZero = TransactionId.fromString(transactionId: "0.0.4163533@1681876267.054802581")
+
+    // then
+    assertEquals(expected: padded, actual: short)
+    assertEquals(expected: "0.0.4163533@1681876267.054802581", actual: leadingZero.toString())
+}
+
+// Source: the Python and Java SDKs.
+test "a transaction id without a valid start of seconds and nanoseconds is rejected" {
+    for text in ["invalid_string", "0.0.123@12345", "0.0.123@1234567890.1234567890"] {
+        // when / then
+        @@expectThrows(illegal-format)
+        TransactionId.fromString(transactionId: text)
+    }
+}
+
+// Source: the C++ SDK (100,000 ids), the Go SDK (concurrently) and the Python SDK (the payer is kept).
+test "generated transaction ids keep their payer and differ" {
+    // given
+    let payer = DEFAULT(Address)
+
+    // when
+    let first = TransactionId.generateTransactionId(accountId: payer)
+    let second = TransactionId.generateTransactionId(accountId: payer)
+
+    // then
+    assertEquals(expected: AccountId.fromString(value: "0.0.1001"), actual: first.accountId)
+    assertEquals(expected: AccountId.fromString(value: "0.0.1001"), actual: second.accountId)
+    assertNotEquals(unexpected: first, actual: second)
+}
+
+// Source: HIP-15, section "Specification": the inputs that must be rejected (all but "0.0.123-abcde", which is well
+// formed and fails only the checksum validation), checked against its regex.
+test "the inputs that HIP-15 rejects are rejected" {
+    for text in HIP15_REJECTED_IDS {
+        // when / then
+        @@expectThrows(illegal-format)
+        Address.fromString(address: text)
+        @@expectThrows(illegal-format)
+        AccountId.fromString(value: text)
+        @@expectThrows(illegal-format)
+        ContractId.fromString(value: text)
+    }
+
+    // when / then: the checksum of another address does not validate
+    assertFalse(condition: Address.fromString(address: "0.0.123-abcde").validateChecksum(
+            network: Network<hedera.HbarUnit>{id: [0], name: "mainnet", nativeTokenUnit: hedera.HbarUnit.HBAR}))
+}
+
+// Source: EIP-55, section "Test Cases" (all caps, all lower and mixed case), written from the bytes of the address.
+test "an EVM address is written in its EIP-55 form" {
+    for checksummed in ["0x52908400098527886E0F7030069857D2E4169EE7", "0x8617E340B3D01FA5F11F306F4090FD50E238070D",
+            "0xde709f2102306220921060314715629080e2fb77", "0x27b1fdb04752bbc536007a920d24acb045561c26",
+            "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", "0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359",
+            "0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB", "0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb"] {
+        // when: built from the bytes, so the case of the text plays no part
+        let evm = EvmAddress.fromBytes(value: hex(text: substring(value: checksummed, start: 2, end: 42)))
+
+        // then
+        assertEquals(expected: checksummed, actual: evm.toString())
+        assertEquals(expected: evm, actual: EvmAddress.fromString(value: checksummed))
+    }
+}
+
+// Source: EIP-55 (mixed case carries a checksum); rejected by ethers.js, web3.js and viem. The second address is the
+// one of the Go SDK's mirror node tests, which is not in EIP-55 form.
+test "an EVM address in mixed case that is not its EIP-55 form is rejected" {
+    for text in ["0x5aaeb6053F3E94C9b9A09f33669435E7Ef1BeAed", "7F2c5e0f4a3b9E8d1C6A5b4E3f2D1c0B9a8E7F6d"] {
+        // when / then
+        @@expectThrows(illegal-format)
+        EvmAddress.fromString(value: text)
+    }
+}
+
+// Source: the Java, JavaScript and Go SDKs (the nanoseconds are written with 9 digits, the nonce follows after "/").
+test "a transaction id is written with 9 digits of nanoseconds" {
+    // when
+    let id = TransactionId.fromString(transactionId: "0.0.31415@1641088801.2/4")
+
+    // then
+    assertEquals(expected: "0.0.31415@1641088801.000000002/4", actual: id.toString())
+}
+
+// Source: the C++ SDK (127.0.0.1); the rejections follow from "only dotted-quad IPv4" of this spec (a port or a leading
+// zero is no dotted quad; the Swift SDK cannot read "127.0.0.1:50211" either).
+test "an IPv4 address is read only from a dotted quad of numbers up to 255" {
+    // when
+    let localhost = IpAddress.fromString(value: "127.0.0.1")
+
+    // then
+    assertEquals(expected: IpAddress.fromBytes(value: hex(text: "7f000001")), actual: localhost)
+    assertEquals(expected: "127.0.0.1", actual: localhost.toString())
+    for text in ["256.0.0.1", "1.2.3", "127.0.0.1:50211", "01.2.3.4"] {
+        // when / then
+        @@expectThrows(illegal-format)
+        IpAddress.fromString(value: text)
     }
 }
 ```

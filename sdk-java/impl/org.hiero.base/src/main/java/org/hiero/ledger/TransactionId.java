@@ -45,7 +45,8 @@ public abstract class TransactionId {
         return nonce;
     }
 
-    /// returns the transaction id as a string
+    /// returns the transaction id as "account@seconds.nanos", followed by "/nonce" if there is a
+    /// nonce; the nanoseconds are always written with 9 digits ("…@1641088801.000000002")
     @Override
     public abstract String toString();
 
@@ -58,7 +59,8 @@ public abstract class TransactionId {
                 accountId.num(), null, null));
     }
 
-    /// Parses a TransactionId from its string form. Throws if the format is invalid.
+    /// Parses a TransactionId from its string form (see toString). The digits after the dot are the
+    /// nanoseconds as a number, so "…@1641088801.2" is 2 nanoseconds. Throws if the format is invalid.
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static TransactionId fromString(final String transactionId) {

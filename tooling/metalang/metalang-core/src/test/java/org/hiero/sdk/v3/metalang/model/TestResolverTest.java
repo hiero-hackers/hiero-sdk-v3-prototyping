@@ -37,6 +37,10 @@ class TestResolverTest {
             """;
 
     private static String spec(final String tests) {
+        return spec("", tests);
+    }
+
+    private static String spec(final String values, final String tests) {
         return """
                 # Shop
 
@@ -53,7 +57,7 @@ class TestResolverTest {
 
                 ```
                 instance Item = Item{name: "apple", count: 3, size: Size.SMALL, tags: ["red"]}
-                ```
+                %s```
 
                 ## Testing
 
@@ -61,7 +65,7 @@ class TestResolverTest {
                 %s```
 
                 ## Questions & Comments
-                """.formatted(SCHEMA, tests);
+                """.formatted(SCHEMA, values, tests);
     }
 
     private static ValidationReport validate(final String tests) {
@@ -79,8 +83,72 @@ class TestResolverTest {
                 .toList();
     }
 
+    private static ValidationReport validate(final String values, final String tests) {
+        return new MetaLang().validate(Map.of("shop.md", spec(values, tests)));
+    }
+
+    private static List<String> rules(final String values, final String tests) {
+        return validate(values, tests).diagnostics().stream().map(Diagnostic::ruleId)
+                .filter(r -> r.startsWith("test.")).toList();
+    }
+
     private static InstanceExpression.Call assertion(final TestDefinition test, final int index) {
         return (InstanceExpression.Call) ((TestDefinition.Evaluate) test.body().get(index)).expression();
+    }
+
+    @Test
+    void namedTestValuesShouldBeVariablesOfTheTestsOfTheirSpec() {
+        final ValidationReport report = validate("""
+                // the names to try
+                values NAMES: list<string> = ["a", "b"]
+                values ITEMS: list<Item> = [DEFAULT(Item), Item.parse(text: "x")]
+                """, """
+                test "uses them" {
+                    for name in NAMES {
+                        assertTrue(condition: length(value: name) == 1)
+                    }
+                    assertEquals(expected: 2, actual: length(value: ITEMS))
+                }
+                """);
+        assertThat(report.diagnostics()).filteredOn(d -> d.ruleId().startsWith("test.")).isEmpty();
+        final LinkedModel model = LinkedModel.of(report.model());
+        assertThat(model.testValues()).extracting(TestValuesDefinition::name).containsExactly("NAMES", "ITEMS");
+        final TestValuesDefinition names = model.testValues().getFirst();
+        assertThat(names.type().text()).isEqualTo("list<string>");
+        assertThat(names.namespace()).isEqualTo("shop");
+        assertThat(names.specName()).isEqualTo("shop");
+        assertThat(names.documentation()).isEqualTo("the names to try");
+        final TestDefinition.For loop = (TestDefinition.For) model.tests().getFirst().body().getFirst();
+        assertThat(loop.iterable()).isEqualTo(new InstanceExpression.Variable("NAMES", names.type(), false));
+    }
+
+    @Test
+    void namedTestValuesShouldBeReported() {
+        final String uses = """
+                test "uses them" {
+                    for name in NAMES {
+                        assertTrue(condition: length(value: name) == 1)
+                    }
+                }
+                """;
+        assertThat(rules("values NAMES: list<string> = [\"a\"]\nvalues NAMES: list<string> = []\n", uses))
+                .containsExactly("test.duplicate-values");
+        assertThat(rules("values NAMES: list<string> = [1]\n", uses)).contains("test.invalid");
+        assertThat(rules("values NAMES: list<string> = [\"a\"]\nvalues NOTE: string = DEFAULT(Item).note\n",
+                uses)).containsExactly("test.nullable");
+        assertThat(rules("values NAMES: list<string> = [\"a\"]\nvalues OTHER: list<string> = []\n", uses))
+                .containsExactly("test.unused-values");
+        assertThat(rules("values NAMES: list<string> = [\"a\"]\n", """
+                test "binds the name again" {
+                    let NAMES = 1
+                    assertEquals(expected: 1, actual: NAMES)
+                }
+                """)).contains("test.duplicate-name");
+    }
+
+    @Test
+    void namedTestValuesWithoutTestsShouldBeReportedAsUnused() {
+        assertThat(rules("values NAMES: list<string> = [\"a\"]\n", "")).containsExactly("test.unused-values");
     }
 
     @Test

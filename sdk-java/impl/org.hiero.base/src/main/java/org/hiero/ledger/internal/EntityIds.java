@@ -9,12 +9,13 @@ import org.hiero.ledger.EvmAddress;
 import org.hiero.ledger.Network;
 import org.jspecify.annotations.Nullable;
 
-/// The text form of the entity ids (`shard.realm.num`, `shard.realm.0x<40 hex>`, each with an optional
-/// `-<checksum>`) and their HIP-15 checksum.
+/// The text form of the entity ids and their HIP-15 checksum: `shard.realm.num` with an optional `-<checksum>`, exactly
+/// as HIP-15 defines it (decimal numbers without leading zeros, five lowercase letters), and `shard.realm.<40 lowercase
+/// hex digits>` for an id of an EVM address (HIP-583, without `0x`).
 public final class EntityIds {
 
     private static final Pattern ENTITY_ID =
-            Pattern.compile("(\\d+)\\.(\\d+)\\.(?:(\\d+)|0x([0-9a-fA-F]{40}))(?:-([a-z]{5}))?");
+            Pattern.compile("(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(?:([0-9a-f]{40})|(0|[1-9]\\d*)(?:-([a-z]{5}))?)");
 
     private static final int P3 = 26 * 26 * 26;
     private static final int P5 = 26 * 26 * 26 * 26 * 26;
@@ -38,22 +39,23 @@ public final class EntityIds {
     /// Parses an entity id.
     ///
     /// @param text    the text
-    /// @param evmForm whether the EVM form `shard.realm.0x<40 hex>` is allowed
+    /// @param evmForm whether the EVM form `shard.realm.<40 lowercase hex digits>` is allowed
     /// @return the parts
     /// @throws IllegalArgumentException if the text is no entity id
     public static Parsed parse(final String text, final boolean evmForm) {
         final Matcher matcher = ENTITY_ID.matcher(text);
-        if (!matcher.matches() || (!evmForm && matcher.group(4) != null)) {
-            throw new IllegalArgumentException("'" + text + "' is no entity id of the form shard.realm."
-                    + (evmForm ? "num or shard.realm.0x<40 hex digits>" : "num") + ", optionally with -checksum");
+        if (!matcher.matches() || (!evmForm && matcher.group(3) != null)) {
+            throw new IllegalArgumentException("'" + text + "' is no entity id of the form shard.realm.num"
+                    + (evmForm ? " or shard.realm.<40 lowercase hex digits>" : "") + " (HIP-15"
+                    + (evmForm ? ", HIP-583" : "") + "), optionally with -checksum");
         }
         final long shard = Long.parseLong(matcher.group(1));
         final long realm = Long.parseLong(matcher.group(2));
-        final String checksum = matcher.group(5) == null ? "" : matcher.group(5);
         if (matcher.group(3) != null) {
-            return new Parsed(shard, realm, Long.parseLong(matcher.group(3)), null, checksum);
+            return new Parsed(shard, realm, null, new EvmAddress(HexFormat.of().parseHex(matcher.group(3))), "");
         }
-        return new Parsed(shard, realm, null, new EvmAddress(HexFormat.of().parseHex(matcher.group(4))), checksum);
+        final String checksum = matcher.group(5) == null ? "" : matcher.group(5);
+        return new Parsed(shard, realm, Long.parseLong(matcher.group(4)), null, checksum);
     }
 
     /// The canonical text form without checksum.
@@ -64,7 +66,7 @@ public final class EntityIds {
     public static String toString(final BaseAddress address, final @Nullable EvmAddress evmAddress) {
         final Long num = address.num();
         final String entity = num != null ? Long.toUnsignedString(num)
-                : evmAddress != null ? "0x" + HexFormat.of().formatHex(evmAddress.bytes()) : "?";
+                : evmAddress != null ? HexFormat.of().formatHex(evmAddress.bytes()) : "?";
         return Long.toUnsignedString(address.shard()) + "." + Long.toUnsignedString(address.realm()) + "." + entity;
     }
 

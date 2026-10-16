@@ -29,9 +29,10 @@ public final class Address extends BaseAddress {
         return EntityIds.validateChecksum(this, network);
     }
 
-    /// Canonical string form. Subtype-specific: "shard.realm.num" for Address / numeric-form
-    /// ContractId / numeric-form AccountId; "shard.realm.0x<hex>" for EVM-form ContractId /
-    /// AccountId; "shard.realm.<base32-hex>" for key-alias-form AccountId.
+    /// Canonical string form, without checksum. Subtype-specific: "shard.realm.num" for Address /
+    /// numeric-form ContractId / numeric-form AccountId, each number in decimal without leading
+    /// zeros (HIP-15); "shard.realm.<40 lowercase hex digits>" without "0x" for EVM-form ContractId /
+    /// AccountId (HIP-583); "shard.realm.<base32>" for key-alias-form AccountId (HIP-32).
     @Override
     public String toString() {
         return EntityIds.toString(this, null);
@@ -44,8 +45,10 @@ public final class Address extends BaseAddress {
     }
 
     /// Parses Address from string format: "shard.realm.num" or "shard.realm.num-checksum"
-    /// (optional checksum suffix after the dash). Throws if the format is invalid, values are
-    /// negative, or parsing fails.
+    /// (optional checksum suffix after the dash), exactly as HIP-15 defines it: decimal numbers
+    /// without leading zeros, a checksum of five lowercase letters, no whitespace or other
+    /// characters. Throws if the format is invalid, values are negative, or parsing fails. The
+    /// checksum is not validated here (see validateChecksum).
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static Address fromString(final String address) {

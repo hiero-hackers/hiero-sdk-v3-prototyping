@@ -63,6 +63,34 @@ A test may use the API of every namespace the file imports, and the default inst
 (`DEFAULT(PrivateKey)`). Tests should test the types of their own spec; using other types to *obtain* values is
 expected.
 
+## Named test values
+
+Inputs that several tests share — typically the lists of text that a parser must reject — are declared once, with a
+name, in the spec's `## Default Instances for Testing` block:
+
+```
+// HIP-15, section "Specification": the inputs that must be rejected.
+values HIP15_REJECTED_IDS: list<string> = ["0.00.123", "0.0.0123-vfmkw", "0.0.123-VFMKW"]
+```
+
+A test reads them by their name like a variable:
+
+```tests
+test "the inputs that HIP-15 rejects are rejected" {
+    for text in HIP15_REJECTED_IDS {
+        @@expectThrows(illegal-format)
+        AccountId.fromString(value: text)
+    }
+}
+```
+
+- The name is `UPPER_SNAKE_CASE`, the type is written out, and the value is an expression of the test language
+  without variables: literals, `DEFAULT(T)`, calls of the API and of the built-in functions. It must not be `null`.
+- Named test values belong to their spec: only the tests of the same spec file see them. A test cannot bind a variable
+  of the same name.
+- The comment above the declaration documents the values and names their source, as the comment of a test does.
+- Every generator turns them into one constant per spec test class (see each language's `api-best-practices-*.md`).
+
 ## Tests
 
 ```
@@ -536,13 +564,15 @@ The spec validator parses and checks every `tests` block. The rules (all ERROR u
 | `syntax.error` | the block cannot be parsed |
 | `test.invalid` | an expression does not resolve: unknown method, attribute or variable, missing or unknown argument, no matching overload, wrong type |
 | `test.duplicate-id` | two tests of one namespace have the same id |
-| `test.duplicate-name` | a variable is bound twice in a test |
+| `test.duplicate-name` | a variable is bound twice in a test, or has the name of named test values |
 | `test.undeclared-error` | `@@expectThrows` names an error that no call in the statement declares |
 | `test.nullable` | a nullable value is used where it may not be (see [`null`](#null)) |
 | `test.incomparable` | `==`/`!=` on incompatible types |
 | `test.out-of-range` | a constant value does not fit its type |
 | `test.ambiguous-call` | an unqualified call fits a built-in function and a function of the spec's namespaces |
 | `test.empty` (WARNING) | a test calls no assertion function and has no `@@expectThrows` |
+| `test.duplicate-values` | two named test values of one spec have the same name |
+| `test.unused-values` (WARNING) | no test of the spec uses the named test values |
 
 ## Translation into the languages
 

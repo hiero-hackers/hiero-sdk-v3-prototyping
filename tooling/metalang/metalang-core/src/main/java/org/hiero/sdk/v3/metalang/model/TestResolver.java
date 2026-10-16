@@ -15,6 +15,7 @@ import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.ast.SchemaFile;
 import org.hiero.sdk.v3.metalang.ast.Statement;
 import org.hiero.sdk.v3.metalang.ast.TestCase;
+import org.hiero.sdk.v3.metalang.ast.TestValues;
 import org.hiero.sdk.v3.metalang.ast.TypeRef;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
 import org.hiero.sdk.v3.metalang.diagnostic.DiagnosticCollector;
@@ -41,9 +42,10 @@ final class TestResolver {
      * The resolved tests and the problems found.
      *
      * @param tests       the tests that could be resolved
+     * @param values      the named test values that could be resolved
      * @param diagnostics the problems
      */
-    record Result(List<TestDefinition> tests, List<Diagnostic> diagnostics) {
+    record Result(List<TestDefinition> tests, List<TestValuesDefinition> values, List<Diagnostic> diagnostics) {
     }
 
     private TestResolver(final SpecModel spec, final InstanceResolver expressions) {
@@ -61,8 +63,8 @@ final class TestResolver {
      */
     static Result resolve(final SpecModel spec, final LinkedModel linked,
                           final BiFunction<TypeRef, SchemaFile, Type> types) {
-        if (spec.files().stream().allMatch(f -> f.tests().isEmpty())) {
-            return new Result(List.of(), List.of());
+        if (spec.files().stream().allMatch(f -> f.tests().isEmpty() && f.values().isEmpty())) {
+            return new Result(List.of(), List.of(), List.of());
         }
         return new TestResolver(spec, InstanceResolver.forTests(spec, linked, types, Builtins.functions())).resolve();
     }
@@ -71,7 +73,11 @@ final class TestResolver {
         final DiagnosticCollector diagnostics = new DiagnosticCollector();
         final List<TestDefinition> tests = new ArrayList<>();
         final Map<String, SourceLocation> ids = new HashMap<>();
+        final List<TestValuesDefinition> allValues = new ArrayList<>();
         for (final SchemaFile file : spec.files()) {
+            final Map<String, TestValuesDefinition> values = values(file, diagnostics);
+            allValues.addAll(values.values());
+            final Set<String> used = new HashSet<>();
             for (final TestCase test : file.tests()) {
                 final String id = file.namespace() + "/" + kebab(test.name());
                 final SourceLocation previous = ids.putIfAbsent(id, test.location());
@@ -82,8 +88,12 @@ final class TestResolver {
                 }
                 final DiagnosticCollector problems = new DiagnosticCollector();
                 annotations(test, problems);
-                final Body body = new Body(file, problems);
-                final List<TestDefinition.Statement> statements = body.statements(test.body(), new LinkedHashMap<>());
+                final Body body = new Body(file, problems, values.keySet());
+                final Map<String, InstanceExpression.Variable> scope = new LinkedHashMap<>();
+                values.values().forEach(v -> scope.put(v.name(), new InstanceExpression.Variable(v.name(), v.type(),
+                        false)));
+                final List<TestDefinition.Statement> statements = body.statements(test.body(), scope);
+                statements.forEach(st -> variables(st, used));
                 final List<Diagnostic> found = problems.sorted();
                 diagnostics.addAll(found);
                 if (found.stream().noneMatch(d -> d.severity() == org.hiero.sdk.v3.metalang.diagnostic.Severity.ERROR)) {
@@ -95,8 +105,88 @@ final class TestResolver {
                             statements, test.documentation(), test.location()));
                 }
             }
+            values.values().stream().filter(v -> !used.contains(v.name())).forEach(v -> diagnostics.report(
+                    Rule.TEST_UNUSED_VALUES, "No test of the spec uses the values '" + v.name() + "'", v.location()));
         }
-        return new Result(List.copyOf(tests), diagnostics.sorted());
+        return new Result(List.copyOf(tests), List.copyOf(allValues), diagnostics.sorted());
+    }
+
+    /** Resolves the named test values of a file; they see no variables, only the API and the built-in functions. */
+    private Map<String, TestValuesDefinition> values(final SchemaFile file, final DiagnosticCollector diagnostics) {
+        final Map<String, TestValuesDefinition> result = new LinkedHashMap<>();
+        for (final TestValues values : file.values()) {
+            final TestValuesDefinition previous = result.get(values.name());
+            if (previous != null) {
+                diagnostics.report(Rule.TEST_DUPLICATE_VALUES, "The spec already declares values named '"
+                        + values.name() + "' (" + previous.location() + ")", values.location());
+                continue;
+            }
+            final Type type = expressions.type(values.type(), file);
+            final InstanceExpression value = expressions.resolve(values.expression(), type, new LinkedHashMap<>(),
+                    file, diagnostics);
+            if (value == null) {
+                continue;
+            }
+            if (InstanceResolver.nullable(value)) {
+                diagnostics.report(Rule.TEST_NULLABLE, "Named test values cannot be null", values.location());
+                continue;
+            }
+            result.put(values.name(), new TestValuesDefinition(values.name(), file.namespace(), specName(file), type,
+                    value, values.documentation(), values.location()));
+        }
+        return result;
+    }
+
+    /** Collects the names of the variables a statement reads. */
+    private static void variables(final TestDefinition.Statement statement, final Set<String> out) {
+        switch (statement) {
+            case TestDefinition.Comment ignored -> {
+                // no expression
+            }
+            case TestDefinition.Let let -> variables(let.value(), out);
+            case TestDefinition.Evaluate evaluate -> variables(evaluate.expression(), out);
+            case TestDefinition.If conditional -> {
+                variables(conditional.condition(), out);
+                conditional.then().forEach(st -> variables(st, out));
+                conditional.otherwise().forEach(st -> variables(st, out));
+            }
+            case TestDefinition.For loop -> {
+                variables(loop.iterable(), out);
+                loop.body().forEach(st -> variables(st, out));
+            }
+        }
+    }
+
+    private static void variables(final InstanceExpression expression, final Set<String> out) {
+        switch (expression) {
+            case InstanceExpression.Variable variable -> out.add(variable.name());
+            case InstanceExpression.Call call -> call.arguments().values().forEach(a -> variables(a, out));
+            case InstanceExpression.MethodCall call -> {
+                variables(call.target(), out);
+                call.arguments().values().forEach(a -> variables(a, out));
+            }
+            case InstanceExpression.Construct construct -> construct.values().values().forEach(v -> variables(v, out));
+            case InstanceExpression.Access access -> variables(access.target(), out);
+            case InstanceExpression.ListValue list -> list.items().forEach(i -> variables(i, out));
+            case InstanceExpression.MapValue map -> map.entries().forEach(e -> {
+                variables(e.getKey(), out);
+                variables(e.getValue(), out);
+            });
+            case InstanceExpression.Binary binary -> {
+                variables(binary.left(), out);
+                variables(binary.right(), out);
+            }
+            case InstanceExpression.Negate negate -> variables(negate.operand(), out);
+            case InstanceExpression.IsNull isNull -> variables(isNull.operand(), out);
+            case InstanceExpression.IsType isType -> variables(isType.operand(), out);
+            case InstanceExpression.Index index -> {
+                variables(index.target(), out);
+                variables(index.index(), out);
+            }
+            default -> {
+                // no variables
+            }
+        }
     }
 
     private static void annotations(final TestCase test, final DiagnosticCollector out) {
@@ -118,12 +208,15 @@ final class TestResolver {
         private final SchemaFile file;
         private final DiagnosticCollector out;
         private final Set<String> names = new HashSet<>();
+        /** The names of the spec's named test values, which a test cannot bind again. */
+        private final Set<String> values;
         /** Whether the test calls an assertion or expects an error. */
         private boolean checks;
 
-        private Body(final SchemaFile file, final DiagnosticCollector out) {
+        private Body(final SchemaFile file, final DiagnosticCollector out, final Set<String> values) {
             this.file = file;
             this.out = out;
+            this.values = values;
         }
 
         /**
@@ -267,6 +360,10 @@ final class TestResolver {
 
         /** Registers a variable name; a name is bound at most once per test. */
         private boolean declare(final String name, final SourceLocation location) {
+            if (values.contains(name)) {
+                out.report(Rule.TEST_DUPLICATE_NAME, "'" + name + "' is the name of values of this spec", location);
+                return false;
+            }
             if (!names.add(name)) {
                 out.report(Rule.TEST_DUPLICATE_NAME, "'" + name + "' is already bound in this test", location);
                 return false;

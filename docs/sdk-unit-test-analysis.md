@@ -212,13 +212,13 @@ the specs, not from the SDKs; the generated contract tests already cover their b
 | ECDSA private key "PKCS#8" | Six SDKs use `3030020100300706052b8104000a04220420<scalar>`. This is **no valid PKCS#8**: OpenSSL rejects it; the standard form is `303e020100301006072a8648ce3d020106052b8104000a0427302502010104…` (✔). Go exports SEC1. | **Decided:** standard PKCS#8 (RFC 5958, RFC 5915) only; the legacy form is rejected (test in `keys.md`). |
 | ECDSA SPKI export | Go and Python: RFC 5480 (`3036…`); Rust, Swift, JS, C++: legacy curve-OID-only `302d…` | **Decided:** RFC 5480 with the compressed point (test in `keys.md`). |
 | ECDSA public key `bytes` | All return the 33-byte compressed point | Specify it in `keys.md`. |
-| TransactionId nanos | Java, JS, Go, Python pad to 9 digits (`.000000005`); Rust, Swift, C++ do not (`.5` means 5 ns there) | Specify 9 zero-padded digits. Then adopt `0.0.3@1614997926.5` → `0.0.3@1614997926.000000005`. |
+| TransactionId nanos | Java, JS, Go, Python pad to 9 digits (`.000000005`); Rust, Swift, C++ do not (`.5` means 5 ns there) | **Decided:** 9 zero-padded digits on output (Java, JS, Go); `.2` is read as 2 ns (test in `ledger.md`). |
 | Hbar `toString` | Java, JS, Rust, Swift: `tℏ` below 10,000 tinybars, else decimal ℏ (`9999 tℏ`, `0.0001 ℏ`); Python: always 8 decimals | Add `toString` with the majority format; Rust's boundary values are the tests. |
 | μ in `μℏ` | Spec and five SDKs: U+03BC; Swift: U+00B5 (✔) | Keep U+03BC and say so; strings compare by code point. |
-| `EvmAddress.toString` | Lowercase with `0x` (Swift, Rust), without (Java, Python), uppercase (C++); the spec says EIP-55, which no SDK does | Decide; EIP-55 vectors would have to come from EIP-55 itself. |
+| `EvmAddress.toString` | Lowercase with `0x` (Swift, Rust), without (Java, Python), uppercase (C++); the spec says EIP-55, which no SDK does | **Decided:** EIP-55 on output; on input all-lower and all-upper are accepted, mixed case only in its EIP-55 form (EIP-55 test cases in `ledger.md`). |
 | Key-alias text form | The spec says `shard.realm.<base32>`; the SDKs print hex DER (`0.0.302a3005…`) | Decide. |
 | Long-zero address of a non-zero shard/realm | Java, Go, JS encode num only; Python packs shard and realm; Rust reads them back | Decide before adding the conversion. |
-| Bare forms | JS accepts `"25050"` as `0.0.25050`; Java accepts a bare EVM hex; leading zeros (`0.00.123`) only rejected by Python | Decide which strings are ids. |
+| Bare forms | JS accepts `"25050"` as `0.0.25050`; Java accepts a bare EVM hex; leading zeros (`0.00.123`) only rejected by Python | **Decided:** HIP-15 only for `shard.realm.num` (no leading zeros, lowercase checksum, no whitespace); the EVM form of an id is `shard.realm.<40 lowercase hex>` without `0x` (HIP-583). Tests in `ledger.md`. |
 | `num` range | The spec: `uint64`; HAPI: `int64` | Narrow to the `int64` range, or document it. |
 | Hbar MIN/MAX | Python, Java: ±50 billion ℏ; Go: `int64` range | Out of scope for now; open question in `hedera.md`. |
 

@@ -50,12 +50,19 @@ topLevelDecl
 // The content of a spec's "## Default Instances for Testing" code block: for a type, the standard way to obtain an instance
 // through the API. It uses the namespace and the imports of the file's API schema.
 
+// It also holds the named test values of the spec: `values NAME: type = expression`, a value (typically a list of
+// inputs) that the tests of the same spec use by its name.
+
 instances
-    : instanceDecl* EOF
+    : (instanceDecl | valuesDecl)* EOF
     ;
 
 instanceDecl
     : INSTANCE typeRef ASSIGN expression SEMI?
+    ;
+
+valuesDecl
+    : VALUES identifier COLON typeRef ASSIGN expression SEMI?
     ;
 
 // Expressions of default instances and tests. The grammar accepts the operators everywhere; a default instance
@@ -289,6 +296,7 @@ identifier
     | EXTENDS
     | FUNCTION
     | INSTANCE
+    | VALUES
     | DEFAULT
     | TEST
     | LET
@@ -314,6 +322,7 @@ TYPE        : 'type';
 EXTENDS     : 'extends';
 FUNCTION    : 'function';
 INSTANCE    : 'instance';
+VALUES      : 'values';
 DEFAULT     : 'DEFAULT';
 TEST        : 'test';
 LET         : 'let';

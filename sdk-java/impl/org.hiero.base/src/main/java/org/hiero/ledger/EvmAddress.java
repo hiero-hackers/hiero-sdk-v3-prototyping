@@ -49,7 +49,8 @@ public record EvmAddress(byte[] bytes) {
         return Objects.hash(Arrays.hashCode(bytes));
     }
 
-    /// Canonical EIP-55-style "0x<40 hex chars>" form.
+    /// The EIP-55 form: "0x" and the 40 hex digits, a letter in upper case where EIP-55's
+    /// checksum (the Keccak-256 hash of the lowercase digits) asks for it.
     @Override
     public String toString() {
         // EIP-55: a letter is upper case if the matching nibble of the Keccak-256 hash of the lowercase digits is 8 or more
@@ -64,15 +65,24 @@ public record EvmAddress(byte[] bytes) {
     }
 
     /// Parses an EvmAddress from its hex-string form. Accepts both "0xabc…" and bare "abc…"
-    /// (40 hex chars). Throws on anything else (wrong length, non-hex characters).
+    /// (40 hex chars). Digits all in lower or all in upper case are accepted as they are; digits
+    /// in mixed case must be the EIP-55 form, otherwise the text is rejected as mistyped. Throws
+    /// on anything else (wrong length, non-hex characters).
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static EvmAddress fromString(final String value) {
         final String hex = value.startsWith("0x") ? value.substring(2) : value;
-        if (hex.length() != 40 || !hex.chars().allMatch(c -> Character.digit(c, 16) >= 0)) {
+        if (!hex.matches("[0-9a-fA-F]{40}")) {
             throw new IllegalArgumentException("'" + value + "' is no EVM address of 40 hex digits");
         }
-        return new EvmAddress(HexFormat.of().parseHex(hex));
+        final EvmAddress address = new EvmAddress(HexFormat.of().parseHex(hex));
+        // EIP-55: digits in mixed case carry a checksum and must be the EIP-55 form; all lower or all upper carry none
+        final boolean mixedCase = !hex.equals(hex.toLowerCase(java.util.Locale.ROOT))
+                && !hex.equals(hex.toUpperCase(java.util.Locale.ROOT));
+        if (mixedCase && !address.toString().equals("0x" + hex)) {
+            throw new IllegalArgumentException("'" + value + "' is not in its EIP-55 form, the address is mistyped");
+        }
+        return address;
     }
 
     /// Wraps raw bytes. `value.length` must equal 20; otherwise throws.

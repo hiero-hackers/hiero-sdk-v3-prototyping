@@ -726,11 +726,16 @@ The built-in functions and assertions are the namespace `testing`, declared in t
 test keeps equal — and linked on their own, so they never become part of the API. Integer arithmetic has the type
 `int256` in the model (the test language computes without overflow). Rules: `test.invalid`, `test.duplicate-id`,
 `test.duplicate-name`, `test.undeclared-error`, `test.nullable`, `test.incomparable`, `test.out-of-range`,
-`test.ambiguous-call` and the warning `test.empty`.
+`test.ambiguous-call`, `test.duplicate-values` and the warnings `test.empty` and `test.unused-values`.
+
+The named test values of a spec (`values NAME: type = expression` in its `## Default Instances for Testing` block,
+AST `TestValues`) are resolved by `TestResolver` too, without variables and against their declared type, into
+`LinkedModel.testValues()` (`TestValuesDefinition`); every test of the same spec file starts with them as variables.
 
 Generators: **Java only so far.** `SpecTestGenerator` writes one class per spec, `<Spec>SpecTest` (e.g.
 `KeysSpecTest`), into `src/test/java` of the module and in the package of the namespace, in the style of the other
-generated tests (header, `@DisplayName`, `///` comments, helpers `defaultPrivateKey()` for the default instances).
+generated tests (header, `@DisplayName`, `///` comments, helpers `defaultPrivateKey()` for the default instances,
+a `private static final` constant per named test values).
 The comments inside a test (`// given`, `// when`, `// then`, ...) are copied to the same place; a comment that
 follows a statement starts a new paragraph, a comment behind a statement stays behind it. The
 API parts are rendered by `JavaSamples` in a test mode (`@@async` calls are awaited with `join()`, calls may throw

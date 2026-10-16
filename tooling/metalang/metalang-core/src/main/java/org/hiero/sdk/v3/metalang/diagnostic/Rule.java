@@ -270,6 +270,10 @@ public enum Rule {
             "test-language.md#built-in-functions"),
     TEST_EMPTY("test.empty", Severity.WARNING,
             "A test checks nothing: no assertion and no @@expectThrows", "test-language.md#validation"),
+    TEST_DUPLICATE_VALUES("test.duplicate-values", Severity.ERROR,
+            "Two named test values of a spec have the same name", "test-language.md#named-test-values"),
+    TEST_UNUSED_VALUES("test.unused-values", Severity.WARNING,
+            "Named test values are used by no test of their spec", "test-language.md#named-test-values"),
 
     // --- enums -----------------------------------------------------------------------------------
     ENUM_BODY_ATTRIBUTE("enum.body-attribute", Severity.ERROR,

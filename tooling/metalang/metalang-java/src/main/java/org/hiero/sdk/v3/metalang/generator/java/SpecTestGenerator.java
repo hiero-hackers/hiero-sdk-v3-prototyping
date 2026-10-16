@@ -17,6 +17,7 @@ import org.hiero.sdk.v3.metalang.model.MethodDefinition;
 import org.hiero.sdk.v3.metalang.model.ParameterDefinition;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
 import org.hiero.sdk.v3.metalang.model.TestDefinition;
+import org.hiero.sdk.v3.metalang.model.TestValuesDefinition;
 import org.hiero.sdk.v3.metalang.model.Type;
 import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 
@@ -69,19 +70,22 @@ final class SpecTestGenerator {
      * @param namespace the namespace
      * @param specName  the name of the spec file without extension
      * @param tests     the tests of the spec
+     * @param values    the named test values of the spec
      * @param context   the generation context
      * @param visible   the Java modules the tests can use: the module and the modules it requires
      * @param functions the generated namespace-level functions
      * @return the test file, empty if the class name is taken by a type of the specs
      */
     static Optional<GeneratedFile> generate(final String module, final String namespace, final String specName,
-                                            final List<TestDefinition> tests, final JavaContext context,
+                                            final List<TestDefinition> tests,
+                                            final List<TestValuesDefinition> values, final JavaContext context,
                                             final Set<String> visible, final List<FunctionDefinition> functions) {
         final String className = className(specName);
         if (context.model().type(new QualifiedName(namespace, className)).isPresent()) {
             return Optional.empty();
         }
         final TestFile file = new TestFile(namespace, className, context, visible, functions);
+        values.forEach(file::values);
         tests.forEach(file::test);
         return Optional.of(new GeneratedFile(TestGenerator.path(module, namespace, className),
                 file.render(specName)));
@@ -106,6 +110,10 @@ final class SpecTestGenerator {
         private final Imports imports;
         private final JavaSamples samples;
         private final List<String> tests = new ArrayList<>();
+        /** The constants that hold the named test values. */
+        private final List<String> fields = new ArrayList<>();
+        /** The named test values without a Java form. */
+        private final Set<String> missingValues = new HashSet<>();
         /** The methods that return the default instances, by name. */
         private final Map<String, String> helpers = new java.util.LinkedHashMap<>();
         private final List<String> notes = new ArrayList<>();
@@ -128,6 +136,22 @@ final class SpecTestGenerator {
         }
 
         // ------------------------------------------------------------------------------------------------ tests
+
+        /** Named test values: a constant of the test class; a test that uses values without one is not generated. */
+        private void values(final TestValuesDefinition values) {
+            final String value;
+            try {
+                value = INDENT + "private static final " + declaration(values.type(), false) + " "
+                        + JavaKeywords.identifier(values.name()) + " = " + expression(values.value()) + ";\n";
+            } catch (final Unsupported e) {
+                notes.add("values `" + values.name() + "`: " + e.getMessage());
+                missingValues.add(values.name());
+                return;
+            }
+            final StringBuilder java = new StringBuilder();
+            values.documentation().lines().forEach(l -> java.append(INDENT).append("/// ").append(l).append('\n'));
+            fields.add(java.append(value).toString());
+        }
 
         private void test(final TestDefinition test) {
             throwsChecked = checked(test.body());
@@ -293,6 +317,8 @@ final class SpecTestGenerator {
         /** An expression; the API parts are rendered by {@link JavaSamples}, the parts of tests here. */
         private String expression(final InstanceExpression expression) {
             return switch (expression) {
+                case InstanceExpression.Variable variable when missingValues.contains(variable.name()) ->
+                        throw new Unsupported("the values " + variable.name() + " have no Java form");
                 case InstanceExpression.Variable variable -> JavaKeywords.identifier(variable.name());
                 case InstanceExpression.Default value -> defaultValue(value.type());
                 case InstanceExpression.Negate negate -> negate(negate);
@@ -555,6 +581,9 @@ final class SpecTestGenerator {
             }
             java.append('@').append(displayName).append('(').append(JavaLiterals.quote(specName)).append(")\n");
             java.append("class ").append(className).append(" {\n");
+            for (final String field : fields) {
+                java.append('\n').append(field);
+            }
             for (final String test : tests) {
                 java.append('\n').append(test);
             }

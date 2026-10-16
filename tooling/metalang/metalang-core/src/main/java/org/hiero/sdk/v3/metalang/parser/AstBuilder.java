@@ -22,6 +22,7 @@ import org.hiero.sdk.v3.metalang.ast.Requires;
 import org.hiero.sdk.v3.metalang.ast.SchemaFile;
 import org.hiero.sdk.v3.metalang.ast.Statement;
 import org.hiero.sdk.v3.metalang.ast.TestCase;
+import org.hiero.sdk.v3.metalang.ast.TestValues;
 import org.hiero.sdk.v3.metalang.ast.TypeParameter;
 import org.hiero.sdk.v3.metalang.ast.TypeRef;
 import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
@@ -50,7 +51,7 @@ final class AstBuilder {
         final List<Requires> requires = ctx.requiresDecl().stream().map(this::requires).toList();
         final List<Declaration> declarations = ctx.topLevelDecl().stream().map(this::declaration).toList();
         return new SchemaFile(qualifiedName(ns.qualifiedName()), requires, declarations, comments(),
-                location(ns.start), source.description(), source.descriptionLine(), List.of(), List.of());
+                location(ns.start), source.description(), source.descriptionLine(), List.of(), List.of(), List.of());
     }
 
     /**
@@ -62,6 +63,17 @@ final class AstBuilder {
     List<Instance> instances(final MetaLangParser.InstancesContext ctx) {
         return ctx.instanceDecl().stream().map(d -> new Instance(typeRef(d.typeRef()), expression(d.expression()),
                 documentation(d), location(d.INSTANCE().getSymbol()))).toList();
+    }
+
+    /**
+     * Builds the named test values of a "## Default Instances for Testing" block.
+     *
+     * @param ctx the parse tree
+     * @return the named test values in source order
+     */
+    List<TestValues> values(final MetaLangParser.InstancesContext ctx) {
+        return ctx.valuesDecl().stream().map(d -> new TestValues(identifier(d.identifier()), typeRef(d.typeRef()),
+                expression(d.expression()), documentation(d), location(d.VALUES().getSymbol()))).toList();
     }
 
     /**

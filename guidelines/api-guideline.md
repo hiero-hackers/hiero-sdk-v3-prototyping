@@ -922,6 +922,10 @@ Rules:
 - Prefer the way a user of the SDK would go (a factory function, an attribute of an object the user already has) over
   constructing internals.
 
+The same block can also declare **named test values** (`values NAME: list<string> = [...]`): inputs that several tests
+of the spec share, such as the text a parser must reject. They are part of the test language, see "Named test values"
+in [`test-language.md`](test-language.md).
+
 Tools use the default instances wherever they need an instance of a type — the generated tests, for example, take them
 for attributes and arguments before any other way. For every type that attributes or parameters use but that cannot be
 obtained through the API at all (no default instance, no concrete subtype, no factory), the validator reports the

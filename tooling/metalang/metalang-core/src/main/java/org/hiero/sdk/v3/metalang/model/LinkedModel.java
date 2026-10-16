@@ -26,15 +26,17 @@ public final class LinkedModel {
     private final List<InstanceDefinition> instances;
     private final List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> instanceDiagnostics;
     private final List<TestDefinition> tests;
+    private final List<TestValuesDefinition> testValues;
     private final List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> testDiagnostics;
 
     LinkedModel(final Map<QualifiedName, TypeDefinition> types, final List<FunctionDefinition> functions,
                 final List<ConstantDefinition> constants, final List<NamespaceDefinition> namespaces,
                 final List<InstanceDefinition> instances,
                 final List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> instanceDiagnostics,
-                final List<TestDefinition> tests,
+                final List<TestDefinition> tests, final List<TestValuesDefinition> testValues,
                 final List<org.hiero.sdk.v3.metalang.diagnostic.Diagnostic> testDiagnostics) {
         this.tests = List.copyOf(tests);
+        this.testValues = List.copyOf(testValues);
         this.testDiagnostics = List.copyOf(testDiagnostics);
         this.types = Collections.unmodifiableSortedMap(new TreeMap<>(types));
         this.functions = List.copyOf(functions);
@@ -79,6 +81,16 @@ public final class LinkedModel {
      */
     public List<TestDefinition> tests() {
         return tests;
+    }
+
+    /**
+     * Returns the named test values of the specs ({@code values} in {@code ## Default Instances for Testing}) that could
+     * be resolved.
+     *
+     * @return the named test values, ordered by spec file and source order
+     */
+    public List<TestValuesDefinition> testValues() {
+        return testValues;
     }
 
     /**

@@ -53,9 +53,10 @@ public abstract class BaseAddress {
     /// Validates the checksum against the given network's checksum scheme.
     public abstract boolean validateChecksum(final Network<?> network);
 
-    /// Canonical string form. Subtype-specific: "shard.realm.num" for Address / numeric-form
-    /// ContractId / numeric-form AccountId; "shard.realm.0x<hex>" for EVM-form ContractId /
-    /// AccountId; "shard.realm.<base32-hex>" for key-alias-form AccountId.
+    /// Canonical string form, without checksum. Subtype-specific: "shard.realm.num" for Address /
+    /// numeric-form ContractId / numeric-form AccountId, each number in decimal without leading
+    /// zeros (HIP-15); "shard.realm.<40 lowercase hex digits>" without "0x" for EVM-form ContractId /
+    /// AccountId (HIP-583); "shard.realm.<base32>" for key-alias-form AccountId (HIP-32).
     @Override
     public abstract String toString();
 

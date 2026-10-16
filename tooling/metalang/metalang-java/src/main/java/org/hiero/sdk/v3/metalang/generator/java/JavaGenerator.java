@@ -197,7 +197,9 @@ public final class JavaGenerator {
                 model.tests().stream().filter(t -> t.namespace().equals(namespace.name()))
                         .forEach(t -> specTests.computeIfAbsent(t.specName(), k -> new ArrayList<>()).add(t));
                 specTests.forEach((spec, tests) -> SpecTestGenerator.generate(module.name(), namespace.name(), spec,
-                        tests, context, visible, allFunctions).ifPresent(file -> {
+                        tests, model.testValues().stream().filter(v -> v.namespace().equals(namespace.name())
+                                && v.specName().equals(spec)).toList(), context, visible, allFunctions)
+                        .ifPresent(file -> {
                             files.add(file);
                             specTestModules.add(module.name());
                         }));

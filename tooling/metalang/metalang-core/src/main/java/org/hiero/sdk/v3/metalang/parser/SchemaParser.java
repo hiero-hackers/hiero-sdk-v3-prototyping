@@ -7,6 +7,7 @@ import org.hiero.sdk.v3.metalang.ast.Instance;
 import org.hiero.sdk.v3.metalang.ast.SchemaFile;
 import org.hiero.sdk.v3.metalang.ast.Statement;
 import org.hiero.sdk.v3.metalang.ast.TestCase;
+import org.hiero.sdk.v3.metalang.ast.TestValues;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
 import org.hiero.sdk.v3.metalang.diagnostic.DiagnosticCollector;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
@@ -52,18 +53,21 @@ public final class SchemaParser {
      * The result of parsing a "## Default Instances for Testing" block.
      *
      * @param instances   the default instances (empty if the block has syntax errors)
+     * @param values      the named test values (empty if the block has syntax errors)
      * @param diagnostics the syntax errors
      */
-    public record InstancesResult(List<Instance> instances, List<Diagnostic> diagnostics) {
+    public record InstancesResult(List<Instance> instances, List<TestValues> values, List<Diagnostic> diagnostics) {
 
         /**
          * Creates a result.
          *
          * @param instances   the default instances
+         * @param values      the named test values
          * @param diagnostics the syntax errors
          */
         public InstancesResult {
             instances = List.copyOf(instances);
+            values = List.copyOf(values);
             diagnostics = List.copyOf(diagnostics);
         }
     }
@@ -79,9 +83,10 @@ public final class SchemaParser {
         final SyntaxParser.Result<MetaLangParser.InstancesContext> syntax = SyntaxParser.parse(source,
                 MetaLangParser::instances);
         if (!syntax.diagnostics().isEmpty()) {
-            return new InstancesResult(List.of(), syntax.diagnostics());
+            return new InstancesResult(List.of(), List.of(), syntax.diagnostics());
         }
-        return new InstancesResult(new AstBuilder(source, syntax.tokens()).instances(syntax.tree()), List.of());
+        final AstBuilder builder = new AstBuilder(source, syntax.tokens());
+        return new InstancesResult(builder.instances(syntax.tree()), builder.values(syntax.tree()), List.of());
     }
 
     /**

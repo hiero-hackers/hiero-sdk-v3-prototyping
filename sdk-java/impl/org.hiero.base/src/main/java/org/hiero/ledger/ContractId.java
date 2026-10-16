@@ -26,9 +26,10 @@ public final class ContractId extends EvmCapableAddress {
         return EntityIds.validateChecksum(this, network);
     }
 
-    /// Canonical string form. Subtype-specific: "shard.realm.num" for Address / numeric-form
-    /// ContractId / numeric-form AccountId; "shard.realm.0x<hex>" for EVM-form ContractId /
-    /// AccountId; "shard.realm.<base32-hex>" for key-alias-form AccountId.
+    /// Canonical string form, without checksum. Subtype-specific: "shard.realm.num" for Address /
+    /// numeric-form ContractId / numeric-form AccountId, each number in decimal without leading
+    /// zeros (HIP-15); "shard.realm.<40 lowercase hex digits>" without "0x" for EVM-form ContractId /
+    /// AccountId (HIP-583); "shard.realm.<base32>" for key-alias-form AccountId (HIP-32).
     @Override
     public String toString() {
         return EntityIds.toString(this, evmAddress());
@@ -40,8 +41,8 @@ public final class ContractId extends EvmCapableAddress {
         return EntityIds.toStringWithChecksum(this, evmAddress());
     }
 
-    /// Parses "shard.realm.num" or "shard.realm.0x<40-hex>" (with optional "-<checksum>" suffix).
-    /// Throws if the format is invalid.
+    /// Parses "shard.realm.num" (with optional "-<checksum>" suffix) or "shard.realm.<40 lowercase
+    /// hex digits>" (HIP-583: the EVM address without "0x"). Throws if the format is invalid.
     ///
     /// @throws IllegalArgumentException if an illegal format error occurs
     public static ContractId fromString(final String value) {

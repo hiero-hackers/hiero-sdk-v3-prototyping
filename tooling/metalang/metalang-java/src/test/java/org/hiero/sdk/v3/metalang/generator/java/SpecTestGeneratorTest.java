@@ -45,6 +45,10 @@ class SpecTestGeneratorTest {
 
     private static final String INSTANCES = """
             instance Point = Point{x: 2, big: 18446744073709551615, label: "aℏ", data: [1, 2], tags: ["a", "b"]}
+
+            // labels of one letter
+            values LABELS: list<string> = ["a", "b"]
+            values HOLDERS: list<Holder> = [DEFAULT(Holder)]
             """;
 
     private static final String TESTS = """
@@ -109,6 +113,18 @@ class SpecTestGeneratorTest {
                 fail(message: "never runs")
             }
 
+            test "named test values" {
+                for label in LABELS {
+                    assertEquals(expected: 1, actual: length(value: label))
+                }
+            }
+
+            test "named test values without Java form" {
+                for holder in HOLDERS {
+                    assertNotNull(actual: holder)
+                }
+            }
+
             test "a holder" {
                 let h = DEFAULT(Holder)
                 assertNotNull(actual: h)
@@ -168,7 +184,7 @@ class SpecTestGeneratorTest {
         assertThat(run.unexpected()).isEmpty();
         // the expected error and the method call reach a method stub; the disabled test does not run
         assertThat(run.stubs()).containsExactly("ASpecTest.aMethodStub", "ASpecTest.anExpectedError");
-        assertThat(run.tests()).isEqualTo(6);
+        assertThat(run.tests()).isEqualTo(7);
     }
 
     @Test
@@ -203,7 +219,13 @@ class SpecTestGeneratorTest {
     void aTestWithoutJavaFormShouldBeListedAsNotGenerated() {
         final List<GeneratedFile> files = generate(TESTS);
         assertThat(file(files, "/org/hiero/a/ASpecTest.java"))
-                .contains("/// Not generated:\n/// - `a holder`: no value of a.Holder\n")
+                .contains("/// Not generated:\n/// - values `HOLDERS`: no value of a.Holder\n"
+                        + "/// - `named test values without Java form`: the values HOLDERS have no Java form\n"
+                        + "/// - `a holder`: no value of a.Holder\n")
+                .contains("class ASpecTest {\n\n    /// labels of one letter\n"
+                        + "    private static final List<String> LABELS = List.of(\"a\", \"b\");\n")
+                .contains("for (final String label : LABELS) {")
+                .doesNotContain("HOLDERS =")
                 .doesNotContain("void aHolder()");
         assertThat(TestGenerator.untested(files)).contains("ASpecTest: `a holder`: no value of a.Holder");
     }

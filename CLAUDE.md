@@ -205,7 +205,9 @@ points to keep specs valid and consistent:
 - `## Default Instances for Testing` records the standard way to obtain an instance of the spec's types through the API
   (`instance PublicKey = DEFAULT(PrivateKey).createPublicKey()`), with concrete values where implementations check them
   (keys, addresses). Generated tests use them first; the validator warns (`instance.missing`) about types that cannot
-  be obtained at all. See "Default instances" in `guidelines/api-guideline.md`.
+  be obtained at all. See "Default instances" in `guidelines/api-guideline.md`. The same block declares **named test
+  values** that only the tests of the same spec share (`values MALFORMED_ENTITY_IDS: list<string> = [...]`, read as
+  `for text in MALFORMED_ENTITY_IDS`); see "Named test values" in `guidelines/test-language.md`.
 - `## Description` and the comments directly above declarations become the **public API documentation** (Javadoc,
   rustdoc, …): write them for SDK users. Spec-author rationale, links to other spec files, ADR references and
   meta-language details go to `## Design Notes` (resolved) or `## Questions & Comments` (open). The validator warns
@@ -278,7 +280,7 @@ polling), which had been written into the generated code in place and reached 34
 `test-account-create-transaction.ts` against a local Solo network, in Java and TypeScript; that spike exists only in
 git history (`3b5305d~1`, introduced in `3caad63 "Durchstich :)"`), and the TypeScript one has not been ported. Today
 `impl` implements keys, the ledger ids, `Hbar`, `AuthorityFactory`, `ClientFactory`, `Response.queryReceipt`,
-`PackedTransaction`, `PrngTransaction` and `AccountCreateTransaction`; **all 67 spec tests pass** (keys 44, ledger 13,
+`PackedTransaction`, `PrngTransaction` and `AccountCreateTransaction`; **all 83 spec tests pass** (keys 44, ledger 29,
 transactions 10), the contract tests of unimplemented methods fail by design. It has the same Maven coordinates as
 `generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The TCK has not been run
 against it yet (it needs Solo, i.e. Docker). [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is the

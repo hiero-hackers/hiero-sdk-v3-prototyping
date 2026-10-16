@@ -118,7 +118,7 @@ public final class MetaLang {
             if (extraction.instances() != null) {
                 final SchemaParser.InstancesResult instances = parser.parseInstances(extraction.instances());
                 diagnostics.addAll(instances.diagnostics());
-                schema = schema == null ? null : schema.withInstances(instances.instances());
+                schema = schema == null ? null : schema.withInstances(instances.instances(), instances.values());
             }
             final List<TestCase> tests = new ArrayList<>();
             for (final SchemaSource block : extraction.tests()) {

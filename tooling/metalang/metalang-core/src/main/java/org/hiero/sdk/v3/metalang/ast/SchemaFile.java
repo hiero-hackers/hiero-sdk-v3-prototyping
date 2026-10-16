@@ -16,11 +16,12 @@ import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
  * @param description  the Markdown text of the spec's {@code ## Description} section (may be empty)
  * @param descriptionLine the Markdown line of the first line of {@code description} (0 if there is none)
  * @param instances    the default instances of the spec's {@code ## Default Instances for Testing} section
+ * @param values       the named test values of the same section
  * @param tests        the tests of the {@code tests} blocks of the spec's {@code ## Testing} section
  */
 public record SchemaFile(String namespace, List<Requires> requires, List<Declaration> declarations,
                          List<Comment> comments, SourceLocation location, String description, int descriptionLine,
-                         List<Instance> instances, List<TestCase> tests)
+                         List<Instance> instances, List<TestValues> values, List<TestCase> tests)
         implements Node {
 
     /**
@@ -34,10 +35,12 @@ public record SchemaFile(String namespace, List<Requires> requires, List<Declara
      * @param description  the description section (Markdown)
      * @param descriptionLine line of the first description line or 0
      * @param instances    the default instances
+     * @param values       the named test values
      * @param tests        the tests
      */
     public SchemaFile {
         instances = List.copyOf(Objects.requireNonNull(instances, "instances must not be null"));
+        values = List.copyOf(Objects.requireNonNull(values, "values must not be null"));
         tests = List.copyOf(Objects.requireNonNull(tests, "tests must not be null"));
         Objects.requireNonNull(description, "description must not be null");
         Objects.requireNonNull(namespace, "namespace must not be null");
@@ -68,14 +71,15 @@ public record SchemaFile(String namespace, List<Requires> requires, List<Declara
     }
 
     /**
-     * Returns a copy with the given default instances.
+     * Returns a copy with the given default instances and named test values.
      *
      * @param newInstances the default instances
+     * @param newValues    the named test values
      * @return the copy
      */
-    public SchemaFile withInstances(final List<Instance> newInstances) {
+    public SchemaFile withInstances(final List<Instance> newInstances, final List<TestValues> newValues) {
         return new SchemaFile(namespace, requires, declarations, comments, location, description, descriptionLine,
-                newInstances, tests);
+                newInstances, newValues, tests);
     }
 
     /**
@@ -86,6 +90,6 @@ public record SchemaFile(String namespace, List<Requires> requires, List<Declara
      */
     public SchemaFile withTests(final List<TestCase> newTests) {
         return new SchemaFile(namespace, requires, declarations, comments, location, description, descriptionLine,
-                instances, newTests);
+                instances, values, newTests);
     }
 }
