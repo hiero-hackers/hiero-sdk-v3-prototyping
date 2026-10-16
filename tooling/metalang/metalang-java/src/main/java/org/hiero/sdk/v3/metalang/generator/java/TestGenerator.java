@@ -1019,27 +1019,16 @@ public final class TestGenerator {
 
         private String render(final String tested, final boolean testedDeprecated) {
             deprecated |= testedDeprecated || samples.usesDeprecated();
-            final String nullable = usesAssertValue ? imports.use(JavaTypes.JSPECIFY, "Nullable") : "";
-            final String arrays = usesAssertValue ? imports.use("java.util", "Arrays") : "";
             final StringBuilder java = new StringBuilder(JavaGenerator.HEADER).append('\n');
             java.append("package ").append(JavaNames.packageName(namespace)).append(";\n\n");
+            if (usesAssertValue) {
+                // the comparison of the hand-written test support module (sdk-java/test-support)
+                java.append("import static ").append(SpecTestGenerator.TESTING).append(".assertValue;\n");
+            }
             java.append("import static ").append(JUNIT).append(".Assertions.*;\n\n");
             // render the members first: they register the imports
             final List<String> members = new ArrayList<>(tests);
             members.addAll(helpers.values());
-            if (usesAssertValue) {
-                members.add(INDENT + "/// Asserts that two values are equal; arrays by their content.\n"
-                        + INDENT + "private static void assertValue(final @" + nullable + " Object expected, "
-                        + "final @" + nullable + " Object actual) {\n"
-                        + INDENT + INDENT + "if (expected instanceof byte[] bytes && actual instanceof byte[] other) {\n"
-                        + INDENT + INDENT + INDENT + "assertArrayEquals(bytes, other, () -> "
-                        + "\"expected \" + " + arrays + ".toString(bytes) + \" but was \" + " + arrays
-                        + ".toString(other));\n"
-                        + INDENT + INDENT + "} else {\n"
-                        + INDENT + INDENT + INDENT + "assertEquals(expected, actual);\n"
-                        + INDENT + INDENT + "}\n"
-                        + INDENT + "}\n");
-            }
             final String displayName = imports.use(JUNIT, "DisplayName");
             final String generated = JavaGenerator.generated(imports);
             final String importBlock = imports.render();

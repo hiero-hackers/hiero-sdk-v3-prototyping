@@ -1,9 +1,8 @@
 package org.hiero.ledger;
 
+import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -90,14 +89,5 @@ class ConsensusNodeTest {
 
     private static ConsensusNode defaultSubject() {
         return new ConsensusNode(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), 35211, new AccountId(0L, 0L, "", 3L, null, null));
-    }
-
-    /// Asserts that two values are equal; arrays by their content.
-    private static void assertValue(final @Nullable Object expected, final @Nullable Object actual) {
-        if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
-            assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was " + Arrays.toString(other));
-        } else {
-            assertEquals(expected, actual);
-        }
     }
 }

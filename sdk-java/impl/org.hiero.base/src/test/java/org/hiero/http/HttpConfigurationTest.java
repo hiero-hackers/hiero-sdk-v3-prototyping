@@ -1,13 +1,12 @@
 package org.hiero.http;
 
+import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -79,14 +78,5 @@ class HttpConfigurationTest {
 
     private static HttpConfiguration create() {
         return new HttpConfiguration(defaultHeadersValue(), connectTimeoutValue(), defaultRequestTimeoutValue());
-    }
-
-    /// Asserts that two values are equal; arrays by their content.
-    private static void assertValue(final @Nullable Object expected, final @Nullable Object actual) {
-        if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
-            assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was " + Arrays.toString(other));
-        } else {
-            assertEquals(expected, actual);
-        }
     }
 }

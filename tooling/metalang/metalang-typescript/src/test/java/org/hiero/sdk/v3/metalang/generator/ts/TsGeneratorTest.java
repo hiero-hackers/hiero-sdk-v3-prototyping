@@ -72,12 +72,16 @@ class TsGeneratorTest {
                     .contains("\"version\": \"1.2.3\"")
                     .contains("\"./c/sub\": {\n      \"types\": \"./dist/c/sub/index.d.ts\"")
                     .contains("\"dependencies\": {\n    \"@acme/support\": \"1.2.3\",\n    \"@acme/base\": \"1.2.3\"\n  }");
-            // the hand-written support package is a dependency of the packages that use it: here only client
-            assertThat(file(files, "packages/base/package.json")).doesNotContain("dependencies")
-                    .doesNotContain("support");
+            // the hand-written support package is a dependency of the packages that use it: here only client; the
+            // tests of every package use the test support package
+            assertThat(file(files, "packages/base/package.json")).doesNotContain("\"dependencies\"")
+                    .doesNotContain("@acme/support\"").contains("\"devDependencies\": {\n"
+                            + "    \"@acme/test-support\": \"1.2.3\"\n  }");
             assertThat(file(files, "packages/client/tsconfig.json"))
-                    .contains("{ \"path\": \"../../../support\" },\n    { \"path\": \"../base\" }");
-            assertThat(file(files, "packages/base/tsconfig.json")).doesNotContain("support");
+                    .contains("{ \"path\": \"../../../support\" },\n    { \"path\": \"../../../test-support\" },\n"
+                            + "    { \"path\": \"../base\" }");
+            assertThat(file(files, "packages/base/tsconfig.json")).doesNotContain("../../../support\"")
+                    .contains("{ \"path\": \"../../../test-support\" }");
             assertThat(file(files, "/c/sub/Line.ts"))
                     .contains("import type { Point } from \"@acme/base/b\";")
                     // a value import, not `import type`: the constructor checks `length instanceof Duration`

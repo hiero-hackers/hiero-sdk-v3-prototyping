@@ -242,7 +242,7 @@ class TsTckGeneratorTest {
     }
 
     /**
-     * Builds the repository layout in a temporary directory — generated API, support package, contract, server and
+     * Builds the repository layout in a temporary directory — generated API, support packages, contract, server and
      * the runtime of the repository below one node_modules — compiles the server without the runtime, then the
      * runtime, and sends requests to the server.
      */
@@ -253,6 +253,7 @@ class TsTckGeneratorTest {
         write(new TsGenerator().generate(model), temp.resolve("sdk-ts/generated"));
         write(files, temp.resolve("sdk-ts/tck/generated"));
         copy(GeneratedTs.SUPPORT, temp.resolve("sdk-ts/support"));
+        copy(GeneratedTs.TEST_SUPPORT, temp.resolve("sdk-ts/test-support"));
         copy(REPOSITORY.resolve("sdk-ts/tck/runtime"), temp.resolve("sdk-ts/tck/runtime"));
         final Path modules = temp.resolve("node_modules");
         Files.createDirectories(modules.resolve("@hiero"));
@@ -264,6 +265,7 @@ class TsTckGeneratorTest {
             }
         }
         Files.createSymbolicLink(modules.resolve("@hiero/support"), temp.resolve("sdk-ts/support"));
+        Files.createSymbolicLink(modules.resolve("@hiero/test-support"), temp.resolve("sdk-ts/test-support"));
         Files.createSymbolicLink(modules.resolve("@hiero/tck-contract"), temp.resolve("sdk-ts/tck/generated/contract"));
         Files.createSymbolicLink(modules.resolve("@hiero/tck-server"), temp.resolve("sdk-ts/tck/generated/server"));
 

@@ -1,8 +1,8 @@
 package org.hiero.ledger;
 
+import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
 import org.hiero.hedera.HbarUnit;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
@@ -185,14 +185,5 @@ class AccountIdTest {
 
     private static EvmAddress addressValue() {
         return new EvmAddress(new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20});
-    }
-
-    /// Asserts that two values are equal; arrays by their content.
-    private static void assertValue(final @Nullable Object expected, final @Nullable Object actual) {
-        if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
-            assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was " + Arrays.toString(other));
-        } else {
-            assertEquals(expected, actual);
-        }
     }
 }

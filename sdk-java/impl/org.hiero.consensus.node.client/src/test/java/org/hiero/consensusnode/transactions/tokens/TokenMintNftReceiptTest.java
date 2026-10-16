@@ -1,11 +1,11 @@
 package org.hiero.consensusnode.transactions.tokens;
 
+import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.hiero.authority.AuthorityFactory;
@@ -20,7 +20,6 @@ import org.hiero.ledger.Address;
 import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -144,14 +143,5 @@ class TokenMintNftReceiptTest {
 
     private static TokenMintNftReceipt create() {
         return new TokenMintNftReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), totalSupplyValue(), serialsValue());
-    }
-
-    /// Asserts that two values are equal; arrays by their content.
-    private static void assertValue(final @Nullable Object expected, final @Nullable Object actual) {
-        if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
-            assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was " + Arrays.toString(other));
-        } else {
-            assertEquals(expected, actual);
-        }
     }
 }

@@ -1,14 +1,13 @@
 package org.hiero.consensusnode.client;
 
+import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
 import org.hiero.keys.ByteImportEncoding;
 import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
 import org.hiero.keys.PrivateKey;
 import org.hiero.ledger.AccountId;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -61,14 +60,5 @@ class AccountTest {
 
     private static Account defaultSubject() {
         return new Account(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"));
-    }
-
-    /// Asserts that two values are equal; arrays by their content.
-    private static void assertValue(final @Nullable Object expected, final @Nullable Object actual) {
-        if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
-            assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was " + Arrays.toString(other));
-        } else {
-            assertEquals(expected, actual);
-        }
     }
 }

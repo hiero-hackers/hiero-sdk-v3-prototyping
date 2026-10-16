@@ -732,7 +732,7 @@ The named test values of a spec (`values NAME: type = expression` in its `## Def
 AST `TestValues`) are resolved by `TestResolver` too, without variables and against their declared type, into
 `LinkedModel.testValues()` (`TestValuesDefinition`); every test of the same spec file starts with them as variables.
 
-Generators: **Java only so far.** `SpecTestGenerator` writes one class per spec, `<Spec>SpecTest` (e.g.
+Generators: **Java and TypeScript.** `SpecTestGenerator` writes one class per spec, `<Spec>SpecTest` (e.g.
 `KeysSpecTest`), into `src/test/java` of the module and in the package of the namespace, in the style of the other
 generated tests (header, `@DisplayName`, `///` comments, helpers `defaultPrivateKey()` for the default instances,
 a `private static final` constant per named test values).
@@ -743,10 +743,23 @@ checked exceptions, exact integers are checked and converted where they are pass
 `checked(…, "int32").intValueExact()`). The built-in functions and assertions are static methods of the hand-written
 module `sdk-java/test-support` (`org.hiero.sdk.testing.Testing`, artifact `hiero-sdk-test-support`), which
 implements the semantics of the test language where Java differs (code points, `BigInteger` arithmetic, value
-equality); a module with spec tests gets it as test dependency. `@@expectThrows(id)` becomes
+equality); it also holds `assertValue`, the comparison of the contract tests per type, so every module with tests
+gets it as test dependency. `@@expectThrows(id)` becomes
 `assertThrows(<exception of the id>.class, () -> …)`. A test that has no Java form is not generated and listed in the
 comment of the class and by `generate`. `SpecTestGeneratorTest` compiles the generated tests with `-Werror` against
 the generated modules and the sources of `sdk-java/test-support`, and runs them.
+
+`TsSpecTestGenerator` writes one `<spec>.spec.test.ts` per spec into the directory of the namespace, for the Node.js
+test runner, with the same structure: the comments of the spec, a module constant per named test values, helpers
+`defaultPrivateKey()`. The API parts are rendered by `TsSamples` in a test mode (`@@async` calls are awaited, values
+passed to the API are converted). Integers of the test language are always `bigint` (`int(x)` for a `number` of the
+API, `checked(…, "uint64")` / `checkedNumber(…, "int32")` where they reach the API), decimals are their text and
+computed by functions. The built-in functions and assertions are the hand-written npm package `sdk-ts/test-support`
+(`@hiero/test-support`), which also holds `assertValue` of the contract tests; it is a development dependency of
+every package with tests (key `ts.testSupport`).
+`@@expectThrows(id)` becomes `assert.throws(() => …, <error class of the id>)`. `TsSpecTestGeneratorTest` builds the
+generated tests with the strict configuration against the generated packages and the test support package, and runs
+them.
 
 ## Default instances
 

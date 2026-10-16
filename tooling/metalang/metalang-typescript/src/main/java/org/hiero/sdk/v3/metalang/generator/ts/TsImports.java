@@ -81,6 +81,11 @@ final class TsImports {
         return add(TsNames.supportPackage(context.config()), "support", name, value);
     }
 
+    /** A function of the hand-written test support package (the built-in functions of the test language). */
+    String testSupport(final String name) {
+        return add(TsNames.testSupportPackage(context.config()), "testing", name, true);
+    }
+
     private String use(final String targetFolder, final String namespace, final String name, final String stem,
                        final boolean value) {
         final String specifier;

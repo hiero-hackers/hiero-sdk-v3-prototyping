@@ -166,7 +166,6 @@ public final class JavaGenerator {
         final List<GeneratedFile> files = new ArrayList<>();
         final List<FunctionDefinition> allFunctions = plan.functions().values().stream().flatMap(List::stream).toList();
         final Set<String> supportUsers = new HashSet<>();
-        final Set<String> specTestModules = new HashSet<>();
         for (final Module module : modules) {
             final Set<String> packagesWithTypes = new TreeSet<>();
             // the tests of a module can only use the types of the modules it requires
@@ -199,10 +198,7 @@ public final class JavaGenerator {
                 specTests.forEach((spec, tests) -> SpecTestGenerator.generate(module.name(), namespace.name(), spec,
                         tests, model.testValues().stream().filter(v -> v.namespace().equals(namespace.name())
                                 && v.specName().equals(spec)).toList(), context, visible, allFunctions)
-                        .ifPresent(file -> {
-                            files.add(file);
-                            specTestModules.add(module.name());
-                        }));
+                        .ifPresent(files::add));
                 final List<ConstantDefinition> constants = plan.constants().getOrDefault(namespace.name(), List.of());
                 if (!constants.isEmpty()) {
                     files.add(ConstantsGenerator.generate(module.name(), namespace.name(), constants, context));
@@ -242,11 +238,21 @@ public final class JavaGenerator {
                                         config.protobuf().contains(m.folder())
                                                 ? Stream.of(ProtobufFiles.ARTIFACT) : Stream.<String>empty())
                                 .flatMap(stream -> stream).toList(),
-                        specTestModules.contains(m.name()) ? List.of(SpecTestGenerator.ARTIFACT) : List.of()))
+                        usesTestSupport(m.name(), files) ? List.of(SpecTestGenerator.ARTIFACT) : List.of()))
                 .toList();
         files.add(MavenGenerator.parent(mavenModules, config));
         mavenModules.forEach(m -> files.add(MavenGenerator.module(m, config)));
         return files.stream().sorted().toList();
+    }
+
+    /**
+     * Whether the tests of a module use the hand-written test support module (sdk-java/test-support): the tests of
+     * the specs and the comparison of the contract tests ({@code assertValue}).
+     */
+    private static boolean usesTestSupport(final String module, final List<GeneratedFile> files) {
+        final String tests = JavaNames.sourceRoot(module).replaceFirst("/src/main/java$", "/src/test/java/");
+        final String testing = "import static " + SpecTestGenerator.TESTING + ".";
+        return files.stream().anyMatch(f -> f.path().startsWith(tests) && f.content().contains(testing));
     }
 
     /**

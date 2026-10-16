@@ -31,7 +31,8 @@ guidelines/
   api-guideline.md              # THE meta-language: syntax + cross-cutting API best practices. Read this first.
   test-language.md              # DRAFT: the language of `tests` blocks in a spec's `## Testing`, from which unit
                                 #   tests are generated per language (analysis: docs/spec-defined-tests.md). Parsed,
-                                #   resolved (test.* rules) and generated for Java (`<Spec>SpecTest`) so far
+                                #   resolved (test.* rules) and generated for Java (`<Spec>SpecTest`) and TypeScript
+                                #   (`<spec>.spec.test.ts`) so far
   api-best-practices-java.md    # How meta-language concepts map to idiomatic Java
   api-best-practices-rust.md    # ... Rust (the mapping of the Rust generator)
   api-best-practices-go.md      # ... Go (the mapping of the Go generator)
@@ -52,8 +53,9 @@ sdk-java/
   support/                      # Hand-written Java support types (streaming, thread-safety) as Maven module
                                 #   hiero-sdk-support; sdk-java/generated depends on it (install it first)
   test-support/                 # Hand-written Maven module hiero-sdk-test-support (JPMS org.hiero.sdk.test.support):
-                                #   the built-in functions and assertions of the test language (class Testing); the
-                                #   generated spec tests (<Spec>SpecTest) depend on it in test scope (install it first)
+                                #   the built-in functions and assertions of the test language (class Testing) and
+                                #   assertValue of the contract tests; every generated module with tests depends on
+                                #   it in test scope (install it first)
   protobuf/                     # Hand-written Maven module hiero-sdk-protobuf (JPMS org.hiero.sdk.protobuf). Has no
                                 #   sources of its own: it compiles /tooling/protobuf into Java at build time. NOT public
                                 #   API - every package is exported only with `exports ... to <sdk module>`.
@@ -82,6 +84,9 @@ sdk-ts/
   openspec/                     # TypeScript-only OpenSpec root
   support/                      # Hand-written TypeScript support types (Duration, StreamItem, AbstractConstructor)
                                 #   as npm package @hiero/support
+  test-support/                 # Hand-written npm package @hiero/test-support: the built-in functions and assertions
+                                #   of the test language (spec tests, <spec>.spec.test.ts) and assertValue of the
+                                #   contract tests; a development dependency of every generated package with tests
   generated/                    # Generated TypeScript API, one package per spec folder, with generated node:test
                                 #   tests (scripts/generate-ts.sh)
   tck/generated/                # Generated TCK contract and server (@hiero/tck-contract, @hiero/tck-server)
@@ -319,7 +324,8 @@ Comments` of the respective spec files and are its real output:
   the test mode of `InstanceResolver`, the `test.*` rules with fixtures, and — for a built-in function — the schema in
   the guideline **and** its copy `metalang-core/src/main/resources/org/hiero/sdk/v3/metalang/testing.md` (a test keeps
   both equal) plus its implementation in `sdk-java/test-support` (`Testing`) and the Java mapping in
-  `SpecTestGenerator` / `api-best-practices-java.md`. Only Java generates spec tests so far.
+  `SpecTestGenerator` / `api-best-practices-java.md`, and the same for TypeScript (`sdk-ts/test-support`,
+  `TsSpecTestGenerator`, `api-best-practices-ts.md`). Java and TypeScript generate spec tests so far.
 - **Open design questions** belong under each file's `## Questions & Comments` (often attributed to a GitHub handle).
   Don't silently resolve them; surface them.
 - **Language best-practice docs** (`api-best-practices-*.md`) describe how a meta-language concept maps to one

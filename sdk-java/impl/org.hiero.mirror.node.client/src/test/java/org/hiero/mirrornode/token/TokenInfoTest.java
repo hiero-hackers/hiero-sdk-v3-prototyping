@@ -1,11 +1,11 @@
 package org.hiero.mirrornode.token;
 
+import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigInteger;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.List;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
@@ -331,14 +331,5 @@ class TokenInfoTest {
 
     private static TokenInfo create() {
         return new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue());
-    }
-
-    /// Asserts that two values are equal; arrays by their content.
-    private static void assertValue(final @Nullable Object expected, final @Nullable Object actual) {
-        if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
-            assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was " + Arrays.toString(other));
-        } else {
-            assertEquals(expected, actual);
-        }
     }
 }

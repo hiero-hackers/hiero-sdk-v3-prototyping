@@ -113,14 +113,13 @@ public final class TsTestGenerator {
         private final Map<String, String> helpers = new LinkedHashMap<>();
         private final Map<String, String> helperNames = new HashMap<>();
         private final List<String> notes = new ArrayList<>();
-        private boolean usesAssertValue;
 
         private TestFile(final String namespace, final TsContext context) {
             this.namespace = namespace;
             this.context = context;
             final String folder = context.folder(namespace);
             this.directory = TsNames.sourceDirectory(folder, namespace);
-            this.imports = new TsImports(context, folder, directory, "create", "init", "assertValue", "describe",
+            this.imports = new TsImports(context, folder, directory, "create", "init", "describe",
                     "test", "assert");
             final Set<String> visible = new HashSet<>(SpecFolders.required(folder, context.folders()));
             visible.add(folder);
@@ -701,9 +700,9 @@ public final class TsTestGenerator {
 
         // ----------------------------------------------------------------------------------------- rendering
 
+        /** Compares with {@code assertValue} of the test support package. */
         private String assertValue(final String expected, final String actual) {
-            usesAssertValue = true;
-            return INDENT + INDENT + "assertValue(" + expected + ", " + actual + ");\n";
+            return INDENT + INDENT + imports.testSupport("assertValue") + "(" + expected + ", " + actual + ");\n";
         }
 
         private void test(final String name, final boolean async, final String body) {
@@ -751,30 +750,12 @@ public final class TsTestGenerator {
                 notes.stream().distinct().forEach(n -> ts.append(NOTE).append(n).append('\n'));
             }
             ts.append('\n');
-            if (code.indexOf("assert") >= 0) {
+            if (java.util.regex.Pattern.compile("(?<![\\w$])assert\\.").matcher(code).find()) {
                 ts.append("import assert from \"node:assert/strict\";\n");
             }
             ts.append("import { describe, test } from \"node:test\";\n");
             ts.append(imports.render(code.toString())).append('\n');
             ts.append(code);
-            if (usesAssertValue) {
-                ts.append("""
-
-                        /** Asserts that two values are equal: by `equals` if they have it, by content if they are \
-                        arrays, bytes, sets, maps or dates, otherwise identical. */
-                        function assertValue(expected: unknown, actual: unknown): void {
-                            if (typeof expected === "object" && expected !== null && "equals" in expected
-                                    && typeof expected.equals === "function") {
-                                assert.ok(expected.equals(actual), `expected ${String(expected)} but was ${String(actual)}`);
-                            } else if (expected instanceof Uint8Array || expected instanceof Date || expected instanceof Set
-                                    || expected instanceof Map || Array.isArray(expected)) {
-                                assert.deepStrictEqual(actual, expected);
-                            } else {
-                                assert.strictEqual(actual, expected);
-                            }
-                        }
-                        """);
-            }
             return new GeneratedFile(directory + "/" + fileName, ts.toString());
         }
     }

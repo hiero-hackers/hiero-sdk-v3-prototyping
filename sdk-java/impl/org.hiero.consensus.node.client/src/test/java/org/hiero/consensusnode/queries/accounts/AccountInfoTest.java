@@ -1,11 +1,11 @@
 package org.hiero.consensusnode.queries.accounts;
 
+import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import org.hiero.authority.Authority;
 import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.hedera.Hbar;
@@ -193,14 +193,5 @@ class AccountInfoTest {
 
     private static AccountInfo create() {
         return new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue());
-    }
-
-    /// Asserts that two values are equal; arrays by their content.
-    private static void assertValue(final @Nullable Object expected, final @Nullable Object actual) {
-        if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
-            assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was " + Arrays.toString(other));
-        } else {
-            assertEquals(expected, actual);
-        }
     }
 }

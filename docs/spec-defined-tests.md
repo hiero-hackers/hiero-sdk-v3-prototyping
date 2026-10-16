@@ -303,8 +303,10 @@ data with a hand-written runner (test vectors, TCK) or needs hand-written glue (
 exist in this repository, so the language is built here.
 
 Status: steps 1 to 3 are done for Java (parser, type checking with the `test.*` rules, `SpecTestGenerator` with the
-test support module `sdk-java/test-support`); `spec/base/keys.md` has the first known-answer tests, and the generated
-`KeysSpecTest` passes against the implementation of the Java spike.
+test support module `sdk-java/test-support`) and TypeScript (`TsSpecTestGenerator` with the test support package
+`sdk-ts/test-support`); `spec/base/keys.md` has the first known-answer tests, and the generated `KeysSpecTest` passes
+against the Java implementation `sdk-java/impl`. TypeScript has no implementation yet, so its spec tests fail at the
+stubs.
 
 1. **The guideline** — done as a draft: [`guidelines/test-language.md`](../guidelines/test-language.md) defines
    syntax, semantics, built-in functions and validation rules.

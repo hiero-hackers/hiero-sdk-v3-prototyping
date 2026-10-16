@@ -43,6 +43,10 @@ final class TsSamples {
     private final TsImports imports;
     private final Predicate<String> visibleFolder;
     private boolean doubles;
+    /** Renders the parts of a test that are no API (variables, operators, built-in functions, default instances). */
+    private java.util.function.Function<InstanceExpression, Optional<String>> testExpressions = e -> Optional.empty();
+    /** Renders a value passed to a parameter or attribute of the given type (tests convert exact integers). */
+    private java.util.function.BiFunction<InstanceExpression, Type, Optional<String>> testArguments;
 
     /**
      * Creates the sample builder of a test file.
@@ -55,6 +59,43 @@ final class TsSamples {
         this.context = context;
         this.imports = imports;
         this.visibleFolder = visibleFolder;
+    }
+
+    /**
+     * Switches to the rendering of test expressions: the parts of a test that are no API are rendered by the test
+     * generator, and the values passed to the API are converted by it.
+     *
+     * @param renderer  renders variables, operators, built-in functions and default instances
+     * @param arguments renders a value passed to a parameter or attribute of the given type
+     */
+    void testExpressions(final java.util.function.Function<InstanceExpression, Optional<String>> renderer,
+                         final java.util.function.BiFunction<InstanceExpression, Type, Optional<String>> arguments) {
+        testExpressions = renderer;
+        testArguments = arguments;
+    }
+
+    private boolean tests() {
+        return testArguments != null;
+    }
+
+    /**
+     * Renders an expression of a test that uses the API.
+     *
+     * @param expression the expression
+     * @return the TypeScript expression, empty if a part has no TypeScript form
+     */
+    Optional<String> expression(final InstanceExpression expression) {
+        return render(expression, Set.of());
+    }
+
+    /** In a test, an asynchronous call is awaited. */
+    private String awaited(final MethodDefinition method, final String call) {
+        return tests() && method.hasAnnotation("async") ? "(await " + call + ")" : call;
+    }
+
+    private Optional<String> argument(final InstanceExpression value, final Type target,
+                                      final Set<QualifiedName> visiting) {
+        return tests() ? testArguments.apply(value, target) : render(value, visiting);
     }
 
     private boolean visible(final String namespace) {
@@ -411,14 +452,25 @@ final class TsSamples {
 
     private Optional<String> render(final InstanceExpression expression, final Set<QualifiedName> visiting) {
         return switch (expression) {
+            // in a test, default instances and built-in functions are rendered by the test generator
+            case InstanceExpression.Default value when tests() -> testExpressions.apply(value);
+            case InstanceExpression.Call call when tests() && call.namespace().equals(
+                    org.hiero.sdk.v3.metalang.model.Builtins.NAMESPACE) -> testExpressions.apply(call);
             case InstanceExpression.Default value -> value(value.type(), List.of(), 0, visiting);
             case InstanceExpression.Construct construct -> {
                 if (!context.isGenerated(construct.type().name())) {
                     yield Optional.empty();
                 }
                 final List<String> values = new ArrayList<>();
+                final Map<String, Type> fieldTypes = new java.util.HashMap<>();
+                if (context.model().definition(construct.type()) instanceof TypeDefinition.ComplexTypeDefinition c) {
+                    Constraints.arguments(c, construct.type()).ifPresent(arguments -> c.fields().forEach(f ->
+                            fieldTypes.put(f.name(), LinkedModel.substitute(f.type(), arguments))));
+                }
                 for (final Map.Entry<String, InstanceExpression> value : construct.values().entrySet()) {
-                    final Optional<String> rendered = render(value.getValue(), visiting);
+                    final Type fieldType = fieldTypes.get(value.getKey());
+                    final Optional<String> rendered = fieldType == null ? render(value.getValue(), visiting)
+                            : argument(value.getValue(), fieldType, visiting);
                     if (rendered.isEmpty()) {
                         yield Optional.empty();
                     }
@@ -441,17 +493,19 @@ final class TsSamples {
                     }
                     target = imports.function(call.namespace(), call.method().name());
                 }
-                yield arguments(call.method(), call.arguments(), visiting).map(a -> target + "(" + a + ")");
+                yield arguments(call.method(), call.arguments(), visiting).map(a -> awaited(call.method(),
+                        target + "(" + a + ")"));
             }
             case InstanceExpression.MethodCall call -> render(call.target(), visiting).flatMap(target ->
-                    arguments(call.method(), call.arguments(), visiting).map(a -> target + "." + call.method().name()
-                            + "(" + a + ")"));
+                    arguments(call.method(), call.arguments(), visiting).map(a -> awaited(call.method(), target + "."
+                            + call.method().name() + "(" + a + ")")));
             case InstanceExpression.Access access -> render(access.target(), visiting)
                     .map(target -> target + "." + access.field().name());
             case InstanceExpression.Value value -> Optional.of(renderValue(value));
             case InstanceExpression.ConstantValue constant -> visible(constant.constant().name().namespace())
                     ? Optional.of(imports.constant(constant.constant().name().namespace(),
                     constant.constant().name().name())) : Optional.empty();
+            case InstanceExpression.ListValue list when tests() -> testExpressions.apply(list);
             case InstanceExpression.ListValue list -> {
                 final List<String> items = new ArrayList<>();
                 for (final InstanceExpression item : list.items()) {
@@ -469,7 +523,8 @@ final class TsSamples {
                         : builtin.name().equals("set") ? "new Set([" + String.join(", ", items) + "])"
                         : "[" + String.join(", ", items) + "]");
             }
-            default -> Optional.empty(); // the variables and operators of tests do not occur here
+            // the variables and operators of tests
+            default -> testExpressions.apply(expression);
         };
     }
 
@@ -496,7 +551,7 @@ final class TsSamples {
                 }
                 continue;
             }
-            final Optional<String> rendered = render(value, visiting);
+            final Optional<String> rendered = argument(value, parameter.type(), visiting);
             if (rendered.isEmpty()) {
                 return Optional.empty();
             }

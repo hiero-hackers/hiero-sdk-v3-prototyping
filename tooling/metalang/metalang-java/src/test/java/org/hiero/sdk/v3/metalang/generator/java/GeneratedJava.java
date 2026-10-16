@@ -181,7 +181,7 @@ final class GeneratedJava {
             }
         }
         // the spec tests use the test support module; on the class path like a test dependency of Maven
-        if (files.stream().anyMatch(f -> f.path().endsWith("SpecTest.java"))) {
+        if (files.stream().anyMatch(f -> f.content().contains("import static org.hiero.sdk.testing.Testing."))) {
             try (Stream<Path> support = Files.walk(TEST_SUPPORT)) {
                 support.filter(p -> p.toString().endsWith(".java") && !p.endsWith("module-info.java"))
                         .sorted().forEach(sources::add);

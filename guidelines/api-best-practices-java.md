@@ -3704,7 +3704,9 @@ JUnit tests that look like the other generated tests:
 | a call of an `@@async` method | `….toCompletableFuture().join()` |
 | a call that declares a checked exception | the test method declares `throws Exception` |
 
-A module whose specs have tests gets `hiero-sdk-test-support` as test dependency. Like every generated type, a test
+A module with generated tests gets `hiero-sdk-test-support` as test dependency: the tests of the specs use its
+built-in functions, and the contract tests per type compare with its `assertValue` (arrays of bytes by their content,
+everything else with `equals`) instead of declaring that helper in every test class. Like every generated type, a test
 class carries `@Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")`.
 
 ## Questions & Comments

@@ -176,6 +176,9 @@ class RustConformanceTest {
     @Test
     void generatedRustShouldProvideTheApiOfTheSpecs() throws Exception {
         assumeTrue(available(), "cargo is needed");
+        // the generated code is not under version control: scripts/generate-rust.sh produces it
+        assumeTrue(java.nio.file.Files.isDirectory(REPOSITORY.resolve("sdk-rust/generated")),
+                "sdk-rust/generated is needed");
         final RustConformance.Result result = RustConformance.check(LinkedModel.of(new MetaLang().validate(
                         REPOSITORY.resolve("spec")).model()), new RustGenerator(RustGeneratorConfig.load(
                         REPOSITORY.resolve("sdk-rust/generator.properties"))), REPOSITORY.resolve("sdk-rust/generated"),

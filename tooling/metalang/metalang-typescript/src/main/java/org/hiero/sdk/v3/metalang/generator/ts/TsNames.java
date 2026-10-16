@@ -40,6 +40,27 @@ final class TsNames {
         return config.support().startsWith("/") ? config.support() : up + config.support();
     }
 
+    /**
+     * Returns the name of the hand-written test support package (the built-in functions of the test language).
+     *
+     * @param config the configuration
+     * @return {@code <scope>/test-support}
+     */
+    static String testSupportPackage(final TsGeneratorConfig config) {
+        return config.scope() + "/test-support";
+    }
+
+    /**
+     * Returns the directory of the test support package relative to a directory of the workspace.
+     *
+     * @param config the configuration
+     * @param up     the path from the directory to the workspace root, e.g. {@code ../../}
+     * @return the directory
+     */
+    static String testSupportDirectory(final TsGeneratorConfig config, final String up) {
+        return config.testSupport().startsWith("/") ? config.testSupport() : up + config.testSupport();
+    }
+
     static String packageDirectory(final String folder) {
         return "packages/" + folder;
     }

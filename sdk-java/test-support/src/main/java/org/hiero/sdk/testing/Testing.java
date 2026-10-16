@@ -15,6 +15,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.LongStream;
 import org.junit.jupiter.api.AssertionFailureBuilder;
+import org.junit.jupiter.api.Assertions;
 
 /**
  * The built-in functions and assertions of the test language ({@code guidelines/test-language.md}, namespace
@@ -234,6 +235,23 @@ public final class Testing {
      */
     public static void fail(final String message) {
         AssertionFailureBuilder.assertionFailure().message(message).buildAndThrow();
+    }
+
+    /**
+     * The comparison of the contract tests generated per type: arrays of bytes by their content, everything else with
+     * {@link Object#equals(Object)}. Unlike {@link #assertEquals(Object, Object)} it does not use the value equality
+     * of the test language: a contract test checks that a value is passed through unchanged.
+     *
+     * @param expected the expected value, may be {@code null}
+     * @param actual   the actual value, may be {@code null}
+     */
+    public static void assertValue(final Object expected, final Object actual) {
+        if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
+            Assertions.assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was "
+                    + Arrays.toString(other));
+        } else {
+            Assertions.assertEquals(expected, actual);
+        }
     }
 
     // --- equality --------------------------------------------------------------------------------

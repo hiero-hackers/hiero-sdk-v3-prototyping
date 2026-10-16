@@ -6,6 +6,7 @@
   "type": "module",
   "workspaces": [
     "support",
+    "test-support",
     "generated/packages/*",
     "tck/generated/*",
     "tck/runtime"

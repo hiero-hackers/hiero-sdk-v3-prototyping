@@ -73,12 +73,15 @@ class JavaConformanceTest {
         final Path repository = specs.toAbsolutePath().normalize().getParent();
         final JavaGenerator generator = new JavaGenerator(JavaGeneratorConfig.load(
                 repository.resolve("sdk-java/generator.properties")));
+        // the generated code is not under version control: scripts/generate-java.sh produces it
+        org.junit.jupiter.api.Assumptions.assumeTrue(java.nio.file.Files.isDirectory(
+                repository.resolve("sdk-java/generated")), "sdk-java/generated is needed");
 
         // WHEN
         final JavaConformance.Result result = JavaConformance.check(LinkedModel.of(new MetaLang().validate(specs)
                 .model()), generator, repository.resolve("sdk-java/generated"));
 
-        // THEN generated/java is up to date (otherwise: regenerate it, see tooling/metalang/README.md)
+        // THEN sdk-java/generated is up to date (otherwise: regenerate it, see tooling/metalang/README.md)
         assertThat(result.differences()).isEmpty();
         assertThat(result.types()).isPositive();
     }

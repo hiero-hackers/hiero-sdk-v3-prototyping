@@ -1,13 +1,12 @@
 package org.hiero.consensusnode.queries;
 
+import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
 import org.hiero.hedera.Hbar;
 import org.hiero.hedera.HbarUnit;
 import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -59,14 +58,5 @@ class PaidQueryResponseTest {
 
     private static PaidQueryResponse<String> create() {
         return new PaidQueryResponse<>(valueValue(), answeredByValue(), costValue());
-    }
-
-    /// Asserts that two values are equal; arrays by their content.
-    private static void assertValue(final @Nullable Object expected, final @Nullable Object actual) {
-        if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
-            assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was " + Arrays.toString(other));
-        } else {
-            assertEquals(expected, actual);
-        }
     }
 }

@@ -869,16 +869,43 @@ namespace, for the Node.js test runner (`node:test`, `node:assert`). They check 
 Tests whose values cannot be built are `test.todo` entries.
 
 Because value objects have no equality (see [Identity and equality](#identity-and-equality)), the generated tests
-compare with a helper rather than with `deepStrictEqual`:
-
-```ts
-/** Asserts that two values are equal: by `equals` if they have it, by content if they are arrays, bytes, sets,
-    maps or dates, otherwise identical. */
-function assertValue(expected: unknown, actual: unknown): void { /* ... */ }
-```
+compare with `assertValue` of the hand-written package `@hiero/test-support` (`sdk-ts/test-support`) rather than with
+`deepStrictEqual`: by `equals` if the expected value has it, by content if it is an array, bytes, a set, a map or a
+date, otherwise by identity. Every package with generated tests has the package as development dependency.
 
 Hand-written tests follow the same structure as the Java ones — one behaviour per test, given/when/then, and the
 error cases next to the happy path.
+
+### Tests in the specs
+
+The tests of the `tests` blocks in a spec's `## Testing` section (see [`test-language.md`](test-language.md)) become
+one test file per spec, next to the other generated tests:
+
+| Test language | TypeScript |
+|---|---|
+| the tests of spec `keys.md` | `keys.spec.test.ts` in the directory of the namespace (`packages/base/src/keys/`), one `describe("keys", …)` |
+| `test "name" { … }` | `test("name", () => { … })`; the id (`keys/name`) and the comment above the test as `//` comments; `async () =>` if the test awaits a call |
+| `@@disabled("reason")` | `test("name", { skip: "reason" }, …)` |
+| `@@deprecated("reason")` | `// Deprecated: reason` |
+| `// given`, `// when`, `// then` and every other comment inside a test | the same `//` comment at the same place |
+| `let x = …` | `const x: <Type> = …;` (`\| null` where the value may be `null`) |
+| `if` / `else if` / `else`, `for x in …` | `if (…) { … } else if …`, `for (const x of …)` |
+| `values NAME: list<string> = [...]` (named test values of the spec) | a module constant `const NAME: ReadonlyArray<string> = [...];` with the comment of the declaration as `/** */` comment |
+| `DEFAULT(PrivateKey)` | a helper `function defaultPrivateKey(): PrivateKey` that returns the default instance |
+| `assertEquals(expected: a, actual: b)` and the other built-in functions | the functions of the hand-written package `@hiero/test-support` (`sdk-ts/test-support`); `toString` is `text`, and overloads that differ by a numeric type get a suffix (`absDouble`, `minDecimal`, `toDecimalDouble`), because `number` and `string` also stand for other types |
+| `@@expectThrows(illegal-format) call(…)` | `assert.throws(() => call(…), RangeError);` with the error class of the id; `await assert.rejects(async () => …)` for an asynchronous call |
+| `a == b`, `a != b` | `equal(a, b)`, `!equal(a, b)` (the value equality of the test language: bytes by content, lists, sets and maps by their elements, integers by value, an object with `equals` by that method, the instance of a class by all its getters); `a === b` for enum constants; decimals are compared without their scale (`decimal(a)`) |
+| integers | always `bigint`: `int(x)` converts a `number` of the API, a literal is `3n`; `+ - * / %` are the `bigint` operators, which truncate like the test language |
+| an integer passed to the API | `checked(value, "uint64")` for a `bigint` parameter, `checkedNumber(value, "int32")` for a `number` one: a value out of range fails the test |
+| `double` arithmetic | the `number` operators |
+| `decimal` arithmetic and comparison | `addDecimal`, `subtractDecimal`, `multiplyDecimal`, `negateDecimal`, `compareDecimal(a, b) < 0` on the decimal text |
+| `<`, `>` on other values (dates) | `compare(a, b) < 0` |
+| `a + b` of `bytes`, of lists | `concat(a, b)` |
+| `x is null`, `x is Circle` | `x === null`, `x instanceof Circle` (only a class has a type at runtime; `is` on an abstraction is not generated) |
+| `[a, b]`, `{k: v}`, `x[i]` | an array, `new Set([…])`, `new Uint8Array([…])`; `new Map([[k, v]])`; `get(x, i)` |
+
+A test without TypeScript form is a `test.todo` entry and listed at the top of the file, like the contract tests. The
+location of `@hiero/test-support` is the configuration key `ts.testSupport` (default `../test-support`).
 
 ## Generator gaps (summary)
 

@@ -25,20 +25,26 @@ final class TsProjectGenerator {
 
     static List<GeneratedFile> root(final List<SpecFolders.Folder> folders, final TsGeneratorConfig config,
                                     final boolean support) {
-        return root(folders, config, support, false);
+        return root(folders, config, support, false, false);
     }
 
     static List<GeneratedFile> root(final List<SpecFolders.Folder> folders, final TsGeneratorConfig config,
-                                    final boolean support, final boolean protobuf) {
-        // the hand-written support package is linked into the workspace and built first
+                                    final boolean support, final boolean testSupport, final boolean protobuf) {
+        // the hand-written support packages are linked into the workspace and built first
         final List<String> workspaces = new java.util.ArrayList<>();
         if (support) {
             workspaces.add(TsNames.supportDirectory(config, ""));
+        }
+        if (testSupport) {
+            workspaces.add(TsNames.testSupportDirectory(config, ""));
         }
         folders.forEach(f -> workspaces.add(TsNames.packageDirectory(f.name())));
         final List<String> references = new java.util.ArrayList<>();
         if (support) {
             references.add(TsNames.supportDirectory(config, ""));
+        }
+        if (testSupport) {
+            references.add(TsNames.testSupportDirectory(config, ""));
         }
         folders.forEach(f -> references.add("./" + TsNames.packageDirectory(f.name())));
         // the marker in the first line: JSON has no comments
@@ -117,7 +123,7 @@ final class TsProjectGenerator {
 
     static List<GeneratedFile> folder(final SpecFolders.Folder folder, final List<String> subpaths,
                                       final TsGeneratorConfig config, final boolean support,
-                                      final boolean protobuf) {
+                                      final boolean testSupport, final boolean protobuf) {
         final String directory = TsNames.packageDirectory(folder.name());
         final String exports = subpaths.stream().sorted().map(s -> "    \"./" + s + "\": {\n"
                         + "      \"types\": \"./dist/" + s + "/index.d.ts\",\n"
@@ -136,9 +142,15 @@ final class TsProjectGenerator {
             dependencies.add("    \"" + PROTOBUF_RUNTIME + "\": \"" + PROTOBUF_RUNTIME_VERSION + "\"");
         }
         final String dependencyEntries = String.join(",\n", dependencies);
+        // the tests of the specs use the test support package; it is not needed at runtime
+        final String devDependencies = testSupport ? ",\n  \"devDependencies\": {\n    \""
+                + TsNames.testSupportPackage(config) + "\": \"" + config.version() + "\"\n  }" : "";
         final List<String> references = new java.util.ArrayList<>();
         if (support) {
             references.add(TsNames.supportDirectory(config, "../../"));
+        }
+        if (testSupport) {
+            references.add(TsNames.testSupportDirectory(config, "../../"));
         }
         folder.requires().forEach(r -> references.add("../" + r));
         final String packageJson = "{ \"//\": \"" + TsGenerator.MARKER + "\",\n"
@@ -147,8 +159,8 @@ final class TsProjectGenerator {
                 + "  \"description\": \"Package " + folder.name() + " of the Hiero SDK.\",\n"
                 + "  \"type\": \"module\",\n"
                 + "  \"exports\": {\n" + exports + "\n  },\n"
-                + "  \"files\": [\"dist\"]" + (dependencies.isEmpty() ? "\n" : ",\n  \"dependencies\": {\n"
-                + dependencyEntries + "\n  }\n")
+                + "  \"files\": [\"dist\"]" + (dependencies.isEmpty() ? "" : ",\n  \"dependencies\": {\n"
+                + dependencyEntries + "\n  }") + devDependencies + "\n"
                 + "}\n";
         final String tsconfig = "// " + TsGenerator.MARKER + "\n"
                 + "{\n"

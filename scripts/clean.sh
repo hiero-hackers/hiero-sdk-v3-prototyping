@@ -53,6 +53,7 @@ if (( build_output )); then
   add "$repository"/sdk-java/support/target "$repository"/sdk-java/protobuf/target \
       "$repository"/sdk-java/tck/runtime/target
   add "$repository"/sdk-ts/support/dist "$repository"/sdk-ts/support/tsconfig.tsbuildinfo \
+      "$repository"/sdk-ts/test-support/dist "$repository"/sdk-ts/test-support/tsconfig.tsbuildinfo \
       "$repository"/sdk-ts/tck/runtime/dist "$repository"/sdk-ts/tck/runtime/*.tsbuildinfo
 fi
 

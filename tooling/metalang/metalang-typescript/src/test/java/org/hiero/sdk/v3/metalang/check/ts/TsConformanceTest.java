@@ -21,10 +21,10 @@ import org.junit.jupiter.api.io.TempDir;
 
 class TsConformanceTest {
 
-    /** The installed TypeScript of the generated workspace (npm install in generated/ts). */
     private static final Path REPOSITORY = Path.of(System.getProperty("spec.root", "../../../spec")).toAbsolutePath()
             .normalize().getParent();
-    private static final Path TYPESCRIPT = REPOSITORY.resolve("generated/ts/node_modules/typescript");
+    /** The installed TypeScript of the npm workspace (npm install in sdk-ts). */
+    private static final Path TYPESCRIPT = REPOSITORY.resolve("sdk-ts/node_modules/typescript");
 
     @TempDir
     Path temp;
@@ -178,12 +178,14 @@ class TsConformanceTest {
 
     @Test
     void generatedTsShouldProvideTheApiOfTheSpecs() throws Exception {
-        assumeTrue(available(), "node and generated/ts/node_modules (npm install) are needed");
+        assumeTrue(available(), "node and sdk-ts/node_modules (npm install) are needed");
+        // the generated code is not under version control: scripts/generate-ts.sh produces it
+        assumeTrue(Files.isDirectory(REPOSITORY.resolve("sdk-ts/generated/packages")), "sdk-ts/generated is needed");
         final Path specs = REPOSITORY.resolve("spec");
         final TsConformance.Result result = TsConformance.check(LinkedModel.of(new MetaLang().validate(specs)
                         .model()), new TsGenerator(TsGeneratorConfig.load(REPOSITORY.resolve("sdk-ts/generator.properties"))),
-                REPOSITORY.resolve("generated/ts"), null);
-        // generated/ts is up to date (otherwise: regenerate it, see tooling/metalang/README.md)
+                REPOSITORY.resolve("sdk-ts/generated"), TYPESCRIPT);
+        // sdk-ts/generated is up to date (otherwise: regenerate it, see tooling/metalang/README.md)
         assertThat(result.differences()).isEmpty();
         assertThat(result.declarations()).isPositive();
     }

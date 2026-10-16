@@ -1,8 +1,8 @@
 package org.hiero.enterprise.service.account;
 
+import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Arrays;
 import org.hiero.authority.Authority;
 import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.hedera.Hbar;
@@ -12,7 +12,6 @@ import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -64,14 +63,5 @@ class AccountInformationTest {
 
     private static AccountInformation create() {
         return new AccountInformation(accountIdValue(), balanceValue(), authorityValue());
-    }
-
-    /// Asserts that two values are equal; arrays by their content.
-    private static void assertValue(final @Nullable Object expected, final @Nullable Object actual) {
-        if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
-            assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was " + Arrays.toString(other));
-        } else {
-            assertEquals(expected, actual);
-        }
     }
 }

@@ -1,12 +1,12 @@
 package org.hiero.mirrornode.topic;
 
+import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.hiero.authority.Authority;
@@ -181,14 +181,5 @@ class TopicTest {
 
     private static Topic create() {
         return new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue());
-    }
-
-    /// Asserts that two values are equal; arrays by their content.
-    private static void assertValue(final @Nullable Object expected, final @Nullable Object actual) {
-        if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
-            assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was " + Arrays.toString(other));
-        } else {
-            assertEquals(expected, actual);
-        }
     }
 }

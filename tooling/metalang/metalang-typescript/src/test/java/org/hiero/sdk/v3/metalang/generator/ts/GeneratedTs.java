@@ -23,6 +23,9 @@ final class GeneratedTs {
     static final Path SUPPORT = Path.of(System.getProperty("spec.root", "../../../spec")).toAbsolutePath().normalize()
             .resolveSibling("sdk-ts/support");
 
+    /** The hand-written test support package of the repository. */
+    static final Path TEST_SUPPORT = SUPPORT.resolveSibling("test-support");
+
     static final Path MODULES = Path.of(System.getProperty("spec.root", "../../../spec")).toAbsolutePath().normalize()
             .resolveSibling("sdk-ts/node_modules");
 
@@ -76,21 +79,17 @@ final class GeneratedTs {
             Files.createDirectories(target.getParent());
             Files.writeString(target, file.content(), StandardCharsets.UTF_8);
         }
-        final Path support = directory.resolve("sdk-ts/support");
-        try (var sources = Files.walk(SUPPORT)) {
-            for (final Path source : sources.filter(Files::isRegularFile)
-                    .filter(p -> !SUPPORT.relativize(p).toString().matches("(dist|node_modules)/.*|.*\\.tsbuildinfo"))
-                    .toList()) {
-                final Path copy = support.resolve(SUPPORT.relativize(source).toString());
-                Files.createDirectories(copy.getParent());
-                Files.copy(source, copy);
-            }
-        }
+        final Path support = copy(SUPPORT, directory.resolve("sdk-ts/support"));
+        final Path testSupport = copy(TEST_SUPPORT, directory.resolve("sdk-ts/test-support"));
         final Path modules = workspace.resolve("node_modules");
         Files.createDirectories(modules.resolve(scope));
         Files.createSymbolicLink(modules.resolve("typescript"), MODULES.resolve("typescript"));
         Files.createSymbolicLink(modules.resolve("@types"), MODULES.resolve("@types"));
         Files.createSymbolicLink(modules.resolve(scope).resolve("support"), support);
+        Files.createSymbolicLink(modules.resolve(scope).resolve("test-support"), testSupport);
+        // the test support package (beside the workspace) finds the Node.js type definitions in sdk-ts/node_modules
+        Files.createDirectories(directory.resolve("sdk-ts/node_modules"));
+        Files.createSymbolicLink(directory.resolve("sdk-ts/node_modules/@types"), MODULES.resolve("@types"));
         try (var packages = Files.list(workspace.resolve("packages"))) {
             for (final Path pkg : packages.toList()) {
                 Files.createSymbolicLink(modules.resolve(scope).resolve(pkg.getFileName()), pkg);
@@ -100,6 +99,20 @@ final class GeneratedTs {
                 "--build").directory(workspace.toFile()).redirectErrorStream(true).start();
         final String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         return process.waitFor() == 0 ? "" : output;
+    }
+
+    /** Copies a hand-written package without its build output. */
+    private static Path copy(final Path from, final Path to) throws java.io.IOException {
+        try (var sources = Files.walk(from)) {
+            for (final Path source : sources.filter(Files::isRegularFile)
+                    .filter(p -> !from.relativize(p).toString().matches("(dist|node_modules)/.*|.*\\.tsbuildinfo"))
+                    .toList()) {
+                final Path copy = to.resolve(from.relativize(source).toString());
+                Files.createDirectories(copy.getParent());
+                Files.copy(source, copy);
+            }
+        }
+        return to;
     }
 
     /**

@@ -2,14 +2,13 @@
 
 package org.hiero.shop.money;
 
+import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigInteger;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import javax.annotation.processing.Generated;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -27,14 +26,5 @@ class PlanTest {
         assertValue(Duration.ofSeconds(3_600L), Plan.PREMIUM.timeout());
         assertValue(new BigInteger("100000000000000000000"), Plan.PREMIUM.limit());
         assertValue(List.of(), Plan.PREMIUM.tags());
-    }
-
-    /// Asserts that two values are equal; arrays by their content.
-    private static void assertValue(final @Nullable Object expected, final @Nullable Object actual) {
-        if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
-            assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was " + Arrays.toString(other));
-        } else {
-            assertEquals(expected, actual);
-        }
     }
 }

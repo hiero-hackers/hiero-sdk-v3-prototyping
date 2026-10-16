@@ -1,0 +1,19 @@
+{
+  "name": "@hiero/test-support",
+  "version": "0.1.0-SNAPSHOT",
+  "description": "Hand-written built-in functions and assertions of the test language, used by the TypeScript tests generated from the specs.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*"
+  ],
+  "scripts": {
+    "test": "tsc --build && node --test \"dist/**/*.test.js\""
+  }
+}

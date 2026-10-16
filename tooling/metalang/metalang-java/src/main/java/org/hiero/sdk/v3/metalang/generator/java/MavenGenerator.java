@@ -169,7 +169,7 @@ final class MavenGenerator {
                 + "            <artifactId>junit-jupiter</artifactId>\n"
                 + "            <scope>test</scope>\n"
                 + "        </dependency>\n"
-                // the tests of the specs use the hand-written test support (sdk-java/test-support)
+                // the generated tests use the hand-written test support (sdk-java/test-support)
                 + module.testRequires().stream().map(r -> "        <dependency>\n"
                         + "            <groupId>${project.groupId}</groupId>\n"
                         + "            <artifactId>" + r + "</artifactId>\n"

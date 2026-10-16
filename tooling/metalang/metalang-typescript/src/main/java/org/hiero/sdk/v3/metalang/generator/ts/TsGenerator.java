@@ -2,13 +2,16 @@ package org.hiero.sdk.v3.metalang.generator.ts;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.SortedMap;
+import java.util.TreeMap;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 import org.hiero.sdk.v3.metalang.generator.SpecFolders;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
 import org.hiero.sdk.v3.metalang.model.NamespaceDefinition;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
+import org.hiero.sdk.v3.metalang.model.TestDefinition;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
 
 /**
@@ -56,7 +59,9 @@ public final class TsGenerator {
         final TsContext context = new TsContext(config, model);
         final List<GeneratedFile> files = new ArrayList<>();
         final String supportImport = "from \"" + TsNames.supportPackage(config) + "\"";
+        final String testSupportImport = "from \"" + TsNames.testSupportPackage(config) + "\"";
         boolean anySupport = false;
+        boolean anyTestSupport = false;
         for (final SpecFolders.Folder folder : context.folders()) {
             final List<GeneratedFile> folderFiles = new ArrayList<>();
             final List<String> subpaths = new ArrayList<>();
@@ -75,6 +80,13 @@ public final class TsGenerator {
                 });
                 TsNamespaceGenerator.constants(namespace.name(), context).ifPresent(namespaceFiles::add);
                 TsNamespaceGenerator.errors(namespace.name(), context).ifPresent(namespaceFiles::add);
+                // the tests of the `tests` blocks: one file per spec
+                final Map<String, List<TestDefinition>> specTests = new TreeMap<>();
+                model.tests().stream().filter(t -> t.namespace().equals(namespace.name()))
+                        .forEach(t -> specTests.computeIfAbsent(t.specName(), k -> new ArrayList<>()).add(t));
+                specTests.forEach((spec, tests) -> namespaceFiles.add(TsSpecTestGenerator.generate(namespace.name(),
+                        spec, tests, model.testValues().stream().filter(v -> v.namespace().equals(namespace.name())
+                                && v.specName().equals(spec)).toList(), context)));
                 namespaceFiles.add(TsNamespaceGenerator.index(namespace, TsNamespaceGenerator.modules(namespace.name(),
                         types, namespaceFiles, context), context));
                 folderFiles.addAll(namespaceFiles);
@@ -83,11 +95,15 @@ public final class TsGenerator {
             // the hand-written support package is a dependency of every package whose code imports from it
             final boolean support = folderFiles.stream().anyMatch(f -> f.content().contains(supportImport));
             anySupport |= support;
+            // the hand-written test support package is a development dependency of every package with spec tests
+            final boolean testSupport = folderFiles.stream().anyMatch(f -> f.content().contains(testSupportImport));
+            anyTestSupport |= testSupport;
             files.addAll(folderFiles);
-            files.addAll(TsProjectGenerator.folder(folder, subpaths, config, support,
+            files.addAll(TsProjectGenerator.folder(folder, subpaths, config, support, testSupport,
                     config.protobuf().contains(folder.name())));
         }
-        files.addAll(TsProjectGenerator.root(context.folders(), config, anySupport, !config.protobuf().isEmpty()));
+        files.addAll(TsProjectGenerator.root(context.folders(), config, anySupport, anyTestSupport,
+                !config.protobuf().isEmpty()));
         return files.stream().sorted().toList();
     }
 

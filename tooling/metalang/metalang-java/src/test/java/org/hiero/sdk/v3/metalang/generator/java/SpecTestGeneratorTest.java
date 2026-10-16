@@ -231,18 +231,25 @@ class SpecTestGeneratorTest {
     }
 
     @Test
-    void onlyAModuleWithSpecTestsShouldDependOnTheTestSupport() {
+    void onlyAModuleWithTestsShouldDependOnTheTestSupport() {
         assertThat(generate(TESTS).stream().filter(f -> f.path().equals("pom.xml")).findFirst().orElseThrow()
                 .content()).doesNotContain("hiero-sdk-test-support");
         final String module = generate(TESTS).stream().filter(f -> f.path().endsWith("/pom.xml")
                 && !f.path().equals("pom.xml")).findFirst().orElseThrow().content();
         assertThat(module).contains("            <artifactId>hiero-sdk-test-support</artifactId>\n"
                 + "            <version>${project.version}</version>\n            <scope>test</scope>\n");
-        final ValidationReport withoutTests = new MetaLang().validate(Map.of("f/a.md",
+        // the contract tests use it as well (assertValue); a module without any test does not
+        final ValidationReport withoutSpecTests = new MetaLang().validate(Map.of("f/a.md",
                 spec("").replace("```tests\n```\n", "")));
-        assertThat(new JavaGenerator(JavaGeneratorConfig.DEFAULT).generate(LinkedModel.of(withoutTests.model()))
-                .stream().noneMatch(f -> f.content().contains("hiero-sdk-test-support")
-                        || f.path().endsWith("SpecTest.java"))).isTrue();
+        final List<GeneratedFile> contractTestsOnly = new JavaGenerator(JavaGeneratorConfig.DEFAULT)
+                .generate(LinkedModel.of(withoutSpecTests.model()));
+        assertThat(contractTestsOnly).noneMatch(f -> f.path().endsWith("SpecTest.java"));
+        assertThat(contractTestsOnly).anyMatch(f -> f.path().endsWith("/pom.xml")
+                && f.content().contains("hiero-sdk-test-support"));
+        final ValidationReport withoutTests = new MetaLang().validate(Map.of("f/a.md", "# A\n\n## Description\n\n"
+                + "Text.\n\n## API Schema\n\n```\nnamespace a\nabstraction Shape {}\n```\n\n## Questions & Comments\n"));
+        assertThat(new JavaGenerator(JavaGeneratorConfig.DEFAULT).generate(LinkedModel.of(withoutTests.model())))
+                .noneMatch(f -> f.content().contains("hiero-sdk-test-support"));
     }
 
     @Test
