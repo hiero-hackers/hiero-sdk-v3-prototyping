@@ -4,6 +4,7 @@ import static org.hiero.sdk.testing.Testing.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,20 +12,34 @@ import org.junit.jupiter.api.Test;
 @DisplayName("keys")
 class KeysSpecTest {
 
+    /// Private keys (raw bytes in hex) and their public keys, per algorithm. All are published vectors, recomputed
+    /// independently: for Ed25519 RFC 8032, section 7.1 (TEST 1, TEST 2, TEST 3), the key of the serialization tests of the
+    /// Java, Go and JavaScript SDKs, and the default key (its public key as derived by OpenSSL); for secp256k1 the scalars
+    /// 1, 2 and 3 (the generator of SEC 2 and its multiples, as compressed SEC 1 points) and the vector of the Go,
+    /// JavaScript, Rust and Swift tests.
+    private static final Map<KeyAlgorithm, Map<String, String>> KEY_PAIRS = Map.of(KeyAlgorithm.ED25519, Map.of("9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60", "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a", "4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb", "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c", "c5aa8df43f9f837bedb7442f31dcb7b166d38535076f094b85ce3a2e0b4458f7", "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025", "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10", "e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7", "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c", "690fb5dbd7a8ab708e231a1ada8dec56d57744719ec4ef6ebb180ef5e8ae6b2d"), KeyAlgorithm.ECDSA, Map.of("0000000000000000000000000000000000000000000000000000000000000001", "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798", "0000000000000000000000000000000000000000000000000000000000000002", "02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5", "0000000000000000000000000000000000000000000000000000000000000003", "02f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9", "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048", "02703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"));
+
+    /// Messages to sign, with the edge cases of a message: empty, a single zero byte, text, text with characters of more than
+    /// one byte in UTF-8, a long message of bytes that are not text, and a transaction body (the known answer of the
+    /// JavaScript SDK).
+    private static final List<byte[]> MESSAGES = List.of(hex(""), hex("00"), utf8("hello"), utf8("ℏ 1 hbar = 100,000,000 tℏ"), repeat(hex("ff"), 1000L), hex("0a0e0a0408011001120608001000180412060800100018031880c2d72f220208783200721a0a180a0a0a0608001000180410130a0a0a060800100018051014"));
+
     /// `keys/a-private-key-imported-from-hex-has-these-raw-bytes`
     @Test
     @DisplayName("a private key imported from hex has these raw bytes")
     void aPrivateKeyImportedFromHexHasTheseRawBytes() {
-        // given
-        final String hexText = "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c";
+        for (final KeyAlgorithm algorithm : keys(KEY_PAIRS)) {
+            final Map<String, String> pairs = get(KEY_PAIRS, algorithm);
+            for (final String secret : keys(pairs)) {
+                // when
+                final PrivateKey key = KeysFactory.createPrivateKey(algorithm, ByteImportEncoding.HEX, secret);
 
-        // when
-        final PrivateKey key = KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, hexText);
-
-        // then
-        assertEquals(hex(hexText), key.bytes());
-        assertEquals(KeyAlgorithm.ED25519, key.algorithm());
-        assertEquals(KeyType.PRIVATE, key.type());
+                // then
+                assertEquals(hex(secret), key.bytes());
+                assertEquals(algorithm, key.algorithm());
+                assertEquals(KeyType.PRIVATE, key.type());
+            }
+        }
     }
 
     /// `keys/the-default-private-key-encodes-as-pkcs-8-der`
@@ -41,62 +56,96 @@ class KeysSpecTest {
         assertEquals(hex("302e020100300506032b657004220420d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"), der);
     }
 
-    /// `keys/the-public-key-of-an-ed25519-key-is-a-public-ed25519-key-of-32-bytes`
+    /// `keys/a-private-key-derives-its-published-public-key`
+    ///
+    /// Source: the vectors of KEY_PAIRS (RFC 8032, SEC 2 and the tests of the Java, Go, JavaScript, Rust and Swift SDKs).
+    /// The public key of an ECDSA key is the compressed SEC 1 point (33 bytes) in every SDK.
     @Test
-    @DisplayName("the public key of an Ed25519 key is a public Ed25519 key of 32 bytes")
-    void thePublicKeyOfAnEd25519KeyIsAPublicEd25519KeyOf32Bytes() {
-        // given
-        final PrivateKey privateKey = defaultPrivateKey();
+    @DisplayName("a private key derives its published public key")
+    void aPrivateKeyDerivesItsPublishedPublicKey() {
+        for (final KeyAlgorithm algorithm : keys(KEY_PAIRS)) {
+            final Map<String, String> pairs = get(KEY_PAIRS, algorithm);
+            for (final String secret : keys(pairs)) {
+                // when
+                final PublicKey publicKey = KeysFactory.createPrivateKey(algorithm, ByteImportEncoding.HEX, secret).createPublicKey();
 
-        // when
-        final PublicKey publicKey = privateKey.createPublicKey();
-
-        // then
-        assertEquals(KeyType.PUBLIC, publicKey.type());
-        assertEquals(KeyAlgorithm.ED25519, publicKey.algorithm());
-        assertEquals(32L, length(publicKey.bytes()));
-        assertEquals(publicKey, KeysFactory.createPublicKey(KeyAlgorithm.ED25519, publicKey.bytes()));
+                // then
+                assertEquals(hex(get(pairs, secret)), publicKey.bytes());
+                assertEquals(algorithm, publicKey.algorithm());
+                assertEquals(KeyType.PUBLIC, publicKey.type());
+                assertEquals(publicKey, KeysFactory.createPublicKey(algorithm, publicKey.bytes()));
+            }
+        }
     }
 
     /// `keys/a-signature-verifies-with-the-public-key-and-only-for-its-message`
+    ///
+    /// Source: the Go, C++ and Python SDKs (sign, verify, and a signature that no longer verifies for another message); the
+    /// C++ SDK (the empty message).
     @Test
     @DisplayName("a signature verifies with the public key and only for its message")
     void aSignatureVerifiesWithThePublicKeyAndOnlyForItsMessage() {
-        // given
-        final byte[] message = utf8("hello");
+        for (final KeyAlgorithm algorithm : keys(KEY_PAIRS)) {
+            final Map<String, String> pairs = get(KEY_PAIRS, algorithm);
+            for (final String secret : keys(pairs)) {
+                // given
+                final PrivateKey privateKey = KeysFactory.createPrivateKey(algorithm, ByteImportEncoding.HEX, secret);
+                final PublicKey publicKey = KeysFactory.createPublicKey(algorithm, hex(get(pairs, secret)));
+                for (final byte[] message : MESSAGES) {
+                    // when
+                    final byte[] signature = privateKey.sign(message);
 
-        // when
-        final byte[] signature = defaultPrivateKey().sign(message);
-
-        // then: RFC 8032 signatures may be randomised by the platform (Apple CryptoKit does), so only verification is checked
-        assertEquals(64L, length(signature));
-        assertTrue(defaultPublicKey().verify(message, signature));
-        assertFalse(defaultPublicKey().verify(utf8("hello!"), signature));
+                    // then: RFC 8032 signatures may be randomised by the platform (Apple CryptoKit does), so only
+                    // verification is checked
+                    assertEquals(64L, length(signature));
+                    assertTrue(publicKey.verify(message, signature));
+                    assertFalse(publicKey.verify(concat(message, hex("00")), signature));
+                }
+            }
+        }
     }
 
     /// `keys/a-key-survives-every-format-that-supports-its-type`
+    ///
+    /// Source: the Java, Go and Python SDKs (a key read back from its own DER and PEM encoding).
     @Test
     @DisplayName("a key survives every format that supports its type")
     void aKeySurvivesEveryFormatThatSupportsItsType() {
-        // given
-        final PrivateKey key = defaultPrivateKey();
-        for (final KeyFormat format : List.of(KeyFormat.PKCS8_WITH_DER, KeyFormat.SPKI_WITH_DER, KeyFormat.PKCS8_WITH_PEM, KeyFormat.SPKI_WITH_PEM)) {
-            if (!format.supportsType(KeyType.PRIVATE)) {
-                // when / then: a format for public keys rejects a private key
-                assertThrows(IllegalArgumentException.class, () -> key.toBytes(format));
-            } else if (format.encoding() == KeyEncoding.DER) {
-                // when
-                final byte[] der = key.toBytes(format);
+        for (final KeyAlgorithm algorithm : keys(KEY_PAIRS)) {
+            final Map<String, String> pairs = get(KEY_PAIRS, algorithm);
+            for (final String secret : keys(pairs)) {
+                // given
+                final PrivateKey privateKey = KeysFactory.createPrivateKey(algorithm, ByteImportEncoding.HEX, secret);
+                final PublicKey publicKey = privateKey.createPublicKey();
+                for (final KeyFormat format : List.of(KeyFormat.PKCS8_WITH_DER, KeyFormat.SPKI_WITH_DER, KeyFormat.PKCS8_WITH_PEM, KeyFormat.SPKI_WITH_PEM)) {
+                    if (format.supportsType(KeyType.PRIVATE)) {
+                        if (format.encoding() == KeyEncoding.DER) {
+                            // when / then
+                            assertEquals(privateKey, KeysFactory.createPrivateKey(format, privateKey.toBytes(format)));
+                        } else {
+                            // when
+                            final String pem = privateKey.toString(format);
 
-                // then
-                assertEquals(key, KeysFactory.createPrivateKey(format, der));
-            } else {
-                // when
-                final String pem = key.toString(format);
+                            // then
+                            assertTrue(startsWith(pem, "-----BEGIN PRIVATE KEY-----"));
+                            assertEquals(privateKey, KeysFactory.createPrivateKey(format, pem));
+                        }
+                    } else {
+                        // when / then: a format for public keys rejects a private key
+                        assertThrows(IllegalArgumentException.class, () -> privateKey.toBytes(format));
+                        if (format.encoding() == KeyEncoding.DER) {
+                            // when / then
+                            assertEquals(publicKey, KeysFactory.createPublicKey(format, publicKey.toBytes(format)));
+                        } else {
+                            // when
+                            final String publicPem = publicKey.toString(format);
 
-                // then
-                assertTrue(startsWith(pem, "-----BEGIN PRIVATE KEY-----"));
-                assertEquals(key, KeysFactory.createPrivateKey(format, pem));
+                            // then
+                            assertTrue(startsWith(publicPem, "-----BEGIN PUBLIC KEY-----"));
+                            assertEquals(publicKey, KeysFactory.createPublicKey(format, publicPem));
+                        }
+                    }
+                }
             }
         }
     }
@@ -108,9 +157,11 @@ class KeysSpecTest {
         // given
         final String tooShort = "d3671a1e";
         final String tooLong = repeat("ab", 33L);
-        for (final String hexText : List.of(tooShort, tooLong)) {
-            // when / then
-            assertThrows(IllegalArgumentException.class, () -> KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, hexText));
+        for (final KeyAlgorithm algorithm : keys(KEY_PAIRS)) {
+            for (final String hexText : List.of(tooShort, tooLong)) {
+                // when / then
+                assertThrows(IllegalArgumentException.class, () -> KeysFactory.createPrivateKey(algorithm, ByteImportEncoding.HEX, hexText));
+            }
         }
     }
 
@@ -169,25 +220,6 @@ class KeysSpecTest {
         assertEquals(der, written);
     }
 
-    /// `keys/the-rfc-8032-secret-keys-derive-the-rfc-8032-public-keys`
-    ///
-    /// Source: RFC 8032, section 7.1, TEST 1 and TEST 2 (published test vectors).
-    @Test
-    @DisplayName("the RFC 8032 secret keys derive the RFC 8032 public keys")
-    void theRFC8032SecretKeysDeriveTheRFC8032PublicKeys() {
-        // given
-        final byte[] secret1 = hex("9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60");
-        final byte[] secret2 = hex("4ccd089b28ff96da9db6c346ec114e0f5b8a319f35aba624da8cf6ed4fb8a6fb");
-
-        // when
-        final PublicKey public1 = KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, secret1).createPublicKey();
-        final PublicKey public2 = KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, secret2).createPublicKey();
-
-        // then
-        assertEquals(hex("d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a"), public1.bytes());
-        assertEquals(hex("3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c"), public2.bytes());
-    }
-
     /// `keys/an-rfc-8032-signature-verifies-only-for-its-message`
     ///
     /// Source: RFC 8032, section 7.1, TEST 2.
@@ -205,24 +237,6 @@ class KeysSpecTest {
         // then
         assertTrue(valid);
         assertFalse(otherMessage);
-    }
-
-    /// `keys/a-secp256k1-private-key-derives-its-compressed-public-key`
-    ///
-    /// Source: secp256k1 (SEC 2); the vector of the Go, JavaScript, Rust and Swift tests, verified with OpenSSL. The public
-    /// key of an ECDSA key is the compressed SEC 1 point (33 bytes) in every SDK.
-    @Test
-    @DisplayName("a secp256k1 private key derives its compressed public key")
-    void aSecp256k1PrivateKeyDerivesItsCompressedPublicKey() {
-        // given
-        final String hexText = "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048";
-
-        // when
-        final PublicKey publicKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, hexText).createPublicKey();
-
-        // then
-        assertEquals(KeyAlgorithm.ECDSA, publicKey.algorithm());
-        assertEquals(hex("02703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"), publicKey.bytes());
     }
 
     /// `keys/a-secp256k1-spki-der-key-with-a-compressed-or-uncompressed-point-is-read-as-the-compressed-point`
@@ -318,25 +332,6 @@ class KeysSpecTest {
         assertNotEquals(ed25519, ecdsa);
     }
 
-    /// `keys/a-secp256k1-signature-verifies-with-the-public-key-and-only-for-its-message`
-    ///
-    /// Source: the Go, C++ and Python SDKs (sign, verify, and a signature that no longer verifies for another message).
-    @Test
-    @DisplayName("a secp256k1 signature verifies with the public key and only for its message")
-    void aSecp256k1SignatureVerifiesWithThePublicKeyAndOnlyForItsMessage() {
-        // given
-        final PrivateKey privateKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
-        final byte[] message = utf8("hello world");
-
-        // when
-        final byte[] signature = privateKey.sign(message);
-
-        // then
-        assertEquals(64L, length(signature));
-        assertTrue(privateKey.createPublicKey().verify(message, signature));
-        assertFalse(privateKey.createPublicKey().verify(utf8("hello world!"), signature));
-    }
-
     /// `keys/a-secp256k1-signature-is-the-rfc-6979-low-s-signature-of-the-keccak-256-hash`
     ///
     /// Source: the known answer of the Go, Rust and Swift SDKs (Keccak-256, RFC 6979, low-s); the Java SDK computes the same r
@@ -367,23 +362,6 @@ class KeysSpecTest {
 
         // when / then
         assertTrue(publicKey.verify(utf8("hello world"), highS));
-    }
-
-    /// `keys/a-secp256k1-key-survives-every-format-that-supports-its-type`
-    ///
-    /// Source: the Java, Go and Python SDKs (an ECDSA key read back from its own DER and PEM encoding).
-    @Test
-    @DisplayName("a secp256k1 key survives every format that supports its type")
-    void aSecp256k1KeySurvivesEveryFormatThatSupportsItsType() {
-        // given
-        final PrivateKey privateKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
-        final PublicKey publicKey = privateKey.createPublicKey();
-
-        // when / then: PKCS#8 holds the private key, SPKI the public key, each in DER and in PEM
-        assertEquals(privateKey, KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_DER, privateKey.toBytes(KeyFormat.PKCS8_WITH_DER)));
-        assertEquals(privateKey, KeysFactory.createPrivateKey(KeyFormat.PKCS8_WITH_PEM, privateKey.toString(KeyFormat.PKCS8_WITH_PEM)));
-        assertEquals(publicKey, KeysFactory.createPublicKey(KeyFormat.SPKI_WITH_DER, publicKey.toBytes(KeyFormat.SPKI_WITH_DER)));
-        assertEquals(publicKey, KeysFactory.createPublicKey(KeyFormat.SPKI_WITH_PEM, publicKey.toString(KeyFormat.SPKI_WITH_PEM)));
     }
 
     /// `keys/a-private-key-imported-from-base64-is-the-key-of-the-same-bytes-in-hex`
@@ -458,30 +436,16 @@ class KeysSpecTest {
     @Test
     @DisplayName("a hex key may have a 0x prefix")
     void aHexKeyMayHaveA0xPrefix() {
-        // given
-        final String hexText = "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c";
+        for (final KeyAlgorithm algorithm : keys(KEY_PAIRS)) {
+            final Map<String, String> pairs = get(KEY_PAIRS, algorithm);
+            for (final String secret : keys(pairs)) {
+                // when
+                final PrivateKey key = KeysFactory.createPrivateKey(algorithm, ByteImportEncoding.HEX, "0x" + secret);
 
-        // when
-        final PrivateKey key = KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "0x" + hexText);
-
-        // then
-        assertEquals(defaultPrivateKey(), key);
-    }
-
-    /// `keys/the-ed25519-key-db48-derives-the-public-key-e0c8ec`
-    ///
-    /// Source: the Java, Go and JavaScript SDKs (the key of their Ed25519 serialization tests and its public key).
-    @Test
-    @DisplayName("the Ed25519 key db48… derives the public key e0c8ec…")
-    void theEd25519KeyDb48DerivesThePublicKeyE0c8ec() {
-        // given
-        final PrivateKey privateKey = KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10");
-
-        // when
-        final PublicKey publicKey = privateKey.createPublicKey();
-
-        // then
-        assertEquals(hex("e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"), publicKey.bytes());
+                // then
+                assertEquals(KeysFactory.createPrivateKey(algorithm, ByteImportEncoding.HEX, secret), key);
+            }
+        }
     }
 
     /// `keys/the-ed25519-signatures-of-other-sdks-verify`
@@ -512,7 +476,6 @@ class KeysSpecTest {
         final PublicKey test3 = KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, hex("c5aa8df43f9f837bedb7442f31dcb7b166d38535076f094b85ce3a2e0b4458f7")).createPublicKey();
 
         // when / then
-        assertEquals(hex("fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025"), test3.bytes());
         assertTrue(test1.verify(hex(""), hex("e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd2" + "5bf5f0595bbe24655141438e7a100b")));
         assertTrue(test3.verify(hex("af82"), hex("6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a" + "7c15e9716ed28dc027beceea1ec40a")));
     }
@@ -556,26 +519,16 @@ class KeysSpecTest {
     @Test
     @DisplayName("a signature of the wrong length does not verify")
     void aSignatureOfTheWrongLengthDoesNotVerify() {
-        // given
-        final PublicKey publicKey = defaultPublicKey();
-        for (final byte[] signature : List.of(hex("01020304"), hex(""), repeat(hex("00"), 65L))) {
-            // when / then
-            assertFalse(publicKey.verify(utf8("hello"), signature));
-        }
-    }
-
-    /// `keys/the-empty-message-can-be-signed-and-verified`
-    ///
-    /// Source: the C++ SDK (sign and verify the empty message).
-    @Test
-    @DisplayName("the empty message can be signed and verified")
-    void theEmptyMessageCanBeSignedAndVerified() {
-        for (final PrivateKey privateKey : List.of(defaultPrivateKey(), KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"))) {
-            // when
-            final byte[] signature = privateKey.sign(hex(""));
-
-            // then
-            assertTrue(privateKey.createPublicKey().verify(hex(""), signature));
+        for (final KeyAlgorithm algorithm : keys(KEY_PAIRS)) {
+            final Map<String, String> pairs = get(KEY_PAIRS, algorithm);
+            for (final String secret : keys(pairs)) {
+                // given
+                final PublicKey publicKey = KeysFactory.createPublicKey(algorithm, hex(get(pairs, secret)));
+                for (final byte[] signature : List.of(hex("01020304"), hex(""), repeat(hex("00"), 65L))) {
+                    // when / then
+                    assertFalse(publicKey.verify(utf8("hello"), signature));
+                }
+            }
         }
     }
 
@@ -742,9 +695,5 @@ class KeysSpecTest {
 
     private static PrivateKey defaultPrivateKey() {
         return KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c");
-    }
-
-    private static PublicKey defaultPublicKey() {
-        return defaultPrivateKey().createPublicKey();
     }
 }

@@ -3,7 +3,9 @@ package org.hiero.ledger;
 import static org.hiero.sdk.testing.Testing.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 import org.hiero.hedera.HbarUnit;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,50 +25,58 @@ class LedgerSpecTest {
     /// and characters) and the Python SDK (malformed checksum separators, whitespace).
     private static final List<String> MALFORMED_ENTITY_IDS = List.of("", "0.0", "0.0.", "0.0.a", "a.b.c", "0.0.-1", "-1.-1.-1", "1.2.3.4", "8901000", "8.901000", ".8.90.1000.", "8..901000", "890.1000.", "0.0.1!", "o.o.e", "abc", "0.0.123#vfmkw", "0.0.123 - vfmkw", "0.0.123vfmkw", "0.0.123-vfm-kw", " 0.0.100 ");
 
-    /// `ledger/the-hip-15-checksum-of-an-account-id-is-valid-only-on-its-ledger`
+    /// Entity ids with a HIP-15 checksum and the id of the ledger it belongs to, each recomputed with the algorithm of
+    /// HIP-15: the vectors of HIP-15 and of the Java, JavaScript, Rust, Swift, Go and Python SDKs (0.0.123 on mainnet,
+    /// testnet and previewnet), of the Python SDK (ledger 3), the checksum tables of the Rust and Swift SDKs (0.0.0 to
+    /// 0.0.255 per ledger, here the first, second and last entry, and a ledger id of four bytes), and the vectors of the
+    /// Swift (0.0.1126123), Python (0.0.100), JavaScript (0.0.321) and Go (0.0.3) SDKs.
+    private static final Map<String, byte[]> HIP15_CHECKSUMS = Map.ofEntries(Map.entry("0.0.123-vfmkw", new byte[] {(byte) 0}), Map.entry("0.0.0-uvnqa", new byte[] {(byte) 0}), Map.entry("0.0.1-dfkxr", new byte[] {(byte) 0}), Map.entry("0.0.255-hpphi", new byte[] {(byte) 0}), Map.entry("0.0.100-hhghj", new byte[] {(byte) 0}), Map.entry("0.0.1126123-ycfte", new byte[] {(byte) 0}), Map.entry("0.0.123-esxsf", new byte[] {(byte) 1}), Map.entry("0.0.0-eiyxj", new byte[] {(byte) 1}), Map.entry("0.0.1-mswfa", new byte[] {(byte) 1}), Map.entry("0.0.3-dmqui", new byte[] {(byte) 1}), Map.entry("0.0.255-rdaor", new byte[] {(byte) 1}), Map.entry("0.0.321-uhcxp", new byte[] {(byte) 1}), Map.entry("0.0.123-ogizo", new byte[] {(byte) 2}), Map.entry("0.0.0-nwkes", new byte[] {(byte) 2}), Map.entry("0.0.1-wghmj", new byte[] {(byte) 2}), Map.entry("0.0.255-aqlwa", new byte[] {(byte) 2}), Map.entry("0.0.1-ftsts", new byte[] {(byte) 3}), Map.entry("0.0.0-kenvf", new byte[] {(byte) 12, (byte) 31, (byte) 0, (byte) 2}), Map.entry("0.0.1-solcw", new byte[] {(byte) 12, (byte) 31, (byte) 0, (byte) 2}), Map.entry("0.0.255-wypmn", new byte[] {(byte) 12, (byte) 31, (byte) 0, (byte) 2}));
+
+    /// EIP-55, section "Test Cases": addresses in their EIP-55 form (all caps, all lower and mixed case).
+    private static final List<String> EIP55_ADDRESSES = List.of("0x52908400098527886E0F7030069857D2E4169EE7", "0x8617E340B3D01FA5F11F306F4090FD50E238070D", "0xde709f2102306220921060314715629080e2fb77", "0x27b1fdb04752bbc536007a920d24acb045561c26", "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", "0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359", "0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB", "0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb");
+
+    /// `ledger/the-hip-15-checksums-are-valid-on-their-ledger`
     ///
-    /// Source: HIP-15; the vectors of the Java, JavaScript, Rust, Swift, Go and Python SDKs.
+    /// Source: HIP-15 (the checksum belongs to every entity id and to its ledger); the vectors of HIP15_CHECKSUMS.
     @Test
-    @DisplayName("the HIP-15 checksum of an account id is valid only on its ledger")
-    void theHIP15ChecksumOfAnAccountIdIsValidOnlyOnItsLedger() {
+    @DisplayName("the HIP-15 checksums are valid on their ledger")
+    void theHIP15ChecksumsAreValidOnTheirLedger() {
+        for (final String text : keys(HIP15_CHECKSUMS)) {
+            // given
+            final Network<HbarUnit> ledger = new Network<>(get(HIP15_CHECKSUMS, text), "ledger", HbarUnit.HBAR);
+
+            // when
+            final AccountId account = AccountId.fromString(text);
+
+            // then
+            assertEquals(substring(text, checked(integer(length(text)).subtract(integer(5L)), "int64").longValueExact(), length(text)), account.checksum(), text);
+            assertEquals(text, account.toStringWithChecksum());
+            assertTrue(account.validateChecksum(ledger), text);
+            assertTrue(Address.fromString(text).validateChecksum(ledger), text);
+            assertTrue(ContractId.fromString(text).validateChecksum(ledger), text);
+        }
+    }
+
+    /// `ledger/a-hip-15-checksum-is-not-valid-on-another-ledger`
+    ///
+    /// Source: HIP-15; the vectors of the Java, JavaScript, Rust, Swift, Go and Python SDKs (a checksum of another ledger),
+    /// of the Python SDK (ledgers 0 to 3) and of the Rust and Swift SDKs (a ledger id of more than one byte); the token,
+    /// topic, schedule and contract id tests of all SDKs.
+    @Test
+    @DisplayName("a HIP-15 checksum is not valid on another ledger")
+    void aHIP15ChecksumIsNotValidOnAnotherLedger() {
         // given
         final Network<HbarUnit> mainnet = new Network<>(new byte[] {(byte) 0}, "mainnet", HbarUnit.HBAR);
         final Network<HbarUnit> testnet = new Network<>(new byte[] {(byte) 1}, "testnet", HbarUnit.HBAR);
         final Network<HbarUnit> previewnet = new Network<>(new byte[] {(byte) 2}, "previewnet", HbarUnit.HBAR);
-
-        // when
-        final AccountId onMainnet = AccountId.fromString("0.0.123-vfmkw");
-        final AccountId onTestnet = AccountId.fromString("0.0.123-esxsf");
-        final AccountId onPreviewnet = AccountId.fromString("0.0.123-ogizo");
-
-        // then
-        assertEquals("vfmkw", onMainnet.checksum());
-        assertTrue(onMainnet.validateChecksum(mainnet));
-        assertTrue(onTestnet.validateChecksum(testnet));
-        assertTrue(onPreviewnet.validateChecksum(previewnet));
-        assertFalse(onMainnet.validateChecksum(testnet));
-        assertFalse(AccountId.fromString("0.0.123-ntjli").validateChecksum(previewnet));
-    }
-
-    /// `ledger/the-hip-15-checksum-depends-on-every-byte-of-the-ledger-id`
-    ///
-    /// Source: HIP-15; the vectors of the Python SDK (ledgers 0 to 3) and of the Rust and Swift SDKs (a ledger id of more
-    /// than one byte).
-    @Test
-    @DisplayName("the HIP-15 checksum depends on every byte of the ledger id")
-    void theHIP15ChecksumDependsOnEveryByteOfTheLedgerId() {
-        // given
         final Network<HbarUnit> local = new Network<>(new byte[] {(byte) 3}, "local", HbarUnit.HBAR);
-        final Network<HbarUnit> custom = new Network<>(new byte[] {(byte) 12, (byte) 31, (byte) 0, (byte) 2}, "custom", HbarUnit.HBAR);
 
-        // when
-        final Address one = Address.fromString("0.0.1-ftsts");
-        final Address zero = Address.fromString("0.0.0-kenvf");
-
-        // then
-        assertTrue(one.validateChecksum(local));
-        assertTrue(zero.validateChecksum(custom));
-        assertFalse(zero.validateChecksum(local));
+        // when / then
+        assertFalse(AccountId.fromString("0.0.123-vfmkw").validateChecksum(testnet));
+        assertFalse(AccountId.fromString("0.0.123-ntjli").validateChecksum(previewnet));
+        assertFalse(Address.fromString("0.0.0-kenvf").validateChecksum(local));
+        assertFalse(Address.fromString("0.0.123-vfmkw").validateChecksum(previewnet));
+        assertFalse(ContractId.fromString("0.0.123-ogizo").validateChecksum(mainnet));
     }
 
     /// `ledger/a-malformed-checksum-is-rejected`
@@ -249,56 +259,6 @@ class LedgerSpecTest {
         }
     }
 
-    /// `ledger/the-hip-15-checksums-of-the-sdk-tables-are-valid-on-their-ledger`
-    ///
-    /// Source: HIP-15; the checksum tables of the Rust and Swift SDKs (0.0.0 to 0.0.255 per ledger, here the first, second
-    /// and last entry and the entries for a ledger id of four bytes), and the vectors of the Swift (0.0.1126123), Python
-    /// (0.0.100), JavaScript (0.0.321) and Go (0.0.3) SDKs.
-    @Test
-    @DisplayName("the HIP-15 checksums of the SDK tables are valid on their ledger")
-    void theHIP15ChecksumsOfTheSDKTablesAreValidOnTheirLedger() {
-        // given
-        final Network<HbarUnit> mainnet = new Network<>(new byte[] {(byte) 0}, "mainnet", HbarUnit.HBAR);
-        final Network<HbarUnit> testnet = new Network<>(new byte[] {(byte) 1}, "testnet", HbarUnit.HBAR);
-        final Network<HbarUnit> previewnet = new Network<>(new byte[] {(byte) 2}, "previewnet", HbarUnit.HBAR);
-        final Network<HbarUnit> custom = new Network<>(new byte[] {(byte) 12, (byte) 31, (byte) 0, (byte) 2}, "custom", HbarUnit.HBAR);
-
-        // when / then
-        for (final String onMainnet : List.of("0.0.0-uvnqa", "0.0.1-dfkxr", "0.0.255-hpphi", "0.0.100-hhghj", "0.0.1126123-ycfte")) {
-            assertTrue(AccountId.fromString(onMainnet).validateChecksum(mainnet), onMainnet);
-        }
-        for (final String onTestnet : List.of("0.0.0-eiyxj", "0.0.1-mswfa", "0.0.3-dmqui", "0.0.255-rdaor", "0.0.321-uhcxp")) {
-            assertTrue(AccountId.fromString(onTestnet).validateChecksum(testnet), onTestnet);
-        }
-        for (final String onPreviewnet : List.of("0.0.0-nwkes", "0.0.1-wghmj", "0.0.255-aqlwa")) {
-            assertTrue(AccountId.fromString(onPreviewnet).validateChecksum(previewnet), onPreviewnet);
-        }
-        for (final String onCustom : List.of("0.0.1-solcw", "0.0.255-wypmn")) {
-            assertTrue(AccountId.fromString(onCustom).validateChecksum(custom), onCustom);
-        }
-    }
-
-    /// `ledger/the-hip-15-checksum-of-an-address-and-a-contract-id-is-valid-only-on-its-ledger`
-    ///
-    /// Source: HIP-15 (the checksum belongs to every entity id); the token, topic, schedule and contract id tests of all SDKs.
-    @Test
-    @DisplayName("the HIP-15 checksum of an address and a contract id is valid only on its ledger")
-    void theHIP15ChecksumOfAnAddressAndAContractIdIsValidOnlyOnItsLedger() {
-        // given
-        final Network<HbarUnit> mainnet = new Network<>(new byte[] {(byte) 0}, "mainnet", HbarUnit.HBAR);
-        final Network<HbarUnit> previewnet = new Network<>(new byte[] {(byte) 2}, "previewnet", HbarUnit.HBAR);
-
-        // when
-        final Address address = Address.fromString("0.0.123-vfmkw");
-        final ContractId contract = ContractId.fromString("0.0.123-ogizo");
-
-        // then
-        assertTrue(address.validateChecksum(mainnet));
-        assertFalse(address.validateChecksum(previewnet));
-        assertTrue(contract.validateChecksum(previewnet));
-        assertFalse(contract.validateChecksum(mainnet));
-    }
-
     /// `ledger/tostring-omits-the-checksum-and-tostringwithchecksum-keeps-it`
     ///
     /// Source: the Java, Rust, Swift, JavaScript and Python SDKs (the canonical string form carries no checksum).
@@ -345,23 +305,27 @@ class LedgerSpecTest {
     /// `ledger/a-contract-id-and-an-account-id-of-an-evm-address-are-read-from-and-written-as-shard-realm-address`
     ///
     /// Source: HIP-583 (the EVM-address form of an id is shard.realm and the address without "0x", in lower case:
-    /// 0.0.b794f5ea0ba39494ce839613fffba74279579268); the Java, Rust, JavaScript, Go and Python SDKs write it so.
+    /// 0.0.b794f5ea0ba39494ce839613fffba74279579268); the Java, Rust, JavaScript, Go and Python SDKs write it so. The
+    /// addresses are those of EIP55_ADDRESSES.
     @Test
     @DisplayName("a contract id and an account id of an EVM address are read from and written as shard.realm.<address>")
     void aContractIdAndAnAccountIdOfAnEVMAddressAreReadFromAndWrittenAsShardRealmAddress() {
-        // given
-        final EvmAddress address = EvmAddress.fromString("b794f5ea0ba39494ce839613fffba74279579268");
+        for (final String checksummed : EIP55_ADDRESSES) {
+            // given
+            final EvmAddress address = EvmAddress.fromString(checksummed);
+            final String digits = toHex(address.bytes());
 
-        // when
-        final ContractId contract = ContractId.fromString("1.2.b794f5ea0ba39494ce839613fffba74279579268");
-        final AccountId account = AccountId.fromString("0.0.b794f5ea0ba39494ce839613fffba74279579268");
+            // when
+            final ContractId contract = ContractId.fromString("1.2." + digits);
+            final AccountId account = AccountId.fromString("0.0." + digits);
 
-        // then
-        assertEquals(ContractId.fromEvmAddress(1L, 2L, address), contract);
-        assertEquals("1.2.b794f5ea0ba39494ce839613fffba74279579268", contract.toString());
-        assertEquals(address, account.evmAddress());
-        assertNull(account.num());
-        assertEquals("0.0.b794f5ea0ba39494ce839613fffba74279579268", account.toString());
+            // then
+            assertEquals(ContractId.fromEvmAddress(1L, 2L, address), contract);
+            assertEquals("1.2." + digits, contract.toString());
+            assertEquals(address, account.evmAddress());
+            assertNull(account.num());
+            assertEquals("0.0." + digits, account.toString());
+        }
     }
 
     /// `ledger/an-id-with-0x-or-upper-case-hex-digits-in-its-evm-address-form-is-rejected`
@@ -371,10 +335,14 @@ class LedgerSpecTest {
     @Test
     @DisplayName("an id with 0x or upper case hex digits in its EVM-address form is rejected")
     void anIdWith0xOrUpperCaseHexDigitsInItsEVMAddressFormIsRejected() {
-        for (final String text : List.of("1.2.0xb794f5ea0ba39494ce839613fffba74279579268", "1.2.B794F5EA0BA39494CE839613FFFBA74279579268")) {
+        for (final String checksummed : EIP55_ADDRESSES) {
             // when / then
-            assertThrows(IllegalArgumentException.class, () -> ContractId.fromString(text));
+            assertThrows(IllegalArgumentException.class, () -> ContractId.fromString("1.2." + checksummed));
+            assertThrows(IllegalArgumentException.class, () -> AccountId.fromString("0.0." + checksummed));
         }
+
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> ContractId.fromString("1.2.B794F5EA0BA39494CE839613FFFBA74279579268"));
     }
 
     /// `ledger/an-account-id-of-a-long-zero-evm-address-keeps-the-address-and-has-no-number`
@@ -466,11 +434,11 @@ class LedgerSpecTest {
 
     /// `ledger/an-evm-address-is-written-in-its-eip-55-form`
     ///
-    /// Source: EIP-55, section "Test Cases" (all caps, all lower and mixed case), written from the bytes of the address.
+    /// Source: EIP-55, section "Test Cases", written from the bytes of the address.
     @Test
     @DisplayName("an EVM address is written in its EIP-55 form")
     void anEVMAddressIsWrittenInItsEIP55Form() {
-        for (final String checksummed : List.of("0x52908400098527886E0F7030069857D2E4169EE7", "0x8617E340B3D01FA5F11F306F4090FD50E238070D", "0xde709f2102306220921060314715629080e2fb77", "0x27b1fdb04752bbc536007a920d24acb045561c26", "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", "0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359", "0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB", "0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb")) {
+        for (final String checksummed : EIP55_ADDRESSES) {
             // when: built from the bytes, so the case of the text plays no part
             final EvmAddress evm = EvmAddress.fromBytes(hex(substring(checksummed, 2L, 42L)));
 

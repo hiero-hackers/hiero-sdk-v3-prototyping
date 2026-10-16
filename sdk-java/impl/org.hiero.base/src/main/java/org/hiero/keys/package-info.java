@@ -61,17 +61,15 @@
 /// The string is a hex dump of the DER bytes.
 ///
 /// ```
-/// 30 2A 30 05 06 03 2B 65 70 03 21 00
-/// 1D 0F 36 11 67 7D 11 EC 59 85 55 9B
-/// 0A 7C 22 7A D9 88 CB 0B E6 C8 27 67
-/// E8 96 F6 9E E3
+/// 30 2A 30 05 06 03 2B 65 70 03 21 00 69 0F B5 DB D7 A8 AB 70 8E 23 1A 1A
+/// DA 8D EC 56 D5 77 44 71 9E C4 EF 6E BB 18 0E F5 E8 AE 6B 2D
 /// ```
 ///
 /// ##### SPKI + PEM (Public Key)
 ///
 /// ```
 /// -----BEGIN PUBLIC KEY-----
-/// MCowBQYDK2VwAyEAHQ82EWd9EexZhVWbCnwietmIywvmyCdn6Jb2nuM=
+/// MCowBQYDK2VwAyEAaQ+129eoq3COIxoa2o3sVtV3RHGexO9uuxgO9eiuay0=
 /// -----END PUBLIC KEY-----
 /// ```
 package org.hiero.keys;

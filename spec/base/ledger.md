@@ -393,6 +393,28 @@ values MALFORMED_CHECKSUMS: list<string> = ["0.0.123-ntjl", "0.0.123-ntjl1", "0.
 values MALFORMED_ENTITY_IDS: list<string> = ["", "0.0", "0.0.", "0.0.a", "a.b.c", "0.0.-1", "-1.-1.-1", "1.2.3.4",
         "8901000", "8.901000", ".8.90.1000.", "8..901000", "890.1000.", "0.0.1!", "o.o.e", "abc", "0.0.123#vfmkw",
         "0.0.123 - vfmkw", "0.0.123vfmkw", "0.0.123-vfm-kw", " 0.0.100 "]
+
+// Entity ids with a HIP-15 checksum and the id of the ledger it belongs to, each recomputed with the algorithm of
+// HIP-15: the vectors of HIP-15 and of the Java, JavaScript, Rust, Swift, Go and Python SDKs (0.0.123 on mainnet,
+// testnet and previewnet), of the Python SDK (ledger 3), the checksum tables of the Rust and Swift SDKs (0.0.0 to
+// 0.0.255 per ledger, here the first, second and last entry, and a ledger id of four bytes), and the vectors of the
+// Swift (0.0.1126123), Python (0.0.100), JavaScript (0.0.321) and Go (0.0.3) SDKs.
+values HIP15_CHECKSUMS: map<string, bytes> = {
+    "0.0.123-vfmkw": [0], "0.0.0-uvnqa": [0], "0.0.1-dfkxr": [0], "0.0.255-hpphi": [0], "0.0.100-hhghj": [0],
+    "0.0.1126123-ycfte": [0],
+    "0.0.123-esxsf": [1], "0.0.0-eiyxj": [1], "0.0.1-mswfa": [1], "0.0.3-dmqui": [1], "0.0.255-rdaor": [1],
+    "0.0.321-uhcxp": [1],
+    "0.0.123-ogizo": [2], "0.0.0-nwkes": [2], "0.0.1-wghmj": [2], "0.0.255-aqlwa": [2],
+    "0.0.1-ftsts": [3],
+    "0.0.0-kenvf": [12, 31, 0, 2], "0.0.1-solcw": [12, 31, 0, 2], "0.0.255-wypmn": [12, 31, 0, 2]
+}
+
+// EIP-55, section "Test Cases": addresses in their EIP-55 form (all caps, all lower and mixed case).
+values EIP55_ADDRESSES: list<string> = ["0x52908400098527886E0F7030069857D2E4169EE7",
+        "0x8617E340B3D01FA5F11F306F4090FD50E238070D", "0xde709f2102306220921060314715629080e2fb77",
+        "0x27b1fdb04752bbc536007a920d24acb045561c26", "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed",
+        "0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359", "0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB",
+        "0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb"]
 ```
 
 ## Testing
@@ -402,42 +424,42 @@ Tests of the ids, written as given / when / then. The checksums are those of HIP
 `docs/sdk-unit-test-analysis.md` for where the SDKs test the same.
 
 ```tests
-// Source: HIP-15; the vectors of the Java, JavaScript, Rust, Swift, Go and Python SDKs.
-test "the HIP-15 checksum of an account id is valid only on its ledger" {
+// Source: HIP-15 (the checksum belongs to every entity id and to its ledger); the vectors of HIP15_CHECKSUMS.
+test "the HIP-15 checksums are valid on their ledger" {
+    for text in keys(value: HIP15_CHECKSUMS) {
+        // given
+        let ledger = Network<hedera.HbarUnit>{id: HIP15_CHECKSUMS[text], name: "ledger",
+                nativeTokenUnit: hedera.HbarUnit.HBAR}
+
+        // when
+        let account = AccountId.fromString(value: text)
+
+        // then
+        assertEquals(expected: substring(value: text, start: length(value: text) - 5, end: length(value: text)),
+                actual: account.checksum, message: text)
+        assertEquals(expected: text, actual: account.toStringWithChecksum())
+        assertTrue(condition: account.validateChecksum(network: ledger), message: text)
+        assertTrue(condition: Address.fromString(address: text).validateChecksum(network: ledger), message: text)
+        assertTrue(condition: ContractId.fromString(value: text).validateChecksum(network: ledger), message: text)
+    }
+}
+
+// Source: HIP-15; the vectors of the Java, JavaScript, Rust, Swift, Go and Python SDKs (a checksum of another ledger),
+// of the Python SDK (ledgers 0 to 3) and of the Rust and Swift SDKs (a ledger id of more than one byte); the token,
+// topic, schedule and contract id tests of all SDKs.
+test "a HIP-15 checksum is not valid on another ledger" {
     // given
     let mainnet = Network<hedera.HbarUnit>{id: [0], name: "mainnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
     let testnet = Network<hedera.HbarUnit>{id: [1], name: "testnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
     let previewnet = Network<hedera.HbarUnit>{id: [2], name: "previewnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
-
-    // when
-    let onMainnet = AccountId.fromString(value: "0.0.123-vfmkw")
-    let onTestnet = AccountId.fromString(value: "0.0.123-esxsf")
-    let onPreviewnet = AccountId.fromString(value: "0.0.123-ogizo")
-
-    // then
-    assertEquals(expected: "vfmkw", actual: onMainnet.checksum)
-    assertTrue(condition: onMainnet.validateChecksum(network: mainnet))
-    assertTrue(condition: onTestnet.validateChecksum(network: testnet))
-    assertTrue(condition: onPreviewnet.validateChecksum(network: previewnet))
-    assertFalse(condition: onMainnet.validateChecksum(network: testnet))
-    assertFalse(condition: AccountId.fromString(value: "0.0.123-ntjli").validateChecksum(network: previewnet))
-}
-
-// Source: HIP-15; the vectors of the Python SDK (ledgers 0 to 3) and of the Rust and Swift SDKs (a ledger id of more
-// than one byte).
-test "the HIP-15 checksum depends on every byte of the ledger id" {
-    // given
     let local = Network<hedera.HbarUnit>{id: [3], name: "local", nativeTokenUnit: hedera.HbarUnit.HBAR}
-    let custom = Network<hedera.HbarUnit>{id: [12, 31, 0, 2], name: "custom", nativeTokenUnit: hedera.HbarUnit.HBAR}
 
-    // when
-    let one = Address.fromString(address: "0.0.1-ftsts")
-    let zero = Address.fromString(address: "0.0.0-kenvf")
-
-    // then
-    assertTrue(condition: one.validateChecksum(network: local))
-    assertTrue(condition: zero.validateChecksum(network: custom))
-    assertFalse(condition: zero.validateChecksum(network: local))
+    // when / then
+    assertFalse(condition: AccountId.fromString(value: "0.0.123-vfmkw").validateChecksum(network: testnet))
+    assertFalse(condition: AccountId.fromString(value: "0.0.123-ntjli").validateChecksum(network: previewnet))
+    assertFalse(condition: Address.fromString(address: "0.0.0-kenvf").validateChecksum(network: local))
+    assertFalse(condition: Address.fromString(address: "0.0.123-vfmkw").validateChecksum(network: previewnet))
+    assertFalse(condition: ContractId.fromString(value: "0.0.123-ogizo").validateChecksum(network: mainnet))
 }
 
 // Source: HIP-15 (five lowercase letters); rejected by the Java, Go, Rust and Swift SDKs.
@@ -587,48 +609,6 @@ test "text that is no transaction id is rejected" {
     }
 }
 
-// Source: HIP-15; the checksum tables of the Rust and Swift SDKs (0.0.0 to 0.0.255 per ledger, here the first, second
-// and last entry and the entries for a ledger id of four bytes), and the vectors of the Swift (0.0.1126123), Python
-// (0.0.100), JavaScript (0.0.321) and Go (0.0.3) SDKs.
-test "the HIP-15 checksums of the SDK tables are valid on their ledger" {
-    // given
-    let mainnet = Network<hedera.HbarUnit>{id: [0], name: "mainnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
-    let testnet = Network<hedera.HbarUnit>{id: [1], name: "testnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
-    let previewnet = Network<hedera.HbarUnit>{id: [2], name: "previewnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
-    let custom = Network<hedera.HbarUnit>{id: [12, 31, 0, 2], name: "custom", nativeTokenUnit: hedera.HbarUnit.HBAR}
-
-    // when / then
-    for onMainnet in ["0.0.0-uvnqa", "0.0.1-dfkxr", "0.0.255-hpphi", "0.0.100-hhghj", "0.0.1126123-ycfte"] {
-        assertTrue(condition: AccountId.fromString(value: onMainnet).validateChecksum(network: mainnet), message: onMainnet)
-    }
-    for onTestnet in ["0.0.0-eiyxj", "0.0.1-mswfa", "0.0.3-dmqui", "0.0.255-rdaor", "0.0.321-uhcxp"] {
-        assertTrue(condition: AccountId.fromString(value: onTestnet).validateChecksum(network: testnet), message: onTestnet)
-    }
-    for onPreviewnet in ["0.0.0-nwkes", "0.0.1-wghmj", "0.0.255-aqlwa"] {
-        assertTrue(condition: AccountId.fromString(value: onPreviewnet).validateChecksum(network: previewnet), message: onPreviewnet)
-    }
-    for onCustom in ["0.0.1-solcw", "0.0.255-wypmn"] {
-        assertTrue(condition: AccountId.fromString(value: onCustom).validateChecksum(network: custom), message: onCustom)
-    }
-}
-
-// Source: HIP-15 (the checksum belongs to every entity id); the token, topic, schedule and contract id tests of all SDKs.
-test "the HIP-15 checksum of an address and a contract id is valid only on its ledger" {
-    // given
-    let mainnet = Network<hedera.HbarUnit>{id: [0], name: "mainnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
-    let previewnet = Network<hedera.HbarUnit>{id: [2], name: "previewnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
-
-    // when
-    let address = Address.fromString(address: "0.0.123-vfmkw")
-    let contract = ContractId.fromString(value: "0.0.123-ogizo")
-
-    // then
-    assertTrue(condition: address.validateChecksum(network: mainnet))
-    assertFalse(condition: address.validateChecksum(network: previewnet))
-    assertTrue(condition: contract.validateChecksum(network: previewnet))
-    assertFalse(condition: contract.validateChecksum(network: mainnet))
-}
-
 // Source: the Java, Rust, Swift, JavaScript and Python SDKs (the canonical string form carries no checksum).
 test "toString omits the checksum and toStringWithChecksum keeps it" {
     // given
@@ -664,31 +644,41 @@ test "an EVM address of 39 or 42 digits, with a misplaced or doubled 0x, or of 2
 }
 
 // Source: HIP-583 (the EVM-address form of an id is shard.realm and the address without "0x", in lower case:
-// 0.0.b794f5ea0ba39494ce839613fffba74279579268); the Java, Rust, JavaScript, Go and Python SDKs write it so.
+// 0.0.b794f5ea0ba39494ce839613fffba74279579268); the Java, Rust, JavaScript, Go and Python SDKs write it so. The
+// addresses are those of EIP55_ADDRESSES.
 test "a contract id and an account id of an EVM address are read from and written as shard.realm.<address>" {
-    // given
-    let address = EvmAddress.fromString(value: "b794f5ea0ba39494ce839613fffba74279579268")
+    for checksummed in EIP55_ADDRESSES {
+        // given
+        let address = EvmAddress.fromString(value: checksummed)
+        let digits = toHex(value: address.bytes)
 
-    // when
-    let contract = ContractId.fromString(value: "1.2.b794f5ea0ba39494ce839613fffba74279579268")
-    let account = AccountId.fromString(value: "0.0.b794f5ea0ba39494ce839613fffba74279579268")
+        // when
+        let contract = ContractId.fromString(value: "1.2." + digits)
+        let account = AccountId.fromString(value: "0.0." + digits)
 
-    // then
-    assertEquals(expected: ContractId.fromEvmAddress(shard: 1, realm: 2, address: address), actual: contract)
-    assertEquals(expected: "1.2.b794f5ea0ba39494ce839613fffba74279579268", actual: contract.toString())
-    assertEquals(expected: address, actual: account.evmAddress)
-    assertNull(actual: account.num)
-    assertEquals(expected: "0.0.b794f5ea0ba39494ce839613fffba74279579268", actual: account.toString())
+        // then
+        assertEquals(expected: ContractId.fromEvmAddress(shard: 1, realm: 2, address: address), actual: contract)
+        assertEquals(expected: "1.2." + digits, actual: contract.toString())
+        assertEquals(expected: address, actual: account.evmAddress)
+        assertNull(actual: account.num)
+        assertEquals(expected: "0.0." + digits, actual: account.toString())
+    }
 }
 
 // Source: HIP-583 and HIP-15 (no other formats are accepted): the "0x" belongs to the stand-alone Ethereum address,
 // not to an id, and an id is written in lower case.
 test "an id with 0x or upper case hex digits in its EVM-address form is rejected" {
-    for text in ["1.2.0xb794f5ea0ba39494ce839613fffba74279579268", "1.2.B794F5EA0BA39494CE839613FFFBA74279579268"] {
+    for checksummed in EIP55_ADDRESSES {
         // when / then
         @@expectThrows(illegal-format)
-        ContractId.fromString(value: text)
+        ContractId.fromString(value: "1.2." + checksummed)
+        @@expectThrows(illegal-format)
+        AccountId.fromString(value: "0.0." + checksummed)
     }
+
+    // when / then
+    @@expectThrows(illegal-format)
+    ContractId.fromString(value: "1.2.B794F5EA0BA39494CE839613FFFBA74279579268")
 }
 
 // Source: the Java, Go and Swift SDKs (an account id built from an EVM address keeps that address, even a long-zero
@@ -763,12 +753,9 @@ test "the inputs that HIP-15 rejects are rejected" {
             network: Network<hedera.HbarUnit>{id: [0], name: "mainnet", nativeTokenUnit: hedera.HbarUnit.HBAR}))
 }
 
-// Source: EIP-55, section "Test Cases" (all caps, all lower and mixed case), written from the bytes of the address.
+// Source: EIP-55, section "Test Cases", written from the bytes of the address.
 test "an EVM address is written in its EIP-55 form" {
-    for checksummed in ["0x52908400098527886E0F7030069857D2E4169EE7", "0x8617E340B3D01FA5F11F306F4090FD50E238070D",
-            "0xde709f2102306220921060314715629080e2fb77", "0x27b1fdb04752bbc536007a920d24acb045561c26",
-            "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", "0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359",
-            "0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB", "0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb"] {
+    for checksummed in EIP55_ADDRESSES {
         // when: built from the bytes, so the case of the text plays no part
         let evm = EvmAddress.fromBytes(value: hex(text: substring(value: checksummed, start: 2, end: 42)))
 
