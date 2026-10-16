@@ -217,4 +217,8 @@ class AccountCreateParamsTest {
     private static AccountCreateParams create() {
         return new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
     }
+
+    private static AccountCreateParams defaultSubject() {
+        return new AccountCreateParams(new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c").createPublicKey()), null, null, false, null, null, null, null, false, null);
+    }
 }

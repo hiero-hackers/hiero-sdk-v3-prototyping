@@ -61,4 +61,38 @@ abstraction TransactionSupport<$$Receipt extends Receipt, $$Transaction extends 
 @@static set<TransactionSupport<ANY, ANY>> getAllTransactionSupports() // returns all TransactionSupport instances
 ```
 
+## Testing
+
+Tests of the lookup of `TransactionSupport` implementations, written as given / when / then. The current SDKs have no
+such SPI, so the tests check only what this spec states. The conversions of a `TransactionSupport` work on protobuf
+messages and are tested by each implementation.
+
+```tests
+// Source: this spec (getAllTransactionSupports returns every registered support, getTransactionSupport the one of a
+// type).
+test "every registered transaction support is found by its transaction type" {
+    for support in getAllTransactionSupports() {
+        // when
+        let found = getTransactionSupport(transactionType: support.getTransactionType())
+
+        // then
+        assertEquals(expected: support.getTransactionType(), actual: found.getTransactionType())
+    }
+}
+
+// Source: this spec (getTransactionSupport throws if no support is registered for the type). A receipt is no
+// transaction, so no support is registered for it.
+test "a type without a registered transaction support is rejected" {
+    // when / then
+    @@expectThrows(not-found-error)
+    getTransactionSupport(transactionType: Receipt)
+}
+```
+
 ## Questions & Comments
+
+- **Are the built-in transaction types registered as `TransactionSupport`?** `PackedTransaction.fromBytes(...)` and
+  `getResponse(...)` resolve the concrete transaction type at runtime, which suggests that every built-in type
+  (`AccountCreateTransaction`, `PrngTransaction`, ...) has a `TransactionSupport` that `getTransactionSupport(...)`
+  finds. The spec does not say so; if it did, a test could check that the support of each built-in type names that
+  type.

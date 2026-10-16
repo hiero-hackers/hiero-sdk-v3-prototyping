@@ -175,6 +175,96 @@ TokenInfo info = query.submit(client).value;
 combine it with `maxQueryPayment` for a hard ceiling. See
 [`queries.md`](queries.md#examples) for the full pattern.
 
+## Testing
+
+Offline tests of the token queries and their result types, written as given / when / then. Nothing is submitted; the
+comment above each test names where the current SDKs test the same.
+
+```tests
+// Source: the Java SDK (TokenInfoQueryTest.getSetTokenId), the Python SDK (token_info_query_test.py,
+// test_constructor and test_get_method) and the Swift SDK (TokenInfoQueryUnitTests, the get / set test).
+test "a token info query keeps the id of its token" {
+    // given
+    let token = DEFAULT(Address)
+
+    // when
+    let query = TokenInfoQuery{tokenId: token}
+
+    // then
+    assertEquals(expected: token, actual: query.tokenId)
+}
+
+// Source: the Java SDK (TokenNftInfoQueryTest.propertiesTest), the Python SDK (token_nft_info_query_test.py,
+// test_constructor) and the JavaScript SDK (TokenNftInfoQuery); this spec (serials start at 1).
+test "an NFT info query keeps its token id and serial, and serial 1 is accepted" {
+    // given
+    let token = DEFAULT(Address)
+
+    for serial in [1, 101] {
+        // when
+        let query = TokenNftInfoQuery{tokenId: token, serial: serial}
+
+        // then
+        assertEquals(expected: token, actual: query.tokenId)
+        assertEquals(expected: serial, actual: query.serial)
+    }
+}
+
+// Source: this spec (the defaults of TokenInfo; a key that was never granted is absent, and so is its status); the
+// Python SDK (token_info_test.py, test_token_info_initialization) and the Java SDK (TokenInfoTest).
+test "a token info has these defaults" {
+    // when
+    let info = TokenInfo{tokenId: DEFAULT, type: TokenType.FUNGIBLE_COMMON, name: "ffff", symbol: "F",
+            totalSupply: 1000, treasuryAccountId: DEFAULT, supplyType: TokenSupplyType.INFINITE, expirationTime: DEFAULT}
+
+    // then
+    assertEquals(expected: 0, actual: info.decimals)
+    assertEquals(expected: 0, actual: length(value: info.metadata))
+    assertFalse(condition: info.deleted)
+    assertNull(actual: info.maxSupply)
+    assertNull(actual: info.tokenMemo)
+    assertNull(actual: info.autoRenewPeriod)
+    assertNull(actual: info.autoRenewAccount)
+    assertNull(actual: info.adminAuthority)
+    assertNull(actual: info.supplyAuthority)
+    assertNull(actual: info.kycAuthority)
+    assertNull(actual: info.freezeAuthority)
+    assertNull(actual: info.wipeAuthority)
+    assertNull(actual: info.pauseAuthority)
+    assertNull(actual: info.feeScheduleAuthority)
+    assertNull(actual: info.metadataAuthority)
+    assertNull(actual: info.defaultFreezeStatus)
+    assertNull(actual: info.defaultKycStatus)
+    assertNull(actual: info.paused)
+}
+
+// Source: this spec (name and symbol have at most 100 characters).
+test "a token info accepts a name and a symbol of 100 characters" {
+    // given
+    let longest = repeat(value: "a", count: 100)
+
+    // when
+    let info = TokenInfo{tokenId: DEFAULT, type: TokenType.NON_FUNGIBLE_UNIQUE, name: longest, symbol: longest,
+            totalSupply: 0, treasuryAccountId: DEFAULT, supplyType: TokenSupplyType.INFINITE, expirationTime: DEFAULT}
+
+    // then
+    assertEquals(expected: longest, actual: info.name)
+    assertEquals(expected: longest, actual: info.symbol)
+}
+
+// Source: this spec (the defaults of TokenNftInfo); the Python SDK (token_nft_info_test.py,
+// test_from_proto_without_spender_id) and the Java SDK (TokenNftInfoTest).
+test "an NFT info without allowance has no spender and empty metadata" {
+    // when
+    let info = TokenNftInfo{tokenId: DEFAULT, serial: 1, accountId: DEFAULT, creationTime: DEFAULT}
+
+    // then
+    assertEquals(expected: 1, actual: info.serial)
+    assertEquals(expected: 0, actual: length(value: info.metadata))
+    assertNull(actual: info.spenderId)
+}
+```
+
 ## Questions & Comments
 
 - **All eight key fields are the `Authority` authorization type.** Each is an `Authority`

@@ -127,7 +127,7 @@ class SemanticVersionTest {
     @Test
     @DisplayName("toString() can be called and returns a value")
     void shouldCallToString() {
-        assertNotNull(create().toString());
+        assertNotNull(defaultSubject().toString());
     }
 
     private static int majorValue() {
@@ -152,5 +152,9 @@ class SemanticVersionTest {
 
     private static SemanticVersion create() {
         return new SemanticVersion(majorValue(), minorValue(), patchValue(), preReleaseLabelValue(), buildMetadataValue());
+    }
+
+    private static SemanticVersion defaultSubject() {
+        return new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85");
     }
 }

@@ -168,6 +168,130 @@ new FileDeleteTransaction()
     .signWithOperatorAndSubmit(client);
 ```
 
+## Testing
+
+Offline tests of the file transactions, written as given / when / then: the attributes a transaction keeps, the
+defaults of the attributes it leaves out, and the packed form of each transaction. The contents are small enough for
+one transaction; chunking and the network's key checks are tested by the TCK, not here.
+
+```tests
+// Source: this spec (@@default([]) of contents, @@nullable).
+test "a file create transaction without attributes has empty contents and nothing else" {
+    // when
+    let transaction = FileCreateTransaction{}
+
+    // then
+    assertEquals(expected: 0, actual: length(value: transaction.contents))
+    assertNull(actual: transaction.authority)
+    assertNull(actual: transaction.expirationTime)
+    assertNull(actual: transaction.fileMemo)
+}
+
+// Source: the Python SDK (test_constructor_with_parameters of FileCreateTransaction: "Test file content",
+// "Test memo") and the Swift SDK (FileCreateTransactionUnitTests.test_GetSetContents).
+test "a file create transaction keeps its contents, authority and memo" {
+    // given
+    let contents = utf8(text: "Test file content")
+
+    // when
+    let transaction = FileCreateTransaction{contents: contents, authority: DEFAULT(Authority), fileMemo: "Test memo"}
+
+    // then
+    assertEquals(expected: contents, actual: transaction.contents)
+    assertEquals(expected: DEFAULT(Authority), actual: transaction.authority)
+    assertEquals(expected: "Test memo", actual: transaction.fileMemo)
+}
+
+// Source: the Java SDK (FileCreateTransactionTest.shouldBytes and shouldBytesNoSetters) and the Swift SDK
+// (FileCreateTransactionUnitTests.test_ToFromBytes).
+test "a file create transaction survives toBytes and fromBytes" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+    let nodes = [ledger.AccountId.fromString(value: "0.0.3"), ledger.AccountId.fromString(value: "0.0.4")]
+    let withAttributes = FileCreateTransaction{contents: utf8(text: "Test file content"), authority: DEFAULT(Authority),
+            fileMemo: "Test memo"}
+
+    for transaction in [withAttributes, FileCreateTransaction{}] {
+        // given
+        let packed = transaction.pack(payer: payer, nodes: nodes)
+
+        // when
+        let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+        // then
+        assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
+        assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+    }
+}
+
+// Source: the Python SDK (test_constructor_with_parameters of FileAppendTransaction: file 0.0.12345,
+// "Test append content"), the Java SDK (FileAppendTransactionTest.shouldBytes) and the Swift SDK
+// (FileAppendTransactionUnitTests.test_GetSetFileId, test_GetSetContents and test_ToFromBytes).
+test "a file append transaction keeps its file and contents and survives toBytes and fromBytes" {
+    // given
+    let fileId = Address.fromString(address: "0.0.12345")
+    let contents = utf8(text: "Test append content")
+    let transaction = FileAppendTransaction{fileId: fileId, contents: contents}
+
+    // when
+    let packed = transaction.pack(payer: DEFAULT(consensusnode.client.Account),
+            nodes: [ledger.AccountId.fromString(value: "0.0.3")])
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: fileId, actual: transaction.fileId)
+    assertEquals(expected: contents, actual: transaction.contents)
+    assertEquals(expected: 1, actual: length(value: packed.signableBodies()))
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+
+// Source: this spec (every nullable field of an update is "leave unchanged"); the Python SDK
+// (test_constructor_without_parameters of FileUpdateTransaction).
+test "a file update transaction changes nothing but what it names" {
+    // when
+    let transaction = FileUpdateTransaction{fileId: DEFAULT(Address)}
+
+    // then
+    assertEquals(expected: DEFAULT(Address), actual: transaction.fileId)
+    assertNull(actual: transaction.contents)
+    assertNull(actual: transaction.authority)
+    assertNull(actual: transaction.expirationTime)
+    assertNull(actual: transaction.fileMemo)
+}
+
+// Source: the Python SDK (test_constructor_with_parameters of FileUpdateTransaction), the Java SDK
+// (FileUpdateTransactionTest.shouldBytes) and the Swift SDK (FileUpdateTransactionUnitTests.test_ToFromBytes).
+test "a file update transaction survives toBytes and fromBytes" {
+    // given
+    let packed = FileUpdateTransaction{fileId: DEFAULT(Address), contents: utf8(text: "Updated content"),
+            authority: DEFAULT(Authority), fileMemo: "Updated memo"}
+            .pack(payer: DEFAULT(consensusnode.client.Account), nodes: [ledger.AccountId.fromString(value: "0.0.3")])
+
+    // when
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+
+// Source: the Python SDK (test_constructor_with_file_id of FileDeleteTransaction), the Java SDK
+// (FileDeleteTransactionTest.shouldBytes) and the Swift SDK (FileDeleteTransactionUnitTests.test_ToFromBytes).
+test "a file delete transaction keeps its file and survives toBytes and fromBytes" {
+    // given
+    let transaction = FileDeleteTransaction{fileId: DEFAULT(Address)}
+
+    // when
+    let packed = transaction.pack(payer: DEFAULT(consensusnode.client.Account),
+            nodes: [ledger.AccountId.fromString(value: "0.0.3")])
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: DEFAULT(Address), actual: transaction.fileId)
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+```
+
 ## Questions & Comments
 
 - **`authority` is a single `Authority`.** HAPI's `FileCreateTransactionBody.keys` is a single
@@ -205,3 +329,14 @@ new FileDeleteTransaction()
   auto-renew account or auto-renew period — expiration is set explicitly. Should the v3
   surface anticipate a future HIP that adds auto-renew to files, or stay aligned with the
   current protocol shape?
+
+- **Which expiration time does a `FileCreateTransaction` without `expirationTime` get?** The field comment says "SDK
+  default if unset", but the spec does not state the default, so no test can check it. The Python SDK sets the
+  current time plus 90 days (7,776,000 seconds) in the constructor. Should the default be stated (e.g. as an
+  `@@default`-like rule relative to the valid start), or should "unset" mean that the network's default applies?
+
+- **How does a chunked `FileAppendTransaction` map onto `PackedTransaction`?** A `PackedTransaction` has one
+  `transactionId` and one body per target node, but each chunk of a large append is a transaction of its own with its
+  own `TransactionId`. What `pack(...)`, `signableBodies()` and `toBytes()` return for contents above the body limit is
+  not stated, so the chunking tests of the current SDKs (one body per chunk and node, consecutive valid starts) cannot
+  be written against this API.

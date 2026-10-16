@@ -105,4 +105,8 @@ class TopicCreateParamsTest {
     private static TopicCreateParams create() {
         return new TopicCreateParams(adminAuthorityValue(), submitAuthorityValue(), topicMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue());
     }
+
+    private static TopicCreateParams defaultSubject() {
+        return new TopicCreateParams(null, null, null, null, null);
+    }
 }

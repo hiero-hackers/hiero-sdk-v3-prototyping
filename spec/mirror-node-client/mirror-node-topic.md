@@ -70,4 +70,27 @@ abstraction TopicRepository {
 
 ```
 
+## Testing
+
+The queries of `TopicRepository` need a Mirror Node, and `Topic` and `TopicMessage` cannot be created in a test
+because the test language has no literal for `zonedDateTime` and `seconds`.
+
+```tests
+// Source: this spec (a message submitted in several chunks carries the chunk's number and the total number of
+// chunks, and the id of the transaction of its first chunk).
+test "chunk info keeps the initial transaction id, the chunk number and the total" {
+    // given
+    let initial = DEFAULT(TransactionId)
+
+    // when
+    let chunk = ChunkInfo{initialTransactionId: initial, nonce: 0, number: 2, total: 3, scheduled: false}
+
+    // then
+    assertEquals(expected: initial, actual: chunk.initialTransactionId)
+    assertEquals(expected: 2, actual: chunk.number)
+    assertEquals(expected: 3, actual: chunk.total)
+    assertFalse(condition: chunk.scheduled)
+}
+```
+
 ## Questions & Comments

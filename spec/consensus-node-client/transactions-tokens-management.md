@@ -214,6 +214,143 @@ new TokenUpdateNftsTransaction()
     .signWithOperatorAndSubmit(client);
 ```
 
+## Testing
+
+Offline tests of the token management transactions, written as given / when / then: the values a transaction keeps,
+and that a packed transaction survives its serialized form. Nothing is submitted; whether the network accepts a
+transaction (the token has the key, the account is no treasury) is tested by the Hiero TCK. The current SDKs test the
+same behaviour with their getter / setter and `fromBytes(toBytes())` tests; the comment above each test names where.
+
+```tests
+// Source: the Java SDK (TokenWipeTransactionTest: token 4.2.0, account 0.6.9, amount 4) and the JavaScript SDK
+// (TokenWipeTransaction, "should handle large bigint amounts": 9000000000000000000).
+test "a fungible wipe transaction keeps the token, the account and the amount" {
+    // given
+    let token = Address.fromString(address: "4.2.0")
+    let account = AccountId.fromString(value: "0.6.9")
+
+    // when
+    let wipe = TokenWipeFungibleTransaction{tokenId: token, accountId: account, amount: 4}
+    let largeWipe = TokenWipeFungibleTransaction{tokenId: token, accountId: account, amount: 9000000000000000000}
+
+    // then
+    assertEquals(expected: token, actual: wipe.tokenId)
+    assertEquals(expected: account, actual: wipe.accountId)
+    assertEquals(expected: 4, actual: wipe.amount)
+    assertEquals(expected: 9000000000000000000, actual: largeWipe.amount)
+}
+
+// Source: the Java SDK (TokenWipeTransactionTest: serials 8, 9 and 10) and the Python SDK
+// (test_constructor_with_serial_numbers).
+test "an NFT wipe transaction keeps its serials in order" {
+    // when
+    let wipe = TokenWipeNftTransaction{tokenId: Address.fromString(address: "4.2.0"),
+            accountId: AccountId.fromString(value: "0.6.9"), serials: [8, 9, 10]}
+
+    // then
+    assertEquals(expected: Address.fromString(address: "4.2.0"), actual: wipe.tokenId)
+    assertEquals(expected: AccountId.fromString(value: "0.6.9"), actual: wipe.accountId)
+    assertEquals(expected: [8, 9, 10], actual: wipe.serials)
+}
+
+// Source: the Java SDK (TokenFreezeTransactionTest and TokenUnfreezeTransactionTest: token 6.5.4, account 0.0.222;
+// TokenGrantKycTransactionTest and TokenRevokeKycTransactionTest: token 4.2.0, account 6.9.0).
+test "freeze, unfreeze, grant KYC and revoke KYC transactions keep the token and the account" {
+    // given
+    let frozenToken = Address.fromString(address: "6.5.4")
+    let frozenAccount = AccountId.fromString(value: "0.0.222")
+    let kycToken = Address.fromString(address: "4.2.0")
+    let kycAccount = AccountId.fromString(value: "6.9.0")
+
+    // when
+    let freeze = TokenFreezeTransaction{tokenId: frozenToken, accountId: frozenAccount}
+    let unfreeze = TokenUnfreezeTransaction{tokenId: frozenToken, accountId: frozenAccount}
+    let grantKyc = TokenGrantKycTransaction{tokenId: kycToken, accountId: kycAccount}
+    let revokeKyc = TokenRevokeKycTransaction{tokenId: kycToken, accountId: kycAccount}
+
+    // then
+    assertEquals(expected: frozenToken, actual: freeze.tokenId)
+    assertEquals(expected: frozenAccount, actual: freeze.accountId)
+    assertEquals(expected: frozenToken, actual: unfreeze.tokenId)
+    assertEquals(expected: frozenAccount, actual: unfreeze.accountId)
+    assertEquals(expected: kycToken, actual: grantKyc.tokenId)
+    assertEquals(expected: kycAccount, actual: grantKyc.accountId)
+    assertEquals(expected: kycToken, actual: revokeKyc.tokenId)
+    assertEquals(expected: kycAccount, actual: revokeKyc.accountId)
+}
+
+// Source: the Java SDK (TokenPauseTransactionTest and TokenUnpauseTransactionTest: token 4.2.0) and the Python SDK
+// (test__from_proto_restores_token_id).
+test "pause and unpause transactions keep the token" {
+    // when
+    let pause = TokenPauseTransaction{tokenId: Address.fromString(address: "4.2.0")}
+    let unpause = TokenUnpauseTransaction{tokenId: Address.fromString(address: "4.2.0")}
+
+    // then
+    assertEquals(expected: Address.fromString(address: "4.2.0"), actual: pause.tokenId)
+    assertEquals(expected: Address.fromString(address: "4.2.0"), actual: unpause.tokenId)
+}
+
+// Source: TokenUpdateNftsTransaction.metadata ("null → leave unchanged"); the JavaScript SDK
+// (TokenUpdateNftsTransaction, "should _metadata equal to null").
+test "an NFT metadata update without metadata leaves the metadata unchanged" {
+    // when
+    let update = TokenUpdateNftsTransaction{tokenId: Address.fromString(address: "4.2.0"), serials: [8, 9, 10]}
+
+    // then
+    assertNull(actual: update.metadata)
+}
+
+// Source: the Java SDK (TokenUpdateNftsTransactionTest: token 4.2.0, serials 8, 9 and 10, metadata 1, 2, 3, 4, 5) and
+// the Python SDK (test_constructor_with_parameters).
+test "an NFT metadata update keeps the token, the serials and the metadata" {
+    // when
+    let update = TokenUpdateNftsTransaction{tokenId: Address.fromString(address: "4.2.0"), serials: [8, 9, 10],
+            metadata: [1, 2, 3, 4, 5]}
+
+    // then
+    assertEquals(expected: Address.fromString(address: "4.2.0"), actual: update.tokenId)
+    assertEquals(expected: [8, 9, 10], actual: update.serials)
+    assertEquals(expected: hex(text: "0102030405"), actual: update.metadata)
+}
+
+// Source: the Java SDK (shouldBytes / shouldBytesFungible / shouldBytesNft of the TokenWipe, TokenFreeze,
+// TokenUnfreeze, TokenGrantKyc, TokenRevokeKyc, TokenPause, TokenUnpause and TokenUpdateNfts tests:
+// fromBytes(toBytes()) gives the same transaction); the JavaScript SDK (TokenWipeTransaction, "should round trip from
+// bytes") and the to / from bytes tests of the Go SDK.
+test "every token management transaction survives toBytes and fromBytes unchanged" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+    let nodes = [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")]
+    let token = Address.fromString(address: "4.2.0")
+    let account = AccountId.fromString(value: "0.6.9")
+    let transactions: list<consensusnode.transactions.PackedTransaction<ANY, ANY>> = [
+            TokenWipeFungibleTransaction{tokenId: token, accountId: account, amount: 4}
+                    .sign(payer: payer, nodes: nodes),
+            TokenWipeNftTransaction{tokenId: token, accountId: account, serials: [8, 9, 10]}
+                    .sign(payer: payer, nodes: nodes),
+            TokenFreezeTransaction{tokenId: token, accountId: account}.sign(payer: payer, nodes: nodes),
+            TokenUnfreezeTransaction{tokenId: token, accountId: account}.sign(payer: payer, nodes: nodes),
+            TokenGrantKycTransaction{tokenId: token, accountId: account}.sign(payer: payer, nodes: nodes),
+            TokenRevokeKycTransaction{tokenId: token, accountId: account}.sign(payer: payer, nodes: nodes),
+            TokenPauseTransaction{tokenId: token}.sign(payer: payer, nodes: nodes),
+            TokenUnpauseTransaction{tokenId: token}.sign(payer: payer, nodes: nodes),
+            TokenUpdateNftsTransaction{tokenId: token, serials: [8, 9, 10], metadata: [1, 2, 3, 4, 5]}
+                    .sign(payer: payer, nodes: nodes)]
+
+    for transaction in transactions {
+        // when
+        let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: transaction.toBytes())
+
+        // then
+        assertEquals(expected: transaction.toBytes(), actual: restored.toBytes())
+        assertEquals(expected: transaction.transactionId, actual: restored.transactionId)
+        assertEquals(expected: transaction.signableBodies(), actual: restored.signableBodies())
+        assertEquals(expected: 2, actual: length(value: restored.nodeSignatures))
+    }
+}
+```
+
 ## Questions & Comments
 
 - **`TokenFeeScheduleUpdate` is intentionally absent.** Its only payload is the custom-fee

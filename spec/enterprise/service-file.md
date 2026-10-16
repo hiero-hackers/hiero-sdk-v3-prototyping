@@ -66,4 +66,65 @@ FileService {
 FileService createService(session: Session)
 ```
 
+## Default Instances for Testing
+
+```
+// The parameters of a file without values: empty contents and no authority.
+instance FileCreateParams = FileCreateParams{}
+```
+
+## Testing
+
+Tests of `FileCreateParams`. The methods of `FileService` talk to the network and are not unit-tested here (among them
+the splitting of large contents into chunks). A violated `@@maxLength` cannot be expected yet: the test language
+expects errors of calls only, and creating a `FileCreateParams` declares none. An expiration time cannot be written
+in a test yet, as the test language has no date and time literals.
+
+```tests
+// Source: this spec (@@default and @@nullable of FileCreateParams, "Nothing is required"); hiero-enterprise-java
+// (ProtocolLayerDataCreationTests, testFileCreateRequestCreation: empty contents without an expiration time and a
+// memo are accepted).
+test "file parameters without values have empty contents and nothing else" {
+    // when
+    let params = DEFAULT(FileCreateParams)
+
+    // then
+    assertEquals(expected: 0, actual: length(value: params.contents))
+    assertNull(actual: params.authority)
+    assertNull(actual: params.expirationTime)
+    assertNull(actual: params.fileMemo)
+}
+
+// Source: the FileCreateTransaction unit tests of the Java (FileCreateTransactionTest), Go
+// (file_create_transaction_unit_test.go), C++ (FileCreateTransactionUnitTests) and Python
+// (file_create_transaction_test.py, test_constructor_with_parameters) SDKs: every value that is set is read back
+// unchanged.
+test "file parameters keep the values they are created with" {
+    // given
+    let contents = utf8(text: "Hello, Hiero!")
+    let authority = DEFAULT(Authority)
+
+    // when
+    let params = FileCreateParams{contents: contents, authority: authority, fileMemo: "fileMemo"}
+
+    // then
+    assertEquals(expected: contents, actual: params.contents)
+    assertEquals(expected: authority, actual: params.authority)
+    assertEquals(expected: "fileMemo", actual: params.fileMemo)
+}
+
+// Source: this spec (@@maxLength(100) of fileMemo); HAPI limits a memo to 100 bytes, which ASCII text of 100
+// characters is.
+test "a file memo of 100 characters is accepted" {
+    // given
+    let memo = repeat(value: "a", count: 100)
+
+    // when
+    let params = FileCreateParams{fileMemo: memo}
+
+    // then
+    assertEquals(expected: memo, actual: params.fileMemo)
+}
+```
+
 ## Questions & Comments

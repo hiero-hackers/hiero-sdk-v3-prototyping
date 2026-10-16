@@ -116,14 +116,14 @@ final class TsSpecTestGenerator {
         private final String directory;
         private final TsImports imports;
         private final TsSamples samples;
-        private final List<String> constants = new ArrayList<>();
+        /** The functions that create the named test values, by name. */
+        private final Map<String, String> constants = new LinkedHashMap<>();
         private final List<String> tests = new ArrayList<>();
         /** The functions that return the default instances, by name. */
         private final Map<String, String> helpers = new LinkedHashMap<>();
         private final List<String> notes = new ArrayList<>();
         /** The named test values without a TypeScript form. */
         private final Set<String> missingValues = new HashSet<>();
-        private boolean usesAssert;
 
         private TestFile(final String namespace, final TsContext context, final String... ownNames) {
             this.context = context;
@@ -141,12 +141,16 @@ final class TsSpecTestGenerator {
 
         // ------------------------------------------------------------------------------------------------ tests
 
-        /** Named test values: a constant of the module; a test that uses values without one is not generated. */
+        /**
+         * Named test values: a function of the module that creates them where a test uses them - a value that cannot be
+         * created fails only the tests that use it, with its cause. A test that uses values without TypeScript form is
+         * not generated.
+         */
         private void values(final TestValuesDefinition values) {
             final String value;
             try {
-                value = "const " + TsNames.local(values.name()) + ": " + TsTypes.declaration(values.type(), false,
-                        imports) + " = " + converted(values.value(), values.type()) + ";\n";
+                value = "function " + TsNames.local(values.name()) + "(): " + TsTypes.declaration(values.type(), false,
+                        imports) + " {\n" + INDENT + "return " + converted(values.value(), values.type()) + ";\n}\n";
             } catch (final Unsupported e) {
                 notes.add("values `" + values.name() + "`: " + e.getMessage());
                 missingValues.add(values.name());
@@ -158,7 +162,7 @@ final class TsSpecTestGenerator {
                 values.documentation().lines().forEach(l -> ts.append((" * " + l).stripTrailing()).append('\n'));
                 ts.append(" */\n");
             }
-            constants.add(ts.append(value).toString());
+            constants.put(TsNames.local(values.name()), ts.append(value).toString());
         }
 
         private void test(final TestDefinition test) {
@@ -219,7 +223,6 @@ final class TsSpecTestGenerator {
                 case TestDefinition.Let let -> indent + "const " + TsNames.local(let.name()) + ": "
                         + declaration(let.type(), let.nullable()) + " = " + converted(let.value(), let.type()) + ";\n";
                 case TestDefinition.Evaluate evaluate when evaluate.expectedError() != null -> {
-                    usesAssert = true;
                     final TsContext.ErrorClass error = context.error(evaluate.expectedError());
                     final String errorClass = error.namespace() == null ? error.name() : imports.error(error, true);
                     final String call = expression(evaluate.expression());
@@ -260,6 +263,8 @@ final class TsSpecTestGenerator {
             return switch (expression) {
                 case InstanceExpression.Variable variable when missingValues.contains(variable.name()) ->
                         throw new Unsupported("the values " + variable.name() + " have no TypeScript form");
+                case InstanceExpression.Variable variable when constants.containsKey(TsNames.local(variable.name())) ->
+                        TsNames.local(variable.name()) + "()";
                 case InstanceExpression.Variable variable -> TsNames.local(variable.name());
                 case InstanceExpression.Default value -> defaultValue(value.type());
                 case InstanceExpression.Negate negate -> negate(negate);
@@ -379,7 +384,8 @@ final class TsSpecTestGenerator {
         }
 
         private String isType(final InstanceExpression.IsType isType) {
-            if (!(isType.checked() instanceof Type.DeclaredType declared) || !context.isClass(declared.name())) {
+            if (!(isType.checked() instanceof Type.DeclaredType declared) || !context.isClass(declared.name())
+                    && !context.isEnum(declared.name())) {
                 throw new Unsupported("'is " + isType.checked().text() + "': only a class has a type at runtime");
             }
             final String check = operand(isType.operand()) + " instanceof " + imports.value(declared.name());
@@ -426,6 +432,11 @@ final class TsSpecTestGenerator {
          * language is checked against the range of the type and converted to its TypeScript type.
          */
         private String converted(final InstanceExpression value, final Type target) {
+            // a type literal (the resolver gives it its type as argument: type<Receipt>) is the class of the type
+            if (value instanceof InstanceExpression.Value && value.type() instanceof Type.BasicType basic
+                    && basic.builtin().category() == BuiltinType.Category.TYPE && !basic.arguments().isEmpty()) {
+                return typeLiteral(basic.arguments().getFirst());
+            }
             if (!(value.type() instanceof Type.BasicType from)
                     || from.builtin().category() != BuiltinType.Category.INTEGER
                     || !(target instanceof Type.BasicType to) || to.builtin().category() != BuiltinType.Category.INTEGER
@@ -540,9 +551,10 @@ final class TsSpecTestGenerator {
             return converted(value, parameter);
         }
 
-        /** The class that stands for a type at runtime (a type literal names a declared type). */
+        /** The class that stands for a type at runtime (a type literal names a declared type; enums are classes). */
         private String typeLiteral(final Type type) {
-            if (type instanceof Type.DeclaredType declared && context.isClass(declared.name())) {
+            if (type instanceof Type.DeclaredType declared && (context.isClass(declared.name())
+                    || context.isEnum(declared.name()))) {
                 return imports.value(declared.name());
             }
             throw new Unsupported("the type " + type.text() + " has no class at runtime");
@@ -563,8 +575,11 @@ final class TsSpecTestGenerator {
             notes.stream().distinct().forEach(n -> all.add(INDENT + "test.todo(" + TsLiterals.quote("not generated: "
                     + n) + ");\n"));
             final StringBuilder code = new StringBuilder();
-            for (final String constant : constants) {
-                code.append(constant).append('\n');
+            // only the named test values that a generated test uses (an unused function is a compiler error)
+            for (final Map.Entry<String, String> constant : constants.entrySet()) {
+                if (String.join("", all).contains(constant.getKey() + "()")) {
+                    code.append(constant.getValue()).append('\n');
+                }
             }
             code.append("describe(").append(TsLiterals.quote(specName)).append(", () => {\n");
             code.append(String.join("\n", all));
@@ -580,7 +595,8 @@ final class TsSpecTestGenerator {
                 notes.stream().distinct().forEach(n -> ts.append(NOTE).append(n).append('\n'));
             }
             ts.append('\n');
-            if (usesAssert) {
+            // only if a generated test uses it (an unused import is a compiler error)
+            if (java.util.regex.Pattern.compile("(?<![\\w$])assert\\.").matcher(code).find()) {
                 ts.append("import assert from \"node:assert/strict\";\n");
             }
             ts.append("import { describe, test } from \"node:test\";\n");

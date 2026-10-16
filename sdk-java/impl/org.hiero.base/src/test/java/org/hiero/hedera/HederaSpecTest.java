@@ -13,9 +13,13 @@ import org.junit.jupiter.api.Test;
 class HederaSpecTest {
 
     /// The number of tinybars in one of each unit, and its symbol, as the units of HBAR are defined above.
-    private static final Map<HbarUnit, Long> TINYBARS_PER_UNIT = Map.of(HbarUnit.TINYBAR, 1L, HbarUnit.MICROBAR, 100L, HbarUnit.MILLIBAR, 100_000L, HbarUnit.HBAR, 100_000_000L, HbarUnit.KILOBAR, 100_000_000_000L, HbarUnit.MEGABAR, 100_000_000_000_000L, HbarUnit.GIGABAR, 100_000_000_000_000_000L);
+    private static Map<HbarUnit, Long> TINYBARS_PER_UNIT() {
+        return Map.of(HbarUnit.TINYBAR, 1L, HbarUnit.MICROBAR, 100L, HbarUnit.MILLIBAR, 100_000L, HbarUnit.HBAR, 100_000_000L, HbarUnit.KILOBAR, 100_000_000_000L, HbarUnit.MEGABAR, 100_000_000_000_000L, HbarUnit.GIGABAR, 100_000_000_000_000_000L);
+    }
 
-    private static final Map<HbarUnit, String> SYMBOLS = Map.of(HbarUnit.TINYBAR, "tℏ", HbarUnit.MICROBAR, "μℏ", HbarUnit.MILLIBAR, "mℏ", HbarUnit.HBAR, "ℏ", HbarUnit.KILOBAR, "kℏ", HbarUnit.MEGABAR, "Mℏ", HbarUnit.GIGABAR, "Gℏ");
+    private static Map<HbarUnit, String> SYMBOLS() {
+        return Map.of(HbarUnit.TINYBAR, "tℏ", HbarUnit.MICROBAR, "μℏ", HbarUnit.MILLIBAR, "mℏ", HbarUnit.HBAR, "ℏ", HbarUnit.KILOBAR, "kℏ", HbarUnit.MEGABAR, "Mℏ", HbarUnit.GIGABAR, "Gℏ");
+    }
 
     /// `hedera/every-unit-has-its-symbol-and-its-number-of-tinybars`
     ///
@@ -23,10 +27,10 @@ class HederaSpecTest {
     @Test
     @DisplayName("every unit has its symbol and its number of tinybars")
     void everyUnitHasItsSymbolAndItsNumberOfTinybars() {
-        for (final HbarUnit unit : keys(TINYBARS_PER_UNIT)) {
+        for (final HbarUnit unit : keys(TINYBARS_PER_UNIT())) {
             // then
-            assertEquals(get(TINYBARS_PER_UNIT, unit), unit.baseUnitFactor(), unit.symbol());
-            assertEquals(get(SYMBOLS, unit), unit.symbol());
+            assertEquals(get(TINYBARS_PER_UNIT(), unit), unit.baseUnitFactor(), unit.symbol());
+            assertEquals(get(SYMBOLS(), unit), unit.symbol());
         }
     }
 
@@ -36,13 +40,13 @@ class HederaSpecTest {
     @Test
     @DisplayName("one of each unit is its number of tinybars")
     void oneOfEachUnitIsItsNumberOfTinybars() {
-        for (final HbarUnit unit : keys(TINYBARS_PER_UNIT)) {
+        for (final HbarUnit unit : keys(TINYBARS_PER_UNIT())) {
             // given
             final Hbar one = new Hbar(1L, unit);
 
             // when / then
-            assertEquals(get(TINYBARS_PER_UNIT, unit), one.toTinybars(), unit.symbol());
-            assertEquals(get(TINYBARS_PER_UNIT, unit), one.toBaseUnits(), unit.symbol());
+            assertEquals(get(TINYBARS_PER_UNIT(), unit), one.toTinybars(), unit.symbol());
+            assertEquals(get(TINYBARS_PER_UNIT(), unit), one.toBaseUnits(), unit.symbol());
         }
     }
 
@@ -52,7 +56,7 @@ class HederaSpecTest {
     @Test
     @DisplayName("an amount of whole units converts to tinybars and back")
     void anAmountOfWholeUnitsConvertsToTinybarsAndBack() {
-        for (final HbarUnit unit : keys(TINYBARS_PER_UNIT)) {
+        for (final HbarUnit unit : keys(TINYBARS_PER_UNIT())) {
             // given
             final Hbar one = new Hbar(1L, unit);
 
@@ -61,7 +65,7 @@ class HederaSpecTest {
             final Hbar back = tinybars.to(unit);
 
             // then
-            assertEquals(new Hbar(get(TINYBARS_PER_UNIT, unit), HbarUnit.TINYBAR), tinybars);
+            assertEquals(new Hbar(get(TINYBARS_PER_UNIT(), unit), HbarUnit.TINYBAR), tinybars);
             assertEquals(one, back);
         }
     }
@@ -102,7 +106,7 @@ class HederaSpecTest {
     @Test
     @DisplayName("zero is zero in every unit")
     void zeroIsZeroInEveryUnit() {
-        for (final HbarUnit unit : keys(TINYBARS_PER_UNIT)) {
+        for (final HbarUnit unit : keys(TINYBARS_PER_UNIT())) {
             // when / then
             assertEquals(0L, new Hbar(0L, unit).toTinybars());
             assertEquals(new Hbar(0L, HbarUnit.TINYBAR), new Hbar(0L, unit).to(HbarUnit.TINYBAR));
@@ -140,15 +144,15 @@ class HederaSpecTest {
     @Test
     @DisplayName("amounts of the same number of tinybars are equal whatever their units")
     void amountsOfTheSameNumberOfTinybarsAreEqualWhateverTheirUnits() {
-        for (final HbarUnit unit : keys(TINYBARS_PER_UNIT)) {
+        for (final HbarUnit unit : keys(TINYBARS_PER_UNIT())) {
             // given
             final Hbar one = new Hbar(1L, unit);
-            final Hbar inTinybars = new Hbar(get(TINYBARS_PER_UNIT, unit), HbarUnit.TINYBAR);
+            final Hbar inTinybars = new Hbar(get(TINYBARS_PER_UNIT(), unit), HbarUnit.TINYBAR);
 
             // then
             assertEquals(inTinybars, one, unit.symbol());
             assertEquals(inTinybars.hashCode(), one.hashCode(), unit.symbol());
-            assertNotEquals(new Hbar(checked(integer(get(TINYBARS_PER_UNIT, unit)).add(integer(1L)), "int64").longValueExact(), HbarUnit.TINYBAR), one);
+            assertNotEquals(new Hbar(checked(integer(get(TINYBARS_PER_UNIT(), unit)).add(integer(1L)), "int64").longValueExact(), HbarUnit.TINYBAR), one);
         }
         assertEquals(new Hbar(1_000L, HbarUnit.HBAR), new Hbar(1L, HbarUnit.KILOBAR));
         assertNotEquals(new Hbar(-1L, HbarUnit.HBAR), defaultHbar());

@@ -163,6 +163,200 @@ new TokenRejectTransaction()
     .submit(client);
 ```
 
+## Testing
+
+Offline tests of the HIP-904 airdrop transactions, written as given / when / then: the defaults and values a
+transaction keeps, the identity of a pending airdrop, and that a packed transaction survives its serialized form.
+Nothing is submitted; whether an airdrop is delivered or parked as pending is decided by the network and tested by the
+Hiero TCK. The comment above each test names the SDK tests it comes from.
+
+```tests
+// Source: the @@default values of TokenAirdropTransaction; the Python SDK (test_from_proto_without_nft_transfers,
+// test_from_proto_without_token_transfer) and the Java SDK (TokenAirdropTransactionTest, shouldBytesNoSetters).
+test "an airdrop transaction without transfers has no token and no NFT legs" {
+    // when
+    let airdrop = TokenAirdropTransaction{}
+
+    // then
+    assertEquals(expected: 0, actual: length(value: airdrop.tokenTransfers))
+    assertEquals(expected: 0, actual: length(value: airdrop.nftTransfers))
+}
+
+// Source: the Java SDK (TokenAirdropTransactionTest, spawnTestTransaction: the same legs, among them the expected
+// decimals 3 and the approved legs) and the Python SDK (test_build_transaction_body_with_approved_transfer,
+// test_build_transaction_body_with_expected_decimal).
+test "an airdrop transaction keeps its fungible and NFT legs in order" {
+    // given
+    let token5 = Address.fromString(address: "0.0.5")
+    let account5005 = AccountId.fromString(value: "0.0.5005")
+    let account5006 = AccountId.fromString(value: "0.0.5006")
+    let account5007 = AccountId.fromString(value: "0.0.5007")
+    let account5008 = AccountId.fromString(value: "0.0.5008")
+    let tokenTransfers = [
+            TokenTransfer{tokenId: token5, accountId: account5006, amount: -800, expectedDecimals: 3},
+            TokenTransfer{tokenId: token5, accountId: account5007, amount: 400, expectedDecimals: 3},
+            TokenTransfer{tokenId: token5, accountId: account5008, amount: 400},
+            TokenTransfer{tokenId: Address.fromString(address: "0.0.4"), accountId: account5006, amount: 123,
+                    approved: true}]
+    let nftTransfers = [
+            NftTransfer{tokenId: Address.fromString(address: "0.0.3"), serial: 2, sender: account5008,
+                    receiver: account5007},
+            NftTransfer{tokenId: Address.fromString(address: "0.0.4"), serial: 4, sender: account5005,
+                    receiver: account5006, approved: true}]
+
+    // when
+    let airdrop = TokenAirdropTransaction{tokenTransfers: tokenTransfers, nftTransfers: nftTransfers}
+
+    // then
+    assertEquals(expected: tokenTransfers, actual: airdrop.tokenTransfers)
+    assertEquals(expected: nftTransfers, actual: airdrop.nftTransfers)
+    assertEquals(expected: 3, actual: airdrop.tokenTransfers[0].expectedDecimals)
+    assertNull(actual: airdrop.tokenTransfers[2].expectedDecimals)
+    assertTrue(condition: airdrop.tokenTransfers[3].approved)
+    assertFalse(condition: airdrop.nftTransfers[0].approved)
+    assertTrue(condition: airdrop.nftTransfers[1].approved)
+}
+
+// Source: PendingAirdrop ("serial is null for a fungible airdrop and set for a specific NFT"); the Java SDK
+// (PendingAirdropIdTest, testConstructorWithTokenId and testConstructorWithNftId: the same accounts and tokens), the Go
+// SDK (TestPendingAirdropId_FromProtobuf) and the Python SDK (test_pending_airdrop_id_constructor).
+test "a fungible pending airdrop has no serial and an NFT pending airdrop has its serial" {
+    // given
+    let sender = AccountId.fromString(value: "0.0.1001")
+    let receiver = AccountId.fromString(value: "0.0.1002")
+
+    // when
+    let fungible = PendingAirdrop{senderId: sender, receiverId: receiver,
+            tokenId: Address.fromString(address: "0.0.1003")}
+    let nft = PendingAirdrop{senderId: sender, receiverId: receiver, tokenId: Address.fromString(address: "0.0.1004"),
+            serial: 1}
+
+    // then
+    assertEquals(expected: sender, actual: fungible.senderId)
+    assertEquals(expected: receiver, actual: fungible.receiverId)
+    assertEquals(expected: Address.fromString(address: "0.0.1003"), actual: fungible.tokenId)
+    assertNull(actual: fungible.serial)
+    assertEquals(expected: Address.fromString(address: "0.0.1004"), actual: nft.tokenId)
+    assertEquals(expected: 1, actual: nft.serial)
+}
+
+// Source: "Pending-airdrop identity" in this spec ((senderId, receiverId, token), the NFT by token and serial); the C++
+// SDK (PendingAirdropIdUnitTests, OperatorEqualsFt, OperatorEqualsNft and OperatorNotEqualsDifferentSender / Receiver /
+// Token: the same accounts and tokens).
+test "pending airdrops are equal exactly when sender, receiver, token and serial are equal" {
+    // given
+    let sender = AccountId.fromString(value: "1.2.3")
+    let receiver = AccountId.fromString(value: "4.5.6")
+    let token = Address.fromString(address: "7.8.9")
+
+    // when
+    let fungible = PendingAirdrop{senderId: sender, receiverId: receiver, tokenId: token}
+    let nft = PendingAirdrop{senderId: sender, receiverId: receiver, tokenId: token, serial: 10}
+
+    // then
+    assertEquals(expected: PendingAirdrop{senderId: sender, receiverId: receiver, tokenId: token}, actual: fungible)
+    assertEquals(expected: PendingAirdrop{senderId: sender, receiverId: receiver, tokenId: token, serial: 10},
+            actual: nft)
+    assertNotEquals(unexpected: PendingAirdrop{senderId: AccountId.fromString(value: "10.2.3"), receiverId: receiver,
+            tokenId: token}, actual: fungible)
+    assertNotEquals(unexpected: PendingAirdrop{senderId: sender, receiverId: AccountId.fromString(value: "4.5.10"),
+            tokenId: token}, actual: fungible)
+    assertNotEquals(unexpected: PendingAirdrop{senderId: sender, receiverId: receiver,
+            tokenId: Address.fromString(address: "7.8.10")}, actual: fungible)
+    assertNotEquals(unexpected: fungible, actual: nft)
+}
+
+// Source: the Python SDK (token_airdrop_claim_test, test_order_preserved_across_batched_adds: the same pending
+// airdrops) and the Java SDK (TokenClaimAirdropTransactionTest and TokenCancelAirdropTransactionTest,
+// testGetAndSetPendingAirdropIds).
+test "claim and cancel airdrop transactions keep their pending airdrops in order" {
+    // given
+    let sender = AccountId.fromString(value: "0.0.9031")
+    let receiver = AccountId.fromString(value: "0.0.9032")
+    let pendingAirdrops = [
+            PendingAirdrop{senderId: sender, receiverId: receiver, tokenId: Address.fromString(address: "0.0.9030")},
+            PendingAirdrop{senderId: sender, receiverId: receiver, tokenId: Address.fromString(address: "0.0.9035"),
+                    serial: 1},
+            PendingAirdrop{senderId: sender, receiverId: receiver, tokenId: Address.fromString(address: "0.0.9031")},
+            PendingAirdrop{senderId: sender, receiverId: receiver, tokenId: Address.fromString(address: "0.0.9035"),
+                    serial: 2}]
+
+    // when
+    let claim = TokenClaimAirdropTransaction{pendingAirdrops: pendingAirdrops}
+    let cancel = TokenCancelAirdropTransaction{pendingAirdrops: pendingAirdrops}
+
+    // then
+    assertEquals(expected: pendingAirdrops, actual: claim.pendingAirdrops)
+    assertEquals(expected: pendingAirdrops, actual: cancel.pendingAirdrops)
+}
+
+// Source: TokenRejectTransaction.owner ("defaults to the payer when unset"); HAPI TokenRejectTransactionBody (an unset
+// owner is the payer) and the JavaScript SDK (TokenReference, "initializes fungibleToken and nft to null").
+test "a token reject transaction without owner leaves the owner unset" {
+    // when
+    let reject = TokenRejectTransaction{rejections: [TokenReference{tokenId: Address.fromString(address: "1.2.3")}]}
+
+    // then
+    assertNull(actual: reject.owner)
+    assertNull(actual: reject.rejections[0].serial)
+}
+
+// Source: the Java SDK (TokenRejectTransactionTest: owner 0.6.9, the tokens 1.2.3, 4.5.6 and 7.8.9 and the NFTs
+// 4.5.6/2 and 7.8.9/3) and the Python SDK (test_constructor_with_parameters).
+test "a token reject transaction keeps the owner and its fungible and NFT references in order" {
+    // given
+    let rejections = [TokenReference{tokenId: Address.fromString(address: "1.2.3")},
+            TokenReference{tokenId: Address.fromString(address: "4.5.6")},
+            TokenReference{tokenId: Address.fromString(address: "7.8.9")},
+            TokenReference{tokenId: Address.fromString(address: "4.5.6"), serial: 2},
+            TokenReference{tokenId: Address.fromString(address: "7.8.9"), serial: 3}]
+
+    // when
+    let reject = TokenRejectTransaction{owner: AccountId.fromString(value: "0.6.9"), rejections: rejections}
+
+    // then
+    assertEquals(expected: AccountId.fromString(value: "0.6.9"), actual: reject.owner)
+    assertEquals(expected: rejections, actual: reject.rejections)
+}
+
+// Source: the Java SDK (shouldBytes / shouldBytesNoSetters of the TokenAirdrop, TokenClaimAirdrop, TokenCancelAirdrop
+// and TokenReject tests: fromBytes(toBytes()) gives the same transaction), the Swift SDK (testToFromBytes) and the
+// JavaScript SDK (TokenAirdropTransaction, "from | toBytes").
+test "every airdrop transaction survives toBytes and fromBytes unchanged" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+    let nodes = [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")]
+    let token = Address.fromString(address: "0.0.5")
+    let sender = AccountId.fromString(value: "0.0.5006")
+    let receiver = AccountId.fromString(value: "0.0.5008")
+    let pendingAirdrops = [PendingAirdrop{senderId: sender, receiverId: receiver, tokenId: token},
+            PendingAirdrop{senderId: sender, receiverId: receiver, tokenId: Address.fromString(address: "0.0.3"),
+                    serial: 2}]
+    let transactions: list<consensusnode.transactions.PackedTransaction<ANY, ANY>> = [
+            TokenAirdropTransaction{
+                    tokenTransfers: [TokenTransfer{tokenId: token, accountId: sender, amount: -400},
+                            TokenTransfer{tokenId: token, accountId: receiver, amount: 400}],
+                    nftTransfers: [NftTransfer{tokenId: Address.fromString(address: "0.0.3"), serial: 2, sender: sender,
+                            receiver: receiver}]}.sign(payer: payer, nodes: nodes),
+            TokenClaimAirdropTransaction{pendingAirdrops: pendingAirdrops}.sign(payer: payer, nodes: nodes),
+            TokenCancelAirdropTransaction{pendingAirdrops: pendingAirdrops}.sign(payer: payer, nodes: nodes),
+            TokenRejectTransaction{owner: sender, rejections: [TokenReference{tokenId: token},
+                    TokenReference{tokenId: Address.fromString(address: "0.0.3"), serial: 2}]}
+                    .sign(payer: payer, nodes: nodes)]
+
+    for transaction in transactions {
+        // when
+        let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: transaction.toBytes())
+
+        // then
+        assertEquals(expected: transaction.toBytes(), actual: restored.toBytes())
+        assertEquals(expected: transaction.transactionId, actual: restored.transactionId)
+        assertEquals(expected: transaction.signableBodies(), actual: restored.signableBodies())
+        assertEquals(expected: 2, actual: length(value: restored.nodeSignatures))
+    }
+}
+```
+
 ## Questions & Comments
 
 - **Pending airdrops are a *record* field, not a receipt field.** HAPI returns the set of created
@@ -187,3 +381,9 @@ new TokenRejectTransaction()
 - **`TokenReject` `owner` defaults to the payer.** Matching HAPI, an unset `owner` means the payer
   is rejecting its own tokens; set it only when a separate account (which must then sign) is the
   holder.
+
+- **`pendingAirdrops` is a list, but duplicates are not allowed.** The comments of
+  `TokenClaimAirdropTransaction` and `TokenCancelAirdropTransaction` say "no duplicates", and the Python SDK rejects
+  a duplicate pending airdrop before submitting; the order has no meaning to the network. Like
+  `TokenAssociateTransaction.tokens`, this reads like a `set<PendingAirdrop>`. Should the type change, or should the
+  order be kept and a duplicate be an error of the SDK? — open

@@ -223,8 +223,8 @@ class SpecTestGeneratorTest {
                         + "/// - `named test values without Java form`: the values HOLDERS have no Java form\n"
                         + "/// - `a holder`: no value of a.Holder\n")
                 .contains("class ASpecTest {\n\n    /// labels of one letter\n"
-                        + "    private static final List<String> LABELS = List.of(\"a\", \"b\");\n")
-                .contains("for (final String label : LABELS) {")
+                        + "    private static List<String> LABELS() {\n        return List.of(\"a\", \"b\");\n    }\n")
+                .contains("for (final String label : LABELS()) {")
                 .doesNotContain("HOLDERS =")
                 .doesNotContain("void aHolder()");
         assertThat(TestGenerator.untested(files)).contains("ASpecTest: `a holder`: no value of a.Holder");
@@ -295,6 +295,7 @@ class SpecTestGeneratorTest {
                 uint128 echoWide(value: uint128)
                 @@async int32 later()
                 @@throws(io-error) int32 read()
+                @@static int32 count(kind: type)
             }
             """;
 
@@ -376,6 +377,10 @@ class SpecTestGeneratorTest {
                 assertFalse(condition: n.shape != n.shape)
             }
 
+            test "a type literal is passed as class" {
+                assertEquals(expected: 1, actual: Numbers.count(kind: Circle))
+            }
+
             test "dates compare" {
                 let day = DEFAULT(Numbers).day
                 let other = DEFAULT(Numbers).day
@@ -408,6 +413,7 @@ class SpecTestGeneratorTest {
                 .contains("assertTrue((-n.d() < 0.0) && ((n.d() / 3.0) > 0.0));")
                 .contains("assertTrue(n.m().multiply(n.m()).compareTo(n.m().negate()) >= 0);")
                 .contains("assertInstanceOf(Circle.class, n.shape());")
+                .contains("assertEquals(1, Numbers.count(Circle.class));")
                 .contains("Map.ofEntries(Map.entry(1L, 1L)")
                 .contains("    /// Deprecated: replaced\n")
                 .contains("    void test1CallALater() {\n")

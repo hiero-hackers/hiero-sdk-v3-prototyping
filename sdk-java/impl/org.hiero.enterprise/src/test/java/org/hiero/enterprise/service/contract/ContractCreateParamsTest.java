@@ -305,4 +305,8 @@ class ContractCreateParamsTest {
     private static ContractCreateParams create() {
         return new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
     }
+
+    private static ContractCreateParams defaultSubject() {
+        return new ContractCreateParams(new Address(0L, 0L, "", 1001L), null, List.of(), null, null, null, null, null, null, null, null, null, false);
+    }
 }

@@ -351,4 +351,8 @@ class NftTypeCreateParamsTest {
     private static NftTypeCreateParams create() {
         return new NftTypeCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
     }
+
+    private static NftTypeCreateParams defaultSubject() {
+        return new NftTypeCreateParams("Nft Tokens", "NT", null, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null);
+    }
 }

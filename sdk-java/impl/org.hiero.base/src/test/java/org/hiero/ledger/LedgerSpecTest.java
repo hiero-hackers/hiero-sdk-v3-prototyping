@@ -16,24 +16,34 @@ class LedgerSpecTest {
 
     /// HIP-15, section "Specification": the inputs that must be rejected (all but "0.0.123-abcde", which is well formed and
     /// fails only the checksum validation), checked against its regex.
-    private static final List<String> HIP15_REJECTED_IDS = List.of("0.00.123", "0.0.0123-vfmkw", "0.0.123-VFMKW", "0.0.123-vFmKw", "0.0.123#vfmkw", "0.0.123vfmkw", "0.0.123 - vfmkw", "0.123", "0.0.123.", "0.0.123-vf", "0.0.123-vfm-kw", "0.0.123-vfmkwxxxx");
+    private static List<String> HIP15_REJECTED_IDS() {
+        return List.of("0.00.123", "0.0.0123-vfmkw", "0.0.123-VFMKW", "0.0.123-vFmKw", "0.0.123#vfmkw", "0.0.123vfmkw", "0.0.123 - vfmkw", "0.123", "0.0.123.", "0.0.123-vf", "0.0.123-vfm-kw", "0.0.123-vfmkwxxxx");
+    }
 
     /// Checksums that are not five lowercase letters (HIP-15); rejected by the Java, Go, Rust and Swift SDKs.
-    private static final List<String> MALFORMED_CHECKSUMS = List.of("0.0.123-ntjl", "0.0.123-ntjl1", "0.0.123-");
+    private static List<String> MALFORMED_CHECKSUMS() {
+        return List.of("0.0.123-ntjl", "0.0.123-ntjl1", "0.0.123-");
+    }
 
     /// Text that is no entity id: from the JavaScript, Python, C++, Java, Rust and Swift SDKs, the C++ SDK (misplaced dots
     /// and characters) and the Python SDK (malformed checksum separators, whitespace).
-    private static final List<String> MALFORMED_ENTITY_IDS = List.of("", "0.0", "0.0.", "0.0.a", "a.b.c", "0.0.-1", "-1.-1.-1", "1.2.3.4", "8901000", "8.901000", ".8.90.1000.", "8..901000", "890.1000.", "0.0.1!", "o.o.e", "abc", "0.0.123#vfmkw", "0.0.123 - vfmkw", "0.0.123vfmkw", "0.0.123-vfm-kw", " 0.0.100 ");
+    private static List<String> MALFORMED_ENTITY_IDS() {
+        return List.of("", "0.0", "0.0.", "0.0.a", "a.b.c", "0.0.-1", "-1.-1.-1", "1.2.3.4", "8901000", "8.901000", ".8.90.1000.", "8..901000", "890.1000.", "0.0.1!", "o.o.e", "abc", "0.0.123#vfmkw", "0.0.123 - vfmkw", "0.0.123vfmkw", "0.0.123-vfm-kw", " 0.0.100 ");
+    }
 
     /// Entity ids with a HIP-15 checksum and the id of the ledger it belongs to, each recomputed with the algorithm of
     /// HIP-15: the vectors of HIP-15 and of the Java, JavaScript, Rust, Swift, Go and Python SDKs (0.0.123 on mainnet,
     /// testnet and previewnet), of the Python SDK (ledger 3), the checksum tables of the Rust and Swift SDKs (0.0.0 to
     /// 0.0.255 per ledger, here the first, second and last entry, and a ledger id of four bytes), and the vectors of the
     /// Swift (0.0.1126123), Python (0.0.100), JavaScript (0.0.321) and Go (0.0.3) SDKs.
-    private static final Map<String, byte[]> HIP15_CHECKSUMS = Map.ofEntries(Map.entry("0.0.123-vfmkw", new byte[] {(byte) 0}), Map.entry("0.0.0-uvnqa", new byte[] {(byte) 0}), Map.entry("0.0.1-dfkxr", new byte[] {(byte) 0}), Map.entry("0.0.255-hpphi", new byte[] {(byte) 0}), Map.entry("0.0.100-hhghj", new byte[] {(byte) 0}), Map.entry("0.0.1126123-ycfte", new byte[] {(byte) 0}), Map.entry("0.0.123-esxsf", new byte[] {(byte) 1}), Map.entry("0.0.0-eiyxj", new byte[] {(byte) 1}), Map.entry("0.0.1-mswfa", new byte[] {(byte) 1}), Map.entry("0.0.3-dmqui", new byte[] {(byte) 1}), Map.entry("0.0.255-rdaor", new byte[] {(byte) 1}), Map.entry("0.0.321-uhcxp", new byte[] {(byte) 1}), Map.entry("0.0.123-ogizo", new byte[] {(byte) 2}), Map.entry("0.0.0-nwkes", new byte[] {(byte) 2}), Map.entry("0.0.1-wghmj", new byte[] {(byte) 2}), Map.entry("0.0.255-aqlwa", new byte[] {(byte) 2}), Map.entry("0.0.1-ftsts", new byte[] {(byte) 3}), Map.entry("0.0.0-kenvf", new byte[] {(byte) 12, (byte) 31, (byte) 0, (byte) 2}), Map.entry("0.0.1-solcw", new byte[] {(byte) 12, (byte) 31, (byte) 0, (byte) 2}), Map.entry("0.0.255-wypmn", new byte[] {(byte) 12, (byte) 31, (byte) 0, (byte) 2}));
+    private static Map<String, byte[]> HIP15_CHECKSUMS() {
+        return Map.ofEntries(Map.entry("0.0.123-vfmkw", new byte[] {(byte) 0}), Map.entry("0.0.0-uvnqa", new byte[] {(byte) 0}), Map.entry("0.0.1-dfkxr", new byte[] {(byte) 0}), Map.entry("0.0.255-hpphi", new byte[] {(byte) 0}), Map.entry("0.0.100-hhghj", new byte[] {(byte) 0}), Map.entry("0.0.1126123-ycfte", new byte[] {(byte) 0}), Map.entry("0.0.123-esxsf", new byte[] {(byte) 1}), Map.entry("0.0.0-eiyxj", new byte[] {(byte) 1}), Map.entry("0.0.1-mswfa", new byte[] {(byte) 1}), Map.entry("0.0.3-dmqui", new byte[] {(byte) 1}), Map.entry("0.0.255-rdaor", new byte[] {(byte) 1}), Map.entry("0.0.321-uhcxp", new byte[] {(byte) 1}), Map.entry("0.0.123-ogizo", new byte[] {(byte) 2}), Map.entry("0.0.0-nwkes", new byte[] {(byte) 2}), Map.entry("0.0.1-wghmj", new byte[] {(byte) 2}), Map.entry("0.0.255-aqlwa", new byte[] {(byte) 2}), Map.entry("0.0.1-ftsts", new byte[] {(byte) 3}), Map.entry("0.0.0-kenvf", new byte[] {(byte) 12, (byte) 31, (byte) 0, (byte) 2}), Map.entry("0.0.1-solcw", new byte[] {(byte) 12, (byte) 31, (byte) 0, (byte) 2}), Map.entry("0.0.255-wypmn", new byte[] {(byte) 12, (byte) 31, (byte) 0, (byte) 2}));
+    }
 
     /// EIP-55, section "Test Cases": addresses in their EIP-55 form (all caps, all lower and mixed case).
-    private static final List<String> EIP55_ADDRESSES = List.of("0x52908400098527886E0F7030069857D2E4169EE7", "0x8617E340B3D01FA5F11F306F4090FD50E238070D", "0xde709f2102306220921060314715629080e2fb77", "0x27b1fdb04752bbc536007a920d24acb045561c26", "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", "0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359", "0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB", "0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb");
+    private static List<String> EIP55_ADDRESSES() {
+        return List.of("0x52908400098527886E0F7030069857D2E4169EE7", "0x8617E340B3D01FA5F11F306F4090FD50E238070D", "0xde709f2102306220921060314715629080e2fb77", "0x27b1fdb04752bbc536007a920d24acb045561c26", "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed", "0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359", "0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB", "0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb");
+    }
 
     /// `ledger/the-hip-15-checksums-are-valid-on-their-ledger`
     ///
@@ -41,9 +51,9 @@ class LedgerSpecTest {
     @Test
     @DisplayName("the HIP-15 checksums are valid on their ledger")
     void theHIP15ChecksumsAreValidOnTheirLedger() {
-        for (final String text : keys(HIP15_CHECKSUMS)) {
+        for (final String text : keys(HIP15_CHECKSUMS())) {
             // given
-            final Network<HbarUnit> ledger = new Network<>(get(HIP15_CHECKSUMS, text), "ledger", HbarUnit.HBAR);
+            final Network<HbarUnit> ledger = new Network<>(get(HIP15_CHECKSUMS(), text), "ledger", HbarUnit.HBAR);
 
             // when
             final AccountId account = AccountId.fromString(text);
@@ -85,7 +95,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("a malformed checksum is rejected")
     void aMalformedChecksumIsRejected() {
-        for (final String text : MALFORMED_CHECKSUMS) {
+        for (final String text : MALFORMED_CHECKSUMS()) {
             // when / then
             assertThrows(IllegalArgumentException.class, () -> Address.fromString(text));
             assertThrows(IllegalArgumentException.class, () -> AccountId.fromString(text));
@@ -99,7 +109,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("text that is no entity id is rejected")
     void textThatIsNoEntityIdIsRejected() {
-        for (final String text : MALFORMED_ENTITY_IDS) {
+        for (final String text : MALFORMED_ENTITY_IDS()) {
             // when / then
             assertThrows(IllegalArgumentException.class, () -> Address.fromString(text));
             assertThrows(IllegalArgumentException.class, () -> AccountId.fromString(text));
@@ -310,7 +320,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("a contract id and an account id of an EVM address are read from and written as shard.realm.<address>")
     void aContractIdAndAnAccountIdOfAnEVMAddressAreReadFromAndWrittenAsShardRealmAddress() {
-        for (final String checksummed : EIP55_ADDRESSES) {
+        for (final String checksummed : EIP55_ADDRESSES()) {
             // given
             final EvmAddress address = EvmAddress.fromString(checksummed);
             final String digits = toHex(address.bytes());
@@ -335,7 +345,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("an id with 0x or upper case hex digits in its EVM-address form is rejected")
     void anIdWith0xOrUpperCaseHexDigitsInItsEVMAddressFormIsRejected() {
-        for (final String checksummed : EIP55_ADDRESSES) {
+        for (final String checksummed : EIP55_ADDRESSES()) {
             // when / then
             assertThrows(IllegalArgumentException.class, () -> ContractId.fromString("1.2." + checksummed));
             assertThrows(IllegalArgumentException.class, () -> AccountId.fromString("0.0." + checksummed));
@@ -421,7 +431,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("the inputs that HIP-15 rejects are rejected")
     void theInputsThatHIP15RejectsAreRejected() {
-        for (final String text : HIP15_REJECTED_IDS) {
+        for (final String text : HIP15_REJECTED_IDS()) {
             // when / then
             assertThrows(IllegalArgumentException.class, () -> Address.fromString(text));
             assertThrows(IllegalArgumentException.class, () -> AccountId.fromString(text));
@@ -438,7 +448,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("an EVM address is written in its EIP-55 form")
     void anEVMAddressIsWrittenInItsEIP55Form() {
-        for (final String checksummed : EIP55_ADDRESSES) {
+        for (final String checksummed : EIP55_ADDRESSES()) {
             // when: built from the bytes, so the case of the text plays no part
             final EvmAddress evm = EvmAddress.fromBytes(hex(substring(checksummed, 2L, 42L)));
 

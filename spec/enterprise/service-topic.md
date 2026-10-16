@@ -86,6 +86,70 @@ TopicService {
 TopicService createService(session: Session)
 ```
 
+## Default Instances for Testing
+
+```
+// The parameters of a public topic that cannot be changed: no values.
+instance TopicCreateParams = TopicCreateParams{}
+```
+
+## Testing
+
+Tests of `TopicCreateParams`. The methods of `TopicService` talk to the network and are not unit-tested here. A
+violated `@@maxLength` cannot be expected yet: the test language expects errors of calls only, and creating a
+`TopicCreateParams` declares none. `Topic` and `TopicMessage` hold a `zonedDateTime`, which the test language cannot
+write yet (it has no date and time literals), so they are not tested.
+
+```tests
+// Source: this spec (TopicCreateParams: "Nothing is required: without values the topic is public and cannot be
+// changed"); the Python SDK (topic_create_transaction_test.py, test_constructor_default_values: no admin and no submit
+// key).
+test "topic parameters without values describe a public topic that cannot be changed" {
+    // when
+    let params = DEFAULT(TopicCreateParams)
+
+    // then
+    assertNull(actual: params.adminAuthority)
+    assertNull(actual: params.submitAuthority)
+    assertNull(actual: params.topicMemo)
+    assertNull(actual: params.autoRenewPeriod)
+    assertNull(actual: params.autoRenewAccount)
+}
+
+// Source: the TopicCreateTransaction unit tests of the Java (TopicCreateTransactionTest), Go
+// (topic_create_transaction_unit_test.go), C++ (TopicCreateTransactionUnitTests), Swift
+// (TopicCreateTransactionUnitTests) and Python (topic_create_transaction_test.py, test_constructor) SDKs: every value
+// that is set is read back unchanged.
+test "topic parameters keep the values they are created with" {
+    // given
+    let authority = DEFAULT(Authority)
+    let autoRenewAccount = DEFAULT(AccountId)
+
+    // when
+    let params = TopicCreateParams{adminAuthority: authority, submitAuthority: authority, topicMemo: "memo",
+            autoRenewAccount: autoRenewAccount}
+
+    // then
+    assertEquals(expected: authority, actual: params.adminAuthority)
+    assertEquals(expected: authority, actual: params.submitAuthority)
+    assertEquals(expected: "memo", actual: params.topicMemo)
+    assertEquals(expected: autoRenewAccount, actual: params.autoRenewAccount)
+}
+
+// Source: this spec (@@maxLength(100) of topicMemo); HAPI limits a memo to 100 bytes, which ASCII text of 100
+// characters is.
+test "a topic memo of 100 characters is accepted" {
+    // given
+    let memo = repeat(value: "a", count: 100)
+
+    // when
+    let params = TopicCreateParams{topicMemo: memo}
+
+    // then
+    assertEquals(expected: memo, actual: params.topicMemo)
+}
+```
+
 ## Questions & Comments
 
 - The authorization-key fields/parameters here (`Topic.adminAuthority`, `Topic.submitAuthority`, and `createTopic(adminAuthority)`)

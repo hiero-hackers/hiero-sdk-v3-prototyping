@@ -56,6 +56,91 @@ FixedFee {
 }
 ```
 
+## Testing
+
+```tests
+// Source: the Python SDK (hbar_transfer_test: test_hbar_transfer_constructor); this spec (a negative amount is debited,
+// a positive one credited).
+test "an HBAR transfer keeps its account, its signed amount and its approval flag" {
+    // given
+    let account = DEFAULT(AccountId)
+
+    // when
+    let debit = Transfer{account: account, amount: -1000, isApproval: false}
+    let credit = Transfer{account: account, amount: 1000, isApproval: true}
+
+    // then
+    assertEquals(expected: account, actual: debit.account)
+    assertEquals(expected: -1000, actual: debit.amount)
+    assertFalse(condition: debit.isApproval)
+    assertEquals(expected: 1000, actual: credit.amount)
+    assertTrue(condition: credit.isApproval)
+    assertNotEquals(unexpected: debit, actual: credit)
+}
+
+// Source: the Python SDK (token_transfer_test: test_token_transfer_constructor).
+test "a token transfer keeps its token, account, amount and approval flag" {
+    // given
+    let token = Address.fromString(address: "0.0.5005")
+    let account = DEFAULT(AccountId)
+
+    // when
+    let transfer = TokenTransfer{tokenId: token, account: account, amount: -10, isApproval: false}
+
+    // then
+    assertEquals(expected: token, actual: transfer.tokenId)
+    assertEquals(expected: account, actual: transfer.account)
+    assertEquals(expected: -10, actual: transfer.amount)
+    assertFalse(condition: transfer.isApproval)
+    assertEquals(expected: TokenTransfer{tokenId: token, account: account, amount: -10, isApproval: false},
+            actual: transfer)
+}
+
+// Source: the Python SDK (token_nft_transfer_test: test_token_nft_transfer_constructor, approved and not approved).
+test "an NFT transfer keeps its sender, receiver, token, serial number and approval flag" {
+    // given
+    let parties = NftTransferParties{senderAccountId: AccountId.fromString(value: "0.0.1001"),
+            receiverAccountId: AccountId.fromString(value: "0.0.1002"), tokenId: Address.fromString(address: "0.0.5005")}
+
+    for approved in [false, true] {
+        // when
+        let transfer = NftTransfer{isApproval: approved, parties: parties, serialNumber: 1}
+
+        // then
+        assertEquals(expected: approved, actual: transfer.isApproval)
+        assertEquals(expected: parties, actual: transfer.parties)
+        assertEquals(expected: 1, actual: transfer.serialNumber)
+    }
+}
+
+// Source: this spec (`parties` is @@nullable).
+test "an NFT transfer can be created without its parties" {
+    // when
+    let transfer = NftTransfer{isApproval: false, serialNumber: 1}
+
+    // then
+    assertNull(actual: transfer.parties)
+}
+
+// Source: the Java SDK (CustomFixedFeeTest: amount 4, collector 1.2.3, denominating token 5.6.7); this spec (the
+// denominating token is absent if the fee is charged in HBAR).
+test "a fixed fee in HBAR has no denominating token and a fixed fee in a token has one" {
+    // given
+    let collector = AccountId.fromString(value: "1.2.3")
+    let token = Address.fromString(address: "5.6.7")
+
+    // when
+    let inHbar = FixedFee{amount: 4, collectorAccountId: collector}
+    let inToken = FixedFee{amount: 4, collectorAccountId: collector, denominatingTokenId: token}
+
+    // then
+    assertEquals(expected: 4, actual: inHbar.amount)
+    assertEquals(expected: collector, actual: inHbar.collectorAccountId)
+    assertNull(actual: inHbar.denominatingTokenId)
+    assertEquals(expected: token, actual: inToken.denominatingTokenId)
+}
+```
+
 ## Questions & Comments
 
 - `FixedFee.denominatingTokenId`: does this field make sense, since `FixedFee` is also used by the topic query service?

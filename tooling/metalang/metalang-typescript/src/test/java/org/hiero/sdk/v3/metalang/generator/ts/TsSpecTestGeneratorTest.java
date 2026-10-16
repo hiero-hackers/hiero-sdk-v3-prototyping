@@ -96,6 +96,10 @@ class TsSpecTestGeneratorTest {
                 assertTrue(condition: Color.RED == Color.RED && not(value: Color.GREEN == Color.RED))
             }
 
+            test "an enum constant is an instance of its enum" {
+                assertInstanceOf(expected: Color, actual: Color.RED)
+            }
+
             test "maps and indexes" {
                 let m = {"one": 1, "two": 2}
                 assertEquals(expected: 2, actual: m["two"])
@@ -241,7 +245,8 @@ class TsSpecTestGeneratorTest {
                         + "// - `named test values without TypeScript form`: the values HOLDERS have no TypeScript form\n")
                 .contains("import assert from \"node:assert/strict\";\nimport { describe, test } from \"node:test\";\n")
                 .contains("from \"@hiero/test-support\";\n")
-                .contains("/**\n * labels of one letter\n */\nconst LABELS: ReadonlyArray<string> = [\"a\", \"b\"];\n")
+                .contains("/**\n * labels of one letter\n */\nfunction LABELS(): ReadonlyArray<string> {\n"
+                        + "    return [\"a\", \"b\"];\n}\n")
                 .contains("describe(\"a\", () => {\n    // `a/a-record-returns-its-values`\n    //\n"
                         + "    // the attributes of a record\n    test(\"a record returns its values\", () => {\n"
                         + "        // given\n        const p: Point = defaultPoint();\n\n        // then\n")
@@ -254,7 +259,8 @@ class TsSpecTestGeneratorTest {
                 .contains("assertEquals(\"b\", get(defaultPoint().tags, 1n));")
                 .contains("assert.throws(() => Point.parse(\"\"), RangeError);")
                 .contains("test(\"a disabled test\", { skip: \"not yet\" }, () => {")
-                .contains("for (const label of LABELS) {")
+                .contains("assertInstanceOf(Color, Color.RED);")
+                .contains("for (const label of LABELS()) {")
                 .contains("test.todo(\"not generated: `named test values without TypeScript form`")
                 .contains("\nfunction defaultPoint(): Point {\n    return new Point({ x: 2, big: 18446744073709551615n,")
                 .contains("assertApprox(1.5, absDouble(half), 0.0);")
@@ -317,6 +323,7 @@ class TsSpecTestGeneratorTest {
                 @@async int32 later()
                 @@async @@throws(illegal-format) int32 fails()
                 @@throws(not-found-error) int32 find()
+                @@static int32 count(kind: type)
             }
             """;
 
@@ -386,6 +393,14 @@ class TsSpecTestGeneratorTest {
                 assertTrue(condition: -(-n.i) > 0 && (n.shape is Circle) == true)
             }
 
+            test "type literals are classes" {
+                assertEquals(expected: 1, actual: Numbers.count(kind: Circle))
+            }
+
+            test "an interface has no class at runtime" {
+                assertEquals(expected: 1, actual: Numbers.count(kind: Shape))
+            }
+
             test "dates compare" {
                 let day = DEFAULT(Numbers).day
                 let other = DEFAULT(Numbers).day
@@ -417,6 +432,8 @@ class TsSpecTestGeneratorTest {
                 .contains("await assert.rejects(async () => (await defaultNumbers().fails()), RangeError);")
                 .contains("assertTrue(compare(day, other) < 0);")
                 .contains("concat(n.b, hex(\"02\"))")
+                .contains("assertEquals(1, Numbers.count(Circle));")
+                .contains("// - `an interface has no class at runtime`: the type b.Shape has no class at runtime\n")
                 .contains("assert.throws(() => defaultNumbers().find(), NotFoundError);")
                 .contains("// - `an abstraction has no type at runtime`: 'is b.Shape': only a class has a type at runtime\n")
                 .contains("assertEquals(2n, get(new Map<string, bigint>([[\"a\", 2n]]), \"a\"));")

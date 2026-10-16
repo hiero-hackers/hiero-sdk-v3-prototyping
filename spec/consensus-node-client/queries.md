@@ -221,6 +221,61 @@ auditLog.record(info.accountId, c, answeringNode);
 For free queries, `QueryResponse` carries `value` and `answeredBy`; `cost` is only present on
 `PaidQueryResponse` and is therefore unreachable on free-query responses by construction.
 
+## Testing
+
+Offline tests of the settings that every query carries, written as given / when / then. `Query`, `FreeQuery` and
+`PaidQuery` are abstractions, so the tests use the concrete account queries. Cost discovery, payment and the
+`max-query-payment-exceeded-error` need a network and are tested by the Hiero TCK.
+
+```tests
+// Source: the Python SDK (query_test.py, test_set_max_query_payment_valid_param: no limit before one is set) and
+// this spec (if a retry setting is absent, the SDK default is used).
+test "a new query has no payment limit and no retry settings" {
+    // when
+    let paid = consensusnode.queries.accounts.AccountInfoQuery{accountId: DEFAULT}
+    let free = consensusnode.queries.accounts.AccountBalanceQuery{accountId: DEFAULT, contractId: null}
+
+    // then
+    assertNull(actual: paid.maxQueryPayment)
+    assertNull(actual: paid.maxAttempts)
+    assertNull(actual: paid.minBackoff)
+    assertNull(actual: paid.maxBackoff)
+    assertNull(actual: paid.attemptTimeout)
+    assertNull(actual: free.maxAttempts)
+    assertNull(actual: free.minBackoff)
+    assertNull(actual: free.maxBackoff)
+    assertNull(actual: free.attemptTimeout)
+}
+
+// Source: the Python SDK (query_test.py, test_set_max_query_payment_valid_param) and the Java SDK (Query
+// setMaxQueryPayment): a payment limit set on a paid query is kept.
+test "a paid query keeps its payment limit" {
+    // given
+    let limit: NativeToken<ANY, ANY> = DEFAULT(hedera.Hbar)
+
+    // when
+    let query = consensusnode.queries.accounts.AccountInfoQuery{accountId: DEFAULT, maxQueryPayment: limit}
+
+    // then
+    assertEquals(expected: limit, actual: query.maxQueryPayment)
+}
+
+// Source: the Python SDK (client_test.py, test_set_max_attempts_with_valid_param, test_set_min_backoff_with_valid_param,
+// test_set_max_backoff_with_valid_param) and the Java SDK (ClientTest.setMaxAttempts, setMinBackoffValid,
+// setMaxBackoffValid): retry settings that are set are kept.
+test "a query keeps its retry settings" {
+    // when
+    let query = consensusnode.queries.accounts.AccountInfoQuery{accountId: DEFAULT, maxAttempts: 5, minBackoff: 250,
+            maxBackoff: 8000, attemptTimeout: 10000}
+
+    // then
+    assertEquals(expected: 5, actual: query.maxAttempts)
+    assertEquals(expected: 250, actual: query.minBackoff)
+    assertEquals(expected: 8000, actual: query.maxBackoff)
+    assertEquals(expected: 10000, actual: query.attemptTimeout)
+}
+```
+
 ## Questions & Comments
 
 - **Envelope adds a `.value` unwrap step.** Every `submit(client)` callsite now ends in

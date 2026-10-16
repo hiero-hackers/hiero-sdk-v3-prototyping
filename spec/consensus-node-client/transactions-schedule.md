@@ -193,6 +193,137 @@ new ScheduleDeleteTransaction()
     .signWithOperatorAndSubmit(client);   // operator holds the adminKey
 ```
 
+## Testing
+
+Offline tests of the schedule transactions, written as given / when / then: the attributes a transaction keeps, the
+defaults of the attributes it leaves out, and the packed form of each transaction. The inner transaction is a
+`PrngTransaction` or a transfer of 1 HBAR from 0.0.1001 to 0.0.1002. Collecting signatures and executing the
+schedule happen on the network and are tested by the TCK, not here.
+
+```tests
+// Source: this spec (@@nullable, @@default(false) of waitForExpiry); the Python SDK (test_constructor_default_values
+// of ScheduleCreateTransaction).
+test "a schedule create transaction leaves out what is not given" {
+    // given
+    let inner = consensusnode.transactions.utility.PrngTransaction{}
+
+    // when
+    let transaction = ScheduleCreateTransaction{scheduledTransaction: inner}
+
+    // then
+    assertNull(actual: transaction.adminKey)
+    assertNull(actual: transaction.payerAccountId)
+    assertNull(actual: transaction.scheduleMemo)
+    assertNull(actual: transaction.expirationTime)
+    assertFalse(condition: transaction.waitForExpiry)
+}
+
+// Source: the Python SDK (test_constructor_with_parameters of ScheduleCreateTransaction: payer 0.0.123, "test memo",
+// waitForExpiry true, a transfer as inner transaction) and the Swift SDK (ScheduleCreateTransactionUnitTests
+// .test_GetSetPayerAccountId and test_GetSetAdminKey).
+test "a schedule create transaction keeps its inner transaction and attributes" {
+    // given
+    let inner: Transaction<ANY, ANY> = consensusnode.transactions.accounts.TransferTransaction{hbarTransfers: [
+            consensusnode.transactions.accounts.HbarTransfer{accountId: AccountId.fromString(value: "0.0.1001"),
+                    amount: hedera.Hbar{amount: -1, unit: hedera.HbarUnit.HBAR}},
+            consensusnode.transactions.accounts.HbarTransfer{accountId: AccountId.fromString(value: "0.0.1002"),
+                    amount: hedera.Hbar{amount: 1, unit: hedera.HbarUnit.HBAR}}]}
+
+    // when
+    let transaction = ScheduleCreateTransaction{scheduledTransaction: inner, adminKey: DEFAULT(Authority),
+            payerAccountId: AccountId.fromString(value: "0.0.123"), scheduleMemo: "test memo", waitForExpiry: true}
+
+    // then
+    assertEquals(expected: inner, actual: transaction.scheduledTransaction)
+    assertEquals(expected: DEFAULT(Authority), actual: transaction.adminKey)
+    assertEquals(expected: AccountId.fromString(value: "0.0.123"), actual: transaction.payerAccountId)
+    assertEquals(expected: "test memo", actual: transaction.scheduleMemo)
+    assertTrue(condition: transaction.waitForExpiry)
+}
+
+// Source: the Java SDK (ScheduleCreateTransactionTest.shouldBytes and shouldBytesNoSetters) and the Swift SDK
+// (ScheduleCreateTransactionUnitTests.test_ToFromBytes).
+test "a schedule create transaction survives toBytes and fromBytes" {
+    // given
+    let inner: Transaction<ANY, ANY> = consensusnode.transactions.accounts.TransferTransaction{hbarTransfers: [
+            consensusnode.transactions.accounts.HbarTransfer{accountId: AccountId.fromString(value: "0.0.1001"),
+                    amount: hedera.Hbar{amount: -1, unit: hedera.HbarUnit.HBAR}},
+            consensusnode.transactions.accounts.HbarTransfer{accountId: AccountId.fromString(value: "0.0.1002"),
+                    amount: hedera.Hbar{amount: 1, unit: hedera.HbarUnit.HBAR}}]}
+    let packed = ScheduleCreateTransaction{scheduledTransaction: inner, adminKey: DEFAULT(Authority),
+            payerAccountId: AccountId.fromString(value: "0.0.123"), scheduleMemo: "test memo", waitForExpiry: true}
+            .pack(payer: DEFAULT(consensusnode.client.Account), nodes: [AccountId.fromString(value: "0.0.3"),
+                    AccountId.fromString(value: "0.0.4")])
+
+    // when
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+
+// Source: the Python SDK (test_constructor_with_schedule_id of ScheduleSignTransaction), the Java SDK
+// (ScheduleSignTransactionTest.shouldBytes) and the Swift SDK (ScheduleSignTransactionUnitTests.test_GetSetScheduleId
+// and test_ToFromBytes).
+test "a schedule sign transaction keeps its schedule and survives toBytes and fromBytes" {
+    // given
+    let scheduleId = Address.fromString(address: "0.0.5005")
+    let transaction = ScheduleSignTransaction{scheduleId: scheduleId}
+
+    // when
+    let packed = transaction.pack(payer: DEFAULT(consensusnode.client.Account), nodes: [AccountId.fromString(value: "0.0.3")])
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: scheduleId, actual: transaction.scheduleId)
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+
+// Source: this spec (a ScheduleSign carries only the scheduleId; the signatures on it are credited to the schedule);
+// the Python SDK (test_sign_transaction of ScheduleSignTransaction). The second key is the secp256k1 key of the tests
+// of keys.md.
+test "every key that signs a schedule sign transaction signs each body" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+    let second = consensusnode.client.Account{accountId: AccountId.fromString(value: "0.0.1002"),
+            privateKey: keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
+                    value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")}
+    let packed = ScheduleSignTransaction{scheduleId: Address.fromString(address: "0.0.5005")}
+            .sign(payer: payer, nodes: [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")])
+
+    // when
+    let signed = packed.sign(account: second)
+
+    // then
+    assertEquals(expected: 4, actual: length(value: signed.nodeSignatures))
+    for signature in signed.nodeSignatures {
+        for body in signed.signableBodies() {
+            if body.node == signature.node {
+                assertTrue(condition: signature.publicKey.verify(message: body.bytes, signature: signature.signature))
+            }
+        }
+    }
+}
+
+// Source: the Python SDK (test_constructor_with_parameters of ScheduleDeleteTransaction), the Java SDK
+// (ScheduleDeleteTransactionTest.shouldBytes) and the Swift SDK (ScheduleDeleteTransactionUnitTests
+// .test_GetSetScheduleId and test_ToFromBytes).
+test "a schedule delete transaction keeps its schedule and survives toBytes and fromBytes" {
+    // given
+    let scheduleId = Address.fromString(address: "0.0.5005")
+    let transaction = ScheduleDeleteTransaction{scheduleId: scheduleId}
+
+    // when
+    let packed = transaction.pack(payer: DEFAULT(consensusnode.client.Account), nodes: [AccountId.fromString(value: "0.0.3")])
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: scheduleId, actual: transaction.scheduleId)
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+```
+
 ## Questions & Comments
 
 - **`customFeeLimits` (HIP-991) is intentionally absent.** It bounds the custom fees the payer is

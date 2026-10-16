@@ -176,6 +176,88 @@ funded operator account"* fixture referenced below.
   `value.accountId` equals the operator's account id, and whose `value.balance` is greater than
   zero (the operator is funded by solo's one-shot deployment).
 
+### Unit tests
+
+Offline tests of the queries and their result types, written as given / when / then. Nothing is submitted; the
+comment above each test names where the current SDKs test the same.
+
+```tests
+// Source: the Python SDK (account_balance_query_test.py, test_build_account_balance_query and
+// test_set_contract_id_method_chaining_resets_account_id) and the C++ SDK (AccountBalanceQueryUnitTests): a balance
+// query targets either an account or a contract.
+test "a balance query for an account has no contract id" {
+    // given
+    let account = DEFAULT(AccountId)
+
+    // when
+    let query = AccountBalanceQuery{accountId: account, contractId: null}
+
+    // then
+    assertEquals(expected: account, actual: query.accountId)
+    assertNull(actual: query.contractId)
+}
+
+// Source: the Python SDK (account_balance_query_test.py, test_build_account_balance_query_with_contract_id) and the C++
+// SDK (AccountBalanceQueryUnitTests).
+test "a balance query for a contract has no account id" {
+    // given
+    let contract = DEFAULT(ContractId)
+
+    // when
+    let query = AccountBalanceQuery{accountId: null, contractId: contract}
+
+    // then
+    assertEquals(expected: contract, actual: query.contractId)
+    assertNull(actual: query.accountId)
+}
+
+// Source: the Python SDK (account_info_query_test.py and account_records_query_test.py, test_constructor and
+// test_get_method) and the Swift and Go SDKs (the get / set tests of AccountInfoQuery and AccountRecordsQuery).
+test "the info and records queries keep their account id" {
+    // given
+    let account = DEFAULT(AccountId)
+
+    // when
+    let info = AccountInfoQuery{accountId: account}
+    let records = AccountRecordsQuery{accountId: account}
+
+    // then
+    assertEquals(expected: account, actual: info.accountId)
+    assertEquals(expected: account, actual: records.accountId)
+}
+
+// Source: this spec (the defaults of AccountInfo); the Python SDK (account_info_test.py, the initialization of
+// AccountInfo).
+test "an account info has these defaults" {
+    // when
+    let info = AccountInfo{accountId: DEFAULT, balance: DEFAULT(hedera.Hbar), expirationTime: DEFAULT}
+
+    // then
+    assertEquals(expected: 0, actual: info.maxAutomaticTokenAssociations)
+    assertFalse(condition: info.receiverSignatureRequired)
+    assertEquals(expected: 0, actual: info.ownedNfts)
+    assertFalse(condition: info.deleted)
+    assertFalse(condition: info.declineStakingReward)
+    assertNull(actual: info.evmAddress)
+    assertNull(actual: info.authority)
+    assertNull(actual: info.accountMemo)
+    assertNull(actual: info.autoRenewPeriod)
+    assertNull(actual: info.stakedAccountId)
+    assertNull(actual: info.stakedNodeId)
+}
+
+// Source: this spec (an account without qualifying records yields an empty list); the Python SDK
+// (account_records_query_test.py, test_account_record_query_empty_records).
+test "account records without records have an empty list" {
+    // when
+    let records = AccountRecords{accountId: DEFAULT}
+
+    // then
+    assertEquals(expected: DEFAULT(AccountId), actual: records.accountId)
+    assertEquals(expected: 0, actual: length(value: records.records))
+}
+```
+
 ## Questions & Comments
 
 - **`AccountBalanceQuery` accepts either `accountId: AccountId` or `contractId: ContractId`.**

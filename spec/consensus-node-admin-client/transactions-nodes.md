@@ -168,6 +168,23 @@ NodeDeleteReceipt extends Receipt {
 }
 ```
 
+## Default Instances for Testing
+
+```
+// A gossip endpoint by IPv4 address, as in the example "Register a new consensus node".
+instance ServiceEndpoint = ServiceEndpoint{ipAddress: IpAddress{bytes: [10, 0, 0, 7]}, domainName: null, port: 50211}
+
+// A gRPC endpoint by domain name, as in the example "Register a new consensus node".
+values NODE_DOMAIN_ENDPOINT: ServiceEndpoint = ServiceEndpoint{ipAddress: null, domainName: "node7.consensus.example",
+        port: 50211}
+
+// Stand-ins for the DER bytes of a gossip CA certificate and for the SHA-384 hash (48 bytes) of a gRPC certificate;
+// their content does not matter to the transactions.
+values GOSSIP_CA_CERTIFICATE: bytes = utf8(text: "gossip CA certificate")
+
+values GRPC_CERTIFICATE_HASH: bytes = repeat(value: hex(text: "cd"), count: 48)
+```
+
 ## Examples
 
 ### Register a new consensus node
@@ -230,6 +247,163 @@ new NodeDeleteTransaction()
     .sign(adminSigner);
 ```
 
+## Testing
+
+Offline tests of the endpoints and of the attributes the node transactions keep, written as given / when / then.
+The checks of the consensus node (signatures, `INVALID_ENDPOINT`, limits of the network) are not tested here. The
+comment above each test names the SDK tests it comes from.
+
+```tests
+// Source: the Go (TestEndpointSetAndGetAddress, TestEndpointSetAndGetPort), Python (test_constructor_with_values),
+// JavaScript ("should create EndPoint with both address and port") and C++ Endpoint unit tests.
+test "an endpoint by IP address keeps the address and the port" {
+    // given
+    let ipAddress = IpAddress{bytes: [10, 0, 0, 7]}
+
+    // when
+    let endpoint = ServiceEndpoint{ipAddress: ipAddress, domainName: null, port: 50211}
+
+    // then
+    assertEquals(expected: ipAddress, actual: endpoint.ipAddress)
+    assertNull(actual: endpoint.domainName)
+    assertEquals(expected: 50211, actual: endpoint.port)
+}
+
+// Source: the Go (TestEndpointSetAndGetDomainName), JavaScript ("should create EndPoint from domain name JSON"),
+// Python and Java (validateAllowsOnlyDomain) Endpoint unit tests.
+test "an endpoint by domain name keeps the name and the port" {
+    // when
+    let endpoint = ServiceEndpoint{ipAddress: null, domainName: "node7.consensus.example", port: 50211}
+
+    // then
+    assertNull(actual: endpoint.ipAddress)
+    assertEquals(expected: "node7.consensus.example", actual: endpoint.domainName)
+    assertEquals(expected: 50211, actual: endpoint.port)
+}
+
+// Source: the Go (TestEndpointRoundTripProtobuf) and Python (test_serialization_roundtrip) Endpoint unit tests, which
+// compare endpoints by value; the Equality of the test language.
+test "endpoints are equal when address, name and port are equal" {
+    // given
+    let endpoint = DEFAULT(ServiceEndpoint)
+
+    // when
+    let same = ServiceEndpoint{ipAddress: IpAddress{bytes: [10, 0, 0, 7]}, domainName: null, port: 50211}
+    let otherPort = ServiceEndpoint{ipAddress: IpAddress{bytes: [10, 0, 0, 7]}, domainName: null, port: 50212}
+
+    // then
+    assertEquals(expected: endpoint, actual: same)
+    assertNotEquals(unexpected: endpoint, actual: otherPort)
+    assertNotEquals(unexpected: endpoint, actual: NODE_DOMAIN_ENDPOINT)
+}
+
+// Source: the Java, Go (TestUnitNodeCreateTransactionGet), Python (test_constructor_with_parameters), C++, JavaScript
+// and Swift NodeCreateTransaction unit tests.
+test "a node create transaction keeps all its attributes" {
+    // given
+    let account = DEFAULT(AccountId)
+    let adminAuthority = DEFAULT(Authority)
+
+    // when
+    let transaction = NodeCreateTransaction{accountId: account, description: "consensus-node-7",
+            gossipEndpoints: [DEFAULT(ServiceEndpoint)], serviceEndpoints: [NODE_DOMAIN_ENDPOINT],
+            gossipCaCertificate: GOSSIP_CA_CERTIFICATE, grpcCertificateHash: GRPC_CERTIFICATE_HASH,
+            adminAuthority: adminAuthority, declineReward: true, grpcWebProxyEndpoint: NODE_DOMAIN_ENDPOINT}
+
+    // then
+    assertEquals(expected: account, actual: transaction.accountId)
+    assertEquals(expected: "consensus-node-7", actual: transaction.description)
+    assertEquals(expected: [DEFAULT(ServiceEndpoint)], actual: transaction.gossipEndpoints)
+    assertEquals(expected: [NODE_DOMAIN_ENDPOINT], actual: transaction.serviceEndpoints)
+    assertEquals(expected: GOSSIP_CA_CERTIFICATE, actual: transaction.gossipCaCertificate)
+    assertEquals(expected: GRPC_CERTIFICATE_HASH, actual: transaction.grpcCertificateHash)
+    assertEquals(expected: adminAuthority, actual: transaction.adminAuthority)
+    assertTrue(condition: transaction.declineReward)
+    assertEquals(expected: NODE_DOMAIN_ENDPOINT, actual: transaction.grpcWebProxyEndpoint)
+}
+
+// Source: the Python (test_constructor_default_values) and Go (TestUnitNodeCreateTransactionDeclineReward)
+// NodeCreateTransaction unit tests; `@@default(false)` of declineReward.
+test "a node create transaction takes the reward and has no description and no proxy by default" {
+    // when
+    let transaction = NodeCreateTransaction{accountId: DEFAULT(AccountId), gossipEndpoints: [DEFAULT(ServiceEndpoint)],
+            serviceEndpoints: [NODE_DOMAIN_ENDPOINT], gossipCaCertificate: GOSSIP_CA_CERTIFICATE,
+            grpcCertificateHash: GRPC_CERTIFICATE_HASH, adminAuthority: DEFAULT(Authority)}
+
+    // then
+    assertFalse(condition: transaction.declineReward)
+    assertNull(actual: transaction.description)
+    assertNull(actual: transaction.grpcWebProxyEndpoint)
+}
+
+// Source: the Python (test_constructor_default_values), Go (TestUnitNodeUpdateTransactionSetNothing) and JavaScript
+// NodeUpdateTransaction unit tests; the API schema of this spec (fields that are not set are left unchanged, an empty
+// endpoint list leaves the list unchanged).
+test "a node update transaction changes nothing but what is set" {
+    // when
+    let transaction = NodeUpdateTransaction{nodeId: 7}
+
+    // then
+    assertEquals(expected: 7, actual: transaction.nodeId)
+    assertNull(actual: transaction.accountId)
+    assertNull(actual: transaction.description)
+    assertEquals(expected: 0, actual: length(value: transaction.gossipEndpoints))
+    assertEquals(expected: 0, actual: length(value: transaction.serviceEndpoints))
+    assertNull(actual: transaction.gossipCaCertificate)
+    assertNull(actual: transaction.grpcCertificateHash)
+    assertNull(actual: transaction.adminAuthority)
+    assertNull(actual: transaction.declineReward)
+    assertNull(actual: transaction.grpcWebProxyEndpoint)
+}
+
+// Source: the Java, Go (TestUnitNodeUpdateTransactionGet), Python (test_constructor_with_parameters), C++, JavaScript
+// and Swift NodeUpdateTransaction unit tests.
+test "a node update transaction keeps the attributes it sets" {
+    // given
+    let account = DEFAULT(AccountId)
+    let adminAuthority = DEFAULT(Authority)
+
+    // when
+    let transaction = NodeUpdateTransaction{nodeId: 7, accountId: account, description: "consensus-node-7",
+            gossipEndpoints: [DEFAULT(ServiceEndpoint)], serviceEndpoints: [NODE_DOMAIN_ENDPOINT],
+            gossipCaCertificate: GOSSIP_CA_CERTIFICATE, grpcCertificateHash: GRPC_CERTIFICATE_HASH,
+            adminAuthority: adminAuthority, grpcWebProxyEndpoint: NODE_DOMAIN_ENDPOINT}
+
+    // then
+    assertEquals(expected: 7, actual: transaction.nodeId)
+    assertEquals(expected: account, actual: transaction.accountId)
+    assertEquals(expected: "consensus-node-7", actual: transaction.description)
+    assertEquals(expected: [DEFAULT(ServiceEndpoint)], actual: transaction.gossipEndpoints)
+    assertEquals(expected: [NODE_DOMAIN_ENDPOINT], actual: transaction.serviceEndpoints)
+    assertEquals(expected: GOSSIP_CA_CERTIFICATE, actual: transaction.gossipCaCertificate)
+    assertEquals(expected: GRPC_CERTIFICATE_HASH, actual: transaction.grpcCertificateHash)
+    assertEquals(expected: adminAuthority, actual: transaction.adminAuthority)
+    assertEquals(expected: NODE_DOMAIN_ENDPOINT, actual: transaction.grpcWebProxyEndpoint)
+}
+
+// Source: the Go NodeUpdateTransaction unit test (TestUnitNodeUpdateTransactionDeclineReward): true and false are both
+// kept and differ from "not set".
+test "a node update transaction keeps declineReward true and false" {
+    for declineReward in [true, false] {
+        // when
+        let transaction = NodeUpdateTransaction{nodeId: 7, declineReward: declineReward}
+
+        // then
+        assertEquals(expected: declineReward, actual: transaction.declineReward)
+    }
+}
+
+// Source: the Java, Go, Python (test_constructor_with_parameter), C++, JavaScript and Swift NodeDeleteTransaction unit
+// tests.
+test "a node delete transaction keeps its node id" {
+    // when
+    let transaction = NodeDeleteTransaction{nodeId: 7}
+
+    // then
+    assertEquals(expected: 7, actual: transaction.nodeId)
+}
+```
+
 ## Questions & Comments
 
 - **`ConsensusNode` in [`base/ledger.md`](../base/ledger.md) does not carry `nodeId`
@@ -268,3 +442,12 @@ new NodeDeleteTransaction()
 - **No HIP-1046 multi-endpoint gRPC-web proxy field.** `grpcWebProxyEndpoint` is a single
   endpoint, matching the current HAPI shape; if HIP-1046 evolves to a list, both
   `NodeCreate` and `NodeUpdate` need to grow accordingly. Tracked here for visibility.
+
+- **The client-side limits of the current SDKs are not part of this API.** The Go and Python SDKs reject, before
+  submission, more than 10 gossip endpoints, more than 8 service endpoints, a description of more than 100 UTF-8
+  bytes, an empty `gossipCaCertificate` and an endpoint with both an IP address and a domain name. This spec states
+  only `@@minSize(1)` for the endpoint lists of `NodeCreateTransaction` and the "at most 100 characters" in a
+  comment. Whether the limits belong into the API (`@@maxSize(10)`, `@@maxSize(8)`, `@@maxLength(100)`,
+  `@@minSize(1)`, `@@min(1)` for the port) — they are network settings that may change — is open. Even then, a
+  `tests` block could not check them: a violated constructor constraint declares no error id that
+  `@@expectThrows` could name.

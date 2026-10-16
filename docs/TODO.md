@@ -173,3 +173,14 @@ actually referenced.
 - [ ] **`spec/consensus-node-client/client.md`** — pre-existing issues unrelated to imports: the `createClient`
   factories reference an undefined `OperatorAccount` type (likely meant to be `Account`) and use `HieroClient<?>`
   instead of the meta-language wildcard `HieroClient<ANY>`.
+
+
+
+## tests
+
+Zwei Grenzen der Test-Sprache melden beide fertigen Agents übereinstimmend:
+
+Varargs: Ein Varargs-Parameter nimmt im Test nur einen einzelnen Wert, keine Liste.
+Konstruktorprüfungen: Verletzungen von @@oneOf, @@minSize, @@maxLength usw. haben keine Fehler-ID, also kann @@expectThrows sie nicht erwarten.
+
+Gerade die zweite verhindert viele SDK-Tests, die genau solche Prüfungen abdecken. Ich sammle das für die Zusammenfassung. Fünf Agents laufen noch.

@@ -152,7 +152,7 @@ class FileServiceTest {
     }
 
     private static FileCreateParams paramsValue() {
-        return new FileCreateParams(new byte[] {1, 2, 3}, null, null, null);
+        return new FileCreateParams(new byte[0], null, null, null);
     }
 
     private static Address fileIdValue() {

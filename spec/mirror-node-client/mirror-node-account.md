@@ -156,6 +156,55 @@ abstraction AccountRepository {
 
 ```
 
+## Testing
+
+The queries of `AccountRepository` need a Mirror Node, and the allowances, staking rewards and airdrops cannot be
+created in a test because the test language has no literal for `zonedDateTime`.
+
+```tests
+// Source: this spec (`declineReward` and `deleted` default to false; the other optional values are nullable).
+test "an account info without optional values does not decline rewards and is not deleted" {
+    // given
+    let account = DEFAULT(AccountId)
+
+    // when
+    let info = AccountInfo{accountId: account, balance: 100, ethereumNonce: 0, pendingReward: 0}
+
+    // then
+    assertEquals(expected: account, actual: info.accountId)
+    assertEquals(expected: 100, actual: info.balance)
+    assertFalse(condition: info.declineReward)
+    assertFalse(condition: info.deleted)
+    assertNull(actual: info.evmAddress)
+    assertNull(actual: info.alias)
+    assertNull(actual: info.stakedAccountId)
+    assertNull(actual: info.stakedNodeId)
+}
+
+// Source: this spec (`tokens` defaults to an empty list).
+test "an account balance without token balances has an empty token list" {
+    // when
+    let balance = AccountBalance{account: DEFAULT(AccountId), balance: 100}
+
+    // then
+    assertEquals(expected: 100, actual: balance.balance)
+    assertEquals(expected: 0, actual: length(value: balance.tokens))
+}
+
+// Source: this spec (an account balance lists its token balances in the token's smallest unit).
+test "an account balance keeps its token balances" {
+    // given
+    let tokens = [TokenBalance{tokenId: Address.fromString(address: "0.0.5005"), balance: 10},
+            TokenBalance{tokenId: Address.fromString(address: "0.0.5006"), balance: 0}]
+
+    // when
+    let balance = AccountBalance{account: DEFAULT(AccountId), balance: 100, tokens: tokens}
+
+    // then
+    assertEquals(expected: tokens, actual: balance.tokens)
+}
+```
+
 ## Questions & Comments
 
 - **Allowance `timestamp` is a single value, not a range.** The Mirror Node REST returns a

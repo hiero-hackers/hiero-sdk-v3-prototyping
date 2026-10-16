@@ -318,6 +318,39 @@ TokenBurnReceipt extends Receipt {
 }
 ```
 
+## Default Instances for Testing
+
+```
+// The eight token keys of the token tests of the Java SDK (TokenCreateTransactionTest, TokenUpdateTransactionTest), in
+// the order admin, KYC, freeze, wipe, supply, fee schedule, pause and metadata: the public keys of the Ed25519 PKCS#8
+// keys ending in 11 to 18.
+values JAVA_SDK_TOKEN_AUTHORITIES: list<Authority> = [
+        authority.PublicKeyAuthority{publicKey: keys.createPrivateKey(container: keys.KeyFormat.PKCS8_WITH_DER,
+                value: hex(text: "302e020100300506032b657004220420"
+                        + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e11")).createPublicKey()},
+        authority.PublicKeyAuthority{publicKey: keys.createPrivateKey(container: keys.KeyFormat.PKCS8_WITH_DER,
+                value: hex(text: "302e020100300506032b657004220420"
+                        + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e12")).createPublicKey()},
+        authority.PublicKeyAuthority{publicKey: keys.createPrivateKey(container: keys.KeyFormat.PKCS8_WITH_DER,
+                value: hex(text: "302e020100300506032b657004220420"
+                        + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e13")).createPublicKey()},
+        authority.PublicKeyAuthority{publicKey: keys.createPrivateKey(container: keys.KeyFormat.PKCS8_WITH_DER,
+                value: hex(text: "302e020100300506032b657004220420"
+                        + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e14")).createPublicKey()},
+        authority.PublicKeyAuthority{publicKey: keys.createPrivateKey(container: keys.KeyFormat.PKCS8_WITH_DER,
+                value: hex(text: "302e020100300506032b657004220420"
+                        + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e15")).createPublicKey()},
+        authority.PublicKeyAuthority{publicKey: keys.createPrivateKey(container: keys.KeyFormat.PKCS8_WITH_DER,
+                value: hex(text: "302e020100300506032b657004220420"
+                        + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e16")).createPublicKey()},
+        authority.PublicKeyAuthority{publicKey: keys.createPrivateKey(container: keys.KeyFormat.PKCS8_WITH_DER,
+                value: hex(text: "302e020100300506032b657004220420"
+                        + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e17")).createPublicKey()},
+        authority.PublicKeyAuthority{publicKey: keys.createPrivateKey(container: keys.KeyFormat.PKCS8_WITH_DER,
+                value: hex(text: "302e020100300506032b657004220420"
+                        + "db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e18")).createPublicKey()}]
+```
+
 ## Examples
 
 ### Create a fungible token (operator is admin, treasury, and supply key)
@@ -483,6 +516,251 @@ new TokenDeleteTransaction()
     .signWithOperatorAndSubmit(client);
 ```
 
+## Testing
+
+Offline tests of the token lifecycle transactions, written as given / when / then: the defaults and values a
+transaction keeps, and that a packed transaction survives its serialized form. Nothing is submitted; what the network
+does with a transaction (signature checks, supply limits, association rules) is tested by the Hiero TCK. The current
+SDKs test the same behaviour with their getter / setter and `fromBytes(toBytes())` tests; the comment above each test
+names where.
+
+```tests
+// Source: the @@default values of TokenCreateTransaction; the Python SDK (TokenParams: decimals 0, initial supply 0,
+// supply type INFINITE, freeze default false) and HAPI TokenCreateTransactionBody (no key, no maximum supply, no memo
+// and no auto-renew account unless set).
+test "a token create transaction without optional values has the defaults of the spec" {
+    // when
+    let transaction = TokenCreateTransaction{name: "test name", symbol: "test symbol",
+            tokenType: TokenType.FUNGIBLE_COMMON, treasuryAccountId: AccountId.fromString(value: "7.7.7")}
+
+    // then
+    assertEquals(expected: 0, actual: transaction.decimals)
+    assertEquals(expected: 0, actual: transaction.initialSupply)
+    assertEquals(expected: TokenSupplyType.INFINITE, actual: transaction.supplyType)
+    assertFalse(condition: transaction.freezeDefault)
+    assertEquals(expected: 0, actual: length(value: transaction.metadata))
+    assertNull(actual: transaction.maxSupply)
+    assertNull(actual: transaction.tokenMemo)
+    assertNull(actual: transaction.expirationTime)
+    assertNull(actual: transaction.autoRenewPeriod)
+    assertNull(actual: transaction.autoRenewAccount)
+    assertNull(actual: transaction.adminAuthority)
+    assertNull(actual: transaction.kycAuthority)
+    assertNull(actual: transaction.freezeAuthority)
+    assertNull(actual: transaction.wipeAuthority)
+    assertNull(actual: transaction.supplyAuthority)
+    assertNull(actual: transaction.feeScheduleAuthority)
+    assertNull(actual: transaction.pauseAuthority)
+    assertNull(actual: transaction.metadataAuthority)
+}
+
+// Source: the Java SDK (TokenCreateTransactionTest, constructTokenCreateTransactionFungibleFromTransactionBodyProtobuf:
+// the same values); the getter / setter tests of the Python, Go and Swift SDKs.
+test "a token create transaction for a fungible token keeps its values and each key in its own field" {
+    // given
+    let authorities = JAVA_SDK_TOKEN_AUTHORITIES
+
+    // when
+    let transaction = TokenCreateTransaction{name: "test name", symbol: "test symbol",
+            tokenType: TokenType.FUNGIBLE_COMMON, decimals: 3, initialSupply: 30,
+            treasuryAccountId: AccountId.fromString(value: "7.7.7"), freezeDefault: true, tokenMemo: "test memo",
+            metadata: [1, 2, 3, 4, 5], autoRenewAccount: AccountId.fromString(value: "8.8.8"),
+            adminAuthority: authorities[0], kycAuthority: authorities[1], freezeAuthority: authorities[2],
+            wipeAuthority: authorities[3], supplyAuthority: authorities[4], feeScheduleAuthority: authorities[5],
+            pauseAuthority: authorities[6], metadataAuthority: authorities[7]}
+
+    // then
+    assertEquals(expected: "test name", actual: transaction.name)
+    assertEquals(expected: "test symbol", actual: transaction.symbol)
+    assertEquals(expected: TokenType.FUNGIBLE_COMMON, actual: transaction.tokenType)
+    assertEquals(expected: 3, actual: transaction.decimals)
+    assertEquals(expected: 30, actual: transaction.initialSupply)
+    assertEquals(expected: AccountId.fromString(value: "7.7.7"), actual: transaction.treasuryAccountId)
+    assertTrue(condition: transaction.freezeDefault)
+    assertEquals(expected: "test memo", actual: transaction.tokenMemo)
+    assertEquals(expected: hex(text: "0102030405"), actual: transaction.metadata)
+    assertEquals(expected: AccountId.fromString(value: "8.8.8"), actual: transaction.autoRenewAccount)
+    assertEquals(expected: authorities[0], actual: transaction.adminAuthority)
+    assertEquals(expected: authorities[1], actual: transaction.kycAuthority)
+    assertEquals(expected: authorities[2], actual: transaction.freezeAuthority)
+    assertEquals(expected: authorities[3], actual: transaction.wipeAuthority)
+    assertEquals(expected: authorities[4], actual: transaction.supplyAuthority)
+    assertEquals(expected: authorities[5], actual: transaction.feeScheduleAuthority)
+    assertEquals(expected: authorities[6], actual: transaction.pauseAuthority)
+    assertEquals(expected: authorities[7], actual: transaction.metadataAuthority)
+}
+
+// Source: the Java SDK (TokenCreateTransactionTest, constructTokenCreateTransactionNftFromTransactionBodyProtobuf:
+// NON_FUNGIBLE_UNIQUE, FINITE, maximum supply 500); the NFT variants of the Python and Swift SDKs.
+test "a token create transaction for a finite NFT collection keeps its supply type and maximum supply" {
+    // when
+    let transaction = TokenCreateTransaction{name: "test name", symbol: "test symbol",
+            tokenType: TokenType.NON_FUNGIBLE_UNIQUE, treasuryAccountId: AccountId.fromString(value: "7.7.7"),
+            supplyType: TokenSupplyType.FINITE, maxSupply: 500}
+
+    // then
+    assertEquals(expected: TokenType.NON_FUNGIBLE_UNIQUE, actual: transaction.tokenType)
+    assertEquals(expected: TokenSupplyType.FINITE, actual: transaction.supplyType)
+    assertEquals(expected: 500, actual: transaction.maxSupply)
+    assertEquals(expected: 0, actual: transaction.decimals)
+    assertEquals(expected: 0, actual: transaction.initialSupply)
+}
+
+// Source: TokenUpdateTransaction ("every nullable field is leave unchanged when null"); HAPI TokenUpdateTransactionBody
+// (an unset field is not changed); the Python SDK (test_build_transaction_body: only the fields that are set).
+test "a token update transaction with only a token id changes nothing" {
+    // when
+    let transaction = TokenUpdateTransaction{tokenId: Address.fromString(address: "4.2.0")}
+
+    // then
+    assertEquals(expected: Address.fromString(address: "4.2.0"), actual: transaction.tokenId)
+    assertNull(actual: transaction.name)
+    assertNull(actual: transaction.symbol)
+    assertNull(actual: transaction.treasuryAccountId)
+    assertNull(actual: transaction.tokenMemo)
+    assertNull(actual: transaction.metadata)
+    assertNull(actual: transaction.expirationTime)
+    assertNull(actual: transaction.autoRenewPeriod)
+    assertNull(actual: transaction.autoRenewAccount)
+    assertNull(actual: transaction.adminAuthority)
+    assertNull(actual: transaction.kycAuthority)
+    assertNull(actual: transaction.freezeAuthority)
+    assertNull(actual: transaction.wipeAuthority)
+    assertNull(actual: transaction.supplyAuthority)
+    assertNull(actual: transaction.feeScheduleAuthority)
+    assertNull(actual: transaction.pauseAuthority)
+    assertNull(actual: transaction.metadataAuthority)
+}
+
+// Source: the Java SDK (TokenUpdateTransactionTest, constructTokenUpdateTransactionFromTransactionBodyProtobuf: the
+// same keys and values); the getter / setter tests of the Python SDK (test_set_methods, test_single_key_fields).
+test "a token update transaction keeps each rotated key in its own field" {
+    // given
+    let authorities = JAVA_SDK_TOKEN_AUTHORITIES
+
+    // when
+    let transaction = TokenUpdateTransaction{tokenId: Address.fromString(address: "4.2.0"), name: "test name",
+            symbol: "test symbol", treasuryAccountId: AccountId.fromString(value: "7.7.7"), tokenMemo: "test memo",
+            metadata: [1, 2, 3, 4, 5], autoRenewAccount: AccountId.fromString(value: "8.8.8"),
+            adminAuthority: authorities[0], kycAuthority: authorities[1], freezeAuthority: authorities[2],
+            wipeAuthority: authorities[3], supplyAuthority: authorities[4], feeScheduleAuthority: authorities[5],
+            pauseAuthority: authorities[6], metadataAuthority: authorities[7]}
+
+    // then
+    assertEquals(expected: "test name", actual: transaction.name)
+    assertEquals(expected: "test symbol", actual: transaction.symbol)
+    assertEquals(expected: AccountId.fromString(value: "7.7.7"), actual: transaction.treasuryAccountId)
+    assertEquals(expected: "test memo", actual: transaction.tokenMemo)
+    assertEquals(expected: hex(text: "0102030405"), actual: transaction.metadata)
+    assertEquals(expected: AccountId.fromString(value: "8.8.8"), actual: transaction.autoRenewAccount)
+    assertEquals(expected: authorities[0], actual: transaction.adminAuthority)
+    assertEquals(expected: authorities[1], actual: transaction.kycAuthority)
+    assertEquals(expected: authorities[2], actual: transaction.freezeAuthority)
+    assertEquals(expected: authorities[3], actual: transaction.wipeAuthority)
+    assertEquals(expected: authorities[4], actual: transaction.supplyAuthority)
+    assertEquals(expected: authorities[5], actual: transaction.feeScheduleAuthority)
+    assertEquals(expected: authorities[6], actual: transaction.pauseAuthority)
+    assertEquals(expected: authorities[7], actual: transaction.metadataAuthority)
+}
+
+// Source: TokenAssociateTransaction.tokens ("order is irrelevant — hence a set"); the Java SDK
+// (TokenAssociateTransactionTest and TokenDissociateTransactionTest: the same account and token ids).
+test "token associate and dissociate transactions keep the account and the set of tokens in any order" {
+    // given
+    let first = Address.fromString(address: "4.5.6")
+    let second = Address.fromString(address: "7.8.9")
+    let third = Address.fromString(address: "10.11.12")
+    let reordered: set<Address> = [third, first, second]
+
+    // when
+    let associate = TokenAssociateTransaction{accountId: AccountId.fromString(value: "1.2.3"),
+            tokens: [first, second, third]}
+    let dissociate = TokenDissociateTransaction{accountId: AccountId.fromString(value: "1.2.3"),
+            tokens: [first, second, third]}
+
+    // then
+    assertEquals(expected: AccountId.fromString(value: "1.2.3"), actual: associate.accountId)
+    assertEquals(expected: reordered, actual: associate.tokens)
+    assertEquals(expected: AccountId.fromString(value: "1.2.3"), actual: dissociate.accountId)
+    assertEquals(expected: reordered, actual: dissociate.tokens)
+}
+
+// Source: the JavaScript SDK (TokenMintTransaction and TokenBurnTransaction, "should handle large bigint amounts":
+// 9000000000000000000); the Java SDK (TokenMintTransactionTest, TokenBurnTransactionTest: token 4.2.0).
+test "fungible mint and burn transactions keep amounts beyond the 53 bits of a JavaScript number" {
+    // given
+    let token = Address.fromString(address: "4.2.0")
+
+    // when
+    let mint = TokenMintFungibleTransaction{tokenId: token, amount: 9000000000000000000}
+    let burn = TokenBurnFungibleTransaction{tokenId: token, amount: 9000000000000000000}
+
+    // then
+    assertEquals(expected: token, actual: mint.tokenId)
+    assertEquals(expected: 9000000000000000000, actual: mint.amount)
+    assertEquals(expected: token, actual: burn.tokenId)
+    assertEquals(expected: 9000000000000000000, actual: burn.amount)
+}
+
+// Source: TokenMintNftTransaction ("one metadata blob per new serial"); the Java SDK (TokenMintTransactionTest,
+// getSetMetadata: [1, 2, 3, 4, 5]) and the Python SDK (test_build_transaction_body_nft: several entries in order).
+test "an NFT mint transaction keeps one metadata entry per new serial in order" {
+    // given
+    let metadata = [hex(text: "0102030405"), utf8(text: "ipfs://QmHash1"), utf8(text: "ipfs://QmHash2")]
+
+    // when
+    let mint = TokenMintNftTransaction{tokenId: Address.fromString(address: "4.2.0"), metadata: metadata}
+
+    // then
+    assertEquals(expected: 3, actual: length(value: mint.metadata))
+    assertEquals(expected: metadata, actual: mint.metadata)
+}
+
+// Source: the Java SDK (TokenBurnTransactionTest: serial 420) and the Python SDK (token_burn_transaction_test).
+test "an NFT burn transaction keeps its serials in order" {
+    // when
+    let burn = TokenBurnNftTransaction{tokenId: Address.fromString(address: "4.2.0"), serials: [420, 1, 2]}
+
+    // then
+    assertEquals(expected: Address.fromString(address: "4.2.0"), actual: burn.tokenId)
+    assertEquals(expected: [420, 1, 2], actual: burn.serials)
+}
+
+// Source: the Java SDK (shouldBytes / shouldBytesFungible / shouldBytesNft of the TokenCreate, TokenUpdate,
+// TokenDelete, TokenAssociate, TokenDissociate, TokenMint and TokenBurn tests: fromBytes(toBytes()) gives the same
+// transaction); the JavaScript SDK ("should round trip from bytes") and the to / from bytes tests of the Go SDK.
+test "every token lifecycle transaction survives toBytes and fromBytes unchanged" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+    let nodes = [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")]
+    let token = Address.fromString(address: "4.2.0")
+    let account = AccountId.fromString(value: "0.6.9")
+    let transactions: list<consensusnode.transactions.PackedTransaction<ANY, ANY>> = [
+            TokenCreateTransaction{name: "test name", symbol: "test symbol", tokenType: TokenType.FUNGIBLE_COMMON,
+                    decimals: 3, initialSupply: 30, treasuryAccountId: account,
+                    adminAuthority: DEFAULT(Authority)}.sign(payer: payer, nodes: nodes),
+            TokenUpdateTransaction{tokenId: token, name: "test name"}.sign(payer: payer, nodes: nodes),
+            TokenDeleteTransaction{tokenId: token}.sign(payer: payer, nodes: nodes),
+            TokenAssociateTransaction{accountId: account, tokens: [token]}.sign(payer: payer, nodes: nodes),
+            TokenDissociateTransaction{accountId: account, tokens: [token]}.sign(payer: payer, nodes: nodes),
+            TokenMintFungibleTransaction{tokenId: token, amount: 10}.sign(payer: payer, nodes: nodes),
+            TokenMintNftTransaction{tokenId: token, metadata: [[1, 2, 3, 4, 5]]}.sign(payer: payer, nodes: nodes),
+            TokenBurnFungibleTransaction{tokenId: token, amount: 69}.sign(payer: payer, nodes: nodes),
+            TokenBurnNftTransaction{tokenId: token, serials: [420]}.sign(payer: payer, nodes: nodes)]
+
+    for transaction in transactions {
+        // when
+        let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: transaction.toBytes())
+
+        // then
+        assertEquals(expected: transaction.toBytes(), actual: restored.toBytes())
+        assertEquals(expected: transaction.transactionId, actual: restored.transactionId)
+        assertEquals(expected: transaction.signableBodies(), actual: restored.signableBodies())
+        assertEquals(expected: 2, actual: length(value: restored.nodeSignatures))
+    }
+}
+```
+
 ## Questions & Comments
 
 - **All key fields are the `Authority` authorization type.** Each token key (admin, supply,
@@ -529,3 +807,19 @@ new TokenDeleteTransaction()
   (`TOKEN_MAX_BATCH_SIZE_REACHED`) and is encoded as `@@maxSize(10)` on the `metadata` and
   `serials` lists. If a future HIP raises the cap (HIP-1300 jumbo transactions touch this area),
   the annotation widens — callers that respected the previous cap remain valid.
+- **Clearing `autoRenewAccount` with `ZERO_ADDRESS` or `ZERO_ACCOUNT_ID`?** The description and the item above
+  name `ZERO_ADDRESS` as the sentinel for `autoRenewAccount`, but the field is an `AccountId` and cannot hold an
+  `Address`; [`ledger.md`](../base/ledger.md) defines `ZERO_ACCOUNT_ID` for exactly this field. Should the text name
+  `ZERO_ACCOUNT_ID`? — open
+
+- **No size limit on token and NFT metadata.** `TokenCreateTransaction.metadata`,
+  `TokenUpdateTransaction.metadata` and the entries of `TokenMintNftTransaction.metadata` carry no `@@maxSize`,
+  while `TokenUpdateNftsTransaction.metadata` has `@@maxSize(100)`. The network limits each to 100 bytes (HIP-646,
+  HIP-657), and the Python SDK rejects longer token metadata before submitting. Add `@@maxSize(100)` to the first two?
+  The list entries cannot be annotated today (no annotation on a type argument). — open
+
+- **Cross-field rules are not expressed as annotations.** `decimals` and `initialSupply` MUST be 0 for
+  `NON_FUNGIBLE_UNIQUE`, `maxSupply` is only valid with `FINITE`, and `freezeDefault = true` requires a
+  `freezeAuthority`; today these rules live only in comments, so neither the generated contract tests nor the spec
+  tests can check them, and the network rejects them only on submit. Should they be checked by the SDK (and then
+  declared, e.g. as a validation annotation or a `@@throws` of `pack` / `sign`), or stay network-side? — open

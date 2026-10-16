@@ -121,4 +121,8 @@ class ServiceEndpointTest {
     private static ServiceEndpoint create() {
         return new ServiceEndpoint(ipAddressValue(), (String) null, portValue());
     }
+
+    private static ServiceEndpoint defaultSubject() {
+        return new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211);
+    }
 }

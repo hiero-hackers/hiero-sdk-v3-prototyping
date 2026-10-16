@@ -116,6 +116,59 @@ NetworkRepository {
 
 ```
 
+## Testing
+
+The queries of `NetworkRepository` need a Mirror Node, and `ExchangeRate` and `NetworkStake` cannot be created in a
+test because the test language has no literal for `zonedDateTime` and `seconds`.
+
+```tests
+// Source: the Java SDK (MirrorNodeServiceEndpointTest: IP address 1.2.3.4, domain name "test.mirror.com", port 443);
+// HIP-1046 (an endpoint is published either with an IP address or with a domain name).
+test "a service endpoint keeps either its IPv4 address or its domain name and its port" {
+    // when
+    let byAddress = ServiceEndpoint{ipAddressV4: "1.2.3.4", port: 443}
+    let byName = ServiceEndpoint{port: 443, domainName: "test.mirror.com"}
+
+    // then
+    assertEquals(expected: "1.2.3.4", actual: byAddress.ipAddressV4)
+    assertNull(actual: byAddress.domainName)
+    assertEquals(expected: 443, actual: byAddress.port)
+    assertEquals(expected: "test.mirror.com", actual: byName.domainName)
+    assertNull(actual: byName.ipAddressV4)
+    assertEquals(expected: 443, actual: byName.port)
+}
+
+// Source: this spec (`serviceEndpoints` defaults to an empty list; `adminKey` is null on entries from before HIP-869).
+test "a network node without service endpoints and admin key has an empty endpoint list and no admin key" {
+    // given
+    let account = AccountId.fromString(value: "0.0.3")
+
+    // when
+    let node = NetworkNode{nodeId: 0, accountId: account, stake: 0}
+
+    // then
+    assertEquals(expected: 0, actual: node.nodeId)
+    assertEquals(expected: account, actual: node.accountId)
+    assertEquals(expected: 0, actual: length(value: node.serviceEndpoints))
+    assertNull(actual: node.adminKey)
+    assertNull(actual: node.timestamp)
+}
+
+// Source: the Java SDK (MirrorNodeServiceEndpointTest); this spec (the address book entry lists its endpoints).
+test "a network node keeps its service endpoints in order" {
+    // given
+    let endpoints = [ServiceEndpoint{ipAddressV4: "1.2.3.4", port: 443},
+            ServiceEndpoint{port: 443, domainName: "test.mirror.com"}]
+
+    // when
+    let node = NetworkNode{nodeId: 0, accountId: AccountId.fromString(value: "0.0.3"), serviceEndpoints: endpoints,
+            stake: 0}
+
+    // then
+    assertEquals(expected: endpoints, actual: node.serviceEndpoints)
+}
+```
+
 ## Questions & Comments
 
 - **`fees()` vs `estimateFees()`.** `fees()` (existing) returns the network's *current* per-type
@@ -138,3 +191,7 @@ NetworkRepository {
   cannot import the consensus-admin `ServiceEndpoint`).
 - **`NetworkNode.adminKey` is an `Authority`.** The mirror returns the DAB admin key as a `Key`;
   V3 types it as the authorization `Authority` (per [ADR-0004](../../docs/adr/0004-authority-authorization-sum-type.md)).
+- **`ServiceEndpoint` does not state its invariants as annotations.** Its comment says that one of `ipAddressV4` /
+  `domainName` is populated, but there is no `@@oneOf(ipAddressV4, domainName)`, and `port` has no
+  `@@min(0) @@max(65535)` — the Java SDK rejects `-1` and `65536` (`MirrorNodeServiceEndpointTest`). With the
+  annotations, these SDK tests would apply here too (once the test language can expect a construction error).

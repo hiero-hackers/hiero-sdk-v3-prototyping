@@ -105,6 +105,41 @@ abstraction TransactionRepository {
 
 ```
 
+## Testing
+
+The queries of `TransactionRepository` need a Mirror Node, and a `TransactionInfo` cannot be created in a test because
+the test language has no literal for `zonedDateTime` and `seconds`; only the transaction types are tested here.
+
+```tests
+// Source: this spec (BasicTransactionType, whose protocol names are those of the `TransactionTypes` enum of the Mirror
+// Node REST OpenAPI spec).
+test "the basic transaction types carry the names of the Mirror Node REST API" {
+    // when / then
+    assertEquals(expected: "CRYPTOCREATEACCOUNT", actual: BasicTransactionType.ACCOUNT_CREATE.protocolName)
+    assertEquals(expected: "CRYPTODELETE", actual: BasicTransactionType.ACCOUNT_DELETE.protocolName)
+    assertEquals(expected: "CRYPTOUPDATEACCOUNT", actual: BasicTransactionType.ACCOUNT_UPDATE.protocolName)
+    assertEquals(expected: "CRYPTOTRANSFER", actual: BasicTransactionType.CRYPTO_TRANSFER.protocolName)
+    assertEquals(expected: "CONSENSUSCREATETOPIC", actual: BasicTransactionType.TOPIC_CREATE.protocolName)
+    assertEquals(expected: "CONSENSUSSUBMITMESSAGE", actual: BasicTransactionType.TOPIC_MESSAGE_SUBMIT.protocolName)
+    assertEquals(expected: "TOKENCREATION", actual: BasicTransactionType.TOKEN_CREATE.protocolName)
+    assertEquals(expected: "TOKENMINT", actual: BasicTransactionType.TOKEN_MINT.protocolName)
+    assertEquals(expected: "TOKENBURN", actual: BasicTransactionType.TOKEN_BURN.protocolName)
+    assertEquals(expected: "CONTRACTCREATEINSTANCE", actual: BasicTransactionType.CONTRACT_CREATE.protocolName)
+    assertEquals(expected: "CONTRACTCALL", actual: BasicTransactionType.CONTRACT_CALL.protocolName)
+    assertEquals(expected: "ETHEREUMTRANSACTION", actual: BasicTransactionType.ETHEREUM.protocolName)
+}
+
+// Source: this spec (a BasicTransactionType is a TransactionType and can be used as a filter).
+test "a basic transaction type is a transaction type with its protocol name" {
+    // when
+    let type: TransactionType = BasicTransactionType.CRYPTO_TRANSFER
+
+    // then
+    assertInstanceOf(expected: BasicTransactionType, actual: type)
+    assertEquals(expected: "CRYPTOTRANSFER", actual: type.protocolName)
+}
+```
+
 ## Questions & Comments
 
 - `BasicTransactionType` is not complete yet: the full list is to be derived from the `TransactionTypes` enum of the

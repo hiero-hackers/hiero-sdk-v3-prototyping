@@ -57,4 +57,29 @@ abstraction NftRepository {
 
 ```
 
+## Testing
+
+The queries of `NftRepository` need a Mirror Node; only the value types are tested here.
+
+```tests
+// Source: this spec (an NFT is identified by the token id of its type plus its serial number).
+test "NFTs of the same type with different serial numbers are different" {
+    // given
+    let token = Address.fromString(address: "0.0.5005")
+    let owner = DEFAULT(AccountId)
+    let metadata = utf8(text: "metadata")
+
+    // when
+    let first = Nft{tokenId: token, serial: 1, owner: owner, metadata: metadata}
+    let second = Nft{tokenId: token, serial: 2, owner: owner, metadata: metadata}
+
+    // then
+    assertEquals(expected: token, actual: first.tokenId)
+    assertEquals(expected: 1, actual: first.serial)
+    assertEquals(expected: metadata, actual: first.metadata)
+    assertEquals(expected: Nft{tokenId: token, serial: 1, owner: owner, metadata: metadata}, actual: first)
+    assertNotEquals(unexpected: first, actual: second)
+}
+```
+
 ## Questions & Comments

@@ -109,6 +109,74 @@ new SystemDeleteTransaction()
     .signWithOperatorAndSubmit(client);     // expirationTime not used for contracts
 ```
 
+## Testing
+
+Offline tests of the attributes the system delete and undelete transactions keep, written as given / when / then.
+Following `@@oneOf(fileId, contractId)`, a transaction that targets a file has no contract and the other way round.
+The comment above each test names the SDK tests it comes from.
+
+```tests
+// Source: the Java (getSetFileId, getSetExpirationTime, constructSystemDeleteTransactionFromTransactionBodyProtobuf),
+// JavaScript ("should carry the file id and leave the contract id null"), C++ (GetSetFileId, GetSetExpirationTime),
+// Go and Swift SystemDeleteTransaction unit tests.
+test "a system delete of a file keeps the file and the expiration time" {
+    // given
+    let file = DEFAULT(Address)
+    let expirationTime = DEFAULT(ledger.TransactionId).validStart
+
+    // when
+    let transaction = SystemDeleteTransaction{fileId: file, contractId: null, expirationTime: expirationTime}
+
+    // then
+    assertEquals(expected: file, actual: transaction.fileId)
+    assertNull(actual: transaction.contractId)
+    assertEquals(expected: expirationTime, actual: transaction.expirationTime)
+}
+
+// Source: the Java (getSetContractId), JavaScript ("should carry the contract id and leave the file id null"), C++
+// (GetSetContractId), Go and Swift SystemDeleteTransaction unit tests; the API schema of this spec (expirationTime is
+// ignored for contracts).
+test "a system delete of a contract keeps the contract and needs no expiration time" {
+    // given
+    let contract = DEFAULT(ContractId)
+
+    // when
+    let transaction = SystemDeleteTransaction{fileId: null, contractId: contract, expirationTime: null}
+
+    // then
+    assertNull(actual: transaction.fileId)
+    assertEquals(expected: contract, actual: transaction.contractId)
+    assertNull(actual: transaction.expirationTime)
+}
+
+// Source: the Java (shouldSerializeFile), C++, Go and Swift (test_GetSetFileId) SystemUndeleteTransaction unit tests.
+test "a system undelete of a file keeps the file" {
+    // given
+    let file = DEFAULT(Address)
+
+    // when
+    let transaction = SystemUndeleteTransaction{fileId: file, contractId: null}
+
+    // then
+    assertEquals(expected: file, actual: transaction.fileId)
+    assertNull(actual: transaction.contractId)
+}
+
+// Source: the Java (shouldSerializeContract), C++, Go and Swift (test_GetSetContractId) SystemUndeleteTransaction unit
+// tests.
+test "a system undelete of a contract keeps the contract" {
+    // given
+    let contract = DEFAULT(ContractId)
+
+    // when
+    let transaction = SystemUndeleteTransaction{fileId: null, contractId: contract}
+
+    // then
+    assertNull(actual: transaction.fileId)
+    assertEquals(expected: contract, actual: transaction.contractId)
+}
+```
+
 ## Questions & Comments
 
 - **No first-class system-admin key reference.** Same gap as in
@@ -128,3 +196,8 @@ new SystemDeleteTransaction()
   reversal window has elapsed surfaces as `INVALID_FILE_ID`, which is indistinguishable
   from "file never existed". Whether the SDK should map this case to a dedicated
   `system-undelete-window-expired-error` is open.
+
+- **`expirationTime` has a precision of seconds on the wire.** HAPI carries it as a `TimestampSeconds`, so the
+  sub-second part of the `zonedDateTime` is lost when the transaction is serialized (the JavaScript SDK tests this:
+  "should drop nanoseconds across a round trip"). Whether the API should state this (a `seconds`-precision type or a
+  documented truncation) is open; a test of it would also need access to the transaction of a `PackedTransaction`.

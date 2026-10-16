@@ -71,6 +71,82 @@ AccountService createService(session: Session)
 
 ```
 
+## Default Instances for Testing
+
+```
+// The parameters of an account with only the required authority.
+instance AccountCreateParams = AccountCreateParams{authority: DEFAULT}
+```
+
+## Testing
+
+Tests of `AccountCreateParams`. The methods of `AccountService` talk to the network and are not unit-tested here. A
+violation of `@@oneOrNoneOf` (both staking targets set) cannot be expected yet: the test language expects errors of
+calls only, and creating an `AccountCreateParams` declares none.
+
+```tests
+// Source: this spec (@@default and @@nullable of AccountCreateParams).
+test "account parameters with only an authority have the defaults of the spec" {
+    // when
+    let params = DEFAULT(AccountCreateParams)
+
+    // then
+    assertEquals(expected: DEFAULT(Authority), actual: params.authority)
+    assertFalse(condition: params.receiverSignatureRequired)
+    assertFalse(condition: params.declineStakingReward)
+    assertNull(actual: params.initialBalance)
+    assertNull(actual: params.accountMemo)
+    assertNull(actual: params.maxAutomaticTokenAssociations)
+    assertNull(actual: params.autoRenewPeriod)
+    assertNull(actual: params.stakedAccountId)
+    assertNull(actual: params.stakedNodeId)
+    assertNull(actual: params.alias)
+}
+
+// Source: the AccountCreateTransaction unit tests of the Java (AccountCreateTransactionTest), Go
+// (account_create_transaction_unit_test.go), C++ (AccountCreateTransactionUnitTests), Swift
+// (AccountCreateTransactionUnitTests) and Python (account_create_transaction_test.py) SDKs: every value that is set is
+// read back unchanged.
+test "account parameters keep the values they are created with" {
+    // given
+    let authority = DEFAULT(Authority)
+
+    // when
+    let params = AccountCreateParams{authority: authority, accountMemo: "memo", receiverSignatureRequired: true,
+            maxAutomaticTokenAssociations: 10, autoRenewPeriod: 7_776_000, stakedNodeId: 3,
+            declineStakingReward: true}
+
+    // then
+    assertEquals(expected: authority, actual: params.authority)
+    assertEquals(expected: "memo", actual: params.accountMemo)
+    assertTrue(condition: params.receiverSignatureRequired)
+    assertEquals(expected: 10, actual: params.maxAutomaticTokenAssociations)
+    assertEquals(expected: 3, actual: params.stakedNodeId)
+    assertTrue(condition: params.declineStakingReward)
+}
+
+// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); the Python SDK (account_create_transaction_test.py,
+// test_set_stake_account_id_reset_stake_node_id and test_set_stack_node_id_reset_stake_account_id: one target clears
+// the other).
+test "an account is staked to an account, to a node or to neither" {
+    // given
+    let stakedAccount = DEFAULT(AccountId)
+
+    // when
+    let toAccount = AccountCreateParams{authority: DEFAULT, stakedAccountId: stakedAccount}
+    let toNode = AccountCreateParams{authority: DEFAULT, stakedNodeId: 1}
+    let toNeither = DEFAULT(AccountCreateParams)
+
+    // then
+    assertEquals(expected: stakedAccount, actual: toAccount.stakedAccountId)
+    assertNull(actual: toAccount.stakedNodeId)
+    assertEquals(expected: 1, actual: toNode.stakedNodeId)
+    assertNull(actual: toNode.stakedAccountId)
+    assertNull(actual: toNeither.stakedAccountId)
+    assertNull(actual: toNeither.stakedNodeId)
+}
+```
+
 ## Questions & Comments
 
 - The authorization parameters/fields here (`AccountInformation.authority`, `createNewAccount(authority)`, and both

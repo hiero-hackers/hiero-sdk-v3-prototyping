@@ -89,7 +89,10 @@ test "the inputs that HIP-15 rejects are rejected" {
 - Named test values belong to their spec: only the tests of the same spec file see them. A test cannot bind a variable
   of the same name.
 - The comment above the declaration documents the values and names their source, as the comment of a test does.
-- Every generator turns them into one constant per spec test class (see each language's `api-best-practices-*.md`).
+- Every generator turns them into a method or function of the spec's test file that creates them where a test uses
+  them, not into a constant created when the file is loaded: a value that cannot be created (e.g. because a method it
+  calls is not implemented yet) then fails only the tests that use it, with its own cause (see each language's
+  `api-best-practices-*.md`).
 
 ## Tests
 

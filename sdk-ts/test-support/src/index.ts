@@ -120,12 +120,13 @@ export function assertNotNull<T>(actual: T, message?: string | null): asserts ac
 /**
  * Fails the test unless actual is an instance of the expected type.
  *
- * @param expected the class of the type
+ * @param expected the class of the type: any function that `instanceof` accepts, also a class with a private
+ *                 constructor such as an enum class
  * @param actual   the value
  * @param message  the message of the failure
  */
-export function assertInstanceOf(expected: abstract new (...args: never[]) => unknown, actual: unknown,
-                                 message?: string | null): void {
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type -- every class, also one with a private constructor
+export function assertInstanceOf(expected: Function, actual: unknown, message?: string | null): void {
     if (!(actual instanceof expected)) {
         failWith(message, `expected an instance of ${expected.name} but was ${display(actual)}`, expected.name,
             actual);

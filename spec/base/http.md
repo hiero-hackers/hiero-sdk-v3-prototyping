@@ -326,6 +326,75 @@ request = HttpRequest(
     headers: {"content-type": "application/json"})
 ```
 
+## Testing
+
+Tests of the cancellation types and of the URL check of a request, written as given / when / then. The comment above
+each test names its source. The Hiero SDKs of today have no counterpart of these types, so the cases come from this
+spec. The exchange itself (`execute`, `close`) needs a server and is not tested here.
+
+```tests
+// Source: this spec (Cancellation.none() is the cancellation that never fires).
+test "the cancellation that never fires is not cancelled" {
+    // when
+    let cancellation = Cancellation.none()
+
+    // then
+    assertFalse(condition: cancellation.isCancelled())
+}
+
+// Source: this spec (a CancellationSource owns the right to cancel; only its cancellation is handed out).
+test "a new cancellation source is not cancelled" {
+    // when
+    let source = CancellationSource.create()
+
+    // then
+    assertFalse(condition: source.cancellation.isCancelled())
+}
+
+// Source: this spec (cancel() requests cancellation; it is idempotent, a second call does nothing).
+test "cancelling a source cancels its cancellation, also when cancelled twice" {
+    // given
+    let source = CancellationSource.create()
+
+    // when
+    source.cancel()
+    source.cancel()
+
+    // then
+    assertTrue(condition: source.cancellation.isCancelled())
+}
+
+// Source: this spec (a source owns its own cancellation; cancelling one source cancels no other).
+test "cancelling a source cancels no other cancellation" {
+    // given
+    let cancelled = CancellationSource.create()
+    let other = CancellationSource.create()
+
+    // when
+    cancelled.cancel()
+
+    // then
+    assertFalse(condition: other.cancellation.isCancelled())
+    assertFalse(condition: Cancellation.none().isCancelled())
+}
+
+// Source: this spec (@@urlPattern: url is an absolute, well-formed URL; the URLs of the examples of this spec and of the
+// default mirror node of `ledger`).
+test "a request keeps its absolute URL" {
+    for url in ["https://mainnet.mirrornode.hedera.com/api/v1/accounts/0.0.1234", "https://example.org/api/v1/submit",
+            "http://127.0.0.1:38081"] {
+        // when
+        let request = HttpRequest{method: HttpMethod.GET, url: url, body: null, timeout: null, headers: {}}
+
+        // then
+        assertEquals(expected: url, actual: request.url)
+        assertEquals(expected: HttpMethod.GET, actual: request.method)
+        assertNull(actual: request.body)
+        assertNull(actual: request.timeout)
+    }
+}
+```
+
 ## Questions & Comments
 
 - **`duration` is not a declared basic type.** `connectTimeout`, `defaultRequestTimeout`,

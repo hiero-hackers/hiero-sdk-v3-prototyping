@@ -744,7 +744,7 @@ AST `TestValues`) are resolved by `TestResolver` too, without variables and agai
 Generators: **Java and TypeScript.** `SpecTestGenerator` writes one class per spec, `<Spec>SpecTest` (e.g.
 `KeysSpecTest`), into `src/test/java` of the module and in the package of the namespace, in the style of the other
 generated tests (header, `@DisplayName`, `///` comments, helpers `defaultPrivateKey()` for the default instances,
-a `private static final` constant per named test values).
+a method `NAME()` per named test values, so that a value that cannot be created fails only the tests that use it).
 The comments inside a test (`// given`, `// when`, `// then`, ...) are copied to the same place; a comment that
 follows a statement starts a new paragraph, a comment behind a statement stays behind it. The
 API parts are rendered by `JavaSamples` in a test mode (`@@async` calls are awaited with `join()`, calls may throw
@@ -759,7 +759,7 @@ comment of the class and by `generate`. `SpecTestGeneratorTest` compiles the gen
 the generated modules and the sources of `sdk-java/test-support`, and runs them.
 
 `TsSpecTestGenerator` writes one `<spec>.spec.test.ts` per spec into the directory of the namespace, for the Node.js
-test runner, with the same structure: the comments of the spec, a module constant per named test values, helpers
+test runner, with the same structure: the comments of the spec, a module function per named test values, helpers
 `defaultPrivateKey()`. The API parts are rendered by `TsSamples` in a test mode (`@@async` calls are awaited, values
 passed to the API are converted). Integers of the test language are always `bigint` (`int(x)` for a `number` of the
 API, `checked(…, "uint64")` / `checkedNumber(…, "int32")` where they reach the API), decimals are their text and

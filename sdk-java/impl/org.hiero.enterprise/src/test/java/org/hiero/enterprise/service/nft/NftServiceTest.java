@@ -336,7 +336,7 @@ class NftServiceTest {
     }
 
     private static NftTypeCreateParams paramsValue() {
-        return new NftTypeCreateParams("value", "value", null, TokenSupplyType.INFINITE, null, true, null, new byte[] {1, 2, 3}, null, null, null, null, null, null, null, null, null, null, null);
+        return new NftTypeCreateParams("Nft Tokens", "NT", null, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null);
     }
 
     private static AccountId accountIdValue() {

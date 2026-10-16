@@ -171,6 +171,119 @@ new TopicDeleteTransaction()
     .signWithOperatorAndSubmit(client);
 ```
 
+## Testing
+
+Offline tests of the topic transactions, written as given / when / then: the attributes a transaction keeps, the
+defaults of the attributes it leaves out, and the packed form of each transaction. The network's key checks are
+tested by the TCK, not here.
+
+```tests
+// Source: this spec (adminAuthority unset: an immutable topic, submitAuthority unset: a public topic); the Python SDK
+// (test_constructor_default_values of TopicCreateTransaction).
+test "a topic create transaction without attributes creates a public, immutable topic" {
+    // when
+    let transaction = TopicCreateTransaction{}
+
+    // then
+    assertNull(actual: transaction.adminAuthority)
+    assertNull(actual: transaction.submitAuthority)
+    assertNull(actual: transaction.topicMemo)
+    assertNull(actual: transaction.autoRenewPeriod)
+    assertNull(actual: transaction.autoRenewAccount)
+}
+
+// Source: the Python SDK (test_constructor of TopicCreateTransaction: "Test Topic", an admin and a submit key) and the
+// Swift SDK (TopicCreateTransactionUnitTests.test_GetSetSubmitKey, test_GetSetAdminKey and
+// test_GetSetAutoRenewAccountId).
+test "a topic create transaction keeps its authorities, memo and auto-renew account" {
+    // given
+    let submitAuthority: Authority = authority.PublicKeyAuthority{publicKey: keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA,
+            encoding: keys.ByteImportEncoding.HEX,
+            value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048").createPublicKey()}
+
+    // when
+    let transaction = TopicCreateTransaction{adminAuthority: DEFAULT(Authority), submitAuthority: submitAuthority,
+            topicMemo: "Test Topic", autoRenewAccount: AccountId.fromString(value: "0.0.5678")}
+
+    // then
+    assertEquals(expected: DEFAULT(Authority), actual: transaction.adminAuthority)
+    assertEquals(expected: submitAuthority, actual: transaction.submitAuthority)
+    assertEquals(expected: "Test Topic", actual: transaction.topicMemo)
+    assertEquals(expected: AccountId.fromString(value: "0.0.5678"), actual: transaction.autoRenewAccount)
+}
+
+// Source: the Java SDK (TopicCreateTransactionTest.shouldBytes and shouldBytesNoSetters) and the Swift SDK
+// (TopicCreateTransactionUnitTests.test_ToFromBytes).
+test "a topic create transaction survives toBytes and fromBytes" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+    let nodes = [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")]
+    let withAttributes = TopicCreateTransaction{adminAuthority: DEFAULT(Authority), submitAuthority: DEFAULT(Authority),
+            topicMemo: "Test Topic", autoRenewAccount: AccountId.fromString(value: "0.0.5678")}
+
+    for transaction in [withAttributes, TopicCreateTransaction{}] {
+        // given
+        let packed = transaction.pack(payer: payer, nodes: nodes)
+
+        // when
+        let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+        // then
+        assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
+        assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+    }
+}
+
+// Source: this spec (every nullable field of an update is "leave unchanged"); the Python SDK
+// (test_auto_renew_period_omitted_when_unset, test_topic_memo_serialization_distinguishes_unset_and_empty).
+test "a topic update transaction changes nothing but what it names" {
+    // when
+    let transaction = TopicUpdateTransaction{topicId: DEFAULT(Address)}
+
+    // then
+    assertEquals(expected: DEFAULT(Address), actual: transaction.topicId)
+    assertNull(actual: transaction.adminAuthority)
+    assertNull(actual: transaction.submitAuthority)
+    assertNull(actual: transaction.topicMemo)
+    assertNull(actual: transaction.expirationTime)
+    assertNull(actual: transaction.autoRenewPeriod)
+    assertNull(actual: transaction.autoRenewAccount)
+}
+
+// Source: the Python SDK (test_topic_update_transaction_with_all_fields: "Comprehensive update", auto-renew account
+// 0.0.5678), the Java SDK (TopicUpdateTransactionTest.shouldBytes) and the Swift SDK
+// (TopicUpdateTransactionUnitTests.test_ToFromBytes).
+test "a topic update transaction survives toBytes and fromBytes" {
+    // given
+    let packed = TopicUpdateTransaction{topicId: DEFAULT(Address), adminAuthority: DEFAULT(Authority),
+            submitAuthority: DEFAULT(Authority), topicMemo: "Comprehensive update",
+            autoRenewAccount: AccountId.fromString(value: "0.0.5678")}
+            .pack(payer: DEFAULT(consensusnode.client.Account), nodes: [AccountId.fromString(value: "0.0.3")])
+
+    // when
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+
+// Source: the Java SDK (TopicDeleteTransactionTest.shouldBytes) and the Swift SDK (TopicDeleteTransactionUnitTests
+// .test_GetSetTopicId and test_ToFromBytes).
+test "a topic delete transaction keeps its topic and survives toBytes and fromBytes" {
+    // given
+    let transaction = TopicDeleteTransaction{topicId: DEFAULT(Address)}
+
+    // when
+    let packed = transaction.pack(payer: DEFAULT(consensusnode.client.Account), nodes: [AccountId.fromString(value: "0.0.3")])
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: DEFAULT(Address), actual: transaction.topicId)
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+```
+
 ## Questions & Comments
 
 - **`adminAuthority` / `submitAuthority` are the `Authority` authorization type.** Both fields are an
@@ -209,3 +322,11 @@ new TopicDeleteTransaction()
   write-side custom-fee model that does not yet exist in the spec. Adding them here is
   additive and breaks nothing.
 
+- **`ZERO_ADDRESS` does not fit `autoRenewAccount`.** The description says that `autoRenewAccount` is removed by
+  setting it to `ZERO_ADDRESS`, but `ZERO_ADDRESS` is an `Address` and the field is an `AccountId`; `ledger` also
+  defines `ZERO_ACCOUNT_ID`. Should the text name `ZERO_ACCOUNT_ID`?
+
+- **Who pays the renewal of a topic created without `autoRenewAccount`?** The description says the topic itself. The
+  current SDKs instead set the payer (Python: the operator, Swift: `test_AutomaticallySetAutoRenewAccountId`) as
+  `autoRenewAccount` when the transaction is frozen and none is given. Should `pack(...)` do the same in V3, or is
+  the field sent unset?

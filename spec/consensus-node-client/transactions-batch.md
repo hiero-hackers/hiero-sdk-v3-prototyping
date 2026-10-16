@@ -218,6 +218,95 @@ Response<TransferReceipt> innerResponse =
 TransferReceipt innerReceipt = innerResponse.queryReceipt();
 ```
 
+## Testing
+
+Offline tests of `BatchTransaction`, written as given / when / then: the inner transactions it keeps and its packed
+form. The inner transactions are `PrngTransaction`s packed for a batch with the default account as payer and its key
+as batch key; nothing is submitted. Atomic execution and the network's restrictions on inner transactions are tested
+by the TCK, not here.
+
+```tests
+// Source: HIP-551 (an inner transaction has one body for node 0.0.0, signed by its payer); the Python SDK
+// (test_batchify_sets_required_fields).
+test "an inner transaction signed for a batch has one body for node 0.0.0 and its payer's signature" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+
+    // when
+    let inner = consensusnode.transactions.utility.PrngTransaction{}
+            .signForBatch(payer: payer, batchKey: DEFAULT(authority.Authority))
+
+    // then
+    let bodies = inner.signableBodies()
+    assertEquals(expected: 1, actual: length(value: bodies))
+    assertEquals(expected: ledger.AccountId.fromString(value: "0.0.0"), actual: bodies[0].node)
+    assertEquals(expected: payer.accountId, actual: inner.transactionId.accountId)
+    assertEquals(expected: 1, actual: length(value: inner.nodeSignatures))
+    assertTrue(condition: inner.nodeSignatures[0].publicKey.verify(message: bodies[0].bytes,
+            signature: inner.nodeSignatures[0].signature))
+}
+
+// Source: this spec (innerTransactions is executed in list order); the Java SDK (BatchTransactionTest
+// .shouldPreserveTransactionOrder and getInnerTransactionIdsShouldReturnCorrectIds) and the Python SDK
+// (test_get_inner_transactions_ids_returns_transaction_ids).
+test "a batch keeps its inner transactions in their order, each with its own payer" {
+    // given
+    let first = DEFAULT(consensusnode.client.Account)
+    let second = consensusnode.client.Account{accountId: ledger.AccountId.fromString(value: "0.0.1002"),
+            privateKey: first.privateKey}
+    let innerA = consensusnode.transactions.utility.PrngTransaction{}
+            .signForBatch(payer: first, batchKey: DEFAULT(authority.Authority))
+    let innerB = consensusnode.transactions.utility.PrngTransaction{range: 10}
+            .signForBatch(payer: second, batchKey: DEFAULT(authority.Authority))
+
+    // when
+    let batch = BatchTransaction{innerTransactions: [innerA, innerB]}
+
+    // then
+    assertEquals(expected: 2, actual: length(value: batch.innerTransactions))
+    assertEquals(expected: innerA.toBytes(), actual: batch.innerTransactions[0].toBytes())
+    assertEquals(expected: innerB.toBytes(), actual: batch.innerTransactions[1].toBytes())
+    assertEquals(expected: first.accountId, actual: batch.innerTransactions[0].transactionId.accountId)
+    assertEquals(expected: second.accountId, actual: batch.innerTransactions[1].transactionId.accountId)
+}
+
+// Source: the Python SDK (test_round_trip_to_bytes_and_back_preserves_inner_transactions), the Java SDK
+// (BatchTransactionTest.shouldBytes) and the Swift SDK (BatchTransactionUnitTests.test_ToFromBytes).
+test "a signed batch survives toBytes and fromBytes" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+    let inner = consensusnode.transactions.utility.PrngTransaction{}
+            .signForBatch(payer: payer, batchKey: DEFAULT(authority.Authority))
+    let packed = BatchTransaction{innerTransactions: [inner]}
+            .sign(payer: payer, nodes: [ledger.AccountId.fromString(value: "0.0.3")])
+
+    // when
+    let restored = PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
+    assertEquals(expected: packed.transactionId.accountId, actual: restored.transactionId.accountId)
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+    assertEquals(expected: 1, actual: length(value: restored.nodeSignatures))
+}
+
+// Source: HIP-551 (AtomicBatchTransactionBody.transactions holds the signed inner transactions); the Python SDK
+// (test_build_batch_transaction_body).
+test "the body of a batch contains the bytes of its inner transactions" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+    let inner = consensusnode.transactions.utility.PrngTransaction{range: 10}
+            .signForBatch(payer: payer, batchKey: DEFAULT(authority.Authority))
+
+    // when
+    let packed = BatchTransaction{innerTransactions: [inner]}
+            .pack(payer: payer, nodes: [ledger.AccountId.fromString(value: "0.0.3")])
+
+    // then
+    assertTrue(condition: contains(value: packed.signableBodies()[0].bytes, part: inner.signableBodies()[0].bytes))
+}
+```
+
 ## Questions & Comments
 
 - **Open: can the batch key be a composite (`AuthorityList`/threshold) `Authority`, or only a single

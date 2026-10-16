@@ -388,6 +388,315 @@ new AccountAllowanceDeleteTransaction()
     .signWithOperatorAndSubmit(client);
 ```
 
+## Testing
+
+Offline tests of the account transactions, written as given / when / then: the attributes a transaction keeps, the
+defaults of the attributes it leaves out, and the packed form of each transaction. Submitting and the network's
+checks of the transfer sums, signatures and allowances are tested by the TCK, not here. The comment above each test
+names where the current SDKs test the same.
+
+```tests
+// Source: this spec (@@default(false), @@nullable); the Python SDK (test_constructor_default_values of the account
+// transactions) and the Java SDK (AccountCreateTransactionTest.propertiesTest: no staked node id, declineStakingReward
+// false).
+test "an account create transaction leaves out what is not given" {
+    // when
+    let transaction = AccountCreateTransaction{authority: DEFAULT(Authority)}
+
+    // then
+    assertEquals(expected: DEFAULT(Authority), actual: transaction.authority)
+    assertNull(actual: transaction.initialBalance)
+    assertNull(actual: transaction.accountMemo)
+    assertFalse(condition: transaction.receiverSignatureRequired)
+    assertNull(actual: transaction.maxAutomaticTokenAssociations)
+    assertNull(actual: transaction.autoRenewPeriod)
+    assertNull(actual: transaction.stakedAccountId)
+    assertNull(actual: transaction.stakedNodeId)
+    assertFalse(condition: transaction.declineStakingReward)
+    assertNull(actual: transaction.alias)
+}
+
+// Source: the Java SDK (AccountCreateTransactionTest.propertiesTest: 450 tinybars, "some dumb memo", 100 automatic
+// associations, staked to 0.0.3, the EVM address alias 0x5c562e90feaf0eebd33ea75d21024f249d451417) and the Swift SDK
+// (AccountCreateTransactionUnitTests.test_Properties).
+test "an account create transaction keeps its attributes" {
+    // given
+    let initialBalance: NativeToken<ANY, ANY> = hedera.Hbar{amount: 450, unit: hedera.HbarUnit.TINYBAR}
+    let alias = hex(text: "5c562e90feaf0eebd33ea75d21024f249d451417")
+
+    // when
+    let transaction = AccountCreateTransaction{authority: DEFAULT(Authority), initialBalance: initialBalance,
+            accountMemo: "some dumb memo", receiverSignatureRequired: true, maxAutomaticTokenAssociations: 100,
+            stakedAccountId: AccountId.fromString(value: "0.0.3"), declineStakingReward: true, alias: alias}
+
+    // then
+    assertEquals(expected: initialBalance, actual: transaction.initialBalance)
+    assertEquals(expected: "some dumb memo", actual: transaction.accountMemo)
+    assertTrue(condition: transaction.receiverSignatureRequired)
+    assertEquals(expected: 100, actual: transaction.maxAutomaticTokenAssociations)
+    assertEquals(expected: AccountId.fromString(value: "0.0.3"), actual: transaction.stakedAccountId)
+    assertNull(actual: transaction.stakedNodeId)
+    assertTrue(condition: transaction.declineStakingReward)
+    assertEquals(expected: alias, actual: transaction.alias)
+}
+
+// Source: the Java SDK (AccountCreateTransactionTest.shouldBytes and shouldBytes2: staked to an account, staked to node
+// 4), the Swift SDK (test_ToFromBytes and test_ToFromBytes2) and the Python SDK
+// (test_serialization_round_trip_staked_node_id and ..._staked_account_id).
+test "an account create transaction survives toBytes and fromBytes, staked to an account or to a node" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+    let nodes = [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")]
+    let toAccount = AccountCreateTransaction{authority: DEFAULT(Authority), accountMemo: "Test Account",
+            stakedAccountId: AccountId.fromString(value: "0.0.8")}
+    let toNode = AccountCreateTransaction{authority: DEFAULT(Authority), accountMemo: "Test Account", stakedNodeId: 1}
+
+    for transaction in [toAccount, toNode] {
+        // given
+        let packed = transaction.pack(payer: payer, nodes: nodes)
+
+        // when
+        let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+        // then
+        assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
+        assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+    }
+}
+
+// Source: this spec (@@nullable: an update changes only what it names); the Python SDK
+// (test_constructor_without_parameters of AccountUpdateTransaction).
+test "an account update transaction changes nothing but what it names" {
+    // when
+    let transaction = AccountUpdateTransaction{accountId: DEFAULT(AccountId)}
+
+    // then
+    assertEquals(expected: DEFAULT(AccountId), actual: transaction.accountId)
+    assertNull(actual: transaction.authority)
+    assertNull(actual: transaction.accountMemo)
+    assertNull(actual: transaction.receiverSignatureRequired)
+    assertNull(actual: transaction.maxAutomaticTokenAssociations)
+    assertNull(actual: transaction.autoRenewPeriod)
+    assertNull(actual: transaction.expirationTime)
+    assertNull(actual: transaction.stakedAccountId)
+    assertNull(actual: transaction.stakedNodeId)
+    assertNull(actual: transaction.declineStakingReward)
+}
+
+// Source: the Java SDK (AccountUpdateTransactionTest.shouldBytes) and the Swift SDK
+// (AccountUpdateTransactionUnitTests.test_ToFromBytes).
+test "an account update transaction survives toBytes and fromBytes" {
+    // given
+    let packed = AccountUpdateTransaction{accountId: DEFAULT(AccountId), authority: DEFAULT(Authority),
+            accountMemo: "Some memo", receiverSignatureRequired: true, maxAutomaticTokenAssociations: 100,
+            stakedNodeId: 4, declineStakingReward: true}
+            .pack(payer: DEFAULT(consensusnode.client.Account), nodes: [AccountId.fromString(value: "0.0.3")])
+
+    // when
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+
+// Source: the Python SDK (test_constructor_with_parameters of AccountDeleteTransaction), the Java SDK
+// (AccountDeleteTransactionTest.shouldBytes), the JavaScript SDK ("should serialize and deserialize correctly") and the
+// Swift SDK (test_ToFromBytes).
+test "an account delete transaction keeps both accounts and survives toBytes and fromBytes" {
+    // given
+    let transaction = AccountDeleteTransaction{accountId: AccountId.fromString(value: "0.0.1001"),
+            transferAccountId: AccountId.fromString(value: "0.0.1002")}
+
+    // when
+    let packed = transaction.pack(payer: DEFAULT(consensusnode.client.Account), nodes: [AccountId.fromString(value: "0.0.3")])
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: AccountId.fromString(value: "0.0.1001"), actual: transaction.accountId)
+    assertEquals(expected: AccountId.fromString(value: "0.0.1002"), actual: transaction.transferAccountId)
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+
+// Source: this spec (@@default([])); the Python SDK (test_constructor_default_values of TransferTransaction).
+test "a transfer transaction without legs has empty lists" {
+    // when
+    let transaction = TransferTransaction{}
+
+    // then
+    assertEquals(expected: 0, actual: length(value: transaction.hbarTransfers))
+    assertEquals(expected: 0, actual: length(value: transaction.tokenTransfers))
+    assertEquals(expected: 0, actual: length(value: transaction.nftTransfers))
+}
+
+// Source: this spec (@@default(false) of approved, @@nullable expectedDecimals); the Python SDK (test_add_hbar_transfer,
+// test_add_token_transfer, test_add_nft_transfer, test_token_transfer_without_expected_decimals).
+test "a transfer leg is not approved and has no expected decimals unless given" {
+    // when
+    let hbarLeg = HbarTransfer{accountId: DEFAULT(AccountId), amount: hedera.Hbar{amount: -10, unit: hedera.HbarUnit.HBAR}}
+    let tokenLeg = TokenTransfer{tokenId: Address.fromString(address: "0.0.5005"), accountId: DEFAULT(AccountId),
+            amount: -100}
+    let nftLeg = NftTransfer{tokenId: Address.fromString(address: "0.0.5005"), serial: 1,
+            sender: AccountId.fromString(value: "0.0.1001"), receiver: AccountId.fromString(value: "0.0.1002")}
+
+    // then
+    assertFalse(condition: hbarLeg.approved)
+    assertFalse(condition: tokenLeg.approved)
+    assertNull(actual: tokenLeg.expectedDecimals)
+    assertFalse(condition: nftLeg.approved)
+}
+
+// Source: this spec (a transfer is a list of legs; nothing merges them); the Python SDK (test_multiple_nft_transfers,
+// test_nft_transfer_fields_preservation, test_expected_decimals_field_preservation).
+test "a transfer transaction keeps its legs in their order" {
+    // given
+    let token = Address.fromString(address: "0.0.5005")
+    let alice = AccountId.fromString(value: "0.0.1001")
+    let bob = AccountId.fromString(value: "0.0.1002")
+    let hbarLegs = [HbarTransfer{accountId: alice, amount: hedera.Hbar{amount: -10, unit: hedera.HbarUnit.HBAR}},
+            HbarTransfer{accountId: bob, amount: hedera.Hbar{amount: 10, unit: hedera.HbarUnit.HBAR}}]
+    let tokenLegs = [TokenTransfer{tokenId: token, accountId: alice, amount: -100, expectedDecimals: 6, approved: true},
+            TokenTransfer{tokenId: token, accountId: bob, amount: 100, expectedDecimals: 6}]
+    let nftLegs = [NftTransfer{tokenId: token, serial: 1, sender: alice, receiver: bob},
+            NftTransfer{tokenId: token, serial: 2, sender: alice, receiver: bob, approved: true}]
+
+    // when
+    let transaction = TransferTransaction{hbarTransfers: hbarLegs, tokenTransfers: tokenLegs, nftTransfers: nftLegs}
+
+    // then
+    assertEquals(expected: hbarLegs, actual: transaction.hbarTransfers)
+    assertEquals(expected: tokenLegs, actual: transaction.tokenTransfers)
+    assertEquals(expected: 6, actual: transaction.tokenTransfers[0].expectedDecimals)
+    assertTrue(condition: transaction.tokenTransfers[0].approved)
+    assertEquals(expected: nftLegs, actual: transaction.nftTransfers)
+    assertEquals(expected: 2, actual: transaction.nftTransfers[1].serial)
+}
+
+// Source: the Python SDK (test_combined_transfers_reconstruction) and the Swift SDK
+// (TransferTransactionUnitTests.test_ToFromBytes).
+test "a transfer of HBAR, a token and an NFT survives toBytes and fromBytes" {
+    // given
+    let token = Address.fromString(address: "0.0.5005")
+    let alice = AccountId.fromString(value: "0.0.1001")
+    let bob = AccountId.fromString(value: "0.0.1002")
+    let packed = TransferTransaction{
+            hbarTransfers: [HbarTransfer{accountId: alice, amount: hedera.Hbar{amount: -10, unit: hedera.HbarUnit.HBAR}},
+                    HbarTransfer{accountId: bob, amount: hedera.Hbar{amount: 10, unit: hedera.HbarUnit.HBAR}}],
+            tokenTransfers: [TokenTransfer{tokenId: token, accountId: alice, amount: -100, expectedDecimals: 6},
+                    TokenTransfer{tokenId: token, accountId: bob, amount: 100, expectedDecimals: 6}],
+            nftTransfers: [NftTransfer{tokenId: token, serial: 1, sender: alice, receiver: bob, approved: true}]}
+            .pack(payer: DEFAULT(consensusnode.client.Account), nodes: [AccountId.fromString(value: "0.0.3"),
+                    AccountId.fromString(value: "0.0.4")])
+
+    // when
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+
+// Source: this spec (@@default([])); the Python SDK (test_account_allowance_transaction_initialization,
+// test_build_proto_body_empty).
+test "an allowance approve transaction without allowances has empty lists" {
+    // when
+    let transaction = AccountAllowanceApproveTransaction{}
+
+    // then
+    assertEquals(expected: 0, actual: length(value: transaction.hbarAllowances))
+    assertEquals(expected: 0, actual: length(value: transaction.tokenAllowances))
+    assertEquals(expected: 0, actual: length(value: transaction.nftAllowances))
+}
+
+// Source: the Python SDK (test_mixed_allowance_types, test_approve_token_nft_allowance_multiple_serials,
+// test_approve_token_nft_allowance_all_serials, test_zero_amount_allowances) and the Java SDK
+// (AccountAllowanceApproveTransactionTest.propertiesTest).
+test "an allowance approve transaction keeps HBAR, token, serial and collection allowances" {
+    // given
+    let owner = AccountId.fromString(value: "0.0.1001")
+    let spender = AccountId.fromString(value: "0.0.1002")
+    let token = Address.fromString(address: "0.0.5005")
+    let hbarAllowance = HbarAllowance{ownerAccountId: owner, spenderAccountId: spender,
+            amount: hedera.Hbar{amount: 3, unit: hedera.HbarUnit.HBAR}}
+    let revokedHbarAllowance = HbarAllowance{ownerAccountId: owner, spenderAccountId: spender,
+            amount: hedera.Hbar{amount: 0, unit: hedera.HbarUnit.HBAR}}
+    let tokenAllowance = TokenAllowance{tokenId: token, ownerAccountId: owner, spenderAccountId: spender, amount: 6}
+    let serials = NftAllowance{tokenId: token, ownerAccountId: owner, spenderAccountId: spender,
+            grant: NftSerialGrant{serials: [123, 456]}}
+    let collection = NftAllowance{tokenId: Address.fromString(address: "0.0.6006"), ownerAccountId: owner,
+            spenderAccountId: spender, grant: NftCollectionGrant{approved: true}}
+
+    // when
+    let transaction = AccountAllowanceApproveTransaction{hbarAllowances: [hbarAllowance, revokedHbarAllowance],
+            tokenAllowances: [tokenAllowance], nftAllowances: [serials, collection]}
+
+    // then
+    assertEquals(expected: [hbarAllowance, revokedHbarAllowance], actual: transaction.hbarAllowances)
+    assertEquals(expected: [tokenAllowance], actual: transaction.tokenAllowances)
+    assertEquals(expected: [serials, collection], actual: transaction.nftAllowances)
+    assertInstanceOf(expected: NftSerialGrant, actual: transaction.nftAllowances[0].grant)
+    assertInstanceOf(expected: NftCollectionGrant, actual: transaction.nftAllowances[1].grant)
+    assertNull(actual: transaction.nftAllowances[0].delegatingSpender)
+}
+
+// Source: HIP-336 (a spender with a collection grant delegates serials onward); this spec (delegatingSpender).
+test "an NFT allowance keeps its delegating spender" {
+    // given
+    let delegatingSpender = AccountId.fromString(value: "0.0.1003")
+
+    // when
+    let allowance = NftAllowance{tokenId: Address.fromString(address: "0.0.5005"),
+            ownerAccountId: AccountId.fromString(value: "0.0.1001"), spenderAccountId: AccountId.fromString(value: "0.0.1002"),
+            grant: NftSerialGrant{serials: [1]}, delegatingSpender: delegatingSpender}
+
+    // then
+    assertEquals(expected: delegatingSpender, actual: allowance.delegatingSpender)
+}
+
+// Source: the Java SDK (AccountAllowanceApproveTransactionTest.shouldBytes), the JavaScript SDK ("should round trip
+// from bytes and maintain order") and the Swift SDK (test_ToFromBytes).
+test "an allowance approve transaction survives toBytes and fromBytes" {
+    // given
+    let owner = AccountId.fromString(value: "0.0.1001")
+    let spender = AccountId.fromString(value: "0.0.1002")
+    let packed = AccountAllowanceApproveTransaction{
+            hbarAllowances: [HbarAllowance{ownerAccountId: owner, spenderAccountId: spender,
+                    amount: hedera.Hbar{amount: 3, unit: hedera.HbarUnit.HBAR}}],
+            tokenAllowances: [TokenAllowance{tokenId: Address.fromString(address: "0.0.5005"), ownerAccountId: owner,
+                    spenderAccountId: spender, amount: 6}],
+            nftAllowances: [NftAllowance{tokenId: Address.fromString(address: "0.0.6006"), ownerAccountId: owner,
+                    spenderAccountId: spender, grant: NftSerialGrant{serials: [123, 456]}},
+                    NftAllowance{tokenId: Address.fromString(address: "0.0.7007"), ownerAccountId: owner,
+                    spenderAccountId: spender, grant: NftCollectionGrant{approved: false}}]}
+            .pack(payer: DEFAULT(consensusnode.client.Account), nodes: [AccountId.fromString(value: "0.0.3")])
+
+    // when
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+
+// Source: the Java SDK (AccountAllowanceDeleteTransactionTest.shouldBytes), the JavaScript SDK ("[from|to]Bytes"),
+// the Swift SDK (test_ToFromBytes) and the C++ SDK (DeleteNftAllowances).
+test "an allowance delete transaction keeps its deletions and survives toBytes and fromBytes" {
+    // given
+    let deletion = NftAllowanceDeletion{tokenId: Address.fromString(address: "0.0.5005"),
+            ownerAccountId: AccountId.fromString(value: "0.0.1001"), serials: [1, 2, 3]}
+    let transaction = AccountAllowanceDeleteTransaction{nftAllowanceDeletions: [deletion]}
+
+    // when
+    let packed = transaction.pack(payer: DEFAULT(consensusnode.client.Account), nodes: [AccountId.fromString(value: "0.0.3")])
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+    // then
+    assertEquals(expected: [deletion], actual: transaction.nftAllowanceDeletions)
+    assertEquals(expected: [1, 2, 3], actual: transaction.nftAllowanceDeletions[0].serials)
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+```
+
 ## Questions & Comments
 
 - **`AccountAllowanceDeleteTransaction` is NFT-only by design.** HAPI exposes only an NFT

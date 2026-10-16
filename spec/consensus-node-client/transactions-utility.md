@@ -87,6 +87,47 @@ PrngReceipt receipt = new PrngTransaction()
 bytes seed = receipt.prngBytes;   // 48 bytes
 ```
 
+## Testing
+
+Offline tests of `PrngTransaction`, written as given / when / then: the attributes it keeps and its packed form. The
+random value itself is produced by the network and is tested by the TCK, not here.
+
+```tests
+// Source: this spec (range is @@nullable); the Python SDK (test_constructor_default_values).
+test "a PRNG transaction without a range asks for random bytes" {
+    // when
+    let transaction = PrngTransaction{}
+
+    // then
+    assertNull(actual: transaction.range)
+}
+
+// Source: the Python SDK (test_constructor_with_parameters, range 1000) and the Go SDK (TestUnitPrngTransactionSetRange).
+test "a PRNG transaction keeps its range" {
+    // when
+    let transaction = PrngTransaction{range: 1000}
+
+    // then
+    assertEquals(expected: 1000, actual: transaction.range)
+}
+
+// Source: the JavaScript SDK ("should return range when create transaction from Bytes", range 100) and the Go SDK
+// (TestUnitPrngTransactionFromToBytes).
+test "a PRNG transaction with a range survives toBytes and fromBytes" {
+    // given
+    let packed = PrngTransaction{range: 100}
+            .pack(payer: DEFAULT(consensusnode.client.Account), nodes: [ledger.AccountId.fromString(value: "0.0.3")])
+    let bytes = packed.toBytes()
+
+    // when
+    let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: bytes)
+
+    // then
+    assertEquals(expected: bytes, actual: restored.toBytes())
+    assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+}
+```
+
 ## Questions & Comments
 
 - **`prngNumber` is a signed `int32`, but the value is always non-negative.** HAPI returns the

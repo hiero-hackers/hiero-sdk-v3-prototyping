@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Objects;
 import org.hiero.consensusnode.admin.nodes.ServiceEndpoint;
 import org.hiero.ledger.AccountId;
-import org.hiero.ledger.IpAddress;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -51,7 +50,7 @@ class NodeAddressBookTest {
     }
 
     private static List<NodeAddress> nodesValue() {
-        return List.of(new NodeAddress(1L, new AccountId(0L, 0L, "", 1001L, null, null), List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1)), null, new byte[] {1, 2, 3}, new byte[] {1, 2, 3}, new byte[] {1, 2, 3}));
+        return List.of(new NodeAddress(0L, new AccountId(0L, 0L, "", 3L, null, null), List.of(new ServiceEndpoint(null, "network-node1-svc", 50211)), "node1", new byte[] {(byte) 1, (byte) 2, (byte) 3}, new byte[] {(byte) 4, (byte) 5, (byte) 6}, new byte[] {(byte) 7, (byte) 8, (byte) 9}));
     }
 
     private static NodeAddressBook create() {

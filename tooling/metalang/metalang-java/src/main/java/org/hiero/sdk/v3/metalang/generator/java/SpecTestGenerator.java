@@ -114,6 +114,8 @@ final class SpecTestGenerator {
         private final List<String> fields = new ArrayList<>();
         /** The named test values without a Java form. */
         private final Set<String> missingValues = new HashSet<>();
+        /** The named test values, created by a method of the same name. */
+        private final Set<String> valueNames = new HashSet<>();
         /** The methods that return the default instances, by name. */
         private final Map<String, String> helpers = new java.util.LinkedHashMap<>();
         private final List<String> notes = new ArrayList<>();
@@ -137,12 +139,17 @@ final class SpecTestGenerator {
 
         // ------------------------------------------------------------------------------------------------ tests
 
-        /** Named test values: a constant of the test class; a test that uses values without one is not generated. */
+        /**
+         * Named test values: a method of the test class that creates them where a test uses them - a value that cannot
+         * be created fails only the tests that use it, with its cause. A test that uses values without Java form is not
+         * generated.
+         */
         private void values(final TestValuesDefinition values) {
             final String value;
             try {
-                value = INDENT + "private static final " + declaration(values.type(), false) + " "
-                        + JavaKeywords.identifier(values.name()) + " = " + expression(values.value()) + ";\n";
+                value = INDENT + "private static " + declaration(values.type(), false) + " "
+                        + JavaKeywords.identifier(values.name()) + "() {\n" + INDENT + INDENT + "return "
+                        + expression(values.value()) + ";\n" + INDENT + "}\n";
             } catch (final Unsupported e) {
                 notes.add("values `" + values.name() + "`: " + e.getMessage());
                 missingValues.add(values.name());
@@ -151,6 +158,7 @@ final class SpecTestGenerator {
             final StringBuilder java = new StringBuilder();
             values.documentation().lines().forEach(l -> java.append(INDENT).append("/// ").append(l).append('\n'));
             fields.add(java.append(value).toString());
+            valueNames.add(values.name());
         }
 
         private void test(final TestDefinition test) {
@@ -319,6 +327,8 @@ final class SpecTestGenerator {
             return switch (expression) {
                 case InstanceExpression.Variable variable when missingValues.contains(variable.name()) ->
                         throw new Unsupported("the values " + variable.name() + " have no Java form");
+                case InstanceExpression.Variable variable when valueNames.contains(variable.name()) ->
+                        JavaKeywords.identifier(variable.name()) + "()";
                 case InstanceExpression.Variable variable -> JavaKeywords.identifier(variable.name());
                 case InstanceExpression.Default value -> defaultValue(value.type());
                 case InstanceExpression.Negate negate -> negate(negate);
@@ -483,6 +493,11 @@ final class SpecTestGenerator {
          * language is checked against the range of the type and converted to its Java type.
          */
         private String converted(final InstanceExpression value, final Type target) {
+            // a type literal (the resolver gives it its type as argument: type<Receipt>) is a class literal
+            if (value instanceof InstanceExpression.Value && value.type() instanceof Type.BasicType basic
+                    && basic.builtin().category() == BuiltinType.Category.TYPE && !basic.arguments().isEmpty()) {
+                return JavaTypes.type(basic.arguments().getFirst(), true, imports) + ".class";
+            }
             final String java = expression(value);
             if (!(value.type() instanceof Type.BasicType from) || from.builtin().category()
                     != BuiltinType.Category.INTEGER || !(target instanceof Type.BasicType to)

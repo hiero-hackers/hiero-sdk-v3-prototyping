@@ -890,7 +890,7 @@ one test file per spec, next to the other generated tests:
 | `// given`, `// when`, `// then` and every other comment inside a test | the same `//` comment at the same place |
 | `let x = …` | `const x: <Type> = …;` (`\| null` where the value may be `null`) |
 | `if` / `else if` / `else`, `for x in …` | `if (…) { … } else if …`, `for (const x of …)` |
-| `values NAME: list<string> = [...]` (named test values of the spec) | a module constant `const NAME: ReadonlyArray<string> = [...];` with the comment of the declaration as `/** */` comment |
+| `values NAME: list<string> = [...]` (named test values of the spec) | a module function `function NAME(): ReadonlyArray<string> { return [...]; }` with the comment of the declaration as `/** */` comment, only if a generated test uses it; a test calls it (`NAME()`) |
 | `DEFAULT(PrivateKey)` | a helper `function defaultPrivateKey(): PrivateKey` that returns the default instance |
 | `assertEquals(expected: a, actual: b)` and the other built-in functions | the functions of the hand-written package `@hiero/test-support` (`sdk-ts/test-support`); `toString` is `text`, and overloads that differ by a numeric type get a suffix (`absDouble`, `minDecimal`, `toDecimalDouble`), because `number` and `string` also stand for other types |
 | `@@expectThrows(illegal-format) call(…)` | `assert.throws(() => call(…), RangeError);` with the error class of the id; `await assert.rejects(async () => …)` for an asynchronous call |

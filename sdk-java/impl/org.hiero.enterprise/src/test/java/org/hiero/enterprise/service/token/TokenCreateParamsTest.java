@@ -405,4 +405,8 @@ class TokenCreateParamsTest {
     private static TokenCreateParams create() {
         return new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
     }
+
+    private static TokenCreateParams defaultSubject() {
+        return new TokenCreateParams("Token Name", "TKN", null, 0, 0L, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null);
+    }
 }

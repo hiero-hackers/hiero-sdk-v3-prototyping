@@ -114,6 +114,16 @@ AuthorityList extends Authority {
 ```
 // The authority of a single key: the default public key.
 instance Authority = PublicKeyAuthority{publicKey: DEFAULT}
+
+// Three distinct Ed25519 public keys: the public keys of RFC 8032, section 7.1 (TEST 1, TEST 2, TEST 3).
+values PUBLIC_KEYS: list<PublicKey> = [
+    keys.createPublicKey(algorithm: keys.KeyAlgorithm.ED25519,
+            rawBytes: hex(text: "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a")),
+    keys.createPublicKey(algorithm: keys.KeyAlgorithm.ED25519,
+            rawBytes: hex(text: "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c")),
+    keys.createPublicKey(algorithm: keys.KeyAlgorithm.ED25519,
+            rawBytes: hex(text: "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025"))
+]
 ```
 
 ## Examples
@@ -158,6 +168,110 @@ String describe(Authority e) {
         case AuthorityList l              -> return l.threshold + "-of-" + l.children.size()
                                                        + " [" + l.children.map(describe).join(", ") + "]";
     }
+}
+```
+
+## Testing
+
+Tests of the factories and of the equality of authorities, written as given / when / then. The comment above each test
+names its source. A test can pass only one value to a varargs parameter, so the compositions built by the factories
+have one child; compositions of several children are built with `AuthorityList{…}`.
+
+```tests
+// Source: this spec (of(publicKey) is the single-key leaf); the Java, Go, Python and C++ SDKs (a public key is a key).
+test "a single key becomes a public key authority of that key" {
+    // given
+    let publicKey = PUBLIC_KEYS[0]
+    let leaf: Authority = PublicKeyAuthority{publicKey: publicKey}
+
+    // when
+    let authority = of(publicKey: publicKey)
+
+    // then
+    assertInstanceOf(expected: PublicKeyAuthority, actual: authority)
+    assertEquals(expected: leaf, actual: authority)
+}
+
+// Source: this spec (n-of-n: threshold is set to children.size()); the Java, JavaScript, Go and Python SDKs (a key list
+// without a threshold requires all of its keys).
+test "a composition without a threshold requires all of its children" {
+    // given
+    let child = of(publicKey: PUBLIC_KEYS[0])
+    let allOfOne: Authority = AuthorityList{children: [child], threshold: 1}
+
+    // when
+    let authority = of(children: child)
+
+    // then
+    assertInstanceOf(expected: AuthorityList, actual: authority)
+    assertEquals(expected: allOfOne, actual: authority)
+}
+
+// Source: this spec (m-of-n composition); the Go, Python, JavaScript and C++ SDKs (a key list keeps its threshold).
+test "a composition with a threshold keeps its threshold and its child" {
+    // given
+    let child = of(publicKey: PUBLIC_KEYS[0])
+    let oneOfOne: Authority = AuthorityList{children: [child], threshold: 1}
+
+    // when
+    let authority = of(threshold: 1, children: child)
+
+    // then
+    assertEquals(expected: oneOfOne, actual: authority)
+}
+
+// Source: this spec (ofContract maps to HAPI ContractID, ofDelegatable to DelegatableContractID); the Go, Python and C++
+// SDKs (a delegatable contract id becomes a key of its own kind).
+test "a contract leaf is delegatable only when created as delegatable" {
+    // given
+    let contractId = DEFAULT(ContractId)
+    let plainLeaf: Authority = ContractAuthority{contractId: contractId, delegatable: false}
+    let delegatableLeaf: Authority = ContractAuthority{contractId: contractId, delegatable: true}
+
+    // when
+    let plain = ofContract(contractId: contractId)
+    let delegatable = ofDelegatable(contractId: contractId)
+
+    // then
+    assertEquals(expected: plainLeaf, actual: plain)
+    assertEquals(expected: delegatableLeaf, actual: delegatable)
+    assertNotEquals(unexpected: plain, actual: delegatable)
+}
+
+// Source: this spec (@@default(false) delegatable).
+test "a contract authority is not delegatable by default" {
+    // when
+    let authority = ContractAuthority{contractId: DEFAULT(ContractId)}
+
+    // then
+    assertFalse(condition: authority.delegatable)
+    assertEquals(expected: ofContract(contractId: DEFAULT(ContractId)), actual: authority)
+}
+
+// Source: this spec (structural equality: two authorities are equal iff their trees match); the Python and C++ SDKs
+// (equality of contract ids and key lists).
+test "authorities are equal when their trees match" {
+    // given
+    let alice = of(publicKey: PUBLIC_KEYS[0])
+    let bob = of(publicKey: PUBLIC_KEYS[1])
+    let carol = of(publicKey: PUBLIC_KEYS[2])
+    let dao = ofContract(contractId: DEFAULT(ContractId))
+
+    // when
+    let nested = AuthorityList{children: [alice, AuthorityList{children: [bob, carol, dao], threshold: 2}], threshold: 2}
+    let same = AuthorityList{children: [of(publicKey: PUBLIC_KEYS[0]),
+            AuthorityList{children: [of(publicKey: PUBLIC_KEYS[1]), of(publicKey: PUBLIC_KEYS[2]),
+                    ofContract(contractId: DEFAULT(ContractId))], threshold: 2}], threshold: 2}
+
+    // then
+    assertEquals(expected: same, actual: nested)
+    assertEquals(expected: of(publicKey: PUBLIC_KEYS[0]), actual: alice)
+    assertNotEquals(unexpected: bob, actual: alice)
+    assertNotEquals(unexpected: AuthorityList{children: [alice, bob], threshold: 1},
+            actual: AuthorityList{children: [alice, bob], threshold: 2})
+    assertNotEquals(unexpected: AuthorityList{children: [bob, alice], threshold: 2},
+            actual: AuthorityList{children: [alice, bob], threshold: 2})
+    assertNotEquals(unexpected: of(threshold: 1, children: alice), actual: alice)
 }
 ```
 

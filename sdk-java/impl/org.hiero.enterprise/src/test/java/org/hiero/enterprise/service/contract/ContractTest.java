@@ -41,4 +41,8 @@ class ContractTest {
     private static Contract create() {
         return new Contract(contractIdValue());
     }
+
+    private static Contract defaultSubject() {
+        return new Contract(new ContractId(0L, 0L, "", 1001L, null));
+    }
 }

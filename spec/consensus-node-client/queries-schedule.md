@@ -125,6 +125,43 @@ if (info.executionTime != null) {
 }
 ```
 
+## Testing
+
+Offline tests of the schedule query and its result type, written as given / when / then. Nothing is submitted; the
+comment above each test names where the current SDKs test the same.
+
+```tests
+// Source: the Python SDK (schedule_info_query_test.py, test_constructor and test_set_schedule_id) and the Swift SDK
+// (ScheduleInfoQueryUnitTests, the get / set test).
+test "a schedule info query keeps the id of its schedule" {
+    // given
+    let schedule = DEFAULT(Address)
+
+    // when
+    let query = ScheduleInfoQuery{scheduleId: schedule}
+
+    // then
+    assertEquals(expected: schedule, actual: query.scheduleId)
+}
+
+// Source: this spec (the defaults of ScheduleInfo; neither time is set while the schedule is pending); the Python SDK
+// (schedule_info_test.py, test_schedule_info_default_initialization).
+test "a pending schedule info has these defaults" {
+    // when
+    let info = ScheduleInfo{scheduleId: DEFAULT, creatorAccountId: DEFAULT, payerAccountId: DEFAULT,
+            scheduledTransaction: consensusnode.transactions.utility.PrngTransaction{},
+            scheduledTransactionId: DEFAULT, expirationTime: DEFAULT}
+
+    // then
+    assertEquals(expected: 0, actual: length(value: info.signers))
+    assertFalse(condition: info.waitForExpiry)
+    assertNull(actual: info.adminKey)
+    assertNull(actual: info.scheduleMemo)
+    assertNull(actual: info.executionTime)
+    assertNull(actual: info.deletionTime)
+}
+```
+
 ## Questions & Comments
 
 - **`signers` is `list<PublicKey>`, not `list<Authority>`.** A credited signer is always a single

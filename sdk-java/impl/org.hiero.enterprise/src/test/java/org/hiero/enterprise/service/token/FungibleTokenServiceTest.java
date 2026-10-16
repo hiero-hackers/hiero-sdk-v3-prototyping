@@ -213,7 +213,7 @@ class FungibleTokenServiceTest {
     }
 
     private static TokenCreateParams paramsValue() {
-        return new TokenCreateParams("value", "value", null, 1, 1L, TokenSupplyType.INFINITE, null, true, null, new byte[] {1, 2, 3}, null, null, null, null, null, null, null, null, null, null, null);
+        return new TokenCreateParams("Token Name", "TKN", null, 0, 0L, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null);
     }
 
     private static AccountId accountIdValue() {

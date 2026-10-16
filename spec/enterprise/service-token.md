@@ -117,6 +117,117 @@ FungibleTokenService {
 FungibleTokenService createService(session: Session)
 ```
 
+## Default Instances for Testing
+
+```
+// The parameters of a token with only the required name and symbol.
+instance TokenCreateParams = TokenCreateParams{name: "Token Name", symbol: "TKN"}
+```
+
+## Testing
+
+Tests of `TokenCreateParams`. The methods of `FungibleTokenService` talk to the network and are not unit-tested here.
+A violated validation annotation (`@@maxLength`, `@@min`) cannot be expected yet: the test language expects errors of
+calls only, and creating a `TokenCreateParams` declares none.
+
+```tests
+// Source: this spec (@@default and @@nullable of TokenCreateParams); the Python SDK
+// (token_create_transaction_test.py, test_overwrite_defaults: decimals and initial supply are 0, no expiration time).
+test "token parameters with only name and symbol have the defaults of the spec" {
+    // when
+    let params = DEFAULT(TokenCreateParams)
+
+    // then
+    assertEquals(expected: "Token Name", actual: params.name)
+    assertEquals(expected: "TKN", actual: params.symbol)
+    assertEquals(expected: 0, actual: params.decimals)
+    assertEquals(expected: 0, actual: params.initialSupply)
+    assertEquals(expected: TokenSupplyType.INFINITE, actual: params.supplyType)
+    assertFalse(condition: params.freezeDefault)
+    assertEquals(expected: 0, actual: length(value: params.metadata))
+    assertNull(actual: params.treasuryAccountId)
+    assertNull(actual: params.maxSupply)
+    assertNull(actual: params.tokenMemo)
+    assertNull(actual: params.expirationTime)
+    assertNull(actual: params.autoRenewPeriod)
+    assertNull(actual: params.autoRenewAccount)
+    assertNull(actual: params.adminAuthority)
+    assertNull(actual: params.supplyAuthority)
+    assertNull(actual: params.kycAuthority)
+    assertNull(actual: params.freezeAuthority)
+    assertNull(actual: params.wipeAuthority)
+    assertNull(actual: params.pauseAuthority)
+    assertNull(actual: params.feeScheduleAuthority)
+    assertNull(actual: params.metadataAuthority)
+}
+
+// Source: the TokenCreateTransaction unit tests of the Java (TokenCreateTransactionTest), Go
+// (token_create_transaction_unit_test.go), C++ (TokenCreateTransactionUnitTests), Swift
+// (TokenCreateTransactionUnitTests) and Python (token_create_transaction_test.py) SDKs: every value that is set is
+// read back unchanged.
+test "token parameters keep the values they are created with" {
+    // given
+    let authority = DEFAULT(Authority)
+    let treasury = DEFAULT(AccountId)
+    let metadata = utf8(text: "ipfs://bafkreigh2akiscaildc")
+
+    // when
+    let params = TokenCreateParams{name: "USD Coin", symbol: "USDC", treasuryAccountId: treasury, decimals: 6,
+            initialSupply: 1_000_000, supplyType: TokenSupplyType.FINITE, maxSupply: 10_000_000, freezeDefault: true,
+            tokenMemo: "memo", metadata: metadata, autoRenewAccount: treasury, adminAuthority: authority,
+            supplyAuthority: authority, kycAuthority: authority, freezeAuthority: authority,
+            wipeAuthority: authority, pauseAuthority: authority, feeScheduleAuthority: authority,
+            metadataAuthority: authority}
+
+    // then
+    assertEquals(expected: "USD Coin", actual: params.name)
+    assertEquals(expected: "USDC", actual: params.symbol)
+    assertEquals(expected: treasury, actual: params.treasuryAccountId)
+    assertEquals(expected: 6, actual: params.decimals)
+    assertEquals(expected: 1_000_000, actual: params.initialSupply)
+    assertEquals(expected: TokenSupplyType.FINITE, actual: params.supplyType)
+    assertEquals(expected: 10_000_000, actual: params.maxSupply)
+    assertTrue(condition: params.freezeDefault)
+    assertEquals(expected: "memo", actual: params.tokenMemo)
+    assertEquals(expected: metadata, actual: params.metadata)
+    assertEquals(expected: treasury, actual: params.autoRenewAccount)
+    assertEquals(expected: authority, actual: params.adminAuthority)
+    assertEquals(expected: authority, actual: params.supplyAuthority)
+    assertEquals(expected: authority, actual: params.kycAuthority)
+    assertEquals(expected: authority, actual: params.freezeAuthority)
+    assertEquals(expected: authority, actual: params.wipeAuthority)
+    assertEquals(expected: authority, actual: params.pauseAuthority)
+    assertEquals(expected: authority, actual: params.feeScheduleAuthority)
+    assertEquals(expected: authority, actual: params.metadataAuthority)
+}
+
+// Source: this spec (@@maxLength(100) of name, symbol and tokenMemo); HAPI limits them to 100 bytes, which ASCII text
+// of 100 characters is.
+test "a name, a symbol and a memo of 100 characters are accepted" {
+    // given
+    let text = repeat(value: "a", count: 100)
+
+    // when
+    let params = TokenCreateParams{name: text, symbol: text, tokenMemo: text}
+
+    // then
+    assertEquals(expected: 100, actual: length(value: params.name))
+    assertEquals(expected: 100, actual: length(value: params.symbol))
+    assertEquals(expected: text, actual: params.tokenMemo)
+}
+
+// Source: this spec (@@min(1) of maxSupply, which applies to a FINITE supply type).
+test "a finite token accepts a max supply of 1" {
+    // when
+    let params = TokenCreateParams{name: "Token Name", symbol: "TKN", supplyType: TokenSupplyType.FINITE,
+            maxSupply: 1}
+
+    // then
+    assertEquals(expected: TokenSupplyType.FINITE, actual: params.supplyType)
+    assertEquals(expected: 1, actual: params.maxSupply)
+}
+```
+
 ## Questions & Comments
 
 - The `supplyAuthority` parameters of `createToken` accept the full `Authority` type, so multisig (m-of-n) and
@@ -124,6 +235,12 @@ FungibleTokenService createService(session: Session)
   [ADR-0004](../../docs/adr/0004-authority-authorization-sum-type.md) and [`authority.md`](../base/authority.md).
 - Open option: simple single-key convenience overloads taking a `PublicKey` directly could be added later if the
   enterprise layer wants extra ergonomics for the common single-signer case.
+- **Limits in bytes, not in characters.** HAPI limits a token name, a symbol and a memo to 100 bytes of UTF-8, but
+  `@@maxLength(100)` counts characters: a name of 100 non-ASCII characters passes the annotation and is rejected by the
+  network. The tests therefore check the limit only with ASCII text. Should the meta-language get a byte-length
+  annotation (e.g. `@@maxUtf8Bytes(100)`), or should the services check the byte length themselves?
+- **Size of `metadata`.** HAPI limits the token metadata to 100 bytes (the Python SDK rejects more in
+  `set_metadata`), but `metadata` has no `@@maxSize(100)`. Should it get one?
 
 We need better "annotation" support to define ranges of params. For example:
 

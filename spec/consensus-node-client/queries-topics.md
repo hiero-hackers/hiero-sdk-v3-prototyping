@@ -102,6 +102,45 @@ TopicInfo info = query.submit(client).value;
 combine it with `maxQueryPayment` for a hard ceiling. See
 [`queries.md`](queries.md#examples) for the full pattern.
 
+## Testing
+
+Offline tests of the topic query and its result type, written as given / when / then. Nothing is submitted; the
+comment above each test names where the current SDKs test the same.
+
+```tests
+// Source: the Python SDK (topic_info_query_test.py, test_topic_info_query) and the Swift SDK
+// (TopicInfoQueryUnitTests, the get / set test).
+test "a topic info query keeps the id of its topic" {
+    // given
+    let topic = DEFAULT(Address)
+
+    // when
+    let query = TopicInfoQuery{topicId: topic}
+
+    // then
+    assertEquals(expected: topic, actual: query.topicId)
+}
+
+// Source: this spec (an absent admin authority means an immutable topic, an absent submit authority a public one); the
+// Python SDK (topic_info_test.py, test_topic_info_initialization_with_none_values).
+test "a topic info of a public immutable topic has no authorities" {
+    // given
+    let runningHash = repeat(value: hex(text: "00"), count: 48)
+
+    // when
+    let info = TopicInfo{topicId: DEFAULT, runningHash: runningHash, sequenceNumber: 0, expirationTime: DEFAULT}
+
+    // then
+    assertEquals(expected: runningHash, actual: info.runningHash)
+    assertEquals(expected: 0, actual: info.sequenceNumber)
+    assertNull(actual: info.topicMemo)
+    assertNull(actual: info.adminAuthority)
+    assertNull(actual: info.submitAuthority)
+    assertNull(actual: info.autoRenewPeriod)
+    assertNull(actual: info.autoRenewAccount)
+}
+```
+
 ## Questions & Comments
 
 - **`adminAuthority` / `submitAuthority` are the `Authority` authorization type.** Both are an

@@ -109,6 +109,43 @@ FileContents contents = query.submit(client).value;
 combine it with `maxQueryPayment` for a hard ceiling. See
 [`queries.md`](queries.md#examples) for the full pattern.
 
+## Testing
+
+Offline tests of the file queries and their result types, written as given / when / then. Nothing is submitted; the
+comment above each test names where the current SDKs test the same.
+
+```tests
+// Source: the Python SDK (file_contents_query_test.py and file_info_query_test.py, test_constructor and
+// test_get_method) and the Swift SDK (FileContentsQueryUnitTests and FileInfoQueryUnitTests, the get / set tests).
+test "the file queries keep the id of their file" {
+    // given
+    let file = DEFAULT(Address)
+
+    // when
+    let contents = FileContentsQuery{fileId: file}
+    let info = FileInfoQuery{fileId: file}
+
+    // then
+    assertEquals(expected: file, actual: contents.fileId)
+    assertEquals(expected: file, actual: info.fileId)
+}
+
+// Source: this spec (the authority is absent if the file is immutable); the Python SDK (file_info_test.py,
+// test_file_info_default_initialization and test_to_proto_with_none_values).
+test "a file info of an immutable file without memo has no authority and no memo" {
+    // when
+    let info = FileInfo{fileId: DEFAULT, size: 0, expirationTime: DEFAULT, deleted: false, authority: null,
+            fileMemo: null}
+
+    // then
+    assertEquals(expected: DEFAULT(Address), actual: info.fileId)
+    assertEquals(expected: 0, actual: info.size)
+    assertFalse(condition: info.deleted)
+    assertNull(actual: info.authority)
+    assertNull(actual: info.fileMemo)
+}
+```
+
 ## Questions & Comments
 
 - **`FileInfo.key` is the `Authority` authorization type.** The single write-access

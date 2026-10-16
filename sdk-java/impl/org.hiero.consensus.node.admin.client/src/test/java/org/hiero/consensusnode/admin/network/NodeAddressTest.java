@@ -209,7 +209,7 @@ class NodeAddressTest {
     }
 
     private static List<ServiceEndpoint> serviceEndpointsValue() {
-        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
+        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211));
     }
 
     private static String descriptionValue() {
@@ -230,5 +230,9 @@ class NodeAddressTest {
 
     private static NodeAddress create() {
         return new NodeAddress(nodeIdValue(), accountIdValue(), serviceEndpointsValue(), descriptionValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), rsaPublicKeyValue());
+    }
+
+    private static NodeAddress defaultSubject() {
+        return new NodeAddress(0L, new AccountId(0L, 0L, "", 3L, null, null), List.of(new ServiceEndpoint(null, "network-node1-svc", 50211)), "node1", new byte[] {(byte) 1, (byte) 2, (byte) 3}, new byte[] {(byte) 4, (byte) 5, (byte) 6}, new byte[] {(byte) 7, (byte) 8, (byte) 9});
     }
 }

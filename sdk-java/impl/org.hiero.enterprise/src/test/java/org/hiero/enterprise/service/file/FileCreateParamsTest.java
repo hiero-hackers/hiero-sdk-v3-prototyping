@@ -122,4 +122,8 @@ class FileCreateParamsTest {
     private static FileCreateParams create() {
         return new FileCreateParams(contentsValue(), authorityValue(), expirationTimeValue(), fileMemoValue());
     }
+
+    private static FileCreateParams defaultSubject() {
+        return new FileCreateParams(new byte[0], null, null, null);
+    }
 }

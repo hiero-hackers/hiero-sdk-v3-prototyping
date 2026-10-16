@@ -327,11 +327,11 @@ class NodeUpdateTransactionTest {
     }
 
     private static List<ServiceEndpoint> gossipEndpointsValue() {
-        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
+        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211));
     }
 
     private static List<ServiceEndpoint> serviceEndpointsValue() {
-        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
+        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211));
     }
 
     private static byte[] gossipCaCertificateValue() {
@@ -351,7 +351,7 @@ class NodeUpdateTransactionTest {
     }
 
     private static ServiceEndpoint grpcWebProxyEndpointValue() {
-        return new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1);
+        return new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211);
     }
 
     private static NodeUpdateTransaction create() {

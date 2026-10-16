@@ -139,7 +139,7 @@ class NodeCreateTransactionTest {
     @Test
     @DisplayName("gossipEndpoints: accepts the minimum number of elements")
     void shouldAcceptGossipEndpointsAtMinimumSize() {
-        final List<ServiceEndpoint> value = List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
+        final List<ServiceEndpoint> value = List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211));
         final NodeCreateTransaction subject = new NodeCreateTransaction(accountIdValue(), descriptionValue(), value, serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue());
         assertValue(value, subject.gossipEndpoints());
     }
@@ -170,7 +170,7 @@ class NodeCreateTransactionTest {
     @Test
     @DisplayName("serviceEndpoints: accepts the minimum number of elements")
     void shouldAcceptServiceEndpointsAtMinimumSize() {
-        final List<ServiceEndpoint> value = List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
+        final List<ServiceEndpoint> value = List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211));
         final NodeCreateTransaction subject = new NodeCreateTransaction(accountIdValue(), descriptionValue(), gossipEndpointsValue(), value, gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue());
         assertValue(value, subject.serviceEndpoints());
     }
@@ -352,11 +352,11 @@ class NodeCreateTransactionTest {
     }
 
     private static List<ServiceEndpoint> gossipEndpointsValue() {
-        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
+        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211));
     }
 
     private static List<ServiceEndpoint> serviceEndpointsValue() {
-        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1));
+        return List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211));
     }
 
     private static byte[] gossipCaCertificateValue() {
@@ -376,7 +376,7 @@ class NodeCreateTransactionTest {
     }
 
     private static ServiceEndpoint grpcWebProxyEndpointValue() {
-        return new ServiceEndpoint(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), null, 1);
+        return new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211);
     }
 
     private static NodeCreateTransaction create() {

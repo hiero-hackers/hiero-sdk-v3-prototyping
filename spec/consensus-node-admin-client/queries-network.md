@@ -107,6 +107,42 @@ NodeAddressBookQuery extends PaidQuery<NodeAddressBook> {
 }
 ```
 
+## Default Instances for Testing
+
+```
+// The version of the comment of `SemanticVersion.toString()`: with a pre-release label and build metadata.
+instance SemanticVersion = SemanticVersion{major: 0, minor: 49, patch: 1, preReleaseLabel: "rc.1",
+        buildMetadata: "exp.sha.5114f85"}
+
+// A network that speaks the protocol revision of the default version and runs a release build of it.
+instance NetworkVersionInfo = NetworkVersionInfo{hapiVersion: DEFAULT,
+        servicesVersion: SemanticVersion{major: 0, minor: 49, patch: 1, preReleaseLabel: null, buildMetadata: null}}
+
+// The consensus node 0.0.3 of a local Solo network, reachable by domain name; the certificate, hash and key bytes are
+// stand-ins, their content does not matter to the type.
+instance NodeAddress = NodeAddress{nodeId: 0, accountId: AccountId{shard: 0, realm: 0, num: 3, checksum: ""},
+        serviceEndpoints: [ServiceEndpoint{ipAddress: null, domainName: "network-node1-svc", port: 50211}],
+        description: "node1", gossipCaCertificate: [1, 2, 3], grpcCertificateHash: [4, 5, 6], rsaPublicKey: [7, 8, 9]}
+
+// Versions and their canonical semver text: the known answers of the Rust (semantic_version display tests) and Swift
+// (SemanticVersionUnitTests) SDKs, the example of `SemanticVersion.toString()` in this spec, and examples of
+// semver.org (items 9 and 10 of the specification).
+values SEMANTIC_VERSION_TEXTS: map<string, SemanticVersion> = {
+    "1.2.3": SemanticVersion{major: 1, minor: 2, patch: 3, preReleaseLabel: null, buildMetadata: null},
+    "3.1.4-15.92": SemanticVersion{major: 3, minor: 1, patch: 4, preReleaseLabel: "15.92", buildMetadata: null},
+    "1.41.1+6535asd": SemanticVersion{major: 1, minor: 41, patch: 1, preReleaseLabel: null, buildMetadata: "6535asd"},
+    "0.1.4-0.9a2+sha.25531c": SemanticVersion{major: 0, minor: 1, patch: 4, preReleaseLabel: "0.9a2",
+            buildMetadata: "sha.25531c"},
+    "0.49.1-rc.1+exp.sha.5114f85": SemanticVersion{major: 0, minor: 49, patch: 1, preReleaseLabel: "rc.1",
+            buildMetadata: "exp.sha.5114f85"},
+    "1.0.0-x.7.z.92": SemanticVersion{major: 1, minor: 0, patch: 0, preReleaseLabel: "x.7.z.92", buildMetadata: null},
+    "1.0.0+20130313144700": SemanticVersion{major: 1, minor: 0, patch: 0, preReleaseLabel: null,
+            buildMetadata: "20130313144700"},
+    "1.0.0-beta+exp.sha.5114f85": SemanticVersion{major: 1, minor: 0, patch: 0, preReleaseLabel: "beta",
+            buildMetadata: "exp.sha.5114f85"}
+}
+```
+
 ## Examples
 
 ### Read the network version (free)
@@ -158,6 +194,140 @@ if (info.servicesVersion.major >= 0 && info.servicesVersion.minor >= 50) {
 }
 ```
 
+## Testing
+
+Offline tests of the version and address-book types, written as given / when / then. Sending the queries needs a
+network and is not tested here. The comment above each test names its source.
+
+```tests
+// Source: the Rust (semantic_version display tests) and Swift (test_Basic, test_WithPrerelease, test_WithBuild,
+// test_WithPrereleaseAndBuild) SDKs; the example of `SemanticVersion.toString()` in this spec; semver.org.
+test "a semantic version is written in its canonical semver form" {
+    for text in keys(value: SEMANTIC_VERSION_TEXTS) {
+        // when
+        let written = SEMANTIC_VERSION_TEXTS[text].toString()
+
+        // then
+        assertEquals(expected: text, actual: written)
+    }
+}
+
+// Source: the JavaScript ("constructor stores major, minor and patch"), C++ (ConstructWithValues) and Swift
+// (test_ParseWithPrereleaseAndBuild) SemanticVersion unit tests.
+test "a semantic version keeps its numbers and labels" {
+    // when
+    let version = SemanticVersion{major: 1, minor: 2, patch: 0, preReleaseLabel: "beta.10", buildMetadata: "d13fe780"}
+
+    // then
+    assertEquals(expected: 1, actual: version.major)
+    assertEquals(expected: 2, actual: version.minor)
+    assertEquals(expected: 0, actual: version.patch)
+    assertEquals(expected: "beta.10", actual: version.preReleaseLabel)
+    assertEquals(expected: "d13fe780", actual: version.buildMetadata)
+}
+
+// Source: the Swift SemanticVersion unit tests (test_ParseMajorMinorPatch, test_ParseZeroMinorPatch: a release has no
+// labels); the API schema of this spec (both labels are absent for a release version).
+test "a release version has no labels and is written as major.minor.patch" {
+    // when
+    let version = SemanticVersion{major: 0, minor: 2, patch: 0, preReleaseLabel: null, buildMetadata: null}
+
+    // then
+    assertNull(actual: version.preReleaseLabel)
+    assertNull(actual: version.buildMetadata)
+    assertEquals(expected: "0.2.0", actual: version.toString())
+}
+
+// Source: the C++ NetworkVersionInfo unit tests (EqualityIdenticallyConstructed, InequalityDifferentProtobufVersion,
+// InequalityDifferentServicesVersion); the Equality of the test language.
+test "versions and version infos are equal when all their parts are equal" {
+    // given
+    let release = SemanticVersion{major: 0, minor: 49, patch: 1, preReleaseLabel: null, buildMetadata: null}
+    let info = DEFAULT(NetworkVersionInfo)
+
+    // when
+    let same = NetworkVersionInfo{hapiVersion: DEFAULT(SemanticVersion), servicesVersion: release}
+    let otherHapi = NetworkVersionInfo{hapiVersion: release, servicesVersion: release}
+    let otherServices = NetworkVersionInfo{hapiVersion: DEFAULT(SemanticVersion), servicesVersion: DEFAULT(SemanticVersion)}
+
+    // then
+    assertNotEquals(unexpected: release, actual: DEFAULT(SemanticVersion))
+    assertEquals(expected: info, actual: same)
+    assertNotEquals(unexpected: info, actual: otherHapi)
+    assertNotEquals(unexpected: info, actual: otherServices)
+}
+
+// Source: the JavaScript ("constructor stores both versions"), C++ (ConstructWithValues) and Java (shouldSerialize)
+// NetworkVersionInfo unit tests.
+test "a network version info keeps the HAPI and the services version" {
+    // given
+    let hapi = SemanticVersion{major: 0, minor: 50, patch: 0, preReleaseLabel: null, buildMetadata: null}
+    let services = SemanticVersion{major: 0, minor: 50, patch: 3, preReleaseLabel: null, buildMetadata: null}
+
+    // when
+    let info = NetworkVersionInfo{hapiVersion: hapi, servicesVersion: services}
+
+    // then
+    assertEquals(expected: hapi, actual: info.hapiVersion)
+    assertEquals(expected: services, actual: info.servicesVersion)
+}
+
+// Source: the C++ (GetSetNodeId, GetSetAccountId, GetSetCertHash, GetSetEndpoints, GetSetDescription, GetSetPublicKey)
+// and Python (test_init) NodeAddress unit tests.
+test "a node address keeps all its attributes" {
+    // given
+    let account = AccountId{shard: 0, realm: 0, num: 3, checksum: ""}
+    let endpoints = [ServiceEndpoint{ipAddress: null, domainName: "network-node1-svc", port: 50211}]
+    let certificate = utf8(text: "gossip CA certificate")
+    let hash = repeat(value: hex(text: "cd"), count: 48)
+    let rsaKey = utf8(text: "RSA public key")
+
+    // when
+    let address = NodeAddress{nodeId: 0, accountId: account, serviceEndpoints: endpoints, description: "node1",
+            gossipCaCertificate: certificate, grpcCertificateHash: hash, rsaPublicKey: rsaKey}
+
+    // then
+    assertEquals(expected: 0, actual: address.nodeId)
+    assertEquals(expected: account, actual: address.accountId)
+    assertEquals(expected: endpoints, actual: address.serviceEndpoints)
+    assertEquals(expected: "node1", actual: address.description)
+    assertEquals(expected: certificate, actual: address.gossipCaCertificate)
+    assertEquals(expected: hash, actual: address.grpcCertificateHash)
+    assertEquals(expected: rsaKey, actual: address.rsaPublicKey)
+}
+
+// Source: the Python NodeAddress unit test (test_empty_addresses); `@@default([])` of serviceEndpoints and
+// `@@nullable` of description.
+test "a node address has no endpoints and no description by default" {
+    // when
+    let address = NodeAddress{nodeId: 0, accountId: AccountId{shard: 0, realm: 0, num: 3, checksum: ""},
+            gossipCaCertificate: utf8(text: "gossip CA certificate"),
+            grpcCertificateHash: repeat(value: hex(text: "cd"), count: 48), rsaPublicKey: utf8(text: "RSA public key")}
+
+    // then
+    assertEquals(expected: 0, actual: length(value: address.serviceEndpoints))
+    assertNull(actual: address.description)
+}
+
+// Source: the Java AddressBookResponse test of the TCK and the C++ AddressBookQuery unit tests (an address book is a
+// list of node addresses).
+test "an address book keeps its nodes in order" {
+    // given
+    let node0 = DEFAULT(NodeAddress)
+    let node1 = NodeAddress{nodeId: 1, accountId: AccountId{shard: 0, realm: 0, num: 4, checksum: ""},
+            gossipCaCertificate: utf8(text: "gossip CA certificate"),
+            grpcCertificateHash: repeat(value: hex(text: "cd"), count: 48), rsaPublicKey: utf8(text: "RSA public key")}
+
+    // when
+    let book = NodeAddressBook{nodes: [node0, node1]}
+
+    // then
+    assertEquals(expected: 2, actual: length(value: book.nodes))
+    assertEquals(expected: node0, actual: book.nodes[0])
+    assertEquals(expected: node1, actual: book.nodes[1])
+}
+```
+
 ## Questions & Comments
 
 - **`SemanticVersion` is defined inline.** The same type appears in v2 SDKs across several
@@ -189,3 +359,8 @@ if (info.servicesVersion.major >= 0 && info.servicesVersion.minor >= 50) {
 - **`NodeAddressBookQuery` has no input fields.** Address books are per-network, not
   per-shard / per-realm — a single network has one address book file. Multi-network
   callers issue this query once per `HieroClient` they hold.
+
+- **Absent label: `null` or empty string?** The current SDKs (Rust, Swift, C++, Python) model an absent pre-release
+  label or build metadata as `""`, as the protobuf `SemanticVersion` does. Here they are `@@nullable`, so `""` would be
+  a second way to say "absent" — and semver.org forbids empty identifiers. Whether `@@minLength(1)` should exclude it,
+  and how an SDK maps a `""` read from the network, is open.

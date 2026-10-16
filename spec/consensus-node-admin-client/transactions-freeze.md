@@ -86,6 +86,16 @@ FreezeReceipt extends Receipt {
 }
 ```
 
+## Default Instances for Testing
+
+```
+// The id of the system file of the example: an upgrade file.
+values UPGRADE_FILE: Address = Address{shard: 0, realm: 0, num: 150, checksum: ""}
+
+// A SHA-384 hash has 48 bytes; the content of the hash does not matter to the transaction.
+values UPGRADE_FILE_HASH: bytes = repeat(value: hex(text: "ab"), count: 48)
+```
+
 ## Examples
 
 ### Prepare and execute a network upgrade
@@ -125,6 +135,75 @@ new FreezeTransaction()
 new FreezeTransaction()
     .freezeType(FreezeType.FREEZE_ABORT)
     .signWithOperatorAndSubmit(client);
+```
+
+## Testing
+
+Offline tests of the attributes a `FreezeTransaction` keeps, written as given / when / then. Whether the fields fit
+the `freezeType` is checked by the consensus node, not by the SDK, so the tests do not expect an error for a
+missing field. The comment above each test names the SDK tests it comes from.
+
+```tests
+// Source: the Java (getSetFreezeType, getSetStartTime, getSetFileId, getSetFileHash), Python
+// (test_constructor_with_parameters), C++, Go and Swift FreezeTransaction unit tests.
+test "a freeze upgrade keeps its type, start time, update file and file hash" {
+    // given
+    let startTime = DEFAULT(ledger.TransactionId).validStart
+
+    // when
+    let transaction = FreezeTransaction{freezeType: FreezeType.FREEZE_UPGRADE, startTime: startTime,
+            updateFile: UPGRADE_FILE, fileHash: UPGRADE_FILE_HASH}
+
+    // then
+    assertEquals(expected: FreezeType.FREEZE_UPGRADE, actual: transaction.freezeType)
+    assertEquals(expected: startTime, actual: transaction.startTime)
+    assertEquals(expected: UPGRADE_FILE, actual: transaction.updateFile)
+    assertEquals(expected: UPGRADE_FILE_HASH, actual: transaction.fileHash)
+}
+
+// Source: the Python (test_build_transaction_body_with_none_values) and Java (shouldBytesNoSetters) FreezeTransaction
+// unit tests; the Description of this spec (PREPARE_UPGRADE ignores startTime).
+test "a prepared upgrade needs no start time" {
+    // when
+    let transaction = FreezeTransaction{freezeType: FreezeType.PREPARE_UPGRADE, startTime: null,
+            updateFile: UPGRADE_FILE, fileHash: UPGRADE_FILE_HASH}
+
+    // then
+    assertEquals(expected: FreezeType.PREPARE_UPGRADE, actual: transaction.freezeType)
+    assertNull(actual: transaction.startTime)
+    assertEquals(expected: UPGRADE_FILE, actual: transaction.updateFile)
+    assertEquals(expected: UPGRADE_FILE_HASH, actual: transaction.fileHash)
+}
+
+// Source: the Python FreezeTransaction unit test (test_build_proto_body_with_none_fields); the Description of this
+// spec (FREEZE_ONLY needs no upgrade payload).
+test "a freeze without upgrade needs no update file and no file hash" {
+    // given
+    let startTime = DEFAULT(ledger.TransactionId).validStart
+
+    // when
+    let transaction = FreezeTransaction{freezeType: FreezeType.FREEZE_ONLY, startTime: startTime, updateFile: null,
+            fileHash: null}
+
+    // then
+    assertEquals(expected: FreezeType.FREEZE_ONLY, actual: transaction.freezeType)
+    assertEquals(expected: startTime, actual: transaction.startTime)
+    assertNull(actual: transaction.updateFile)
+    assertNull(actual: transaction.fileHash)
+}
+
+// Source: the Go (TestUnitFreezeTypeString) and Python (test_freeze_type_values, test_round_trip_conversion)
+// FreezeType unit tests: every freeze type is kept as given.
+test "a freeze transaction keeps every freeze type" {
+    for freezeType in [FreezeType.FREEZE_ONLY, FreezeType.PREPARE_UPGRADE, FreezeType.FREEZE_UPGRADE,
+            FreezeType.FREEZE_ABORT, FreezeType.TELEMETRY_UPGRADE] {
+        // when
+        let transaction = FreezeTransaction{freezeType: freezeType, startTime: null, updateFile: null, fileHash: null}
+
+        // then
+        assertEquals(expected: freezeType, actual: transaction.freezeType)
+    }
+}
 ```
 
 ## Questions & Comments

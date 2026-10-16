@@ -42,14 +42,18 @@ class NetworkVersionInfoTest {
     }
 
     private static SemanticVersion hapiVersionValue() {
-        return new SemanticVersion(1, 1, 1, null, null);
+        return new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85");
     }
 
     private static SemanticVersion servicesVersionValue() {
-        return new SemanticVersion(1, 1, 1, null, null);
+        return new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85");
     }
 
     private static NetworkVersionInfo create() {
         return new NetworkVersionInfo(hapiVersionValue(), servicesVersionValue());
+    }
+
+    private static NetworkVersionInfo defaultSubject() {
+        return new NetworkVersionInfo(new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85"), new SemanticVersion(0, 49, 1, null, null));
     }
 }

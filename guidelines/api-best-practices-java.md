@@ -3732,7 +3732,7 @@ JUnit tests that look like the other generated tests:
 | `let x = …` | `final <Type> x = …;` (`@Nullable` where the value may be `null`) |
 | `if` / `else if` / `else`, `for x in …` | `if (…) { … } else if …`, `for (final <Type> x : …)` |
 | `DEFAULT(PrivateKey)` | a helper `private static PrivateKey defaultPrivateKey()` that returns the default instance |
-| `values NAME: list<string> = [...]` (named test values of the spec) | a constant `private static final List<String> NAME = List.of(…);` of the test class, with the comment of the declaration as `///` comment; a test reads it by its name |
+| `values NAME: list<string> = [...]` (named test values of the spec) | a method `private static List<String> NAME() { return List.of(…); }` of the test class, with the comment of the declaration as `///` comment; a test calls it (`NAME()`), so a value that cannot be created fails only the tests that use it |
 | `assertEquals(expected: a, actual: b)` and the other built-in functions | the static methods of `org.hiero.sdk.testing.Testing` (`import static org.hiero.sdk.testing.Testing.*`), from the hand-written module `sdk-java/test-support`; `toString` is called `text` (an unqualified `toString(…)` would find `Object.toString()`) |
 | `@@expectThrows(illegal-format) call(…)` | `assertThrows(IllegalArgumentException.class, () -> call(…));` with the exception of the error id |
 | `a == b`, `a != b` | `equal(a, b)`, `!equal(a, b)` (value equality: arrays by content, numbers by value); `a == b` for enum constants |

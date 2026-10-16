@@ -132,6 +132,17 @@ abstraction MirrorNodeHttpClient {
 
 ```
 
+## Default Instances for Testing
+
+```
+// Paths relative to the REST base URL: those that the Go SDK accepts (TestUnitMirrorRestPathAcceptsRelativePaths), the
+// ".." inside a query string that the Java SDK accepts (MirrorNodeRestPathTest.allowsDotDotInsideQueryString) and the
+// path of this spec's example.
+values RELATIVE_PATHS: list<string> = ["/accounts/0.0.1", "/accounts/0.0.1?limit=25",
+        "/accounts/0.0.1/tokens?token.id=gt:0.0.5&order=asc", "/", "/accounts/0x00000000000000000000000000000000000004d2",
+        "/accounts?order=..", "/accounts/0.0.1234?limit=25"]
+```
+
 ## Examples
 
 The following example shows what a repository does internally when it serves
@@ -165,6 +176,44 @@ if (response.statusCode == 200) {
 }
 ```
 
+## Testing
+
+How a request is resolved against the base URL and sent is behaviour of `execute` and needs an `HttpClient`; it is not
+tested here.
+
+```tests
+// Source: the Go SDK (TestUnitMirrorRestPathAcceptsRelativePaths), the Java SDK
+// (MirrorNodeRestPathTest.allowsDotDotInsideQueryString) and this spec's example; the values of RELATIVE_PATHS.
+test "a request keeps a path relative to the REST base URL unchanged" {
+    for path in RELATIVE_PATHS {
+        // when
+        let request = MirrorNodeHttpRequest{method: HttpMethod.GET, path: path, headers: {}}
+
+        // then
+        assertEquals(expected: path, actual: request.path)
+        assertEquals(expected: HttpMethod.GET, actual: request.method)
+        assertNull(actual: request.body)
+        assertNull(actual: request.timeout)
+        assertEquals(expected: 0, actual: length(value: request.headers))
+    }
+}
+
+// Source: the Java SDK (MirrorNodeHttpClientTest: the POST body and the caller's headers are passed on unchanged).
+test "a POST request keeps its body and headers" {
+    // given
+    let body = utf8(text: "{\"data\":\"0xabc\"}")
+
+    // when
+    let request = MirrorNodeHttpRequest{method: HttpMethod.POST, path: "/contracts/call", body: body,
+            headers: {"authorization": "Bearer test"}}
+
+    // then
+    assertEquals(expected: HttpMethod.POST, actual: request.method)
+    assertEquals(expected: body, actual: request.body)
+    assertEquals(expected: {"authorization": "Bearer test"}, actual: request.headers)
+}
+```
+
 ## Questions & Comments
 
 - **`MirrorNodeHttpRequest.timeout` uses `duration`**, which is not a declared basic type — same
@@ -173,3 +222,14 @@ if (response.statusCode == 200) {
   only a `MirrorNode`, so the `HttpClient` behind it is created implicitly. There is currently no
   way for an application to pass in its own transport client (proxy, mTLS, tracing) — an overload
   taking an `HttpClient`, or a factory in this namespace, is probably needed.
+- **`links.next` repeats `/api/v1`.** The Mirror Node returns `links.next` as `/api/v1/accounts?…`, but
+  `MirrorNodeHttpRequest.path` must not repeat the `/api/v1` prefix, so the next page is *not* "just another `execute`
+  call" with that value: the prefix has to be stripped exactly once first. The Java SDK
+  (`MirrorNodeRestPath.fromNextLink`) and the Go SDK (`nextPagePath`) do this and reject a `links.next` that names
+  another host. Who strips it — the repository, or a function of this namespace that could then be tested — is open.
+- **`@@pattern("^/[^\s]*$")` accepts paths that the Java and Go SDKs reject:** a protocol-relative `//evil.example/steal`
+  and `..` segments such as `/accounts/../../etc/passwd` (the Java SDK accepts `..` only inside the query string).
+  Concatenation keeps both on the configured host, but should the pattern reject them anyway?
+- **The rejection of a path that violates `@@pattern` cannot be tested yet:** the test language can only expect an
+  error that a call declares with `@@throws`, and creating a `MirrorNodeHttpRequest` declares none. The rejected inputs
+  of the Go and Java SDKs (`""`, `accounts/0.0.1`, `https://…`, embedded whitespace) are therefore not tested here.

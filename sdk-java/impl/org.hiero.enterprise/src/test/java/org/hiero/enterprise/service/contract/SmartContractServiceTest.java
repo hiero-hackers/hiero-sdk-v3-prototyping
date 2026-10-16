@@ -120,7 +120,7 @@ class SmartContractServiceTest {
     }
 
     private static ContractCreateParams paramsValue() {
-        return new ContractCreateParams(new Address(0L, 0L, "", 1001L), null, List.of(new Param<>("value", "value", new ParamSupplier<>())), null, null, null, null, null, null, null, null, null, true);
+        return new ContractCreateParams(new Address(0L, 0L, "", 1001L), null, List.of(), null, null, null, null, null, null, null, null, null, false);
     }
 
     private static Contract contractValue() {
