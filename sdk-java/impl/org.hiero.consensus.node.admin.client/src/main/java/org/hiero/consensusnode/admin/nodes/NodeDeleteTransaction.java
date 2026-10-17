@@ -23,8 +23,13 @@ public final class NodeDeleteTransaction extends Transaction<NodeDeleteReceipt, 
     private final long nodeId;
 
     /// Creates a new `NodeDeleteTransaction`.
+    ///
+    /// @throws IllegalArgumentException if a value violates its constraints
     public NodeDeleteTransaction(final long nodeId) {
         super();
+        if (nodeId < 0L) {
+            throw new IllegalArgumentException("nodeId must be at least 0");
+        }
         this.nodeId = nodeId;
     }
 

@@ -46,10 +46,10 @@ class NodeDeleteTransactionTest {
     }
 
     @Test
-    @DisplayName("nodeId: accepts the minimum (-9223372036854775808)")
+    @DisplayName("nodeId: accepts the minimum (0)")
     @Tag("testId:consensusnode.admin.nodes.NodeDeleteTransaction/nodeId/accepts-at-minimum")
     void shouldAcceptNodeIdAtMinimum() {
-        final long value = -9223372036854775808L;
+        final long value = 0L;
         final NodeDeleteTransaction subject = new NodeDeleteTransaction(value);
         assertValue(value, subject.nodeId());
     }
@@ -61,6 +61,13 @@ class NodeDeleteTransactionTest {
         final long value = 9223372036854775807L;
         final NodeDeleteTransaction subject = new NodeDeleteTransaction(value);
         assertValue(value, subject.nodeId());
+    }
+
+    @Test
+    @DisplayName("nodeId: rejects a value below the minimum (-1)")
+    @Tag("testId:consensusnode.admin.nodes.NodeDeleteTransaction/nodeId/rejects-below-minimum")
+    void shouldRejectNodeIdBelowMinimum() {
+        assertThrows(IllegalArgumentException.class, () -> new NodeDeleteTransaction(-1L));
     }
 
     @Test

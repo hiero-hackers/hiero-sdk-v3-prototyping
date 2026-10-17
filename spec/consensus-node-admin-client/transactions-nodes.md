@@ -138,7 +138,7 @@ NodeCreateReceipt extends Receipt {
 // list: an empty list means "leave this list as it is".
 @@finalType
 NodeUpdateTransaction extends Transaction<NodeUpdateReceipt, NodeUpdateTransaction> {
-    @@immutable nodeId: int64                                            // the node to update
+    @@immutable @@min(0) nodeId: int64                                   // the node to update
     @@immutable @@nullable accountId: AccountId                          // when set, the new account's key must also sign
     @@immutable @@nullable @@maxBytes(100) description: string           // new free-form description
     @@immutable @@default([]) @@maxSize(10) gossipEndpoints: list<ServiceEndpoint>   // when not empty, replaces the entire list; empty leaves it unchanged
@@ -159,7 +159,7 @@ NodeUpdateReceipt extends Receipt {
 // nodeId is not freed, so historical references still resolve.
 @@finalType
 NodeDeleteTransaction extends Transaction<NodeDeleteReceipt, NodeDeleteTransaction> {
-    @@immutable nodeId: int64                                            // the node to delete
+    @@immutable @@min(0) nodeId: int64                                   // the node to delete
 }
 
 // Receipt of a `NodeDeleteTransaction`.

@@ -256,7 +256,9 @@ final class CryptoServiceBindings {
         return request;
     }
 
-    /// Deletes NFT allowances (AccountAllowanceDeleteTransaction.md, Allowances.md); only `nft` allowances are allowed.
+    /// Deletes NFT allowances (AccountAllowanceDeleteTransaction.md). The tests send every allowance flat -
+    /// {ownerAccountId, tokenId, serialNumbers} - and not nested in `nft` as the specification of the method and
+    /// Allowances.md describe it (test-account-allowance-delete-transaction.ts, revision a3ea777).
     Object deleteAllowance(final Map<String, Object> params, final Session session) {
         final var transaction = buildDeleteAllowance(params);
         final Map<String, Object> commonParams = runtime.object(params, "commonTransactionParams");
@@ -271,13 +273,10 @@ final class CryptoServiceBindings {
     AccountAllowanceDeleteTransaction buildDeleteAllowance(final Map<String, Object> params) {
         final List<NftAllowanceDeletion> nftAllowanceDeletions = new ArrayList<>();
         for (final Map<String, Object> element1 : runtime.objects(params, "allowances")) {
-            final Map<String, Object> item1 = runtime.object(element1, "nft");
-            if (item1 == null) {
-                continue;
-            }
+            final Map<String, Object> item1 = element1;
             nftAllowanceDeletions.add(new NftAllowanceDeletion(
                     runtime.required(runtime.value(item1, List.of(new Source<>("tokenId", convert::address))), "tokenId"),
-                    runtime.required(runtime.value(element1, List.of(new Source<>("ownerAccountId", convert::accountId))), "^ownerAccountId"),
+                    runtime.required(runtime.value(item1, List.of(new Source<>("ownerAccountId", convert::accountId))), "ownerAccountId"),
                     runtime.required(runtime.value(item1, List.of(new Source<>("serialNumbers", json -> BindingSupport.list(json, convert::int64)))), "serialNumbers")));
         }
         final AccountAllowanceDeleteTransaction request = new AccountAllowanceDeleteTransaction(nftAllowanceDeletions);

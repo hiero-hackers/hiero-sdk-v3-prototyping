@@ -71,7 +71,7 @@ final class TopicServiceBindings {
                 runtime.value(params, List.of(new Source<>("submitKey", convert::key))),
                 runtime.value(params, List.of(new Source<>("memo", convert::string))),
                 runtime.value(params, List.of(new Source<>("autoRenewPeriod", convert::seconds))),
-                runtime.value(params, List.of(new Source<>("autoRenewAccount", convert::accountId))));
+                runtime.value(params, List.of(new Source<>("autoRenewAccountId", convert::accountId), new Source<>("autoRenewAccount", convert::accountId))));
         return request;
     }
 
@@ -98,7 +98,7 @@ final class TopicServiceBindings {
                 runtime.value(params, List.of(new Source<>("memo", convert::string))),
                 runtime.value(params, List.of(new Source<>("expirationTime", convert::timestamp))),
                 runtime.value(params, List.of(new Source<>("autoRenewPeriod", convert::seconds))),
-                runtime.value(params, List.of(new Source<>("autoRenewAccount", convert::accountId))));
+                runtime.value(params, List.of(new Source<>("autoRenewAccountId", convert::accountId), new Source<>("autoRenewAccount", convert::accountId))));
         return request;
     }
 

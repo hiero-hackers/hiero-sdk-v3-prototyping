@@ -138,10 +138,10 @@ class NodeUpdateTransactionTest {
     }
 
     @Test
-    @DisplayName("nodeId: accepts the minimum (-9223372036854775808)")
+    @DisplayName("nodeId: accepts the minimum (0)")
     @Tag("testId:consensusnode.admin.nodes.NodeUpdateTransaction/nodeId/accepts-at-minimum")
     void shouldAcceptNodeIdAtMinimum() {
-        final long value = -9223372036854775808L;
+        final long value = 0L;
         final NodeUpdateTransaction subject = new NodeUpdateTransaction(value, accountIdValue(), descriptionValue(), gossipEndpointsValue(), serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue());
         assertValue(value, subject.nodeId());
     }
@@ -153,6 +153,13 @@ class NodeUpdateTransactionTest {
         final long value = 9223372036854775807L;
         final NodeUpdateTransaction subject = new NodeUpdateTransaction(value, accountIdValue(), descriptionValue(), gossipEndpointsValue(), serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue());
         assertValue(value, subject.nodeId());
+    }
+
+    @Test
+    @DisplayName("nodeId: rejects a value below the minimum (-1)")
+    @Tag("testId:consensusnode.admin.nodes.NodeUpdateTransaction/nodeId/rejects-below-minimum")
+    void shouldRejectNodeIdBelowMinimum() {
+        assertThrows(IllegalArgumentException.class, () -> new NodeUpdateTransaction(-1L, accountIdValue(), descriptionValue(), gossipEndpointsValue(), serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
     }
 
     @Test

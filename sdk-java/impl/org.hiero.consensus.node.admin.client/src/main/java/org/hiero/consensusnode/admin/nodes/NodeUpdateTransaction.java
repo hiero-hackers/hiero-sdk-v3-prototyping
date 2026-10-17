@@ -50,6 +50,9 @@ public final class NodeUpdateTransaction extends Transaction<NodeUpdateReceipt, 
             final @Nullable Boolean declineReward,
             final @Nullable ServiceEndpoint grpcWebProxyEndpoint) {
         super();
+        if (nodeId < 0L) {
+            throw new IllegalArgumentException("nodeId must be at least 0");
+        }
         this.nodeId = nodeId;
         this.accountId = accountId;
         if (description != null && description.getBytes(StandardCharsets.UTF_8).length > 100) {

@@ -113,11 +113,13 @@ binding approveAllowance -> AccountAllowanceApproveTransaction {
     result status = receipt.status : status
 }
 
-// Deletes NFT allowances (AccountAllowanceDeleteTransaction.md, Allowances.md); only `nft` allowances are allowed.
+// Deletes NFT allowances (AccountAllowanceDeleteTransaction.md). The tests send every allowance flat -
+// {ownerAccountId, tokenId, serialNumbers} - and not nested in `nft` as the specification of the method and
+// Allowances.md describe it (test-account-allowance-delete-transaction.ts, revision a3ea777).
 binding deleteAllowance -> AccountAllowanceDeleteTransaction {
-    nftAllowanceDeletions = each allowances.nft -> NftAllowanceDeletion {
+    nftAllowanceDeletions = each allowances -> NftAllowanceDeletion {
         tokenId        = tokenId : address
-        ownerAccountId = ^ownerAccountId : accountId
+        ownerAccountId = ownerAccountId : accountId
         serials        = serialNumbers : int64
     }
     result status = receipt.status : status

@@ -22,7 +22,8 @@ binding createTopic -> TopicCreateTransaction {
     adminAuthority   = adminKey : key
     submitAuthority  = submitKey : key
     autoRenewPeriod  = autoRenewPeriod : seconds
-    autoRenewAccount = autoRenewAccount : accountId
+    // the tests send autoRenewAccountId, the specification of the method names it autoRenewAccount
+    autoRenewAccount = autoRenewAccountId : accountId | autoRenewAccount : accountId
     unsupported feeScheduleKey "TopicCreateTransaction has no fee schedule key (HIP-991)"
     unsupported feeExemptKeys "TopicCreateTransaction has no fee exempt keys (HIP-991)"
     unsupported customFees "TopicCreateTransaction has no custom fees (HIP-991)"
@@ -37,7 +38,8 @@ binding updateTopic -> TopicUpdateTransaction {
     adminAuthority   = adminKey : key
     submitAuthority  = submitKey : key
     autoRenewPeriod  = autoRenewPeriod : seconds
-    autoRenewAccount = autoRenewAccount : accountId
+    // the tests send autoRenewAccountId, the specification of the method names it autoRenewAccount
+    autoRenewAccount = autoRenewAccountId : accountId | autoRenewAccount : accountId
     expirationTime   = expirationTime : timestamp
     unsupported feeScheduleKey "TopicUpdateTransaction has no fee schedule key (HIP-991)"
     unsupported feeExemptKeys "TopicUpdateTransaction has no fee exempt keys (HIP-991)"
