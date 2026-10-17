@@ -376,7 +376,10 @@ The default network is a local [Solo](https://solo.hiero.org) network (Solo 0.63
    `TCK_DIR=../hiero-sdk-tck tck/run-tck.sh java|ts [test file ...]`.
 
 `tooling/tck/run-tck.sh` checks that the consensus node is reachable, starts the server, copies `tooling/tck/solo.env` as `.env` into
-the TCK clone (an existing `.env` is saved as `.env.before-v3`) and runs `npm test` or `npm run test:file`. `TCK_ENV`
+the TCK clone (an existing `.env` is saved as `.env.before-v3`) and runs mocha with the arguments of the TCK's
+`npm test` / `npm run test:file`, but with `tooling/tck/otr-mocha-reporter.cjs` instead of mochawesome: the results are
+written as Open Test Reporting to `sdk-<lang>/tck/target/open-test-report.xml` (ADR-0012), each test tagged with its
+id, and `scripts/test-report.sh sdk` renders them together with the SDK's own test results. `TCK_ENV`
 selects another configuration (e.g. the TCK's `.env.testnet`). The values of `tooling/tck/solo.env` are Solo's defaults:
 operator `0.0.2` with Solo's well-known development key, consensus node `127.0.0.1:35211` (account `0.0.3`), mirror
 node REST API `http://127.0.0.1:38081`; the mirror node gRPC and REST-Java endpoints are not verified for Solo yet.

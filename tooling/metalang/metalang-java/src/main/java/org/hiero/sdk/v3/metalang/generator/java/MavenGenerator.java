@@ -120,6 +120,7 @@ final class MavenGenerator {
                                                 <properties>
                                                     <configurationParameters>
                                                         junit.platform.reporting.open.xml.enabled = true
+                                                        junit.platform.reporting.open.xml.git.enabled = true
                                                         junit.platform.reporting.output.dir = ${project.build.directory}/surefire-reports
                                                     </configurationParameters>
                                                 </properties>

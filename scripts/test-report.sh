@@ -3,9 +3,11 @@
 # builds write next to their Surefire reports (ADR-0012). The tests are not run: build first (e.g.
 # `./mvnw -f impl install` in sdk-java, `./mvnw verify` in tooling/metalang).
 #
-# usage: scripts/test-report.sh [sdk|generated|tooling|all] [--open]
+# usage: scripts/test-report.sh [sdk|tck|generated|tooling|all] [--open]
 #
-#   sdk        the Java SDK: sdk-java/impl and sdk-java/test-support -> sdk-java/impl/target/test-report.html
+#   sdk        the Java SDK: sdk-java/impl, sdk-java/test-support and the last TCK run against it (scripts/tck-java.sh)
+#                                                                   -> sdk-java/impl/target/test-report.html
+#   tck        only the last TCK run of the Java SDK                -> sdk-java/tck/target/test-report.html
 #   generated  the generated Java API (stubs): sdk-java/generated   -> sdk-java/generated/target/test-report.html
 #   tooling    the tests of tooling/metalang                        -> tooling/metalang/target/test-report.html
 #   all        all three (the default)
@@ -20,9 +22,9 @@ area="all"
 open=""
 for argument in "$@"; do
   case "$argument" in
-    sdk|generated|tooling|all) area="$argument" ;;
+    sdk|tck|generated|tooling|all) area="$argument" ;;
     --open) open="--open" ;;
-    *) fail "unknown argument '$argument' (usage: scripts/test-report.sh [sdk|generated|tooling|all] [--open])" ;;
+    *) fail "unknown argument '$argument' (usage: scripts/test-report.sh [sdk|tck|generated|tooling|all] [--open])" ;;
   esac
 done
 
@@ -57,7 +59,11 @@ shopt -s nullglob
 if [[ "$area" == "sdk" || "$area" == "all" ]]; then
   render "sdk" "$repository/sdk-java/impl/target/test-report.html" \
     "$repository"/sdk-java/impl/*/target/surefire-reports/open-test-report.xml \
-    "$repository/sdk-java/test-support/target/surefire-reports/open-test-report.xml"
+    "$repository/sdk-java/test-support/target/surefire-reports/open-test-report.xml" \
+    "$repository/sdk-java/tck/target/open-test-report.xml"
+fi
+if [[ "$area" == "tck" ]]; then
+  render "tck" "$repository/sdk-java/tck/target/test-report.html" "$repository/sdk-java/tck/target/open-test-report.xml"
 fi
 if [[ "$area" == "generated" || "$area" == "all" ]]; then
   render "generated" "$repository/sdk-java/generated/target/test-report.html" \

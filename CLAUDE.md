@@ -332,9 +332,10 @@ Comments` of the respective spec files and are its real output:
   `SpecTestGenerator` / `api-best-practices-java.md`, and the same for TypeScript (`sdk-ts/test-support`,
   `TsSpecTestGenerator`, `api-best-practices-ts.md`). Java and TypeScript generate spec tests so far.
 - **Test results** are written as Open Test Reporting next to the usual reports
-  ([ADR-0012](docs/adr/0012-open-test-reporting-as-common-test-result-format.md)): so far by the Java builds
-  (`open-test-report.xml` in `target/surefire-reports`, every test tagged `testId:<id>`); `scripts/test-report.sh`
-  renders them as HTML, separately for the SDK, the generated API and the tooling. TypeScript, the TCK and Rust
+  ([ADR-0012](docs/adr/0012-open-test-reporting-as-common-test-result-format.md)): by the Java builds
+  (`open-test-report.xml` in `target/surefire-reports`, every test tagged `testId:<id>`) and by the TCK runs
+  (`tooling/tck/otr-mocha-reporter.cjs`, into `sdk-<lang>/tck/target/`); `scripts/test-report.sh` renders them as
+  HTML, separately for the SDK (with its last TCK run), the generated API and the tooling. TypeScript and Rust
   follow; the report with the matrix spec test × language and the classification passed / stub / network / other is
   a required follow-up.
 - **Open design questions** belong under each file's `## Questions & Comments` (often attributed to a GitHub handle).

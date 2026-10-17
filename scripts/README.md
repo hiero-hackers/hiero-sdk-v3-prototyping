@@ -16,7 +16,7 @@ is safe to run repeatedly.
 | `clean.sh` | Removes the generated code again; with options also the build output and the caches |
 | `tck-java.sh` | Generates API + TCK server, builds them and runs the Hiero TCK against the Java server |
 | `tck-ts.sh` | The same for the TypeScript server |
-| `test-report.sh` | Renders the results of the last Java test runs (Open Test Reporting, ADR-0012) as HTML, one page each for the SDK (`sdk-java/impl`, `test-support`), the generated API and the tooling; `--open` opens them |
+| `test-report.sh` | Renders the results of the last Java test runs (Open Test Reporting, ADR-0012) as HTML, one page each for the SDK (`sdk-java/impl`, `test-support` and the last run of `tck-java.sh`), the generated API and the tooling; `tck` renders only the TCK run; `--open` opens them |
 
 `common.sh` is the shared library (repository location, JDK resolution, CLI build) and is sourced,
 never run.

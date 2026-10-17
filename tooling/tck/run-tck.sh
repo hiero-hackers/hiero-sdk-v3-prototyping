@@ -5,8 +5,10 @@
 # Usage:   tooling/tck/run-tck.sh java|ts [TCK test file ...]
 # Example: TCK_DIR=../hiero-sdk-tck tooling/tck/run-tck.sh java src/tests/crypto-service/test-account-create-transaction.ts
 #
-# The console output of the TCK is also written to tooling/tck/last-run-<language>.log (git-ignored); the summary of the
-# run, the HTML report of the TCK and that log are printed at the very end, after the summary of the server.
+# The results are written as Open Test Reporting to sdk-<language>/tck/target/open-test-report.xml (ADR-0012; mocha
+# runs with tooling/tck/otr-mocha-reporter.cjs instead of the TCK's mochawesome), the console output also to
+# tooling/tck/last-run-<language>.log (both git-ignored); the summary of the run is printed at the very end, after the
+# summary of the server. `scripts/test-report.sh sdk` renders the results together with those of the SDK's tests.
 #
 # Environment:
 #   TCK_DIR   the clone of hiero-sdk-tck with installed dependencies (required)
@@ -76,13 +78,23 @@ if [[ -f "$TCK_DIR/.env" ]] && ! cmp -s "$env_file" "$TCK_DIR/.env"; then
 fi
 cp "$env_file" "$TCK_DIR/.env"
 cd "$TCK_DIR"
-# not in mochawesome-report: `npm test` deletes that directory when it starts
 log="$repository/tooling/tck/last-run-$language.log"
+# the results as Open Test Reporting (ADR-0012), next to the TCK server of the language; scripts/test-report.sh renders
+# them together with the results of the SDK's own tests
+results="$repository/sdk-$language/tck/target/open-test-report.xml"
+reporter="$repository/tooling/tck/otr-mocha-reporter.cjs"
+export OTR_OUTPUT="$results" TCK_SDK="$language" OTR_GIT_DIR="$repository"
+rm -f "$results" "$results.summary.json"
+# The arguments of the TCK's npm scripts `test` and `test:file` (revision a3ea777), with our reporter instead of
+# mochawesome: an npm script cannot be given another reporter. Keep them in sync when the TCK changes them.
 set +e
 if [[ $# -gt 0 ]]; then
-  npm run test:file -- "$@" 2>&1 | tee "$log"
+  npx mocha --require ts-node/register --require tsconfig-paths/register --require src/preflight.ts \
+    --timeout 90000 --slow 30000 --reporter "$reporter" --exit "$@" 2>&1 | tee "$log"
 else
-  npm test 2>&1 | tee "$log"
+  npx mocha --parallel --jobs 7 --node-option require=ts-node/register --node-option require=tsconfig-paths/register \
+    --require src/preflight.ts --recursive 'src/tests/**/*.ts' --timeout 90000 --slow 30000 \
+    --reporter "$reporter" --exit 2>&1 | tee "$log"
 fi
 status=${PIPESTATUS[0]}
 set -e
@@ -94,14 +106,14 @@ trap - EXIT
 
 echo
 echo "==> TCK result ($language)"
-node -e '
-  const fs = require("fs");
-  const file = "mochawesome-report/mochawesome.json";
-  if (!fs.existsSync(file)) { console.log("   no report: the run crashed before mochawesome wrote it"); process.exit(0); }
-  const s = JSON.parse(fs.readFileSync(file, "utf8")).stats;
-  console.log(`   ${s.tests} tests: ${s.passes} passed, ${s.failures} failed, ${s.pending} pending (skipped)`
-      + ` in ${Math.round(s.duration / 1000)} s`);
-'
-echo "   report:  $TCK_DIR/mochawesome-report/mochawesome.html"
+if [[ -f "$results.summary.json" ]]; then
+  node -e '
+    const s = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+    console.log(`   ${s.tests} tests: ${s.passed} passed, ${s.failed} failed, ${s.skipped} skipped`);
+  ' "$results.summary.json"
+else
+  echo "   no results: the run ended before the reporter finished"
+fi
+echo "   results: $results (scripts/test-report.sh sdk renders them as HTML)"
 echo "   console: $log"
 exit "$status"

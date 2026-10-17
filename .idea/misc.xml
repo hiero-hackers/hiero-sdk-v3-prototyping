@@ -6,6 +6,7 @@
       <list>
         <option value="$PROJECT_DIR$/tooling/metalang/pom.xml" />
         <option value="$PROJECT_DIR$/sdk-java/impl/pom.xml" />
+        <option value="$PROJECT_DIR$/sdk-java/generated/pom.xml" />
       </list>
     </option>
   </component>
