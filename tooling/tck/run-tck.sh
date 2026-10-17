@@ -15,6 +15,8 @@
 #   TCK_ENV   the TCK configuration (default: tooling/tck/solo.env); it is copied to $TCK_DIR/.env, an existing .env is
 #             saved as .env.before-v3
 #   JAVA_HOME a JDK 25 (Java server only; `sdk env` sets it from .sdkmanrc)
+#   TCK_IGNORE_FAILURES  true: failed TCK tests do not fail this script (exit code 0 after the summary); an unreachable
+#             network or a server that cannot start still does
 #   TCK_SERVER_LOG  how much the server logs about failed calls: 'error' (default) logs the first call of each
 #             distinct failure and a summary at the end, 'debug' adds the stack trace of every call, 'off' is silent.
 #             The TCK itself only shows "Internal error", never the exception behind it.
@@ -52,16 +54,19 @@ if ! (exec 3<>"/dev/tcp/$node_host/$node_port") 2>/dev/null; then
   exit 1
 fi
 
+# the output of the server, also attached to the results of the run
+server_log="$repository/tooling/tck/last-run-$language-server.log"
+
 # the server
 port="$(echo "$JSON_RPC_SERVER_URL" | sed -E 's#.*:([0-9]+)/?$#\1#')"
 if [[ "$language" == "java" ]]; then
   jar="$repository/sdk-java/tck/generated/server/target/hiero-sdk-tck-0.1.0-SNAPSHOT.jar"
   [[ -f "$jar" ]] || { echo "Build the Java TCK server first: $jar is missing" >&2; exit 1; }
-  "${JAVA_HOME:+$JAVA_HOME/bin/}java" -jar "$jar" "$port" &
+  "${JAVA_HOME:+$JAVA_HOME/bin/}java" -jar "$jar" "$port" > >(tee "$server_log") 2>&1 &
 else
   main="$repository/sdk-ts/tck/generated/server/dist/main.js"
   [[ -f "$main" ]] || { echo "Build the TypeScript TCK server first: $main is missing" >&2; exit 1; }
-  node "$main" "$port" &
+  node "$main" "$port" > >(tee "$server_log") 2>&1 &
 fi
 server=$!
 trap 'kill "$server" 2>/dev/null || true' EXIT
@@ -83,7 +88,8 @@ log="$repository/tooling/tck/last-run-$language.log"
 # them together with the results of the SDK's own tests
 results="$repository/sdk-$language/tck/target/open-test-report.xml"
 reporter="$repository/tooling/tck/otr-mocha-reporter.cjs"
-export OTR_OUTPUT="$results" TCK_SDK="$language" OTR_GIT_DIR="$repository"
+export OTR_OUTPUT="$results" TCK_SDK="$language" OTR_GIT_DIR="$repository" OTR_JAVA_HOME="${JAVA_HOME:-}" \
+  TCK_ENV_FILE="$env_file" OTR_ATTACHMENTS="$server_log:$log"
 rm -f "$results" "$results.summary.json"
 # The arguments of the TCK's npm scripts `test` and `test:file` (revision a3ea777), with our reporter instead of
 # mochawesome: an npm script cannot be given another reporter. Keep them in sync when the TCK changes them.
@@ -109,11 +115,17 @@ echo "==> TCK result ($language)"
 if [[ -f "$results.summary.json" ]]; then
   node -e '
     const s = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
-    console.log(`   ${s.tests} tests: ${s.passed} passed, ${s.failed} failed, ${s.skipped} skipped`);
+    console.log(`   ${s.tests} tests: ${s.passed} passed, ${s.failed} failed, ${s.skipped} skipped`
+        + `; ${s.hooksFailed} failed hooks (before/after; mocha counts them as failures, the tests of their suite`
+        + ` did not run)`);
   ' "$results.summary.json"
 else
   echo "   no results: the run ended before the reporter finished"
 fi
 echo "   results: $results (scripts/test-report.sh sdk renders them as HTML)"
 echo "   console: $log"
+if [[ "${TCK_IGNORE_FAILURES:-false}" == "true" && "$status" != "0" ]]; then
+  echo "   (failed tests ignored: TCK_IGNORE_FAILURES=true)"
+  exit 0
+fi
 exit "$status"

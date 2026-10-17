@@ -101,6 +101,7 @@ class ProductTest {
     @Test
     @DisplayName("related(limit) can be called and returns a value")
     @Tag("testId:shop.Product/related/call")
+    @Tag("hip:869")
     void shouldCallRelated() {
         assertNotNull(create().related(limitValue()));
     }

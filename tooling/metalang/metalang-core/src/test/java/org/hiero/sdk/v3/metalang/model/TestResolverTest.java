@@ -10,6 +10,7 @@ import java.util.Map;
 import org.hiero.sdk.v3.metalang.MetaLang;
 import org.hiero.sdk.v3.metalang.ValidationReport;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
+import org.hiero.sdk.v3.metalang.generator.Hips;
 import org.hiero.sdk.v3.metalang.source.MarkdownSchemaExtractor;
 import org.junit.jupiter.api.Test;
 
@@ -112,6 +113,35 @@ class TestResolverTest {
 
         // THEN the id stays when the name changes; without @@testId the name gives the id
         assertThat(tests).extracting(TestDefinition::id).containsExactly("shop/stable-id", "shop/a-test-without-id");
+    }
+
+    @Test
+    void aTestShouldCarryTheHipsOfTheBehaviourItTests() {
+        // GIVEN / WHEN
+        final List<TestDefinition> tests = tests("""
+                @@testId("dynamic-address-book")
+                @@hip("869", "1046")
+                test "a node has a gRPC-web proxy endpoint" {
+                    assertTrue(condition: true)
+                }
+                """);
+
+        // THEN
+        assertThat(Hips.of(tests.getFirst().annotations())).containsExactly("869", "1046");
+
+        // AND an argument that is no HIP number is reported
+        assertThat(rules("""
+                @@hip("HIP-869")
+                test "a" {
+                    assertTrue(condition: true)
+                }
+                """)).containsExactly("test.invalid");
+        assertThat(rules("""
+                @@hip
+                test "a" {
+                    assertTrue(condition: true)
+                }
+                """)).containsExactly("test.invalid");
     }
 
     @Test

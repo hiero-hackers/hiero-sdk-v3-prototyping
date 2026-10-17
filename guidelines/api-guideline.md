@@ -145,6 +145,8 @@ The following annotations should be used:
 - `@@finalType`: Indicates that the type is final and cannot be extended.
 - `@@deprecated`: Indicates that the type is retained for compatibility but should no longer be used. See
   [Deprecation](#deprecation) for the full semantics.
+- `@@hip("869"[, ...])`: Records the Hiero Improvement Proposal(s) the type comes from. See
+  [HIP references](#hip-references).
 - `@@threadSafe[(groupName)]`: Indicates that **all methods** declared by the type (complex type, abstraction or
   enum) can be called concurrently by the SDK and must be implemented in a thread-safe manner. It is equivalent to
   annotating every method of the type with `@@threadSafe[(groupName)]`. See the
@@ -510,6 +512,8 @@ The following annotations should be used:
 - `@@nullable`: Indicates that the field can be null or undefined (language-specific).
 - `@@deprecated`: Indicates that the attribute is retained for compatibility but should no longer be used. See
   [Deprecation](#deprecation) for the full semantics.
+- `@@hip("869"[, ...])`: Records the Hiero Improvement Proposal(s) the attribute comes from. See
+  [HIP references](#hip-references).
 - `@@override`: Indicates that the field re-declares a field inherited from a parent type to
   tighten the parent's contract. Currently the only supported tightening is narrowing
   `@@nullable` to non-`@@nullable` — see
@@ -640,6 +644,8 @@ The following annotations should be used:
   contract that the API conformance tooling checks.
 - `@@deprecated`: Indicates that the method is retained for compatibility but should no longer be used. See
   [Deprecation](#deprecation) for the full semantics.
+- `@@hip("869"[, ...])`: Records the Hiero Improvement Proposal(s) the method comes from. See
+  [HIP references](#hip-references).
 - `@@throws(error-type-a[, ...])`: Indicates that the method can throw an exception/error.
   The error-types should be stable identifiers, not transport-specific.
   Use lowercase-kebab for error identifiers (e.g., `not-found-error`, `parse-error`).
@@ -708,7 +714,7 @@ Rules:
 
 The following attribute annotations can be used on method parameters: `@@nullable`, `@@min(value)`, `@@max(value)`,
 `@@minLength(value)`, `@@maxLength(value)`, `@@maxBytes(value)`, `@@minSize(value)`, `@@maxSize(value)`,
-`@@pattern(regex)`, `@@urlPattern`
+`@@pattern(regex)`, `@@urlPattern`, `@@hip("869"[, ...])`
 
 On a [varargs](#variable-arguments-varargs) parameter, `@@minSize(value)` and `@@maxSize(value)` constrain the number
 of passed arguments (e.g. `addSigners(@@minSize(1) signers: Key...)` requires at least one signer).
@@ -763,6 +769,36 @@ enum Category {
  Versioning and removal schedules remain prose because this meta-language does
 not currently define a shared SDK version model. Concrete language bindings must emit their idiomatic deprecation marker
 and preserve the explanation in generated API documentation.
+
+### HIP references
+
+A [Hiero Improvement Proposal](https://github.com/hiero-ledger/hiero-improvement-proposals) (HIP) is the document in
+which a feature of the network is specified. The `@@hip` annotation records which proposal an API element comes from.
+It takes the HIP numbers as strings, in the order in which the proposals introduced the element:
+
+```
+namespace consensusnode.admin.nodes
+
+// A consensus node of the address book.
+@@hip("869")
+ConsensusNodeInfo {
+    @@immutable nodeId: int64
+    @@immutable @@nullable @@hip("1046") grpcWebProxyEndpoint: ServiceEndpoint
+}
+```
+
+`@@hip` may annotate a complex type, abstraction, enumeration, enum value, attribute, method, namespace-level
+function, method parameter, constant and [test](test-language.md). It carries no behaviour: it neither changes the
+contract of the element nor is it inherited by a subtype or an overriding declaration — a declaration that a later
+proposal added states that proposal itself.
+
+Generators turn the annotation into the reference of the generated API documentation (in Java a `@see` tag that links
+the Markdown file of the proposal) and tag the generated tests of the element with it, so that a test run can be
+filtered by a HIP. A test inherits the HIPs of the type and the member it tests. Of the generators of this repository
+only the Java one maps `@@hip` so far; the others ignore it.
+
+Write `@@hip` where the element *originates*; a proposal that is only mentioned in passing belongs in the prose of the
+documentation.
 
 ### Namespace
 
@@ -881,6 +917,8 @@ namespace transactions
 
 constant MAX_TRANSACTIONS:int32 = 100
 ```
+
+A constant may be annotated with `@@deprecated` and with `@@hip("869")`.
 
 ### Default instances
 

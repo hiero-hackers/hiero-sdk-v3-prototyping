@@ -167,6 +167,7 @@ class CartTest {
     @Test
     @DisplayName("rejects null for coupons")
     @Tag("testId:shop.Cart/coupons/rejects-null")
+    @Tag("hip:540")
     void shouldRejectNullCoupons() {
         assertThrows(NullPointerException.class, () -> new Cart<>(itemsValue(), (Set<String>) null, notesValue(), quantityValue(), discountValue(), legacyValue(), categoryValue(), totalValue()));
     }
@@ -174,6 +175,7 @@ class CartTest {
     @Test
     @DisplayName("the constructor copies coupons; the accessor returns an unmodifiable collection")
     @Tag("testId:shop.Cart/coupons/copies-in")
+    @Tag("hip:540")
     void shouldCopyCouponsIn() {
         final Set<String> value = new LinkedHashSet<>(couponsValue());
         final Set<String> expected = Set.copyOf(value);

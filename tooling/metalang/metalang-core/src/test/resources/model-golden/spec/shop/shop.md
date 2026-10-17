@@ -22,7 +22,7 @@ Product extends Entity<int64> {
     @@immutable @@override id: int64
     @@immutable @@maxLength(40) name: string
     @@immutable price: Money
-    @@async @@throws(not-found-error) list<Product> related(@@min(1) limit: int32)
+    @@async @@throws(not-found-error) @@hip("869") list<Product> related(@@min(1) @@hip("1046") limit: int32)
 }
 
 // Something with a numeric code.
@@ -31,6 +31,7 @@ abstraction Coded {
 }
 
 // Something with a price.
+@@hip("869")
 abstraction Priced {
     @@immutable price: Money
 
@@ -61,6 +62,7 @@ Square extends Shape, Priced {
 }
 
 // A product category.
+@@hip("17")
 enum Category(code: int8, @@nullable label: string) extends Coded {
     FOOD(1, "Food") // things to eat
     OTHER(2, null)
@@ -94,7 +96,7 @@ Cart<$$Item> {
     // the items in the cart;
     // never more than 100
     @@immutable @@minSize(1) @@maxSize(100) items: list<$$Item>
-    @@immutable @@default([]) coupons: set<string>
+    @@immutable @@default([]) @@hip("540") coupons: set<string>
     @@immutable notes: map<string, string>
     @@immutable @@default(1) @@min(1) @@max(10) quantity: int32
     @@immutable @@nullable @@min(0) discount: int32
@@ -126,7 +128,7 @@ Hash {
 
 // Not a record: the attribute is mutable.
 Counter {
-    value: int32
+    @@hip("1046") value: int32
 }
 
 // Not a record: no attributes.
@@ -148,9 +150,10 @@ Listing {
     @@immutable entity: Entity<string>
 }
 
+@@hip("540")
 constant MAX_PRODUCTS: int32 = 1_000
 
-@@static Product create(name: string, tags: string...)
+@@static @@hip("869") Product create(@@hip("1046") name: string, tags: string...)
 ```
 
 ## Testing

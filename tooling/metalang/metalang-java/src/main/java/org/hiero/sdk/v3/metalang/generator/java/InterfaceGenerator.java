@@ -45,7 +45,7 @@ final class InterfaceGenerator {
                     context.boxed(type.name(), field.name()), imports);
             body.append(body.isEmpty() ? "" : "\n");
             body.append(MarkdownComment.render(INDENT, List.of(field.documentation().isBlank()
-                    ? "Returns the `" + field.name() + "`." : field.documentation()), List.of(),
+                    ? "Returns the `" + field.name() + "`." : field.documentation()), JavaHips.seeTags(field),
                     field.hasAnnotation("deprecated")));
             if (context.overridesAccessor(type.name(), field.name())) {
                 body.append(INDENT).append("@Override\n");
@@ -59,8 +59,8 @@ final class InterfaceGenerator {
                 body.append('\n');
                 body.append(MarkdownComment.render(INDENT, List.of("Sets the `" + field.name() + "`.",
                                 MarkdownComment.deprecationReason(field.documentation())),
-                        List.of("@param " + accessor + " the new value", "@return this object"),
-                        field.hasAnnotation("deprecated")));
+                        JavaHips.withSeeTags(List.of("@param " + accessor + " the new value", "@return this object"),
+                                field), field.hasAnnotation("deprecated")));
                 if (field.hasAnnotation("deprecated")) {
                     body.append(INDENT).append("@Deprecated\n");
                 }
@@ -85,7 +85,7 @@ final class InterfaceGenerator {
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
         }
-        java.append(MarkdownComment.render("", List.of(type.documentation()), List.of(),
+        java.append(MarkdownComment.render("", List.of(type.documentation()), JavaHips.seeTags(type),
                 type.hasAnnotation("deprecated")));
         java.append(generated);
         if (type.hasAnnotation("deprecated")) {

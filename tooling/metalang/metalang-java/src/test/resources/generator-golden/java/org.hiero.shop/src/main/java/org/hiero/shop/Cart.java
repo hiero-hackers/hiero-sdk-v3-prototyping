@@ -14,6 +14,7 @@ import org.jspecify.annotations.Nullable;
 ///
 /// @param items the items in the cart;
 ///   never more than 100
+/// @param coupons ([HIP-540](https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-540.md))
 @Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public record Cart<Item>(
         List<Item> items,
@@ -127,6 +128,7 @@ public record Cart<Item>(
         ///
         /// @param coupons the value
         /// @return this builder
+        /// @see <a href="https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-540.md">HIP-540</a>
         public Builder<Item> coupons(final Set<String> coupons) {
             this.coupons = coupons;
             return this;

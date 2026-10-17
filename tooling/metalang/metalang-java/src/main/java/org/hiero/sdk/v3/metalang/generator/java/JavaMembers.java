@@ -73,6 +73,16 @@ final class JavaMembers {
                 }
             }
         }
+        // the HIPs of the parameters are documented in their @param tags, those of the method in a @see tag
+        final List<String> parameterTags = new ArrayList<>();
+        for (final ParameterDefinition parameter : method.parameters()) {
+            final String hips = JavaHips.inline(parameter.annotations());
+            if (!hips.isEmpty()) {
+                parameterTags.add("@param " + JavaKeywords.identifier(parameter.name()) + hips);
+            }
+        }
+        tags.addAll(0, parameterTags);
+        tags.addAll(JavaHips.seeTags(method));
         java.append(MarkdownComment.render("    ", paragraphs, tags, method.hasAnnotation("deprecated")));
         if (method.hasAnnotation("deprecated")) {
             java.append("    @Deprecated\n");

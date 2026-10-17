@@ -53,9 +53,10 @@ sdk-java/
   support/                      # Hand-written Java support types (streaming, thread-safety) as Maven module
                                 #   hiero-sdk-support; sdk-java/generated depends on it (install it first)
   test-support/                 # Hand-written Maven module hiero-sdk-test-support (JPMS org.hiero.sdk.test.support):
-                                #   the built-in functions and assertions of the test language (class Testing) and
-                                #   assertValue of the contract tests; every generated module with tests depends on
-                                #   it in test scope (install it first)
+                                #   the built-in functions and assertions of the test language (class Testing),
+                                #   assertValue of the contract tests and the JUnit extension TestEnvironment (start
+                                #   of the run and Java runtime in the test results); every generated module with tests
+                                #   depends on it in test scope (install it first)
   protobuf/                     # Hand-written Maven module hiero-sdk-protobuf (JPMS org.hiero.sdk.protobuf). Has no
                                 #   sources of its own: it compiles /tooling/protobuf into Java at build time. NOT public
                                 #   API - every package is exported only with `exports ... to <sdk module>`.
@@ -228,7 +229,8 @@ points to keep specs valid and consistent:
   `lowercase-kebab-case` (e.g. `not-found-error`).
 - **Generic type parameters are prefixed with `$$`** (e.g. `Page<$$T>`, `Transaction<$$Receipt extends Receipt>`).
 - **Annotations use a `@@` prefix.** Common ones: `@@immutable`, `@@nullable`, `@@deprecated`, `@@default(v)`,
-  `@@static`, `@@async`,
+  `@@hip("869")` (the Hiero Improvement Proposal an element comes from: a `@see` link in the API docs, a `hip:869`
+  tag on its tests), `@@static`, `@@async`,
   `@@streaming`, `@@throws(...)`, `@@threadSafe[(group)]`, validation (`@@min/@@max/@@minLength/...`), and type-level
   `@@oneOf(...)`, `@@oneOrNoneOf(...)`, `@@finalType`.
 - Abstract types use `abstraction`; inheritance uses `extends`; enums use `enum`.
@@ -292,8 +294,9 @@ utilities and the enterprise services. The specs have 386 spec tests (45 spec fi
 value is rejected); **all 386 and all 2,787 contract tests pass** against `impl`, and `metalang check` reports that it
 provides the API. What the specs cannot express is recorded in their `## Questions & Comments`. It has the same
 Maven coordinates as `generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The
-TCK binds 47 of its 65 methods (`tooling/tck/bindings`) but has not been run against `impl` yet (it needs Solo, i.e.
-Docker). [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is the
+TCK binds 47 of its 65 methods (`tooling/tck/bindings`); `./mvnw -f impl install -Ptck` (in `sdk-java`) runs it after
+the build against a local Solo network. The last module of every build of `impl`, `impl/test-report`, renders the
+results of all tests (with the profile also the TCK) as `sdk-java/impl/target/test-report.html`. [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is the
 runbook: how the copy was made, file inventory, filled stubs, build and verify, the TCK, and the traps.
 
 Four spec problems made the implementation harder than it should be; they are recorded in the `## Questions &

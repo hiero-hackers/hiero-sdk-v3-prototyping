@@ -511,6 +511,12 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   paragraph of the documentation that mentions the deprecation (moved out of the description; repeated at the setter
   of a deprecated attribute), otherwise "Retained for compatibility; do not use it in new code."
   The validator warns about `@@deprecated` elements without such a paragraph (`doc.deprecated-without-reason`).
+- **HIP references** (`Hips`, `JavaHips`): `@@hip("869")` becomes a `@see` tag with a link to the Markdown file of
+  the proposal in `hiero-ledger/hiero-improvement-proposals` - on the type, the accessor and the setter of an
+  attribute, the method, the builder method, the constant and the enum value. Where the element is documented by a
+  tag of the enclosing comment (a record component and a method parameter), the link is written into the text of
+  that `@param` tag instead. Every generated test of an annotated type or member carries `@Tag("hip:869")` next to
+  its `testId:` tag, spec tests as well as contract tests.
 - **Exceptions** (`ExceptionGenerator`, `JavaExceptions`): error identifiers of `@@throws` with a JDK equivalent use
   it (`not-found-error` → `NoSuchElementException`, `illegal-format` → `IllegalArgumentException`, `timeout-error` →
   `TimeoutException`, `io-error` → `IOException`, …); every other identifier gets a `final` unchecked exception class

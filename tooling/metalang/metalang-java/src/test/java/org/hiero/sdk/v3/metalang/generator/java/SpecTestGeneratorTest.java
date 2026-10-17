@@ -218,6 +218,21 @@ class SpecTestGeneratorTest {
     }
 
     @Test
+    void aTestShouldBeTaggedWithItsHips() {
+        final String java = file(generate("""
+                @@testId("a-hip-test")
+                @@hip("869", "1046")
+                test "a test of a proposal" {
+                    assertTrue(condition: true)
+                }
+                """), "/org/hiero/a/ASpecTest.java");
+        assertThat(java).contains("    @Tag(\"testId:a/a-hip-test\")\n"
+                + "    @Tag(\"hip:869\")\n"
+                + "    @Tag(\"hip:1046\")\n"
+                + "    void aTestOfAProposal() {\n");
+    }
+
+    @Test
     void aTestWithoutJavaFormShouldBeListedAsNotGenerated() {
         final List<GeneratedFile> files = generate(TESTS);
         assertThat(file(files, "/org/hiero/a/ASpecTest.java"))

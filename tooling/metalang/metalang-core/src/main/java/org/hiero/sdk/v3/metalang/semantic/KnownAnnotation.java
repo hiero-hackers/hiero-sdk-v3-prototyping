@@ -35,6 +35,9 @@ public enum KnownAnnotation {
     STATIC("static", Arguments.NONE, ElementKind.METHOD, ElementKind.FUNCTION),
     FINAL_METHOD("finalMethod", Arguments.NONE, ElementKind.METHOD),
     THROWS("throws", Arguments.NAMES, ElementKind.METHOD, ElementKind.FUNCTION),
+    HIP("hip", Arguments.HIP_NUMBERS, ElementKind.COMPLEX_TYPE, ElementKind.ABSTRACTION, ElementKind.ENUM,
+            ElementKind.ENUM_VALUE, ElementKind.FIELD, ElementKind.METHOD, ElementKind.FUNCTION,
+            ElementKind.PARAMETER, ElementKind.CONSTANT),
     ONE_OF("oneOf", Arguments.AT_LEAST_TWO_NAMES, ElementKind.COMPLEX_TYPE, ElementKind.ABSTRACTION),
     ONE_OR_NONE_OF("oneOrNoneOf", Arguments.AT_LEAST_TWO_NAMES, ElementKind.COMPLEX_TYPE, ElementKind.ABSTRACTION),
     SEALED("sealed", Arguments.NAMES, ElementKind.COMPLEX_TYPE, ElementKind.ABSTRACTION),
@@ -80,6 +83,8 @@ public enum KnownAnnotation {
         ONE_NON_NEGATIVE_INTEGER,
         /** Exactly one string. */
         ONE_STRING,
+        /** One or more HIP numbers as strings, e.g. {@code @@hip("869", "1046")}. */
+        HIP_NUMBERS,
         /** One or more bare names. */
         NAMES,
         /** Two or more bare names. */

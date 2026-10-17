@@ -1,0 +1,104 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.hiero.sdk</groupId>
+        <artifactId>hiero-sdk</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>hiero-sdk-test-report</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Hiero SDK: test report</name>
+    <description>
+        Renders the results of all tests of the SDK - the unit tests of every module and, with the profile `tck`, the
+        TCK run - as one HTML page, sdk-java/impl/target/test-report.html (Open Test Reporting, ADR-0012;
+        scripts/test-report.sh sdk). -DtestReport.skip=true leaves it out.
+    </description>
+
+    <properties>
+        <repository.root>${project.basedir}/../../..</repository.root>
+        <testReport.skip>false</testReport.skip>
+    </properties>
+
+    <!-- not a library: the dependencies only make this module the last one of the build -->
+    <dependencies>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-consensus-node-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-consensus-node-admin-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-mirror-node-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-enterprise</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- no Javadoc for a module without sources -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <!-- verify: the unit tests of the modules have run; with the profile `tck` the TCK run as well -->
+                    <execution>
+                        <id>test-report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${testReport.skip}</skip>
+                            <executable>bash</executable>
+                            <commandlineArgs>${repository.root}/scripts/test-report.sh sdk</commandlineArgs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- after the TCK run, so that its results are on the page -->
+        <profile>
+            <id>tck</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.hiero.sdk</groupId>
+                    <artifactId>hiero-sdk-tck-run</artifactId>
+                    <version>${project.version}</version>
+                    <type>pom</type>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+</project>

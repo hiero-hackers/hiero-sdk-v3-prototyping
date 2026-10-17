@@ -8,6 +8,8 @@ import javax.annotation.processing.Generated;
 @Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public final class ShopFactory {
 
+    /// @param name ([HIP-1046](https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-1046.md))
+    /// @see <a href="https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-869.md">HIP-869</a>
     public static Product create(final String name, final String... tags) {
         throw new UnsupportedOperationException("Not implemented yet: ShopFactory.create");
     }

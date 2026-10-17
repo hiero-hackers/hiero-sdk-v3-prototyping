@@ -7,4 +7,7 @@ module org.hiero.sdk.test.support {
     requires transitive org.junit.jupiter.api;
 
     exports org.hiero.sdk.testing;
+
+    // publishes when a test run started and the Java runtime it runs on (with autodetection of extensions)
+    provides org.junit.jupiter.api.extension.Extension with org.hiero.sdk.testing.TestEnvironment;
 }

@@ -7,6 +7,8 @@ import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 
 /// A product category.
+///
+/// @see <a href="https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-17.md">HIP-17</a>
 @Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public enum Category implements Coded {
 

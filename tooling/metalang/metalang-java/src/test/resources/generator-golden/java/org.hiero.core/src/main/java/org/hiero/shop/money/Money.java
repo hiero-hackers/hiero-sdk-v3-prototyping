@@ -11,6 +11,8 @@ import org.jspecify.annotations.Nullable;
 /// An amount of money.
 ///
 /// @param cents the amount in cents
+/// @param timeout ([HIP-1046](https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-1046.md))
+/// @see <a href="https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-17.md">HIP-17</a>
 @Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public record Money(BigInteger cents, @Nullable Duration timeout) {
 

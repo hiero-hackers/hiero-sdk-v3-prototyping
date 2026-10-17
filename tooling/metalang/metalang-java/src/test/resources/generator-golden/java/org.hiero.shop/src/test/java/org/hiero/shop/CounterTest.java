@@ -27,6 +27,7 @@ class CounterTest {
     @Test
     @DisplayName("value: accepts the minimum (-2147483648)")
     @Tag("testId:shop.Counter/value/accepts-at-minimum")
+    @Tag("hip:1046")
     void shouldAcceptValueAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final Counter subject = new Counter(value);
@@ -36,6 +37,7 @@ class CounterTest {
     @Test
     @DisplayName("value: accepts the maximum (2147483647)")
     @Tag("testId:shop.Counter/value/accepts-at-maximum")
+    @Tag("hip:1046")
     void shouldAcceptValueAtMaximum() {
         final int value = 2147483647;
         final Counter subject = new Counter(value);
@@ -45,6 +47,7 @@ class CounterTest {
     @Test
     @DisplayName("setValue changes value and returns the object")
     @Tag("testId:shop.Counter/value/set")
+    @Tag("hip:1046")
     void shouldSetValue() {
         final Counter subject = create();
         final int value = valueOtherValue();
@@ -55,6 +58,7 @@ class CounterTest {
     @Test
     @DisplayName("setValue accepts the minimum (-2147483648)")
     @Tag("testId:shop.Counter/value/set-accepts-at-minimum")
+    @Tag("hip:1046")
     void shouldSetValueAtMinimum() {
         final Counter subject = create();
         final int value = Integer.MIN_VALUE;
@@ -65,6 +69,7 @@ class CounterTest {
     @Test
     @DisplayName("setValue accepts the maximum (2147483647)")
     @Tag("testId:shop.Counter/value/set-accepts-at-maximum")
+    @Tag("hip:1046")
     void shouldSetValueAtMaximum() {
         final Counter subject = create();
         final int value = 2147483647;

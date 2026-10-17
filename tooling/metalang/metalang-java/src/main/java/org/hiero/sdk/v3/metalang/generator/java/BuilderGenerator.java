@@ -112,8 +112,8 @@ final class BuilderGenerator {
             final String identifier = JavaKeywords.identifier(field.name());
             java.append('\n').append(MarkdownComment.render(INDENT + INDENT, List.of("Sets the `" + field.name()
                             + "`.", field.documentation(), MarkdownComment.deprecationReason(field.documentation())),
-                    List.of("@param " + identifier + " the value", "@return this builder"),
-                    field.hasAnnotation("deprecated")));
+                    JavaHips.withSeeTags(List.of("@param " + identifier + " the value", "@return this builder"),
+                            field), field.hasAnnotation("deprecated")));
             if (field.hasAnnotation("deprecated")) {
                 java.append(INDENT).append(INDENT).append("@Deprecated\n");
             }

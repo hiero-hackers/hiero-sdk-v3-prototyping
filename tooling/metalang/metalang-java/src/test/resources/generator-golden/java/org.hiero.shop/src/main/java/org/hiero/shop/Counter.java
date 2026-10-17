@@ -16,6 +16,8 @@ public class Counter {
     }
 
     /// Returns the `value`.
+    ///
+    /// @see <a href="https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-1046.md">HIP-1046</a>
     public int value() {
         return value;
     }
@@ -24,6 +26,7 @@ public class Counter {
     ///
     /// @param value the new value
     /// @return this object
+    /// @see <a href="https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-1046.md">HIP-1046</a>
     public Counter setValue(final int value) {
         this.value = value;
         return this;

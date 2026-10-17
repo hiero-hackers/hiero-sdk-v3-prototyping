@@ -105,7 +105,7 @@ final class RecordGenerator {
             body.append(body.isEmpty() ? "" : "\n");
             body.append(MarkdownComment.render(INDENT, List.of(field.documentation(), bytes
                     ? "Returns a copy of the `" + field.name() + "` array."
-                    : "Returns the `" + field.name() + "` of this value."), List.of(),
+                    : "Returns the `" + field.name() + "` of this value."), JavaHips.seeTags(field),
                     field.hasAnnotation("deprecated")));
             body.append(INDENT).append("@Override\n");
             if (field.hasAnnotation("deprecated")) {
@@ -148,8 +148,8 @@ final class RecordGenerator {
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
         }
-        java.append(MarkdownComment.render("", List.of(type.documentation()), parameterTags(fields),
-                type.hasAnnotation("deprecated")));
+        java.append(MarkdownComment.render("", List.of(type.documentation()),
+                JavaHips.withSeeTags(parameterTags(fields), type), type.hasAnnotation("deprecated")));
         java.append(generated);
         if (type.hasAnnotation("deprecated")) {
             java.append("@Deprecated\n");
@@ -220,13 +220,21 @@ final class RecordGenerator {
     private static List<String> parameterTags(final List<FieldDefinition> fields) {
         final List<String> tags = new ArrayList<>();
         for (final FieldDefinition field : fields) {
+            final String hips = JavaHips.inline(field.annotations());
             final List<String> lines = field.documentation().strip().lines().toList();
             if (lines.isEmpty()) {
+                if (!hips.isEmpty()) {
+                    tags.add("@param " + JavaKeywords.identifier(field.name()) + hips);
+                }
                 continue;
             }
-            tags.add("@param " + JavaKeywords.identifier(field.name()) + " " + lines.getFirst());
+            tags.add("@param " + JavaKeywords.identifier(field.name()) + " " + lines.getFirst()
+                    + (lines.size() == 1 ? hips : ""));
             lines.subList(1, lines.size()).forEach(l -> tags.add("  " + (l.stripLeading().startsWith("@")
                     ? "&#64;" + l.stripLeading().substring(1) : l)));
+            if (lines.size() > 1 && !hips.isEmpty()) {
+                tags.set(tags.size() - 1, tags.getLast() + hips);
+            }
         }
         return tags;
     }

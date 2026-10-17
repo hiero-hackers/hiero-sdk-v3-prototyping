@@ -20,6 +20,7 @@ class CategoryTest {
     @Test
     @DisplayName("the constants have the attribute values of the specs")
     @Tag("testId:shop.Category/constants")
+    @Tag("hip:17")
     void shouldProvideTheAttributesOfTheConstants() {
         assertValue((byte) 1, Category.FOOD.code());
         assertValue("Food", Category.FOOD.label());
@@ -34,6 +35,7 @@ class CategoryTest {
     @Test
     @DisplayName("isFood() can be called")
     @Tag("testId:shop.Category/isFood/call")
+    @Tag("hip:17")
     void shouldCallIsFood() {
         Category.FOOD.isFood();
     }
@@ -41,6 +43,7 @@ class CategoryTest {
     @Test
     @DisplayName("byCode(code) can be called and returns a value (only NoSuchElementException may occur)")
     @Tag("testId:shop.Category/byCode/call")
+    @Tag("hip:17")
     void shouldCallByCode() throws Exception {
         try {
             assertNotNull(Category.byCode(codeValue()));

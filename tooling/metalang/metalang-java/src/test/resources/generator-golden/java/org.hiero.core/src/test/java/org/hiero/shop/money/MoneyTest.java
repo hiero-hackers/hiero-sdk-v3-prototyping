@@ -21,6 +21,7 @@ class MoneyTest {
     @Test
     @DisplayName("creates a Money and returns the values")
     @Tag("testId:shop.money.Money/create")
+    @Tag("hip:17")
     void shouldCreateAndReturnTheValues() {
         final BigInteger cents = centsValue();
         final @Nullable Duration timeout = timeoutValue();
@@ -32,6 +33,7 @@ class MoneyTest {
     @Test
     @DisplayName("rejects null for cents")
     @Tag("testId:shop.money.Money/cents/rejects-null")
+    @Tag("hip:17")
     void shouldRejectNullCents() {
         assertThrows(NullPointerException.class, () -> new Money((BigInteger) null, timeoutValue()));
     }
@@ -39,6 +41,7 @@ class MoneyTest {
     @Test
     @DisplayName("cents: accepts the minimum (-1000000000000000000)")
     @Tag("testId:shop.money.Money/cents/accepts-at-minimum")
+    @Tag("hip:17")
     void shouldAcceptCentsAtMinimum() {
         final BigInteger value = new BigInteger("-1000000000000000000");
         final Money subject = new Money(value, timeoutValue());
@@ -48,6 +51,7 @@ class MoneyTest {
     @Test
     @DisplayName("cents: accepts the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819967)")
     @Tag("testId:shop.money.Money/cents/accepts-at-maximum")
+    @Tag("hip:17")
     void shouldAcceptCentsAtMaximum() {
         final BigInteger value = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
         final Money subject = new Money(value, timeoutValue());
@@ -57,6 +61,7 @@ class MoneyTest {
     @Test
     @DisplayName("cents: rejects a value below the minimum (-1000000000000000001)")
     @Tag("testId:shop.money.Money/cents/rejects-below-minimum")
+    @Tag("hip:17")
     void shouldRejectCentsBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new Money(new BigInteger("-1000000000000000001"), timeoutValue()));
     }
@@ -64,6 +69,7 @@ class MoneyTest {
     @Test
     @DisplayName("cents: rejects a value above the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819968)")
     @Tag("testId:shop.money.Money/cents/rejects-above-maximum")
+    @Tag("hip:17")
     void shouldRejectCentsAboveMaximum() {
         assertThrows(IllegalArgumentException.class, () -> new Money(new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819968"), timeoutValue()));
     }
@@ -71,6 +77,7 @@ class MoneyTest {
     @Test
     @DisplayName("equal values give equal objects and hash codes")
     @Tag("testId:shop.money.Money/value-semantics")
+    @Tag("hip:17")
     void shouldCompareByValue() {
         final Money subject = create();
         final Money other = create();

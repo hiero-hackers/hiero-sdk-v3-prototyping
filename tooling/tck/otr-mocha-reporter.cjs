@@ -9,6 +9,13 @@
 //   OTR_GIT_DIR the Git repository of the SDK under test (default: none): its origin (without credentials), branch,
 //               commit and status are written into the infrastructure (Git extension of Open Test Reporting); the
 //               commit of the TCK clone (the working directory) is a data entry of the root
+//   OTR_JAVA_HOME  the JDK the Java TCK server runs on (default: `java` of the PATH, only for TCK_SDK=java): its
+//               vendor, distribution and version are data entries of the root
+//   OTR_ATTACHMENTS  files to attach to the root, separated by ':' (the logs of the run)
+//
+// The data entries of the root: the start of the run, the SDK under test, the versions of the TCK, Node.js and mocha,
+// the Java runtime of the server, and the network the TCK talks to (NODE_IP, NODE_ACCOUNT_ID, MIRROR_NODE_REST_URL,
+// OPERATOR_ACCOUNT_ID of the TCK configuration - never its private key).
 //
 // Every test gets the tag `testId:tck/<file>/<title path in kebab-case>` (the file relative to src/tests, without
 // extension). In mocha's parallel mode the events of a file arrive when the file is finished, so the times are those
@@ -18,7 +25,7 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { execFileSync } = require("node:child_process");
+const { execFileSync, spawnSync } = require("node:child_process");
 
 // mocha of the TCK clone (this file lives outside of it)
 const Mocha = require(require.resolve("mocha", { paths: [process.cwd()] }));
@@ -35,7 +42,7 @@ class OpenTestReportingReporter extends Mocha.reporters.Spec {
         this.file = path.resolve(process.env.OTR_OUTPUT || "open-test-report.xml");
         this.started = new Set();
         this.finished = new Set();
-        this.counts = { tests: 0, passed: 0, failed: 0, skipped: 0 };
+        this.counts = { tests: 0, passed: 0, failed: 0, skipped: 0, hooksFailed: 0 };
         this.fd = undefined; // opened when the run begins: a run that stops in the TCK's preflight leaves no file
 
         runner.once(EVENT_RUN_BEGIN, () => this.begin());
@@ -58,6 +65,7 @@ class OpenTestReportingReporter extends Mocha.reporters.Spec {
             if (test.type === "hook") {
                 // a failed hook (before/after) is no test: it fails the suite it belongs to
                 const id = this.id(test);
+                this.counts.hooksFailed++;
                 this.start(id, this.parent(test), test.title, test.file);
                 this.finish(id, "ERRORED", message(error));
                 return;
@@ -85,16 +93,10 @@ class OpenTestReportingReporter extends Mocha.reporters.Spec {
             + text(os.userInfo().username) + "</userName><operatingSystem>" + text(os.type())
             + "</operatingSystem><cpuCores>" + os.cpus().length + "</cpuCores>"
             + (process.env.OTR_GIT_DIR ? gitInfrastructure(process.env.OTR_GIT_DIR) : "") + "</infrastructure>\n");
-        const entries = [];
-        if (process.env.TCK_SDK) {
-            entries.push('<entry key="sdk">' + text(process.env.TCK_SDK) + "</entry>");
-        }
-        const tckCommit = git(process.cwd(), "rev-parse", "HEAD");
-        if (tckCommit) {
-            entries.push('<entry key="tck-commit">' + text(tckCommit) + "</entry>");
-        }
-        const sdk = entries.length ? '<attachments><data time="' + now() + '">' + entries.join("")
-            + "</data></attachments>" : "";
+        const sdk = '<attachments><data time="' + now() + '">' + Object.entries(rootEntries())
+            .filter(([, value]) => value !== undefined && value !== "")
+            .map(([key, value]) => '<entry key="' + attribute(key) + '">' + text(value) + "</entry>").join("")
+            + "</data></attachments>";
         this.write('<e:started id="' + ROOT_ID + '" name="Hiero TCK" time="' + now() + '">' + sdk + "</e:started>\n");
         this.started.add(ROOT_ID);
     }
@@ -107,6 +109,12 @@ class OpenTestReportingReporter extends Mocha.reporters.Spec {
             if (!this.finished.has(id) && id !== ROOT_ID) {
                 this.finish(id, "ABORTED", "the run ended before this element finished");
             }
+        }
+        const files = (process.env.OTR_ATTACHMENTS || "").split(":").filter((file) => file.length > 0);
+        if (files.length > 0) {
+            this.write('<e:reported id="' + ROOT_ID + '" time="' + now() + '"><attachments>' + files.map((file) =>
+                '<file time="' + now() + '" path="' + attribute(path.resolve(file))
+                + '" mediaType="text/plain; charset=utf-8"/>').join("") + "</attachments></e:reported>\n");
         }
         this.finish(ROOT_ID, "SUCCESSFUL");
         this.write("</e:events>\n");
@@ -165,6 +173,54 @@ class OpenTestReportingReporter extends Mocha.reporters.Spec {
     write(chunk) {
         fs.writeSync(this.fd, chunk);
     }
+}
+
+// the data entries of the root: the run, the TCK and its environment, the SDK under test and the network
+function rootEntries() {
+    const entries = {
+        "run.started": now(),
+        "sdk": process.env.TCK_SDK,
+        "tck.version": packageVersion(path.join(process.cwd(), "package.json")),
+        "tck.commit": git(process.cwd(), "rev-parse", "HEAD"),
+        "tck.configuration": process.env.TCK_ENV_FILE ? path.basename(process.env.TCK_ENV_FILE) : undefined,
+        "node.version": process.version,
+        "mocha.version": packageVersion(require.resolve("mocha/package.json", { paths: [process.cwd()] })),
+        "network.consensusNode": process.env.NODE_IP,
+        "network.consensusNodeAccountId": process.env.NODE_ACCOUNT_ID,
+        "network.mirrorNodeRestUrl": process.env.MIRROR_NODE_REST_URL,
+        "network.operatorAccountId": process.env.OPERATOR_ACCOUNT_ID,
+    };
+    if (process.env.TCK_SDK === "java") {
+        Object.assign(entries, javaRuntime(process.env.OTR_JAVA_HOME));
+    }
+    return entries;
+}
+
+function packageVersion(file) {
+    try {
+        return JSON.parse(fs.readFileSync(file, "utf8")).version;
+    } catch {
+        return undefined;
+    }
+}
+
+// vendor, distribution and version of a JVM, as the JVM itself reports them
+function javaRuntime(home) {
+    const java = home ? path.join(home, "bin", "java") : "java";
+    // -XshowSettings writes to stderr
+    const result = spawnSync(java, ["-XshowSettings:properties", "-version"], { encoding: "utf8" });
+    const settings = typeof result.stderr === "string" ? result.stderr : "";
+    const property = (name) => {
+        const match = settings.match(new RegExp("^\\s*" + name.replace(/\./g, "\\.") + " = (.*)$", "m"));
+        return match ? match[1].trim() : undefined;
+    };
+    return {
+        "java.vendor": property("java.vendor"),
+        "java.vendor.version": property("java.vendor.version"),
+        "java.runtime.version": property("java.runtime.version"),
+        "java.vm.name": property("java.vm.name"),
+        "java.home": property("java.home"),
+    };
 }
 
 // the output of a git command, undefined if it fails (no repository, no remote, git missing)

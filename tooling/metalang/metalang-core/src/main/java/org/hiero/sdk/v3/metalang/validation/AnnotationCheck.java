@@ -18,6 +18,7 @@ import org.hiero.sdk.v3.metalang.ast.SchemaFile;
 import org.hiero.sdk.v3.metalang.ast.TypeRef;
 import org.hiero.sdk.v3.metalang.diagnostic.DiagnosticCollector;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
+import org.hiero.sdk.v3.metalang.generator.Hips;
 import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 import org.hiero.sdk.v3.metalang.semantic.KnownAnnotation;
 import org.hiero.sdk.v3.metalang.semantic.KnownAnnotation.ElementKind;
@@ -153,6 +154,9 @@ final class AnnotationCheck implements Check {
                     && INTEGER.matcher(n.text()).matches() ? null : "takes exactly one non-negative integer";
             case ONE_STRING -> args.size() == 1 && args.getFirst() instanceof Literal.StringLiteral s
                     ? regexProblem(s.value()) : "takes exactly one string";
+            case HIP_NUMBERS -> !args.isEmpty() && args.stream().allMatch(a -> a instanceof Literal.StringLiteral s
+                    && Hips.isNumber(s.value()))
+                    ? null : "takes one or more HIP numbers as strings, e.g. @@hip(\"869\")";
             case NAMES -> !args.isEmpty() && args.stream().allMatch(a -> a instanceof Literal.NameLiteral)
                     ? null : "takes one or more names";
             case AT_LEAST_TWO_NAMES -> args.size() >= 2 && args.stream().allMatch(AnnotationCheck::isSimpleName)

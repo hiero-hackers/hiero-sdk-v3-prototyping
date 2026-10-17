@@ -431,10 +431,47 @@ class ValidatorTest {
                 "X { @@throws void m() }",
                 "X { @@throws(\"x\") void m() }",
                 "@@oneOf(a) X { @@nullable a: int32 }",
-                "@@oneOf(a, \"b\") X { @@nullable a: int32 }"
+                "@@oneOf(a, \"b\") X { @@nullable a: int32 }",
+                "@@hip X {}",
+                "@@hip(869) X {}",
+                "@@hip(\"\") X {}",
+                "@@hip(\"HIP-869\") X {}",
+                "@@hip(\"0869\") X {}",
+                "@@hip(\"869\", \"869\") X {}"
         })
         void shouldReportInvalidArguments(final String declaration) {
             assertThat(rules("namespace a\n" + declaration)).contains("annotation.arguments");
+        }
+
+        @Test
+        void shouldAcceptHipOnEveryKindOfElement() {
+            // GIVEN every element that may come from a Hiero Improvement Proposal
+            final String schema = """
+                    namespace a
+
+                    @@hip("869")
+                    constant MAX: int32 = 1
+
+                    @@hip("869", "1046")
+                    X {
+                        @@immutable @@hip("540") a: int32
+
+                        @@hip("869") void m(@@hip("1046") b: int32)
+                    }
+
+                    @@hip("869")
+                    abstraction Y {
+                        @@immutable @@hip("869") c: int32
+                    }
+
+                    @@hip("869")
+                    enum E { @@hip("540") A }
+
+                    @@static @@hip("869") int32 f()
+                    """;
+
+            // THEN
+            assertThat(rules(schema)).isEmpty();
         }
 
         @Test

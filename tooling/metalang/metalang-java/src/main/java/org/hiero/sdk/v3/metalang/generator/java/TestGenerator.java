@@ -13,9 +13,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.hiero.sdk.v3.metalang.ast.Annotation;
 import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
+import org.hiero.sdk.v3.metalang.generator.Hips;
 import org.hiero.sdk.v3.metalang.generator.OneOfGroups;
 import org.hiero.sdk.v3.metalang.generator.TestIds;
 import org.hiero.sdk.v3.metalang.generator.IntegerRange;
@@ -227,6 +229,10 @@ public final class TestGenerator {
         private final Map<String, String> helperNames = new HashMap<>();
         private final Set<String> testNames = new HashSet<>();
         private final Set<String> testIds = new HashSet<>();
+        /** The HIPs of the tested type: every test of the class is tagged with them. */
+        private List<String> typeHips = List.of();
+        /** The HIPs of the member whose tests are added at the moment ({@link #member(List)}). */
+        private List<String> memberHips = List.of();
         private final List<String> notes = new ArrayList<>();
         private boolean deprecated;
         private boolean usesAssertValue;
@@ -247,6 +253,7 @@ public final class TestGenerator {
 
         /** Tests of a record or class. */
         private boolean objectTests(final TypeDefinition.ComplexTypeDefinition type) {
+            typeHips = Hips.of(type);
             final Optional<Map<Type.TypeVariable, Type>> variables = Constraints.defaults(type.typeParameters());
             if (variables.isEmpty()) {
                 notes.add("no type arguments for " + type.name().name() + " (a type parameter refers to itself)");
@@ -331,6 +338,7 @@ public final class TestGenerator {
             }
             for (int i = 0; i < parameters.size(); i++) {
                 final Input parameter = parameters.get(i);
+                final List<String> enclosing = member(parameter.annotations());
                 final int index = i;
                 final java.util.function.Function<String, String> call = value -> constructor + "("
                         + exclusive(type, parameters, arguments, index, value) + ")";
@@ -358,6 +366,7 @@ public final class TestGenerator {
                 // the value of the attribute, also of one that create() leaves null for its group
                 copyTest(parameter, values.get(i), "In", local -> call.apply(local), "subject."
                         + parameter.identifier() + "()", typeName);
+                memberHips = enclosing;
             }
 
             // @@oneOf and @@oneOrNoneOf: two attributes of a group are rejected, none only for @@oneOf
@@ -554,6 +563,7 @@ public final class TestGenerator {
         }
 
         private void setterTests(final Input field, final Optional<String> current, final String typeName) {
+            final List<String> enclosing = member(field.annotations());
             final String setter = InterfaceGenerator.setter(field.name());
             final String accessor = "subject." + field.identifier() + "()";
             final Optional<String> other = helper(field, 1, true);
@@ -597,6 +607,7 @@ public final class TestGenerator {
             }
             other.ifPresent(o -> copyTest(field, o + "()", "InSetter", local -> "create()",
                     accessor, typeName));
+            memberHips = enclosing;
         }
 
         /**
@@ -679,6 +690,7 @@ public final class TestGenerator {
         // ------------------------------------------------------------------------------------------------- enums
 
         private boolean enumTests(final TypeDefinition.EnumDefinition type) {
+            typeHips = Hips.of(type);
             deprecated |= type.hasAnnotation("deprecated") || type.values().stream()
                     .anyMatch(v -> v.hasAnnotation("deprecated"));
             final String enumName = imports.use(JavaNames.packageName(namespace), type.name().name());
@@ -712,6 +724,7 @@ public final class TestGenerator {
 
         /** Tests of the static methods of an abstraction (or of a type that cannot be created). */
         private boolean staticMethodTests(final TypeDefinition.ComplexTypeDefinition type) {
+            typeHips = Hips.of(type);
             final String typeName = imports.use(JavaNames.packageName(namespace), type.name().name());
             for (final MethodDefinition method : type.methods()) {
                 if (method.isStatic()) {
@@ -731,6 +744,17 @@ public final class TestGenerator {
          */
         private void methodTest(final MethodDefinition method, final String target,
                                 final Map<Type.TypeVariable, Type> variables) {
+            final List<String> enclosing = member(method.annotations());
+            try {
+                methodTests(method, target, variables);
+            } finally {
+                memberHips = enclosing;
+            }
+        }
+
+        /** The tests of a method; {@link #methodTest} tags them with the HIPs of the method. */
+        private void methodTests(final MethodDefinition method, final String target,
+                                 final Map<Type.TypeVariable, Type> variables) {
             final Optional<Map<Type.TypeVariable, Type>> own = Constraints.defaults(method.typeParameters());
             if (own.isEmpty()) {
                 notes.add("no type arguments for `" + method.signature() + "`");
@@ -808,14 +832,17 @@ public final class TestGenerator {
             for (final FunctionDefinition function : functions) {
                 final MethodDefinition method = function.method();
                 methodTest(method, factoryName, Map.of());
+                final List<String> enclosing = member(method.annotations());
                 final Optional<Map<Type.TypeVariable, Type>> variables = Constraints.defaults(method.typeParameters());
                 final Optional<List<String>> arguments = variables.flatMap(v -> arguments(method, v));
                 if (arguments.isEmpty()) {
+                    memberHips = enclosing;
                     continue;
                 }
                 final String name = capitalize(method.name());
                 for (int i = 0; i < method.parameters().size(); i++) {
                     final Input parameter = input(method.parameters().get(i), variables.get());
+                    final List<String> enclosingParameter = alsoMember(parameter.annotations());
                     final int index = i;
                     final java.util.function.Function<String, String> call = value -> factoryName + "."
                             + JavaKeywords.identifier(method.name()) + "(" + replace(arguments.get(), index, value)
@@ -840,7 +867,9 @@ public final class TestGenerator {
                                             + call.apply(c.expression()) + ");\n");
                         }
                     }
+                    memberHips = enclosingParameter;
                 }
+                memberHips = enclosing;
             }
         }
 
@@ -1121,11 +1150,47 @@ public final class TestGenerator {
             for (int i = 2; !testIds.add(uniqueId); i++) {
                 uniqueId = id + "-" + i;
             }
+            final StringBuilder hipTags = new StringBuilder();
+            for (final String hip : hips()) {
+                hipTags.append(INDENT).append("@").append(imports.use(JUNIT, "Tag")).append("(")
+                        .append(JavaLiterals.quote(Hips.tag(hip))).append(")\n");
+            }
             tests.add(INDENT + "@" + imports.use(JUNIT, "Test") + "\n" + INDENT + "@"
                     + imports.use(JUNIT, "DisplayName") + "(" + JavaLiterals.quote(display) + ")\n"
                     + INDENT + "@" + imports.use(JUNIT, "Tag") + "(" + JavaLiterals.quote(TestIds.tag(uniqueId))
-                    + ")\n"
+                    + ")\n" + hipTags
                     + INDENT + "void " + unique + "()" + throwsClause + " {\n" + body + INDENT + "}\n");
+        }
+
+        /**
+         * Starts the tests of a member: they are tagged with its HIPs in addition to those of the type. The caller
+         * restores the returned value when it is done with the member.
+         *
+         * @param annotations the annotations of the member
+         * @return the HIPs of the enclosing member, to be restored
+         */
+        private List<String> member(final List<Annotation> annotations) {
+            final List<String> previous = memberHips;
+            memberHips = Hips.of(annotations);
+            return previous;
+        }
+
+        /**
+         * Adds the HIPs of a parameter to those of its method, for the tests of that parameter. The caller restores
+         * the returned value when it is done with the parameter.
+         *
+         * @param annotations the annotations of the parameter
+         * @return the HIPs of the method, to be restored
+         */
+        private List<String> alsoMember(final List<Annotation> annotations) {
+            final List<String> previous = memberHips;
+            memberHips = Stream.concat(previous.stream(), Hips.of(annotations).stream()).distinct().toList();
+            return previous;
+        }
+
+        /** The HIPs of the tests that are added at the moment: those of the type and those of the member. */
+        private List<String> hips() {
+            return Stream.concat(typeHips.stream(), memberHips.stream()).distinct().toList();
         }
 
         /** The language-neutral id of a test of this class: its scope plus the element and the check. */

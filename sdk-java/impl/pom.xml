@@ -16,6 +16,8 @@
         <module>org.hiero.consensus.node.client</module>
         <module>org.hiero.enterprise</module>
         <module>org.hiero.mirror.node.client</module>
+        <!-- the results of all tests as one HTML page (after the modules; with the profile tck after the TCK run) -->
+        <module>test-report</module>
     </modules>
 
     <properties>
@@ -75,6 +77,7 @@
                             <configurationParameters>
                                 junit.platform.reporting.open.xml.enabled = true
                                 junit.platform.reporting.open.xml.git.enabled = true
+                                junit.jupiter.extensions.autodetection.enabled = true
                                 junit.platform.reporting.output.dir = ${project.build.directory}/surefire-reports
                             </configurationParameters>
                         </properties>
@@ -100,6 +103,11 @@
                     <artifactId>maven-install-plugin</artifactId>
                     <version>3.1.4</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>3.6.4</version>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -117,4 +125,19 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+          ./mvnw -f impl install -Ptck: after the modules, runs the Hiero TCK against the SDK (scripts/tck-java.sh, a
+          local Solo network must be running); the module test-report then puts its results on the page of all test
+          results, sdk-java/impl/target/test-report.html. Properties of the module tck-run: tck.dir,
+          tck.ignoreFailures, tck.tests.
+        -->
+        <profile>
+            <id>tck</id>
+            <modules>
+                <module>tck-run</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>

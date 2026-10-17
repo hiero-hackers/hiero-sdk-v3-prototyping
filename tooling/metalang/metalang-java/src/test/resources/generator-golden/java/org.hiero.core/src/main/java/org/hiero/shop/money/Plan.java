@@ -12,6 +12,7 @@ import javax.annotation.processing.Generated;
 public enum Plan {
 
     BASIC(Duration.ofSeconds(30L), new BigInteger("1000"), List.of("a", "b")),
+    /// @see <a href="https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-540.md">HIP-540</a>
     PREMIUM(Duration.ofSeconds(3_600L), new BigInteger("100000000000000000000"), List.of());
 
     private final Duration timeout;

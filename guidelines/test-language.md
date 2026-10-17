@@ -118,6 +118,7 @@ test "name" {
 | Annotation | Meaning |
 |---|---|
 | `@@testId("id")` | The stable id of the test within its namespace (see **Id**); the name may change, the id stays. |
+| `@@hip("869"[, ...])` | The Hiero Improvement Proposal(s) the tested behaviour comes from (see [HIP references](api-guideline.md#hip-references)). The generators tag the test with `hip:<number>`, so that a test run can be filtered by a proposal. |
 | `@@deprecated("reason")` | The test still runs but is scheduled for removal, e.g. together with a deprecated method. |
 | `@@disabled("reason")` | The test is generated but not run (`@Disabled`, `test.skip`, `#[ignore]`, `t.Skip`, `pytest.mark.skip`). The reason is mandatory. |
 

@@ -17,6 +17,7 @@ class ShopFactoryTest {
     @Test
     @DisplayName("create(name, tags) can be called and returns a value")
     @Tag("testId:shop/create/call")
+    @Tag("hip:869")
     void shouldCallCreate() {
         assertNotNull(ShopFactory.create(nameValue(), tagsValue()));
     }
@@ -24,6 +25,8 @@ class ShopFactoryTest {
     @Test
     @DisplayName("create rejects null for name")
     @Tag("testId:shop/create/name/rejects-null")
+    @Tag("hip:869")
+    @Tag("hip:1046")
     void shouldRejectNullNameInCreate() {
         assertThrows(NullPointerException.class, () -> ShopFactory.create((String) null, tagsValue()));
     }

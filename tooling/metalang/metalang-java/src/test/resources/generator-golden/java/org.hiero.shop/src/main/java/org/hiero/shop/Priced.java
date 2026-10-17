@@ -7,6 +7,8 @@ import javax.annotation.processing.Generated;
 import org.hiero.shop.money.Money;
 
 /// Something with a price.
+///
+/// @see <a href="https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-869.md">HIP-869</a>
 @Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public interface Priced {
 

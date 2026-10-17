@@ -168,8 +168,8 @@ final class ClassGenerator {
                     .equals(self)) {
                 members.add(MarkdownComment.render(INDENT, List.of("Sets the `" + field.name() + "`.",
                                 MarkdownComment.deprecationReason(field.documentation())),
-                        List.of("@param " + JavaKeywords.identifier(field.name()) + " the new value",
-                                "@return this object"), field.hasAnnotation("deprecated"))
+                        JavaHips.withSeeTags(List.of("@param " + JavaKeywords.identifier(field.name())
+                                + " the new value", "@return this object"), field), field.hasAnnotation("deprecated"))
                         + (selfIsVariable ? INDENT + "@SuppressWarnings(\"unchecked\")\n" : "")
                         + INDENT + "@Override\n"
                         + (field.hasAnnotation("deprecated") ? INDENT + "@Deprecated\n" : "")
@@ -226,7 +226,7 @@ final class ClassGenerator {
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
         }
-        java.append(MarkdownComment.render("", List.of(type.documentation()), List.of(),
+        java.append(MarkdownComment.render("", List.of(type.documentation()), JavaHips.seeTags(type),
                 type.hasAnnotation("deprecated")));
         java.append(generated);
         if (type.hasAnnotation("deprecated")) {
@@ -324,7 +324,7 @@ final class ClassGenerator {
         final boolean bytes = JavaConstraints.isBytes(field.type());
         final StringBuilder java = new StringBuilder(MarkdownComment.render(INDENT, List.of(
                 field.documentation().isBlank() ? "Returns the `" + field.name() + "`." : field.documentation()),
-                List.of(), field.hasAnnotation("deprecated")));
+                JavaHips.seeTags(field), field.hasAnnotation("deprecated")));
         if (context.overridesAccessor(type.name(), field.name())) {
             java.append(INDENT).append("@Override\n");
         }
@@ -353,7 +353,7 @@ final class ClassGenerator {
         }
         final StringBuilder java = new StringBuilder(MarkdownComment.render(INDENT,
                 List.of("Sets the `" + field.name() + "`.", MarkdownComment.deprecationReason(field.documentation())),
-                tags, field.hasAnnotation("deprecated")));
+                JavaHips.withSeeTags(tags, field), field.hasAnnotation("deprecated")));
         if (selfIsVariable) {
             java.append(INDENT).append("@SuppressWarnings(\"unchecked\")\n");
         }

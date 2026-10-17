@@ -1,0 +1,101 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.hiero.sdk</groupId>
+        <artifactId>hiero-sdk</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>hiero-sdk-tck-run</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Hiero SDK: TCK run</name>
+    <description>
+        Runs the Hiero TCK against the Java SDK; the module test-report renders its results together with the unit
+        tests. Part of the build only with the profile `tck`: ./mvnw -f impl install -Ptck
+    </description>
+
+    <properties>
+        <repository.root>${project.basedir}/../../..</repository.root>
+        <!-- the clone of https://github.com/hiero-ledger/hiero-sdk-tck (with 'npm install' done) -->
+        <tck.dir>${repository.root}/../hiero-sdk-tck</tck.dir>
+        <!-- failed TCK tests do not fail the build: the report is the result; -Dtck.ignoreFailures=false to fail -->
+        <tck.ignoreFailures>true</tck.ignoreFailures>
+        <!-- TCK test files to run, separated by spaces, e.g. src/tests/crypto-service/test-account-create-transaction.ts;
+             empty runs the complete suite -->
+        <tck.tests></tck.tests>
+    </properties>
+
+    <!-- not a library: only the place where the TCK runs, after all modules of the SDK are installed -->
+    <dependencies>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-consensus-node-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-consensus-node-admin-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-mirror-node-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-enterprise</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- no Javadoc for a module without sources -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <!--
+                      In the phase install: the TCK server is a Maven build of its own (sdk-java/tck) that compiles
+                      against the installed SDK, so every module must be installed before. With `verify` the TCK does
+                      not run.
+                    -->
+                    <execution>
+                        <id>tck</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>bash</executable>
+                            <commandlineArgs>${repository.root}/scripts/tck-java.sh --skip-api ${tck.tests}</commandlineArgs>
+                            <environmentVariables>
+                                <TCK_DIR>${tck.dir}</TCK_DIR>
+                                <TCK_IGNORE_FAILURES>${tck.ignoreFailures}</TCK_IGNORE_FAILURES>
+                            </environmentVariables>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

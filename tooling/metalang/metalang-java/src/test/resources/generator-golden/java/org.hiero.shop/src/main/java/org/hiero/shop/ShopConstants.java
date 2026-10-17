@@ -8,6 +8,7 @@ import javax.annotation.processing.Generated;
 @Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
 public final class ShopConstants {
 
+    /// @see <a href="https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-540.md">HIP-540</a>
     public static final int MAX_PRODUCTS = 1_000;
 
     private ShopConstants() {

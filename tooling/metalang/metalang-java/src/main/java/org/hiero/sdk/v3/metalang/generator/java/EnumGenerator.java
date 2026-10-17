@@ -39,8 +39,8 @@ final class EnumGenerator {
         final List<EnumValueDefinition> values = enumType.values();
         for (int i = 0; i < values.size(); i++) {
             final EnumValueDefinition value = values.get(i);
-            body.append(MarkdownComment.render("    ", List.of(value.documentation()), List.of(),
-                    value.hasAnnotation("deprecated")));
+            body.append(MarkdownComment.render("    ", List.of(value.documentation()),
+                    JavaHips.seeTags(value), value.hasAnnotation("deprecated")));
             if (value.hasAnnotation("deprecated")) {
                 body.append("    @Deprecated\n");
             }
@@ -85,7 +85,7 @@ final class EnumGenerator {
             for (final ParameterDefinition attribute : enumType.attributes()) {
                 body.append('\n');
                 body.append(MarkdownComment.render("    ", List.of("Returns the `" + attribute.name()
-                        + "` of this value.")));
+                        + "` of this value."), JavaHips.seeTags(attribute)));
                 final String field = JavaKeywords.identifier(attribute.name());
                 if (context.overridesAccessor(enumType.name(), attribute.name())) {
                     body.append("    @Override\n");
@@ -115,7 +115,7 @@ final class EnumGenerator {
         if (!importBlock.isEmpty()) {
             java.append(importBlock).append('\n');
         }
-        java.append(MarkdownComment.render("", List.of(enumType.documentation()), List.of(),
+        java.append(MarkdownComment.render("", List.of(enumType.documentation()), JavaHips.seeTags(enumType),
                 enumType.hasAnnotation("deprecated")));
         java.append(generated);
         if (enumType.hasAnnotation("deprecated")) {

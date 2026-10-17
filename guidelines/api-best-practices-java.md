@@ -797,6 +797,42 @@ MISC((byte) 4, "Misc");
  Emit plain `@Deprecated` because `@@deprecated` does not carry a shared version or removal schedule; do not invent
 values for Java's `since` or `forRemoval` elements.
 
+## HIP references (`@@hip`)
+
+`@@hip("869")` ([HIP references](api-guideline.md#hip-references)) becomes a `@see` tag that links the Markdown file
+of the proposal, on the element that carries the annotation — the type, the accessor and the setter of an attribute,
+the method, the constant, the enum value and the method of the builder:
+
+```
+// A consensus node of the address book.
+@@hip("869")
+ConsensusNodeInfo {
+    @@immutable nodeId: int64
+    @@immutable @@nullable @@hip("1046") grpcWebProxyEndpoint: ServiceEndpoint
+}
+```
+
+```java
+/// A consensus node of the address book.
+///
+/// @param nodeId the id of the node
+/// @param grpcWebProxyEndpoint ([HIP-1046](https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-1046.md))
+/// @see <a href="https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-869.md">HIP-869</a>
+public record ConsensusNodeInfo(long nodeId, @Nullable ServiceEndpoint grpcWebProxyEndpoint) {
+```
+
+Where the element is documented by a tag of its enclosing comment instead of a comment of its own — a record
+component (`@param`) and a method parameter — the link is written in the text of that tag as a Markdown link, because
+`@see` would attach it to the record resp. the method. The `@see` form is HTML (`<a href="…">HIP-869</a>`): the
+`@see` tag of a Markdown documentation comment (JEP 467) does not accept a Markdown link.
+
+Every generated test of an annotated type or member is tagged with `@Tag("hip:869")` in addition to its
+`testId:` tag, so a HIP can be run on its own:
+
+```shell
+./mvnw test -Dgroups="hip:869"
+```
+
 ## Enumerations
 
 Enumerations defined in the meta-language map directly to Java `enum` types. Enum values use `UPPER_SNAKE_CASE` as
@@ -3727,6 +3763,7 @@ JUnit tests that look like the other generated tests:
 |---|---|
 | the tests of spec `keys.md` | class `KeysSpecTest` in `src/test/java`, package of the namespace (`org.hiero.keys`) |
 | `test "name" { … }` | `@Test @DisplayName("name") @Tag("testId:keys/<id>") void name() { … }`; the id (`keys/<id>`) and the comment above the test as `///` comment; the tag carries the id into the test results (Open Test Reporting, ADR-0012) |
+| `@@hip("869")` | an additional `@Tag("hip:869")`; a contract test also carries the HIPs of the type and the member it tests |
 | `@@disabled("reason")` | `@Disabled("reason")` |
 | `// given`, `// when`, `// then` and every other comment inside a test | the same `//` comment at the same place; a comment after a statement starts a new paragraph (blank line), a comment behind a statement stays behind it |
 | `@@deprecated("reason")` | `/// Deprecated: reason` and `@SuppressWarnings("deprecation")` on the class |

@@ -48,6 +48,9 @@ public final class Product extends Entity<Long> {
     }
 
     /// The returned stage completes exceptionally with `NoSuchElementException` if the operation fails.
+    ///
+    /// @param limit ([HIP-1046](https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-1046.md))
+    /// @see <a href="https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-869.md">HIP-869</a>
     public CompletionStage<List<Product>> related(final int limit) {
         throw new UnsupportedOperationException("Not implemented yet: Product.related");
     }

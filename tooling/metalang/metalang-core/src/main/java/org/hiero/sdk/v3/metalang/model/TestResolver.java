@@ -22,6 +22,7 @@ import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
 import org.hiero.sdk.v3.metalang.diagnostic.DiagnosticCollector;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
 import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
+import org.hiero.sdk.v3.metalang.generator.Hips;
 import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 import org.hiero.sdk.v3.metalang.semantic.SpecModel;
 import org.jspecify.annotations.Nullable;
@@ -33,7 +34,7 @@ import org.jspecify.annotations.Nullable;
  */
 final class TestResolver {
 
-    private static final Set<String> TEST_ANNOTATIONS = Set.of("disabled", "deprecated", "testId");
+    private static final Set<String> TEST_ANNOTATIONS = Set.of("disabled", "deprecated", "testId", Hips.ANNOTATION);
 
     /** The form of a test id: lowercase words of letters and digits, joined by hyphens. */
     private static final Pattern TEST_ID = Pattern.compile("[a-z0-9]+(-[a-z0-9]+)*");
@@ -207,14 +208,20 @@ final class TestResolver {
         for (final Annotation annotation : test.annotations()) {
             if (!TEST_ANNOTATIONS.contains(annotation.name())) {
                 out.report(Rule.TEST_INVALID, "A test cannot be annotated with @@" + annotation.name()
-                        + "; allowed are @@testId(\"id\"), @@disabled(\"reason\") and @@deprecated(\"reason\")",
-                        annotation.location());
+                        + "; allowed are @@testId(\"id\"), @@hip(\"869\"), @@disabled(\"reason\") and "
+                        + "@@deprecated(\"reason\")", annotation.location());
             } else if (annotation.name().equals("testId")) {
                 if (annotation.arguments().size() != 1
                         || !(annotation.arguments().getFirst() instanceof Literal.StringLiteral id)
                         || !TEST_ID.matcher(id.value()).matches()) {
                     out.report(Rule.TEST_INVALID, "@@testId needs the id as a string of lowercase words joined by "
                             + "hyphens, e.g. @@testId(\"hex-key-with-0x-prefix\")", annotation.location());
+                }
+            } else if (annotation.name().equals(Hips.ANNOTATION)) {
+                if (annotation.arguments().isEmpty() || !annotation.arguments().stream()
+                        .allMatch(a -> a instanceof Literal.StringLiteral s && Hips.isNumber(s.value()))) {
+                    out.report(Rule.TEST_INVALID, "@@hip needs one or more HIP numbers as strings, e.g. "
+                            + "@@hip(\"869\")", annotation.location());
                 }
             } else if (annotation.arguments().size() != 1
                     || !(annotation.arguments().getFirst() instanceof Literal.StringLiteral)) {

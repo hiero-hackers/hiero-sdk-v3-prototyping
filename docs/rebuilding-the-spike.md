@@ -116,7 +116,7 @@ In `sdk-java` (JDK 25, `sdk env`):
   None of them needs a network. Keep `-Dmaven.test.failure.ignore=true` while working on a change, so one failure
   does not hide the others;
 - the results are also written as Open Test Reporting (ADR-0012), `target/surefire-reports/open-test-report.xml` per
-  module, every test tagged with its id; `scripts/test-report.sh sdk` renders them as
+  module, every test tagged with its id; the last module of the build, `impl/test-report`, renders them as
   `sdk-java/impl/target/test-report.html`;
 - the conformance check still reports *provides the API of the specs*:
 
@@ -131,6 +131,19 @@ against the implementation:
 
 ```bash
 TCK_DIR=../hiero-sdk-tck scripts/tck-java.sh src/tests/crypto-service/test-account-create-transaction.ts
+```
+
+Or as part of the Maven build of `impl`, with the profile `tck`: after the modules are installed, the module
+`impl/tck-run` runs `scripts/tck-java.sh --skip-api` (TCK contract, runtime and server against the installed SDK, then
+the TCK). The module `impl/test-report`, part of every build of `impl` (`-DtestReport.skip=true` leaves it out), runs
+last and renders the unit tests - with the profile also the TCK run - as one page,
+`sdk-java/impl/target/test-report.html` (`scripts/test-report.sh sdk`; without the profile it shows the last TCK run,
+if there was one). The TCK clone is expected next to the repository (`-Dtck.dir=…` otherwise);
+failed TCK tests do not fail the build unless `-Dtck.ignoreFailures=false`; `-Dtck.tests="src/tests/…ts"` runs single
+files. It needs `install` (not `verify`), because the TCK server compiles against the installed SDK:
+
+```bash
+./mvnw -f impl install -Ptck
 ```
 
 The bindings cover 47 of the 65 TCK methods (`metalang tck check`, see `docs/tck-binding.md`); the TCK skips the
