@@ -294,9 +294,9 @@ utilities and the enterprise services. The specs have 386 spec tests (45 spec fi
 value is rejected); **all 386 and all 2,787 contract tests pass** against `impl`, and `metalang check` reports that it
 provides the API. What the specs cannot express is recorded in their `## Questions & Comments`. It has the same
 Maven coordinates as `generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The
-TCK binds 47 of its 65 methods (`tooling/tck/bindings`); `./mvnw -f impl install -Ptck` (in `sdk-java`) runs it after
+TCK binds 47 of its 65 methods (`tooling/tck/bindings`); `./mvnw -f impl verify -Ptck` (in `sdk-java`) builds the TCK server in the same reactor and runs it after
 the build against a local Solo network. The last module of every build of `impl`, `impl/test-report`, renders the
-results of all tests (with the profile also the TCK) as `sdk-java/impl/target/test-report.html`. [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is the
+results of all tests (with the profile also the TCK) as `sdk-java/impl/target/test-report/index.html`. [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is the
 runbook: how the copy was made, file inventory, filled stubs, build and verify, the TCK, and the traps.
 
 Four spec problems made the implementation harder than it should be; they are recorded in the `## Questions &

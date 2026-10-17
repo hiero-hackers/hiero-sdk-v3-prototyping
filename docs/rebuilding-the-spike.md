@@ -113,11 +113,13 @@ In `sdk-java` (JDK 25, `sdk env`):
 **Done when:**
 
 - every test passes: the 386 tests of the specs (`<Spec>SpecTest`) and the 2,787 contract tests (`<Type>Test`).
-  None of them needs a network. Keep `-Dmaven.test.failure.ignore=true` while working on a change, so one failure
-  does not hide the others;
+  None of them needs a network. A failed test does not stop the build: while `impl/test-report` is part of it (the
+  default), the profile `test-report` sets `maven.test.failure.ignore`, every module is tested, and `impl/test-report`
+  fails the build at the end, after the page is rendered (`-DtestReport.failOnFailures=false`: it does not;
+  `-DtestReport.skip=true`: no page, the first failure stops the build again);
 - the results are also written as Open Test Reporting (ADR-0012), `target/surefire-reports/open-test-report.xml` per
   module, every test tagged with its id; the last module of the build, `impl/test-report`, renders them as
-  `sdk-java/impl/target/test-report.html`;
+  `sdk-java/impl/target/test-report/index.html`;
 - the conformance check still reports *provides the API of the specs*:
 
   ```bash
@@ -133,17 +135,21 @@ against the implementation:
 TCK_DIR=../hiero-sdk-tck scripts/tck-java.sh src/tests/crypto-service/test-account-create-transaction.ts
 ```
 
-Or as part of the Maven build of `impl`, with the profile `tck`: after the modules are installed, the module
-`impl/tck-run` runs `scripts/tck-java.sh --skip-api` (TCK contract, runtime and server against the installed SDK, then
-the TCK). The module `impl/test-report`, part of every build of `impl` (`-DtestReport.skip=true` leaves it out), runs
+Or as part of the Maven build of `impl`, with the profile `tck`: it adds the TCK contract, runtime and server
+(`sdk-java/tck/generated/contract`, `sdk-java/tck/runtime`, `sdk-java/tck/generated/server`) to the reactor, so they
+compile against the SDK modules of the same build, not against installed ones. The first project of the reactor
+regenerates contract and server from the bindings (`scripts/tck-java.sh --generate-only`; `-Dtck.skipGenerate=true`
+does not - a change of a generated POM takes effect with the next build, as the reactor has read the POMs already), and
+the module `impl/tck-run` runs the TCK in the phase `integration-test` (`scripts/tck-java.sh --skip-build`, on the JDK of
+the build). The module `impl/test-report`, part of every build of `impl` (`-DtestReport.skip=true` leaves it out), runs
 last and renders the unit tests - with the profile also the TCK run - as one page,
-`sdk-java/impl/target/test-report.html` (`scripts/test-report.sh sdk`; without the profile it shows the last TCK run,
+`sdk-java/impl/target/test-report/index.html` (`scripts/test-report.sh sdk`; without the profile it shows the last TCK run,
 if there was one). The TCK clone is expected next to the repository (`-Dtck.dir=…` otherwise);
 failed TCK tests do not fail the build unless `-Dtck.ignoreFailures=false`; `-Dtck.tests="src/tests/…ts"` runs single
-files. It needs `install` (not `verify`), because the TCK server compiles against the installed SDK:
+files. `verify` is enough:
 
 ```bash
-./mvnw -f impl install -Ptck
+./mvnw -f impl verify -Ptck
 ```
 
 The bindings cover 47 of the 65 TCK methods (`metalang tck check`, see `docs/tck-binding.md`); the TCK skips the

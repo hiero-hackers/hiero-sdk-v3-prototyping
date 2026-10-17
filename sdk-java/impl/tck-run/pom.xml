@@ -14,7 +14,7 @@
     <name>Hiero SDK: TCK run</name>
     <description>
         Runs the Hiero TCK against the Java SDK; the module test-report renders its results together with the unit
-        tests. Part of the build only with the profile `tck`: ./mvnw -f impl install -Ptck
+        tests. Part of the build only with the profile `tck`: ./mvnw -f impl verify -Ptck
     </description>
 
     <properties>
@@ -28,31 +28,11 @@
         <tck.tests></tck.tests>
     </properties>
 
-    <!-- not a library: only the place where the TCK runs, after all modules of the SDK are installed -->
+    <!-- not a library: only the place where the TCK runs, after the TCK server is built in the same reactor -->
     <dependencies>
         <dependency>
             <groupId>org.hiero.sdk</groupId>
-            <artifactId>hiero-base</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hiero.sdk</groupId>
-            <artifactId>hiero-consensus-node-client</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hiero.sdk</groupId>
-            <artifactId>hiero-consensus-node-admin-client</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hiero.sdk</groupId>
-            <artifactId>hiero-mirror-node-client</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.hiero.sdk</groupId>
-            <artifactId>hiero-enterprise</artifactId>
+            <artifactId>hiero-sdk-tck</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
@@ -75,22 +55,23 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
                     <!--
-                      In the phase install: the TCK server is a Maven build of its own (sdk-java/tck) that compiles
-                      against the installed SDK, so every module must be installed before. With `verify` the TCK does
-                      not run.
+                      In the phase integration-test: the TCK server (sdk-java/tck/generated/server) is packaged by
+                      then, with the SDK modules of this reactor in its lib directory.
                     -->
                     <execution>
                         <id>tck</id>
-                        <phase>install</phase>
+                        <phase>integration-test</phase>
                         <goals>
                             <goal>exec</goal>
                         </goals>
                         <configuration>
                             <executable>bash</executable>
-                            <commandlineArgs>${repository.root}/scripts/tck-java.sh --skip-api ${tck.tests}</commandlineArgs>
+                            <commandlineArgs>${repository.root}/scripts/tck-java.sh --skip-build ${tck.tests}</commandlineArgs>
                             <environmentVariables>
                                 <TCK_DIR>${tck.dir}</TCK_DIR>
                                 <TCK_IGNORE_FAILURES>${tck.ignoreFailures}</TCK_IGNORE_FAILURES>
+                                <!-- the server runs on the JDK of this build -->
+                                <JAVA_HOME>${java.home}</JAVA_HOME>
                             </environmentVariables>
                         </configuration>
                     </execution>

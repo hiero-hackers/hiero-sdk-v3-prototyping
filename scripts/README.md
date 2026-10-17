@@ -14,7 +14,7 @@ is safe to run repeatedly.
 | `generate-go.sh` | Go API into `sdk-go/generated`, then `go build`, `go vet` and the `gofmt -l` check |
 | `generate-python.sh` | Python API into `sdk-python/generated`, then `mypy --strict` |
 | `clean.sh` | Removes the generated code again; with options also the build output and the caches |
-| `tck-java.sh` | Generates API + TCK server, builds them and runs the Hiero TCK against the Java server; `--skip-api` leaves the API and `sdk-java/impl` alone (used by the Maven profile `tck` of `sdk-java/impl`) |
+| `tck-java.sh` | Generates API + TCK server, builds them and runs the Hiero TCK against the Java server; `--generate-only` only generates the TCK contract and server, `--skip-build` only runs the TCK (both used by the Maven profile `tck` of `sdk-java/impl`) |
 | `tck-ts.sh` | The same for the TypeScript server |
 | `test-report.sh` | Renders the results of the last Java test runs (Open Test Reporting, ADR-0012) as HTML, one page each for the SDK (`sdk-java/impl`, `test-support` and the last run of `tck-java.sh`), the generated API and the tooling; `tck` renders only the TCK run; `--open` opens them |
 

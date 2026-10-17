@@ -14,13 +14,17 @@
     <name>Hiero SDK: test report</name>
     <description>
         Renders the results of all tests of the SDK - the unit tests of every module and, with the profile `tck`, the
-        TCK run - as one HTML page, sdk-java/impl/target/test-report.html (Open Test Reporting, ADR-0012;
-        scripts/test-report.sh sdk). -DtestReport.skip=true leaves it out.
+        TCK run - as one HTML page, sdk-java/impl/target/test-report/index.html (Open Test Reporting, ADR-0012;
+        scripts/test-report.sh sdk). -DtestReport.skip=true leaves it out. While it is part of the build, failed unit
+        tests do not stop the build (profile test-report of the parent); this module fails it at the end instead, after
+        the page is rendered (-DtestReport.failOnFailures=false: it does not). Failed TCK tests are governed by the
+        module tck-run (tck.ignoreFailures).
     </description>
 
     <properties>
         <repository.root>${project.basedir}/../../..</repository.root>
         <testReport.skip>false</testReport.skip>
+        <testReport.failOnFailures>true</testReport.failOnFailures>
     </properties>
 
     <!-- not a library: the dependencies only make this module the last one of the build -->
@@ -80,6 +84,9 @@
                             <skip>${testReport.skip}</skip>
                             <executable>bash</executable>
                             <commandlineArgs>${repository.root}/scripts/test-report.sh sdk</commandlineArgs>
+                            <environmentVariables>
+                                <TEST_REPORT_FAIL_ON_FAILURES>${testReport.failOnFailures}</TEST_REPORT_FAIL_ON_FAILURES>
+                            </environmentVariables>
                         </configuration>
                     </execution>
                 </executions>

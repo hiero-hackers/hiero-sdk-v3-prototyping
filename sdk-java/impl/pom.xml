@@ -130,16 +130,71 @@
 
     <profiles>
         <!--
-          ./mvnw -f impl install -Ptck: after the modules, runs the Hiero TCK against the SDK (scripts/tck-java.sh, a
-          local Solo network must be running); the module test-report then puts its results on the page of all test
-          results, sdk-java/impl/target/test-report.html. Properties of the module tck-run: tck.dir,
+          While the module test-report renders the results (the default; -DtestReport.skip=true leaves it out), a failed
+          test does not stop the build: every module is tested, the TCK runs with the profile tck, and the page shows
+          all results. test-report fails the build at the end instead if a unit test failed
+          (-DtestReport.failOnFailures=false: it does not). -Dmaven.test.failure.ignore=false stops at the first module
+          again.
+        -->
+        <profile>
+            <id>test-report</id>
+            <activation>
+                <property>
+                    <name>!testReport.skip</name>
+                </property>
+            </activation>
+            <properties>
+                <maven.test.failure.ignore>true</maven.test.failure.ignore>
+            </properties>
+        </profile>
+        <!--
+          ./mvnw -f impl verify -Ptck: builds the TCK server in this reactor - the contract and the server generated
+          from tooling/tck/bindings (sdk-java/tck/generated, regenerated first by scripts/tck-java.sh with the option
+          generate-only; -Dtck.skipGenerate=true: not) and the hand-written runtime (sdk-java/tck/runtime) - against
+          the modules of this build, and runs the Hiero TCK with it in the phase integration-test (module tck-run; a
+          local Solo network must be running). The module test-report then puts its results on the page of all test
+          results, sdk-java/impl/target/test-report/index.html. Properties of the module tck-run: tck.dir,
           tck.ignoreFailures, tck.tests.
         -->
         <profile>
             <id>tck</id>
+            <properties>
+                <tck.skipGenerate>false</tck.skipGenerate>
+            </properties>
             <modules>
+                <module>../tck/generated/contract</module>
+                <module>../tck/runtime</module>
+                <module>../tck/generated/server</module>
                 <module>tck-run</module>
             </modules>
+            <build>
+                <plugins>
+                    <!--
+                      In the reactor's first project, before the TCK modules compile: their sources are regenerated in
+                      place. The reactor has read their POMs already - a change of a generated POM takes effect with
+                      the next build.
+                    -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <inherited>false</inherited>
+                        <executions>
+                            <execution>
+                                <id>tck-generate</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${tck.skipGenerate}</skip>
+                                    <executable>bash</executable>
+                                    <commandlineArgs>${project.basedir}/../../scripts/tck-java.sh --generate-only</commandlineArgs>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>

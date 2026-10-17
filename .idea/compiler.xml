@@ -14,15 +14,18 @@
         <module name="hiero-base (1)" />
         <module name="hiero-enterprise (1)" />
         <module name="hiero-consensus-node-admin-client" />
+        <module name="hiero-sdk-tck" />
         <module name="metalang-go" />
         <module name="hiero-mirror-node-client" />
         <module name="hiero-consensus-node-admin-client (1)" />
+        <module name="hiero-sdk-tck-runtime" />
         <module name="metalang-python" />
         <module name="metalang-typescript" />
         <module name="hiero-enterprise" />
         <module name="metalang-rust" />
         <module name="hiero-consensus-node-client (1)" />
         <module name="metalang-java" />
+        <module name="hiero-sdk-tck-contract" />
       </profile>
     </annotationProcessing>
   </component>
@@ -38,6 +41,9 @@
       <module name="hiero-enterprise (1)" options="-Xlint:all -Werror" />
       <module name="hiero-mirror-node-client" options="-Xlint:all -Werror" />
       <module name="hiero-mirror-node-client (1)" options="-Xlint:all -Werror" />
+      <module name="hiero-sdk-tck" options="-Xlint:all -Werror" />
+      <module name="hiero-sdk-tck-contract" options="-Xlint:all -Werror" />
+      <module name="hiero-sdk-tck-runtime" options="-Xlint:all -Werror" />
     </option>
   </component>
 </project>

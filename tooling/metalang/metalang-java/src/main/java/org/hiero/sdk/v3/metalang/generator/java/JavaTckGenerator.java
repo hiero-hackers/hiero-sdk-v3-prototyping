@@ -970,6 +970,9 @@ public final class JavaTckGenerator {
                     .append("                <artifactId>maven-jar-plugin</artifactId>\n")
                     .append("                <version>3.4.2</version>\n")
                     .append("                <configuration>\n")
+                    // the manifest lists the dependencies: rewritten also when no class changed, in an incremental
+                    // build (the profile tck of sdk-java/impl builds the server in its reactor)
+                    .append("                    <forceCreation>true</forceCreation>\n")
                     .append("                    <archive>\n")
                     .append("                        <manifest>\n")
                     .append("                            <mainClass>").append(PACKAGE).append(".TckMain</mainClass>\n")
