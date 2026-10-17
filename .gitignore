@@ -6,6 +6,7 @@ sdk-java/generated/target/
 sdk-java/generated/*/target/
 sdk-java/tck/generated/*/target/
 sdk-java/tck/runtime/target/
+tooling/tck/last-run-*.log
 sdk-java/support/target/
 sdk-java/test-support/target/
 sdk-java/protobuf/target/

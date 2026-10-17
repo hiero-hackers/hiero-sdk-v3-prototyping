@@ -5,6 +5,9 @@
 # Usage:   tooling/tck/run-tck.sh java|ts [TCK test file ...]
 # Example: TCK_DIR=../hiero-sdk-tck tooling/tck/run-tck.sh java src/tests/crypto-service/test-account-create-transaction.ts
 #
+# The console output of the TCK is also written to tooling/tck/last-run-<language>.log (git-ignored); the summary of the
+# run, the HTML report of the TCK and that log are printed at the very end, after the summary of the server.
+#
 # Environment:
 #   TCK_DIR   the clone of hiero-sdk-tck with installed dependencies (required)
 #   TCK_ENV   the TCK configuration (default: tooling/tck/solo.env); it is copied to $TCK_DIR/.env, an existing .env is
@@ -73,8 +76,32 @@ if [[ -f "$TCK_DIR/.env" ]] && ! cmp -s "$env_file" "$TCK_DIR/.env"; then
 fi
 cp "$env_file" "$TCK_DIR/.env"
 cd "$TCK_DIR"
+# not in mochawesome-report: `npm test` deletes that directory when it starts
+log="$repository/tooling/tck/last-run-$language.log"
+set +e
 if [[ $# -gt 0 ]]; then
-  npm run test:file -- "$@"
+  npm run test:file -- "$@" 2>&1 | tee "$log"
 else
-  npm test
+  npm test 2>&1 | tee "$log"
 fi
+status=${PIPESTATUS[0]}
+set -e
+
+# stop the server first: it prints the summary of its failed calls when it stops, the result of the TCK comes last
+kill "$server" 2>/dev/null || true
+wait "$server" 2>/dev/null || true
+trap - EXIT
+
+echo
+echo "==> TCK result ($language)"
+node -e '
+  const fs = require("fs");
+  const file = "mochawesome-report/mochawesome.json";
+  if (!fs.existsSync(file)) { console.log("   no report: the run crashed before mochawesome wrote it"); process.exit(0); }
+  const s = JSON.parse(fs.readFileSync(file, "utf8")).stats;
+  console.log(`   ${s.tests} tests: ${s.passes} passed, ${s.failures} failed, ${s.pending} pending (skipped)`
+      + ` in ${Math.round(s.duration / 1000)} s`);
+'
+echo "   report:  $TCK_DIR/mochawesome-report/mochawesome.html"
+echo "   console: $log"
+exit "$status"
