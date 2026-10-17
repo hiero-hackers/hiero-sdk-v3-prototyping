@@ -121,6 +121,8 @@ final class MavenGenerator {
                                                     <configurationParameters>
                                                         junit.platform.reporting.open.xml.enabled = true
                                                         junit.platform.reporting.open.xml.git.enabled = true
+                                                        junit.platform.output.capture.stdout = true
+                                                        junit.platform.output.capture.stderr = true
                                                         junit.jupiter.extensions.autodetection.enabled = true
                                                         junit.platform.reporting.output.dir = ${project.build.directory}/surefire-reports
                                                     </configurationParameters>

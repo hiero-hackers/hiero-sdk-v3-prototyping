@@ -12,6 +12,9 @@
 //   OTR_JAVA_HOME  the JDK the Java TCK server runs on (default: `java` of the PATH, only for TCK_SDK=java): its
 //               vendor, distribution and version are data entries of the root
 //   OTR_ATTACHMENTS  files to attach to the root, separated by ':' (the logs of the run)
+//   OTR_TEST_OUTPUT_DIR  the output of every single test (tooling/tck/otr-test-output.cjs, loaded with `--require`):
+//               its stdout, stderr and the log of the TCK server for its calls are attached to the test as
+//               <output source="stdout|stderr|tck-server">
 //
 // The data entries of the root: the start of the run, the SDK under test, the versions of the TCK, Node.js and mocha,
 // the Java runtime of the server, and the network the TCK talks to (NODE_IP, NODE_ACCOUNT_ID, MIRROR_NODE_REST_URL,
@@ -30,7 +33,8 @@ const { execFileSync, spawnSync } = require("node:child_process");
 // mocha of the TCK clone (this file lives outside of it)
 const Mocha = require(require.resolve("mocha", { paths: [process.cwd()] }));
 const { EVENT_RUN_BEGIN, EVENT_RUN_END, EVENT_SUITE_BEGIN, EVENT_SUITE_END, EVENT_TEST_BEGIN, EVENT_TEST_PASS,
-    EVENT_TEST_FAIL, EVENT_TEST_PENDING } = Mocha.Runner.constants;
+    EVENT_TEST_FAIL, EVENT_TEST_PENDING, EVENT_TEST_END, EVENT_HOOK_BEGIN } = Mocha.Runner.constants;
+const testOutput = require("./otr-test-output.cjs");
 
 const ROOT_ID = "tck";
 const MOCHA_ID = "__mocha_id__";
@@ -44,24 +48,41 @@ class OpenTestReportingReporter extends Mocha.reporters.Spec {
         this.finished = new Set();
         this.counts = { tests: 0, passed: 0, failed: 0, skipped: 0, hooksFailed: 0 };
         this.fd = undefined; // opened when the run begins: a run that stops in the TCK's preflight leaves no file
+        this.outputDirectory = process.env.OTR_TEST_OUTPUT_DIR;
+        // the result of the last test, written when its afterEach hooks are done: they write the output of the test
+        this.pending = undefined;
+
+        // the console line of the result (spec reporter, before this one) is no output of the test
+        runner.prependListener(EVENT_TEST_PASS, () => { testOutput.state.paused = true; });
+        runner.prependListener(EVENT_TEST_FAIL, () => { testOutput.state.paused = true; });
+        for (const event of [EVENT_TEST_END, EVENT_TEST_BEGIN, EVENT_HOOK_BEGIN]) {
+            runner.on(event, () => { testOutput.state.paused = false; });
+        }
 
         runner.once(EVENT_RUN_BEGIN, () => this.begin());
         runner.on(EVENT_SUITE_BEGIN, (suite) => {
+            this.flush();
             if (!suite.root) {
                 this.start(this.id(suite), this.parent(suite), suite.title, this.fileOf(suite));
             }
         });
         runner.on(EVENT_SUITE_END, (suite) => {
+            this.flush();
             if (!suite.root) {
                 this.finish(this.id(suite), "SUCCESSFUL");
             }
         });
-        runner.on(EVENT_TEST_BEGIN, (test) => this.startTest(test));
+        runner.on(EVENT_TEST_BEGIN, (test) => {
+            this.flush();
+            this.startTest(test);
+        });
         runner.on(EVENT_TEST_PASS, (test) => {
+            this.flush();
             this.counts.passed++;
-            this.finish(this.id(test), "SUCCESSFUL");
+            this.pending = { id: this.id(test), status: "SUCCESSFUL" };
         });
         runner.on(EVENT_TEST_FAIL, (test, error) => {
+            this.flush();
             if (test.type === "hook") {
                 // a failed hook (before/after) is no test: it fails the suite it belongs to
                 const id = this.id(test);
@@ -72,9 +93,10 @@ class OpenTestReportingReporter extends Mocha.reporters.Spec {
             }
             this.startTest(test);
             this.counts.failed++;
-            this.finish(this.id(test), "FAILED", message(error));
+            this.pending = { id: this.id(test), status: "FAILED", reason: message(error) };
         });
         runner.on(EVENT_TEST_PENDING, (test) => {
+            this.flush();
             this.startTest(test);
             this.counts.skipped++;
             this.finish(this.id(test), "SKIPPED");
@@ -105,6 +127,7 @@ class OpenTestReportingReporter extends Mocha.reporters.Spec {
         if (this.fd === undefined) {
             return;
         }
+        this.flush();
         for (const id of [...this.started].reverse()) {
             if (!this.finished.has(id) && id !== ROOT_ID) {
                 this.finish(id, "ABORTED", "the run ended before this element finished");
@@ -121,6 +144,27 @@ class OpenTestReportingReporter extends Mocha.reporters.Spec {
         fs.closeSync(this.fd);
         this.counts.tests = this.counts.passed + this.counts.failed + this.counts.skipped;
         fs.writeFileSync(this.file + ".summary.json", JSON.stringify(this.counts) + "\n");
+    }
+
+    // the result of the last test, with its output
+    flush() {
+        const test = this.pending;
+        if (!test) {
+            return;
+        }
+        this.pending = undefined;
+        const outputs = this.outputDirectory ? Object.keys(testOutput.SOURCES).map((source) => {
+            const file = testOutput.outputFile(this.outputDirectory, test.id, source);
+            return fs.existsSync(file)
+                ? '<output source="' + source + '" time="' + now() + '">' + cdata(fs.readFileSync(file, "utf8"))
+                    + "</output>"
+                : "";
+        }).join("") : "";
+        if (outputs) {
+            this.write('<e:reported id="' + attribute(test.id) + '" time="' + now() + '"><attachments>' + outputs
+                + "</attachments></e:reported>\n");
+        }
+        this.finish(test.id, test.status, test.reason);
     }
 
     startTest(test) {
@@ -289,6 +333,10 @@ function clean(value) {
 
 function text(value) {
     return clean(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function cdata(value) {
+    return "<![CDATA[" + clean(value).replace(/]]>/g, "]]]]><![CDATA[>") + "]]>";
 }
 
 function attribute(value) {

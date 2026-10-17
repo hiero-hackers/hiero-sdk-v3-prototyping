@@ -27,6 +27,7 @@ final class JsonRpcServer implements TckServer {
     private final Map<String, Handler> handlers;
     private final Map<String, RuntimeSession> sessions = new ConcurrentHashMap<>();
     private final ServerLog log = new ServerLog();
+    private final TestLog testLog = new TestLog();
     private @Nullable HttpServer server;
 
     /**
@@ -38,13 +39,21 @@ final class JsonRpcServer implements TckServer {
         this.handlers = Map.copyOf(handlers);
     }
 
+    /// The response to a request, and the exception the call failed with (for the log of the test).
+    private record Answer(String response, @Nullable Throwable cause) {
+    }
+
     @Override
     public String handle(final String request) {
+        return answer(request).response();
+    }
+
+    private Answer answer(final String request) {
         Object id = null;
         String name = null;
         try {
             if (!(Json.read(request) instanceof Map<?, ?> message)) {
-                return error(null, RpcError.INVALID_REQUEST, "Invalid Request", Map.of());
+                return new Answer(error(null, RpcError.INVALID_REQUEST, "Invalid Request", Map.of()), null);
             }
             id = message.get("id");
             final Object method = message.get("method");
@@ -52,8 +61,8 @@ final class JsonRpcServer implements TckServer {
             final Handler handler = name != null ? handlers.get(name) : null;
             if (handler == null) {
                 log.failed(name, RpcError.METHOD_NOT_FOUND, "no binding for this TCK method", null);
-                return error(id, RpcError.METHOD_NOT_FOUND, "Method not found",
-                        Map.of("method", String.valueOf(method)));
+                return new Answer(error(id, RpcError.METHOD_NOT_FOUND, "Method not found",
+                        Map.of("method", String.valueOf(method))), null);
             }
             @SuppressWarnings("unchecked")
             final Map<String, Object> params = message.get("params") instanceof Map<?, ?> map
@@ -64,7 +73,7 @@ final class JsonRpcServer implements TckServer {
             response.put("jsonrpc", "2.0");
             response.put("id", id);
             response.put("result", handler.handle(params, session));
-            return Json.write(response);
+            return new Answer(Json.write(response), null);
         } catch (final Throwable e) {
             // also Error: a NoClassDefFoundError must become a JSON-RPC error, not a request that never answers
             Throwable cause = e;
@@ -76,15 +85,17 @@ final class JsonRpcServer implements TckServer {
             if (cause.getMessage() != null && cause.getMessage().startsWith(PRECHECK_PREFIX)) {
                 final String status = cause.getMessage().substring(PRECHECK_PREFIX.length());
                 log.failed(name, RpcError.HIERO_ERROR, status, cause);
-                return error(id, RpcError.HIERO_ERROR, "Hiero error", Map.of("status", status));
+                return new Answer(error(id, RpcError.HIERO_ERROR, "Hiero error", Map.of("status", status)),
+                        cause);
             }
             if (cause instanceof RpcError error) {
                 log.failed(name, error.code(), detail(error), error);
-                return error(id, error.code(), error.getMessage(), error.data());
+                return new Answer(error(id, error.code(), error.getMessage(), error.data()), error);
             }
             final String detail = cause.getClass().getSimpleName() + ": " + cause.getMessage();
             log.failed(name, RpcError.INTERNAL_ERROR, detail, cause);
-            return error(id, RpcError.INTERNAL_ERROR, "Internal error", Map.of("message", detail));
+            return new Answer(error(id, RpcError.INTERNAL_ERROR, "Internal error", Map.of("message", detail)),
+                    cause);
         }
     }
 
@@ -131,7 +142,10 @@ final class JsonRpcServer implements TckServer {
 
     private void exchange(final HttpExchange exchange) throws IOException {
         final String request = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-        final byte[] response = handle(request).getBytes(StandardCharsets.UTF_8);
+        final Answer answer = answer(request);
+        testLog.call(exchange.getRequestHeaders().getFirst(TestLog.TEST_ID_HEADER), request, answer.response(),
+                answer.cause());
+        final byte[] response = answer.response().getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         exchange.sendResponseHeaders(200, response.length);
         try (OutputStream out = exchange.getResponseBody()) {

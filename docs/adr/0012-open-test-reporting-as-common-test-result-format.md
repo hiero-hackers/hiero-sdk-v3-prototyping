@@ -1,7 +1,7 @@
 # ADR-0012: Open Test Reporting is the common format of all test results
 
 **Status:** Accepted
-**Date:** 2026-10-17
+**Date:** 2026-10-17 (amended 2026-10-17: required content of a report)
 
 ## Context
 
@@ -66,6 +66,24 @@ tooling stay separate from those of the SDKs.
 - **Rendering, first step:** the HTML report of the OTR CLI. The views it lacks are **required** follow-ups (see
   below), not options.
 - **The first step covers Java only.**
+- **Required content:** every producer writes the content below, so that a result can be traced to what ran, where
+  and against what, and a failure can be understood from the report alone. All of it uses standard means of OTR.
+
+Required content of a report:
+
+| Where | What | Java (JUnit) | TCK (mocha) |
+|---|---|---|---|
+| `infrastructure` | host, user, operating system, CPU cores | JUnit | reporter |
+| `infrastructure`, Git extension [5] | origin (without credentials), branch, commit, clean status of the repository under test | `…open.xml.git.enabled` | reporter (`OTR_GIT_DIR`) |
+| data entries of the run | `run.started` (start of the run, ISO-8601 UTC) | `TestEnvironment` (`sdk-java/test-support`) | reporter |
+| data entries of the run | the runtime: `java.vendor`, `java.vendor.version`, `java.runtime.version`, `java.vm.name`, `java.home` — for other languages their equivalents (`node.version`, …) | `TestEnvironment` | reporter: Node.js and mocha; Java of the TCK server |
+| data entries of the run (TCK only) | `sdk`, `tck.version`, `tck.commit`, `tck.configuration`, `network.consensusNode`, `network.consensusNodeAccountId`, `network.mirrorNodeRestUrl`, `network.operatorAccountId` | — | reporter |
+| `file` attachments of the run (TCK only) | the console log of the run and the output of the TCK server | — | reporter (`OTR_ATTACHMENTS`) |
+| tag of every test | `testId:<id>` | generated `@Tag` | reporter |
+| `output` of every test | `stdout` and `stderr` while the test runs, logging included | `junit.platform.output.capture.stdout/stderr` | `tooling/tck/otr-test-output.cjs` |
+| `output` of every test (TCK only) | `tck-server`: the server's log of the calls of this test — request, response, stack trace of a failure | — | the server, via the header `X-TCK-Test-Id` |
+
+  A report never contains a secret: no private key of the TCK configuration, no credentials of a Git remote.
 
 Rejected:
 
@@ -97,6 +115,11 @@ Rejected:
 - In the TCK's parallel mode the events of a file arrive when the file is finished [9]; the times in the report are
   then those of the reporter, durations are approximate.
 - Until the old outputs are removed, every run writes two kinds of result files.
+- The output of every test makes the reports larger; a TCK run of the complete suite writes one server log per test.
+- Output is assigned by time: what a test writes after it finished (an unawaited promise) is lost or lands in the
+  next test. A TCK call that is made outside of a test (in `before`/`after` of a suite) has no test.
+- The per-test server log needs the TCK server's cooperation: it must read `X-TCK-Test-Id`. Every TCK server of a
+  language has to implement it; a server without it still works, its tests only lack the `tck-server` output.
 - Surefire 3.5.4 is the version of JUnit's documented setup [6]; `impl` uses 3.5.3 [1] and must be checked or upgraded.
 
 ### Follow-ups
@@ -105,6 +128,7 @@ Rejected:
 - Test language: `@@testId` (grammar, `KnownAnnotation`, validator rule with fixture, guideline) and ids for all spec
   tests; the scheme of the language-neutral check ids of contract tests in the generator core.
 - Define the syntax of the tag that carries the test id, the same in every language.
+- The TypeScript TCK server (`sdk-ts/tck/runtime`): the per-test log of `X-TCK-Test-Id`, like the Java one.
 - Reporters for `node:test` and the TCK (mocha); Rust with cargo-nextest (which of its outputs is used is decided then).
 - **Required:** a `metalang report` command that reads OTR and produces the views the CLI lacks: the matrix spec test ×
   language and the classification passed / stub / network / other.

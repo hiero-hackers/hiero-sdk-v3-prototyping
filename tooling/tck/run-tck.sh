@@ -6,7 +6,8 @@
 # Example: TCK_DIR=../hiero-sdk-tck tooling/tck/run-tck.sh java src/tests/crypto-service/test-account-create-transaction.ts
 #
 # The results are written as Open Test Reporting to sdk-<language>/tck/target/open-test-report.xml (ADR-0012; mocha
-# runs with tooling/tck/otr-mocha-reporter.cjs instead of the TCK's mochawesome), the console output also to
+# runs with tooling/tck/otr-mocha-reporter.cjs instead of the TCK's mochawesome; every test carries its stdout, stderr
+# and the server's log of its calls, see tooling/tck/otr-test-output.cjs), the console output also to
 # tooling/tck/last-run-<language>.log (both git-ignored); the summary of the run is printed at the very end, after the
 # summary of the server. `scripts/test-report.sh sdk` renders the results together with those of the SDK's tests.
 #
@@ -56,6 +57,13 @@ fi
 
 # the output of the server, also attached to the results of the run
 server_log="$repository/tooling/tck/last-run-$language-server.log"
+# the results as Open Test Reporting (ADR-0012), next to the TCK server of the language; scripts/test-report.sh renders
+# them together with the results of the SDK's own tests. The output of every single test (its stdout and stderr, and
+# the server's log of its calls) is attached to it: tooling/tck/otr-test-output.cjs and the server write it to
+# OTR_TEST_OUTPUT_DIR, the reporter reads it from there.
+results="$repository/sdk-$language/tck/target/open-test-report.xml"
+export OTR_TEST_OUTPUT_DIR="$repository/sdk-$language/tck/target/test-output"
+rm -rf "$OTR_TEST_OUTPUT_DIR" "$results" "$results.summary.json"
 
 # the server
 port="$(echo "$JSON_RPC_SERVER_URL" | sed -E 's#.*:([0-9]+)/?$#\1#')"
@@ -84,22 +92,20 @@ fi
 cp "$env_file" "$TCK_DIR/.env"
 cd "$TCK_DIR"
 log="$repository/tooling/tck/last-run-$language.log"
-# the results as Open Test Reporting (ADR-0012), next to the TCK server of the language; scripts/test-report.sh renders
-# them together with the results of the SDK's own tests
-results="$repository/sdk-$language/tck/target/open-test-report.xml"
 reporter="$repository/tooling/tck/otr-mocha-reporter.cjs"
 export OTR_OUTPUT="$results" TCK_SDK="$language" OTR_GIT_DIR="$repository" OTR_JAVA_HOME="${JAVA_HOME:-}" \
   TCK_ENV_FILE="$env_file" OTR_ATTACHMENTS="$server_log:$log"
-rm -f "$results" "$results.summary.json"
+test_output="$repository/tooling/tck/otr-test-output.cjs"
 # The arguments of the TCK's npm scripts `test` and `test:file` (revision a3ea777), with our reporter instead of
 # mochawesome: an npm script cannot be given another reporter. Keep them in sync when the TCK changes them.
 set +e
 if [[ $# -gt 0 ]]; then
   npx mocha --require ts-node/register --require tsconfig-paths/register --require src/preflight.ts \
+    --require "$test_output" \
     --timeout 90000 --slow 30000 --reporter "$reporter" --exit "$@" 2>&1 | tee "$log"
 else
   npx mocha --parallel --jobs 7 --node-option require=ts-node/register --node-option require=tsconfig-paths/register \
-    --require src/preflight.ts --recursive 'src/tests/**/*.ts' --timeout 90000 --slow 30000 \
+    --require src/preflight.ts --require "$test_output" --recursive 'src/tests/**/*.ts' --timeout 90000 --slow 30000 \
     --reporter "$reporter" --exit 2>&1 | tee "$log"
 fi
 status=${PIPESTATUS[0]}

@@ -379,7 +379,13 @@ The default network is a local [Solo](https://solo.hiero.org) network (Solo 0.63
 the TCK clone (an existing `.env` is saved as `.env.before-v3`) and runs mocha with the arguments of the TCK's
 `npm test` / `npm run test:file`, but with `tooling/tck/otr-mocha-reporter.cjs` instead of mochawesome: the results are
 written as Open Test Reporting to `sdk-<lang>/tck/target/open-test-report.xml` (ADR-0012), each test tagged with its
-id, and `scripts/test-report.sh sdk` renders them together with the SDK's own test results. `TCK_ENV`
+id, and `scripts/test-report.sh sdk` renders them together with the SDK's own test results. Every test carries its
+output: `tooling/tck/otr-test-output.cjs` (a mocha root hook plugin, loaded with `--require`, also in the parallel
+workers) captures stdout and stderr while the test runs and sends mocha's id of the test with every JSON-RPC request
+in the header `X-TCK-Test-Id`; the Java server (`TestLog` in `sdk-java/tck/runtime`) appends request, response and the
+stack trace of a failure to the log of that test. Both write to `sdk-<lang>/tck/target/test-output/`, the reporter
+attaches the files as `<output source="stdout|stderr|tck-server">`. The TypeScript server does not read the header
+yet. `TCK_ENV`
 selects another configuration (e.g. the TCK's `.env.testnet`). The values of `tooling/tck/solo.env` are Solo's defaults:
 operator `0.0.2` with Solo's well-known development key, consensus node `127.0.0.1:35211` (account `0.0.3`), mirror
 node REST API `http://127.0.0.1:38081`; the mirror node gRPC and REST-Java endpoints are not verified for Solo yet.

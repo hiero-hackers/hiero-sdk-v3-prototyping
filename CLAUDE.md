@@ -337,7 +337,9 @@ Comments` of the respective spec files and are its real output:
 - **Test results** are written as Open Test Reporting next to the usual reports
   ([ADR-0012](docs/adr/0012-open-test-reporting-as-common-test-result-format.md)): by the Java builds
   (`open-test-report.xml` in `target/surefire-reports`, every test tagged `testId:<id>`) and by the TCK runs
-  (`tooling/tck/otr-mocha-reporter.cjs`, into `sdk-<lang>/tck/target/`); `scripts/test-report.sh` renders them as
+  (`tooling/tck/otr-mocha-reporter.cjs`, into `sdk-<lang>/tck/target/`). Every test carries its stdout/stderr, a TCK
+  test also the server's log of its calls (`tooling/tck/otr-test-output.cjs`, header `X-TCK-Test-Id`, Java server
+  `TestLog`); the required content of a report is listed in ADR-0012. `scripts/test-report.sh` renders them as
   HTML, separately for the SDK (with its last TCK run), the generated API and the tooling. TypeScript and Rust
   follow; the report with the matrix spec test × language and the classification passed / stub / network / other is
   a required follow-up.
