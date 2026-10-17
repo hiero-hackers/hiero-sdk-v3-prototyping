@@ -1,13 +1,9 @@
 package org.hiero.enterprise.service.contract;
 
 
-public class ParamSupplier<SolidityType> {
+/// Supplies the value of a parameter in the form the contract call encodes; the SDK implements it for the parameters
+/// that its factory functions (ofString, ofAddress, ...) create.
+public interface ParamSupplier<SolidityType> {
 
-    /// Creates a new `ParamSupplier`.
-    public ParamSupplier() {
-    }
-
-    public SolidityType getNativeContractValue() {
-        throw new UnsupportedOperationException("Not implemented yet: ParamSupplier.getNativeContractValue");
-    }
+    SolidityType getNativeContractValue();
 }

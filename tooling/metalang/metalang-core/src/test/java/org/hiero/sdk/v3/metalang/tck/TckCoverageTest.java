@@ -132,6 +132,39 @@ class TckCoverageTest {
     }
 
     @Test
+    void variantsNestedObjectsAndBoundNamesShouldBeCompared() {
+        // GIVEN
+        final TckBindings.Bindings bindings = TckFixtures.resolve("""
+                binding createOrder
+                    when detail -> OrderTransaction {
+                        customer = customer : string | buyer : string
+                        grant    = when serials -> SerialGrant { serials = serials : int64 }
+                                   else -> AllGrant { all = all : bool }
+                        detail   = detail -> Detail { note = note : string }
+                        inner    = request inner
+                        items    = each item in names?, lines -> Item { name = item : string  unsupported x "y" }
+                        result serials = receipt.serials : int64
+                    }
+                    else -> OrderTransaction {
+                        customer = customer : string | unknown : string
+                        unsupported gone "removed"
+                    }
+                """);
+        final Map<String, TckSpecifications.Method> methods = Map.of("createOrder",
+                new TckSpecifications.Method("createOrder", "o.md",
+                        List.of("detail", "customer", "serials", "all", "inner", "names", "lines"),
+                        List.of("serials")));
+
+        // WHEN
+        final TckCoverage.Report report = TckCoverage.check(bindings, methods);
+
+        // THEN only one source of an assignment has to exist; bound names and nested objects are no parameters
+        assertThat(report.bound()).containsExactly("createOrder");
+        assertThat(report.findings()).containsExactly(
+                "Parameter gone of method createOrder does not exist in the TCK");
+    }
+
+    @Test
     void unknownCommonParametersShouldBeReported() {
         // GIVEN
         final TckBindings.Bindings bindings = TckFixtures.resolve("""

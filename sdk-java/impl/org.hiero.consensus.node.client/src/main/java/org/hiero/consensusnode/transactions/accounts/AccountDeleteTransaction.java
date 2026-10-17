@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.accounts;
 
+import org.hiero.consensusnode.client.internal.AccountKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -43,27 +45,27 @@ public final class AccountDeleteTransaction extends Transaction<AccountDeleteRec
 
     @Override
     public PackedTransaction<AccountDeleteReceipt, AccountDeleteTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountDeleteTransaction.pack");
+        return new Packing<>(AccountKinds.ACCOUNT_DELETE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<AccountDeleteReceipt, AccountDeleteTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountDeleteTransaction.signWithOperator");
+        return new Packing<>(AccountKinds.ACCOUNT_DELETE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<AccountDeleteReceipt, AccountDeleteTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountDeleteTransaction.sign");
+        return new Packing<>(AccountKinds.ACCOUNT_DELETE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<AccountDeleteReceipt, AccountDeleteTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountDeleteTransaction.sign");
+        return new Packing<>(AccountKinds.ACCOUNT_DELETE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<AccountDeleteReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountDeleteTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(AccountKinds.ACCOUNT_DELETE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -79,21 +81,21 @@ public final class AccountDeleteTransaction extends Transaction<AccountDeleteRec
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<AccountDeleteReceipt, AccountDeleteTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountDeleteTransaction.packForBatch");
+        return new Packing<>(AccountKinds.ACCOUNT_DELETE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<AccountDeleteReceipt, AccountDeleteTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountDeleteTransaction.signForBatchWithOperator");
+        return new Packing<>(AccountKinds.ACCOUNT_DELETE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<AccountDeleteReceipt, AccountDeleteTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountDeleteTransaction.signForBatch");
+        return new Packing<>(AccountKinds.ACCOUNT_DELETE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -101,7 +103,7 @@ public final class AccountDeleteTransaction extends Transaction<AccountDeleteRec
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<AccountDeleteReceipt, AccountDeleteTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountDeleteTransaction.signForBatch");
+        return new Packing<>(AccountKinds.ACCOUNT_DELETE).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

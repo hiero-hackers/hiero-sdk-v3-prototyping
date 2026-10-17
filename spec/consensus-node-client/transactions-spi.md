@@ -96,3 +96,19 @@ test "a type without a registered transaction support is rejected" {
   (`AccountCreateTransaction`, `PrngTransaction`, ...) has a `TransactionSupport` that `getTransactionSupport(...)`
   finds. The spec does not say so; if it did, a test could check that the support of each built-in type names that
   type.
+
+- **Three of the four `TransactionSupport.create(...)` methods cannot be implemented.** `create(TransactionResponse)`
+  has to build a `Response` and `create(TransactionReceipt)` a receipt, and both need a `TransactionId` — but neither
+  HAPI message carries one (`TransactionResponse` holds only the precheck code and the cost, `TransactionReceipt` has
+  no transaction id). `create(TransactionBody)` would read a transaction back from its body, which needs a mapping from
+  body to transaction per type that the spec does not define. The Java implementation throws for these three; only
+  `create(TransactionRecord)` works, because the record carries the `transactionID`. Should the methods take the
+  `TransactionId` as an additional parameter, be removed, or should the spec define the body-to-transaction mapping
+  (which `ScheduleInfo.scheduledTransaction` needs as well)?
+
+- **There is no public concrete receipt for transactions of unknown type.** A record whose transaction type the SDK
+  cannot map to a typed receipt — e.g. an entry of `AccountRecords.records`, which mixes all transaction types — still
+  needs a `Receipt`, but `Receipt` is an abstraction and every concrete receipt belongs to one transaction type. The
+  Java implementation uses an internal, untyped receipt class, so a caller cannot narrow such an element with
+  `instanceof` to a public type. Should the spec define a public general receipt type (status plus the generic HAPI
+  receipt fields), or should records of unknown types be represented differently?

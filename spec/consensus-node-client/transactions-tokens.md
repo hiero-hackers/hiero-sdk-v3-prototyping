@@ -940,7 +940,9 @@ test "a token create transaction rejects a name of more than 100 UTF-8 bytes" {
   [`mirror-node-token.md`](../mirror-node-client/mirror-node-token.md); the write-side builder is
   tracked in [`missing-features.md`](../../docs/missing-features.md) section 3.3 and depends on the
   same `Key` sum type. Adding `customFees: list<CustomFee>` here once the write-side model lands
-  is additive and breaks nothing.
+  is additive and breaks nothing. Until then neither the Java implementation nor the TCK can create a
+  token with custom fees: the TCK binding declares the `customFees` parameter of `createToken` as
+  unsupported, and the TCK tests that use it cannot pass.
 
 - **`TokenWipe`, `Freeze` / `Unfreeze`, `Pause` / `Unpause`, `GrantKyc` / `RevokeKyc`,
   `FeeScheduleUpdate`, `UpdateNfts` are deliberately out of scope of this file.** They live in
@@ -981,3 +983,30 @@ test "a token create transaction rejects a name of more than 100 UTF-8 bytes" {
   meaningful combination in V3, should one of them win (and be documented), or should they be `@@oneOrNoneOf`?
   Also, "SDK default applies when unset" for `expirationTime` names no default (the Java and Rust SDKs set an
   auto-renew period of 90 days instead), so no test can check it. — open
+
+- **A `TokenCreateTransaction` without `expirationTime` and `autoRenewPeriod` is rejected by the network.** The
+  description says that the protocol default applies when `autoRenewPeriod` is unset, but HAPI has no such default
+  and rejects a create that sets neither field. The Java implementation follows V2: it sends an `autoRenewPeriod` of
+  90 days, and whenever the period is non-zero and no `autoRenewAccount` is given, it sets the payer as auto-renew
+  account. This contradicts both the description and `TokenInfo.autoRenewAccount` in
+  [`queries-tokens.md`](queries-tokens.md) ("if absent, the token itself pays"). Should the spec state these defaults
+  (e.g. as `@@default` on `autoRenewPeriod` and a rule for `autoRenewAccount`), or should `pack(...)` reject a create
+  without either field? — open
+
+- **`tokenType` has no default.** `TokenCreateTransaction.tokenType` is required, while the V2 SDKs default to
+  `FUNGIBLE_COMMON` and the TCK binding sends `"ft"` when the TCK request leaves the type out. Should the field get
+  `@@default(FUNGIBLE_COMMON)`, or stay required (and the binding keep supplying the value)? — open
+
+- **`tokens` of `TokenAssociate` / `TokenDissociate` is a `set`, which the TCK contradicts.** Semantically the field
+  is a set — order does not matter and a duplicate is meaningless — so the type follows the meaning. But the TCK has
+  tests that send a token twice and expect the network status `TOKEN_ID_REPEATED_IN_TOKEN_LIST`; with a `set` the
+  duplicate collapses before the transaction is built, the transaction succeeds, and these tests cannot pass. The Java
+  implementation keeps the `set`. Is `set` the right choice (and the TCK tests are out of scope for V3), or does the
+  API have to be able to send the duplicates? — open
+
+- **Splitting mint / burn / wipe by token type removes a request the network rejects.** `TokenMint`, `TokenBurn` and
+  `TokenWipe` (in [`transactions-tokens-management.md`](transactions-tokens-management.md)) have a fungible variant
+  with an `amount` and an NFT variant with `metadata` / `serials`, so a request with neither an amount nor serials
+  cannot be expressed. Where the V2 SDKs send such a request and the network rejects it, the Java implementation
+  fails in the SDK (no variant can be chosen). Is the earlier, SDK-side failure the intended behavior, and which
+  error should it be? — open

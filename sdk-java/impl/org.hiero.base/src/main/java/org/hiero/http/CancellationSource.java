@@ -17,10 +17,11 @@ public record CancellationSource(Cancellation cancellation) {
     /// callbacks synchronously on the calling thread.
     @ThreadSafe(group = "cancellation")
     public void cancel() {
-        throw new UnsupportedOperationException("Not implemented yet: CancellationSource.cancel");
+        cancellation.fire();
     }
 
+    /// Creates a source with a new cancellation that has not fired.
     public static CancellationSource create() {
-        throw new UnsupportedOperationException("Not implemented yet: CancellationSource.create");
+        return new CancellationSource(new Cancellation());
     }
 }

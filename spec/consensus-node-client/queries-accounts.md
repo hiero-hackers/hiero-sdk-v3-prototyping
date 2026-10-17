@@ -307,9 +307,13 @@ test "an account info rejects being staked to an account and to a node" {
   typed identifiers in V3 (see [ADR-0003](../../docs/adr/0003-three-level-address-hierarchy-with-nullability-narrowing.md)).
   The dual setter matches the V2 ergonomic of having a balance query work uniformly for
   accounts and smart contracts. `@@oneOf` enforces exactly one of the two at construction.
-- **`AccountInfo.evmAddress` is the typed `EvmAddress` value type.** Carries 20 raw bytes
-  with hex `toString()` and `fromString` / `fromBytes` factories — concrete language bindings
-  do not need to expose a separate hex-string accessor.
+- **Which address is `AccountInfo.evmAddress`?** The field is a 20-byte `EvmAddress` and documented as the
+  "EVM-address alias if assigned". HAPI's `CryptoGetInfo` returns the alias (if it is a 20-byte EVM address) and
+  `contractAccountID`, which for an account without such an alias is the long-zero form of its id. The Java
+  implementation returns the 20-byte alias if present, else `contractAccountID` unless it is just the long-zero form,
+  so an account without an alias has no `evmAddress`. V2 and the TCK binding (`contractAccountId`) expect the
+  long-zero address instead. Should `evmAddress` be the alias only (`null` otherwise), always an address (falling back
+  to the long-zero form), or should `AccountInfo` carry both?
 - **Deleted-account behaviour.** Querying a deleted account returns an `AccountInfo` with
   `deleted = true` and most other fields cleared. Callers should branch on `deleted` rather
   than assuming the rest of the snapshot is meaningful.
@@ -334,10 +338,24 @@ test "an account info rejects being staked to an account and to a node" {
   the base abstraction `Record<Receipt>` from [`transactions.md`](transactions.md). Callers that
   need a typed receipt narrow the element at the language level (e.g. a pattern match / `instanceof`).
   This is the only place in the query specs that returns the base `Record` rather than a
-  query-specific result type.
+  query-specific result type. The narrowing does not work today: there is no public concrete receipt for
+  transaction types the SDK cannot map, so the Java implementation builds these elements with an internal,
+  untyped receipt — see the open item in [`transactions-spi.md`](transactions-spi.md).
 
 - **`AccountInfo` covers fewer attributes than HAPI `CryptoGetInfo`.** Not modelled (besides the
   deprecated proxy-staking and record-threshold fields): the token relationships, the alias key, the
   ledger ID, the hbar / token / NFT allowances and the Ethereum nonce. The TCK's `getAccountInfo`
   returns them (see [`tck-binding.md`](../../docs/tck-binding.md)). Are they left out on purpose (e.g. token
   relationships and allowances are read from the mirror node), or should `AccountInfo` add them?
+
+- **An empty memo cannot be told from an absent one.** `AccountInfo.accountMemo` is `@@nullable`, but HAPI returns
+  the memo as a protobuf `string`, which is `""` both when no memo was set and when an empty one was. The Java
+  implementation returns `""` for `AccountInfo` but `null` for the memos of `TokenInfo`, `TopicInfo` and `FileInfo`
+  ([`queries-tokens.md`](queries-tokens.md), [`queries-topics.md`](queries-topics.md),
+  [`queries-files.md`](queries-files.md)) — which is inconsistent. Should the memo fields of the consensus-node infos
+  be non-nullable (empty string when absent), or should `""` always be read as `null`?
+
+- **`AccountBalance.tokenBalances` is always empty.** HAPI deprecated the `tokenBalances` field of
+  `CryptoGetAccountBalance` and current networks no longer fill it, so the Java implementation always returns an
+  empty map, and the example that reads a token balance from it does not work. Should the field be removed (token
+  balances are read from the mirror node), or should the SDK fill it from another source?

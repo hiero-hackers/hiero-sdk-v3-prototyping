@@ -3,19 +3,35 @@ package org.hiero.enterprise.service.contract;
 import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.math.BigInteger;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.hiero.authority.Authority;
+import org.hiero.authority.AuthorityFactory;
 import org.hiero.authority.PublicKeyAuthority;
+import org.hiero.consensusnode.client.ClientFactory;
+import org.hiero.consensusnode.transactions.TransactionsFactory;
+import org.hiero.consensusnode.transactions.spi.SpiFactory;
+import org.hiero.enterprise.service.ServiceFactory;
+import org.hiero.enterprise.service.account.AccountFactory;
+import org.hiero.enterprise.service.file.FileFactory;
+import org.hiero.enterprise.service.nft.NftFactory;
+import org.hiero.enterprise.service.token.TokenFactory;
+import org.hiero.enterprise.service.topic.TopicFactory;
 import org.hiero.hedera.Hbar;
 import org.hiero.hedera.HbarUnit;
+import org.hiero.http.HttpFactory;
 import org.hiero.keys.ByteImportEncoding;
 import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
+import org.hiero.ledger.config.ConfigFactory;
+import org.hiero.mirrornode.MirrornodeFactory;
+import org.hiero.mirrornode.network.NetworkFactory;
+import org.hiero.mirrornode.transaction.TransactionFactory;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
@@ -259,7 +275,7 @@ class ContractCreateParamsTest {
     }
 
     private static List<Param<?, ?>> constructorParamsValue() {
-        return List.of(new Param<>("value", "value", new ParamSupplier<>()));
+        return List.of(ContractFactory.int256(new BigInteger("1")));
     }
 
     private static long gasValue() {

@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.accounts;
 
+import org.hiero.consensusnode.client.internal.AccountKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -62,27 +64,27 @@ public final class TransferTransaction extends Transaction<TransferReceipt, Tran
 
     @Override
     public PackedTransaction<TransferReceipt, TransferTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TransferTransaction.pack");
+        return new Packing<>(AccountKinds.TRANSFER).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TransferReceipt, TransferTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TransferTransaction.signWithOperator");
+        return new Packing<>(AccountKinds.TRANSFER).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<TransferReceipt, TransferTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TransferTransaction.sign");
+        return new Packing<>(AccountKinds.TRANSFER).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TransferReceipt, TransferTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TransferTransaction.sign");
+        return new Packing<>(AccountKinds.TRANSFER).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<TransferReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TransferTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(AccountKinds.TRANSFER).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -98,21 +100,21 @@ public final class TransferTransaction extends Transaction<TransferReceipt, Tran
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<TransferReceipt, TransferTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TransferTransaction.packForBatch");
+        return new Packing<>(AccountKinds.TRANSFER).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<TransferReceipt, TransferTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TransferTransaction.signForBatchWithOperator");
+        return new Packing<>(AccountKinds.TRANSFER).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<TransferReceipt, TransferTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TransferTransaction.signForBatch");
+        return new Packing<>(AccountKinds.TRANSFER).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -120,7 +122,7 @@ public final class TransferTransaction extends Transaction<TransferReceipt, Tran
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<TransferReceipt, TransferTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TransferTransaction.signForBatch");
+        return new Packing<>(AccountKinds.TRANSFER).signForBatch(this, payerId, signer, batchKey);
     }
 
     /// Returns a builder for a new `TransferTransaction`.

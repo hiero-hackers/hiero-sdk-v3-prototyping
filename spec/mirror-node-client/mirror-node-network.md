@@ -248,7 +248,8 @@ test "network stake keeps its staking parameters and its staking period" {
   its field set, and the full HIP-1313 fee-estimation model (node / network / service breakdown
   plus the high-volume congestion multiplier) is tracked in
   [`missing-features.md`](../../docs/missing-features.md) §3.4. Only `estimatedFee` is modelled here;
-  expand once §3.4 lands the authoritative shape.
+  expand once §3.4 lands the authoritative shape. The Java implementation of `estimateFees` is provisional
+  for the same reason and has not been checked against a mirror node that supports HIP-1313.
 - **`estimateFees(transaction: bytes)` takes encoded bytes, not a typed transaction.** The
   mirror-node layer is independent of `consensus-node-client`, so it cannot reference
   `PackedTransaction`; the protobuf-encoded transaction bytes are the layering-clean input (and
@@ -271,3 +272,9 @@ test "network stake keeps its staking parameters and its staking period" {
   period are lost, and the comment does not say that the minutes are converted. Should `NetworkStake`
   have `stakingPeriodStart` / `stakingPeriodEnd: zonedDateTime` (or a range type, see the allowance
   note in [`mirror-node-account.md`](mirror-node-account.md)) next to the duration?
+
+- **`ContractRepository` and `NetworkRepository` are concrete types.** The other five repositories are abstractions,
+  but these two are declared without `abstraction`, so they can be instantiated directly — and a
+  `new ContractRepository()` / `new NetworkRepository()` has no `MirrorNode` and cannot reach a mirror node. The Java
+  implementation creates working instances only through `createRepository(...)` / `createMirrorNodeClient(...)`.
+  Should both be abstractions like the other repositories?

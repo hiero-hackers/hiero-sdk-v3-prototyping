@@ -1,8 +1,10 @@
-import { of as authorityOf, PublicKeyAuthority, type Authority } from "@hiero/base/authority";
+import { AuthorityList, of as authorityOf, PublicKeyAuthority, type Authority } from "@hiero/base/authority";
 import { Hbar, HbarUnit } from "@hiero/base/hedera";
-import { createPrivateKey, createPublicKey, KeyFormat, type PrivateKey } from "@hiero/base/keys";
-import { AccountId, Address, EvmAddress } from "@hiero/base/ledger";
+import { createPrivateKey, createPublicKey, KeyFormat, type PrivateKey, type PublicKey } from "@hiero/base/keys";
+import { AccountId, Address, EvmAddress, IpAddress, type TransactionId } from "@hiero/base/ledger";
 import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
+import { TokenSupplyType, TokenType } from "@hiero/base/token";
+import type { TokenNftInfo } from "@hiero/consensus-node-client/consensusnode/queries/tokens";
 import type { TransactionStatus } from "@hiero/consensus-node-client/consensusnode/transactions";
 import { Duration } from "@hiero/support";
 import type { Converters } from "@hiero/tck-contract";
@@ -89,6 +91,66 @@ export class TsConverters implements Converters {
         return Uint8Array.from(Buffer.from(text.startsWith("0x") ? text.substring(2) : text, "hex"));
     }
 
+    utf8(json: unknown): Uint8Array {
+        return new TextEncoder().encode(this.string(json));
+    }
+
+    /** A JSON list of keys that must all sign; an empty list is no key (`null`: the attribute stays absent). */
+    keyList(json: unknown): Authority {
+        if (!Array.isArray(json)) {
+            throw new TypeError(`not a list of keys: ${String(json)}`);
+        }
+        if (json.length === 0) {
+            // the runtime treats a null value as absent; the contract has no nullable converters
+            return null as unknown as Authority;
+        }
+        return authorityOf(...json.map((key: unknown) => this.key(key)));
+    }
+
+    /** `ft` / `nft`, or the name of the constant. */
+    tokenType(json: unknown): TokenType {
+        switch (this.string(json).toLowerCase()) {
+            case "ft":
+            case "fungible_common":
+                return TokenType.FUNGIBLE_COMMON;
+            case "nft":
+            case "non_fungible_unique":
+                return TokenType.NON_FUNGIBLE_UNIQUE;
+            default:
+                throw new RangeError(`not a token type: ${String(json)}`);
+        }
+    }
+
+    tokenSupplyType(json: unknown): TokenSupplyType {
+        const name = this.string(json).toUpperCase();
+        const type = TokenSupplyType.values().find((value) => value.name === name);
+        if (type === undefined) {
+            throw new RangeError(`not a token supply type: ${String(json)}`);
+        }
+        return type;
+    }
+
+    nftIdToken(json: unknown): Address {
+        return this.address(TsConverters.#nftIdPart(json, 0));
+    }
+
+    nftIdSerial(json: unknown): bigint {
+        return this.int64(TsConverters.#nftIdPart(json, 1));
+    }
+
+    ipAddress(json: unknown): IpAddress {
+        return IpAddress.fromBytes(this.hex(json));
+    }
+
+    static #nftIdPart(json: unknown, index: number): string {
+        const parts = String(json).split("/");
+        const part = parts[index];
+        if (parts.length !== 2 || part === undefined) {
+            throw new RangeError(`not an NFT ID (tokenId/serial): ${String(json)}`);
+        }
+        return part;
+    }
+
     // --- outbound --------------------------------------------------------------------------------
 
     stringJson(value: string): unknown {
@@ -146,6 +208,42 @@ export class TsConverters implements Converters {
     statusJson(value: TransactionStatus): unknown {
         const named = value as TransactionStatus & { readonly name?: unknown };
         return typeof named.name === "string" ? named.name : String(value.code);
+    }
+
+    numberJson(value: number): unknown {
+        return value;
+    }
+
+    utf8Json(value: Uint8Array): unknown {
+        return new TextDecoder().decode(value);
+    }
+
+    /** The keys of a list that must all sign, or the single key. */
+    keyListJson(value: Authority): unknown {
+        if (value instanceof AuthorityList && value.threshold === value.children.length) {
+            return value.children.map((child) => this.keyJson(child));
+        }
+        return [this.keyJson(value)];
+    }
+
+    publicKeyJson(value: PublicKey): unknown {
+        return Buffer.from(value.toBytes(KeyFormat.SPKI_WITH_DER)).toString("hex");
+    }
+
+    tokenTypeJson(value: TokenType): unknown {
+        return value.name;
+    }
+
+    tokenSupplyTypeJson(value: TokenSupplyType): unknown {
+        return value.name;
+    }
+
+    nftIdJson(value: TokenNftInfo): unknown {
+        return `${value.tokenId.toString()}/${value.serial.toString()}`;
+    }
+
+    transactionIdJson(value: TransactionId): unknown {
+        return value.toString();
     }
 
     // --- used by the runtime itself --------------------------------------------------------------

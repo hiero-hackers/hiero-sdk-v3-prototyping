@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.queries.accounts;
 
+import org.hiero.consensusnode.client.internal.AccountQueries;
+import org.hiero.consensusnode.client.internal.Querying;
 import java.util.concurrent.CompletionStage;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.queries.FreeQuery;
@@ -82,7 +84,7 @@ public final class AccountBalanceQuery extends FreeQuery<AccountBalance> {
     /// handled transparently.
     @Override
     public CompletionStage<QueryResponse<AccountBalance>> submit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountBalanceQuery.submit");
+        return Querying.free(this, AccountQueries.ACCOUNT_BALANCE, client);
     }
 
     /// Returns a builder for a new `AccountBalanceQuery`.

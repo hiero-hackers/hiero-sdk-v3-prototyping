@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.files;
 
+import org.hiero.consensusnode.client.internal.FileKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -36,27 +38,27 @@ public final class FileDeleteTransaction extends Transaction<FileDeleteReceipt, 
 
     @Override
     public PackedTransaction<FileDeleteReceipt, FileDeleteTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: FileDeleteTransaction.pack");
+        return new Packing<>(FileKinds.FILE_DELETE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<FileDeleteReceipt, FileDeleteTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: FileDeleteTransaction.signWithOperator");
+        return new Packing<>(FileKinds.FILE_DELETE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<FileDeleteReceipt, FileDeleteTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: FileDeleteTransaction.sign");
+        return new Packing<>(FileKinds.FILE_DELETE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<FileDeleteReceipt, FileDeleteTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: FileDeleteTransaction.sign");
+        return new Packing<>(FileKinds.FILE_DELETE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<FileDeleteReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: FileDeleteTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(FileKinds.FILE_DELETE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -72,21 +74,21 @@ public final class FileDeleteTransaction extends Transaction<FileDeleteReceipt, 
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<FileDeleteReceipt, FileDeleteTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: FileDeleteTransaction.packForBatch");
+        return new Packing<>(FileKinds.FILE_DELETE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<FileDeleteReceipt, FileDeleteTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: FileDeleteTransaction.signForBatchWithOperator");
+        return new Packing<>(FileKinds.FILE_DELETE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<FileDeleteReceipt, FileDeleteTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: FileDeleteTransaction.signForBatch");
+        return new Packing<>(FileKinds.FILE_DELETE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -94,7 +96,7 @@ public final class FileDeleteTransaction extends Transaction<FileDeleteReceipt, 
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<FileDeleteReceipt, FileDeleteTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: FileDeleteTransaction.signForBatch");
+        return new Packing<>(FileKinds.FILE_DELETE).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

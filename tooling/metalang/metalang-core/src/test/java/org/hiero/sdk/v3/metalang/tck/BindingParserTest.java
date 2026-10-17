@@ -1,6 +1,7 @@
 package org.hiero.sdk.v3.metalang.tck;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
@@ -61,9 +62,11 @@ class BindingParserTest {
                 .containsExactly("customer", "^name");
         assertThat(customer.sources().get(1).path().parent()).isTrue();
         final Binding.Each each = (Binding.Each) binding.members().get(1);
-        assertThat(each.source().first()).isEqualTo("lines");
-        assertThat(each.source().last()).isEqualTo("item");
-        assertThat(each.source().rest().toString()).isEqualTo("item");
+        final Binding.Path source = each.generators().getFirst().path();
+        assertThat(each.generators().getFirst().name()).isNull();
+        assertThat(source.first()).isEqualTo("lines");
+        assertThat(source.last()).isEqualTo("item");
+        assertThat(source.rest().toString()).isEqualTo("item");
         assertThat(each.type()).isEqualTo("Item");
         assertThat(each.members()).hasSize(1);
         final Binding.Result order = (Binding.Result) binding.members().get(2);
@@ -78,6 +81,68 @@ class BindingParserTest {
     }
 
     @Test
+    void shouldParseVariantsNestedObjectsRequestsGeneratorsAndConstants() {
+        // WHEN
+        final BindingParser.Result result = BindingParser.parse("shop.md", """
+                ```bindings
+                // Mints.
+                binding mint
+                    when metadata -> A {
+                        x = "ft" : string | y : string
+                        result r = receipt : string
+                    }
+                    when serials -> B { }
+                    else -> C {
+                        grant = when serials -> G { } else -> H { }
+                        endpoint = proxy -> E { }
+                        plain = -> E { }
+                        inner = request scheduled
+                        list = each pending, serial in serialNumbers?, token in tokens -> P { }
+                    }
+                binding single when a -> A { }
+                ```
+                """);
+
+        // THEN
+        assertThat(result.diagnostics()).isEmpty();
+        assertThat(result.bindings()).extracting(Binding::name).containsExactly("mint", "mint", "mint", "single");
+        assertThat(result.bindings()).extracting(b -> String.valueOf(b.when()))
+                .containsExactly("metadata", "serials", "null", "a");
+        assertThat(result.bindings()).extracting(Binding::type).containsExactly("A", "B", "C", "A");
+        assertThat(result.bindings()).extracting(Binding::documentation).containsExactly("Mints.", "Mints.",
+                "Mints.", "");
+        final Binding.Assignment x = (Binding.Assignment) result.bindings().getFirst().members().getFirst();
+        assertThat(x.sources().getFirst().literal()).isEqualTo("ft");
+        assertThat(x.sources().getFirst().path()).isNull();
+        assertThat(x.sources()).extracting(Binding.Source::toString).containsExactly("\"ft\"", "y");
+        assertThat(((Binding.Result) result.bindings().getFirst().members().get(1)).value().segments())
+                .containsExactly("receipt");
+        final List<Binding.Member> members = result.bindings().get(2).members();
+        final Binding.Construct grant = (Binding.Construct) members.getFirst();
+        assertThat(grant.path()).isNull();
+        assertThat(grant.variants()).extracting(v -> String.valueOf(v.when()), Binding.Variant::type)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple("serials", "G"),
+                        org.assertj.core.groups.Tuple.tuple("null", "H"));
+        assertThat(((Binding.Construct) members.get(1)).path()).hasToString("proxy");
+        assertThat(((Binding.Construct) members.get(2)).path()).isNull();
+        assertThat(((Binding.Request) members.get(3)).path()).hasToString("scheduled");
+        final Binding.Each list = (Binding.Each) members.get(4);
+        assertThat(list.generators()).containsExactly(
+                new Binding.Generator(null, new Binding.Path(false, List.of("pending")), false),
+                new Binding.Generator("serial", new Binding.Path(false, List.of("serialNumbers")), true),
+                new Binding.Generator("token", new Binding.Path(false, List.of("tokens")), false));
+    }
+
+    @Test
+    void sourcesAreEitherPathsOrConstants() {
+        assertThatThrownBy(() -> new Binding.Source(null, null, "string"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new Binding.Each("a", List.of(), "T", List.of(),
+                new org.hiero.sdk.v3.metalang.diagnostic.SourceLocation("f", 1, 1)))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void attributesMayBeNamedLikeKeywords() {
         // WHEN
         final BindingParser.Result result = BindingParser.parse("shop.md", """
@@ -86,6 +151,8 @@ class BindingParserTest {
                     result = result : string
                     unsupported = unsupported : string
                     each = each : string
+                    when = when : string
+                    request = request : string
                     unsupported result "reason"
                 }
                 ```
@@ -93,10 +160,10 @@ class BindingParserTest {
 
         // THEN
         assertThat(result.diagnostics()).isEmpty();
-        assertThat(result.bindings().getFirst().members()).hasSize(4);
-        assertThat(result.bindings().getFirst().members().get(3))
+        assertThat(result.bindings().getFirst().members()).hasSize(6);
+        assertThat(result.bindings().getFirst().members().get(5))
                 .isEqualTo(new Binding.Unsupported(false, "result", "reason",
-                        result.bindings().getFirst().members().get(3).location()));
+                        result.bindings().getFirst().members().get(5).location()));
     }
 
     @ParameterizedTest
@@ -108,7 +175,10 @@ class BindingParserTest {
             "binding b T {};expected '->', found 'T'",
             "binding b -> T { x = y };expected ':', found '}'",
             "binding b -> T { unsupported x y };expected the reason as string, found 'y'",
-            "binding b -> T { x = \"y\" : string };expected a name, found 'y'",
+            "binding b -> T { x = \"y\" };expected ':', found '}'",
+            "binding b when -> T { };expected a name, found '->'",
+            "binding b when a -> T { } else T { };expected '->', found 'T'",
+            "binding b -> T { x = each a, b in -> T { } };expected a name, found '->'",
             "binding b -> T { x = y : string \"oops };expected a name, found 'unterminated string'",
     })
     void syntaxErrorsShouldBeReported(final String block, final String message) {

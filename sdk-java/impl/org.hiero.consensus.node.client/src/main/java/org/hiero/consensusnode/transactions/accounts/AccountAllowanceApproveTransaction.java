@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.accounts;
 
+import org.hiero.consensusnode.client.internal.AccountKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -65,27 +67,27 @@ public final class AccountAllowanceApproveTransaction extends Transaction<Accoun
 
     @Override
     public PackedTransaction<AccountAllowanceApproveReceipt, AccountAllowanceApproveTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountAllowanceApproveTransaction.pack");
+        return new Packing<>(AccountKinds.ACCOUNT_ALLOWANCE_APPROVE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<AccountAllowanceApproveReceipt, AccountAllowanceApproveTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountAllowanceApproveTransaction.signWithOperator");
+        return new Packing<>(AccountKinds.ACCOUNT_ALLOWANCE_APPROVE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<AccountAllowanceApproveReceipt, AccountAllowanceApproveTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountAllowanceApproveTransaction.sign");
+        return new Packing<>(AccountKinds.ACCOUNT_ALLOWANCE_APPROVE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<AccountAllowanceApproveReceipt, AccountAllowanceApproveTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountAllowanceApproveTransaction.sign");
+        return new Packing<>(AccountKinds.ACCOUNT_ALLOWANCE_APPROVE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<AccountAllowanceApproveReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountAllowanceApproveTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(AccountKinds.ACCOUNT_ALLOWANCE_APPROVE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -101,21 +103,21 @@ public final class AccountAllowanceApproveTransaction extends Transaction<Accoun
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<AccountAllowanceApproveReceipt, AccountAllowanceApproveTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountAllowanceApproveTransaction.packForBatch");
+        return new Packing<>(AccountKinds.ACCOUNT_ALLOWANCE_APPROVE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<AccountAllowanceApproveReceipt, AccountAllowanceApproveTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountAllowanceApproveTransaction.signForBatchWithOperator");
+        return new Packing<>(AccountKinds.ACCOUNT_ALLOWANCE_APPROVE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<AccountAllowanceApproveReceipt, AccountAllowanceApproveTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountAllowanceApproveTransaction.signForBatch");
+        return new Packing<>(AccountKinds.ACCOUNT_ALLOWANCE_APPROVE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -123,7 +125,7 @@ public final class AccountAllowanceApproveTransaction extends Transaction<Accoun
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<AccountAllowanceApproveReceipt, AccountAllowanceApproveTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountAllowanceApproveTransaction.signForBatch");
+        return new Packing<>(AccountKinds.ACCOUNT_ALLOWANCE_APPROVE).signForBatch(this, payerId, signer, batchKey);
     }
 
     /// Returns a builder for a new `AccountAllowanceApproveTransaction`.

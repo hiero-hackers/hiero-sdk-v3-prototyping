@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.schedule;
 
+import org.hiero.consensusnode.client.internal.ScheduleKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -39,27 +41,27 @@ public final class ScheduleSignTransaction extends Transaction<ScheduleSignRecei
 
     @Override
     public PackedTransaction<ScheduleSignReceipt, ScheduleSignTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: ScheduleSignTransaction.pack");
+        return new Packing<>(ScheduleKinds.SCHEDULE_SIGN).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<ScheduleSignReceipt, ScheduleSignTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: ScheduleSignTransaction.signWithOperator");
+        return new Packing<>(ScheduleKinds.SCHEDULE_SIGN).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<ScheduleSignReceipt, ScheduleSignTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: ScheduleSignTransaction.sign");
+        return new Packing<>(ScheduleKinds.SCHEDULE_SIGN).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<ScheduleSignReceipt, ScheduleSignTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: ScheduleSignTransaction.sign");
+        return new Packing<>(ScheduleKinds.SCHEDULE_SIGN).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<ScheduleSignReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: ScheduleSignTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(ScheduleKinds.SCHEDULE_SIGN).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -75,21 +77,21 @@ public final class ScheduleSignTransaction extends Transaction<ScheduleSignRecei
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<ScheduleSignReceipt, ScheduleSignTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: ScheduleSignTransaction.packForBatch");
+        return new Packing<>(ScheduleKinds.SCHEDULE_SIGN).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<ScheduleSignReceipt, ScheduleSignTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: ScheduleSignTransaction.signForBatchWithOperator");
+        return new Packing<>(ScheduleKinds.SCHEDULE_SIGN).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<ScheduleSignReceipt, ScheduleSignTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: ScheduleSignTransaction.signForBatch");
+        return new Packing<>(ScheduleKinds.SCHEDULE_SIGN).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -97,7 +99,7 @@ public final class ScheduleSignTransaction extends Transaction<ScheduleSignRecei
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<ScheduleSignReceipt, ScheduleSignTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: ScheduleSignTransaction.signForBatch");
+        return new Packing<>(ScheduleKinds.SCHEDULE_SIGN).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

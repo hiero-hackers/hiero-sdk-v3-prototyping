@@ -366,9 +366,20 @@ test "a file delete transaction keeps its file and survives toBytes and fromByte
   default if unset", but the spec does not state the default, so no test can check it. The Python SDK sets the
   current time plus 90 days (7,776,000 seconds) in the constructor. Should the default be stated (e.g. as an
   `@@default`-like rule relative to the valid start), or should "unset" mean that the network's default applies?
+  The Java implementation sends the valid start of the transaction id plus 90 days, as the V2 SDKs do.
 
 - **How does a chunked `FileAppendTransaction` map onto `PackedTransaction`?** A `PackedTransaction` has one
   `transactionId` and one body per target node, but each chunk of a large append is a transaction of its own with its
   own `TransactionId`. What `pack(...)`, `signableBodies()` and `toBytes()` return for contents above the body limit is
   not stated, so the chunking tests of the current SDKs (one body per chunk and node, consecutive valid starts) cannot
-  be written against this API.
+  be written against this API. Because of this, the Java implementation does not chunk at all: `pack(...)` rejects a
+  `FileAppendTransaction` whose contents exceed 4096 bytes, so larger contents can only be appended by the caller in
+  several transactions.
+
+- **An immutable file cannot be expressed.** HAPI makes a file immutable with an empty key list, but
+  `AuthorityList` requires at least one child (`@@minSize(1)`) and `authority` cannot be set to "no keys". So
+  `FileCreateTransaction` can only create an immutable file by leaving `authority` unset, and `FileUpdateTransaction`
+  cannot make an existing file immutable (`null` means "unchanged"). On the read side, `FileInfo.authority` of a file
+  without keys is absent, while the TCK expects an empty key list (`[]`). Should there be an explicit "no keys" value
+  (cf. the `KeyUpdate` operation of ADR-0004 for tokens and topics), and how should the TCK binding map an absent
+  authority?

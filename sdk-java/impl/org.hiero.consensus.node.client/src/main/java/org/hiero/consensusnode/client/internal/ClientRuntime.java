@@ -7,6 +7,7 @@ import com.hederahashgraph.api.proto.java.ResponseType;
 import com.hederahashgraph.api.proto.java.Transaction;
 import com.hederahashgraph.api.proto.java.TransactionGetReceiptQuery;
 import com.hederahashgraph.api.proto.java.TransactionGetReceiptResponse;
+import com.hederahashgraph.api.proto.java.TransactionGetRecordQuery;
 import com.hederahashgraph.api.proto.java.TransactionResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -20,7 +21,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.queries.QueryResponse;
 import org.hiero.consensusnode.transactions.Receipt;
+import org.hiero.consensusnode.transactions.Record;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.ConsensusNode;
 import org.hiero.ledger.TransactionId;
@@ -42,11 +45,13 @@ public final class ClientRuntime {
     private static final Map<HieroClient<?>, ClientRuntime> BY_CLIENT = new ConcurrentHashMap<>();
     private static final Map<TransactionId, Pending> BY_TRANSACTION = new ConcurrentHashMap<>();
 
+    private final HieroClient<?> client;
     private final List<ConsensusNode> nodes;
     private final Map<ConsensusNode, ManagedChannel> channels = new ConcurrentHashMap<>();
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
-    private ClientRuntime(final NetworkSetting networkSetting) {
+    private ClientRuntime(final HieroClient<?> client, final NetworkSetting networkSetting) {
+        this.client = client;
         this.nodes = networkSetting.getConsensusNodes().stream()
                 .sorted(Comparator.comparing(node -> node.account().toString())).toList();
         if (nodes.isEmpty()) {
@@ -59,7 +64,7 @@ public final class ClientRuntime {
     /// @param client         the client
     /// @param networkSetting the network it talks to
     public static void register(final HieroClient<?> client, final NetworkSetting networkSetting) {
-        BY_CLIENT.put(client, new ClientRuntime(networkSetting));
+        BY_CLIENT.put(client, new ClientRuntime(client, networkSetting));
     }
 
     /// Returns the runtime of a client.
@@ -100,13 +105,12 @@ public final class ClientRuntime {
     public CompletableFuture<Void> submit(final ConsensusNode node, final TransactionKind<?, ?> kind,
                                           final Transaction transaction, final TransactionId id) {
         BY_TRANSACTION.put(id, new Pending(this, node, kind));
-        return Grpc.call(channel(node), Grpc.unary(kind.service(), kind.method(), Transaction.getDefaultInstance(),
-                TransactionResponse.getDefaultInstance()), transaction).thenAccept(response -> {
+        return Grpc.call(channel(node), kind.grpcMethod(), transaction).thenAccept(response -> {
             final HapiTransactionStatus precheck = HapiTransactionStatus.ofCode(
                     response.getNodeTransactionPrecheckCodeValue());
             if (precheck != HapiTransactionStatus.OK) {
                 BY_TRANSACTION.remove(id);
-                throw new IllegalStateException("The node rejected the transaction: " + precheck);
+                throw new PrecheckException(precheck);
             }
         });
     }
@@ -131,6 +135,32 @@ public final class ClientRuntime {
         }
         return CompletableFuture.supplyAsync(() -> pending.runtime().awaitReceipt(id, pending),
                 pending.runtime().executor);
+    }
+
+    /// Queries the record of a submitted transaction, once it has reached consensus. The operator of the client that
+    /// submitted it pays for the query.
+    ///
+    /// @param id the id of the transaction
+    /// @return the record
+    public static CompletableFuture<Record<Receipt>> queryRecord(final TransactionId id) {
+        final Pending pending = BY_TRANSACTION.get(id);
+        if (pending == null) {
+            return CompletableFuture.failedFuture(new IllegalStateException("The transaction " + id
+                    + " was not submitted through a client of this SDK"));
+        }
+        // the record exists once the receipt is final
+        return queryReceipt(id).thenCompose(receipt -> Querying.paid(id, null, recordQuery(pending.kind()),
+                pending.runtime().client).toCompletableFuture()).thenApply(QueryResponse::value);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static QueryKind<TransactionId, Record<Receipt>> recordQuery(final TransactionKind<?, ?> kind) {
+        final KindSupport<Receipt, ?> support = new KindSupport<>((TransactionKind<Receipt, ?>) (TransactionKind<?, ?>) kind);
+        return new QueryKind<>(CRYPTO_SERVICE, "getTxRecordByTxID",
+                (transactionId, header) -> Query.newBuilder().setTransactionGetRecord(TransactionGetRecordQuery
+                        .newBuilder().setHeader(header).setTransactionID(Protobuf.toProto(transactionId))).build(),
+                response -> response.getTransactionGetRecord().getHeader(),
+                (transactionId, response) -> support.create(response.getTransactionGetRecord().getTransactionRecord()));
     }
 
     private Receipt awaitReceipt(final TransactionId id, final Pending pending) {
@@ -163,7 +193,18 @@ public final class ClientRuntime {
                 + " s, last status " + last);
     }
 
-    private ManagedChannel channel(final ConsensusNode node) {
+    /// The executor of the blocking work of this runtime (virtual threads).
+    ///
+    /// @return the executor
+    ExecutorService executor() {
+        return executor;
+    }
+
+    /// The channel to a node.
+    ///
+    /// @param node the node
+    /// @return the channel, created on first use
+    ManagedChannel channel(final ConsensusNode node) {
         return channels.computeIfAbsent(node, target -> ManagedChannelBuilder
                 .forAddress(target.ip().toString(), target.port()).usePlaintext().executor(executor).build());
     }
@@ -174,8 +215,15 @@ public final class ClientRuntime {
     }
 
     private static void sleep() {
+        sleep(RECEIPT_POLL_INTERVAL);
+    }
+
+    /// Waits.
+    ///
+    /// @param duration how long
+    static void sleep(final Duration duration) {
         try {
-            Thread.sleep(RECEIPT_POLL_INTERVAL);
+            Thread.sleep(duration);
         } catch (final InterruptedException interrupted) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted while waiting for a receipt", interrupted);

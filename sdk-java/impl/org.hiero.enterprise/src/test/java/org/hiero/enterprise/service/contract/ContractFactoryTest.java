@@ -102,7 +102,7 @@ class ContractFactoryTest {
     @Test
     @DisplayName("ofAddress(value) can be called and returns a value")
     void shouldCallOfAddress() {
-        assertNotNull(ContractFactory.ofAddress(valueValue()));
+        assertNotNull(ContractFactory.ofAddress(valueValue3()));
     }
 
     @Test
@@ -112,9 +112,15 @@ class ContractFactoryTest {
     }
 
     @Test
+    @DisplayName("ofAddress: value rejects a value that does not match the pattern")
+    void shouldRejectValueNotMatchingThePatternInOfAddress() {
+        assertThrows(IllegalArgumentException.class, () -> ContractFactory.ofAddress(""));
+    }
+
+    @Test
     @DisplayName("ofAddress(value) can be called and returns a value")
     void shouldCallOfAddress2() {
-        assertNotNull(ContractFactory.ofAddress(valueValue3()));
+        assertNotNull(ContractFactory.ofAddress(valueValue4()));
     }
 
     @Test
@@ -126,13 +132,13 @@ class ContractFactoryTest {
     @Test
     @DisplayName("ofBool(value) can be called and returns a value")
     void shouldCallOfBool() {
-        assertNotNull(ContractFactory.ofBool(valueValue4()));
+        assertNotNull(ContractFactory.ofBool(valueValue5()));
     }
 
     @Test
     @DisplayName("uint8(value) can be called and returns a value")
     void shouldCallUint8() {
-        assertNotNull(ContractFactory.uint8(valueValue5()));
+        assertNotNull(ContractFactory.uint8(valueValue6()));
     }
 
     @Test
@@ -162,7 +168,7 @@ class ContractFactoryTest {
     @Test
     @DisplayName("int8(value) can be called and returns a value")
     void shouldCallInt8() {
-        assertNotNull(ContractFactory.int8(valueValue6()));
+        assertNotNull(ContractFactory.int8(valueValue7()));
     }
 
     @Test
@@ -180,7 +186,7 @@ class ContractFactoryTest {
     @Test
     @DisplayName("uint256(value) can be called and returns a value")
     void shouldCallUint256() {
-        assertNotNull(ContractFactory.uint256(valueValue7()));
+        assertNotNull(ContractFactory.uint256(valueValue8()));
     }
 
     @Test
@@ -216,7 +222,7 @@ class ContractFactoryTest {
     @Test
     @DisplayName("int256(value) can be called and returns a value")
     void shouldCallInt256() {
-        assertNotNull(ContractFactory.int256(valueValue7()));
+        assertNotNull(ContractFactory.int256(valueValue8()));
     }
 
     @Test
@@ -269,23 +275,27 @@ class ContractFactoryTest {
         return new byte[] {1, 2, 3};
     }
 
-    private static EvmAddress valueValue3() {
+    private static String valueValue3() {
+        return "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    }
+
+    private static EvmAddress valueValue4() {
         return new EvmAddress(new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20});
     }
 
-    private static boolean valueValue4() {
+    private static boolean valueValue5() {
         return true;
     }
 
-    private static short valueValue5() {
+    private static short valueValue6() {
         return (short) 1;
     }
 
-    private static byte valueValue6() {
+    private static byte valueValue7() {
         return (byte) 1;
     }
 
-    private static BigInteger valueValue7() {
+    private static BigInteger valueValue8() {
         return new BigInteger("1");
     }
 

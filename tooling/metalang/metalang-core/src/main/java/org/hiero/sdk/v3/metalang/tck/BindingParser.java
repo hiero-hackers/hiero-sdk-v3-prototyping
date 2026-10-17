@@ -11,18 +11,25 @@ import org.hiero.sdk.v3.metalang.source.MarkdownSchemaExtractor;
  * Reads the {@code bindings} code blocks of a Markdown file:
  *
  * <pre>
- * file       := (requires | binding)*
- * requires   := 'requires' '{' NAME (',' NAME)* '}' 'from' QNAME
- * binding    := ('binding' | 'common') NAME '-&gt;' QNAME '{' member* '}'
- * member     := 'result' path '=' path ':' NAME
- *             | 'unsupported' 'result'? NAME STRING
- *             | NAME '=' 'each' path '-&gt;' QNAME '{' member* '}'
- *             | NAME '=' source ('|' source)*
- * source     := path ':' NAME
- * path       := '^'? NAME ('.' NAME)*
+ * file         := (requires | binding)*
+ * requires     := 'requires' '{' NAME (',' NAME)* '}' 'from' QNAME
+ * binding      := ('binding' | 'common') NAME construction
+ * construction := '-&gt;' QNAME body
+ *               | ('when' path '-&gt;' QNAME body)+ ('else' '-&gt;' QNAME body)?
+ * body         := '{' member* '}'
+ * member       := 'result' path '=' path ':' NAME
+ *               | 'unsupported' 'result'? NAME STRING
+ *               | NAME '=' 'each' generator (',' generator)* '-&gt;' QNAME body
+ *               | NAME '=' 'request' path
+ *               | NAME '=' path? construction
+ *               | NAME '=' source ('|' source)*
+ * generator    := path | NAME 'in' path '?'?
+ * source       := (path | STRING) ':' NAME
+ * path         := '^'? NAME ('.' NAME)*
  * </pre>
  *
- * <p>Comments ({@code //}) directly above a binding become its documentation. A syntax error is reported as
+ * <p>A binding with variants ({@code when ... else ...}) becomes one {@link Binding} per variant, all with the same
+ * name and documentation. Comments ({@code //}) directly above a binding become its documentation. A syntax error is reported as
  * diagnostic {@code tck.syntax} and ends the code block.
  */
 public final class BindingParser {
@@ -103,7 +110,7 @@ public final class BindingParser {
                 if (peek().text().equals("requires")) {
                     requires();
                 } else if (peek().text().equals("binding") || peek().text().equals("common")) {
-                    bindings.add(binding());
+                    bindings.addAll(binding());
                 } else {
                     throw new SyntaxError("expected 'requires', 'binding' or 'common', found '" + peek().text() + "'",
                             peek());
@@ -127,14 +134,43 @@ public final class BindingParser {
         requires.add(new Requires(names, qualifiedName(), location(start)));
     }
 
-    private Binding binding() {
+    private List<Binding> binding() {
         final Token start = next();
         final String documentation = String.join("\n", start.comments());
         final String name = name();
-        expect("->");
-        final String type = qualifiedName();
-        final List<Binding.Member> members = members();
-        return new Binding(start.text().equals("common"), name, type, members, documentation, location(start));
+        final boolean common = start.text().equals("common");
+        final List<Binding> result = new ArrayList<>();
+        for (final Binding.Variant variant : construction()) {
+            result.add(new Binding(common, name, variant.type(), variant.when(), variant.members(), documentation,
+                    result.isEmpty() ? location(start) : variant.location()));
+        }
+        return result;
+    }
+
+    /** {@code -> Type { ... }} or the variants {@code when a -> A { ... } else -> B { ... }}. */
+    private List<Binding.Variant> construction() {
+        final List<Binding.Variant> variants = new ArrayList<>();
+        if (!peek().text().equals("when") || peek().kind() != Kind.NAME) {
+            final Token start = peek();
+            expect("->");
+            final String type = qualifiedName();
+            variants.add(new Binding.Variant(null, type, members(), location(start)));
+            return variants;
+        }
+        while (peek().text().equals("when") && peek().kind() == Kind.NAME) {
+            final Token start = next();
+            final Binding.Path when = path();
+            expect("->");
+            final String type = qualifiedName();
+            variants.add(new Binding.Variant(when, type, members(), location(start)));
+        }
+        if (peek().text().equals("else") && peek().kind() == Kind.NAME) {
+            final Token start = next();
+            expect("->");
+            final String type = qualifiedName();
+            variants.add(new Binding.Variant(null, type, members(), location(start)));
+        }
+        return variants;
     }
 
     private List<Binding.Member> members() {
@@ -168,20 +204,59 @@ public final class BindingParser {
         }
         final String attribute = name();
         expect("=");
-        if (peek().text().equals("each") && peekAt(1).kind() == Kind.NAME) {
+        if (keyword("each")) {
             next();
-            final Binding.Path source = path();
+            final List<Binding.Generator> generators = new ArrayList<>();
+            do {
+                generators.add(generator());
+            } while (accept(","));
             expect("->");
             final String type = qualifiedName();
-            return new Binding.Each(attribute, source, type, members(), location(start));
+            return new Binding.Each(attribute, generators, type, members(), location(start));
+        }
+        if (keyword("request")) {
+            next();
+            return new Binding.Request(attribute, path(), location(start));
+        }
+        if (keyword("when") || peek().text().equals("->") && peek().kind() == Kind.SYMBOL) {
+            return new Binding.Construct(attribute, null, construction(), location(start));
         }
         final List<Binding.Source> sources = new ArrayList<>();
         do {
+            if (peek().kind() == Kind.STRING) {
+                final String literal = next().text();
+                expect(":");
+                sources.add(new Binding.Source(null, literal, name()));
+                continue;
+            }
             final Binding.Path path = path();
+            if (sources.isEmpty() && (keyword("when") || peek().text().equals("->") && peek().kind() == Kind.SYMBOL)) {
+                return new Binding.Construct(attribute, path, construction(), location(start));
+            }
             expect(":");
             sources.add(new Binding.Source(path, name()));
         } while (accept("|"));
         return new Binding.Assignment(attribute, sources, location(start));
+    }
+
+    /** {@code list.object} or {@code name in list} or {@code name in list?}. */
+    private Binding.Generator generator() {
+        if (peek().kind() == Kind.NAME && peekAt(1).kind() == Kind.NAME && peekAt(1).text().equals("in")) {
+            final String name = name();
+            next();
+            final Binding.Path path = path();
+            return new Binding.Generator(name, path, accept("?"));
+        }
+        return new Binding.Generator(null, path(), false);
+    }
+
+    /**
+     * Whether the next token is a keyword: the name followed by another name or by {@code ^} (not by {@code :} or
+     * {@code .}).
+     */
+    private boolean keyword(final String keyword) {
+        return peek().text().equals(keyword) && peek().kind() == Kind.NAME && (peekAt(1).kind() == Kind.NAME
+                || peekAt(1).kind() == Kind.SYMBOL && peekAt(1).text().equals("^"));
     }
 
     private Binding.Path path() {

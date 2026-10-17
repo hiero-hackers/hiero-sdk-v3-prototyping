@@ -809,3 +809,15 @@ test "an IPv4 address is read only from a dotted quad of numbers up to 255" {
 - `ConsensusNode` does not carry the stable DAB `nodeId` (HIP-869) yet. Adding it is deferred until the
   typed-identifier roll-out (see `docs/missing-features.md` §3.1); see also the *Questions & Comments* in
   `consensus-node-admin-client/transactions-nodes.md`.
+- **`TransactionId` has no `scheduled` flag.** HAPI's `TransactionID` carries a `scheduled` boolean that marks the id
+  of a transaction executed by a schedule; the inner transaction has the same account and valid start as the
+  `ScheduleCreate` / `ScheduleSign` transaction, and only this flag tells them apart. Without it,
+  `ScheduleCreateReceipt.scheduledTransactionId` and `ScheduleSignReceipt.scheduledTransactionId` are equal to the id of
+  the schedule transaction itself, and querying the receipt of the scheduled transaction returns the receipt of the
+  schedule transaction. The Java implementation has no workaround. Should `TransactionId` gain a `scheduled` field
+  (and `toString` / `fromString` the `?scheduled` suffix of the V2 SDKs)?
+- **The default `MirrorNode` instance has no `/api/v1`.** `instance MirrorNode` uses `http://127.0.0.1:38081`, but
+  `MirrorNode.restBaseUrl` and [`mirror-node-http.md`](../mirror-node-client/mirror-node-http.md) require the base URL
+  to include the API version segment (`scheme://host[:port]/api/v1`). A client built from the default instance calls
+  `http://127.0.0.1:38081/accounts/...` instead of `.../api/v1/accounts/...`. Should the instance be
+  `http://127.0.0.1:38081/api/v1`, or should `restBaseUrl` be the host only and the prefix be added by the client?

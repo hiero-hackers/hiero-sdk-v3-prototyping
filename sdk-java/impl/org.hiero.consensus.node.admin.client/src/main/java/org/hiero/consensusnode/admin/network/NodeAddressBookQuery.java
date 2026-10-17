@@ -1,7 +1,9 @@
 package org.hiero.consensusnode.admin.network;
 
 import java.util.concurrent.CompletionStage;
+import org.hiero.consensusnode.admin.internal.AdminQueries;
 import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.client.internal.Querying;
 import org.hiero.consensusnode.queries.PaidQuery;
 import org.hiero.consensusnode.queries.PaidQueryResponse;
 import org.hiero.nativeToken.NativeToken;
@@ -72,7 +74,8 @@ public final class NodeAddressBookQuery extends PaidQuery<NodeAddressBook> {
     /// handled transparently.
     @Override
     public CompletionStage<PaidQueryResponse<NodeAddressBook>> submit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeAddressBookQuery.submit");
+        return Querying.paid(AdminQueries.addressBookFile(client.operatorAccount().accountId()), maxQueryPayment(),
+                AdminQueries.NODE_ADDRESS_BOOK, client);
     }
 
     /// Asks the network for the current price of this query without executing it. The returned value is a
@@ -80,7 +83,15 @@ public final class NodeAddressBookQuery extends PaidQuery<NodeAddressBook> {
     /// Throws if `maxQueryPayment` is set and the quoted price exceeds it.
     @Override
     public CompletionStage<NativeToken<?, ?>> getCost(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeAddressBookQuery.getCost");
+        final NativeToken<?, ?> maxQueryPayment = maxQueryPayment();
+        return Querying.cost(AdminQueries.addressBookFile(client.operatorAccount().accountId()),
+                AdminQueries.NODE_ADDRESS_BOOK, client).thenApply(cost -> {
+                    if (maxQueryPayment != null && cost.toBaseUnits() > maxQueryPayment.toBaseUnits()) {
+                        throw new IllegalStateException("The query costs " + cost + ", more than its maxQueryPayment "
+                                + maxQueryPayment);
+                    }
+                    return cost;
+                });
     }
 
     @Override

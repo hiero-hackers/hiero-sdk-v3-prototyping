@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.admin.nodes;
 
+import org.hiero.consensusnode.admin.internal.AdminKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
@@ -137,27 +139,27 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
 
     @Override
     public PackedTransaction<NodeCreateReceipt, NodeCreateTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeCreateTransaction.pack");
+        return new Packing<>(AdminKinds.NODE_CREATE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<NodeCreateReceipt, NodeCreateTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeCreateTransaction.signWithOperator");
+        return new Packing<>(AdminKinds.NODE_CREATE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<NodeCreateReceipt, NodeCreateTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeCreateTransaction.sign");
+        return new Packing<>(AdminKinds.NODE_CREATE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<NodeCreateReceipt, NodeCreateTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeCreateTransaction.sign");
+        return new Packing<>(AdminKinds.NODE_CREATE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<NodeCreateReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeCreateTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(AdminKinds.NODE_CREATE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -173,21 +175,21 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<NodeCreateReceipt, NodeCreateTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeCreateTransaction.packForBatch");
+        return new Packing<>(AdminKinds.NODE_CREATE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<NodeCreateReceipt, NodeCreateTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeCreateTransaction.signForBatchWithOperator");
+        return new Packing<>(AdminKinds.NODE_CREATE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<NodeCreateReceipt, NodeCreateTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeCreateTransaction.signForBatch");
+        return new Packing<>(AdminKinds.NODE_CREATE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -195,7 +197,7 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<NodeCreateReceipt, NodeCreateTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeCreateTransaction.signForBatch");
+        return new Packing<>(AdminKinds.NODE_CREATE).signForBatch(this, payerId, signer, batchKey);
     }
 
     /// Returns a builder for a new `NodeCreateTransaction`.

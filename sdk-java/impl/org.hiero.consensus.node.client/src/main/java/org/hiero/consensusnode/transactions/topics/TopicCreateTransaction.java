@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.topics;
 
+import org.hiero.consensusnode.client.internal.TopicKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
@@ -73,27 +75,27 @@ public final class TopicCreateTransaction extends Transaction<TopicCreateReceipt
 
     @Override
     public PackedTransaction<TopicCreateReceipt, TopicCreateTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicCreateTransaction.pack");
+        return new Packing<>(TopicKinds.TOPIC_CREATE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TopicCreateReceipt, TopicCreateTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicCreateTransaction.signWithOperator");
+        return new Packing<>(TopicKinds.TOPIC_CREATE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<TopicCreateReceipt, TopicCreateTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicCreateTransaction.sign");
+        return new Packing<>(TopicKinds.TOPIC_CREATE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TopicCreateReceipt, TopicCreateTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicCreateTransaction.sign");
+        return new Packing<>(TopicKinds.TOPIC_CREATE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<TopicCreateReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicCreateTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(TopicKinds.TOPIC_CREATE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -109,21 +111,21 @@ public final class TopicCreateTransaction extends Transaction<TopicCreateReceipt
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<TopicCreateReceipt, TopicCreateTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicCreateTransaction.packForBatch");
+        return new Packing<>(TopicKinds.TOPIC_CREATE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<TopicCreateReceipt, TopicCreateTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicCreateTransaction.signForBatchWithOperator");
+        return new Packing<>(TopicKinds.TOPIC_CREATE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<TopicCreateReceipt, TopicCreateTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicCreateTransaction.signForBatch");
+        return new Packing<>(TopicKinds.TOPIC_CREATE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -131,7 +133,7 @@ public final class TopicCreateTransaction extends Transaction<TopicCreateReceipt
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<TopicCreateReceipt, TopicCreateTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicCreateTransaction.signForBatch");
+        return new Packing<>(TopicKinds.TOPIC_CREATE).signForBatch(this, payerId, signer, batchKey);
     }
 
     /// Returns a builder for a new `TopicCreateTransaction`.

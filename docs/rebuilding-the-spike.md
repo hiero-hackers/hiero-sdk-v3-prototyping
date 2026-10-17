@@ -3,9 +3,11 @@
 How the V3 API is implemented today, how to build and verify it, and what cost time on the way. Written to be
 executed by an agent.
 
-- **Java:** `sdk-java/impl` is a **copy of the generated Java project** that is maintained by hand. Of the 386 tests
-  of the specs, 348 pass against it (all of keys 38, ledger 27, hedera 12 and transactions 10); the other 38 fail at
-  methods that are not implemented yet.
+- **Java:** `sdk-java/impl` is a **copy of the generated Java project** that is maintained by hand. It implements the
+  whole API of the specs: all 386 tests of the specs and all 2,787 contract tests pass against it, no method is a stub
+  any more, and `metalang check` reports that it provides the API. What the specs cannot express is recorded in their
+  `## Questions & Comments` (and implemented as a documented workaround where one exists). The TCK binds 47 of its
+  65 methods (section 3); the implementation has not been run against Solo yet.
 - **TypeScript:** only the first spike, which was written into the generated code in place and exists in git
   history only (section 6).
 
@@ -41,42 +43,34 @@ last copied generation) is not decided.
 
 ## 2. What was added to `sdk-java/impl`
 
+Helpers live in non-exported `internal` packages of each module. The parts that carry the design:
+
 | File | Responsibility |
 |---|---|
-| `org.hiero.base/…/keys/internal/Keys.java` | Ed25519 and ECDSA secp256k1 over BouncyCastle: validation, derivation, signing, PKCS#8/SPKI by OID |
-| `…/keys/internal/Secp256k1.java`, `Pem.java`, `Oids.java` | curve and Keccak-256, PEM envelope, the three OIDs |
-| `…/ledger/internal/EntityIds.java` | `shard.realm.num` / `shard.realm.0x<hex>` text forms and the HIP-15 checksum |
-| `…/ledger/internal/DefaultTransactionId.java` | the only concrete `TransactionId` and its generator |
-| `org.hiero.consensus.node.client/…/client/internal/ClientRuntime.java` | channels, node selection, submit, receipt polling, the two registries (traps 4, 5) |
-| `…/client/internal/Protobuf.java`, `Grpc.java` | API types ↔ HAPI messages; unary gRPC without generated stubs |
-| `…/client/internal/TransactionKind.java`, `TransactionKinds.java` | per transaction type: gRPC method, body field, receipt |
+| `org.hiero.base/…/keys/internal/Keys.java`, `Secp256k1.java`, `Pem.java`, `Oids.java` | Ed25519 and ECDSA secp256k1 over BouncyCastle: validation, derivation, signing, PKCS#8/SPKI by OID, PEM, Keccak-256 |
+| `…/ledger/internal/EntityIds.java`, `DefaultTransactionId.java` | entity id text forms and the HIP-15 checksum; the only concrete `TransactionId` |
+| `…/ledger/config/internal/NetworkSettings.java` | the process-wide registry of `ConfigFactory` (Hedera mainnet/testnet, Solo preloaded) |
+| `…/http/internal/DefaultHttpClient.java` | the `HttpClient` of the API over `java.net.http` (timeouts, cancellation, `close`) |
+| `org.hiero.consensus.node.client/…/client/internal/ClientRuntime.java` | channels, node selection, submit, receipt polling, `queryRecord`, the two registries (traps 4, 5) |
+| `…/client/internal/Protobuf.java`, `Grpc.java` | API types ↔ HAPI messages (ids, keys ↔ `Authority`, times, `Hbar`); unary gRPC without generated stubs |
+| `…/client/internal/TransactionKind.java` | per transaction type: gRPC method, body field, how the body is filled and the receipt built; `selects` tells apart types that share a body field (fungible/NFT mint, burn, wipe) |
+| `…/client/internal/AccountKinds.java`, `FileKinds`, `TopicKinds`, `ScheduleKinds`, `TokenKinds`, `UtilityKinds` | the kinds of all transaction types of the module, one class per area |
+| `…/client/internal/TransactionKinds.java` | the registry: the built-in kinds plus those other modules register as `TransactionSupport` with the `ServiceLoader` |
+| `…/client/internal/KindSupport.java` | the `TransactionSupport` (SPI) of a kind; `SpiFactory` returns these and the ones of other providers |
 | `…/client/internal/Packing.java` | `pack`, the `sign` tiers and the batch forms, once for every transaction type |
 | `…/client/internal/DefaultPackedTransaction.java` | the only concrete `PackedTransaction`; bytes = `TransactionList` |
-| `…/client/internal/DefaultExchangeRate.java` | the `ExchangeRate` of a receipt |
+| `…/client/internal/QueryKind.java`, `Querying.java` | per query type: gRPC method, request, answer; free and paid queries (cost query, payment transfer to the node signed by the operator, `maxQueryPayment`), retry while the node is busy |
+| `…/client/internal/AccountQueries.java`, `FileQueries`, `TopicQueries`, `ScheduleQueries`, `TokenQueries` | the query kinds of the module |
+| `…/client/internal/PrecheckException.java` | a node rejected a request in precheck; message `precheck failed: <STATUS>` (trap 18) |
 | `…/client/internal/HapiTransactionStatus.java` | one constant per HAPI `ResponseCodeEnum` value, derived from the vendored proto |
+| `org.hiero.consensus.node.admin.client/…/admin/internal/AdminKinds.java`, `AdminQueries.java`, `AdminSupports.java` | the six administration transaction types, the version and address book queries; registered with the `ServiceLoader` as `TransactionSupport` |
+| `org.hiero.mirror.node.client/…/mirrornode/internal/` | REST client of the Mirror Node (`/api/v1`), a small JSON parser, pagination over `links.next`, one repository implementation per area |
+| `org.hiero.enterprise/…/service/internal/` | the session and the six services on top of the public API of the other modules; Solidity ABI encoding of the contract parameters |
 
-The filled stubs:
-
-| Type | Methods |
-|---|---|
-| `keys/KeysFactory` | all 12 |
-| `keys/PrivateKey`, `PublicKey` | all (`toRawBytes`, `toBytes`, `toString`, `sign`/`verify`, `createPublicKey`) |
-| `keys/KeyFormat`, `KeyContainer`, `KeyEncoding`, `ByteImportEncoding` | `supportsType`, `decode` |
-| `ledger/Address`, `AccountId`, `ContractId` | `fromString`, `toString`, `toStringWithChecksum`, `validateChecksum`, `fromEvmAddress` |
-| `ledger/EvmAddress`, `IpAddress` | `fromString`, `fromBytes`, `toString` (EIP-55 resp. dotted quad) |
-| `ledger/TransactionId` | `generateTransactionId`, `fromString` |
-| `hedera/Hbar` | `to`, `toBaseUnits`, `toTinybars` |
-| `authority/AuthorityFactory` | all 5 |
-| `consensusnode/client/ClientFactory` | both `createClient` |
-| `consensusnode/transactions/Response` | `queryReceipt` (`queryRecord` is still a stub) |
-| `consensusnode/transactions/TransactionsFactory` | `getResponse` |
-| `consensusnode/transactions/PackedTransaction` | `fromBytes` |
-| `transactions/utility/PrngTransaction`, `transactions/accounts/AccountCreateTransaction` | all 9 (`pack`, `sign…`, `…ForBatch…`), delegating to `Packing` |
-
-Dependencies: `org.hiero.base` needs `org.bouncycastle:bcprov-jdk18on:1.83` (`requires org.bouncycastle.provider`);
-`org.hiero.consensus.node.client` needs `io.grpc:grpc-api` and `grpc-protobuf-lite` (compile) plus
-`grpc-netty-shaded` (runtime), each with six exclusions (trap 13). The hand-written `sdk-java/protobuf` exports
-`com.hedera.hashgraph.sdk.proto` (`TransactionList`) to `org.hiero.consensus.node.client`.
+Dependencies: `org.hiero.base` needs `org.bouncycastle:bcprov-jdk18on:1.83` (`requires org.bouncycastle.provider`) and
+`requires java.net.http`; `org.hiero.consensus.node.client` needs `io.grpc:grpc-api` and `grpc-protobuf-lite`
+(compile) plus `grpc-netty-shaded` (runtime), each with six exclusions (trap 13). The hand-written `sdk-java/protobuf`
+exports `com.hedera.hashgraph.sdk.proto` (`TransactionList`) to `org.hiero.consensus.node.client`.
 
 `HapiTransactionStatus` is mechanical — regenerate it instead of editing it:
 
@@ -92,9 +86,18 @@ print(len(out), 'constants, SUCCESS =', dict(out)['SUCCESS'])
 PY
 ```
 
-**Implementing another transaction type:** add a `TransactionKind` to `TransactionKinds` (gRPC service and method,
-body field, receipt) and let the nine methods of the type delegate to `new Packing<>(TransactionKinds.X)`, as
-`PrngTransaction` does.
+**Adding a transaction type:** add a `TransactionKind` constant to the kind class of its area (gRPC service and
+method, body field, how the body is filled, how the receipt is built) and let the nine methods of the type delegate to
+`new Packing<>(XKinds.CONST)`. A type of another module (as the administration client does) registers a `KindSupport`
+subclass with `provides org.hiero.consensusnode.transactions.spi.TransactionSupport with …`; the client module
+exports its `internal` package to that module (trap 12). **Adding a query type:** a `QueryKind` constant and
+`submit`/`getCost` delegating to `Querying.free`/`paid`/`cost`.
+
+**What is known not to work** (each recorded in the `## Questions & Comments` of its spec): chunked `FileAppend`
+(contents above 4096 bytes are rejected, as a `PackedTransaction` has one transaction id), the conversions of
+`TransactionSupport` that need a transaction id a HAPI message does not carry, typed transactions read back from a
+body (`ScheduleInfo.scheduledTransaction`), contract calls and topic messages of the enterprise services (no such
+transactions in the specs), and signing with other keys than the operator's in the enterprise services.
 
 ## 3. Build and verify
 
@@ -109,9 +112,9 @@ In `sdk-java` (JDK 25, `sdk env`):
 
 **Done when:**
 
-- `KeysSpecTest` 44/44 and `LedgerSpecTest` 30/30 (`org.hiero.base`) and `TransactionsSpecTest` 10/10
-  (`org.hiero.consensus.node.client`) pass. The contract tests of methods nobody has implemented yet fail by design,
-  hence `-Dmaven.test.failure.ignore=true`;
+- every test passes: the 386 tests of the specs (`<Spec>SpecTest`) and the 2,787 contract tests (`<Type>Test`).
+  None of them needs a network. Keep `-Dmaven.test.failure.ignore=true` while working on a change, so one failure
+  does not hide the others;
 - the conformance check still reports *provides the API of the specs*:
 
   ```bash
@@ -127,8 +130,9 @@ against the implementation:
 TCK_DIR=../hiero-sdk-tck scripts/tck-java.sh src/tests/crypto-service/test-account-create-transaction.ts
 ```
 
-The implementation has not been measured against Solo yet. Offline, the server can be checked with a call that
-needs no network:
+The bindings cover 47 of the 65 TCK methods (`metalang tck check`, see `docs/tck-binding.md`); the TCK skips the
+others (`-32601`). The implementation has not been measured against Solo yet. Offline, the server can be checked with
+calls that need no network (`setup` succeeds, a transaction fails only at the connection):
 
 ```bash
 java -jar sdk-java/tck/generated/server/target/hiero-sdk-tck-*.jar 8599 &
@@ -197,7 +201,9 @@ are new.
 12. **`internal` packages stay unexported.** `org.hiero.base` does not export its `internal` packages, so the
     client module cannot use `DefaultTransactionId`: it builds transaction ids through the public API
     (`TransactionId.generateTransactionId`, `TransactionId.fromString`) and has its own `DefaultExchangeRate`. A
-    qualified `exports … to <module>` would warn that the target is not in the graph — an error under `-Werror`.
+    qualified `exports … to <module>` warns that the target is not in the graph when the module is built alone — an
+    error under `-Werror` unless the module declaration has `@SuppressWarnings("module")`, which is how the client
+    module exports its `internal` package to the administration client.
 13. **gRPC is an automatic module.** `module-info.java` of the client module needs
     `@SuppressWarnings("requires-automatic")`, again because of `-Werror`.
 14. **Javadoc is checked.** `-Xlint:all -Werror` plus doclint `all,-missing` with `failOnWarnings`:
@@ -210,6 +216,16 @@ are new.
     protobuf module exports that package only to the client module.
 17. **`seconds.nanos` of a transaction id is an integer number of nanoseconds**, not a decimal fraction
     (`…@1641088801.2` is 2 ns), as in all Hiero SDKs.
+18. **A precheck rejection is a message, not a type.** The specs have no error that carries a status (see the
+    `## Questions & Comments` of `transactions.md`), so `PrecheckException` - not exported - puts it into the message
+    as `precheck failed: <STATUS>`, and the TCK runtime turns that form into `-32001` with `data.status`. Change both
+    together.
+19. **Key lists and threshold keys cross the TCK as protobuf `Key` hex.** `Authority` has no byte form, so the TCK
+    runtime encodes and decodes the `Key` message itself (`KeyProto`); it also derives the EVM address of
+    `generateKey` with BouncyCastle, which the API cannot yet.
+20. **HAPI requires defaults the specs leave to "the protocol".** Besides trap 9: a file create needs an expiration
+    time, a token or topic create an auto-renew period (or an expiration time); the implementation sets the values of
+    the V2 SDKs (valid start + 90 days, 90 days). Each case is an open point in its spec.
 
 ## 6. TypeScript: the in-place spike
 
@@ -280,10 +296,12 @@ These replace or add to section 5; the numbers are independent.
 ## 7. What it is not
 
 The registries of traps 4 and 5 are workarounds for spec problems recorded in the `## Questions & Comments` of
-`spec/consensus-node-client/client.md` and `transactions.md`, not a design. Most of the API is still a stub: only
-`PrngTransaction` and `AccountCreateTransaction` of the transaction types, no queries, no mirror node client, no
-`Response.queryRecord`.
+`spec/consensus-node-client/client.md` and `transactions.md`, not a design. The same holds for the message form of a
+precheck rejection (trap 18) and the protobuf `Key` codec of the TCK runtime (trap 19).
 
-The 8 failing TCK tests of the spike are API gaps, not bugs: `Authority` has no `toBytes`/`fromBytes` (key lists,
-threshold keys), `PublicKey` has no EVM address, and a precheck rejection surfaces as `-32603` instead of `-32001`
-with a status.
+The 8 failing TCK tests of the spike were API gaps; the runtime now works around all three (key lists and threshold
+keys, the EVM address of `generateKey`, the status of a precheck rejection as `-32001`), so they are expected to
+pass. Whether they do, and how the other 46 bound methods fare, needs a run against Solo.
+
+No part of the implementation has talked to a network yet: the offline tests check the shape of every request
+(`pack`, round trips through `toBytes`), not whether a node accepts it.

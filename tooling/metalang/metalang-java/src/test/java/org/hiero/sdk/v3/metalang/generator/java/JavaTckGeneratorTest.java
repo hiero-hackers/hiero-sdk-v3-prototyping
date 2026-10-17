@@ -247,9 +247,16 @@ class JavaTckGeneratorTest {
                     "contract/src/main/java/org/hiero/tck/contract/TckRuntime.java",
                     "contract/src/main/java/org/hiero/tck/contract/TckServer.java",
                     "server/pom.xml",
+                    "server/src/main/java/org/hiero/tck/server/BindingSupport.java",
                     "server/src/main/java/org/hiero/tck/server/CommonBindings.java",
                     "server/src/main/java/org/hiero/tck/server/CryptoServiceBindings.java",
-                    "server/src/main/java/org/hiero/tck/server/TckMain.java");
+                    "server/src/main/java/org/hiero/tck/server/FileServiceBindings.java",
+                    "server/src/main/java/org/hiero/tck/server/NodeServiceBindings.java",
+                    "server/src/main/java/org/hiero/tck/server/Requests.java",
+                    "server/src/main/java/org/hiero/tck/server/ScheduleServiceBindings.java",
+                    "server/src/main/java/org/hiero/tck/server/TckMain.java",
+                    "server/src/main/java/org/hiero/tck/server/TokenServiceBindings.java",
+                    "server/src/main/java/org/hiero/tck/server/TopicServiceBindings.java");
             assertThat(files).filteredOn(f -> f.path().endsWith(".java"))
                     .allSatisfy(f -> assertThat(f.content()).startsWith(JavaGenerator.HEADER));
             // the server knows the runtime only as runtime dependency
@@ -292,6 +299,28 @@ class JavaTckGeneratorTest {
                     .contains("runtime.put(result, \"stakingInfo.stakedNodeId\", response.stakedNodeId(), "
                             + "convert::int64Json);")
                     .contains("// not provided: ethereumNonce");
+            assertThat(content("TokenServiceBindings.java"))
+                    // variants: a handler and a builder that select the variant
+                    .contains("if (runtime.value(params, List.of(new Source<>(\"metadata\", value -> value))) != null) {\n"
+                            + "            return mintToken1(params, session);")
+                    .contains("Transaction<?, ?> buildMintToken(final Map<String, Object> params) {")
+                    .contains("requests.put(\"mintToken\", this::buildMintToken);")
+                    // lists and sets of values, constants, list results
+                    .contains("new Source<>(\"metadata\", json -> BindingSupport.list(json, convert::hex))")
+                    .contains("new Source<>(\"tokenIds\", json -> BindingSupport.set(json, convert::address))")
+                    .contains("convert.tokenType(\"ft\")")
+                    .contains("values -> BindingSupport.json(values, convert::int64Json)")
+                    // names bound to the values of a list
+                    .contains("final Map<String, Object> scope1 = BindingSupport.with(params, \"serial\", value1);")
+                    // mutable attributes are set after the request was created; the whole response as result
+                    .contains("request.setMaxQueryPayment(maxQueryPayment);")
+                    .contains("runtime.put(result, \"nftId\", response, convert::nftIdJson);");
+            assertThat(content("CryptoServiceBindings.java"))
+                    .contains("!= null ? new NftSerialGrant(");
+            assertThat(content("NodeServiceBindings.java"))
+                    .contains("grpcWebProxyEndpointJson1 == null ? null : new ServiceEndpoint(");
+            assertThat(content("ScheduleServiceBindings.java"))
+                    .contains("requests.build(runtime.object(params, \"scheduledTransaction\"))");
             assertThat(content("CommonBindings.java"))
                     .contains("transaction.setMemo(memo);")
                     .contains("runtime.unsupported(params, \"transactionId\"");
@@ -311,8 +340,16 @@ class JavaTckGeneratorTest {
             assertThat((String) handle.invoke(server, request("createAccount",
                     "{\"sessionId\":\"s\",\"key\":\"302a300506032b6570032100\"}")))
                     .contains("\"code\":-32603").contains("Not implemented yet");
+            // a runtime method, not a binding
             assertThat((String) handle.invoke(server, request("generateKey",
-                    "{\"type\":\"keyList\"}"))).contains("not supported by the API");
+                    "{\"type\":\"keyList\"}"))).doesNotContain("-32601");
+            // variants: the parameter selects the transaction, and a nested request is built by its binding
+            assertThat((String) handle.invoke(server, request("mintToken",
+                    "{\"sessionId\":\"s\",\"tokenId\":\"0.0.5\",\"metadata\":[\"00\"]}")))
+                    .contains("\"code\":-32603");
+            assertThat((String) handle.invoke(server, request("createSchedule",
+                    "{\"sessionId\":\"s\",\"scheduledTransaction\":{\"method\":\"unknown\"}}")))
+                    .contains("not a transaction method of the bindings: unknown");
             assertThat((String) handle.invoke(server, "[]")).contains("\"code\":-32600");
         }
 

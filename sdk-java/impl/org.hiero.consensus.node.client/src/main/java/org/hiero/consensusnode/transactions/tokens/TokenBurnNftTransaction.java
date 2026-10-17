@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.tokens;
 
+import org.hiero.consensusnode.client.internal.TokenKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -43,27 +45,27 @@ public final class TokenBurnNftTransaction extends TokenBurnTransaction<TokenBur
 
     @Override
     public PackedTransaction<TokenBurnReceipt, TokenBurnNftTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenBurnNftTransaction.pack");
+        return new Packing<>(TokenKinds.TOKEN_BURN_NFT).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenBurnReceipt, TokenBurnNftTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenBurnNftTransaction.signWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_BURN_NFT).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<TokenBurnReceipt, TokenBurnNftTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenBurnNftTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_BURN_NFT).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenBurnReceipt, TokenBurnNftTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenBurnNftTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_BURN_NFT).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<TokenBurnReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenBurnNftTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(TokenKinds.TOKEN_BURN_NFT).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -79,21 +81,21 @@ public final class TokenBurnNftTransaction extends TokenBurnTransaction<TokenBur
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<TokenBurnReceipt, TokenBurnNftTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenBurnNftTransaction.packForBatch");
+        return new Packing<>(TokenKinds.TOKEN_BURN_NFT).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<TokenBurnReceipt, TokenBurnNftTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenBurnNftTransaction.signForBatchWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_BURN_NFT).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<TokenBurnReceipt, TokenBurnNftTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenBurnNftTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_BURN_NFT).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -101,7 +103,7 @@ public final class TokenBurnNftTransaction extends TokenBurnTransaction<TokenBur
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<TokenBurnReceipt, TokenBurnNftTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenBurnNftTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_BURN_NFT).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

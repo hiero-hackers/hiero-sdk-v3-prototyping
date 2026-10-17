@@ -116,8 +116,8 @@ public final class DefaultPackedTransaction<R extends Receipt, T extends Transac
     @Override
     public CompletionStage<Response<R>> submit(final HieroClient<?> client) {
         if (kind == null) {
-            return CompletableFuture.failedFuture(new UnsupportedOperationException(
-                    "Not implemented yet: submitting a transaction of this type"));
+            return CompletableFuture.failedFuture(new IllegalStateException(
+                    "The transaction has a body no registered transaction support knows; it cannot be submitted"));
         }
         final ClientRuntime runtime = ClientRuntime.of(client);
         for (final NodeBody body : bodies) {
@@ -156,7 +156,7 @@ public final class DefaultPackedTransaction<R extends Receipt, T extends Transac
                 }
             }
             final TransactionId id = Protobuf.fromProto(first.getTransactionID());
-            final TransactionKind<?, ?> kind = TransactionKinds.of(first.getDataCase());
+            final TransactionKind<?, ?> kind = TransactionKinds.of(first);
             return kind == null ? unknown(id, signatures, bodies) : restore(id, signatures, bodies, kind);
         } catch (final InvalidProtocolBufferException invalid) {
             throw new IllegalArgumentException("The bytes are no serialized transaction", invalid);

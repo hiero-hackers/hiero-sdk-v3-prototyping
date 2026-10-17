@@ -19,7 +19,7 @@ public enum Converter {
     STRING("string", true, true, "A string.", "string"),
     BOOL("bool", true, true, "A boolean.", "bool"),
     INT32("int32", true, true, "A 32-bit integer (JSON number or decimal string; a decimal string in results).",
-            "int32"),
+            "int32", "uint16"),
     INT64("int64", true, true, "A 64-bit integer (JSON number or decimal string; a decimal string in results).",
             "int64"),
     TINYBAR("tinybar", true, true,
@@ -37,7 +37,25 @@ public enum Converter {
             + "`Key` of a key list or threshold key.", "authority.Authority"),
     HEX("hex", true, true, "Bytes as hex string.", "bytes"),
     STATUS("status", false, true, "The name of a transaction status (`\"SUCCESS\"`).",
-            "consensusnode.transactions.TransactionStatus");
+            "consensusnode.transactions.TransactionStatus"),
+    NUMBER("number", false, true, "A 32-bit integer as JSON number (where the TCK expects a number, not a string).",
+            "int32", "uint16"),
+    UTF8("utf8", true, true, "Bytes as UTF-8 text.", "bytes"),
+    KEY_LIST("keyList", true, true, "A JSON list of keys (each as for `key`) that must all sign; an empty list is "
+            + "no key. In results the keys of a list that must all sign, or the single key.", "authority.Authority"),
+    PUBLIC_KEY("publicKey", false, true, "A public key as DER-encoded hex string.", "keys.PublicKey"),
+    TOKEN_TYPE("tokenType", true, true, "A token type: `ft` or `nft` (or the name of the constant); the name of the "
+            + "constant in results (`FUNGIBLE_COMMON`).", "token.TokenType"),
+    TOKEN_SUPPLY_TYPE("tokenSupplyType", true, true, "A token supply type: `infinite` or `finite` (any case); the "
+            + "name of the constant in results (`INFINITE`).", "token.TokenSupplyType"),
+    NFT_ID_TOKEN("nftIdToken", true, false, "The token ID of an NFT ID (`\"0.0.1234/1\"`).", "ledger.Address"),
+    NFT_ID_SERIAL("nftIdSerial", true, false, "The serial number of an NFT ID (`\"0.0.1234/1\"`).", "int64"),
+    NFT_ID("nftId", false, true, "The NFT ID (`\"0.0.1234/1\"`) of the information about an NFT.",
+            "consensusnode.queries.tokens.TokenNftInfo"),
+    TRANSACTION_ID("transactionId", false, true, "A transaction ID (`\"0.0.1234@1700000000.000000000\"`).",
+            "ledger.TransactionId"),
+    IP_ADDRESS("ipAddress", true, false, "An IP address as hex string of its bytes (`\"7f000001\"`).",
+            "ledger.IpAddress");
 
     private final String id;
     private final boolean inbound;

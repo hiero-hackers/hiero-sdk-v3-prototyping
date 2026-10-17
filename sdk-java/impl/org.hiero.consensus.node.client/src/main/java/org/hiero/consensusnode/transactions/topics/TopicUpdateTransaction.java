@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.topics;
 
+import org.hiero.consensusnode.client.internal.TopicKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -94,27 +96,27 @@ public final class TopicUpdateTransaction extends Transaction<TopicUpdateReceipt
 
     @Override
     public PackedTransaction<TopicUpdateReceipt, TopicUpdateTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicUpdateTransaction.pack");
+        return new Packing<>(TopicKinds.TOPIC_UPDATE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TopicUpdateReceipt, TopicUpdateTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicUpdateTransaction.signWithOperator");
+        return new Packing<>(TopicKinds.TOPIC_UPDATE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<TopicUpdateReceipt, TopicUpdateTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicUpdateTransaction.sign");
+        return new Packing<>(TopicKinds.TOPIC_UPDATE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TopicUpdateReceipt, TopicUpdateTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicUpdateTransaction.sign");
+        return new Packing<>(TopicKinds.TOPIC_UPDATE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<TopicUpdateReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicUpdateTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(TopicKinds.TOPIC_UPDATE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -130,21 +132,21 @@ public final class TopicUpdateTransaction extends Transaction<TopicUpdateReceipt
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<TopicUpdateReceipt, TopicUpdateTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicUpdateTransaction.packForBatch");
+        return new Packing<>(TopicKinds.TOPIC_UPDATE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<TopicUpdateReceipt, TopicUpdateTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicUpdateTransaction.signForBatchWithOperator");
+        return new Packing<>(TopicKinds.TOPIC_UPDATE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<TopicUpdateReceipt, TopicUpdateTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicUpdateTransaction.signForBatch");
+        return new Packing<>(TopicKinds.TOPIC_UPDATE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -152,7 +154,7 @@ public final class TopicUpdateTransaction extends Transaction<TopicUpdateReceipt
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<TopicUpdateReceipt, TopicUpdateTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TopicUpdateTransaction.signForBatch");
+        return new Packing<>(TopicKinds.TOPIC_UPDATE).signForBatch(this, payerId, signer, batchKey);
     }
 
     /// Returns a builder for a new `TopicUpdateTransaction`.

@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.tokens;
 
+import org.hiero.consensusnode.client.internal.TokenKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -45,27 +47,27 @@ public final class TokenUnfreezeTransaction extends Transaction<TokenUnfreezeRec
 
     @Override
     public PackedTransaction<TokenUnfreezeReceipt, TokenUnfreezeTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUnfreezeTransaction.pack");
+        return new Packing<>(TokenKinds.TOKEN_UNFREEZE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenUnfreezeReceipt, TokenUnfreezeTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUnfreezeTransaction.signWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_UNFREEZE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<TokenUnfreezeReceipt, TokenUnfreezeTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUnfreezeTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_UNFREEZE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenUnfreezeReceipt, TokenUnfreezeTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUnfreezeTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_UNFREEZE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<TokenUnfreezeReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUnfreezeTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(TokenKinds.TOKEN_UNFREEZE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -81,21 +83,21 @@ public final class TokenUnfreezeTransaction extends Transaction<TokenUnfreezeRec
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<TokenUnfreezeReceipt, TokenUnfreezeTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUnfreezeTransaction.packForBatch");
+        return new Packing<>(TokenKinds.TOKEN_UNFREEZE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<TokenUnfreezeReceipt, TokenUnfreezeTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUnfreezeTransaction.signForBatchWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_UNFREEZE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<TokenUnfreezeReceipt, TokenUnfreezeTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUnfreezeTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_UNFREEZE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -103,7 +105,7 @@ public final class TokenUnfreezeTransaction extends Transaction<TokenUnfreezeRec
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<TokenUnfreezeReceipt, TokenUnfreezeTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUnfreezeTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_UNFREEZE).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.tokens;
 
+import org.hiero.consensusnode.client.internal.TokenKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -55,27 +57,27 @@ public final class TokenAssociateTransaction extends Transaction<TokenAssociateR
 
     @Override
     public PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAssociateTransaction.pack");
+        return new Packing<>(TokenKinds.TOKEN_ASSOCIATE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAssociateTransaction.signWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_ASSOCIATE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAssociateTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_ASSOCIATE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAssociateTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_ASSOCIATE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<TokenAssociateReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAssociateTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(TokenKinds.TOKEN_ASSOCIATE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -91,21 +93,21 @@ public final class TokenAssociateTransaction extends Transaction<TokenAssociateR
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAssociateTransaction.packForBatch");
+        return new Packing<>(TokenKinds.TOKEN_ASSOCIATE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAssociateTransaction.signForBatchWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_ASSOCIATE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAssociateTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_ASSOCIATE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -113,7 +115,7 @@ public final class TokenAssociateTransaction extends Transaction<TokenAssociateR
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAssociateTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_ASSOCIATE).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

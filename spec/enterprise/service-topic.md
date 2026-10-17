@@ -243,3 +243,9 @@ test "a topic message keeps the values it is created with" {
   [`authority.md`](../base/authority.md).
 - Open option: simple single-key convenience overloads taking a `PublicKey` directly could be added later if the
   enterprise layer wants extra ergonomics for the common single-signer case.
+
+- **`submitMessage` and `getAll` cannot be implemented yet.** `consensusnode.transactions` has no `TopicMessageSubmit`
+  transaction (see [`transactions-topics.md`](../consensus-node-client/transactions-topics.md)), and the mirror-node
+  `TopicRepository` has no find-all (see [`mirror-node-topic.md`](../mirror-node-client/mirror-node-topic.md)), so the
+  Java implementation fails for both methods. Should `getAll` stay in the API once there is no Mirror Node endpoint
+  that lists topics?

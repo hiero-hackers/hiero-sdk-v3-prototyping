@@ -83,3 +83,8 @@ test "NFTs of the same type with different serial numbers are different" {
 ```
 
 ## Questions & Comments
+
+- **NFTs without an owner cannot be represented.** `Nft.owner` is required, but the Mirror Node returns NFTs without
+  an owner — a burned NFT has `account_id = null`. The Java implementation leaves such NFTs out of every result page, so
+  a page can hold fewer entries than the REST response and a burned NFT cannot be looked up at all. Should `owner` be
+  `@@nullable` (perhaps together with a `deleted` flag), or is leaving these NFTs out the intended behavior?

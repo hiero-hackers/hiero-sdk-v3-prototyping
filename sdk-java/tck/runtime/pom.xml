@@ -36,6 +36,12 @@
             <artifactId>hiero-consensus-node-client</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- Keccak-256 and secp256k1 for the EVM address of generateKey (the API has no such derivation yet) -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.83</version>
+        </dependency>
         <dependency>
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>

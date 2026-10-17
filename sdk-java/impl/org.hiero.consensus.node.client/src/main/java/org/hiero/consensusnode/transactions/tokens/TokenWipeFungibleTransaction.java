@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.tokens;
 
+import org.hiero.consensusnode.client.internal.TokenKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -37,27 +39,27 @@ public final class TokenWipeFungibleTransaction extends TokenWipeTransaction<Tok
 
     @Override
     public PackedTransaction<TokenWipeReceipt, TokenWipeFungibleTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenWipeFungibleTransaction.pack");
+        return new Packing<>(TokenKinds.TOKEN_WIPE_FUNGIBLE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenWipeReceipt, TokenWipeFungibleTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenWipeFungibleTransaction.signWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_WIPE_FUNGIBLE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<TokenWipeReceipt, TokenWipeFungibleTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenWipeFungibleTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_WIPE_FUNGIBLE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenWipeReceipt, TokenWipeFungibleTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenWipeFungibleTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_WIPE_FUNGIBLE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<TokenWipeReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenWipeFungibleTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(TokenKinds.TOKEN_WIPE_FUNGIBLE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -73,21 +75,21 @@ public final class TokenWipeFungibleTransaction extends TokenWipeTransaction<Tok
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<TokenWipeReceipt, TokenWipeFungibleTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenWipeFungibleTransaction.packForBatch");
+        return new Packing<>(TokenKinds.TOKEN_WIPE_FUNGIBLE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<TokenWipeReceipt, TokenWipeFungibleTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenWipeFungibleTransaction.signForBatchWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_WIPE_FUNGIBLE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<TokenWipeReceipt, TokenWipeFungibleTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenWipeFungibleTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_WIPE_FUNGIBLE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -95,7 +97,7 @@ public final class TokenWipeFungibleTransaction extends TokenWipeTransaction<Tok
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<TokenWipeReceipt, TokenWipeFungibleTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenWipeFungibleTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_WIPE_FUNGIBLE).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

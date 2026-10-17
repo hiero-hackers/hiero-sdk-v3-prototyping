@@ -25,6 +25,9 @@ public record Response<ReceiptT extends Receipt>(TransactionId transactionId) {
 
     /// query for the record of the transaction
     public CompletionStage<Record<ReceiptT>> queryRecord() {
-        throw new UnsupportedOperationException("Not implemented yet: Response.queryRecord");
+        @SuppressWarnings("unchecked")
+        final CompletionStage<Record<ReceiptT>> record = ClientRuntime.queryRecord(transactionId)
+                .thenApply(value -> (Record<ReceiptT>) (Record<?>) value);
+        return record;
     }
 }

@@ -11,6 +11,14 @@ import com.hederahashgraph.api.proto.java.SignaturePair;
 import com.hederahashgraph.api.proto.java.ThresholdKey;
 import com.hederahashgraph.api.proto.java.Timestamp;
 import com.hederahashgraph.api.proto.java.TransactionID;
+import com.hederahashgraph.api.proto.java.FileID;
+import com.hederahashgraph.api.proto.java.ScheduleID;
+import com.hederahashgraph.api.proto.java.TokenID;
+import com.hederahashgraph.api.proto.java.TopicID;
+import java.util.List;
+import org.hiero.hedera.Hbar;
+import org.hiero.hedera.HbarUnit;
+import org.hiero.ledger.Address;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -29,6 +37,8 @@ import org.hiero.nativeToken.ExchangeRate;
 
 /// Maps the types of the API to the HAPI messages and back.
 public final class Protobuf {
+
+    private static final int EVM_ADDRESS_LENGTH = 20;
 
     private Protobuf() {
     }
@@ -52,13 +62,176 @@ public final class Protobuf {
         return builder.setAlias(ByteString.copyFrom(alias)).build();
     }
 
-    /// Maps an account id message.
+    /// Maps an account id message. An alias of 20 bytes is an EVM address, any other alias a key alias (HIP-32).
     ///
     /// @param accountId the message
     /// @return the account id
     public static AccountId fromProto(final AccountID accountId) {
+        if (accountId.getAccountCase() == AccountID.AccountCase.ALIAS) {
+            final byte[] alias = accountId.getAlias().toByteArray();
+            return alias.length == EVM_ADDRESS_LENGTH
+                    ? new AccountId(accountId.getShardNum(), accountId.getRealmNum(), "", null, new EvmAddress(alias),
+                    null)
+                    : new AccountId(accountId.getShardNum(), accountId.getRealmNum(), "", null, null, alias);
+        }
         return new AccountId(accountId.getShardNum(), accountId.getRealmNum(), "", accountId.getAccountNum(), null,
                 null);
+    }
+
+    /// Maps a contract id message.
+    ///
+    /// @param contractId the message
+    /// @return the contract id
+    public static ContractId fromProto(final ContractID contractId) {
+        return contractId.getContractCase() == ContractID.ContractCase.EVM_ADDRESS
+                ? new ContractId(contractId.getShardNum(), contractId.getRealmNum(), "", null,
+                new EvmAddress(contractId.getEvmAddress().toByteArray()))
+                : new ContractId(contractId.getShardNum(), contractId.getRealmNum(), "", contractId.getContractNum(),
+                null);
+    }
+
+    /// Maps the address of a token.
+    ///
+    /// @param address the address
+    /// @return the message
+    public static TokenID toTokenId(final Address address) {
+        return TokenID.newBuilder().setShardNum(address.shard()).setRealmNum(address.realm())
+                .setTokenNum(number(address)).build();
+    }
+
+    /// Maps a token id message.
+    ///
+    /// @param tokenId the message
+    /// @return the address
+    public static Address fromProto(final TokenID tokenId) {
+        return new Address(tokenId.getShardNum(), tokenId.getRealmNum(), "", tokenId.getTokenNum());
+    }
+
+    /// Maps the address of a file.
+    ///
+    /// @param address the address
+    /// @return the message
+    public static FileID toFileId(final Address address) {
+        return FileID.newBuilder().setShardNum(address.shard()).setRealmNum(address.realm())
+                .setFileNum(number(address)).build();
+    }
+
+    /// Maps a file id message.
+    ///
+    /// @param fileId the message
+    /// @return the address
+    public static Address fromProto(final FileID fileId) {
+        return new Address(fileId.getShardNum(), fileId.getRealmNum(), "", fileId.getFileNum());
+    }
+
+    /// Maps the address of a topic.
+    ///
+    /// @param address the address
+    /// @return the message
+    public static TopicID toTopicId(final Address address) {
+        return TopicID.newBuilder().setShardNum(address.shard()).setRealmNum(address.realm())
+                .setTopicNum(number(address)).build();
+    }
+
+    /// Maps a topic id message.
+    ///
+    /// @param topicId the message
+    /// @return the address
+    public static Address fromProto(final TopicID topicId) {
+        return new Address(topicId.getShardNum(), topicId.getRealmNum(), "", topicId.getTopicNum());
+    }
+
+    /// Maps the address of a schedule.
+    ///
+    /// @param address the address
+    /// @return the message
+    public static ScheduleID toScheduleId(final Address address) {
+        return ScheduleID.newBuilder().setShardNum(address.shard()).setRealmNum(address.realm())
+                .setScheduleNum(number(address)).build();
+    }
+
+    /// Maps a schedule id message.
+    ///
+    /// @param scheduleId the message
+    /// @return the address
+    public static Address fromProto(final ScheduleID scheduleId) {
+        return new Address(scheduleId.getShardNum(), scheduleId.getRealmNum(), "", scheduleId.getScheduleNum());
+    }
+
+    /// Maps the address of an account (an `Address` used where HAPI expects an `AccountID`).
+    ///
+    /// @param address the address
+    /// @return the message
+    public static AccountID toAccountId(final Address address) {
+        return AccountID.newBuilder().setShardNum(address.shard()).setRealmNum(address.realm())
+                .setAccountNum(number(address)).build();
+    }
+
+    /// Maps the address of a contract (an `Address` used where HAPI expects a `ContractID`).
+    ///
+    /// @param address the address
+    /// @return the message
+    public static ContractID toContractId(final Address address) {
+        return ContractID.newBuilder().setShardNum(address.shard()).setRealmNum(address.realm())
+                .setContractNum(number(address)).build();
+    }
+
+    private static long number(final Address address) {
+        final Long num = address.num();
+        if (num == null) {
+            throw new IllegalArgumentException("The address " + address + " has no entity number");
+        }
+        return num;
+    }
+
+    /// Maps a timestamp message.
+    ///
+    /// @param timestamp the message
+    /// @return the point in time, in UTC
+    public static ZonedDateTime fromProto(final Timestamp timestamp) {
+        return ZonedDateTime.ofInstant(Instant.ofEpochSecond(timestamp.getSeconds(), timestamp.getNanos()),
+                ZoneOffset.UTC);
+    }
+
+    /// Maps a duration message.
+    ///
+    /// @param duration the message
+    /// @return the duration
+    public static java.time.Duration fromProto(final Duration duration) {
+        return java.time.Duration.ofSeconds(duration.getSeconds());
+    }
+
+    /// An amount of tinybar as the native token of the network.
+    ///
+    /// @param tinybars the amount
+    /// @return the amount in hbar
+    public static Hbar hbar(final long tinybars) {
+        return new Hbar(tinybars, HbarUnit.TINYBAR);
+    }
+
+    /// Maps a key message to an authority.
+    ///
+    /// @param key the message
+    /// @return the authority
+    /// @throws IllegalArgumentException if the key is of a kind the API has no authority for
+    public static Authority fromProto(final Key key) {
+        return switch (key.getKeyCase()) {
+            case ED25519 -> new PublicKeyAuthority(KeysFactory.createPublicKey(KeyAlgorithm.ED25519,
+                    key.getEd25519().toByteArray()));
+            case ECDSA_SECP256K1 -> new PublicKeyAuthority(KeysFactory.createPublicKey(KeyAlgorithm.ECDSA,
+                    key.getECDSASecp256K1().toByteArray()));
+            case KEYLIST -> {
+                final List<Authority> children = key.getKeyList().getKeysList().stream().map(Protobuf::fromProto)
+                        .toList();
+                yield new AuthorityList(children, children.size());
+            }
+            case THRESHOLDKEY -> new AuthorityList(key.getThresholdKey().getKeys().getKeysList().stream()
+                    .map(Protobuf::fromProto).toList(), key.getThresholdKey().getThreshold());
+            case CONTRACTID -> new ContractAuthority(fromProto(key.getContractID()), false);
+            case DELEGATABLE_CONTRACT_ID -> new ContractAuthority(fromProto(key.getDelegatableContractId()), true);
+            default -> throw new IllegalArgumentException("A key of kind " + key.getKeyCase()
+                    + " has no authority in the API");
+        };
     }
 
     /// Maps a transaction id.

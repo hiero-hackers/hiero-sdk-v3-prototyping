@@ -284,12 +284,15 @@ later spec changes reach `impl` is not decided yet** (today: regenerate, compare
 polling), which had been written into the generated code in place and reached 34 of the 42 tests of
 `test-account-create-transaction.ts` against a local Solo network, in Java and TypeScript; that spike exists only in
 git history (`3b5305d~1`, introduced in `3caad63 "Durchstich :)"`), and the TypeScript one has not been ported. Today
-`impl` implements keys, the ledger ids, `Hbar`, `AuthorityFactory`, `ClientFactory`, `Response.queryReceipt`,
-`PackedTransaction`, `PrngTransaction` and `AccountCreateTransaction`; the specs have 386 spec tests
-(45 spec files, 88 of them check that an invalid value is rejected); **348 pass** against `impl` - among them all of
-keys (38), ledger (27), hedera (12) and transactions (10) - and the other 38 and the contract tests of unimplemented methods fail at the stubs by design. It has the same Maven coordinates as
-`generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The TCK has not been run
-against it yet (it needs Solo, i.e. Docker). [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is the
+`impl` implements the **whole API**: every transaction type (one `TransactionKind` per type in an area class such as
+`TokenKinds`, all sharing `Packing`; the admin client registers its types as `TransactionSupport` via the
+`ServiceLoader`), every query (`QueryKind` + `Querying`, with query payment), the mirror node REST client, the base
+utilities and the enterprise services. The specs have 386 spec tests (45 spec files, 88 of them check that an invalid
+value is rejected); **all 386 and all 2,787 contract tests pass** against `impl`, and `metalang check` reports that it
+provides the API. What the specs cannot express is recorded in their `## Questions & Comments`. It has the same
+Maven coordinates as `generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The
+TCK binds 47 of its 65 methods (`tooling/tck/bindings`) but has not been run against `impl` yet (it needs Solo, i.e.
+Docker). [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is the
 runbook: how the copy was made, file inventory, filled stubs, build and verify, the TCK, and the traps.
 
 Four spec problems made the implementation harder than it should be; they are recorded in the `## Questions &

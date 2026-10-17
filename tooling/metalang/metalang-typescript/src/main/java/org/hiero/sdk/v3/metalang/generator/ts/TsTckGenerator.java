@@ -106,6 +106,9 @@ public final class TsTckGenerator {
         if (!problems.isEmpty()) {
             throw new GenerationException(problems);
         }
+        server.add(new GeneratedFile(SERVER + "/src/BindingSupport.ts", TsGenerator.HEADER + "\n"
+                + BINDING_SUPPORT.replace("@hiero/tck-contract", contractPackage())));
+        server.add(requestsModule(context));
         server.add(serverModule(classes));
         server.add(new GeneratedFile(SERVER + "/src/main.ts", TsGenerator.HEADER + """
 
@@ -306,45 +309,63 @@ public final class TsTckGenerator {
     private GeneratedFile bindingsClass(final String className, final String file,
                                         final List<TckBindings.Resolved> bindings, final TsContext context) {
         final TsImports imports = new TsImports(context, "", SERVER + "/src", className);
-        final List<String> methods = new ArrayList<>();
-        for (final TckBindings.Resolved binding : bindings) {
-            methods.add(method(binding, imports, context));
-        }
-        final StringBuilder code = new StringBuilder()
+        final java.util.Map<String, List<TckBindings.Resolved>> methods = new java.util.LinkedHashMap<>();
+        bindings.forEach(b -> methods.computeIfAbsent(b.binding().name(), k -> new ArrayList<>()).add(b));
+        final List<String> code = new ArrayList<>();
+        methods.forEach((name, variants) -> code.addAll(method(name, variants, imports, context)));
+        final StringBuilder text = new StringBuilder()
                 .append("/** The TCK methods of the bindings file `").append(file).append("`. */\n")
                 .append("export class ").append(className).append(" {\n\n");
-        final String body = String.join("\n", methods);
-        code.append(fields(body, true))
+        final String body = String.join("\n", code);
+        final boolean transactions = methods.values().stream()
+                .anyMatch(v -> v.getFirst().kind() == TckBindings.Kind.TRANSACTION);
+        final boolean requests = body.contains("this.#requests") || transactions;
+        text.append(fields(body, true, requests))
                 .append(INDENT).append("/** Creates the methods. */\n")
-                .append(INDENT).append("constructor(runtime: TckRuntime, common: CommonBindings) {\n")
+                .append(INDENT).append("constructor(runtime: TckRuntime, common: CommonBindings, requests: Requests) {\n")
                 .append(INDENT).append(INDENT).append("this.#runtime = runtime;\n");
         if (body.contains("this.#convert")) {
-            code.append(INDENT).append(INDENT).append("this.#convert = runtime.converters;\n");
+            text.append(INDENT).append(INDENT).append("this.#convert = runtime.converters;\n");
         }
         if (body.contains("this.#common")) {
-            code.append(INDENT).append(INDENT).append("this.#common = common;\n");
+            text.append(INDENT).append(INDENT).append("this.#common = common;\n");
         }
-        code.append(INDENT).append("}\n\n")
-                .append(INDENT).append("/** Registers the methods. */\n")
+        if (requests) {
+            text.append(INDENT).append(INDENT).append("this.#requests = requests;\n");
+        } else {
+            text.append(INDENT).append(INDENT).append("void requests;\n");
+        }
+        text.append(INDENT).append("}\n\n")
+                .append(INDENT).append("/** Registers the methods (and the builders of their transactions). */\n")
                 .append(INDENT).append("register(methods: Map<string, Handler>): void {\n");
-        for (final TckBindings.Resolved binding : bindings) {
-            code.append(INDENT).append(INDENT).append("methods.set(")
-                    .append(TsLiterals.quote(binding.binding().name())).append(", (params, session) => this.")
-                    .append(binding.binding().name()).append("(params, session));\n");
-        }
-        code.append(INDENT).append("}\n");
-        methods.forEach(m -> code.append('\n').append(m));
-        code.append("}\n");
+        methods.forEach((name, variants) -> {
+            text.append(INDENT).append(INDENT).append("methods.set(").append(TsLiterals.quote(name))
+                    .append(", (params, session) => this.").append(name).append("(params, session));\n");
+            if (variants.getFirst().kind() == TckBindings.Kind.TRANSACTION) {
+                text.append(INDENT).append(INDENT).append("this.#requests.put(").append(TsLiterals.quote(name))
+                        .append(", (params) => this.").append(builder(name, 0)).append("(params));\n");
+            }
+        });
+        text.append(INDENT).append("}\n");
+        code.forEach(m -> text.append('\n').append(m));
+        text.append("}\n");
         for (final String name : List.of("TckRuntime", "Converters", "Handler", "JsonObject", "Session")) {
             imports.external(contractPackage(), name, false);
         }
-        final String rendered = imports.render(code.toString());
+        final String rendered = imports.render(text.toString());
+        final String support = SUPPORT_FUNCTIONS.stream().filter(f -> Pattern.compile("(?<![.\\w#])" + f + "\\(")
+                .matcher(text).find()).collect(Collectors.joining(", "));
         return new GeneratedFile(SERVER + "/src/" + className + ".ts", TsGenerator.HEADER + "\n" + rendered
-                + "import type { CommonBindings } from \"./CommonBindings.js\";\n\n" + code);
+                + "import type { CommonBindings } from \"./CommonBindings.js\";\n"
+                + (support.isEmpty() ? "" : "import { " + support + " } from \"./BindingSupport.js\";\n")
+                + "import type { Requests } from \"./Requests.js\";\n\n" + text);
     }
 
+    /** The functions of the generated module {@code BindingSupport}. */
+    private static final List<String> SUPPORT_FUNCTIONS = List.of("elements", "list", "set", "toJson", "withName");
+
     /** The private fields the methods use. */
-    private static String fields(final String body, final boolean common) {
+    private static String fields(final String body, final boolean common, final boolean requests) {
         final StringBuilder java = new StringBuilder()
                 .append(INDENT).append("readonly #runtime: TckRuntime;\n");
         if (body.contains("this.#convert")) {
@@ -353,18 +374,87 @@ public final class TsTckGenerator {
         if (common && body.contains("this.#common")) {
             java.append(INDENT).append("readonly #common: CommonBindings;\n");
         }
+        if (requests) {
+            java.append(INDENT).append("readonly #requests: Requests;\n");
+        }
         return java.append('\n').toString();
     }
 
-    private String method(final TckBindings.Resolved binding, final TsImports imports, final TsContext context) {
+    /** The name of the builder of a variant (1-based), or of the method ({@code 0}). */
+    private static String builder(final String method, final int variant) {
+        return "build" + Character.toUpperCase(method.charAt(0)) + method.substring(1)
+                + (variant > 0 ? String.valueOf(variant) : "");
+    }
+
+    /** The methods of a TCK method: per variant a builder and a handler; with variants the selecting ones. */
+    private List<String> method(final String name, final List<TckBindings.Resolved> variants,
+                                final TsImports imports, final TsContext context) {
+        final List<String> methods = new ArrayList<>();
+        final boolean single = variants.size() == 1 && variants.getFirst().binding().when() == null;
+        if (!single) {
+            methods.add(dispatcher(name, variants, false, imports));
+            if (variants.getFirst().kind() == TckBindings.Kind.TRANSACTION) {
+                methods.add(dispatcher(name, variants, true, imports));
+            }
+        }
+        for (int i = 0; i < variants.size(); i++) {
+            final int variant = single ? 0 : i + 1;
+            methods.add(handler(name, variant, variants.get(i)));
+            methods.add(build(name, variant, variants.get(i), imports, context));
+        }
+        return methods;
+    }
+
+    private String dispatcher(final String name, final List<TckBindings.Resolved> variants, final boolean build,
+                              final TsImports imports) {
+        final String indent = INDENT + INDENT;
+        final StringBuilder code = new StringBuilder();
+        if (build) {
+            final String transaction = imports.type(new QualifiedName("consensusnode.transactions", "Transaction"));
+            code.append(INDENT).append("/** Builds the transaction of `").append(name).append("` without sending it. */\n")
+                    .append(INDENT).append(builder(name, 0)).append("(params: JsonObject): ").append(transaction)
+                    .append("<any, any> {\n");
+        } else {
+            if (!variants.getFirst().binding().documentation().isBlank()) {
+                code.append(TsDoc.render(INDENT, List.of(variants.getFirst().binding().documentation())));
+            }
+            code.append(INDENT).append("async ").append(name)
+                    .append("(params: JsonObject, session: Session): Promise<unknown> {\n");
+        }
+        boolean fallback = false;
+        for (int i = 0; i < variants.size(); i++) {
+            final Binding.Path when = variants.get(i).binding().when();
+            final String call = build ? "this." + builder(name, i + 1) + "(params)"
+                    : "this." + name + (i + 1) + "(params, session)";
+            if (when == null) {
+                code.append(indent).append("return ").append(call).append(";\n");
+                fallback = true;
+                break;
+            }
+            code.append(indent).append("if (").append(present("params", when)).append(") {\n")
+                    .append(indent).append(INDENT).append("return ").append(call).append(";\n")
+                    .append(indent).append("}\n");
+        }
+        if (!fallback) {
+            code.append(indent).append("return this.#runtime.required(null, ").append(TsLiterals.quote(variants
+                    .stream().map(v -> String.valueOf(v.binding().when())).collect(Collectors.joining(" | "))))
+                    .append(");\n");
+        }
+        return code.append(INDENT).append("}\n").toString();
+    }
+
+    private static String present(final String json, final Binding.Path path) {
+        return "this.#runtime.value(" + json + ", [{ path: " + TsLiterals.quote(path.toString())
+                + ", converter: (json) => json }]) !== null";
+    }
+
+    private String handler(final String name, final int variant, final TckBindings.Resolved binding) {
         final String indent = INDENT + INDENT;
         final StringBuilder body = new StringBuilder();
-        rejectUnsupported(binding.members(), "params", body, indent);
-        final String request = construct(binding.type(), binding.members(), "params", null, 1, body, indent,
-                imports, context);
         final boolean transaction = binding.kind() == TckBindings.Kind.TRANSACTION;
         final String variable = transaction ? "transaction" : "query";
-        body.append(indent).append("const ").append(variable).append(" = ").append(request).append(";\n");
+        body.append(indent).append("const ").append(variable).append(" = this.").append(builder(name, variant))
+                .append("(params);\n");
         final String value = transaction ? "receipt" : "response";
         if (transaction) {
             body.append(indent).append("const commonParams = this.#runtime.object(params, ")
@@ -378,9 +468,12 @@ public final class TsTckGenerator {
         body.append(indent).append("const result: Record<string, unknown> = {};\n");
         for (final TckBindings.Member member : binding.members()) {
             if (member instanceof TckBindings.Result result) {
+                final String converter = "this.#convert." + result.converter().id() + "Json";
                 body.append(indent).append("this.#runtime.put(result, ").append(TsLiterals.quote(result.name()
                         .toString())).append(", ").append(access(value, result.fields()))
-                        .append(", (value) => this.#convert.").append(result.converter().id()).append("Json(value));\n");
+                        .append(result.collection() == TckBindings.Collection.NONE
+                                ? ", (value) => " + converter + "(value));\n"
+                                : ", (values) => toJson(values, (value) => " + converter + "(value)));\n");
             } else if (member instanceof TckBindings.Unsupported(final Binding.Unsupported unsupported)
                     && unsupported.result()) {
                 body.append(indent).append("// not provided: ").append(unsupported.name()).append(" (")
@@ -389,12 +482,31 @@ public final class TsTckGenerator {
         }
         body.append(indent).append("return result;\n");
         final StringBuilder code = new StringBuilder();
-        if (!binding.binding().documentation().isBlank()) {
-            code.append(TsDoc.render(INDENT, List.of(binding.binding().documentation())));
+        if (variant == 0) {
+            if (!binding.binding().documentation().isBlank()) {
+                code.append(TsDoc.render(INDENT, List.of(binding.binding().documentation())));
+            }
+        } else {
+            code.append(INDENT).append("/** Variant ").append(variant).append(" of `").append(name).append("`: `")
+                    .append(binding.type().name().name()).append("`. */\n");
         }
-        return code.append(INDENT).append("async ").append(binding.binding().name())
+        return code.append(INDENT).append("async ").append(name).append(variant > 0 ? String.valueOf(variant) : "")
                 .append("(params: JsonObject, session: Session): Promise<unknown> {\n")
                 .append(body).append(INDENT).append("}\n").toString();
+    }
+
+    private String build(final String name, final int variant, final TckBindings.Resolved binding,
+                         final TsImports imports, final TsContext context) {
+        final String indent = INDENT + INDENT;
+        final StringBuilder body = new StringBuilder();
+        rejectUnsupported(binding.members(), "params", body, indent);
+        final String request = construct(binding.type(), binding.members(), "params", null, 1, body, indent,
+                imports, context);
+        body.append(indent).append("return ").append(request).append(";\n");
+        final String type = imports.type(binding.type().name());
+        return INDENT + "/** Builds the request of `" + name + "`" + (variant > 0 ? " (variant " + variant + ")" : "")
+                + " without sending it. */\n"
+                + INDENT + builder(name, variant) + "(params: JsonObject): " + type + " {\n" + body + INDENT + "}\n";
     }
 
     /** The JSON parameters the API cannot provide are rejected if they are sent. */
@@ -431,10 +543,15 @@ public final class TsTckGenerator {
                 }
                 continue; // the constructor applies null or the default
             }
-            final String value = member.get() instanceof TckBindings.Value v
-                    ? value(field, v, json, parent, imports)
-                    : elements(field, (TckBindings.Elements) member.get(), json, depth, body, indent, imports,
-                    context);
+            final String value = switch (member.get()) {
+                case TckBindings.Value v -> value(field, v, json, parent, imports);
+                case TckBindings.Elements e -> elements(field, e, json, parent, depth, body, indent, imports,
+                        context);
+                case TckBindings.Nested n -> nested(field, n, json, parent, depth, body, indent, imports, context);
+                case TckBindings.Request r -> wrap(field, "this.#requests.build(this.#runtime.object(" + json + ", "
+                        + TsLiterals.quote(r.path().toString()) + "))", r.path().toString(), imports);
+                default -> throw new IllegalStateException("not an attribute: " + member.get());
+            };
             properties.add(field.name() + ": " + value);
         }
         final String name = imports.value(type.name());
@@ -450,6 +567,8 @@ public final class TsTckGenerator {
         return switch (member) {
             case TckBindings.Value value -> Optional.of(value.field());
             case TckBindings.Elements elements -> Optional.of(elements.field());
+            case TckBindings.Nested nested -> Optional.of(nested.field());
+            case TckBindings.Request request -> Optional.of(request.field());
             default -> Optional.empty();
         };
     }
@@ -457,25 +576,40 @@ public final class TsTckGenerator {
     /** A bound value: the first present source, then the default, {@code null} or the check that it is present. */
     private static String value(final FieldDefinition field, final TckBindings.Value value, final String json,
                                 final @Nullable String parent, final TsImports imports) {
-        final String lookup = lookup(value.sources(), json, parent);
+        return wrap(field, lookup(value, json, parent), value.sources().stream()
+                .map(s -> s.path() != null ? s.path().toString() : "\"" + s.literal() + "\"")
+                .collect(Collectors.joining(" | ")), imports);
+    }
+
+    /** A possibly absent value: the default, {@code null} or the check that it is present. */
+    private static String wrap(final FieldDefinition field, final String value, final String parameters,
+                               final TsImports imports) {
         if (field.hasAnnotation("default")) {
-            return "this.#runtime.or(" + lookup + ", " + TsLiterals.expression(field.annotation("default")
+            return "this.#runtime.or(" + value + ", " + TsLiterals.expression(field.annotation("default")
                     .orElseThrow().arguments().getFirst(), field.type(), imports) + ")";
         }
         if (field.hasAnnotation("nullable")) {
-            return lookup;
+            return value;
         }
-        return "this.#runtime.required(" + lookup + ", " + TsLiterals.quote(value.sources().stream()
-                .map(s -> s.path().toString()).collect(Collectors.joining(" | "))) + ")";
+        return "this.#runtime.required(" + value + ", " + TsLiterals.quote(parameters) + ")";
     }
 
     /** The lookup of the sources: one {@code value} per JSON object, the first present one wins. */
-    private static String lookup(final List<TckBindings.Source> sources, final String json,
-                                 final @Nullable String parent) {
+    private static String lookup(final TckBindings.Value value, final String json, final @Nullable String parent) {
         final List<String> groups = new ArrayList<>();
         String currentObject = null;
         List<String> current = new ArrayList<>();
-        for (final TckBindings.Source source : sources) {
+        for (final TckBindings.Source source : value.sources()) {
+            final String converter = converter(source.converter(), value.collection());
+            if (source.path() == null) {
+                if (!current.isEmpty()) {
+                    groups.add("this.#runtime.value(" + currentObject + ", [" + String.join(", ", current) + "])");
+                    current = new ArrayList<>();
+                }
+                currentObject = null;
+                groups.add("(" + converter + ")(" + TsLiterals.quote(Objects.requireNonNull(source.literal())) + ")");
+                continue;
+            }
             final String object = source.path().parent() ? Objects.requireNonNull(parent,
                     "'^' outside of 'each'") : json;
             if (!object.equals(currentObject) && !current.isEmpty()) {
@@ -484,9 +618,11 @@ public final class TsTckGenerator {
             }
             currentObject = object;
             current.add("{ path: " + TsLiterals.quote(String.join(".", source.path().segments()))
-                    + ", converter: (json) => this.#convert." + source.converter().id() + "(json) }");
+                    + ", converter: " + converter + " }");
         }
-        groups.add("this.#runtime.value(" + currentObject + ", [" + String.join(", ", current) + "])");
+        if (!current.isEmpty()) {
+            groups.add("this.#runtime.value(" + currentObject + ", [" + String.join(", ", current) + "])");
+        }
         String lookup = groups.getLast();
         for (int i = groups.size() - 2; i >= 0; i--) {
             lookup = "this.#runtime.or(" + groups.get(i) + ", " + lookup + ")";
@@ -494,36 +630,105 @@ public final class TsTckGenerator {
         return lookup;
     }
 
+    /** The converter as function: the method of the catalogue, or applied to every element of a JSON list. */
+    private static String converter(final Converter converter, final TckBindings.Collection collection) {
+        final String single = "this.#convert." + converter.id() + "(element)";
+        return switch (collection) {
+            case NONE -> "(json) => this.#convert." + converter.id() + "(json)";
+            case LIST -> "(json) => list(json, (element) => " + single + ")";
+            case SET -> "(json) => set(json, (element) => " + single + ")";
+        };
+    }
+
     /**
-     * A list built with {@code each}: the first segment of the source is the JSON list, the rest the object inside
-     * each element ({@code transfers.hbar}); elements without that object are skipped.
+     * A list built with {@code each}: nested loops over the generators (objects of a JSON list, or the values of a
+     * JSON list bound to a name).
      */
     private String elements(final FieldDefinition field, final TckBindings.Elements elements, final String json,
-                            final int depth, final StringBuilder body, final String indent, final TsImports imports,
-                            final TsContext context) {
+                            final @Nullable String parent, final int depth, final StringBuilder body,
+                            final String indent, final TsImports imports, final TsContext context) {
         final String list = TsNames.local(field.name()) + (depth > 1 ? String.valueOf(depth) : "");
-        final String element = "element" + depth;
-        final String item = "item" + depth;
         final String elementType = imports.type(elements.elementType().name());
-        body.append(indent).append("const ").append(list).append(": ").append(elementType).append("[] = [];\n")
-                .append(indent).append("for (const ").append(element).append(" of this.#runtime.objects(")
-                .append(json).append(", ").append(TsLiterals.quote(elements.source().first())).append(")) {\n");
-        final String inner = indent + INDENT;
-        if (elements.source().segments().size() == 1) {
-            body.append(inner).append("const ").append(item).append(" = ").append(element).append(";\n");
-        } else {
-            body.append(inner).append("const ").append(item).append(" = this.#runtime.object(").append(element)
-                    .append(", ").append(TsLiterals.quote(elements.source().rest().toString())).append(");\n")
-                    .append(inner).append("if (").append(item).append(" === null) {\n")
-                    .append(inner).append(INDENT).append("continue;\n")
-                    .append(inner).append("}\n");
+        body.append(indent).append("const ").append(list).append(": ").append(elementType).append("[] = [];\n");
+        String scope = json;
+        String enclosing = parent;
+        String inner = indent;
+        final boolean single = elements.generators().size() == 1;
+        for (int i = 0; i < elements.generators().size(); i++) {
+            final Binding.Generator generator = elements.generators().get(i);
+            final String suffix = depth + (single ? "" : "_" + (i + 1));
+            final String owner = generator.path().parent() ? Objects.requireNonNull(enclosing,
+                    "'^' outside of 'each'") : scope;
+            if (generator.name() == null) {
+                final String element = "element" + suffix;
+                final String item = "item" + suffix;
+                body.append(inner).append("for (const ").append(element).append(" of this.#runtime.objects(")
+                        .append(owner).append(", ").append(TsLiterals.quote(generator.path().first())).append(")) {\n");
+                inner += INDENT;
+                if (generator.path().segments().size() == 1) {
+                    body.append(inner).append("const ").append(item).append(" = ").append(element).append(";\n");
+                } else {
+                    body.append(inner).append("const ").append(item).append(" = this.#runtime.object(").append(element)
+                            .append(", ").append(TsLiterals.quote(generator.path().rest().toString())).append(");\n")
+                            .append(inner).append("if (").append(item).append(" === null) {\n")
+                            .append(inner).append(INDENT).append("continue;\n")
+                            .append(inner).append("}\n");
+                }
+                scope = item;
+                enclosing = element;
+            } else {
+                final String value = "value" + suffix;
+                final String next = "scope" + suffix;
+                body.append(inner).append("for (const ").append(value).append(" of elements(this.#runtime.value(")
+                        .append(owner).append(", [{ path: ")
+                        .append(TsLiterals.quote(String.join(".", generator.path().segments())))
+                        .append(", converter: (json) => json }]), ").append(generator.optional()).append(")) {\n");
+                inner += INDENT;
+                body.append(inner).append("const ").append(next).append(" = withName(").append(scope).append(", ")
+                        .append(TsLiterals.quote(generator.name())).append(", ").append(value).append(");\n");
+                scope = next;
+            }
         }
-        rejectUnsupported(elements.members(), item, body, inner);
-        final String construction = construct(elements.elementType(), elements.members(), item, element, depth + 1,
-                body, inner, imports, context);
-        body.append(inner).append(list).append(".push(").append(construction).append(");\n")
-                .append(indent).append("}\n");
+        rejectUnsupported(elements.members(), scope, body, inner);
+        final String construction = construct(elements.elementType(), elements.members(), scope, enclosing,
+                depth + 1, body, inner, imports, context);
+        body.append(inner).append(list).append(".push(").append(construction).append(");\n");
+        for (int i = elements.generators().size() - 1; i >= 0; i--) {
+            body.append(indent).append(INDENT.repeat(i)).append("}\n");
+        }
         return list;
+    }
+
+    /** A nested object: the variant selected by the presence of its parameter. */
+    private String nested(final FieldDefinition field, final TckBindings.Nested nested, final String json,
+                          final @Nullable String parent, final int depth, final StringBuilder body,
+                          final String indent, final TsImports imports, final TsContext context) {
+        String scope = json;
+        String enclosing = parent;
+        if (nested.path() != null) {
+            scope = TsNames.local(field.name()) + "Json" + depth;
+            body.append(indent).append("const ").append(scope).append(" = this.#runtime.object(")
+                    .append(nested.path().parent() ? Objects.requireNonNull(parent, "'^' outside of 'each'") : json)
+                    .append(", ").append(TsLiterals.quote(String.join(".", nested.path().segments()))).append(");\n");
+            enclosing = json;
+        }
+        final String target = nested.path() != null ? scope + "!" : scope;
+        String expression = "null";
+        for (int i = nested.variants().size() - 1; i >= 0; i--) {
+            final TckBindings.Variant variant = nested.variants().get(i);
+            final String construction = construct(variant.type(), variant.members(), target, enclosing, depth + 1,
+                    body, indent, imports, context);
+            expression = variant.when() == null ? construction
+                    : "(" + present(variant.when().parent() ? Objects.requireNonNull(enclosing) : target,
+                    new Binding.Path(false, variant.when().segments())) + " ? " + construction + " : "
+                    + expression + ")";
+        }
+        if (nested.path() != null) {
+            expression = "(" + scope + " === null ? null : " + expression + ")";
+        }
+        return wrap(field, expression, nested.path() != null ? nested.path().toString()
+                : nested.variants().stream().filter(v -> v.when() != null).map(v -> v.when().toString()).collect(Collectors.joining(" | ")),
+                imports);
     }
 
     /** The access to a result value: properties, null-safe after a nullable attribute. */
@@ -553,7 +758,7 @@ public final class TsTckGenerator {
                 if (member instanceof TckBindings.Value value) {
                     final String name = TsNames.local(value.field().name());
                     body.append(indent).append("const ").append(name).append(" = ")
-                            .append(lookup(value.sources(), "params", null)).append(";\n")
+                            .append(lookup(value, "params", null)).append(";\n")
                             .append(indent).append("if (").append(name).append(" !== null) {\n")
                             .append(indent).append(INDENT).append("transaction.").append(value.field().name())
                             .append(" = ").append(name).append(";\n")
@@ -566,7 +771,7 @@ public final class TsTckGenerator {
                 .append("/** The common transaction parameters (`").append(TckSpecifications.COMMON)
                 .append("`) of all transactions. */\n")
                 .append("export class CommonBindings {\n\n")
-                .append(fields(bodyText, false))
+                .append(fields(bodyText, false, false))
                 .append(INDENT).append("/** Creates the common transaction parameters. */\n")
                 .append(INDENT).append("constructor(runtime: TckRuntime) {\n")
                 .append(INDENT).append(INDENT).append("this.#runtime = runtime;\n");
@@ -590,13 +795,104 @@ public final class TsTckGenerator {
                 + imports.render(code.toString()) + "\n" + code);
     }
 
+    /** The registry of the transaction builders, for transactions that are part of another request. */
+    private GeneratedFile requestsModule(final TsContext context) {
+        final TsImports imports = new TsImports(context, "", SERVER + "/src", "Requests");
+        final String transaction = imports.type(new QualifiedName("consensusnode.transactions", "Transaction"));
+        imports.external(contractPackage(), "JsonObject", false);
+        imports.external(contractPackage(), "TckRuntime", false);
+        final String code = """
+                /**
+                 * The builders of the transactions of all bindings, for a transaction that is part of another request
+                 * (`request` in the bindings, e.g. the scheduled transaction of a schedule).
+                 */
+                export class Requests {
+
+                    readonly #runtime: TckRuntime;
+                    readonly #builders = new Map<string, (params: JsonObject) => $T<any, any>>();
+
+                    /** Creates the registry. */
+                    constructor(runtime: TckRuntime) {
+                        this.#runtime = runtime;
+                    }
+
+                    /** Registers the builder of the transaction of a method. */
+                    put(method: string, builder: (params: JsonObject) => $T<any, any>): void {
+                        this.#builders.set(method, builder);
+                    }
+
+                    /**
+                     * Builds the transaction of a nested request (`method` and `params`) without sending it; `null` if the
+                     * request is absent.
+                     */
+                    build(request: JsonObject | null): $T<any, any> | null {
+                        if (request === null) {
+                            return null;
+                        }
+                        const method = String(request["method"]);
+                        const builder = this.#builders.get(method);
+                        if (builder === undefined) {
+                            throw new RangeError(`not a transaction method of the bindings: ${method}`);
+                        }
+                        return builder(this.#runtime.object(request, "params") ?? {});
+                    }
+                }
+                """.replace("$T", transaction);
+        return new GeneratedFile(SERVER + "/src/Requests.ts", TsGenerator.HEADER + "\n" + imports.render(code)
+                + "\n" + code);
+    }
+
+    /** The helpers of the generated bindings. */
+    private static final String BINDING_SUPPORT = """
+
+            import type { JsonObject } from "@hiero/tck-contract";
+
+            /** Returns the elements of a JSON list; an absent list is empty, or one element `null` if optional. */
+            export function elements(json: unknown, optional: boolean): ReadonlyArray<unknown> {
+                if (json === null || json === undefined) {
+                    return optional ? [null] : [];
+                }
+                if (!Array.isArray(json)) {
+                    throw new TypeError(`not a JSON list: ${String(json)}`);
+                }
+                return json as ReadonlyArray<unknown>;
+            }
+
+            /** Converts every element of a JSON list. */
+            export function list<T>(json: unknown, converter: (json: unknown) => T): T[] {
+                return elements(json, false).map((element) => converter(element));
+            }
+
+            /** Converts every element of a JSON list into a set (in the order of the list). */
+            export function set<T>(json: unknown, converter: (json: unknown) => T): Set<T> {
+                return new Set(list(json, converter));
+            }
+
+            /** Converts every value into JSON. */
+            export function toJson<T>(values: Iterable<T>, converter: (value: T) => unknown): unknown[] {
+                return Array.from(values, (value) => converter(value));
+            }
+
+            /** Returns a JSON object with a name bound to a value (absent if the value is `null`). */
+            export function withName(json: JsonObject, name: string, value: unknown): JsonObject {
+                const result: Record<string, unknown> = { ...json };
+                if (value === null || value === undefined) {
+                    delete result[name];
+                } else {
+                    result[name] = value;
+                }
+                return result;
+            }
+            """;
+
     // --- server module and packages ------------------------------------------------------------------
 
     private GeneratedFile serverModule(final List<String> classes) {
         final StringBuilder code = new StringBuilder(TsGenerator.HEADER).append('\n')
                 .append("import type { Handler, TckRuntimeModule, TckServer } from \"").append(contractPackage())
                 .append("\";\n")
-                .append("import { CommonBindings } from \"./CommonBindings.js\";\n");
+                .append("import { CommonBindings } from \"./CommonBindings.js\";\n")
+                .append("import { Requests } from \"./Requests.js\";\n");
         classes.stream().sorted().forEach(c -> code.append("import { ").append(c).append(" } from \"./").append(c)
                 .append(".js\";\n"));
         code.append('\n')
@@ -613,8 +909,10 @@ public final class TsTckGenerator {
                 .append(INDENT).append("const module = (await import(RUNTIME)) as TckRuntimeModule;\n")
                 .append(INDENT).append("const runtime = module.createRuntime();\n")
                 .append(INDENT).append("const common = new CommonBindings(runtime);\n")
+                .append(INDENT).append("const requests = new Requests(runtime);\n")
                 .append(INDENT).append("const methods = new Map<string, Handler>();\n");
-        classes.forEach(c -> code.append(INDENT).append("new ").append(c).append("(runtime, common).register(methods);\n"));
+        classes.forEach(c -> code.append(INDENT).append("new ").append(c)
+                .append("(runtime, common, requests).register(methods);\n"));
         code.append(INDENT).append("return runtime.server(methods);\n")
                 .append("}\n");
         return new GeneratedFile(SERVER + "/src/server.ts", code.toString());

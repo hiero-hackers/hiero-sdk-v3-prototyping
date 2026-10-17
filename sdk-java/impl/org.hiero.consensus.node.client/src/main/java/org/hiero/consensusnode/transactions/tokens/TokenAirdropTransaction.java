@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.tokens;
 
+import org.hiero.consensusnode.client.internal.TokenKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -54,27 +56,27 @@ public final class TokenAirdropTransaction extends Transaction<TokenAirdropRecei
 
     @Override
     public PackedTransaction<TokenAirdropReceipt, TokenAirdropTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAirdropTransaction.pack");
+        return new Packing<>(TokenKinds.TOKEN_AIRDROP).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenAirdropReceipt, TokenAirdropTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAirdropTransaction.signWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_AIRDROP).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<TokenAirdropReceipt, TokenAirdropTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAirdropTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_AIRDROP).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenAirdropReceipt, TokenAirdropTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAirdropTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_AIRDROP).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<TokenAirdropReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAirdropTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(TokenKinds.TOKEN_AIRDROP).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -90,21 +92,21 @@ public final class TokenAirdropTransaction extends Transaction<TokenAirdropRecei
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<TokenAirdropReceipt, TokenAirdropTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAirdropTransaction.packForBatch");
+        return new Packing<>(TokenKinds.TOKEN_AIRDROP).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<TokenAirdropReceipt, TokenAirdropTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAirdropTransaction.signForBatchWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_AIRDROP).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<TokenAirdropReceipt, TokenAirdropTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAirdropTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_AIRDROP).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -112,7 +114,7 @@ public final class TokenAirdropTransaction extends Transaction<TokenAirdropRecei
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<TokenAirdropReceipt, TokenAirdropTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenAirdropTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_AIRDROP).signForBatch(this, payerId, signer, batchKey);
     }
 
     /// Returns a builder for a new `TokenAirdropTransaction`.

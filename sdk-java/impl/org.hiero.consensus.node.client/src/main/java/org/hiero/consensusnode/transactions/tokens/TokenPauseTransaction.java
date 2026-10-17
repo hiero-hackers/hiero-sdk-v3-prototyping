@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.tokens;
 
+import org.hiero.consensusnode.client.internal.TokenKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -38,27 +40,27 @@ public final class TokenPauseTransaction extends Transaction<TokenPauseReceipt, 
 
     @Override
     public PackedTransaction<TokenPauseReceipt, TokenPauseTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenPauseTransaction.pack");
+        return new Packing<>(TokenKinds.TOKEN_PAUSE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenPauseReceipt, TokenPauseTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenPauseTransaction.signWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_PAUSE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<TokenPauseReceipt, TokenPauseTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenPauseTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_PAUSE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenPauseReceipt, TokenPauseTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenPauseTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_PAUSE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<TokenPauseReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenPauseTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(TokenKinds.TOKEN_PAUSE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -74,21 +76,21 @@ public final class TokenPauseTransaction extends Transaction<TokenPauseReceipt, 
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<TokenPauseReceipt, TokenPauseTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenPauseTransaction.packForBatch");
+        return new Packing<>(TokenKinds.TOKEN_PAUSE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<TokenPauseReceipt, TokenPauseTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenPauseTransaction.signForBatchWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_PAUSE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<TokenPauseReceipt, TokenPauseTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenPauseTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_PAUSE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -96,7 +98,7 @@ public final class TokenPauseTransaction extends Transaction<TokenPauseReceipt, 
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<TokenPauseReceipt, TokenPauseTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenPauseTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_PAUSE).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

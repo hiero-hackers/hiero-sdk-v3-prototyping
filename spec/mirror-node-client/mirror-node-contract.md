@@ -115,4 +115,12 @@ test "a contract without optional values has no admin authority, expiration, EVM
   the contract state as a range `timestamp: {from, to}`, and for the current state `to` is `null` (e.g. the Hiero
   Enterprise Java test fixture `contract.json`). A `Contract` of the current state therefore cannot be built without
   inventing an end time. Should `toTimestamp` be `@@nullable`? The same holds for `permanentRemoval`, which the REST
-  API also returns as `null`.
+  API also returns as `null`. The Java implementation fills an open `to` with a sentinel end time and a `null`
+  `permanentRemoval` with a fallback value (see the general item in [`mirror-node.md`](mirror-node.md)), so a caller
+  cannot tell these values from real ones.
+
+- **`ContractRepository` and `NetworkRepository` are concrete types.** The other five repositories are abstractions,
+  but these two are declared without `abstraction`, so they can be instantiated directly — and a
+  `new ContractRepository()` / `new NetworkRepository()` has no `MirrorNode` and cannot reach a mirror node. The Java
+  implementation creates working instances only through `createRepository(...)` / `createMirrorNodeClient(...)`.
+  Should both be abstractions like the other repositories?

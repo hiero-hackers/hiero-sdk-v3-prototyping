@@ -22,7 +22,7 @@ import org.jspecify.annotations.NullMarked;
 /// - `org.hiero.consensusnode.transactions.utility`
 @NullMarked
 // gRPC ships no module descriptor; io.grpc and io.grpc.protobuf.lite are automatic modules
-@SuppressWarnings("requires-automatic")
+@SuppressWarnings({"requires-automatic", "module"})
 module org.hiero.consensus.node.client {
     requires transitive org.hiero.base;
     requires transitive org.hiero.sdk.protobuf;
@@ -47,4 +47,9 @@ module org.hiero.consensus.node.client {
     exports org.hiero.consensusnode.transactions.tokens;
     exports org.hiero.consensusnode.transactions.topics;
     exports org.hiero.consensusnode.transactions.utility;
+    // the implementation of the transaction types of the admin client (Packing, TransactionKind, Protobuf)
+    exports org.hiero.consensusnode.client.internal to org.hiero.consensus.node.admin.client;
+
+    // transaction types of other modules (the administration client, a custom service)
+    uses org.hiero.consensusnode.transactions.spi.TransactionSupport;
 }

@@ -250,7 +250,7 @@ the contract with the runtime and the server are generated, the runtime is hand-
 
 | Part | Where |
 |---|---|
-| Bindings | [`tooling/tck/bindings`](../tooling/tck/bindings): `crypto-service.md`, `common.md` |
+| Bindings | [`tooling/tck/bindings`](../tooling/tck/bindings): `common.md` and one file per TCK service (`crypto-service.md`, `token-service.md`, `file-service.md`, `topic-service.md`, `schedule-service.md`, `node-service.md`) |
 | Parser, resolver against the spec model, converter catalogue | `tooling/metalang/metalang-core`, package `org.hiero.sdk.v3.metalang.tck` (`BindingParser`, `TckBindings`, `Converter`) |
 | Reader of the TCK test specifications and coverage check | same package (`TckSpecifications`, `TckCoverage`) |
 | Generated contract with the runtime: `Converters` (derived from the converter catalogue), `TckRuntime`, `Source`, `Session`, `Handler`, `TckServer` — interfaces and records only | [`sdk-java/tck/generated/contract`](../sdk-java/tck/generated/contract): `hiero-sdk-tck-contract` |
@@ -294,12 +294,45 @@ The kind of a binding follows from its type: a type with `signWithOperatorAndSub
 its receipt), a type with `submit` a query (answered with the value of its response). The common transaction
 parameters bind to the mutable attributes of `Transaction`.
 
+Further forms, added when the other services were bound:
+
+| Form | Meaning | Used by |
+|---|---|---|
+| `tokens = tokenIds : address` on a `list<T>` or `set<T>` attribute | the converter of `T` converts every element of a JSON list; the same for results (`result serialNumbers = receipt.serials : int64` writes a JSON list) | `associateToken`, `mintToken`, `getScheduleInfo` |
+| `tokenType = tokenType : tokenType \| "ft" : tokenType` | a constant as source, converted like a JSON string: a default where the TCK has one and the API has none | `createToken` |
+| `binding mintToken when metadata -> A { ... } else -> B { ... }` | variants: the first variant whose JSON parameter is present is used, `else` otherwise; one TCK method can map to several types | `mintToken`, `burnToken`, `wipeToken` |
+| `grant = when serialNumbers -> A { ... } else -> B { ... }` | a nested object of a declared (e.g. sealed) attribute type, created from the current JSON object | `approveAllowance` (`NftGrant`) |
+| `endpoint = grpcWebProxyEndpoint -> ServiceEndpoint { ... }` | a nested object created from the JSON object at the path (absent object: `null`) | `createNode`, `updateNode` |
+| `each pendingAirdrops, serial in serialNumbers? -> PendingAirdrop { ... }` | several generators iterate like nested loops; `name in list` binds every value of a JSON list to a name the members read like a parameter, `?` makes an absent list one iteration without the name | `claimToken`, `cancelAirdrop`, `rejectToken` |
+| `scheduledTransaction = request scheduledTransaction` | a transaction built by the binding of a nested TCK request (`method`, `params`) without sending it | `createSchedule` |
+| `result nftId = response : nftId` | the whole receipt or response as value of a result | `getTokenNftInfo` |
+| `maxQueryPayment = maxQueryPayment : tinybar` on a mutable attribute | set with a setter after the request was created (only on the type of the binding) | the paid queries |
+
+The converter catalogue grew by `number` (an `int32` as JSON number), `utf8`, `keyList` (a JSON list of keys that
+must all sign), `publicKey`, `tokenType`, `tokenSupplyType`, `nftIdToken` / `nftIdSerial` / `nftId` (the NFT ID
+`0.0.1234/1`), `transactionId` and `ipAddress`; `int32` also converts `uint16`. Each is implemented in both runtimes
+(`JavaConverters`, `TsConverters`).
+
+The generated server has one builder per binding (and variant) besides the handler; the builders of the transactions
+are registered by method name (`Requests`), which is what `request` uses. `BindingSupport` holds the helpers of the
+generated code (lists, sets, bound names); both are generated, so the runtimes are unchanged by these forms.
+
+The coverage check compares the variants of a method together, ignores the names bound by `each name in list` and
+the parameters of nested objects with a path, and of the alternative sources of an attribute requires only one to
+exist in the TCK: the TCK's specification of `deleteFile` names the parameter `fileID` while its tests send `fileId`,
+and the binding accepts both.
+
 ### Results
 
 - **Coverage:** all bindings resolve against the specs without findings. Against the TCK test specifications
-  (`docs/test-specifications`, 65 methods) the check reports 8 bound methods (the five bindings and the three runtime
-  methods), 56 unbound methods and no finding: every parameter and result of the bound methods is either bound or
-  declared `unsupported` with its reason.
+  (`docs/test-specifications`, 64 methods) the check first reported 8 bound methods (the five crypto bindings of the
+  spike and the three runtime methods); with the token, file, topic, schedule, node and allowance bindings it reports
+  47 bound methods, 17 unbound methods and no finding: every parameter and result of the bound methods is either bound
+  or declared `unsupported` with its reason. The unbound methods have no counterpart in the V3 specs (contract
+  service, `createEthereumTransaction`, `submitTopicMessage`, `updateTokenFeeSchedule`, `getTransactionReceipt`,
+  `ping`, `pingAll`), read the Mirror Node (`getMirrorNodeAccountBalance`, `getMirrorNodeTokenBalance`), check V2
+  behaviour (`executeDeprecatedAccountBalanceQuery`) or return a list of objects (`getAddressBook`); the bindings
+  files explain each.
 - **No hand-written handler code:** all five methods, including `transferCrypto` with its three lists of transfers
   and `getAccountInfo` with the nested `stakingInfo`, are generated from the bindings. The generated code builds the
   request with the constructor of the type (missing values become `null` or the `@@default` of the attribute,
@@ -361,9 +394,10 @@ node, the server answers, and `setup` fails on the stub.
 
 ## Open questions
 
-- **Methods that do not fit the uniform flow** (`airdropToken`, `submitTopicMessage` with chunks, the Mirror Node
-  queries): `each` covers lists like the transfers of `transferCrypto`; do the remaining ones need more forms, or a
-  hand-written handler as escape hatch?
+- **Methods that do not fit the uniform flow:** `each` with several generators, variants, nested objects and nested
+  requests cover airdrops, rejections, allowances and schedules without hand-written handlers. Open are results that
+  are lists of objects (`getAddressBook`, custom fees), `submitTopicMessage` with chunks (no API yet) and the Mirror
+  Node queries: more forms, or a hand-written handler as escape hatch?
 - **Shared runtime logic:** Java and TypeScript each have a hand-written runtime of similar size (JSON access,
   execution flow, converters, `setup`). Rust will add a third; how much of that can be avoided (e.g. by generating the
   JSON access from the contract) is open.

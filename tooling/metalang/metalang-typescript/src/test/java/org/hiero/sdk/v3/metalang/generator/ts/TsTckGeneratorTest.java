@@ -48,8 +48,15 @@ class TsTckGeneratorTest {
                 "contract/src/index.ts",
                 "contract/tsconfig.json",
                 "server/package.json",
+                "server/src/BindingSupport.ts",
                 "server/src/CommonBindings.ts",
                 "server/src/CryptoServiceBindings.ts",
+                "server/src/FileServiceBindings.ts",
+                "server/src/NodeServiceBindings.ts",
+                "server/src/Requests.ts",
+                "server/src/ScheduleServiceBindings.ts",
+                "server/src/TokenServiceBindings.ts",
+                "server/src/TopicServiceBindings.ts",
                 "server/src/index.ts",
                 "server/src/main.ts",
                 "server/src/server.ts",
@@ -107,6 +114,27 @@ class TsTckGeneratorTest {
                 .contains("this.#runtime.put(result, \"stakingInfo.stakedNodeId\", response.stakedNodeId, "
                         + "(value) => this.#convert.int64Json(value));")
                 .contains("// not provided: ethereumNonce");
+        assertThat(content("server/src/TokenServiceBindings.ts"))
+                // variants: a handler and a builder that select the variant
+                .contains("if (this.#runtime.value(params, [{ path: \"metadata\", converter: (json) => json }]) "
+                        + "!== null) {\n            return this.mintToken1(params, session);")
+                .contains("buildMintToken(params: JsonObject): Transaction<any, any> {")
+                .contains("this.#requests.put(\"mintToken\", (params) => this.buildMintToken(params));")
+                // lists and sets of values, constants, list results
+                .contains("converter: (json) => list(json, (element) => this.#convert.hex(element))")
+                .contains("converter: (json) => set(json, (element) => this.#convert.address(element))")
+                .contains("((json) => this.#convert.tokenType(json))(\"ft\")")
+                .contains("(values) => toJson(values, (value) => this.#convert.int64Json(value))")
+                .contains("import { elements, list, set, toJson, withName } from \"./BindingSupport.js\";")
+                // names bound to the values of a list; the whole response as result
+                .contains("const scope1 = withName(params, \"serial\", value1);")
+                .contains("maxQueryPayment: this.#runtime.value(params, [{ path: \"maxQueryPayment\"")
+                .contains("this.#runtime.put(result, \"nftId\", response, (value) => this.#convert.nftIdJson(value));");
+        assertThat(content("server/src/CryptoServiceBindings.ts")).contains("!== null ? new NftSerialGrant({");
+        assertThat(content("server/src/NodeServiceBindings.ts"))
+                .contains("(grpcWebProxyEndpointJson1 === null ? null : new ServiceEndpoint({");
+        assertThat(content("server/src/ScheduleServiceBindings.ts"))
+                .contains("this.#requests.build(this.#runtime.object(params, \"scheduledTransaction\"))");
         assertThat(content("server/src/CommonBindings.ts")).contains("transaction.memo = memo;")
                 .contains("this.#runtime.unsupported(params, \"transactionId\"");
     }
@@ -214,7 +242,7 @@ class TsTckGeneratorTest {
                 .contains("const items2: Item[] = [];")
                 .contains("const item2 = this.#runtime.object(element2, \"item\");")
                 .contains("receipt.detail?.note")
-                .contains("const transaction = new Empty({});");
+                .contains("buildEmpty(params: JsonObject): Empty {\n        return new Empty({});");
         // converters whose type the API does not have cannot be used, so the contract leaves them out
         assertThat(generated.stream().filter(f -> f.path().endsWith("/Converters.ts")).findFirst().orElseThrow()
                 .content()).contains("    string(json: unknown): string;\n").doesNotContain("accountId");
@@ -282,7 +310,9 @@ class TsTckGeneratorTest {
                         '{"jsonrpc":"2.0","id":1,"method":"reset","params":{"sessionId":"s"}}',
                         '{"jsonrpc":"2.0","id":2,"method":"unknownMethod","params":{}}',
                         '{"jsonrpc":"2.0","id":3,"method":"createAccount","params":{"sessionId":"s","key":"302a"}}',
-                        '{"jsonrpc":"2.0","id":4,"method":"generateKey","params":{"type":"keyList"}}']) {
+                        '{"jsonrpc":"2.0","id":4,"method":"generateKey","params":{"type":"keyList"}}',
+                        '{"jsonrpc":"2.0","id":5,"method":"createSchedule","params":{"sessionId":"s",'
+                            + '"scheduledTransaction":{"method":"unknown"}}}']) {
                     console.log(await server.handle(request));
                 }
                 """);
@@ -291,7 +321,8 @@ class TsTckGeneratorTest {
         assertThat(output).contains("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"status\":\"SUCCESS\"}}")
                 .contains("\"id\":2,\"error\":{\"code\":-32601")
                 .contains("\"id\":3,\"error\":{\"code\":-32603").contains("Not implemented yet")
-                .contains("not supported by the API");
+                .contains("not supported by the API")
+                .contains("not a transaction method of the bindings: unknown");
     }
 
     private static void write(final List<GeneratedFile> generated, final Path directory) throws IOException {

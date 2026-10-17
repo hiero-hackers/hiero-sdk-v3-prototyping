@@ -159,9 +159,12 @@ public final class Packing<R extends Receipt, T extends Transaction<R, T>> {
         return new DefaultPackedTransaction<>(id, List.of(), List.of(new NodeBody(NO_NODE, body)), kind);
     }
 
-    /// `TransactionId.generateTransactionId` takes an `Address`, so only a payer with an entity number can pay (see
-    /// the `## Questions & Comments` of `ledger.md`).
-    private static TransactionId transactionId(final AccountId payer) {
+    /// A new transaction id of a payer. `TransactionId.generateTransactionId` takes an `Address`, so only a payer with
+    /// an entity number can pay (see the `## Questions & Comments` of `ledger.md`).
+    ///
+    /// @param payer the payer
+    /// @return the transaction id
+    static TransactionId transactionId(final AccountId payer) {
         final Long num = payer.num();
         if (num == null) {
             throw new IllegalArgumentException("The payer " + payer + " has no entity number");

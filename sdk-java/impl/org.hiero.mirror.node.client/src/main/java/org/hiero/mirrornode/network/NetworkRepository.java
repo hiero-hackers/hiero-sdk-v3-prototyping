@@ -3,32 +3,36 @@ package org.hiero.mirrornode.network;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import org.hiero.common.Page;
+import org.hiero.mirrornode.internal.MirrorNodeRest;
 import org.jspecify.annotations.Nullable;
 
 public class NetworkRepository {
 
     /// Creates a new `NetworkRepository`.
+    ///
+    /// A repository created with this constructor is bound to no mirror node: its queries fail with
+    /// `MirrorNodeException`. `NetworkFactory.createRepository` creates a repository for a mirror node.
     public NetworkRepository() {
     }
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
     public CompletionStage<@Nullable ExchangeRates> exchangeRates() {
-        throw new UnsupportedOperationException("Not implemented yet: NetworkRepository.exchangeRates");
+        return MirrorNodeRest.unbound("NetworkRepository");
     }
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
     public CompletionStage<List<NetworkFee>> fees() {
-        throw new UnsupportedOperationException("Not implemented yet: NetworkRepository.fees");
+        return MirrorNodeRest.unbound("NetworkRepository");
     }
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
     public CompletionStage<@Nullable NetworkStake> stake() {
-        throw new UnsupportedOperationException("Not implemented yet: NetworkRepository.stake");
+        return MirrorNodeRest.unbound("NetworkRepository");
     }
 
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
     public CompletionStage<@Nullable NetworkSupplies> supplies() {
-        throw new UnsupportedOperationException("Not implemented yet: NetworkRepository.supplies");
+        return MirrorNodeRest.unbound("NetworkRepository");
     }
 
     /// The network's consensus-node list (address book).
@@ -36,7 +40,7 @@ public class NetworkRepository {
     ///
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
     public CompletionStage<Page<NetworkNode>> nodes() {
-        throw new UnsupportedOperationException("Not implemented yet: NetworkRepository.nodes");
+        return MirrorNodeRest.unbound("NetworkRepository");
     }
 
     /// Estimate the fee for a candidate transaction (HIP-1313). The transaction is passed as its
@@ -44,6 +48,6 @@ public class NetworkRepository {
     ///
     /// The returned stage completes exceptionally with `MirrorNodeException` if the operation fails.
     public CompletionStage<FeeEstimate> estimateFees(final byte[] transaction) {
-        throw new UnsupportedOperationException("Not implemented yet: NetworkRepository.estimateFees");
+        return MirrorNodeRest.unbound("NetworkRepository");
     }
 }

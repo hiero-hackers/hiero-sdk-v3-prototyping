@@ -1,7 +1,9 @@
 package org.hiero.consensusnode.admin.network;
 
 import java.util.concurrent.CompletionStage;
+import org.hiero.consensusnode.admin.internal.AdminQueries;
 import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.client.internal.Querying;
 import org.hiero.consensusnode.queries.FreeQuery;
 import org.hiero.consensusnode.queries.QueryResponse;
 import org.jspecify.annotations.Nullable;
@@ -60,7 +62,10 @@ public final class NetworkVersionInfoQuery extends FreeQuery<NetworkVersionInfo>
     /// handled transparently.
     @Override
     public CompletionStage<QueryResponse<NetworkVersionInfo>> submit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: NetworkVersionInfoQuery.submit");
+        // The network bills NetworkGetVersionInfo like any other paid query: without a payment it is rejected at
+        // precheck. The answer is therefore bought with a payment of the quoted cost from the operator.
+        return Querying.paid(this, null, AdminQueries.NETWORK_VERSION_INFO, client)
+                .<QueryResponse<NetworkVersionInfo>>thenApply(response -> response);
     }
 
     @Override

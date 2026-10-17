@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.queries.files;
 
+import org.hiero.consensusnode.client.internal.FileQueries;
+import org.hiero.consensusnode.client.internal.Querying;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import org.hiero.consensusnode.client.HieroClient;
@@ -84,7 +86,7 @@ public final class FileInfoQuery extends PaidQuery<FileInfo> {
     /// handled transparently.
     @Override
     public CompletionStage<PaidQueryResponse<FileInfo>> submit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: FileInfoQuery.submit");
+        return Querying.paid(this, maxQueryPayment(), FileQueries.FILE_INFO, client);
     }
 
     /// Asks the network for the current price of this query without executing it. The returned value is a
@@ -92,7 +94,7 @@ public final class FileInfoQuery extends PaidQuery<FileInfo> {
     /// Throws if `maxQueryPayment` is set and the quoted price exceeds it.
     @Override
     public CompletionStage<NativeToken<?, ?>> getCost(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: FileInfoQuery.getCost");
+        return Querying.cost(this, FileQueries.FILE_INFO, client);
     }
 
     @Override

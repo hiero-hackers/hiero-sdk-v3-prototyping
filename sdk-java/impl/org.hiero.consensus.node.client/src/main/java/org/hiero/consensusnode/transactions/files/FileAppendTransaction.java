@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.files;
 
+import org.hiero.consensusnode.client.internal.FileKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -46,27 +48,27 @@ public final class FileAppendTransaction extends Transaction<FileAppendReceipt, 
 
     @Override
     public PackedTransaction<FileAppendReceipt, FileAppendTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: FileAppendTransaction.pack");
+        return new Packing<>(FileKinds.FILE_APPEND).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<FileAppendReceipt, FileAppendTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: FileAppendTransaction.signWithOperator");
+        return new Packing<>(FileKinds.FILE_APPEND).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<FileAppendReceipt, FileAppendTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: FileAppendTransaction.sign");
+        return new Packing<>(FileKinds.FILE_APPEND).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<FileAppendReceipt, FileAppendTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: FileAppendTransaction.sign");
+        return new Packing<>(FileKinds.FILE_APPEND).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<FileAppendReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: FileAppendTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(FileKinds.FILE_APPEND).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -82,21 +84,21 @@ public final class FileAppendTransaction extends Transaction<FileAppendReceipt, 
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<FileAppendReceipt, FileAppendTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: FileAppendTransaction.packForBatch");
+        return new Packing<>(FileKinds.FILE_APPEND).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<FileAppendReceipt, FileAppendTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: FileAppendTransaction.signForBatchWithOperator");
+        return new Packing<>(FileKinds.FILE_APPEND).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<FileAppendReceipt, FileAppendTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: FileAppendTransaction.signForBatch");
+        return new Packing<>(FileKinds.FILE_APPEND).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -104,7 +106,7 @@ public final class FileAppendTransaction extends Transaction<FileAppendReceipt, 
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<FileAppendReceipt, FileAppendTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: FileAppendTransaction.signForBatch");
+        return new Packing<>(FileKinds.FILE_APPEND).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

@@ -8,7 +8,7 @@ import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.consensusnode.client.internal.Packing;
-import org.hiero.consensusnode.client.internal.TransactionKinds;
+import org.hiero.consensusnode.client.internal.UtilityKinds;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
@@ -43,27 +43,27 @@ public final class PrngTransaction extends Transaction<PrngReceipt, PrngTransact
 
     @Override
     public PackedTransaction<PrngReceipt, PrngTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        return new Packing<>(TransactionKinds.PRNG).pack(this, payer, nodes);
+        return new Packing<>(UtilityKinds.PRNG).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<PrngReceipt, PrngTransaction> signWithOperator(final HieroClient<?> client) {
-        return new Packing<>(TransactionKinds.PRNG).signWithOperator(this, client);
+        return new Packing<>(UtilityKinds.PRNG).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<PrngReceipt, PrngTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        return new Packing<>(TransactionKinds.PRNG).sign(this, payer, nodes);
+        return new Packing<>(UtilityKinds.PRNG).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<PrngReceipt, PrngTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        return new Packing<>(TransactionKinds.PRNG).sign(this, payerId, signer, nodes);
+        return new Packing<>(UtilityKinds.PRNG).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<PrngReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        return new Packing<>(TransactionKinds.PRNG).signWithOperatorAndSubmit(this, client);
+        return new Packing<>(UtilityKinds.PRNG).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -79,21 +79,21 @@ public final class PrngTransaction extends Transaction<PrngReceipt, PrngTransact
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<PrngReceipt, PrngTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        return new Packing<>(TransactionKinds.PRNG).packForBatch(this, payer, batchKey);
+        return new Packing<>(UtilityKinds.PRNG).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<PrngReceipt, PrngTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        return new Packing<>(TransactionKinds.PRNG).signForBatchWithOperator(this, client, batchKey);
+        return new Packing<>(UtilityKinds.PRNG).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<PrngReceipt, PrngTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        return new Packing<>(TransactionKinds.PRNG).signForBatch(this, payer, batchKey);
+        return new Packing<>(UtilityKinds.PRNG).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -101,7 +101,7 @@ public final class PrngTransaction extends Transaction<PrngReceipt, PrngTransact
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<PrngReceipt, PrngTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        return new Packing<>(TransactionKinds.PRNG).signForBatch(this, payerId, signer, batchKey);
+        return new Packing<>(UtilityKinds.PRNG).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

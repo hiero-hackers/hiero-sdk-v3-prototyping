@@ -286,8 +286,17 @@ final class SpecTestGenerator {
                 case TestDefinition.Evaluate evaluate when evaluate.expectedError() != null -> {
                     usesAssertThrows = true;
                     final JavaExceptions.JavaException exception = context.exception(evaluate.expectedError());
-                    yield indent + "assertThrows(" + imports.use(exception.packageName(), exception.simpleName())
-                            + ".class, () -> " + expression(evaluate.expression()) + ");\n";
+                    final String call = expression(evaluate.expression());
+                    final String type = imports.use(exception.packageName(), exception.simpleName());
+                    if (!call.endsWith(".toCompletableFuture().join()")) {
+                        yield indent + "assertThrows(" + type + ".class, () -> " + call + ");\n";
+                    }
+                    // an @@async call fails its stage: join() wraps the error in a CompletionException
+                    final String completion = imports.use("java.util.concurrent", "CompletionException");
+                    yield indent + "assertThrows(" + type + ".class, () -> {\n" + indent + INDENT + "try {\n"
+                            + indent + INDENT + INDENT + call + ";\n" + indent + INDENT + "} catch (final "
+                            + completion + " failed) {\n" + indent + INDENT + INDENT + "throw failed.getCause();\n"
+                            + indent + INDENT + "}\n" + indent + "});\n";
                 }
                 case TestDefinition.Evaluate evaluate -> indent + expression(evaluate.expression()) + ";\n";
                 case TestDefinition.If conditional -> indent + conditional(conditional, depth) + "\n";

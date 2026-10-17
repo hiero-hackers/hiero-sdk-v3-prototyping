@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.admin.nodes;
 
+import org.hiero.consensusnode.admin.internal.AdminKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -33,27 +35,27 @@ public final class NodeDeleteTransaction extends Transaction<NodeDeleteReceipt, 
 
     @Override
     public PackedTransaction<NodeDeleteReceipt, NodeDeleteTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeDeleteTransaction.pack");
+        return new Packing<>(AdminKinds.NODE_DELETE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<NodeDeleteReceipt, NodeDeleteTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeDeleteTransaction.signWithOperator");
+        return new Packing<>(AdminKinds.NODE_DELETE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<NodeDeleteReceipt, NodeDeleteTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeDeleteTransaction.sign");
+        return new Packing<>(AdminKinds.NODE_DELETE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<NodeDeleteReceipt, NodeDeleteTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeDeleteTransaction.sign");
+        return new Packing<>(AdminKinds.NODE_DELETE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<NodeDeleteReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeDeleteTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(AdminKinds.NODE_DELETE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -69,21 +71,21 @@ public final class NodeDeleteTransaction extends Transaction<NodeDeleteReceipt, 
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<NodeDeleteReceipt, NodeDeleteTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeDeleteTransaction.packForBatch");
+        return new Packing<>(AdminKinds.NODE_DELETE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<NodeDeleteReceipt, NodeDeleteTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeDeleteTransaction.signForBatchWithOperator");
+        return new Packing<>(AdminKinds.NODE_DELETE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<NodeDeleteReceipt, NodeDeleteTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeDeleteTransaction.signForBatch");
+        return new Packing<>(AdminKinds.NODE_DELETE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -91,7 +93,7 @@ public final class NodeDeleteTransaction extends Transaction<NodeDeleteReceipt, 
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<NodeDeleteReceipt, NodeDeleteTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: NodeDeleteTransaction.signForBatch");
+        return new Packing<>(AdminKinds.NODE_DELETE).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

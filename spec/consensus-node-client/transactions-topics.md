@@ -340,14 +340,18 @@ test "a topic delete transaction keeps its topic and survives toBytes and fromBy
   question raised in [`transactions-files.md`](transactions-files.md) (`FileAppend` chunked
   appends) and additionally interacts with HIP-991 custom-fee limits; it deserves its own
   spec rather than being smuggled into the lifecycle file. Tracked in
-  [`missing-features.md`](../../docs/missing-features.md) section 1.5.
+  [`missing-features.md`](../../docs/missing-features.md) section 1.5. Until it is specified, no message
+  can be submitted to a topic at all: the Java implementation has no such transaction, and
+  `TopicService.submitMessage` in [`service-topic.md`](../enterprise/service-topic.md) cannot be
+  implemented either.
 
 - **HIP-991 custom-fee fields are out of scope.** `TopicCreate` / `TopicUpdate` in HAPI
   carry `customFees: list<FixedCustomFee>`, `feeScheduleAuthority: Key`, and
   `feeExemptAuthorities: list<Key>` for revenue-generating topics. These are tracked in
   [`missing-features.md`](../../docs/missing-features.md) sections 1.5 and 2.3 and depend on a
   write-side custom-fee model that does not yet exist in the spec. Adding them here is
-  additive and breaks nothing.
+  additive and breaks nothing. Until then the Java implementation cannot create a revenue-generating
+  topic.
 
 - **`ZERO_ADDRESS` does not fit `autoRenewAccount`.** The description says that `autoRenewAccount` is removed by
   setting it to `ZERO_ADDRESS`, but `ZERO_ADDRESS` is an `Address` and the field is an `AccountId`; `ledger` also
@@ -356,4 +360,9 @@ test "a topic delete transaction keeps its topic and survives toBytes and fromBy
 - **Who pays the renewal of a topic created without `autoRenewAccount`?** The description says the topic itself. The
   current SDKs instead set the payer (Python: the operator, Swift: `test_AutomaticallySetAutoRenewAccountId`) as
   `autoRenewAccount` when the transaction is frozen and none is given. Should `pack(...)` do the same in V3, or is
-  the field sent unset?
+  the field sent unset? The Java implementation follows the spec and sends none, so it differs from V2 here.
+
+- **A `TopicCreateTransaction` without `autoRenewPeriod` is rejected by the network.** The description says that
+  the protocol default applies when the field is unset, but HAPI has no such default and rejects the create. The Java
+  implementation sends 90 days, as the V2 SDKs do. Should the spec state that default (e.g. `@@default` on
+  `autoRenewPeriod`), or make the field required?

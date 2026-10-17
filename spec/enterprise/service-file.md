@@ -155,3 +155,8 @@ test "a file memo of 101 characters is rejected" {
 ```
 
 ## Questions & Comments
+
+- **A failed append leaves a partial file.** Contents above the size of one transaction are written as a create (or
+  update) followed by several appends. If one of the appends fails, the file exists with only part of the contents,
+  and the service reports only the error. Should the service delete the file again, report how far it got, or should
+  this be documented as the caller's problem?

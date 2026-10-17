@@ -24,7 +24,9 @@ requires {Authority} from authority
 requires {NativeToken} from nativeToken
 requires {Session} from enterprise.service
 
-ParamSupplier<$$SolidityType> {
+// Supplies the value of a parameter in the form the contract call encodes; the SDK implements it for the parameters
+// that its factory functions (ofString, ofAddress, ...) create.
+abstraction ParamSupplier<$$SolidityType> {
     $$SolidityType getNativeContractValue()
 }
 
@@ -34,7 +36,8 @@ Param<$$LangType, $$SolidityType> {
     @@immutable supplier:ParamSupplier<$$SolidityType>
 }
 
-ContractCallResult {
+// The values a contract function returned; created by the SDK from the result of a call.
+abstraction ContractCallResult {
     @@immutable size: uint8
     
     // Runtime type of the result value at `index`; use it to check the value returned by get(index).
@@ -111,7 +114,7 @@ SmartContractService {
 @@static Param<string, ANY> ofBytes23(value:string)
 @@static Param<bytes, ANY> ofBytes(value:bytes)
 @@static Param<bytes, ANY> ofBytes23(value:bytes)
-@@static Param<string, ANY> ofAddress(value:string)
+@@static Param<string, ANY> ofAddress(@@pattern("^(0x)?[0-9a-fA-F]{40}$") value:string)
 @@static Param<EvmAddress, ANY> ofAddress(value:EvmAddress)
 @@static Param<bool, ANY> ofBool(value:bool)
 @@static Param<uint8, ANY> uint8(value:uint8)
@@ -134,6 +137,9 @@ instance ContractCreateParams = ContractCreateParams{fileId: DEFAULT}
 
 // A contract addressed by the default contract id.
 instance Contract = Contract{contractId: DEFAULT}
+
+// The supplier of a string parameter, created by its factory function.
+instance ParamSupplier = ofString(value: "value").supplier
 ```
 
 ## Testing
@@ -345,8 +351,15 @@ test "contracts with the same contract id are equal" {
   constructor parameters, admin authority, staking), because the consensus layer has no `ContractCreateTransaction`
   yet. Once it exists, the fields should be aligned with it, as the other `…CreateParams` types are with their
   transactions. Open: whether `gas` should stay optional (a default chosen by the service) or be required as in HAPI.
+  Because `consensusnode.transactions` has neither a contract create nor a contract call transaction, the Java
+  implementation cannot implement `createContract…` or `callContractFunction` at all; both fail.
+- **How is a `ContractCallResult` obtained?** `ContractCallResult` had no values of its own and is now an abstraction
+  the SDK creates from the result of a call. Which source the SDK reads the result from (the record of a
+  `ContractCall` transaction, a `ContractCallLocal` query, or the Mirror Node `POST /contracts/call`) and how the
+  result types are known for decoding is not specified.
 - **`nativeType` of a `Param` is not specified.** Hiero Enterprise Java sets it to the Solidity type name
-  (`string`, `address`, `bool`, `uint8`, `uint256`, ...). Stating that in the spec would let the tests check it for
-  every factory function; today they check only `value`.
+  (`string`, `address`, `bool`, `uint8`, `uint256`, ...), and the Java implementation does the same. Stating that in
+  the spec would let the tests check it for every factory function; today they check only `value`.
 - **`ofBytes23` looks like a typo of `ofBytes32`** (Solidity has `bytes1` to `bytes32`; Hiero Enterprise Java has
-  `bytes32`). Which length is meant?
+  `bytes32`). Which length is meant? The Java implementation takes the name literally and creates a `bytes23`
+  parameter.

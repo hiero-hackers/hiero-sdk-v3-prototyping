@@ -21,7 +21,14 @@ public record SemanticVersion(
     /// Canonical semver string, e.g. "0.49.1-rc.1+exp.sha.5114f85"
     @Override
     public String toString() {
-        throw new UnsupportedOperationException("Not implemented yet: SemanticVersion.toString");
+        final StringBuilder text = new StringBuilder().append(major).append('.').append(minor).append('.').append(patch);
+        if (preReleaseLabel != null && !preReleaseLabel.isEmpty()) {
+            text.append('-').append(preReleaseLabel);
+        }
+        if (buildMetadata != null && !buildMetadata.isEmpty()) {
+            text.append('+').append(buildMetadata);
+        }
+        return text.toString();
     }
 
     /// Returns a builder for a new `SemanticVersion`.

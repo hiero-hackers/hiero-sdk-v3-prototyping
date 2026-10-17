@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.tokens;
 
+import org.hiero.consensusnode.client.internal.TokenKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -51,27 +53,27 @@ public final class TokenRejectTransaction extends Transaction<TokenRejectReceipt
 
     @Override
     public PackedTransaction<TokenRejectReceipt, TokenRejectTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRejectTransaction.pack");
+        return new Packing<>(TokenKinds.TOKEN_REJECT).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenRejectReceipt, TokenRejectTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRejectTransaction.signWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_REJECT).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<TokenRejectReceipt, TokenRejectTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRejectTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_REJECT).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenRejectReceipt, TokenRejectTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRejectTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_REJECT).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<TokenRejectReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRejectTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(TokenKinds.TOKEN_REJECT).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -87,21 +89,21 @@ public final class TokenRejectTransaction extends Transaction<TokenRejectReceipt
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<TokenRejectReceipt, TokenRejectTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRejectTransaction.packForBatch");
+        return new Packing<>(TokenKinds.TOKEN_REJECT).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<TokenRejectReceipt, TokenRejectTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRejectTransaction.signForBatchWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_REJECT).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<TokenRejectReceipt, TokenRejectTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRejectTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_REJECT).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -109,7 +111,7 @@ public final class TokenRejectTransaction extends Transaction<TokenRejectReceipt
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<TokenRejectReceipt, TokenRejectTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRejectTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_REJECT).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

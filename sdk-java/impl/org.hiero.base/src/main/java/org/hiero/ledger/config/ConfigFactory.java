@@ -1,13 +1,14 @@
 package org.hiero.ledger.config;
 
 import java.util.NoSuchElementException;
+import org.hiero.ledger.config.internal.NetworkSettings;
 
 /// Factory methods of the package `org.hiero.ledger.config`.
 public final class ConfigFactory {
 
     /// Registers a network setting under the given identifier.
     public static void registerNetworkSetting(final String identifier, final NetworkSetting setting) {
-        throw new UnsupportedOperationException("Not implemented yet: ConfigFactory.registerNetworkSetting");
+        NetworkSettings.register(identifier, setting);
     }
 
     /// Returns the network setting registered for the given identifier; throws if none exists.
@@ -15,7 +16,7 @@ public final class ConfigFactory {
     ///
     /// @throws NoSuchElementException if a not found error occurs
     public static NetworkSetting getNetworkSetting(final String identifier) {
-        throw new UnsupportedOperationException("Not implemented yet: ConfigFactory.getNetworkSetting");
+        return NetworkSettings.get(identifier);
     }
 
     private ConfigFactory() {

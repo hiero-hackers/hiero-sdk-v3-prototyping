@@ -298,6 +298,7 @@ class SpecTestGeneratorTest {
                 int256 echoHuge(value: int256)
                 uint128 echoWide(value: uint128)
                 @@async int32 later()
+                @@async @@throws(io-error) int32 readLater()
                 @@throws(io-error) int32 read()
                 @@static int32 count(kind: type)
             }
@@ -345,6 +346,12 @@ class SpecTestGeneratorTest {
             @@deprecated("replaced")
             test "1 call aLater" {
                 assertEquals(expected: 1, actual: DEFAULT(Numbers).later())
+            }
+
+            test "a later read fails" {
+                // when / then
+                @@expectThrows(io-error)
+                DEFAULT(Numbers).readLater()
             }
 
             test "1 call a later" {
@@ -440,6 +447,16 @@ class SpecTestGeneratorTest {
                 .contains("    /// Deprecated: replaced\n")
                 .contains("    void test1CallALater() {\n")
                 .contains("        assertEquals(1, defaultNumbers().later().toCompletableFuture().join());\n")
+                // the error of an @@async call is the cause of the CompletionException of join()
+                .contains("""
+                                assertThrows(IOException.class, () -> {
+                                    try {
+                                        defaultNumbers().readLater().toCompletableFuture().join();
+                                    } catch (final CompletionException failed) {
+                                        throw failed.getCause();
+                                    }
+                                });
+                        """)
                 .contains("    void test1CallALater2() throws Exception {\n        // when / then\n        assertEquals(")
                 .contains("assertTrue(day.compareTo(other) < 0);")
                 .contains("@SuppressWarnings(\"deprecation\")\n")

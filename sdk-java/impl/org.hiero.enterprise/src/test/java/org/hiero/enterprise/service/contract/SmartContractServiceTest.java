@@ -2,10 +2,27 @@ package org.hiero.enterprise.service.contract;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.math.BigInteger;
 import java.util.List;
+import org.hiero.authority.AuthorityFactory;
+import org.hiero.consensusnode.client.ClientFactory;
+import org.hiero.consensusnode.transactions.TransactionsFactory;
+import org.hiero.consensusnode.transactions.spi.SpiFactory;
 import org.hiero.enterprise.service.ServiceException;
+import org.hiero.enterprise.service.ServiceFactory;
+import org.hiero.enterprise.service.account.AccountFactory;
+import org.hiero.enterprise.service.file.FileFactory;
+import org.hiero.enterprise.service.nft.NftFactory;
+import org.hiero.enterprise.service.token.TokenFactory;
+import org.hiero.enterprise.service.topic.TopicFactory;
+import org.hiero.http.HttpFactory;
+import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;
+import org.hiero.ledger.config.ConfigFactory;
+import org.hiero.mirrornode.MirrornodeFactory;
+import org.hiero.mirrornode.network.NetworkFactory;
+import org.hiero.mirrornode.transaction.TransactionFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -112,7 +129,7 @@ class SmartContractServiceTest {
     }
 
     private static Param<?, ?> constructorParamsValue() {
-        return new Param<>("value", "value", new ParamSupplier<>());
+        return ContractFactory.int256(new BigInteger("1"));
     }
 
     private static byte[] contentsValue() {
@@ -132,7 +149,7 @@ class SmartContractServiceTest {
     }
 
     private static Param<?, ?> paramsValue2() {
-        return new Param<>("value", "value", new ParamSupplier<>());
+        return ContractFactory.int256(new BigInteger("1"));
     }
 
     private static ContractId contractIdValue() {

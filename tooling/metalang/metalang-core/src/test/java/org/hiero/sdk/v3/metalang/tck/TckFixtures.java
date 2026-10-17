@@ -8,8 +8,15 @@ import org.hiero.sdk.v3.metalang.model.LinkedModel;
 /** A small shop model with a transaction, a query and their result types, and helpers for bindings files. */
 final class TckFixtures {
 
-    static final LinkedModel MODEL = LinkedModel.of(new MetaLang().validate(Map.of("f/shop.md", TestSpecs.markdown("""
+    static final LinkedModel MODEL = LinkedModel.of(new MetaLang().validate(Map.of("f/tx.md", TestSpecs.markdown("""
+            namespace consensusnode.transactions
+
+            Transaction {
+                @@immutable @@nullable id: string
+            }
+            """), "f/shop.md", TestSpecs.markdown("""
             namespace shop
+            requires {Transaction} from consensusnode.transactions
 
             Response<$$R> {
                 @@immutable value: $$R
@@ -21,6 +28,7 @@ final class TckFixtures {
 
             OrderReceipt {
                 @@immutable orderId: string
+                @@immutable @@default([]) serials: list<int64>
                 @@immutable count: int64
                 @@immutable @@nullable detail: Detail
             }
@@ -30,8 +38,25 @@ final class TckFixtures {
                 @@immutable @@default(false) gift: bool
             }
 
+            @@sealed(SerialGrant, AllGrant)
+            abstraction Grant {
+            }
+
+            SerialGrant extends Grant {
+                @@immutable serials: list<int64>
+            }
+
+            AllGrant extends Grant {
+                @@immutable all: bool
+            }
+
             OrderTransaction {
                 @@immutable customer: string
+                @@immutable @@nullable grant: Grant
+                @@immutable @@nullable detail: Detail
+                @@immutable @@nullable inner: Transaction
+                @@immutable @@default([]) tags: set<string>
+                @@immutable @@default([]) ids: list<int64>
                 @@immutable @@nullable note: string
                 @@immutable @@default([]) items: list<Item>
                 @@immutable @@default([]) names: list<string>
@@ -41,6 +66,7 @@ final class TckFixtures {
 
             OrderQuery {
                 @@immutable id: string
+                @@nullable maxPayment: int64
                 Response<Detail> submit()
             }
 
@@ -54,7 +80,7 @@ final class TckFixtures {
 
     /** Wraps bindings into a bindings file. */
     static String file(final String bindings) {
-        return "# Shop\n\n```bindings\nrequires {OrderTransaction, OrderQuery, Item, Plain} from shop\n" + bindings
+        return "# Shop\n\n```bindings\nrequires {OrderTransaction, OrderQuery, Item, Plain, Detail, SerialGrant, AllGrant} from shop\n" + bindings
                 + "```\n";
     }
 

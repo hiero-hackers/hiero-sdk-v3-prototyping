@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.batch;
 
+import org.hiero.consensusnode.client.internal.UtilityKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -46,27 +48,27 @@ public final class BatchTransaction extends Transaction<BatchReceipt, BatchTrans
 
     @Override
     public PackedTransaction<BatchReceipt, BatchTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: BatchTransaction.pack");
+        return new Packing<>(UtilityKinds.BATCH).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<BatchReceipt, BatchTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: BatchTransaction.signWithOperator");
+        return new Packing<>(UtilityKinds.BATCH).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<BatchReceipt, BatchTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: BatchTransaction.sign");
+        return new Packing<>(UtilityKinds.BATCH).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<BatchReceipt, BatchTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: BatchTransaction.sign");
+        return new Packing<>(UtilityKinds.BATCH).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<BatchReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: BatchTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(UtilityKinds.BATCH).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -82,21 +84,21 @@ public final class BatchTransaction extends Transaction<BatchReceipt, BatchTrans
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<BatchReceipt, BatchTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: BatchTransaction.packForBatch");
+        return new Packing<>(UtilityKinds.BATCH).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<BatchReceipt, BatchTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: BatchTransaction.signForBatchWithOperator");
+        return new Packing<>(UtilityKinds.BATCH).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<BatchReceipt, BatchTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: BatchTransaction.signForBatch");
+        return new Packing<>(UtilityKinds.BATCH).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -104,7 +106,7 @@ public final class BatchTransaction extends Transaction<BatchReceipt, BatchTrans
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<BatchReceipt, BatchTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: BatchTransaction.signForBatch");
+        return new Packing<>(UtilityKinds.BATCH).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

@@ -20,8 +20,8 @@ public final class TransactionsFactory {
     public static <ReceiptT extends Receipt> Response<ReceiptT> getResponse(final TransactionId transactionId, final Class<? extends Transaction<ReceiptT, ?>> transactionType, final HieroClient<?> client) {
         final TransactionKind<?, ?> kind = TransactionKinds.of(transactionType);
         if (kind == null) {
-            throw new UnsupportedOperationException("Not implemented yet: transactions of type "
-                    + transactionType.getSimpleName());
+            throw new IllegalArgumentException("No transaction support is registered for "
+                    + transactionType.getName());
         }
         ClientRuntime.of(client).track(transactionId, kind);
         return new Response<>(transactionId);

@@ -26,5 +26,13 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
+        <!-- JavaTckGeneratorTest compiles the hand-written TCK runtime (sdk-java/tck/runtime), which uses Bouncy
+             Castle (EVM address of an ECDSA key); in the real build it comes with the API implementation -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.83</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

@@ -168,6 +168,13 @@ test "a topic message submitted in one piece has no chunk info" {
 - **`Topic.toTimestamp` is not nullable, but the Mirror Node leaves it open.** The REST API returns the validity of the
   topic state as a range `timestamp: {from, to}`, and for the current state `to` is `null` (e.g. the Hiero Enterprise
   Java test fixture `topic.json`). A `Topic` of the current state cannot be built without inventing an end time. Should
-  `toTimestamp` be `@@nullable`?
+  `toTimestamp` be `@@nullable`? The Java implementation fills an open `to` with a sentinel end time, which a caller
+  cannot tell from a real one.
 - **`TopicMessage.message` is a `string`**, but the REST API returns the message Base64-encoded and a message can be
   arbitrary bytes. Is it the Base64 text, the decoded UTF-8 text, or should it be `bytes`?
+
+- **`TopicRepository` has no find-all.** The other repositories with entities have a `findAll()` (or a comparable
+  list method), but `TopicRepository` can only look up a topic by id. The Mirror Node REST API has no `GET /topics`
+  list endpoint, so a find-all would have to go through another endpoint. Because of this gap,
+  `TopicService.getAll()` in [`service-topic.md`](../enterprise/service-topic.md) cannot be implemented. Should
+  `TopicRepository` get a find-all, or should `TopicService.getAll()` be removed?

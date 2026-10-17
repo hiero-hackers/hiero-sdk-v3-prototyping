@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -82,73 +83,152 @@ public final class TckBindings {
     public sealed interface Member {
     }
 
+    /** How a converter is applied: to the value itself, or to every element of a list or set. */
+    public enum Collection {
+        /** the value itself */
+        NONE,
+        /** every element of a {@code list} */
+        LIST,
+        /** every element of a {@code set} */
+        SET
+    }
+
     /**
      * An attribute with its JSON sources.
      *
-     * @param field   the attribute
-     * @param sources the alternative sources with their converters
+     * @param field      the attribute
+     * @param sources    the alternative sources with their converters
+     * @param collection whether the converter converts the elements of a list or set
      */
-    public record Value(FieldDefinition field, List<Source> sources) implements Member {
+    public record Value(FieldDefinition field, List<Source> sources, Collection collection) implements Member {
 
         /**
          * Creates a value.
          *
-         * @param field   the attribute
-         * @param sources the sources
+         * @param field      the attribute
+         * @param sources    the sources
+         * @param collection the collection
          */
         public Value {
             sources = List.copyOf(sources);
+        }
+
+        /**
+         * Whether the attribute is set with a setter (Java) or an assignment (TypeScript) after the request was
+         * created instead of being passed to its constructor: a mutable attribute that may be absent.
+         *
+         * @return {@code true} for a setter
+         */
+        public boolean setter() {
+            return TckBindings.setter(field);
         }
     }
 
     /**
      * A JSON source with its converter.
      *
-     * @param path      the JSON path
+     * @param path      the JSON path, {@code null} for a constant
+     * @param literal   the constant, {@code null} for a JSON path
      * @param converter the converter
      */
-    public record Source(Binding.Path path, Converter converter) {
+    public record Source(Binding.@Nullable Path path, @Nullable String literal, Converter converter) {
     }
 
     /**
-     * A list attribute built from the elements of a JSON list.
+     * A list attribute built from JSON lists.
      *
      * @param field       the list attribute
-     * @param source      the JSON list and the object of each element
+     * @param generators  the iterations
      * @param elementType the element type
      * @param members     the values of the element type
      */
-    public record Elements(FieldDefinition field, Binding.Path source, TypeDefinition elementType,
+    public record Elements(FieldDefinition field, List<Binding.Generator> generators, TypeDefinition elementType,
                            List<Member> members) implements Member {
 
         /**
          * Creates a list mapping.
          *
          * @param field       the attribute
-         * @param source      the source
+         * @param generators  the iterations
          * @param elementType the element type
          * @param members     the members
          */
         public Elements {
+            generators = List.copyOf(generators);
             members = List.copyOf(members);
         }
     }
 
     /**
+     * An attribute of a declared type created from a JSON object.
+     *
+     * @param field    the attribute
+     * @param path     the JSON object, {@code null} for the current one
+     * @param variants the types to create, selected by the presence of a JSON parameter
+     */
+    public record Nested(FieldDefinition field, Binding.@Nullable Path path, List<Variant> variants)
+            implements Member {
+
+        /**
+         * Creates a nested value.
+         *
+         * @param field    the attribute
+         * @param path     the JSON object
+         * @param variants the variants
+         */
+        public Nested {
+            variants = List.copyOf(variants);
+        }
+    }
+
+    /**
+     * A resolved variant of a nested value.
+     *
+     * @param when    the JSON parameter that selects it, {@code null} for the only or the {@code else} variant
+     * @param type    the type
+     * @param members the members
+     */
+    public record Variant(Binding.@Nullable Path when, TypeDefinition type, List<Member> members) {
+
+        /**
+         * Creates a variant.
+         *
+         * @param when    the condition
+         * @param type    the type
+         * @param members the members
+         */
+        public Variant {
+            members = List.copyOf(members);
+        }
+    }
+
+    /**
+     * A transaction attribute built from a nested TCK request ({@code method} and {@code params}).
+     *
+     * @param field the attribute
+     * @param path  the JSON object of the request
+     */
+    public record Request(FieldDefinition field, Binding.Path path) implements Member {
+    }
+
+    /**
      * A field of the JSON result.
      *
-     * @param name      the result field (a path for nested objects)
-     * @param fields    the attributes from the receipt or response to the value
-     * @param converter the converter to JSON
+     * @param name       the result field (a path for nested objects)
+     * @param fields     the attributes from the receipt or response to the value, empty for the whole value
+     * @param converter  the converter to JSON
+     * @param collection whether the converter converts the elements of a list or set
      */
-    public record Result(Binding.Path name, List<FieldDefinition> fields, Converter converter) implements Member {
+    public record Result(Binding.Path name, List<FieldDefinition> fields, Converter converter, Collection collection)
+            implements Member {
 
         /**
          * Creates a result.
          *
-         * @param name      the result field
-         * @param fields    the attribute path
-         * @param converter the converter
+         * @param name       the result field
+         * @param fields     the attribute path
+         * @param converter  the converter
+         * @param collection the collection
          */
         public Result {
             fields = List.copyOf(fields);
@@ -233,26 +313,53 @@ public final class TckBindings {
             final BindingParser.Result parsed = BindingParser.parse(file.getKey(), file.getValue());
             resolver.diagnostics.addAll(parsed.diagnostics());
             resolver.imports = resolver.imports(parsed.requires());
+            Binding previous = null;
             for (final Binding binding : parsed.bindings()) {
+                final boolean variant = previous != null && !binding.common() && !previous.common()
+                        && previous.name().equals(binding.name()) && previous.when() != null;
+                previous = binding;
                 final Optional<Resolved> resolved = resolver.binding(binding, file.getKey());
-                if (resolved.isEmpty()) {
-                    continue;
-                }
                 if (binding.common()) {
+                    if (resolved.isEmpty()) {
+                        continue;
+                    }
                     if (common != null) {
                         resolver.error("tck.duplicate", "The common transaction parameters are bound twice",
                                 binding.location());
                     }
                     common = resolved.get();
-                } else if (!methods.add(binding.name())) {
+                    continue;
+                }
+                if (!methods.add(binding.name()) && !variant) {
                     resolver.error("tck.duplicate", "Method '" + binding.name() + "' is bound twice",
                             binding.location());
-                } else {
-                    bindings.add(resolved.get());
+                    continue;
                 }
+                if (resolved.isEmpty()) {
+                    continue;
+                }
+                final Optional<Resolved> first = bindings.stream()
+                        .filter(b -> b.binding().name().equals(binding.name())).findFirst();
+                if (first.isPresent() && first.get().kind() != resolved.get().kind()) {
+                    resolver.error("tck.kind", "The variants of method '" + binding.name() + "' are not all "
+                            + first.get().kind().name().toLowerCase(Locale.ROOT) + "s", binding.location());
+                    continue;
+                }
+                bindings.add(resolved.get());
             }
         }
         return new Bindings(bindings, Optional.ofNullable(common), resolver.diagnostics);
+    }
+
+    /**
+     * Whether an attribute is set with a setter after the request was created instead of being passed to its
+     * constructor: a mutable attribute that may be absent ({@code @@nullable} or {@code @@default}).
+     *
+     * @param field the attribute
+     * @return {@code true} for a setter
+     */
+    public static boolean setter(final FieldDefinition field) {
+        return !field.hasAnnotation("immutable") && (field.hasAnnotation("nullable") || field.hasAnnotation("default"));
     }
 
     private Map<String, QualifiedName> imports(final List<BindingParser.Requires> requires) {
@@ -291,6 +398,9 @@ public final class TckBindings {
         if (binding.common()) {
             kind = Kind.COMMON;
             resultType = null;
+            if (binding.when() != null) {
+                error("tck.syntax", "The common transaction parameters have no variants", binding.location());
+            }
         } else {
             final Optional<TypeDefinition> receipt = resultOf(type.get(), "signWithOperatorAndSubmit");
             final Optional<TypeDefinition> response = resultOf(type.get(), "submit");
@@ -306,7 +416,7 @@ public final class TckBindings {
                 return Optional.empty();
             }
         }
-        final List<Member> members = members(binding.members(), type.get(), kind, resultType, false);
+        final List<Member> members = members(binding.members(), type.get(), kind, resultType, Scope.TOP);
         if (kind == Kind.TRANSACTION || kind == Kind.QUERY) {
             required(binding.members(), type.get(), binding.location());
         }
@@ -321,32 +431,65 @@ public final class TckBindings {
                 .map(t -> model.definition((Type.DeclaredType) t.arguments().getFirst())).findFirst();
     }
 
+    /**
+     * Where members are resolved.
+     *
+     * @param top    whether the members belong to the type of the binding (setters are allowed there)
+     * @param parent whether {@code ^} refers to something (inside {@code each} over objects or a nested object)
+     * @param names  the names bound by {@code each name in list}
+     */
+    private record Scope(boolean top, boolean parent, Set<String> names) {
+
+        static final Scope TOP = new Scope(true, false, Set.of());
+
+        Scope nested(final boolean parent) {
+            return new Scope(false, this.parent || parent, names);
+        }
+    }
+
     private List<Member> members(final List<Binding.Member> members, final TypeDefinition type, final Kind kind,
-                                 final @Nullable TypeDefinition resultType, final boolean insideEach) {
+                                 final @Nullable TypeDefinition resultType, final Scope scope) {
         final List<Member> result = new ArrayList<>();
         final Set<String> attributes = new HashSet<>();
         final Set<String> results = new HashSet<>();
         for (final Binding.Member member : members) {
             switch (member) {
-                case Binding.Assignment assignment -> attribute(type, assignment.attribute(), kind,
+                case Binding.Assignment assignment -> attribute(type, assignment.attribute(), kind, scope,
                         assignment.location(), attributes).ifPresent(field -> {
+                    final Collection collection = collection(field.type());
+                    final Type valueType = collection == Collection.NONE ? field.type()
+                            : ((Type.BasicType) field.type()).arguments().getFirst();
                     final List<Source> sources = new ArrayList<>();
                     for (final Binding.Source source : assignment.sources()) {
-                        if (source.path().parent() && !insideEach) {
+                        if (source.path() != null && source.path().parent() && !scope.parent()) {
                             error("tck.parent", "'" + source.path() + "' refers to the enclosing element, but '"
                                     + assignment.attribute() + "' is not inside 'each'", assignment.location());
                             continue;
                         }
-                        converter(source.converter(), true, field.type(), assignment.location())
-                                .ifPresent(c -> sources.add(new Source(source.path(), c)));
+                        converter(source.converter(), true, valueType, assignment.location())
+                                .ifPresent(c -> sources.add(new Source(source.path(), source.literal(), c)));
                     }
-                    result.add(new Value(field, sources));
+                    result.add(new Value(field, sources, collection));
                 });
-                case Binding.Each each -> attribute(type, each.attribute(), kind, each.location(), attributes)
-                        .ifPresent(field -> elements(field, each).ifPresent(result::add));
+                case Binding.Each each -> attribute(type, each.attribute(), kind, scope, each.location(), attributes)
+                        .ifPresent(field -> elements(field, each, scope).ifPresent(result::add));
+                case Binding.Construct construct -> attribute(type, construct.attribute(), kind, scope,
+                        construct.location(), attributes)
+                        .ifPresent(field -> nested(field, construct, scope).ifPresent(result::add));
+                case Binding.Request request -> attribute(type, request.attribute(), kind, scope,
+                        request.location(), attributes).ifPresent(field -> {
+                    if (field.type() instanceof Type.DeclaredType declared
+                            && declared.name().equals(TRANSACTION)) {
+                        result.add(new Request(field, request.path()));
+                    } else {
+                        error("tck.converter", "Attribute '" + field.name() + "' is no " + TRANSACTION
+                                + "; 'request' builds one", request.location());
+                    }
+                });
                 case Binding.Result value -> {
                     if (resultType == null) {
-                        error("tck.result", "The common transaction parameters have no result", value.location());
+                        error("tck.result", kind == Kind.COMMON ? "The common transaction parameters have no result"
+                                : "Only the binding itself has results", value.location());
                     } else if (!results.add(value.name().toString())) {
                         error("tck.duplicate", "Result '" + value.name() + "' is bound twice", value.location());
                     } else {
@@ -359,8 +502,19 @@ public final class TckBindings {
         return result;
     }
 
+    /** The type of the transactions a {@code request} builds. */
+    private static final QualifiedName TRANSACTION = new QualifiedName("consensusnode.transactions", "Transaction");
+
+    private static Collection collection(final Type type) {
+        if (type instanceof Type.BasicType basic && basic.builtin().category() == BuiltinType.Category.COLLECTION) {
+            return basic.builtin().name().equals("set") ? Collection.SET : Collection.LIST;
+        }
+        return Collection.NONE;
+    }
+
     private Optional<FieldDefinition> attribute(final TypeDefinition type, final String name, final Kind kind,
-                                                final SourceLocation location, final Set<String> assigned) {
+                                                final Scope scope, final SourceLocation location,
+                                                final Set<String> assigned) {
         final Optional<FieldDefinition> field = type.field(name);
         if (field.isEmpty()) {
             error("tck.unknown-attribute", "Type '" + type.name() + "' has no attribute '" + name + "'", location);
@@ -375,10 +529,15 @@ public final class TckBindings {
                     + "transaction parameters can only set mutable attributes", location);
             return Optional.empty();
         }
+        if (kind != Kind.COMMON && !scope.top() && setter(field.get())) {
+            error("tck.immutable", "Mutable attribute '" + name + "' of '" + type.name() + "' can only be set on "
+                    + "the type of the binding itself", location);
+            return Optional.empty();
+        }
         return field;
     }
 
-    private Optional<Elements> elements(final FieldDefinition field, final Binding.Each each) {
+    private Optional<Elements> elements(final FieldDefinition field, final Binding.Each each, final Scope scope) {
         if (!(field.type() instanceof Type.BasicType list) || list.builtin().category() != BuiltinType.Category.COLLECTION
                 || !(list.arguments().getFirst() instanceof Type.DeclaredType elementType)) {
             error("tck.converter", "Attribute '" + field.name() + "' is no list of a declared type; 'each' needs one",
@@ -394,10 +553,59 @@ public final class TckBindings {
                     + type.get().name() + "'", each.location());
             return Optional.empty();
         }
-        final List<Member> members = members(each.members(), type.get(), Kind.TRANSACTION, null, true).stream()
-                .filter(m -> !(m instanceof Result)).toList();
+        boolean parent = scope.parent();
+        final Set<String> names = new HashSet<>(scope.names());
+        for (final Binding.Generator generator : each.generators()) {
+            if (generator.path().parent() && !parent) {
+                error("tck.parent", "'" + generator.path() + "' refers to the enclosing element, but '"
+                        + field.name() + "' is not inside 'each'", each.location());
+            }
+            if (generator.name() == null) {
+                parent = true;
+                names.clear(); // the elements of the list replace the JSON object of the names
+            } else if (!names.add(generator.name())) {
+                error("tck.duplicate", "Name '" + generator.name() + "' is bound twice", each.location());
+            }
+        }
+        final List<Member> members = members(each.members(), type.get(), Kind.TRANSACTION, null,
+                new Scope(false, parent, Set.copyOf(names)));
         required(each.members(), type.get(), each.location());
-        return Optional.of(new Elements(field, each.source(), type.get(), members));
+        return Optional.of(new Elements(field, each.generators(), type.get(), members));
+    }
+
+    private Optional<Nested> nested(final FieldDefinition field, final Binding.Construct construct,
+                                    final Scope scope) {
+        if (!(field.type() instanceof Type.DeclaredType declared)) {
+            error("tck.converter", "Attribute '" + field.name() + "' is no declared type; '->' creates one",
+                    construct.location());
+            return Optional.empty();
+        }
+        if (construct.path() != null && construct.path().parent() && !scope.parent()) {
+            error("tck.parent", "'" + construct.path() + "' refers to the enclosing element, but '"
+                    + field.name() + "' is not inside 'each'", construct.location());
+        }
+        final List<Variant> variants = new ArrayList<>();
+        for (int i = 0; i < construct.variants().size(); i++) {
+            final Binding.Variant variant = construct.variants().get(i);
+            final Optional<TypeDefinition> type = type(variant.type(), variant.location());
+            if (type.isEmpty()) {
+                continue;
+            }
+            if (!model.isSubtypeOf(type.get().name(), declared.name())) {
+                error("tck.converter", "Attribute '" + field.name() + "' holds '" + declared.name() + "', not '"
+                        + type.get().name() + "'", variant.location());
+                continue;
+            }
+            final List<Member> members = members(variant.members(), type.get(), Kind.TRANSACTION, null,
+                    scope.nested(construct.path() != null));
+            members.stream().filter(m -> m instanceof Elements || m instanceof Nested && construct.path() != null)
+                    .findFirst().ifPresent(m -> error("tck.syntax", "A nested object cannot contain 'each' or "
+                            + "another nested object with a path", variant.location()));
+            required(variant.members(), type.get(), variant.location());
+            variants.add(new Variant(variant.when(), type.get(), members));
+        }
+        return variants.size() == construct.variants().size()
+                ? Optional.of(new Nested(field, construct.path(), variants)) : Optional.empty();
     }
 
     /** Reports the required attributes (no null, no default) that get no value: requests cannot be built then. */
@@ -405,10 +613,13 @@ public final class TckBindings {
                           final SourceLocation location) {
         final Set<String> assigned = new HashSet<>();
         members.forEach(m -> {
-            if (m instanceof Binding.Assignment a) {
-                assigned.add(a.attribute());
-            } else if (m instanceof Binding.Each e) {
-                assigned.add(e.attribute());
+            switch (m) {
+                case Binding.Assignment a -> assigned.add(a.attribute());
+                case Binding.Each e -> assigned.add(e.attribute());
+                case Binding.Construct c -> assigned.add(c.attribute());
+                case Binding.Request r -> assigned.add(r.attribute());
+                default -> {
+                }
             }
         });
         for (final FieldDefinition field : type.fields()) {
@@ -422,14 +633,15 @@ public final class TckBindings {
 
     private Optional<Result> result(final Binding.Result value, final Kind kind, final TypeDefinition resultType) {
         final String root = kind == Kind.TRANSACTION ? "receipt" : "response";
-        if (!value.value().first().equals(root) || value.value().parent() || value.value().segments().size() < 2) {
-            error("tck.result", "A result of a " + kind.name().toLowerCase(java.util.Locale.ROOT) + " starts with '"
-                    + root + ".', not '" + value.value() + "'", value.location());
+        if (!value.value().first().equals(root) || value.value().parent()) {
+            error("tck.result", "A result of a " + kind.name().toLowerCase(Locale.ROOT) + " starts with '"
+                    + root + "', not '" + value.value() + "'", value.location());
             return Optional.empty();
         }
         TypeDefinition current = resultType;
+        Type type = new Type.DeclaredType(resultType.name(), List.of());
         final List<FieldDefinition> fields = new ArrayList<>();
-        for (final String segment : value.value().rest().segments()) {
+        for (final String segment : value.value().segments().subList(1, value.value().segments().size())) {
             if (current == null) {
                 error("tck.result", "'" + value.value() + "' continues after a value that has no attributes",
                         value.location());
@@ -442,10 +654,13 @@ public final class TckBindings {
                 return Optional.empty();
             }
             fields.add(field.get());
-            current = field.get().type() instanceof Type.DeclaredType declared ? model.definition(declared) : null;
+            type = field.get().type();
+            current = type instanceof Type.DeclaredType declared ? model.definition(declared) : null;
         }
-        return converter(value.converter(), false, fields.getLast().type(), value.location())
-                .map(c -> new Result(value.name(), fields, c));
+        final Collection collection = collection(type);
+        final Type valueType = collection == Collection.NONE ? type : ((Type.BasicType) type).arguments().getFirst();
+        return converter(value.converter(), false, valueType, value.location())
+                .map(c -> new Result(value.name(), fields, c, collection));
     }
 
     private Optional<Converter> converter(final String name, final boolean inbound, final Type type,

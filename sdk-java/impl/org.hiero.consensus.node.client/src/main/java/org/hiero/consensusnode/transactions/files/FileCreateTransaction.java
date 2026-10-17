@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.files;
 
+import org.hiero.consensusnode.client.internal.FileKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -74,27 +76,27 @@ public final class FileCreateTransaction extends Transaction<FileCreateReceipt, 
 
     @Override
     public PackedTransaction<FileCreateReceipt, FileCreateTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: FileCreateTransaction.pack");
+        return new Packing<>(FileKinds.FILE_CREATE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<FileCreateReceipt, FileCreateTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: FileCreateTransaction.signWithOperator");
+        return new Packing<>(FileKinds.FILE_CREATE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<FileCreateReceipt, FileCreateTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: FileCreateTransaction.sign");
+        return new Packing<>(FileKinds.FILE_CREATE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<FileCreateReceipt, FileCreateTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: FileCreateTransaction.sign");
+        return new Packing<>(FileKinds.FILE_CREATE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<FileCreateReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: FileCreateTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(FileKinds.FILE_CREATE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -110,21 +112,21 @@ public final class FileCreateTransaction extends Transaction<FileCreateReceipt, 
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<FileCreateReceipt, FileCreateTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: FileCreateTransaction.packForBatch");
+        return new Packing<>(FileKinds.FILE_CREATE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<FileCreateReceipt, FileCreateTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: FileCreateTransaction.signForBatchWithOperator");
+        return new Packing<>(FileKinds.FILE_CREATE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<FileCreateReceipt, FileCreateTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: FileCreateTransaction.signForBatch");
+        return new Packing<>(FileKinds.FILE_CREATE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -132,7 +134,7 @@ public final class FileCreateTransaction extends Transaction<FileCreateReceipt, 
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<FileCreateReceipt, FileCreateTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: FileCreateTransaction.signForBatch");
+        return new Packing<>(FileKinds.FILE_CREATE).signForBatch(this, payerId, signer, batchKey);
     }
 
     /// Returns a builder for a new `FileCreateTransaction`.

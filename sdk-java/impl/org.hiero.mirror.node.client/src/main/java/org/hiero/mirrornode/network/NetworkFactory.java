@@ -1,12 +1,14 @@
 package org.hiero.mirrornode.network;
 
 import org.hiero.ledger.MirrorNode;
+import org.hiero.mirrornode.internal.DefaultNetworkRepository;
+import org.hiero.mirrornode.internal.MirrorNodeRest;
 
 /// Factory methods of the package `org.hiero.mirrornode.network`.
 public final class NetworkFactory {
 
     public static NetworkRepository createRepository(final MirrorNode mirrorNode) {
-        throw new UnsupportedOperationException("Not implemented yet: NetworkFactory.createRepository");
+        return new DefaultNetworkRepository(MirrorNodeRest.create(mirrorNode));
     }
 
     private NetworkFactory() {

@@ -2,12 +2,24 @@
 
 The TCK methods of the crypto service
 ([crypto-service](https://github.com/hiero-ledger/hiero-sdk-tck/tree/main/docs/test-specifications/crypto-service)):
-accounts and transfers. Results are written in the conventions of the TCK: amounts in tinybar, durations in
+accounts, transfers and allowances. Results are written in the conventions of the TCK: amounts in tinybar, durations in
 seconds and integers as decimal strings.
+
+## Methods without binding
+
+- `getTransactionReceipt`: the V3 API reads a receipt only through the `Response` of a submitted transaction
+  (`Response.queryReceipt`); there is no receipt query for a given transaction ID, nor duplicate or child receipts.
+- `executeDeprecatedAccountBalanceQuery`: the TCK checks the deprecation warning and error texts of the V2 SDKs; the
+  result (`constructionWarning`, `executionError`) is no value of the API. `AccountBalanceQuery` itself exists.
+- `ping`, `pingAll`: the V3 client has no ping of a consensus node.
+- `getMirrorNodeAccountBalance`: reads the Mirror Node, not a request of the consensus node client.
 
 ```bindings
 requires {AccountCreateTransaction, AccountUpdateTransaction, AccountDeleteTransaction, TransferTransaction} from consensusnode.transactions.accounts
 requires {HbarTransfer, TokenTransfer, NftTransfer} from consensusnode.transactions.accounts
+requires {AccountAllowanceApproveTransaction, AccountAllowanceDeleteTransaction} from consensusnode.transactions.accounts
+requires {HbarAllowance, TokenAllowance, NftAllowance, NftSerialGrant, NftCollectionGrant} from consensusnode.transactions.accounts
+requires {NftAllowanceDeletion} from consensusnode.transactions.accounts
 requires {AccountInfoQuery} from consensusnode.queries.accounts
 
 // Creates an account (AccountCreateTransaction.md).
@@ -68,6 +80,45 @@ binding transferCrypto -> TransferTransaction {
         sender   = senderAccountId : accountId
         receiver = receiverAccountId : accountId
         approved = ^approved : bool
+    }
+    result status = receipt.status : status
+}
+
+// Approves hbar, token and NFT allowances (AccountAllowanceApproveTransaction.md, Allowances.md). An NFT allowance
+// grants the listed serial numbers if `serialNumbers` is sent, otherwise the whole collection (`approvedForAll`).
+binding approveAllowance -> AccountAllowanceApproveTransaction {
+    hbarAllowances = each allowances.hbar -> HbarAllowance {
+        ownerAccountId   = ^ownerAccountId : accountId
+        spenderAccountId = ^spenderAccountId : accountId
+        amount           = amount : tinybar
+    }
+    tokenAllowances = each allowances.token -> TokenAllowance {
+        tokenId          = tokenId : address
+        ownerAccountId   = ^ownerAccountId : accountId
+        spenderAccountId = ^spenderAccountId : accountId
+        amount           = amount : int64
+    }
+    nftAllowances = each allowances.nft -> NftAllowance {
+        tokenId           = tokenId : address
+        ownerAccountId    = ^ownerAccountId : accountId
+        spenderAccountId  = ^spenderAccountId : accountId
+        grant             = when serialNumbers -> NftSerialGrant {
+                                serials = serialNumbers : int64
+                            }
+                            else -> NftCollectionGrant {
+                                approved = approvedForAll : bool
+                            }
+        delegatingSpender = delegateSpenderAccountId : accountId
+    }
+    result status = receipt.status : status
+}
+
+// Deletes NFT allowances (AccountAllowanceDeleteTransaction.md, Allowances.md); only `nft` allowances are allowed.
+binding deleteAllowance -> AccountAllowanceDeleteTransaction {
+    nftAllowanceDeletions = each allowances.nft -> NftAllowanceDeletion {
+        tokenId        = tokenId : address
+        ownerAccountId = ^ownerAccountId : accountId
+        serials        = serialNumbers : int64
     }
     result status = receipt.status : status
 }

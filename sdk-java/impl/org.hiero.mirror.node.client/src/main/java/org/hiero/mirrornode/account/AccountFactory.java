@@ -1,12 +1,14 @@
 package org.hiero.mirrornode.account;
 
 import org.hiero.ledger.MirrorNode;
+import org.hiero.mirrornode.internal.DefaultAccountRepository;
+import org.hiero.mirrornode.internal.MirrorNodeRest;
 
 /// Factory methods of the package `org.hiero.mirrornode.account`.
 public final class AccountFactory {
 
     public static AccountRepository createRepository(final MirrorNode mirrorNode) {
-        throw new UnsupportedOperationException("Not implemented yet: AccountFactory.createRepository");
+        return new DefaultAccountRepository(MirrorNodeRest.create(mirrorNode));
     }
 
     private AccountFactory() {

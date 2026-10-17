@@ -788,3 +788,10 @@ test "an account create transaction rejects a memo of more than 100 UTF-8 bytes"
   intentionally do not surface a fake "delete fungible allowance" affordance — it would have
   to translate to an approve(0) under the hood, hiding which signature is actually required
   (the *owner*, same as approve). <- That should be done in enterprise layer
+
+- **Several legs for the same account in a `TransferTransaction`.** The lists allow the same account to appear in
+  several `HbarTransfer` (or, per token, `TokenTransfer`) legs, but HAPI rejects a transfer list in which an account
+  appears twice (`ACCOUNT_REPEATED_IN_ACCOUNT_AMOUNTS`). The Java implementation sums the legs with the same account
+  and the same `approved` value into one, and keeps an approved and a non-approved leg of the same account apart; the
+  V2 SDKs merge the legs and sort the list. Should the API merge legs (and then specify how, including the `approved`
+  case and the order), or reject duplicates when the transaction is built or packed? — open

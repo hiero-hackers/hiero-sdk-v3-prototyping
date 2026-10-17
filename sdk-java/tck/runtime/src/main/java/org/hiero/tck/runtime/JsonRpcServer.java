@@ -21,6 +21,9 @@ import org.jspecify.annotations.Nullable;
  */
 final class JsonRpcServer implements TckServer {
 
+    /** The beginning of the message of an error of the SDK for a request a node rejected in precheck. */
+    private static final String PRECHECK_PREFIX = "precheck failed: ";
+
     private final Map<String, Handler> handlers;
     private final Map<String, RuntimeSession> sessions = new ConcurrentHashMap<>();
     private final ServerLog log = new ServerLog();
@@ -67,6 +70,13 @@ final class JsonRpcServer implements TckServer {
             Throwable cause = e;
             while (cause instanceof CompletionException && cause.getCause() != null) {
                 cause = cause.getCause();
+            }
+            // a node rejected the request before consensus: the SDK reports the status in a fixed message form,
+            // as the specs have no error type with a status yet (see the Questions & Comments of transactions.md)
+            if (cause.getMessage() != null && cause.getMessage().startsWith(PRECHECK_PREFIX)) {
+                final String status = cause.getMessage().substring(PRECHECK_PREFIX.length());
+                log.failed(name, RpcError.HIERO_ERROR, status, cause);
+                return error(id, RpcError.HIERO_ERROR, "Hiero error", Map.of("status", status));
             }
             if (cause instanceof RpcError error) {
                 log.failed(name, error.code(), detail(error), error);

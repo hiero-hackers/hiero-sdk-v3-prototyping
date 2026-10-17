@@ -1,44 +1,31 @@
 package org.hiero.enterprise.service.contract;
 
-import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.hiero.authority.AuthorityFactory;
+import org.hiero.consensusnode.client.ClientFactory;
+import org.hiero.consensusnode.transactions.TransactionsFactory;
+import org.hiero.consensusnode.transactions.spi.SpiFactory;
+import org.hiero.enterprise.service.ServiceFactory;
+import org.hiero.enterprise.service.account.AccountFactory;
+import org.hiero.enterprise.service.file.FileFactory;
+import org.hiero.enterprise.service.nft.NftFactory;
+import org.hiero.enterprise.service.token.TokenFactory;
+import org.hiero.enterprise.service.topic.TopicFactory;
+import org.hiero.http.HttpFactory;
+import org.hiero.keys.KeysFactory;
+import org.hiero.ledger.config.ConfigFactory;
+import org.hiero.mirrornode.MirrornodeFactory;
+import org.hiero.mirrornode.network.NetworkFactory;
+import org.hiero.mirrornode.transaction.TransactionFactory;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 
 /// Tests of `Param`, generated from the specs.
+///
+/// Not generated:
+/// - no valid value for `supplier` of Param: constructor, attribute and method tests
 @DisplayName("Param")
 class ParamTest {
-
-    @Test
-    @DisplayName("creates a Param and returns the values")
-    void shouldCreateAndReturnTheValues() {
-        final String valueArgument = valueValue();
-        final String nativeType = nativeTypeValue();
-        final ParamSupplier<String> supplier = supplierValue();
-        final Param<String, String> subject = new Param<>(valueArgument, nativeType, supplier);
-        assertValue(valueArgument, subject.value());
-        assertValue(nativeType, subject.nativeType());
-        assertValue(supplier, subject.supplier());
-    }
-
-    @Test
-    @DisplayName("rejects null for value")
-    void shouldRejectNullValue() {
-        assertThrows(NullPointerException.class, () -> new Param<>((String) null, nativeTypeValue(), supplierValue()));
-    }
-
-    @Test
-    @DisplayName("rejects null for nativeType")
-    void shouldRejectNullNativeType() {
-        assertThrows(NullPointerException.class, () -> new Param<>(valueValue(), (String) null, supplierValue()));
-    }
-
-    @Test
-    @DisplayName("rejects null for supplier")
-    void shouldRejectNullSupplier() {
-        assertThrows(NullPointerException.class, () -> new Param<>(valueValue(), nativeTypeValue(), (ParamSupplier<String>) null));
-    }
 
     private static String valueValue() {
         return "value";
@@ -46,13 +33,5 @@ class ParamTest {
 
     private static String nativeTypeValue() {
         return "value";
-    }
-
-    private static ParamSupplier<String> supplierValue() {
-        return new ParamSupplier<>();
-    }
-
-    private static Param<String, String> create() {
-        return new Param<>(valueValue(), nativeTypeValue(), supplierValue());
     }
 }

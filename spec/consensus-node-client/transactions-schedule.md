@@ -354,7 +354,17 @@ test "a schedule delete transaction keeps its schedule and survives toBytes and 
   `Transaction<ANY, ANY>`, `scheduledTransactionId` carries no compile-time link to the inner receipt
   type; the caller re-supplies the inner transaction's type token to `getResponse(...)` and gets a
   typed `Response<$$Receipt>` back (the SDK resolves the matching `TransactionSupport`). See the
-  *Read the executed inner transaction's receipt* example above.
+  *Read the executed inner transaction's receipt* example above. This does not work today: `TransactionId` has no
+  `scheduled` flag, so `scheduledTransactionId` equals the id of the schedule transaction and `getResponse(...)` finds
+  the receipt of the `ScheduleCreate` instead of the inner transaction — see the open item in
+  [`ledger.md`](../base/ledger.md).
 
 - **`ScheduleInfoQuery` is not specified here** — read-side schedule state belongs with the other
   consensus-node queries, specified in [`queries-schedule.md`](queries-schedule.md).
+
+- **The Java implementation does check schedulability, against the Design Notes.** A scheduled transaction is sent
+  as a `SchedulableTransactionBody`, which has one field per schedulable HAPI transaction type; a transaction type
+  without such a field cannot be written into it at all. The Java implementation therefore rejects these inner types
+  in `ScheduleCreateTransaction` on the client side, although the Design Notes say that the SDK does no schedulability
+  check. How does a custom transaction type (via `TransactionSupport`) declare that it is schedulable and which body
+  field it uses, and should the spec name the client-side rejection (e.g. as a `@@throws`)?

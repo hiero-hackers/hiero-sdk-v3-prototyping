@@ -20,6 +20,7 @@ module org.hiero.base {
     requires transitive org.hiero.sdk.support;
     requires static transitive org.jspecify;
     requires org.bouncycastle.provider;
+    requires java.net.http;
 
     exports org.hiero.authority;
     exports org.hiero.common;

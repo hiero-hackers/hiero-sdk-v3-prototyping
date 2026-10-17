@@ -229,6 +229,12 @@ test "a schedule info with both an execution and a deletion time is rejected" {
   type. Reading its execution outcome therefore re-supplies the inner transaction's type token to
   `Transaction.getResponse(...)` (see [`transactions.md`](transactions.md) and the schedule
   examples). The snapshot exposes the *captured body*; it is never packed or signed.
+  `ScheduleInfo.scheduledTransaction` cannot be rebuilt as a typed transaction, though: HAPI returns a
+  `SchedulableTransactionBody`, and the spec defines no mapping from a body back to a transaction type (the same gap as
+  `TransactionSupport.create(TransactionBody)` in [`transactions-spi.md`](transactions-spi.md)). The Java implementation
+  returns an internal transaction that only holds the raw schedulable body, so a caller cannot read its fields or
+  narrow it. Should the spec define the body-to-transaction mapping, or type the field as something other than a
+  `Transaction`?
 
 - **No `deleted` boolean — state is the `@@oneOrNoneOf` timestamp pair.** Rather than a flag plus a
   timestamp, the executed/deleted/pending state is read directly from which (if either) of

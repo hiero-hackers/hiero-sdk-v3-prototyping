@@ -1,7 +1,9 @@
 package org.hiero.sdk.v3.metalang.generator.java;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -99,6 +101,9 @@ public final class JavaTckGenerator {
         if (!problems.isEmpty()) {
             throw new GenerationException(problems);
         }
+        files.add(new GeneratedFile(SOURCE_ROOT + "BindingSupport.java", JavaGenerator.annotated(
+                JavaGenerator.HEADER + '\n' + "package " + PACKAGE + ";\n\n" + BINDING_SUPPORT)));
+        files.add(requestsClass(context));
         files.add(mainClass(classes));
         files.add(pom(DIRECTORY, "hiero-sdk-tck", "Hiero SDK TCK server",
                 "The JSON-RPC server of the Hiero SDK TCK for the Java API.", artifactIds,
@@ -129,22 +134,25 @@ public final class JavaTckGenerator {
                                                final List<TckBindings.Resolved> bindings, final JavaContext context) {
         final Imports imports = context.imports(PACKAGE, className);
         imports.use("java.util", "Map");
-        final List<String> methods = new ArrayList<>();
-        for (final TckBindings.Resolved binding : bindings) {
-            methods.add(method(binding, imports, context));
-        }
+        final Map<String, List<TckBindings.Resolved>> methods = new LinkedHashMap<>();
+        bindings.forEach(b -> methods.computeIfAbsent(b.binding().name(), k -> new ArrayList<>()).add(b));
+        final List<String> code = new ArrayList<>();
+        methods.forEach((name, variants) -> code.addAll(method(name, variants, imports, context)));
         final StringBuilder register = new StringBuilder()
-                .append(INDENT).append("/// Registers the methods.\n")
+                .append(INDENT).append("/// Registers the methods (and the builders of their transactions).\n")
                 .append(INDENT).append("///\n")
                 .append(INDENT).append("/// @param methods the methods by name\n")
                 .append(INDENT).append("void register(final Map<String, Handler> methods) {\n");
-        for (final TckBindings.Resolved binding : bindings) {
-            register.append(INDENT).append(INDENT).append("methods.put(")
-                    .append(JavaLiterals.quote(binding.binding().name())).append(", this::")
-                    .append(binding.binding().name()).append(");\n");
-        }
+        methods.forEach((name, variants) -> {
+            register.append(INDENT).append(INDENT).append("methods.put(").append(JavaLiterals.quote(name))
+                    .append(", this::").append(name).append(");\n");
+            if (variants.getFirst().kind() == TckBindings.Kind.TRANSACTION) {
+                register.append(INDENT).append(INDENT).append("requests.put(").append(JavaLiterals.quote(name))
+                        .append(", this::").append(builder(name, 0)).append(");\n");
+            }
+        });
         register.append(INDENT).append("}\n");
-        final String members = fields(className, true) + register + methods.stream().map(m -> "\n" + m)
+        final String members = fields(className, true) + register + code.stream().map(m -> "\n" + m)
                 .collect(Collectors.joining());
         contractImports(members, imports);
         final StringBuilder java = new StringBuilder(JavaGenerator.HEADER).append('\n')
@@ -163,39 +171,118 @@ public final class JavaTckGenerator {
                 .append(INDENT).append("private final TckRuntime runtime;\n")
                 .append(INDENT).append("private final Converters convert;\n");
         if (common) {
-            java.append(INDENT).append("private final CommonBindings common;\n");
+            java.append(INDENT).append("private final CommonBindings common;\n")
+                    .append(INDENT).append("private final Requests requests;\n");
         }
         java.append('\n')
                 .append(INDENT).append("/// Creates the methods.\n")
                 .append(INDENT).append("///\n")
-                .append(INDENT).append("/// @param runtime the runtime\n");
+                .append(INDENT).append("/// @param runtime  the runtime\n");
         if (common) {
-            java.append(INDENT).append("/// @param common  the common transaction parameters\n");
+            java.append(INDENT).append("/// @param common   the common transaction parameters\n")
+                    .append(INDENT).append("/// @param requests the builders of the transactions of all methods\n");
         }
         java.append(INDENT).append(className).append("(final TckRuntime runtime")
-                .append(common ? ", final CommonBindings common" : "").append(") {\n")
+                .append(common ? ", final CommonBindings common, final Requests requests" : "").append(") {\n")
                 .append(INDENT).append(INDENT).append("this.runtime = runtime;\n")
                 .append(INDENT).append(INDENT).append("this.convert = runtime.converters();\n");
         if (common) {
-            java.append(INDENT).append(INDENT).append("this.common = common;\n");
+            java.append(INDENT).append(INDENT).append("this.common = common;\n")
+                    .append(INDENT).append(INDENT).append("this.requests = requests;\n");
         }
         return java.append(INDENT).append("}\n\n").toString();
     }
 
-    private static String method(final TckBindings.Resolved binding, final Imports imports,
-                                 final JavaContext context) {
+    /** The name of the builder of a variant (1-based), or of the method ({@code 0}). */
+    private static String builder(final String method, final int variant) {
+        return "build" + Character.toUpperCase(method.charAt(0)) + method.substring(1)
+                + (variant > 0 ? String.valueOf(variant) : "");
+    }
+
+    /**
+     * The methods of a TCK method: per variant a builder of the request and a handler; with variants also the
+     * handler and the builder that select the variant.
+     */
+    private static List<String> method(final String name, final List<TckBindings.Resolved> variants,
+                                       final Imports imports, final JavaContext context) {
+        final List<String> methods = new ArrayList<>();
+        final boolean single = variants.size() == 1 && variants.getFirst().binding().when() == null;
+        if (!single) {
+            methods.add(dispatcher(name, variants, false, imports));
+            if (variants.getFirst().kind() == TckBindings.Kind.TRANSACTION) {
+                methods.add(dispatcher(name, variants, true, imports));
+            }
+        }
+        for (int i = 0; i < variants.size(); i++) {
+            final int variant = single ? 0 : i + 1;
+            methods.add(handler(name, variant, variants.get(i), imports));
+            methods.add(build(name, variant, variants.get(i), imports, context));
+        }
+        return methods;
+    }
+
+    /** Selects the variant by the presence of its parameter. */
+    private static String dispatcher(final String name, final List<TckBindings.Resolved> variants,
+                                     final boolean build, final Imports imports) {
         final String indent = INDENT + INDENT;
         final StringBuilder java = new StringBuilder();
-        documentation(binding.binding().documentation(), java);
-        java.append(INDENT).append("Object ").append(binding.binding().name())
+        if (build) {
+            final String transaction = imports.use(JavaNames.packageName("consensusnode.transactions"),
+                    "Transaction");
+            java.append(INDENT).append("/// Builds the transaction of `").append(name)
+                    .append("` without sending it.\n")
+                    .append(INDENT).append(transaction).append("<?, ?> ").append(builder(name, 0))
+                    .append("(final Map<String, Object> params) {\n");
+        } else {
+            documentation(variants.getFirst().binding().documentation(), java);
+            java.append(INDENT).append("Object ").append(name)
+                    .append("(final Map<String, Object> params, final Session session) {\n");
+        }
+        boolean fallback = false;
+        for (int i = 0; i < variants.size(); i++) {
+            final Binding.Path when = variants.get(i).binding().when();
+            final String call = (build ? builder(name, i + 1) + "(params)" : name + (i + 1) + "(params, session)");
+            if (when == null) {
+                java.append(indent).append("return ").append(call).append(";\n");
+                fallback = true;
+                break;
+            }
+            java.append(indent).append("if (").append(present("params", when, imports)).append(") {\n")
+                    .append(indent).append(INDENT).append("return ").append(call).append(";\n")
+                    .append(indent).append("}\n");
+        }
+        if (!fallback) {
+            java.append(indent).append("return runtime.required(null, ").append(JavaLiterals.quote(variants.stream()
+                    .map(v -> String.valueOf(v.binding().when())).collect(Collectors.joining(" | "))))
+                    .append(");\n");
+        }
+        return java.append(INDENT).append("}\n").toString();
+    }
+
+    private static String present(final String json, final Binding.Path path, final Imports imports) {
+        imports.use("java.util", "List");
+        return "runtime.value(" + json + ", List.of(new Source<>(" + JavaLiterals.quote(path.toString())
+                + ", value -> value))) != null";
+    }
+
+    /** The handler of a variant: builds the request, sends it and converts the result. */
+    private static String handler(final String name, final int variant, final TckBindings.Resolved binding,
+                                  final Imports imports) {
+        final String indent = INDENT + INDENT;
+        final StringBuilder java = new StringBuilder();
+        if (variant == 0) {
+            documentation(binding.binding().documentation(), java);
+        } else {
+            java.append(INDENT).append("/// Variant ").append(variant).append(" of `").append(name).append("`: `")
+                    .append(binding.type().name().name()).append("`.\n");
+        }
+        java.append(INDENT).append("Object ").append(name).append(variant > 0 ? String.valueOf(variant) : "")
                 .append("(final Map<String, Object> params, final Session session) {\n");
         final StringBuilder body = new StringBuilder();
-        rejectUnsupported(binding.members(), "params", body, indent);
-        final String request = construct(binding.type(), binding.members(), "params", null, 1, body, indent,
-                imports, context);
         final boolean transaction = binding.kind() == TckBindings.Kind.TRANSACTION;
         final String variable = transaction ? "transaction" : "query";
-        body.append(indent).append("final var ").append(variable).append(" = ").append(request).append(";\n");
+        body.append(indent).append("final var ").append(variable).append(" = ").append(builder(name, variant))
+                .append("(params);\n");
         final String value = transaction ? "receipt" : "response";
         if (transaction) {
             body.append(indent).append("final Map<String, Object> commonParams = runtime.object(params, ")
@@ -210,9 +297,12 @@ public final class JavaTckGenerator {
         body.append(indent).append("final Map<String, Object> result = new LinkedHashMap<>();\n");
         for (final TckBindings.Member member : binding.members()) {
             if (member instanceof TckBindings.Result result) {
+                final String converter = "convert::" + result.converter().id() + "Json";
                 body.append(indent).append("runtime.put(result, ").append(JavaLiterals.quote(result.name()
-                        .toString())).append(", ").append(access(value, result.fields(), imports))
-                        .append(", convert::").append(result.converter().id()).append("Json);\n");
+                        .toString())).append(", ").append(access(value, result.fields(), imports)).append(", ")
+                        .append(result.collection() == TckBindings.Collection.NONE ? converter
+                                : "values -> BindingSupport.json(values, " + converter + ")")
+                        .append(");\n");
             } else if (member instanceof TckBindings.Unsupported(final Binding.Unsupported unsupported)
                     && unsupported.result()) {
                 body.append(indent).append("// not provided: ").append(unsupported.name()).append(" (")
@@ -220,8 +310,37 @@ public final class JavaTckGenerator {
             }
         }
         body.append(indent).append("return result;\n");
-        java.append(body).append(INDENT).append("}\n");
-        return java.toString();
+        return java.append(body).append(INDENT).append("}\n").toString();
+    }
+
+    /** The builder of a variant: the request from the JSON parameters, with its mutable attributes set. */
+    private static String build(final String name, final int variant, final TckBindings.Resolved binding,
+                                final Imports imports, final JavaContext context) {
+        final String indent = INDENT + INDENT;
+        final StringBuilder body = new StringBuilder();
+        rejectUnsupported(binding.members(), "params", body, indent);
+        final String request = construct(binding.type(), binding.members(), "params", null, 1, body, indent,
+                imports, context);
+        final String type = imports.use(JavaNames.packageName(binding.type().name().namespace()),
+                binding.type().name().name());
+        body.append(indent).append("final ").append(type).append(" request = ").append(request).append(";\n");
+        for (final TckBindings.Member member : binding.members()) {
+            if (member instanceof TckBindings.Value value && value.setter()) {
+                final String local = JavaKeywords.identifier(value.field().name());
+                body.append(indent).append("final var ").append(local).append(" = ")
+                        .append(lookup(value, "params", null, imports)).append(";\n")
+                        .append(indent).append("if (").append(local).append(" != null) {\n")
+                        .append(indent).append(INDENT).append("request.")
+                        .append(InterfaceGenerator.setter(value.field().name())).append('(').append(local)
+                        .append(");\n")
+                        .append(indent).append("}\n");
+            }
+        }
+        body.append(indent).append("return request;\n");
+        return INDENT + "/// Builds the request of `" + name + "`" + (variant > 0 ? " (variant " + variant + ")" : "")
+                + " without sending it.\n"
+                + INDENT + type + " " + builder(name, variant) + "(final Map<String, Object> params) {\n"
+                + body + INDENT + "}\n";
     }
 
     /** The JSON parameters the API cannot provide are rejected if they are sent. */
@@ -256,12 +375,19 @@ public final class JavaTckGenerator {
                     .filter(f -> f.name().equals(field.name())).isPresent()).findFirst();
             if (member.isEmpty()) {
                 arguments.add(unbound(type, field, imports, context));
-            } else if (member.get() instanceof TckBindings.Value value) {
-                arguments.add(value(field, value, json, parent, imports, context));
-            } else {
-                arguments.add(elements(field, (TckBindings.Elements) member.get(), json, depth, body, indent,
-                        imports, context));
+                continue;
             }
+            arguments.add(switch (member.get()) {
+                case TckBindings.Value value -> value(field, value, json, parent, imports, context);
+                case TckBindings.Elements elements -> elements(field, elements, json, parent, depth, body, indent,
+                        imports, context);
+                case TckBindings.Nested nested -> nested(field, nested, json, parent, depth, body, indent, imports,
+                        context);
+                case TckBindings.Request request -> wrap(field, "requests.build(runtime.object(" + json + ", "
+                        + JavaLiterals.quote(request.path().toString()) + "))", request.path().toString(), imports,
+                        context);
+                default -> throw new IllegalStateException("not an attribute: " + member.get());
+            });
         }
         final String name = imports.use(JavaNames.packageName(type.name().namespace()), type.name().name());
         final String diamond = type.typeParameters().isEmpty() ? "" : "<>";
@@ -276,6 +402,8 @@ public final class JavaTckGenerator {
         return switch (member) {
             case TckBindings.Value value -> Optional.of(value.field());
             case TckBindings.Elements elements -> Optional.of(elements.field());
+            case TckBindings.Nested nested -> Optional.of(nested.field());
+            case TckBindings.Request request -> Optional.of(request.field());
             default -> Optional.empty();
         };
     }
@@ -301,26 +429,44 @@ public final class JavaTckGenerator {
     /** A bound value: the first present source, then the default, {@code null} or the check that it is present. */
     private static String value(final FieldDefinition field, final TckBindings.Value value, final String json,
                                 final @Nullable String parent, final Imports imports, final JavaContext context) {
-        final String lookup = lookup(value.sources(), json, parent, imports);
-        if (field.hasAnnotation("default")) {
-            return "runtime.or(" + lookup + ", " + defaultValue(field, imports, context) + ")";
-        }
-        if (field.hasAnnotation("nullable")) {
-            return lookup;
-        }
-        return "runtime.required(" + lookup + ", " + JavaLiterals.quote(value.sources().stream()
-                .map(s -> s.path().toString()).collect(Collectors.joining(" | "))) + ")";
+        return wrap(field, lookup(value, json, parent, imports), value.sources().stream()
+                .map(s -> s.path() != null ? s.path().toString() : "\"" + s.literal() + "\"")
+                .collect(Collectors.joining(" | ")), imports, context);
     }
 
-    /** The lookup of the sources: one {@code runtime.value} per JSON object, the first present one wins. */
-    private static String lookup(final List<TckBindings.Source> sources, final String json,
-                                 final @Nullable String parent,
+    /** A possibly absent value: the default, {@code null} or the check that it is present. */
+    private static String wrap(final FieldDefinition field, final String value, final String parameters,
+                               final Imports imports, final JavaContext context) {
+        if (field.hasAnnotation("default")) {
+            return "runtime.or(" + value + ", " + defaultValue(field, imports, context) + ")";
+        }
+        if (field.hasAnnotation("nullable")) {
+            return value;
+        }
+        return "runtime.required(" + value + ", " + JavaLiterals.quote(parameters) + ")";
+    }
+
+    /**
+     * The lookup of the sources: one {@code runtime.value} per JSON object, the first present one wins; a constant
+     * is converted directly.
+     */
+    private static String lookup(final TckBindings.Value value, final String json, final @Nullable String parent,
                                  final Imports imports) {
         imports.use("java.util", "List");
         final List<String> groups = new ArrayList<>();
         String currentObject = null;
         List<String> current = new ArrayList<>();
-        for (final TckBindings.Source source : sources) {
+        for (final TckBindings.Source source : value.sources()) {
+            final String converter = converter(source.converter(), value.collection());
+            if (source.path() == null) {
+                if (!current.isEmpty()) {
+                    groups.add("runtime.value(" + currentObject + ", List.of(" + String.join(", ", current) + "))");
+                    current = new ArrayList<>();
+                }
+                currentObject = null;
+                groups.add(apply(converter, JavaLiterals.quote(Objects.requireNonNull(source.literal()))));
+                continue;
+            }
             final String object = source.path().parent() ? Objects.requireNonNull(parent,
                     "'^' outside of 'each'") : json;
             if (!object.equals(currentObject) && !current.isEmpty()) {
@@ -329,9 +475,11 @@ public final class JavaTckGenerator {
             }
             currentObject = object;
             current.add("new Source<>(" + JavaLiterals.quote(String.join(".", source.path().segments()))
-                    + ", convert::" + source.converter().id() + ")");
+                    + ", " + converter + ")");
         }
-        groups.add("runtime.value(" + currentObject + ", List.of(" + String.join(", ", current) + "))");
+        if (!current.isEmpty()) {
+            groups.add("runtime.value(" + currentObject + ", List.of(" + String.join(", ", current) + "))");
+        }
         String lookup = groups.getLast();
         for (int i = groups.size() - 2; i >= 0; i--) {
             lookup = "runtime.or(" + groups.get(i) + ", " + lookup + ")";
@@ -339,43 +487,124 @@ public final class JavaTckGenerator {
         return lookup;
     }
 
+    /** The converter as function: the method of the catalogue, or applied to every element of a JSON list. */
+    private static String converter(final org.hiero.sdk.v3.metalang.tck.Converter converter,
+                                    final TckBindings.Collection collection) {
+        return switch (collection) {
+            case NONE -> "convert::" + converter.id();
+            case LIST -> "json -> BindingSupport.list(json, convert::" + converter.id() + ")";
+            case SET -> "json -> BindingSupport.set(json, convert::" + converter.id() + ")";
+        };
+    }
+
+    private static String apply(final String converter, final String argument) {
+        return converter.startsWith("convert::") ? "convert." + converter.substring("convert::".length()) + "("
+                + argument + ")" : "BindingSupport.apply(" + argument + ", " + converter + ")";
+    }
+
     /**
-     * A list built with {@code each}: the first segment of the source is the JSON list, the rest the object inside
-     * each element ({@code transfers.hbar}); elements without that object are skipped.
+     * A list built with {@code each}: nested loops over the generators. A generator over objects iterates the JSON
+     * list named by the first segment of its path, the rest names the object inside each element
+     * ({@code transfers.hbar}; elements without that object are skipped); a generator over values binds every
+     * element of a JSON list to a name.
      */
     private static String elements(final FieldDefinition field, final TckBindings.Elements elements,
-                                   final String json, final int depth, final StringBuilder body, final String indent,
-                                   final Imports imports, final JavaContext context) {
+                                   final String json, final @Nullable String parent, final int depth,
+                                   final StringBuilder body, final String indent, final Imports imports,
+                                   final JavaContext context) {
         final String list = JavaKeywords.identifier(field.name()) + (depth > 1 ? String.valueOf(depth) : "");
-        final String element = "element" + depth;
-        final String item = "item" + depth;
         final String elementType = imports.use(JavaNames.packageName(elements.elementType().name().namespace()),
                 elements.elementType().name().name());
         imports.use("java.util", "List");
         imports.use("java.util", "ArrayList");
         body.append(indent).append("final List<").append(elementType).append("> ").append(list)
-                .append(" = new ArrayList<>();\n")
-                .append(indent).append("for (final Map<String, Object> ").append(element)
-                .append(" : runtime.objects(").append(json).append(", ")
-                .append(JavaLiterals.quote(elements.source().first())).append(")) {\n");
-        final String inner = indent + INDENT;
-        if (elements.source().segments().size() == 1) {
-            body.append(inner).append("final Map<String, Object> ").append(item).append(" = ").append(element)
-                    .append(";\n");
-        } else {
-            body.append(inner).append("final Map<String, Object> ").append(item).append(" = runtime.object(")
-                    .append(element).append(", ").append(JavaLiterals.quote(elements.source().rest().toString()))
-                    .append(");\n")
-                    .append(inner).append("if (").append(item).append(" == null) {\n")
-                    .append(inner).append(INDENT).append("continue;\n")
-                    .append(inner).append("}\n");
+                .append(" = new ArrayList<>();\n");
+        String scope = json;
+        String enclosing = parent;
+        String inner = indent;
+        final boolean single = elements.generators().size() == 1;
+        for (int i = 0; i < elements.generators().size(); i++) {
+            final Binding.Generator generator = elements.generators().get(i);
+            final String suffix = depth + (single ? "" : "_" + (i + 1));
+            final String owner = generator.path().parent() ? Objects.requireNonNull(enclosing,
+                    "'^' outside of 'each'") : scope;
+            if (generator.name() == null) {
+                final String element = "element" + suffix;
+                final String item = "item" + suffix;
+                body.append(inner).append("for (final Map<String, Object> ").append(element)
+                        .append(" : runtime.objects(").append(owner).append(", ")
+                        .append(JavaLiterals.quote(generator.path().first())).append(")) {\n");
+                inner += INDENT;
+                if (generator.path().segments().size() == 1) {
+                    body.append(inner).append("final Map<String, Object> ").append(item).append(" = ")
+                            .append(element).append(";\n");
+                } else {
+                    body.append(inner).append("final Map<String, Object> ").append(item).append(" = runtime.object(")
+                            .append(element).append(", ").append(JavaLiterals.quote(generator.path().rest().toString()))
+                            .append(");\n")
+                            .append(inner).append("if (").append(item).append(" == null) {\n")
+                            .append(inner).append(INDENT).append("continue;\n")
+                            .append(inner).append("}\n");
+                }
+                scope = item;
+                enclosing = element;
+            } else {
+                final String value = "value" + suffix;
+                final String next = "scope" + suffix;
+                body.append(inner).append("for (final Object ").append(value).append(" : BindingSupport.elements(")
+                        .append("runtime.value(").append(owner).append(", List.of(new Source<>(")
+                        .append(JavaLiterals.quote(String.join(".", generator.path().segments())))
+                        .append(", json -> json))), ").append(generator.optional()).append(")) {\n");
+                inner += INDENT;
+                body.append(inner).append("final Map<String, Object> ").append(next).append(" = BindingSupport.with(")
+                        .append(scope).append(", ").append(JavaLiterals.quote(generator.name())).append(", ")
+                        .append(value).append(");\n");
+                scope = next;
+            }
         }
-        rejectUnsupported(elements.members(), item, body, inner);
-        final String construction = construct(elements.elementType(), elements.members(), item, element, depth + 1,
-                body, inner, imports, context);
-        body.append(inner).append(list).append(".add(").append(construction).append(");\n")
-                .append(indent).append("}\n");
+        rejectUnsupported(elements.members(), scope, body, inner);
+        final String construction = construct(elements.elementType(), elements.members(), scope, enclosing,
+                depth + 1, body, inner, imports, context);
+        body.append(inner).append(list).append(".add(").append(construction).append(");\n");
+        for (int i = elements.generators().size() - 1; i >= 0; i--) {
+            body.append(indent).append(INDENT.repeat(i)).append("}\n");
+        }
         return list;
+    }
+
+    /**
+     * A nested object: the variant selected by the presence of its parameter, created from the current JSON object or
+     * from the object at the path.
+     */
+    private static String nested(final FieldDefinition field, final TckBindings.Nested nested, final String json,
+                                 final @Nullable String parent, final int depth, final StringBuilder body,
+                                 final String indent, final Imports imports, final JavaContext context) {
+        String scope = json;
+        String enclosing = parent;
+        if (nested.path() != null) {
+            scope = JavaKeywords.identifier(field.name()) + "Json" + depth;
+            body.append(indent).append("final Map<String, Object> ").append(scope).append(" = runtime.object(")
+                    .append(nested.path().parent() ? Objects.requireNonNull(parent, "'^' outside of 'each'") : json)
+                    .append(", ").append(JavaLiterals.quote(String.join(".", nested.path().segments())))
+                    .append(");\n");
+            enclosing = json;
+        }
+        String expression = "null";
+        for (int i = nested.variants().size() - 1; i >= 0; i--) {
+            final TckBindings.Variant variant = nested.variants().get(i);
+            final String construction = construct(variant.type(), variant.members(), scope, enclosing, depth + 1,
+                    body, indent, imports, context);
+            expression = variant.when() == null ? construction
+                    : "(" + present(variant.when().parent() ? Objects.requireNonNull(enclosing) : scope,
+                    new Binding.Path(false, variant.when().segments()), imports) + " ? " + construction + " : "
+                    + expression + ")";
+        }
+        if (nested.path() != null) {
+            expression = scope + " == null ? null : " + expression;
+        }
+        return wrap(field, expression, nested.path() != null ? nested.path().toString()
+                : nested.variants().stream().filter(v -> v.when() != null).map(v -> v.when().toString()).collect(Collectors.joining(" | ")),
+                imports, context);
     }
 
     /** The access to a result value: accessors, null-safe after a nullable attribute. */
@@ -414,7 +643,7 @@ public final class JavaTckGenerator {
                 if (member instanceof TckBindings.Value value) {
                     final String name = JavaKeywords.identifier(value.field().name());
                     body.append(indent).append("final var ").append(name).append(" = ")
-                            .append(lookup(value.sources(), "params", null, imports)).append(";\n")
+                            .append(lookup(value, "params", null, imports)).append(";\n")
                             .append(indent).append("if (").append(name).append(" != null) {\n")
                             .append(indent).append(INDENT).append("transaction.")
                             .append(InterfaceGenerator.setter(value.field().name())).append('(').append(name)
@@ -468,6 +697,168 @@ public final class JavaTckGenerator {
         }
     }
 
+    /** The registry of the transaction builders, for transactions that are part of another request. */
+    private static GeneratedFile requestsClass(final JavaContext context) {
+        final Imports imports = context.imports(PACKAGE, "Requests");
+        imports.use("java.util", "HashMap");
+        imports.use("java.util", "Map");
+        imports.use("java.util.function", "Function");
+        imports.use("org.jspecify.annotations", "Nullable");
+        final String transaction = imports.use(JavaNames.packageName("consensusnode.transactions"), "Transaction");
+        final String members = """
+                    private final TckRuntime runtime;
+                    private final Map<String, Function<Map<String, Object>, $T<?, ?>>> builders = new HashMap<>();
+
+                    /// Creates the registry.
+                    ///
+                    /// @param runtime the runtime
+                    Requests(final TckRuntime runtime) {
+                        this.runtime = runtime;
+                    }
+
+                    /// Registers the builder of the transaction of a method.
+                    ///
+                    /// @param method  the method
+                    /// @param builder the builder: JSON parameters to the transaction
+                    void put(final String method, final Function<Map<String, Object>, $T<?, ?>> builder) {
+                        builders.put(method, builder);
+                    }
+
+                    /// Builds the transaction of a nested request (`method` and `params`) without sending it.
+                    ///
+                    /// @param request the request, `null` if absent
+                    /// @return the transaction, `null` if the request is absent
+                    /// @throws IllegalArgumentException if the method has no transaction binding
+                    @Nullable $T<?, ?> build(final @Nullable Map<String, Object> request) {
+                        if (request == null) {
+                            return null;
+                        }
+                        final Object method = request.get("method");
+                        final Function<Map<String, Object>, $T<?, ?>> builder = builders.get(String.valueOf(method));
+                        if (builder == null) {
+                            throw new IllegalArgumentException("not a transaction method of the bindings: " + method);
+                        }
+                        final Map<String, Object> params = runtime.object(request, "params");
+                        return builder.apply(params == null ? Map.of() : params);
+                    }
+                """.replace("$T", transaction);
+        contractImports(members, imports);
+        final String java = JavaGenerator.HEADER + '\n'
+                + "package " + PACKAGE + ";\n\n"
+                + imports.render() + '\n'
+                + "/// The builders of the transactions of all bindings, for a transaction that is part of another request\n"
+                + "/// (`request` in the bindings, e.g. the scheduled transaction of a schedule).\n"
+                + "final class Requests {\n\n"
+                + members
+                + "}\n";
+        return new GeneratedFile(SOURCE_ROOT + "Requests.java", JavaGenerator.annotated(java));
+    }
+
+    /** The helpers of the generated bindings; they depend on nothing but the JDK. */
+    private static final String BINDING_SUPPORT = """
+            import java.util.ArrayList;
+            import java.util.Collection;
+            import java.util.Collections;
+            import java.util.LinkedHashMap;
+            import java.util.LinkedHashSet;
+            import java.util.List;
+            import java.util.Map;
+            import java.util.Set;
+            import java.util.function.Function;
+            import org.jspecify.annotations.Nullable;
+
+            /// Helpers of the generated bindings: lists of values and the names bound by `each name in list`.
+            final class BindingSupport {
+
+                private BindingSupport() {
+                }
+
+                /// Converts every element of a JSON list.
+                ///
+                /// @param json      the JSON list
+                /// @param converter the converter of an element
+                /// @param <T>       the element type
+                /// @return the values
+                /// @throws IllegalArgumentException if the JSON value is no list
+                static <T> List<T> list(final Object json, final Function<Object, T> converter) {
+                    final List<T> values = new ArrayList<>();
+                    for (final Object element : elements(json, false)) {
+                        values.add(converter.apply(element));
+                    }
+                    return Collections.unmodifiableList(values);
+                }
+
+                /// Converts every element of a JSON list into a set (in the order of the list).
+                ///
+                /// @param json      the JSON list
+                /// @param converter the converter of an element
+                /// @param <T>       the element type
+                /// @return the values
+                /// @throws IllegalArgumentException if the JSON value is no list
+                static <T> Set<T> set(final Object json, final Function<Object, T> converter) {
+                    return Collections.unmodifiableSet(new LinkedHashSet<>(list(json, converter)));
+                }
+
+                /// Converts every value into JSON.
+                ///
+                /// @param values    the values
+                /// @param converter the converter of a value
+                /// @param <T>       the value type
+                /// @return the JSON list
+                static <T> List<Object> json(final Collection<? extends T> values,
+                                             final Function<? super T, Object> converter) {
+                    final List<Object> json = new ArrayList<>();
+                    for (final T value : values) {
+                        json.add(converter.apply(value));
+                    }
+                    return json;
+                }
+
+                /// Applies a converter to a constant.
+                ///
+                /// @param json      the constant
+                /// @param converter the converter
+                /// @param <T>       the type
+                /// @return the value
+                static <T> T apply(final Object json, final Function<Object, T> converter) {
+                    return converter.apply(json);
+                }
+
+                /// Returns the elements of a JSON list.
+                ///
+                /// @param json     the JSON list, `null` if absent
+                /// @param optional whether an absent list counts as one element `null`
+                /// @return the elements
+                /// @throws IllegalArgumentException if the JSON value is no list
+                static List<?> elements(final @Nullable Object json, final boolean optional) {
+                    if (json == null) {
+                        return optional ? Collections.singletonList(null) : List.of();
+                    }
+                    if (!(json instanceof List<?> list)) {
+                        throw new IllegalArgumentException("not a JSON list: " + json);
+                    }
+                    return list;
+                }
+
+                /// Returns a JSON object with a name bound to a value (absent if the value is `null`).
+                ///
+                /// @param json  the JSON object
+                /// @param name  the name
+                /// @param value the value
+                /// @return the JSON object with the name
+                static Map<String, Object> with(final Map<String, Object> json, final String name,
+                                                final @Nullable Object value) {
+                    final Map<String, Object> result = new LinkedHashMap<>(json);
+                    if (value == null) {
+                        result.remove(name);
+                    } else {
+                        result.put(name, value);
+                    }
+                    return result;
+                }
+            }
+            """;
+
     // --- main class and build ------------------------------------------------------------------------
 
     private static GeneratedFile mainClass(final List<String> classes) {
@@ -497,10 +888,11 @@ public final class JavaTckGenerator {
                 .append(INDENT).append(INDENT).append(INDENT).append(INDENT).append(INDENT).append(INDENT)
                 .append("+ \" on the class path\"));\n")
                 .append(INDENT).append(INDENT).append("final CommonBindings common = new CommonBindings(runtime);\n")
+                .append(INDENT).append(INDENT).append("final Requests requests = new Requests(runtime);\n")
                 .append(INDENT).append(INDENT)
                 .append("final Map<String, Handler> methods = new LinkedHashMap<>();\n");
         classes.forEach(c -> java.append(INDENT).append(INDENT).append("new ").append(c)
-                .append("(runtime, common).register(methods);\n"));
+                .append("(runtime, common, requests).register(methods);\n"));
         java.append(INDENT).append(INDENT).append("return runtime.server(methods);\n")
                 .append(INDENT).append("}\n\n")
                 .append(INDENT).append("/// Starts the server.\n")

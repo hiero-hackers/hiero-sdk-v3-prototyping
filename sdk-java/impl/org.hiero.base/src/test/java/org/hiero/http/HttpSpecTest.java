@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -182,6 +183,12 @@ class HttpSpecTest {
         client.close(toDuration("PT5S")).toCompletableFuture().join();
 
         // when / then
-        assertThrows(ClientClosedException.class, () -> client.execute(request, Cancellation.none()).toCompletableFuture().join());
+        assertThrows(ClientClosedException.class, () -> {
+            try {
+                client.execute(request, Cancellation.none()).toCompletableFuture().join();
+            } catch (final CompletionException failed) {
+                throw failed.getCause();
+            }
+        });
     }
 }

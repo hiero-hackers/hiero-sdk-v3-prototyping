@@ -1,14 +1,20 @@
 package org.hiero.tck.runtime;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HexFormat;
+import java.util.List;
+import java.util.Locale;
 import org.hiero.authority.Authority;
 import org.hiero.authority.AuthorityFactory;
+import org.hiero.authority.AuthorityList;
 import org.hiero.authority.PublicKeyAuthority;
+import org.hiero.consensusnode.queries.tokens.TokenNftInfo;
 import org.hiero.consensusnode.transactions.TransactionStatus;
 import org.hiero.hedera.Hbar;
 import org.hiero.hedera.HbarUnit;
@@ -19,8 +25,12 @@ import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.EvmAddress;
+import org.hiero.ledger.IpAddress;
+import org.hiero.ledger.TransactionId;
 import org.hiero.nativeToken.NativeToken;
 import org.hiero.tck.contract.Converters;
+import org.hiero.token.TokenSupplyType;
+import org.hiero.token.TokenType;
 
 /**
  * The converter catalogue for Java: inbound converters turn a JSON value of the TCK into an API value
@@ -94,7 +104,8 @@ final class JavaConverters implements Converters {
             try {
                 return AuthorityFactory.of(KeysFactory.createPublicKey(KeyFormat.SPKI_WITH_DER, bytes));
             } catch (final IllegalArgumentException notPublic) {
-                throw RpcError.gap("a key list or threshold key cannot be read: Authority has no fromBytes");
+                // the protobuf Key of a key list or threshold key (Authority has no byte form in the API)
+                return KeyProto.decode(bytes);
             }
         }
     }
@@ -103,6 +114,61 @@ final class JavaConverters implements Converters {
     public byte[] hex(final Object json) {
         final String text = string(json);
         return HexFormat.of().parseHex(text.startsWith("0x") ? text.substring(2) : text);
+    }
+
+    @Override
+    public byte[] utf8(final Object json) {
+        return string(json).getBytes(StandardCharsets.UTF_8);
+    }
+
+    /** A JSON list of keys that must all sign; an empty list is no key ({@code null}). */
+    @Override
+    public Authority keyList(final Object json) {
+        if (!(json instanceof List<?> list)) {
+            throw new IllegalArgumentException("not a list of keys: " + json);
+        }
+        if (list.isEmpty()) {
+            return null;
+        }
+        return AuthorityFactory.of(list.stream().map(this::key).toArray(Authority[]::new));
+    }
+
+    /** {@code ft} / {@code nft}, or the name of the constant. */
+    @Override
+    public TokenType tokenType(final Object json) {
+        return switch (string(json).toLowerCase(Locale.ROOT)) {
+            case "ft", "fungible_common" -> TokenType.FUNGIBLE_COMMON;
+            case "nft", "non_fungible_unique" -> TokenType.NON_FUNGIBLE_UNIQUE;
+            default -> throw new IllegalArgumentException("not a token type: " + json);
+        };
+    }
+
+    @Override
+    public TokenSupplyType tokenSupplyType(final Object json) {
+        return TokenSupplyType.valueOf(string(json).toUpperCase(Locale.ROOT));
+    }
+
+    @Override
+    public Address nftIdToken(final Object json) {
+        return address(nftIdPart(json, 0));
+    }
+
+    @Override
+    public Long nftIdSerial(final Object json) {
+        return int64(nftIdPart(json, 1));
+    }
+
+    @Override
+    public IpAddress ipAddress(final Object json) {
+        return IpAddress.fromBytes(hex(json));
+    }
+
+    private static String nftIdPart(final Object json, final int index) {
+        final String[] parts = String.valueOf(json).split("/", -1);
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("not an NFT ID (tokenId/serial): " + json);
+        }
+        return parts[index];
     }
 
     // --- outbound ------------------------------------------------------------------------------------
@@ -162,7 +228,7 @@ final class JavaConverters implements Converters {
         if (value instanceof PublicKeyAuthority(final PublicKey publicKey)) {
             return HexFormat.of().formatHex(publicKey.toBytes(KeyFormat.SPKI_WITH_DER));
         }
-        throw RpcError.gap("a key list or threshold key cannot be written: Authority has no toBytes");
+        return HexFormat.of().formatHex(KeyProto.encode(value));
     }
 
     @Override
@@ -174,6 +240,54 @@ final class JavaConverters implements Converters {
     @Override
     public Object statusJson(final TransactionStatus value) {
         return value instanceof Enum<?> constant ? constant.name() : String.valueOf(value.code());
+    }
+
+    @Override
+    public Object numberJson(final Integer value) {
+        return value;
+    }
+
+    @Override
+    public Object utf8Json(final byte[] value) {
+        return new String(value, StandardCharsets.UTF_8);
+    }
+
+    /** The keys of a list that must all sign, or the single key. */
+    @Override
+    public Object keyListJson(final Authority value) {
+        final List<Object> keys = new ArrayList<>();
+        if (value instanceof AuthorityList(final List<Authority> children, final int threshold)
+                && threshold == children.size()) {
+            children.forEach(child -> keys.add(keyJson(child)));
+        } else {
+            keys.add(keyJson(value));
+        }
+        return keys;
+    }
+
+    @Override
+    public Object publicKeyJson(final PublicKey value) {
+        return HexFormat.of().formatHex(value.toBytes(KeyFormat.SPKI_WITH_DER));
+    }
+
+    @Override
+    public Object tokenTypeJson(final TokenType value) {
+        return value.name();
+    }
+
+    @Override
+    public Object tokenSupplyTypeJson(final TokenSupplyType value) {
+        return value.name();
+    }
+
+    @Override
+    public Object nftIdJson(final TokenNftInfo value) {
+        return value.tokenId() + "/" + value.serial();
+    }
+
+    @Override
+    public Object transactionIdJson(final TransactionId value) {
+        return value.toString();
     }
 
     // --- used by the runtime itself ------------------------------------------------------------------

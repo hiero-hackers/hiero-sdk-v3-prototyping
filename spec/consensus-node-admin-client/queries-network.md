@@ -350,15 +350,31 @@ test "an address book keeps its nodes in order" {
   let it be removed cleanly (breaking change for anyone still reading it; nothing the
   consensus node would notice).
 
+- **`NodeAddress.gossipCaCertificate` is always empty when read from file `0.0.102`.** `NodeAddressBookQuery` reads
+  the `NodeAddressBook` protobuf from file `0.0.102`, and the network does not fill the gossip CA certificate in that
+  file; the Java implementation therefore always returns an empty certificate. The advice above to rely on
+  `gossipCaCertificate` cannot be followed with this query. Should the field be `@@nullable`, be removed from
+  `NodeAddress`, or should the query read a different source (e.g. file `0.0.101` or the mirror node)?
+
 - **Result type returns an empty `nodeId: 0` field?** When a node is deleted via
   `NodeDeleteTransaction`, HAPI keeps the entry in the file under a tombstone flag, but
   this query's `NodeAddressBook` does not surface a `deleted` boolean per entry. Whether
-  tombstoned entries should be visible (and how) is open — today they are filtered out
-  client-side by the SDK before returning the typed result.
+  tombstoned entries should be visible (and how) is open. Filtering them out client-side is
+  not possible either: the `NodeAddressBook` protobuf of file `0.0.102` has no deleted flag, so
+  the Java implementation returns every entry of the file as it is.
 
 - **`NodeAddressBookQuery` has no input fields.** Address books are per-network, not
   per-shard / per-realm — a single network has one address book file. Multi-network
-  callers issue this query once per `HieroClient` they hold.
+  callers issue this query once per `HieroClient` they hold. The file id itself still needs a
+  shard and realm (`<shard>.<realm>.102`); without an input the Java implementation takes them
+  from the operator account of the client. Is that the intended rule, or should the shard and
+  realm come from the network setting (or be a field of the query)?
+
+- **`NetworkVersionInfoQuery` is modelled as free, but the network charges for it.** The query is a
+  `FreeQuery`, the description calls `NetworkGetVersionInfoQuery` free and the example *Read the network
+  version (free)* says there is no cost discovery. The network bills `getVersionInfo`, though, and the V2 Java
+  SDK treats it as a paid query. The Java implementation pays for it without a cost limit and hides the cost
+  from the caller. Should it be a `PaidQuery` (and the description and example be corrected)?
 
 - **Absent label: `null` or empty string?** The current SDKs (Rust, Swift, C++, Python) model an absent pre-release
   label or build metadata as `""`, as the protobuf `SemanticVersion` does. Here they are `@@nullable`, so `""` would be

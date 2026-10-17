@@ -72,3 +72,16 @@ test "a mirror node client talks to the mirror node it was created for" {
 ```
 
 ## Questions & Comments
+
+- **Attributes that are not nullable here are `null` in REST responses.** The Mirror Node returns `null` for several
+  attributes that the specs declare as required, e.g. `permanent_removal`, `deleted`, `auto_renew_period` and
+  `created_timestamp` (`Contract`, `Topic`, token info), `decline_reward` and `deleted` (`AccountInfo`, which declares
+  `@@default(false)`), `stake` (`NetworkNode`) and `decimals` (tokens). The Java implementation substitutes fallback values (e.g. `false`, `0` or a sentinel time), so a caller
+  cannot tell a real value from a missing one. Should each of these attributes be `@@nullable`, or should the specs
+  state the fallback value?
+
+- **The HTTP client behind a repository is never closed.** `createRepository(mirrorNode)` of each namespace and
+  `createMirrorNodeClient(mirrorNode)` take only a `MirrorNode` and create the HTTP client themselves, but neither
+  the repositories nor `MirrorNodeClient` have a `close()`. The Java implementation therefore never closes these
+  clients. Should the factories take an existing client (cf. the open item in
+  [`mirror-node-http.md`](mirror-node-http.md)), or should the repositories and the client become closeable?

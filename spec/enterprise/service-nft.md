@@ -296,6 +296,10 @@ test "NFT type parameters reject metadata longer than 100 bytes" {
   [ADR-0004](../../docs/adr/0004-authority-authorization-sum-type.md) and [`authority.md`](../base/authority.md).
 - Open option: simple single-key convenience overloads taking a `PublicKey` directly could be added later if the
   enterprise layer wants extra ergonomics for the common single-signer case.
+- **`burnNfts(nfts)` is not atomic.** The NFTs of the set can belong to different NFT types, and a `TokenBurn` burns
+  serials of one token only, so the Java implementation sends one transaction per NFT type. If one of them fails, the
+  NFTs of the earlier types are already burned. Should the method require NFTs of a single type, use an atomic batch
+  (HIP-551), or document the partial outcome?
 
 We should have immutable data objects as input params for the "create" methods.
 That would allow full flexibility and we only need 1 method with such data object + a hand full of convenience methods.

@@ -129,3 +129,27 @@ abstraction Session {
 - Is `service-error` enough on `awaitConsistency()`, or do we want a distinct `consistency-timeout-error` so callers
   can branch on it? Today the surrounding services already throw `service-error` for everything, so introducing a
   new id would only pay off if applications regularly need to recover from this specific failure mode.
+
+- **Receipts carry no consensus timestamp, so the high-water-mark cannot be one.** The description defines the
+  high-water-mark as "the consensus timestamp of the receipt", but a HAPI `TransactionReceipt` has no consensus
+  timestamp (only the record has one, and fetching it costs a paid query per write). The Java implementation instead
+  remembers the transaction ids of the session's writes, and `awaitConsistency()` polls the Mirror Node until it knows
+  all of them. Should the spec describe the high-water-mark in these terms (which also changes what an exported
+  consistency token would contain), or should a write fetch the record to obtain the timestamp?
+
+- **Services can only sign with the operator.** The service methods take `Authority` values, never private keys, so
+  the only key a service can sign with is the one of the session's operator (or its `TransactionSigner`). Every
+  operation that needs another signature therefore fails on the network unless that authority is the operator's key:
+  `updateAccountAuthority` (needs the old and the new key), `deleteAccount` of another account, transfers from an
+  account other than the operator, and tokens or NFT types with a non-operator treasury or supply authority (mint,
+  burn). The Java implementation signs with the operator only; the `oldAuthority` parameter of
+  `updateAccountAuthority` is unused. Should these methods take additional signers (keys or a `TransactionSigner`),
+  or should the services be documented as operator-only?
+
+- **`createService(session)` needs more from a `Session` than `awaitConsistency()`.** To execute transactions and read
+  from the Mirror Node, a service needs the network setting, the operator account, the signer and a way to advance the
+  high-water-mark — none of which `Session` exposes. The Java implementation therefore accepts only sessions created by
+  `createSession(...)` and rejects any other implementation of `Session`. This conflicts with the framework
+  integration described above, where a service holds a scoped proxy of the session (e.g. Spring's
+  `ScopedProxyMode.TARGET_CLASS`, which works only if the proxy can stand in for the real session). Should `Session`
+  expose what a service needs (perhaps through an SPI), or should services be created per session by the adapter?

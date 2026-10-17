@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.tokens;
 
+import org.hiero.consensusnode.client.internal.TokenKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -45,27 +47,27 @@ public final class TokenRevokeKycTransaction extends Transaction<TokenRevokeKycR
 
     @Override
     public PackedTransaction<TokenRevokeKycReceipt, TokenRevokeKycTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRevokeKycTransaction.pack");
+        return new Packing<>(TokenKinds.TOKEN_REVOKE_KYC).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenRevokeKycReceipt, TokenRevokeKycTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRevokeKycTransaction.signWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_REVOKE_KYC).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<TokenRevokeKycReceipt, TokenRevokeKycTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRevokeKycTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_REVOKE_KYC).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenRevokeKycReceipt, TokenRevokeKycTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRevokeKycTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_REVOKE_KYC).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<TokenRevokeKycReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRevokeKycTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(TokenKinds.TOKEN_REVOKE_KYC).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -81,21 +83,21 @@ public final class TokenRevokeKycTransaction extends Transaction<TokenRevokeKycR
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<TokenRevokeKycReceipt, TokenRevokeKycTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRevokeKycTransaction.packForBatch");
+        return new Packing<>(TokenKinds.TOKEN_REVOKE_KYC).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<TokenRevokeKycReceipt, TokenRevokeKycTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRevokeKycTransaction.signForBatchWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_REVOKE_KYC).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<TokenRevokeKycReceipt, TokenRevokeKycTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRevokeKycTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_REVOKE_KYC).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -103,7 +105,7 @@ public final class TokenRevokeKycTransaction extends Transaction<TokenRevokeKycR
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<TokenRevokeKycReceipt, TokenRevokeKycTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenRevokeKycTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_REVOKE_KYC).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

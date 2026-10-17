@@ -144,3 +144,9 @@ test "a fixed fee in HBAR has no denominating token and a fixed fee in a token h
 ## Questions & Comments
 
 - `FixedFee.denominatingTokenId`: does this field make sense, since `FixedFee` is also used by the topic query service?
+
+- **`NftTransfer.parties` of a mint or burn is `null`, and the token id is lost with it.** `NftTransferParties`
+  requires both a sender and a receiver, but the NFT transfer of a mint has no sender and that of a burn has no
+  receiver. The Java implementation sets `parties` to `null` for these transfers, which also drops the `tokenId` that
+  the REST API does return. Should `senderAccountId` / `receiverAccountId` be `@@nullable`, and should `tokenId` move
+  to `NftTransfer` itself?

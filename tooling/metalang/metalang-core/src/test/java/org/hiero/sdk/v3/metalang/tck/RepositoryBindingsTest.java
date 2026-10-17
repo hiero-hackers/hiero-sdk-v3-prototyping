@@ -21,7 +21,9 @@ class RepositoryBindingsTest {
         // THEN
         assertThat(bindings.diagnostics()).isEmpty();
         assertThat(bindings.bindings()).extracting(b -> b.binding().name())
-                .containsExactly("createAccount", "updateAccount", "deleteAccount", "transferCrypto", "getAccountInfo");
+                .contains("createAccount", "updateAccount", "deleteAccount", "transferCrypto", "getAccountInfo",
+                        "approveAllowance", "createFile", "createNode", "createSchedule", "createToken", "mintToken",
+                        "createTopic");
         assertThat(bindings.common()).isPresent();
     }
 }

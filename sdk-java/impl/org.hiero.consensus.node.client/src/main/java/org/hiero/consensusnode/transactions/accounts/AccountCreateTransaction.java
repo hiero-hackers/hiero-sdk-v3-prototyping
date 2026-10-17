@@ -10,7 +10,7 @@ import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.consensusnode.client.internal.Packing;
-import org.hiero.consensusnode.client.internal.TransactionKinds;
+import org.hiero.consensusnode.client.internal.AccountKinds;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
@@ -133,27 +133,27 @@ public final class AccountCreateTransaction extends Transaction<AccountCreateRec
 
     @Override
     public PackedTransaction<AccountCreateReceipt, AccountCreateTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        return new Packing<>(TransactionKinds.ACCOUNT_CREATE).pack(this, payer, nodes);
+        return new Packing<>(AccountKinds.ACCOUNT_CREATE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<AccountCreateReceipt, AccountCreateTransaction> signWithOperator(final HieroClient<?> client) {
-        return new Packing<>(TransactionKinds.ACCOUNT_CREATE).signWithOperator(this, client);
+        return new Packing<>(AccountKinds.ACCOUNT_CREATE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<AccountCreateReceipt, AccountCreateTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        return new Packing<>(TransactionKinds.ACCOUNT_CREATE).sign(this, payer, nodes);
+        return new Packing<>(AccountKinds.ACCOUNT_CREATE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<AccountCreateReceipt, AccountCreateTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        return new Packing<>(TransactionKinds.ACCOUNT_CREATE).sign(this, payerId, signer, nodes);
+        return new Packing<>(AccountKinds.ACCOUNT_CREATE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<AccountCreateReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        return new Packing<>(TransactionKinds.ACCOUNT_CREATE).signWithOperatorAndSubmit(this, client);
+        return new Packing<>(AccountKinds.ACCOUNT_CREATE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -169,21 +169,21 @@ public final class AccountCreateTransaction extends Transaction<AccountCreateRec
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<AccountCreateReceipt, AccountCreateTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        return new Packing<>(TransactionKinds.ACCOUNT_CREATE).packForBatch(this, payer, batchKey);
+        return new Packing<>(AccountKinds.ACCOUNT_CREATE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<AccountCreateReceipt, AccountCreateTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        return new Packing<>(TransactionKinds.ACCOUNT_CREATE).signForBatchWithOperator(this, client, batchKey);
+        return new Packing<>(AccountKinds.ACCOUNT_CREATE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<AccountCreateReceipt, AccountCreateTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        return new Packing<>(TransactionKinds.ACCOUNT_CREATE).signForBatch(this, payer, batchKey);
+        return new Packing<>(AccountKinds.ACCOUNT_CREATE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -191,7 +191,7 @@ public final class AccountCreateTransaction extends Transaction<AccountCreateRec
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<AccountCreateReceipt, AccountCreateTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        return new Packing<>(TransactionKinds.ACCOUNT_CREATE).signForBatch(this, payerId, signer, batchKey);
+        return new Packing<>(AccountKinds.ACCOUNT_CREATE).signForBatch(this, payerId, signer, batchKey);
     }
 
     /// Returns a builder for a new `AccountCreateTransaction`.

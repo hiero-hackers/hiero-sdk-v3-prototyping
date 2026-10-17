@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.transactions.tokens;
 
+import org.hiero.consensusnode.client.internal.TokenKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -67,27 +69,27 @@ public final class TokenUpdateNftsTransaction extends Transaction<TokenUpdateNft
 
     @Override
     public PackedTransaction<TokenUpdateNftsReceipt, TokenUpdateNftsTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUpdateNftsTransaction.pack");
+        return new Packing<>(TokenKinds.TOKEN_UPDATE_NFTS).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenUpdateNftsReceipt, TokenUpdateNftsTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUpdateNftsTransaction.signWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_UPDATE_NFTS).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<TokenUpdateNftsReceipt, TokenUpdateNftsTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUpdateNftsTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_UPDATE_NFTS).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<TokenUpdateNftsReceipt, TokenUpdateNftsTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUpdateNftsTransaction.sign");
+        return new Packing<>(TokenKinds.TOKEN_UPDATE_NFTS).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<TokenUpdateNftsReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUpdateNftsTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(TokenKinds.TOKEN_UPDATE_NFTS).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -103,21 +105,21 @@ public final class TokenUpdateNftsTransaction extends Transaction<TokenUpdateNft
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<TokenUpdateNftsReceipt, TokenUpdateNftsTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUpdateNftsTransaction.packForBatch");
+        return new Packing<>(TokenKinds.TOKEN_UPDATE_NFTS).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<TokenUpdateNftsReceipt, TokenUpdateNftsTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUpdateNftsTransaction.signForBatchWithOperator");
+        return new Packing<>(TokenKinds.TOKEN_UPDATE_NFTS).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<TokenUpdateNftsReceipt, TokenUpdateNftsTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUpdateNftsTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_UPDATE_NFTS).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -125,7 +127,7 @@ public final class TokenUpdateNftsTransaction extends Transaction<TokenUpdateNft
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<TokenUpdateNftsReceipt, TokenUpdateNftsTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenUpdateNftsTransaction.signForBatch");
+        return new Packing<>(TokenKinds.TOKEN_UPDATE_NFTS).signForBatch(this, payerId, signer, batchKey);
     }
 
     @Override

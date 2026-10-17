@@ -165,3 +165,13 @@ test "account parameters staked to both an account and a node are rejected" {
   [ADR-0004](../../docs/adr/0004-authority-authorization-sum-type.md) and [`authority.md`](../base/authority.md).
 - Open option: simple single-key convenience overloads taking a `PublicKey` directly could be added later if the
   enterprise layer wants extra ergonomics for the common single-signer case.
+
+- **`AccountInformation.authority` is required, but a hollow account has none.** An account created by a transfer to an
+  EVM address (a hollow account) has no key until it signs its first transaction. The Java implementation cannot build
+  an `AccountInformation` for it and fails. Should `authority` be `@@nullable`?
+- **Only Hbar balances can be represented.** `AccountInformation.balance` and `createNewAccount(initialBalance)` are a
+  `NativeToken<ANY, ANY>`, but the Java implementation can only read and write `Hbar`; the native token of a
+  non-Hedera network fails. How does a service learn which `NativeToken` implementation the network of its session
+  uses (e.g. from the `NetworkSetting`)?
+- **`oldAuthority` of `updateAccountAuthority` is unused.** It cannot be used for signing, because an `Authority` holds
+  no private key; see the open item about operator-only signing in [`service.md`](service.md).

@@ -3,6 +3,8 @@ package org.hiero.consensusnode.queries.tokens;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.client.internal.Querying;
+import org.hiero.consensusnode.client.internal.TokenQueries;
 import org.hiero.consensusnode.queries.PaidQuery;
 import org.hiero.consensusnode.queries.PaidQueryResponse;
 import org.hiero.ledger.Address;
@@ -94,7 +96,7 @@ public final class TokenNftInfoQuery extends PaidQuery<TokenNftInfo> {
     /// handled transparently.
     @Override
     public CompletionStage<PaidQueryResponse<TokenNftInfo>> submit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenNftInfoQuery.submit");
+        return Querying.paid(this, maxQueryPayment(), TokenQueries.TOKEN_NFT_INFO, client);
     }
 
     /// Asks the network for the current price of this query without executing it. The returned value is a
@@ -102,7 +104,7 @@ public final class TokenNftInfoQuery extends PaidQuery<TokenNftInfo> {
     /// Throws if `maxQueryPayment` is set and the quoted price exceeds it.
     @Override
     public CompletionStage<NativeToken<?, ?>> getCost(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: TokenNftInfoQuery.getCost");
+        return TokenQueries.cost(this, TokenQueries.TOKEN_NFT_INFO, client);
     }
 
     @Override

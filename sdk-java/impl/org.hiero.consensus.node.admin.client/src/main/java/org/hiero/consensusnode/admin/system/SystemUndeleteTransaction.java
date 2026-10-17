@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.admin.system;
 
+import org.hiero.consensusnode.admin.internal.AdminKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -48,27 +50,27 @@ public final class SystemUndeleteTransaction extends Transaction<SystemUndeleteR
 
     @Override
     public PackedTransaction<SystemUndeleteReceipt, SystemUndeleteTransaction> pack(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: SystemUndeleteTransaction.pack");
+        return new Packing<>(AdminKinds.SYSTEM_UNDELETE).pack(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<SystemUndeleteReceipt, SystemUndeleteTransaction> signWithOperator(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: SystemUndeleteTransaction.signWithOperator");
+        return new Packing<>(AdminKinds.SYSTEM_UNDELETE).signWithOperator(this, client);
     }
 
     @Override
     public PackedTransaction<SystemUndeleteReceipt, SystemUndeleteTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: SystemUndeleteTransaction.sign");
+        return new Packing<>(AdminKinds.SYSTEM_UNDELETE).sign(this, payer, nodes);
     }
 
     @Override
     public PackedTransaction<SystemUndeleteReceipt, SystemUndeleteTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        throw new UnsupportedOperationException("Not implemented yet: SystemUndeleteTransaction.sign");
+        return new Packing<>(AdminKinds.SYSTEM_UNDELETE).sign(this, payerId, signer, nodes);
     }
 
     @Override
     public CompletionStage<Response<SystemUndeleteReceipt>> signWithOperatorAndSubmit(final HieroClient<?> client) {
-        throw new UnsupportedOperationException("Not implemented yet: SystemUndeleteTransaction.signWithOperatorAndSubmit");
+        return new Packing<>(AdminKinds.SYSTEM_UNDELETE).signWithOperatorAndSubmit(this, client);
     }
 
     /// Packs this transaction as the *inner* transaction of a BatchTransaction (HIP-551), without
@@ -84,21 +86,21 @@ public final class SystemUndeleteTransaction extends Transaction<SystemUndeleteR
     /// transaction type may be batched at all is decided by the network.
     @Override
     public PackedTransaction<SystemUndeleteReceipt, SystemUndeleteTransaction> packForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: SystemUndeleteTransaction.packForBatch");
+        return new Packing<>(AdminKinds.SYSTEM_UNDELETE).packForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
     public PackedTransaction<SystemUndeleteReceipt, SystemUndeleteTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: SystemUndeleteTransaction.signForBatchWithOperator");
+        return new Packing<>(AdminKinds.SYSTEM_UNDELETE).signForBatchWithOperator(this, client, batchKey);
     }
 
     /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
     /// batch counterpart of sign(payer, nodes).
     @Override
     public PackedTransaction<SystemUndeleteReceipt, SystemUndeleteTransaction> signForBatch(final Account payer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: SystemUndeleteTransaction.signForBatch");
+        return new Packing<>(AdminKinds.SYSTEM_UNDELETE).signForBatch(this, payer, batchKey);
     }
 
     /// Packs this transaction for a batch with payerId as payer and signs it with the given
@@ -106,7 +108,7 @@ public final class SystemUndeleteTransaction extends Transaction<SystemUndeleteR
     /// sign(payerId, signer, nodes).
     @Override
     public PackedTransaction<SystemUndeleteReceipt, SystemUndeleteTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        throw new UnsupportedOperationException("Not implemented yet: SystemUndeleteTransaction.signForBatch");
+        return new Packing<>(AdminKinds.SYSTEM_UNDELETE).signForBatch(this, payerId, signer, batchKey);
     }
 
     /// Returns a builder for a new `SystemUndeleteTransaction`.
