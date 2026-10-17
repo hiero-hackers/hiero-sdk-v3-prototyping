@@ -4,6 +4,7 @@ import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `KeyFormat`, generated from the specs.
@@ -12,6 +13,7 @@ class KeyFormatTest {
 
     @Test
     @DisplayName("the constants have the attribute values of the specs")
+    @Tag("testId:keys.KeyFormat/constants")
     void shouldProvideTheAttributesOfTheConstants() {
         assertValue(KeyContainer.PKCS8, KeyFormat.PKCS8_WITH_DER.container());
         assertValue(KeyEncoding.DER, KeyFormat.PKCS8_WITH_DER.encoding());
@@ -25,12 +27,14 @@ class KeyFormatTest {
 
     @Test
     @DisplayName("supportsType(type) can be called")
+    @Tag("testId:keys.KeyFormat/supportsType/call")
     void shouldCallSupportsType() {
         KeyFormat.PKCS8_WITH_DER.supportsType(typeValue());
     }
 
     @Test
     @DisplayName("decode(keyType, value) can be called and returns a value (only IllegalArgumentException may occur)")
+    @Tag("testId:keys.KeyFormat/decode/call")
     void shouldCallDecode() throws Exception {
         try {
             assertNotNull(KeyFormat.PKCS8_WITH_DER.decode(keyTypeValue(), valueValue()));

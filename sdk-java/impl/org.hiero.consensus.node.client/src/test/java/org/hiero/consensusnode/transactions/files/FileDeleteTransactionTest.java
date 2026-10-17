@@ -27,6 +27,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `FileDeleteTransaction`, generated from the specs.
@@ -35,6 +36,7 @@ class FileDeleteTransactionTest {
 
     @Test
     @DisplayName("creates a FileDeleteTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final Address fileId = fileIdValue();
         final FileDeleteTransaction subject = new FileDeleteTransaction(fileId);
@@ -46,12 +48,14 @@ class FileDeleteTransactionTest {
 
     @Test
     @DisplayName("rejects null for fileId")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/fileId/rejects-null")
     void shouldRejectNullFileId() {
         assertThrows(NullPointerException.class, () -> new FileDeleteTransaction((Address) null));
     }
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final FileDeleteTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -61,6 +65,7 @@ class FileDeleteTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final FileDeleteTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -69,6 +74,7 @@ class FileDeleteTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final FileDeleteTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -78,6 +84,7 @@ class FileDeleteTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final FileDeleteTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -86,6 +93,7 @@ class FileDeleteTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/memo/set")
     void shouldSetMemo() {
         final FileDeleteTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -95,6 +103,7 @@ class FileDeleteTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final FileDeleteTransaction subject = create();
         subject.setMemo((String) null);
@@ -103,6 +112,7 @@ class FileDeleteTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final FileDeleteTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -112,6 +122,7 @@ class FileDeleteTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final FileDeleteTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -120,54 +131,63 @@ class FileDeleteTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileDeleteTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

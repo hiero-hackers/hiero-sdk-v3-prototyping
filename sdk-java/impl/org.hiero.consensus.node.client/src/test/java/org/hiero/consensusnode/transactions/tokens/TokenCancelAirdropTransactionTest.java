@@ -29,6 +29,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenCancelAirdropTransaction`, generated from the specs.
@@ -37,6 +38,7 @@ class TokenCancelAirdropTransactionTest {
 
     @Test
     @DisplayName("creates a TokenCancelAirdropTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final List<PendingAirdrop> pendingAirdrops = pendingAirdropsValue();
         final TokenCancelAirdropTransaction subject = new TokenCancelAirdropTransaction(pendingAirdrops);
@@ -48,12 +50,14 @@ class TokenCancelAirdropTransactionTest {
 
     @Test
     @DisplayName("rejects null for pendingAirdrops")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/pendingAirdrops/rejects-null")
     void shouldRejectNullPendingAirdrops() {
         assertThrows(NullPointerException.class, () -> new TokenCancelAirdropTransaction((List<PendingAirdrop>) null));
     }
 
     @Test
     @DisplayName("pendingAirdrops: accepts the minimum number of elements")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/pendingAirdrops/accepts-at-minimum-size")
     void shouldAcceptPendingAirdropsAtMinimumSize() {
         final List<PendingAirdrop> value = List.of(new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null));
         final TokenCancelAirdropTransaction subject = new TokenCancelAirdropTransaction(value);
@@ -62,12 +66,14 @@ class TokenCancelAirdropTransactionTest {
 
     @Test
     @DisplayName("pendingAirdrops: rejects fewer elements than the minimum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/pendingAirdrops/rejects-below-minimum-size")
     void shouldRejectPendingAirdropsBelowMinimumSize() {
         assertThrows(IllegalArgumentException.class, () -> new TokenCancelAirdropTransaction(List.of()));
     }
 
     @Test
     @DisplayName("pendingAirdrops: accepts the maximum number of elements")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/pendingAirdrops/accepts-at-maximum-size")
     void shouldAcceptPendingAirdropsAtMaximumSize() {
         final List<PendingAirdrop> value = List.of(new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null));
         final TokenCancelAirdropTransaction subject = new TokenCancelAirdropTransaction(value);
@@ -76,12 +82,14 @@ class TokenCancelAirdropTransactionTest {
 
     @Test
     @DisplayName("pendingAirdrops: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/pendingAirdrops/rejects-above-maximum-size")
     void shouldRejectPendingAirdropsAboveMaximumSize() {
         assertThrows(IllegalArgumentException.class, () -> new TokenCancelAirdropTransaction(List.of(new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null), new PendingAirdrop(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L), null))));
     }
 
     @Test
     @DisplayName("the constructor copies pendingAirdrops; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/pendingAirdrops/copies-in")
     void shouldCopyPendingAirdropsIn() {
         final List<PendingAirdrop> value = new ArrayList<>(pendingAirdropsValue());
         final List<PendingAirdrop> expected = List.copyOf(value);
@@ -93,6 +101,7 @@ class TokenCancelAirdropTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final TokenCancelAirdropTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -102,6 +111,7 @@ class TokenCancelAirdropTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final TokenCancelAirdropTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -110,6 +120,7 @@ class TokenCancelAirdropTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final TokenCancelAirdropTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -119,6 +130,7 @@ class TokenCancelAirdropTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final TokenCancelAirdropTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -127,6 +139,7 @@ class TokenCancelAirdropTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/memo/set")
     void shouldSetMemo() {
         final TokenCancelAirdropTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -136,6 +149,7 @@ class TokenCancelAirdropTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final TokenCancelAirdropTransaction subject = create();
         subject.setMemo((String) null);
@@ -144,6 +158,7 @@ class TokenCancelAirdropTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final TokenCancelAirdropTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -153,6 +168,7 @@ class TokenCancelAirdropTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final TokenCancelAirdropTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -161,54 +177,63 @@ class TokenCancelAirdropTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCancelAirdropTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

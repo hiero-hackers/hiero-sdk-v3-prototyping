@@ -218,6 +218,7 @@ decided by the network and tested by the Hiero TCK. The comment above each test 
 ```tests
 // Source: the @@default values of TokenAirdropTransaction; the Python SDK (test_from_proto_without_nft_transfers,
 // test_from_proto_without_token_transfer) and the Java SDK (TokenAirdropTransactionTest, shouldBytesNoSetters).
+@@testId("an-airdrop-transaction-without-transfers-has-no-token-and-no-nft-legs")
 test "an airdrop transaction without transfers has no token and no NFT legs" {
     // when
     let airdrop = TokenAirdropTransaction{}
@@ -230,6 +231,7 @@ test "an airdrop transaction without transfers has no token and no NFT legs" {
 // Source: the Java SDK (TokenAirdropTransactionTest, spawnTestTransaction: the same legs, among them the expected
 // decimals 3 and the approved legs) and the Python SDK (test_build_transaction_body_with_approved_transfer,
 // test_build_transaction_body_with_expected_decimal).
+@@testId("an-airdrop-transaction-keeps-its-fungible-and-nft-legs-in-order")
 test "an airdrop transaction keeps its fungible and NFT legs in order" {
     // given
     let token5 = Address.fromString(address: "0.0.5")
@@ -265,6 +267,7 @@ test "an airdrop transaction keeps its fungible and NFT legs in order" {
 // Source: PendingAirdrop ("serial is null for a fungible airdrop and set for a specific NFT"); the Java SDK
 // (PendingAirdropIdTest, testConstructorWithTokenId and testConstructorWithNftId: the same accounts and tokens), the Go
 // SDK (TestPendingAirdropId_FromProtobuf) and the Python SDK (test_pending_airdrop_id_constructor).
+@@testId("a-fungible-pending-airdrop-has-no-serial-and-an-nft-pending-airdrop-has-its-serial")
 test "a fungible pending airdrop has no serial and an NFT pending airdrop has its serial" {
     // given
     let sender = AccountId.fromString(value: "0.0.1001")
@@ -288,6 +291,7 @@ test "a fungible pending airdrop has no serial and an NFT pending airdrop has it
 // Source: "Pending-airdrop identity" in this spec ((senderId, receiverId, token), the NFT by token and serial); the C++
 // SDK (PendingAirdropIdUnitTests, OperatorEqualsFt, OperatorEqualsNft and OperatorNotEqualsDifferentSender / Receiver /
 // Token: the same accounts and tokens).
+@@testId("pending-airdrops-are-equal-exactly-when-sender-receiver-token-and-serial-are-equal")
 test "pending airdrops are equal exactly when sender, receiver, token and serial are equal" {
     // given
     let sender = AccountId.fromString(value: "1.2.3")
@@ -314,6 +318,7 @@ test "pending airdrops are equal exactly when sender, receiver, token and serial
 // Source: the Python SDK (token_airdrop_claim_test, test_order_preserved_across_batched_adds: the same pending
 // airdrops) and the Java SDK (TokenClaimAirdropTransactionTest and TokenCancelAirdropTransactionTest,
 // testGetAndSetPendingAirdropIds).
+@@testId("claim-and-cancel-airdrop-transactions-keep-their-pending-airdrops-in-order")
 test "claim and cancel airdrop transactions keep their pending airdrops in order" {
     // given
     let sender = AccountId.fromString(value: "0.0.9031")
@@ -337,6 +342,7 @@ test "claim and cancel airdrop transactions keep their pending airdrops in order
 
 // Source: TokenRejectTransaction.owner ("defaults to the payer when unset"); HAPI TokenRejectTransactionBody (an unset
 // owner is the payer) and the JavaScript SDK (TokenReference, "initializes fungibleToken and nft to null").
+@@testId("a-token-reject-transaction-without-owner-leaves-the-owner-unset")
 test "a token reject transaction without owner leaves the owner unset" {
     // when
     let reject = TokenRejectTransaction{rejections: [TokenReference{tokenId: Address.fromString(address: "1.2.3")}]}
@@ -348,6 +354,7 @@ test "a token reject transaction without owner leaves the owner unset" {
 
 // Source: the Java SDK (TokenRejectTransactionTest: owner 0.6.9, the tokens 1.2.3, 4.5.6 and 7.8.9 and the NFTs
 // 4.5.6/2 and 7.8.9/3) and the Python SDK (test_constructor_with_parameters).
+@@testId("a-token-reject-transaction-keeps-the-owner-and-its-fungible-and-nft-references-in-order")
 test "a token reject transaction keeps the owner and its fungible and NFT references in order" {
     // given
     let rejections = [TokenReference{tokenId: Address.fromString(address: "1.2.3")},
@@ -367,6 +374,7 @@ test "a token reject transaction keeps the owner and its fungible and NFT refere
 // Source: this spec (@@minSize(1)); the network rejects an empty claim with EMPTY_PENDING_AIRDROP_ID_LIST (the Java
 // SDK, TokenAirdropClaimIntegrationTest "Cannot claim the tokens with empty list") and the Python SDK
 // (test_min_ids_enforced_on_build_hits_validation).
+@@testId("a-claim-airdrop-transaction-rejects-an-empty-list-of-pending-airdrops")
 test "a claim airdrop transaction rejects an empty list of pending airdrops" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -374,6 +382,7 @@ test "a claim airdrop transaction rejects an empty list of pending airdrops" {
 }
 
 // Source: this spec (@@maxSize(10)); the Python SDK (token_airdrop_claim_test, test_cannot_exceed_max_airdrops).
+@@testId("a-claim-airdrop-transaction-rejects-more-than-10-pending-airdrops")
 test "a claim airdrop transaction rejects more than 10 pending airdrops" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -382,6 +391,7 @@ test "a claim airdrop transaction rejects more than 10 pending airdrops" {
 
 // Source: this spec (@@minSize(1)); the network rejects an empty cancel with EMPTY_PENDING_AIRDROP_ID_LIST (the Java
 // SDK, TokenAirdropCancelIntegrationTest "Cannot cancel the tokens with empty list").
+@@testId("a-cancel-airdrop-transaction-rejects-an-empty-list-of-pending-airdrops")
 test "a cancel airdrop transaction rejects an empty list of pending airdrops" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -389,6 +399,7 @@ test "a cancel airdrop transaction rejects an empty list of pending airdrops" {
 }
 
 // Source: this spec (@@maxSize(10), the same protocol cap as a claim).
+@@testId("a-cancel-airdrop-transaction-rejects-more-than-10-pending-airdrops")
 test "a cancel airdrop transaction rejects more than 10 pending airdrops" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -397,6 +408,7 @@ test "a cancel airdrop transaction rejects more than 10 pending airdrops" {
 
 // Source: this spec (@@minSize(1)); the network rejects a reject without references with EMPTY_TOKEN_REFERENCE_LIST
 // (the Java SDK, TokenRejectIntegrationTest "Cannot Reject a Token when Token Or NFT ID is not set").
+@@testId("a-token-reject-transaction-rejects-an-empty-list-of-references")
 test "a token reject transaction rejects an empty list of references" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -406,6 +418,7 @@ test "a token reject transaction rejects an empty list of references" {
 // Source: this spec (@@maxSize(10)); the network rejects 11 references with TOKEN_REFERENCE_LIST_SIZE_LIMIT_EXCEEDED
 // (the Java SDK, TokenRejectIntegrationTest "Cannot Reject a Token when executing TokenReject and Token Reference List
 // Size Exceeded", and the same test of the Go, JavaScript, Python, Rust and Swift SDKs).
+@@testId("a-token-reject-transaction-rejects-more-than-10-references")
 test "a token reject transaction rejects more than 10 references" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -415,6 +428,7 @@ test "a token reject transaction rejects more than 10 references" {
 // Source: the Java SDK (shouldBytes / shouldBytesNoSetters of the TokenAirdrop, TokenClaimAirdrop, TokenCancelAirdrop
 // and TokenReject tests: fromBytes(toBytes()) gives the same transaction), the Swift SDK (testToFromBytes) and the
 // JavaScript SDK (TokenAirdropTransaction, "from | toBytes").
+@@testId("every-airdrop-transaction-survives-tobytes-and-frombytes-unchanged")
 test "every airdrop transaction survives toBytes and fromBytes unchanged" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)

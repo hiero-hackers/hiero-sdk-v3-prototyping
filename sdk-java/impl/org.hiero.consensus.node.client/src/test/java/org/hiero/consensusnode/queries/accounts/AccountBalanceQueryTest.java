@@ -20,6 +20,7 @@ import org.hiero.ledger.Network;
 import org.hiero.ledger.config.NetworkSetting;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountBalanceQuery`, generated from the specs.
@@ -28,6 +29,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("creates an AccountBalanceQuery and returns the values")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/create")
     void shouldCreateAndReturnTheValues() {
         final @Nullable AccountId accountId = accountIdValue();
         final @Nullable ContractId contractId = (ContractId) null;
@@ -42,6 +44,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final @Nullable AccountId accountId = accountIdValue();
         final @Nullable ContractId contractId = (ContractId) null;
@@ -55,6 +58,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final AccountBalanceQuery subject = AccountBalanceQuery.builder()
                 .accountId(accountIdValue())
@@ -65,18 +69,21 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("rejects accountId and contractId together (@@oneOf)")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/accountId-contractId/rejects-two")
     void shouldRejectTwoOfAccountIdOrContractId() {
         assertThrows(IllegalArgumentException.class, () -> new AccountBalanceQuery(accountIdValue(), contractIdValue()));
     }
 
     @Test
     @DisplayName("rejects none of accountId, contractId (@@oneOf)")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/accountId-contractId/rejects-none")
     void shouldRejectNoneOfAccountIdOrContractId() {
         assertThrows(IllegalArgumentException.class, () -> new AccountBalanceQuery((AccountId) null, (ContractId) null));
     }
 
     @Test
     @DisplayName("setMaxAttempts changes maxAttempts and returns the object")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/maxAttempts/set")
     void shouldSetMaxAttempts() {
         final AccountBalanceQuery subject = create();
         final @Nullable Integer value = maxAttemptsOtherValue();
@@ -86,6 +93,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts null")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/maxAttempts/set-null")
     void shouldSetMaxAttemptsToNull() {
         final AccountBalanceQuery subject = create();
         subject.setMaxAttempts((Integer) null);
@@ -94,6 +102,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/maxAttempts/set-accepts-at-minimum")
     void shouldSetMaxAttemptsAtMinimum() {
         final AccountBalanceQuery subject = create();
         final @Nullable Integer value = Integer.MIN_VALUE;
@@ -103,6 +112,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/maxAttempts/set-accepts-at-maximum")
     void shouldSetMaxAttemptsAtMaximum() {
         final AccountBalanceQuery subject = create();
         final @Nullable Integer value = 2147483647;
@@ -112,6 +122,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff changes maxBackoff and returns the object")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/maxBackoff/set")
     void shouldSetMaxBackoff() {
         final AccountBalanceQuery subject = create();
         final @Nullable Long value = maxBackoffOtherValue();
@@ -121,6 +132,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts null")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/maxBackoff/set-null")
     void shouldSetMaxBackoffToNull() {
         final AccountBalanceQuery subject = create();
         subject.setMaxBackoff((Long) null);
@@ -129,6 +141,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/maxBackoff/set-accepts-at-minimum")
     void shouldSetMaxBackoffAtMinimum() {
         final AccountBalanceQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -138,6 +151,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/maxBackoff/set-accepts-at-maximum")
     void shouldSetMaxBackoffAtMaximum() {
         final AccountBalanceQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -147,6 +161,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setMinBackoff changes minBackoff and returns the object")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/minBackoff/set")
     void shouldSetMinBackoff() {
         final AccountBalanceQuery subject = create();
         final @Nullable Long value = minBackoffOtherValue();
@@ -156,6 +171,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts null")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/minBackoff/set-null")
     void shouldSetMinBackoffToNull() {
         final AccountBalanceQuery subject = create();
         subject.setMinBackoff((Long) null);
@@ -164,6 +180,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/minBackoff/set-accepts-at-minimum")
     void shouldSetMinBackoffAtMinimum() {
         final AccountBalanceQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -173,6 +190,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/minBackoff/set-accepts-at-maximum")
     void shouldSetMinBackoffAtMaximum() {
         final AccountBalanceQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -182,6 +200,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout changes attemptTimeout and returns the object")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/attemptTimeout/set")
     void shouldSetAttemptTimeout() {
         final AccountBalanceQuery subject = create();
         final @Nullable Long value = attemptTimeoutOtherValue();
@@ -191,6 +210,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts null")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/attemptTimeout/set-null")
     void shouldSetAttemptTimeoutToNull() {
         final AccountBalanceQuery subject = create();
         subject.setAttemptTimeout((Long) null);
@@ -199,6 +219,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/attemptTimeout/set-accepts-at-minimum")
     void shouldSetAttemptTimeoutAtMinimum() {
         final AccountBalanceQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -208,6 +229,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/attemptTimeout/set-accepts-at-maximum")
     void shouldSetAttemptTimeoutAtMaximum() {
         final AccountBalanceQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -217,6 +239,7 @@ class AccountBalanceQueryTest {
 
     @Test
     @DisplayName("submit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalanceQuery/submit/call")
     void shouldCallSubmit() {
         assertNotNull(create().submit(clientValue()));
     }

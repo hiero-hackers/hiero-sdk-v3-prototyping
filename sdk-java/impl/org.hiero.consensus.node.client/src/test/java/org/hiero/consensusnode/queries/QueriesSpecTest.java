@@ -9,6 +9,7 @@ import org.hiero.hedera.HbarUnit;
 import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `queries`, generated from the `tests` blocks of its `## Testing` section.
@@ -21,6 +22,7 @@ class QueriesSpecTest {
     /// this spec (if a retry setting is absent, the SDK default is used).
     @Test
     @DisplayName("a new query has no payment limit and no retry settings")
+    @Tag("testId:consensusnode.queries/a-new-query-has-no-payment-limit-and-no-retry-settings")
     void aNewQueryHasNoPaymentLimitAndNoRetrySettings() {
         // when
         final AccountInfoQuery paid = new AccountInfoQuery(defaultAccountId());
@@ -44,6 +46,7 @@ class QueriesSpecTest {
     /// setMaxQueryPayment): a payment limit set on a paid query is kept.
     @Test
     @DisplayName("a paid query keeps its payment limit")
+    @Tag("testId:consensusnode.queries/a-paid-query-keeps-its-payment-limit")
     void aPaidQueryKeepsItsPaymentLimit() {
         // given
         final NativeToken<?, ?> limit = defaultHbar();
@@ -62,6 +65,7 @@ class QueriesSpecTest {
     /// setMaxBackoffValid): retry settings that are set are kept.
     @Test
     @DisplayName("a query keeps its retry settings")
+    @Tag("testId:consensusnode.queries/a-query-keeps-its-retry-settings")
     void aQueryKeepsItsRetrySettings() {
         // when
         final AccountInfoQuery query = new AccountInfoQuery(defaultAccountId()).setMaxAttempts(5).setMaxBackoff(8000L).setMinBackoff(250L).setAttemptTimeout(10000L);

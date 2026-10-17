@@ -85,6 +85,7 @@ violation of `@@oneOrNoneOf` (both staking targets set) is rejected with `invali
 
 ```tests
 // Source: this spec (@@default and @@nullable of AccountCreateParams).
+@@testId("account-parameters-with-only-an-authority-have-the-defaults-of-the-spec")
 test "account parameters with only an authority have the defaults of the spec" {
     // when
     let params = DEFAULT(AccountCreateParams)
@@ -107,6 +108,7 @@ test "account parameters with only an authority have the defaults of the spec" {
 // (AccountCreateTransactionUnitTests) and Python (account_create_transaction_test.py) SDKs: every value that is set is
 // read back unchanged. The auto-renew period is the one of the Java test (Duration.ofHours(10), which is exactly 36000
 // seconds).
+@@testId("account-parameters-keep-the-values-they-are-created-with")
 test "account parameters keep the values they are created with" {
     // given
     let authority = DEFAULT(Authority)
@@ -130,6 +132,7 @@ test "account parameters keep the values they are created with" {
 // Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); the Python SDK (account_create_transaction_test.py,
 // test_set_stake_account_id_reset_stake_node_id and test_set_stack_node_id_reset_stake_account_id: one target clears
 // the other).
+@@testId("an-account-is-staked-to-an-account-to-a-node-or-to-neither")
 test "an account is staked to an account, to a node or to neither" {
     // given
     let stakedAccount = DEFAULT(AccountId)
@@ -150,6 +153,7 @@ test "an account is staked to an account, to a node or to neither" {
 
 // Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI crypto_create.proto (staked_id is a oneof:
 // staked_account_id or staked_node_id).
+@@testId("account-parameters-staked-to-both-an-account-and-a-node-are-rejected")
 test "account parameters staked to both an account and a node are rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)

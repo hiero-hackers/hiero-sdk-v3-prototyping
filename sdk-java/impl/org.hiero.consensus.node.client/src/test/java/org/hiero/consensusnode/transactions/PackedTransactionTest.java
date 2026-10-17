@@ -3,6 +3,7 @@ package org.hiero.consensusnode.transactions;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `PackedTransaction`, generated from the specs.
@@ -11,6 +12,7 @@ class PackedTransactionTest {
 
     @Test
     @DisplayName("fromBytes(bytes) can be called and returns a value (only IllegalArgumentException may occur)")
+    @Tag("testId:consensusnode.transactions.PackedTransaction/fromBytes/call")
     void shouldCallFromBytes() throws Exception {
         try {
             assertNotNull(PackedTransaction.fromBytes(bytesValue()));

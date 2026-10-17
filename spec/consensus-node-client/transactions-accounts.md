@@ -409,6 +409,7 @@ above each test names where the current SDKs test the same.
 // Source: this spec (@@default(false), @@nullable); the Python SDK (test_constructor_default_values of the account
 // transactions) and the Java SDK (AccountCreateTransactionTest.propertiesTest: no staked node id, declineStakingReward
 // false).
+@@testId("an-account-create-transaction-leaves-out-what-is-not-given")
 test "an account create transaction leaves out what is not given" {
     // when
     let transaction = AccountCreateTransaction{authority: DEFAULT(Authority)}
@@ -430,6 +431,7 @@ test "an account create transaction leaves out what is not given" {
 // associations, an auto renew period of Duration.ofHours(10) = 36000 seconds, staked to 0.0.3, the EVM address alias
 // 0x5c562e90feaf0eebd33ea75d21024f249d451417) and the Swift SDK (AccountCreateTransactionUnitTests.test_Properties,
 // testAutoRenewPeriod = .hours(10)).
+@@testId("an-account-create-transaction-keeps-its-attributes")
 test "an account create transaction keeps its attributes" {
     // given
     let initialBalance: NativeToken<ANY, ANY> = hedera.Hbar{amount: 450, unit: hedera.HbarUnit.TINYBAR}
@@ -456,6 +458,7 @@ test "an account create transaction keeps its attributes" {
 // Source: the Java SDK (AccountCreateTransactionTest.shouldBytes and shouldBytes2: staked to an account, staked to node
 // 4, both with an auto renew period of Duration.ofHours(10) = 36000 seconds), the Swift SDK (test_ToFromBytes and
 // test_ToFromBytes2) and the Python SDK (test_serialization_round_trip_staked_node_id and ..._staked_account_id).
+@@testId("an-account-create-transaction-survives-tobytes-and-frombytes-staked-to-an-account-or-to-a-node")
 test "an account create transaction survives toBytes and fromBytes, staked to an account or to a node" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
@@ -481,6 +484,7 @@ test "an account create transaction survives toBytes and fromBytes, staked to an
 // Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI (CryptoCreateTransactionBody.staked_id is a
 // oneof); the C++ SDK (AccountCreateTransactionUnitTests.ResetStakedAccountId and ResetStakedNodeId) and the Python SDK
 // (test_set_stake_account_id_reset_stake_node_id): setting one clears the other.
+@@testId("an-account-create-transaction-rejects-being-staked-to-an-account-and-to-a-node")
 test "an account create transaction rejects being staked to an account and to a node" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -490,6 +494,7 @@ test "an account create transaction rejects being staked to an account and to a 
 
 // Source: this spec (@@nullable: an update changes only what it names); the Python SDK
 // (test_constructor_without_parameters of AccountUpdateTransaction).
+@@testId("an-account-update-transaction-changes-nothing-but-what-it-names")
 test "an account update transaction changes nothing but what it names" {
     // when
     let transaction = AccountUpdateTransaction{accountId: DEFAULT(AccountId)}
@@ -511,6 +516,7 @@ test "an account update transaction changes nothing but what it names" {
 // autoRenewPeriod = .hours(10) = 36000 seconds, expirationTime = Timestamp(seconds: 1_554_158_543) =
 // 2019-04-01T22:42:23Z) and the Java SDK (AccountUpdateTransactionTest: Duration.ofHours(10),
 // Instant.ofEpochSecond(1554158543)).
+@@testId("an-account-update-transaction-keeps-its-auto-renew-period-and-expiration-time")
 test "an account update transaction keeps its auto renew period and expiration time" {
     // when
     let transaction = AccountUpdateTransaction{accountId: DEFAULT(AccountId), autoRenewPeriod: toSeconds(value: 36000),
@@ -524,6 +530,7 @@ test "an account update transaction keeps its auto renew period and expiration t
 // Source: the Java SDK (AccountUpdateTransactionTest.shouldBytes: Duration.ofHours(10) = 36000 seconds,
 // Instant.ofEpochSecond(1554158543) = 2019-04-01T22:42:23Z) and the Swift SDK
 // (AccountUpdateTransactionUnitTests.test_ToFromBytes).
+@@testId("an-account-update-transaction-survives-tobytes-and-frombytes")
 test "an account update transaction survives toBytes and fromBytes" {
     // given
     let packed = AccountUpdateTransaction{accountId: DEFAULT(AccountId), authority: DEFAULT(Authority),
@@ -543,6 +550,7 @@ test "an account update transaction survives toBytes and fromBytes" {
 // Source: the Python SDK (test_constructor_with_parameters of AccountDeleteTransaction), the Java SDK
 // (AccountDeleteTransactionTest.shouldBytes), the JavaScript SDK ("should serialize and deserialize correctly") and the
 // Swift SDK (test_ToFromBytes).
+@@testId("an-account-delete-transaction-keeps-both-accounts-and-survives-tobytes-and-frombytes")
 test "an account delete transaction keeps both accounts and survives toBytes and fromBytes" {
     // given
     let transaction = AccountDeleteTransaction{accountId: AccountId.fromString(value: "0.0.1001"),
@@ -559,6 +567,7 @@ test "an account delete transaction keeps both accounts and survives toBytes and
 }
 
 // Source: this spec (@@default([])); the Python SDK (test_constructor_default_values of TransferTransaction).
+@@testId("a-transfer-transaction-without-legs-has-empty-lists")
 test "a transfer transaction without legs has empty lists" {
     // when
     let transaction = TransferTransaction{}
@@ -571,6 +580,7 @@ test "a transfer transaction without legs has empty lists" {
 
 // Source: this spec (@@default(false) of approved, @@nullable expectedDecimals); the Python SDK (test_add_hbar_transfer,
 // test_add_token_transfer, test_add_nft_transfer, test_token_transfer_without_expected_decimals).
+@@testId("a-transfer-leg-is-not-approved-and-has-no-expected-decimals-unless-given")
 test "a transfer leg is not approved and has no expected decimals unless given" {
     // when
     let hbarLeg = HbarTransfer{accountId: DEFAULT(AccountId), amount: hedera.Hbar{amount: -10, unit: hedera.HbarUnit.HBAR}}
@@ -588,6 +598,7 @@ test "a transfer leg is not approved and has no expected decimals unless given" 
 
 // Source: this spec (a transfer is a list of legs; nothing merges them); the Python SDK (test_multiple_nft_transfers,
 // test_nft_transfer_fields_preservation, test_expected_decimals_field_preservation).
+@@testId("a-transfer-transaction-keeps-its-legs-in-their-order")
 test "a transfer transaction keeps its legs in their order" {
     // given
     let token = Address.fromString(address: "0.0.5005")
@@ -614,6 +625,7 @@ test "a transfer transaction keeps its legs in their order" {
 
 // Source: the Python SDK (test_combined_transfers_reconstruction) and the Swift SDK
 // (TransferTransactionUnitTests.test_ToFromBytes).
+@@testId("a-transfer-of-hbar-a-token-and-an-nft-survives-tobytes-and-frombytes")
 test "a transfer of HBAR, a token and an NFT survives toBytes and fromBytes" {
     // given
     let token = Address.fromString(address: "0.0.5005")
@@ -638,6 +650,7 @@ test "a transfer of HBAR, a token and an NFT survives toBytes and fromBytes" {
 
 // Source: this spec (@@default([])); the Python SDK (test_account_allowance_transaction_initialization,
 // test_build_proto_body_empty).
+@@testId("an-allowance-approve-transaction-without-allowances-has-empty-lists")
 test "an allowance approve transaction without allowances has empty lists" {
     // when
     let transaction = AccountAllowanceApproveTransaction{}
@@ -651,6 +664,7 @@ test "an allowance approve transaction without allowances has empty lists" {
 // Source: the Python SDK (test_mixed_allowance_types, test_approve_token_nft_allowance_multiple_serials,
 // test_approve_token_nft_allowance_all_serials, test_zero_amount_allowances) and the Java SDK
 // (AccountAllowanceApproveTransactionTest.propertiesTest).
+@@testId("an-allowance-approve-transaction-keeps-hbar-token-serial-and-collection-allowances")
 test "an allowance approve transaction keeps HBAR, token, serial and collection allowances" {
     // given
     let owner = AccountId.fromString(value: "0.0.1001")
@@ -680,6 +694,7 @@ test "an allowance approve transaction keeps HBAR, token, serial and collection 
 }
 
 // Source: HIP-336 (a spender with a collection grant delegates serials onward); this spec (delegatingSpender).
+@@testId("an-nft-allowance-keeps-its-delegating-spender")
 test "an NFT allowance keeps its delegating spender" {
     // given
     let delegatingSpender = AccountId.fromString(value: "0.0.1003")
@@ -695,6 +710,7 @@ test "an NFT allowance keeps its delegating spender" {
 
 // Source: this spec (@@minSize(1): the whole collection is granted by an NftCollectionGrant, not by an empty list of
 // serials as in the current SDKs, e.g. the JavaScript SDK TokenNftAllowance "toProtobuf() with no serial numbers").
+@@testId("a-serial-grant-rejects-an-empty-list-of-serials")
 test "a serial grant rejects an empty list of serials" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -703,6 +719,7 @@ test "a serial grant rejects an empty list of serials" {
 
 // Source: the Java SDK (AccountAllowanceApproveTransactionTest.shouldBytes), the JavaScript SDK ("should round trip
 // from bytes and maintain order") and the Swift SDK (test_ToFromBytes).
+@@testId("an-allowance-approve-transaction-survives-tobytes-and-frombytes")
 test "an allowance approve transaction survives toBytes and fromBytes" {
     // given
     let owner = AccountId.fromString(value: "0.0.1001")
@@ -728,6 +745,7 @@ test "an allowance approve transaction survives toBytes and fromBytes" {
 
 // Source: the Java SDK (AccountAllowanceDeleteTransactionTest.shouldBytes), the JavaScript SDK ("[from|to]Bytes"),
 // the Swift SDK (test_ToFromBytes) and the C++ SDK (DeleteNftAllowances).
+@@testId("an-allowance-delete-transaction-keeps-its-deletions-and-survives-tobytes-and-frombytes")
 test "an allowance delete transaction keeps its deletions and survives toBytes and fromBytes" {
     // given
     let deletion = NftAllowanceDeletion{tokenId: Address.fromString(address: "0.0.5005"),
@@ -746,6 +764,7 @@ test "an allowance delete transaction keeps its deletions and survives toBytes a
 
 // Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI (CryptoUpdateTransactionBody.staked_id is a
 // oneof); the Java SDK (AccountUpdateTransaction.setStakedAccountId / setStakedNodeId: setting one clears the other).
+@@testId("an-account-update-transaction-rejects-being-staked-to-an-account-and-to-a-node")
 test "an account update transaction rejects being staked to an account and to a node" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -755,6 +774,7 @@ test "an account update transaction rejects being staked to an account and to a 
 
 // Source: this spec (@@maxBytes(100) of accountMemo); the consensus node (transaction.maxMemoUtf8Bytes = 100,
 // MEMO_TOO_LONG): 50 characters "ä" are 100 bytes of UTF-8.
+@@testId("an-account-create-transaction-accepts-a-memo-of-100-utf-8-bytes")
 test "an account create transaction accepts a memo of 100 UTF-8 bytes" {
     // given
     let memo = repeat(value: "ä", count: 50)
@@ -768,6 +788,7 @@ test "an account create transaction accepts a memo of 100 UTF-8 bytes" {
 
 // Source: this spec (@@maxBytes(100) of accountMemo); the consensus node (transaction.maxMemoUtf8Bytes = 100,
 // MEMO_TOO_LONG): 51 characters "ä" are 102 bytes of UTF-8, although far fewer than 100 characters.
+@@testId("an-account-create-transaction-rejects-a-memo-of-more-than-100-utf-8-bytes")
 test "an account create transaction rejects a memo of more than 100 UTF-8 bytes" {
     // when / then
     @@expectThrows(invalid-argument-error)

@@ -29,6 +29,16 @@ class RepositorySpecsTest {
     }
 
     @Test
+    void everyTestOfTheSpecsShouldHaveATestId() {
+        // the id makes a test comparable across languages and stable when it is renamed (ADR-0012); the test language
+        // allows tests without one, the specs of this repository do not
+        final List<String> missing = report.model().files().stream().flatMap(file -> file.tests().stream()
+                .filter(test -> test.annotations().stream().noneMatch(a -> a.name().equals("testId")))
+                .map(test -> file.file() + ": " + test.name())).toList();
+        assertThat(missing).isEmpty();
+    }
+
+    @Test
     void reportShouldBeDeterministic() {
         final ValidationReport second = new MetaLang().validate(SPEC_ROOT);
         assertThat(second.diagnostics()).isEqualTo(report.diagnostics());

@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Address`, generated from the specs.
@@ -17,6 +18,7 @@ class AddressTest {
 
     @Test
     @DisplayName("creates an Address and returns the values")
+    @Tag("testId:shop.Address/create")
     void shouldCreateAndReturnTheValues() {
         final String street = streetValue();
         final @Nullable String zip = zipValue();
@@ -31,6 +33,7 @@ class AddressTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:shop.Address/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final String street = streetValue();
         final @Nullable String zip = zipValue();
@@ -50,6 +53,7 @@ class AddressTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:shop.Address/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final Address subject = Address.builder()
                 .street(streetValue())
@@ -61,18 +65,21 @@ class AddressTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:shop.Address/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> Address.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for street")
+    @Tag("testId:shop.Address/street/rejects-null")
     void shouldRejectNullStreet() {
         assertThrows(NullPointerException.class, () -> new Address((String) null, zipValue(), websiteValue(), mapValue()));
     }
 
     @Test
     @DisplayName("street: accepts a value with the minimum length")
+    @Tag("testId:shop.Address/street/accepts-at-minimum-length")
     void shouldAcceptStreetAtMinimumLength() {
         final String value = "v";
         final Address subject = new Address(value, zipValue(), websiteValue(), mapValue());
@@ -81,12 +88,14 @@ class AddressTest {
 
     @Test
     @DisplayName("street: rejects a value shorter than the minimum length")
+    @Tag("testId:shop.Address/street/rejects-below-minimum-length")
     void shouldRejectStreetBelowMinimumLength() {
         assertThrows(IllegalArgumentException.class, () -> new Address("", zipValue(), websiteValue(), mapValue()));
     }
 
     @Test
     @DisplayName("street: accepts a value with the maximum length")
+    @Tag("testId:shop.Address/street/accepts-at-maximum-length")
     void shouldAcceptStreetAtMaximumLength() {
         final String value = "valueaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
         final Address subject = new Address(value, zipValue(), websiteValue(), mapValue());
@@ -95,36 +104,42 @@ class AddressTest {
 
     @Test
     @DisplayName("street: rejects a value longer than the maximum length")
+    @Tag("testId:shop.Address/street/rejects-above-maximum-length")
     void shouldRejectStreetAboveMaximumLength() {
         assertThrows(IllegalArgumentException.class, () -> new Address("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", zipValue(), websiteValue(), mapValue()));
     }
 
     @Test
     @DisplayName("zip: rejects a value that does not match the pattern")
+    @Tag("testId:shop.Address/zip/rejects-not-matching-the-pattern")
     void shouldRejectZipNotMatchingThePattern() {
         assertThrows(IllegalArgumentException.class, () -> new Address(streetValue(), "", websiteValue(), mapValue()));
     }
 
     @Test
     @DisplayName("website: rejects a value that is no URL")
+    @Tag("testId:shop.Address/website/rejects-that-is-no-url")
     void shouldRejectWebsiteThatIsNoUrl() {
         assertThrows(IllegalArgumentException.class, () -> new Address(streetValue(), zipValue(), "not a url", mapValue()));
     }
 
     @Test
     @DisplayName("rejects null for map")
+    @Tag("testId:shop.Address/map/rejects-null")
     void shouldRejectNullMap() {
         assertThrows(NullPointerException.class, () -> new Address(streetValue(), zipValue(), websiteValue(), (String) null));
     }
 
     @Test
     @DisplayName("map: rejects a value that is no URL")
+    @Tag("testId:shop.Address/map/rejects-that-is-no-url")
     void shouldRejectMapThatIsNoUrl() {
         assertThrows(IllegalArgumentException.class, () -> new Address(streetValue(), zipValue(), websiteValue(), "not a url"));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:shop.Address/value-semantics")
     void shouldCompareByValue() {
         final Address subject = create();
         final Address other = create();

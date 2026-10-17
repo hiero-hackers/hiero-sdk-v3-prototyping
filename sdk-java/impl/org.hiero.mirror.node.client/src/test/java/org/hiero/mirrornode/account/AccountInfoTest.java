@@ -15,6 +15,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.EvmAddress;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountInfo`, generated from the specs.
@@ -23,6 +24,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("creates an AccountInfo and returns the values")
+    @Tag("testId:mirrornode.account.AccountInfo/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
         final @Nullable EvmAddress evmAddress = evmAddressValue();
@@ -67,6 +69,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("creates an AccountInfo with the default values")
+    @Tag("testId:mirrornode.account.AccountInfo/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), balanceTimestampValue(), ethereumNonceValue(), pendingRewardValue(), aliasValue(), authorityValue(), accountMemoValue(), createdTimestampValue(), expiryTimestampValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), stakedAccountIdValue(), stakedNodeIdValue(), stakePeriodStartValue());
         assertValue(false, subject.declineReward());
@@ -75,6 +78,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.account.AccountInfo/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final AccountId accountId = accountIdValue();
         final @Nullable EvmAddress evmAddress = evmAddressValue();
@@ -139,6 +143,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.account.AccountInfo/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final AccountInfo subject = AccountInfo.builder()
                 .accountId(accountIdValue())
@@ -165,18 +170,21 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.account.AccountInfo/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> AccountInfo.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:mirrornode.account.AccountInfo/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new AccountInfo((AccountId) null, evmAddressValue(), balanceValue(), balanceTimestampValue(), ethereumNonceValue(), pendingRewardValue(), aliasValue(), authorityValue(), accountMemoValue(), createdTimestampValue(), expiryTimestampValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), declineRewardValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), stakePeriodStartValue()));
     }
 
     @Test
     @DisplayName("balance: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.account.AccountInfo/balance/accepts-at-minimum")
     void shouldAcceptBalanceAtMinimum() {
         final long value = -9223372036854775808L;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), value, balanceTimestampValue(), ethereumNonceValue(), pendingRewardValue(), aliasValue(), authorityValue(), accountMemoValue(), createdTimestampValue(), expiryTimestampValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), declineRewardValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), stakePeriodStartValue());
@@ -185,6 +193,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("balance: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.account.AccountInfo/balance/accepts-at-maximum")
     void shouldAcceptBalanceAtMaximum() {
         final long value = 9223372036854775807L;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), value, balanceTimestampValue(), ethereumNonceValue(), pendingRewardValue(), aliasValue(), authorityValue(), accountMemoValue(), createdTimestampValue(), expiryTimestampValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), declineRewardValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), stakePeriodStartValue());
@@ -193,6 +202,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("ethereumNonce: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.account.AccountInfo/ethereumNonce/accepts-at-minimum")
     void shouldAcceptEthereumNonceAtMinimum() {
         final long value = -9223372036854775808L;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), balanceTimestampValue(), value, pendingRewardValue(), aliasValue(), authorityValue(), accountMemoValue(), createdTimestampValue(), expiryTimestampValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), declineRewardValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), stakePeriodStartValue());
@@ -201,6 +211,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("ethereumNonce: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.account.AccountInfo/ethereumNonce/accepts-at-maximum")
     void shouldAcceptEthereumNonceAtMaximum() {
         final long value = 9223372036854775807L;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), balanceTimestampValue(), value, pendingRewardValue(), aliasValue(), authorityValue(), accountMemoValue(), createdTimestampValue(), expiryTimestampValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), declineRewardValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), stakePeriodStartValue());
@@ -209,6 +220,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("pendingReward: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.account.AccountInfo/pendingReward/accepts-at-minimum")
     void shouldAcceptPendingRewardAtMinimum() {
         final long value = -9223372036854775808L;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), balanceTimestampValue(), ethereumNonceValue(), value, aliasValue(), authorityValue(), accountMemoValue(), createdTimestampValue(), expiryTimestampValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), declineRewardValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), stakePeriodStartValue());
@@ -217,6 +229,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("pendingReward: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.account.AccountInfo/pendingReward/accepts-at-maximum")
     void shouldAcceptPendingRewardAtMaximum() {
         final long value = 9223372036854775807L;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), balanceTimestampValue(), ethereumNonceValue(), value, aliasValue(), authorityValue(), accountMemoValue(), createdTimestampValue(), expiryTimestampValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), declineRewardValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), stakePeriodStartValue());
@@ -225,6 +238,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("the constructor copies alias; the accessor returns a copy")
+    @Tag("testId:mirrornode.account.AccountInfo/alias/copies-in")
     void shouldCopyAliasIn() {
         final byte[] value = aliasValue();
         final byte[] expected = value.clone();
@@ -239,6 +253,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the minimum (-2147483648)")
+    @Tag("testId:mirrornode.account.AccountInfo/maxAutomaticTokenAssociations/accepts-at-minimum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), balanceTimestampValue(), ethereumNonceValue(), pendingRewardValue(), aliasValue(), authorityValue(), accountMemoValue(), createdTimestampValue(), expiryTimestampValue(), autoRenewPeriodValue(), value, receiverSignatureRequiredValue(), declineRewardValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), stakePeriodStartValue());
@@ -247,6 +262,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the maximum (2147483647)")
+    @Tag("testId:mirrornode.account.AccountInfo/maxAutomaticTokenAssociations/accepts-at-maximum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMaximum() {
         final @Nullable Integer value = 2147483647;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), balanceTimestampValue(), ethereumNonceValue(), pendingRewardValue(), aliasValue(), authorityValue(), accountMemoValue(), createdTimestampValue(), expiryTimestampValue(), autoRenewPeriodValue(), value, receiverSignatureRequiredValue(), declineRewardValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), stakePeriodStartValue());
@@ -255,6 +271,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("stakedNodeId: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.account.AccountInfo/stakedNodeId/accepts-at-minimum")
     void shouldAcceptStakedNodeIdAtMinimum() {
         final @Nullable Long value = -9223372036854775808L;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), balanceTimestampValue(), ethereumNonceValue(), pendingRewardValue(), aliasValue(), authorityValue(), accountMemoValue(), createdTimestampValue(), expiryTimestampValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), declineRewardValue(), deletedValue(), stakedAccountIdValue(), value, stakePeriodStartValue());
@@ -263,6 +280,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("stakedNodeId: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.account.AccountInfo/stakedNodeId/accepts-at-maximum")
     void shouldAcceptStakedNodeIdAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), balanceTimestampValue(), ethereumNonceValue(), pendingRewardValue(), aliasValue(), authorityValue(), accountMemoValue(), createdTimestampValue(), expiryTimestampValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), declineRewardValue(), deletedValue(), stakedAccountIdValue(), value, stakePeriodStartValue());

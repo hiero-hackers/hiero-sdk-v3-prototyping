@@ -16,6 +16,7 @@ import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `service-topic`, generated from the `tests` blocks of its `## Testing` section.
@@ -29,6 +30,7 @@ class ServiceTopicSpecTest {
     /// key).
     @Test
     @DisplayName("topic parameters without values describe a public topic that cannot be changed")
+    @Tag("testId:enterprise.service.topic/topic-parameters-without-values-describe-a-public-topic-that-cannot-be-changed")
     void topicParametersWithoutValuesDescribeAPublicTopicThatCannotBeChanged() {
         // when
         final TopicCreateParams params = defaultTopicCreateParams();
@@ -50,6 +52,7 @@ class ServiceTopicSpecTest {
     /// is exactly 86400 seconds).
     @Test
     @DisplayName("topic parameters keep the values they are created with")
+    @Tag("testId:enterprise.service.topic/topic-parameters-keep-the-values-they-are-created-with")
     void topicParametersKeepTheValuesTheyAreCreatedWith() {
         // given
         final Authority authority = defaultAuthority();
@@ -73,6 +76,7 @@ class ServiceTopicSpecTest {
     /// characters is.
     @Test
     @DisplayName("a topic memo of 100 characters is accepted")
+    @Tag("testId:enterprise.service.topic/a-topic-memo-of-100-characters-is-accepted")
     void aTopicMemoOf100CharactersIsAccepted() {
         // given
         final String memo = repeat("a", 100L);
@@ -89,6 +93,7 @@ class ServiceTopicSpecTest {
     /// Source: this spec (@@maxBytes(100) of topicMemo); HAPI limits a memo to 100 bytes.
     @Test
     @DisplayName("a topic memo of 101 characters is rejected")
+    @Tag("testId:enterprise.service.topic/a-topic-memo-of-101-characters-is-rejected")
     void aTopicMemoOf101CharactersIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TopicCreateParams(null, null, repeat("a", 101L), null, null));
@@ -101,6 +106,7 @@ class ServiceTopicSpecTest {
     /// timestamp of the fixture has nanosecond precision, so the test uses some valid point in time instead.
     @Test
     @DisplayName("a topic keeps the values it is created with")
+    @Tag("testId:enterprise.service.topic/a-topic-keeps-the-values-it-is-created-with")
     void aTopicKeepsTheValuesItIsCreatedWith() {
         // given
         final Address topicId = new Address(0L, 0L, "", 1926L);
@@ -124,6 +130,7 @@ class ServiceTopicSpecTest {
     /// "without it the topic cannot be changed").
     @Test
     @DisplayName("a topic without authorities has neither an admin nor a submit authority")
+    @Tag("testId:enterprise.service.topic/a-topic-without-authorities-has-neither-an-admin-nor-a-submit-authority")
     void aTopicWithoutAuthoritiesHasNeitherAnAdminNorASubmitAuthority() {
         // when
         final Topic topic = new Topic(defaultAddress(), null, null, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), "");
@@ -140,6 +147,7 @@ class ServiceTopicSpecTest {
     /// Instant.ofEpochSecond(1554158728); converted exactly to 2019-04-01T22:42:22Z and 2019-04-01T22:45:28Z).
     @Test
     @DisplayName("topics created at different times are not equal")
+    @Tag("testId:enterprise.service.topic/topics-created-at-different-times-are-not-equal")
     void topicsCreatedAtDifferentTimesAreNotEqual() {
         // given
         final ZonedDateTime created = toZonedDateTime("2019-04-01T22:42:22Z");
@@ -163,6 +171,7 @@ class ServiceTopicSpecTest {
     /// is set is read back unchanged.
     @Test
     @DisplayName("a topic message keeps the values it is created with")
+    @Tag("testId:enterprise.service.topic/a-topic-message-keeps-the-values-it-is-created-with")
     void aTopicMessageKeepsTheValuesItIsCreatedWith() {
         // given
         final ZonedDateTime consensusTimestamp = toZonedDateTime("2019-04-01T22:42:22Z");

@@ -35,6 +35,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ScheduleCreateTransaction`, generated from the specs.
@@ -43,6 +44,7 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("creates a ScheduleCreateTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final Transaction<?, ?> scheduledTransaction = scheduledTransactionValue();
         final @Nullable Authority adminKey = adminKeyValue();
@@ -64,6 +66,7 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("creates a ScheduleCreateTransaction with the default values")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final ScheduleCreateTransaction subject = new ScheduleCreateTransaction(scheduledTransactionValue(), adminKeyValue(), payerAccountIdValue(), scheduleMemoValue(), expirationTimeValue());
         assertValue(false, subject.waitForExpiry());
@@ -71,6 +74,7 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Transaction<?, ?> scheduledTransaction = scheduledTransactionValue();
         final @Nullable Authority adminKey = adminKeyValue();
@@ -96,6 +100,7 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final ScheduleCreateTransaction subject = ScheduleCreateTransaction.builder()
                 .scheduledTransaction(scheduledTransactionValue())
@@ -109,18 +114,21 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> ScheduleCreateTransaction.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for scheduledTransaction")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/scheduledTransaction/rejects-null")
     void shouldRejectNullScheduledTransaction() {
         assertThrows(NullPointerException.class, () -> new ScheduleCreateTransaction((Transaction<?, ?>) null, adminKeyValue(), payerAccountIdValue(), scheduleMemoValue(), expirationTimeValue(), waitForExpiryValue()));
     }
 
     @Test
     @DisplayName("scheduleMemo: accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/scheduleMemo/accepts-at-maximum-bytes")
     void shouldAcceptScheduleMemoAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final ScheduleCreateTransaction subject = new ScheduleCreateTransaction(scheduledTransactionValue(), adminKeyValue(), payerAccountIdValue(), value, expirationTimeValue(), waitForExpiryValue());
@@ -129,12 +137,14 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("scheduleMemo: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/scheduleMemo/rejects-above-maximum-bytes")
     void shouldRejectScheduleMemoAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new ScheduleCreateTransaction(scheduledTransactionValue(), adminKeyValue(), payerAccountIdValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", expirationTimeValue(), waitForExpiryValue()));
     }
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final ScheduleCreateTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -144,6 +154,7 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final ScheduleCreateTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -152,6 +163,7 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final ScheduleCreateTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -161,6 +173,7 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final ScheduleCreateTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -169,6 +182,7 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/memo/set")
     void shouldSetMemo() {
         final ScheduleCreateTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -178,6 +192,7 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final ScheduleCreateTransaction subject = create();
         subject.setMemo((String) null);
@@ -186,6 +201,7 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final ScheduleCreateTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -195,6 +211,7 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final ScheduleCreateTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -203,54 +220,63 @@ class ScheduleCreateTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

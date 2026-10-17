@@ -32,6 +32,7 @@ import org.hiero.mirrornode.transaction.TransactionFactory;
 import org.hiero.mirrornode.transaction.TransactionRepository;
 import org.hiero.sdk.annotation.ThreadSafe;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `MirrorNodeClient`, generated from the specs.
@@ -40,6 +41,7 @@ class MirrorNodeClientTest {
 
     @Test
     @DisplayName("creates a MirrorNodeClient and returns the values")
+    @Tag("testId:mirrornode.MirrorNodeClient/create")
     void shouldCreateAndReturnTheValues() {
         final AccountRepository accounts = accountsValue();
         final ContractRepository contracts = contractsValue();
@@ -62,6 +64,7 @@ class MirrorNodeClientTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.MirrorNodeClient/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final AccountRepository accounts = accountsValue();
         final ContractRepository contracts = contractsValue();
@@ -93,6 +96,7 @@ class MirrorNodeClientTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.MirrorNodeClient/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final MirrorNodeClient subject = MirrorNodeClient.builder()
                 .accounts(accountsValue())
@@ -108,54 +112,63 @@ class MirrorNodeClientTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.MirrorNodeClient/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> MirrorNodeClient.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for accounts")
+    @Tag("testId:mirrornode.MirrorNodeClient/accounts/rejects-null")
     void shouldRejectNullAccounts() {
         assertThrows(NullPointerException.class, () -> new MirrorNodeClient((AccountRepository) null, contractsValue(), networkValue(), nftValue(), tokenValue(), topicValue(), transactionValue(), mirrorNodeHttpClientValue()));
     }
 
     @Test
     @DisplayName("rejects null for contracts")
+    @Tag("testId:mirrornode.MirrorNodeClient/contracts/rejects-null")
     void shouldRejectNullContracts() {
         assertThrows(NullPointerException.class, () -> new MirrorNodeClient(accountsValue(), (ContractRepository) null, networkValue(), nftValue(), tokenValue(), topicValue(), transactionValue(), mirrorNodeHttpClientValue()));
     }
 
     @Test
     @DisplayName("rejects null for network")
+    @Tag("testId:mirrornode.MirrorNodeClient/network/rejects-null")
     void shouldRejectNullNetwork() {
         assertThrows(NullPointerException.class, () -> new MirrorNodeClient(accountsValue(), contractsValue(), (NetworkRepository) null, nftValue(), tokenValue(), topicValue(), transactionValue(), mirrorNodeHttpClientValue()));
     }
 
     @Test
     @DisplayName("rejects null for nft")
+    @Tag("testId:mirrornode.MirrorNodeClient/nft/rejects-null")
     void shouldRejectNullNft() {
         assertThrows(NullPointerException.class, () -> new MirrorNodeClient(accountsValue(), contractsValue(), networkValue(), (NftRepository) null, tokenValue(), topicValue(), transactionValue(), mirrorNodeHttpClientValue()));
     }
 
     @Test
     @DisplayName("rejects null for token")
+    @Tag("testId:mirrornode.MirrorNodeClient/token/rejects-null")
     void shouldRejectNullToken() {
         assertThrows(NullPointerException.class, () -> new MirrorNodeClient(accountsValue(), contractsValue(), networkValue(), nftValue(), (TokenRepository) null, topicValue(), transactionValue(), mirrorNodeHttpClientValue()));
     }
 
     @Test
     @DisplayName("rejects null for topic")
+    @Tag("testId:mirrornode.MirrorNodeClient/topic/rejects-null")
     void shouldRejectNullTopic() {
         assertThrows(NullPointerException.class, () -> new MirrorNodeClient(accountsValue(), contractsValue(), networkValue(), nftValue(), tokenValue(), (TopicRepository) null, transactionValue(), mirrorNodeHttpClientValue()));
     }
 
     @Test
     @DisplayName("rejects null for transaction")
+    @Tag("testId:mirrornode.MirrorNodeClient/transaction/rejects-null")
     void shouldRejectNullTransaction() {
         assertThrows(NullPointerException.class, () -> new MirrorNodeClient(accountsValue(), contractsValue(), networkValue(), nftValue(), tokenValue(), topicValue(), (TransactionRepository) null, mirrorNodeHttpClientValue()));
     }
 
     @Test
     @DisplayName("rejects null for mirrorNodeHttpClient")
+    @Tag("testId:mirrornode.MirrorNodeClient/mirrorNodeHttpClient/rejects-null")
     void shouldRejectNullMirrorNodeHttpClient() {
         assertThrows(NullPointerException.class, () -> new MirrorNodeClient(accountsValue(), contractsValue(), networkValue(), nftValue(), tokenValue(), topicValue(), transactionValue(), (MirrorNodeHttpClient) null));
     }

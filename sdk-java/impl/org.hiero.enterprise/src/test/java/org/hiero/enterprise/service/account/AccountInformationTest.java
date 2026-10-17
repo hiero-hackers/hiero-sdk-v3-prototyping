@@ -13,6 +13,7 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountInformation`, generated from the specs.
@@ -21,6 +22,7 @@ class AccountInformationTest {
 
     @Test
     @DisplayName("creates an AccountInformation and returns the values")
+    @Tag("testId:enterprise.service.account.AccountInformation/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
         final NativeToken<?, ?> balance = balanceValue();
@@ -33,18 +35,21 @@ class AccountInformationTest {
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:enterprise.service.account.AccountInformation/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new AccountInformation((AccountId) null, balanceValue(), authorityValue()));
     }
 
     @Test
     @DisplayName("rejects null for balance")
+    @Tag("testId:enterprise.service.account.AccountInformation/balance/rejects-null")
     void shouldRejectNullBalance() {
         assertThrows(NullPointerException.class, () -> new AccountInformation(accountIdValue(), (NativeToken<?, ?>) null, authorityValue()));
     }
 
     @Test
     @DisplayName("rejects null for authority")
+    @Tag("testId:enterprise.service.account.AccountInformation/authority/rejects-null")
     void shouldRejectNullAuthority() {
         assertThrows(NullPointerException.class, () -> new AccountInformation(accountIdValue(), balanceValue(), (Authority) null));
     }

@@ -407,6 +407,7 @@ the current SDKs (see `docs/sdk-unit-test-analysis.md`); the comment above each 
 ```tests
 // Source: HAPI (one TransactionBody per target node, each with its nodeAccountID); the Java, Go, JavaScript and
 // Python SDKs.
+@@testId("packing-gives-one-body-per-target-node-in-the-order-of-the-nodes")
 test "packing gives one body per target node, in the order of the nodes" {
     // given
     let payer = DEFAULT(Account)
@@ -427,6 +428,7 @@ test "packing gives one body per target node, in the order of the nodes" {
 }
 
 // Source: HAPI (a signature covers the bodyBytes of its SignedTransaction); the Java, Python, C++ and Go SDKs.
+@@testId("signing-adds-one-signature-per-node-that-verifies-over-the-body-of-that-node")
 test "signing adds one signature per node that verifies over the body of that node" {
     // given
     let payer = DEFAULT(Account)
@@ -449,6 +451,7 @@ test "signing adds one signature per node that verifies over the body of that no
 }
 
 // Source: the Python, Java and Go SDKs (a key in a SignatureMap only once).
+@@testId("signing-again-with-the-same-key-adds-no-signature")
 test "signing again with the same key adds no signature" {
     // given
     let payer = DEFAULT(Account)
@@ -464,6 +467,7 @@ test "signing again with the same key adds no signature" {
 
 // Source: the JavaScript and Python SDKs (Ed25519 and ECDSA signatures on one transaction). The second key is the
 // secp256k1 key of the tests of keys.md.
+@@testId("an-ed25519-and-a-secp256k1-key-both-sign-every-body")
 test "an Ed25519 and a secp256k1 key both sign every body" {
     // given
     let payer = DEFAULT(Account)
@@ -489,6 +493,7 @@ test "an Ed25519 and a secp256k1 key both sign every body" {
 
 // Source: the Rust, Python, JavaScript, Go and Swift SDKs (the body bytes stay byte-exact, otherwise the signatures
 // break).
+@@testId("a-signed-transaction-survives-tobytes-and-frombytes-unchanged")
 test "a signed transaction survives toBytes and fromBytes unchanged" {
     // given
     let packed = consensusnode.transactions.utility.PrngTransaction{}
@@ -506,6 +511,7 @@ test "a signed transaction survives toBytes and fromBytes unchanged" {
 }
 
 // Source: the multi-party flow of the Python SDK: a transaction is packed by one party and signed by another.
+@@testId("a-restored-transaction-can-be-signed-by-another-party")
 test "a restored transaction can be signed by another party" {
     // given
     let payer = DEFAULT(Account)
@@ -528,6 +534,7 @@ test "a restored transaction can be signed by another party" {
 
 // Source: the out-of-process signing of the Rust SDK and the JavaScript SDK (sign the body bytes, attach the
 // signatures).
+@@testId("signatures-made-outside-the-sdk-are-attached-to-their-bodies")
 test "signatures made outside the SDK are attached to their bodies" {
     // given
     let payer = DEFAULT(Account)
@@ -546,6 +553,7 @@ test "signatures made outside the SDK are attached to their bodies" {
 }
 
 // Source: HIP-551 (an inner batch transaction is addressed to node 0.0.0); the Python SDK.
+@@testId("a-transaction-packed-for-a-batch-has-one-body-for-node-0-0-0")
 test "a transaction packed for a batch has one body for node 0.0.0" {
     // given
     let payer = DEFAULT(Account)
@@ -563,6 +571,7 @@ test "a transaction packed for a batch has one body for node 0.0.0" {
 // Source: a fixture of the JavaScript SDK (a TransactionList with one body for node 0.0.3, payer 0.0.1234, valid
 // start 4891363200 = 2125-01-01, memo "Transaction with validStart in 2125"); a regression test for valid starts
 // beyond 32-bit seconds.
+@@testId("a-transaction-of-another-sdk-is-read-with-a-valid-start-in-2125")
 test "a transaction of another SDK is read with a valid start in 2125" {
     // given
     let bytes = hex(text: "0acc012ac9010a5f0a0d0a0608808fb19c12120318d209120218031880c2d72f2202087832235472616e73616374"
@@ -582,6 +591,7 @@ test "a transaction of another SDK is read with a valid start in 2125" {
 }
 
 // Source: ResponseCodeEnum of the HAPI (response_code.proto).
+@@testId("the-basic-transaction-statuses-have-the-codes-of-the-protocol")
 test "the basic transaction statuses have the codes of the protocol" {
     assertEquals(expected: 0, actual: BasicTransactionStatus.OK.code)
     assertEquals(expected: 1, actual: BasicTransactionStatus.INVALID_TRANSACTION.code)

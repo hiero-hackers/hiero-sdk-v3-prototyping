@@ -15,6 +15,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TopicInfo`, generated from the specs.
@@ -23,6 +24,7 @@ class TopicInfoTest {
 
     @Test
     @DisplayName("creates a TopicInfo and returns the values")
+    @Tag("testId:consensusnode.queries.topics.TopicInfo/create")
     void shouldCreateAndReturnTheValues() {
         final Address topicId = topicIdValue();
         final @Nullable String topicMemo = topicMemoValue();
@@ -47,6 +49,7 @@ class TopicInfoTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.queries.topics.TopicInfo/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Address topicId = topicIdValue();
         final @Nullable String topicMemo = topicMemoValue();
@@ -81,6 +84,7 @@ class TopicInfoTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.queries.topics.TopicInfo/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TopicInfo subject = TopicInfo.builder()
                 .topicId(topicIdValue())
@@ -97,24 +101,28 @@ class TopicInfoTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.queries.topics.TopicInfo/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TopicInfo.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for topicId")
+    @Tag("testId:consensusnode.queries.topics.TopicInfo/topicId/rejects-null")
     void shouldRejectNullTopicId() {
         assertThrows(NullPointerException.class, () -> new TopicInfo((Address) null, topicMemoValue(), runningHashValue(), sequenceNumberValue(), expirationTimeValue(), adminAuthorityValue(), submitAuthorityValue(), autoRenewPeriodValue(), autoRenewAccountValue()));
     }
 
     @Test
     @DisplayName("rejects null for runningHash")
+    @Tag("testId:consensusnode.queries.topics.TopicInfo/runningHash/rejects-null")
     void shouldRejectNullRunningHash() {
         assertThrows(NullPointerException.class, () -> new TopicInfo(topicIdValue(), topicMemoValue(), (byte[]) null, sequenceNumberValue(), expirationTimeValue(), adminAuthorityValue(), submitAuthorityValue(), autoRenewPeriodValue(), autoRenewAccountValue()));
     }
 
     @Test
     @DisplayName("the constructor copies runningHash; the accessor returns a copy")
+    @Tag("testId:consensusnode.queries.topics.TopicInfo/runningHash/copies-in")
     void shouldCopyRunningHashIn() {
         final byte[] value = runningHashValue();
         final byte[] expected = value.clone();
@@ -129,6 +137,7 @@ class TopicInfoTest {
 
     @Test
     @DisplayName("sequenceNumber: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.topics.TopicInfo/sequenceNumber/accepts-at-minimum")
     void shouldAcceptSequenceNumberAtMinimum() {
         final long value = -9223372036854775808L;
         final TopicInfo subject = new TopicInfo(topicIdValue(), topicMemoValue(), runningHashValue(), value, expirationTimeValue(), adminAuthorityValue(), submitAuthorityValue(), autoRenewPeriodValue(), autoRenewAccountValue());
@@ -137,6 +146,7 @@ class TopicInfoTest {
 
     @Test
     @DisplayName("sequenceNumber: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.topics.TopicInfo/sequenceNumber/accepts-at-maximum")
     void shouldAcceptSequenceNumberAtMaximum() {
         final long value = 9223372036854775807L;
         final TopicInfo subject = new TopicInfo(topicIdValue(), topicMemoValue(), runningHashValue(), value, expirationTimeValue(), adminAuthorityValue(), submitAuthorityValue(), autoRenewPeriodValue(), autoRenewAccountValue());
@@ -145,6 +155,7 @@ class TopicInfoTest {
 
     @Test
     @DisplayName("rejects null for expirationTime")
+    @Tag("testId:consensusnode.queries.topics.TopicInfo/expirationTime/rejects-null")
     void shouldRejectNullExpirationTime() {
         assertThrows(NullPointerException.class, () -> new TopicInfo(topicIdValue(), topicMemoValue(), runningHashValue(), sequenceNumberValue(), (ZonedDateTime) null, adminAuthorityValue(), submitAuthorityValue(), autoRenewPeriodValue(), autoRenewAccountValue()));
     }

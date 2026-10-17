@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import javax.annotation.processing.Generated;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Derived`, generated from the specs.
@@ -16,6 +17,7 @@ class DerivedTest {
 
     @Test
     @DisplayName("creates a Derived and returns the values")
+    @Tag("testId:shop.Derived/create")
     void shouldCreateAndReturnTheValues() {
         final int a = aValue();
         final int b = bValue();
@@ -26,6 +28,7 @@ class DerivedTest {
 
     @Test
     @DisplayName("a: accepts the minimum (-2147483648)")
+    @Tag("testId:shop.Derived/a/accepts-at-minimum")
     void shouldAcceptAAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final Derived subject = new Derived(value, bValue());
@@ -34,6 +37,7 @@ class DerivedTest {
 
     @Test
     @DisplayName("a: accepts the maximum (2147483647)")
+    @Tag("testId:shop.Derived/a/accepts-at-maximum")
     void shouldAcceptAAtMaximum() {
         final int value = 2147483647;
         final Derived subject = new Derived(value, bValue());
@@ -42,6 +46,7 @@ class DerivedTest {
 
     @Test
     @DisplayName("b: accepts the minimum (-2147483648)")
+    @Tag("testId:shop.Derived/b/accepts-at-minimum")
     void shouldAcceptBAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final Derived subject = new Derived(aValue(), value);
@@ -50,6 +55,7 @@ class DerivedTest {
 
     @Test
     @DisplayName("b: accepts the maximum (2147483647)")
+    @Tag("testId:shop.Derived/b/accepts-at-maximum")
     void shouldAcceptBAtMaximum() {
         final int value = 2147483647;
         final Derived subject = new Derived(aValue(), value);
@@ -58,6 +64,7 @@ class DerivedTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:shop.Derived/value-semantics")
     void shouldCompareByValue() {
         final Derived subject = create();
         final Derived other = create();

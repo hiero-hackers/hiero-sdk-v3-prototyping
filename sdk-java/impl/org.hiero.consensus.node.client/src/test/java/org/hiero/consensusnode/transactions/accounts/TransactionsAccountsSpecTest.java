@@ -20,6 +20,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.nativeToken.NativeToken;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions-accounts`, generated from the `tests` blocks of its `## Testing` section.
@@ -40,6 +41,7 @@ class TransactionsAccountsSpecTest {
     /// false).
     @Test
     @DisplayName("an account create transaction leaves out what is not given")
+    @Tag("testId:consensusnode.transactions.accounts/an-account-create-transaction-leaves-out-what-is-not-given")
     void anAccountCreateTransactionLeavesOutWhatIsNotGiven() {
         // when
         final AccountCreateTransaction transaction = new AccountCreateTransaction(defaultAuthority(), null, null, false, null, null, null, null, false, null);
@@ -65,6 +67,7 @@ class TransactionsAccountsSpecTest {
     /// testAutoRenewPeriod = .hours(10)).
     @Test
     @DisplayName("an account create transaction keeps its attributes")
+    @Tag("testId:consensusnode.transactions.accounts/an-account-create-transaction-keeps-its-attributes")
     void anAccountCreateTransactionKeepsItsAttributes() {
         // given
         final NativeToken<?, ?> initialBalance = new Hbar(450L, HbarUnit.TINYBAR);
@@ -92,6 +95,7 @@ class TransactionsAccountsSpecTest {
     /// test_ToFromBytes2) and the Python SDK (test_serialization_round_trip_staked_node_id and ..._staked_account_id).
     @Test
     @DisplayName("an account create transaction survives toBytes and fromBytes, staked to an account or to a node")
+    @Tag("testId:consensusnode.transactions.accounts/an-account-create-transaction-survives-tobytes-and-frombytes-staked-to-an-account-or-to-a-node")
     void anAccountCreateTransactionSurvivesToBytesAndFromBytesStakedToAnAccountOrToANode() {
         // given
         final Account payer = defaultAccount();
@@ -118,6 +122,7 @@ class TransactionsAccountsSpecTest {
     /// (test_set_stake_account_id_reset_stake_node_id): setting one clears the other.
     @Test
     @DisplayName("an account create transaction rejects being staked to an account and to a node")
+    @Tag("testId:consensusnode.transactions.accounts/an-account-create-transaction-rejects-being-staked-to-an-account-and-to-a-node")
     void anAccountCreateTransactionRejectsBeingStakedToAnAccountAndToANode() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new AccountCreateTransaction(defaultAuthority(), null, null, false, null, null, AccountId.fromString("0.0.3"), 4L, false, null));
@@ -129,6 +134,7 @@ class TransactionsAccountsSpecTest {
     /// (test_constructor_without_parameters of AccountUpdateTransaction).
     @Test
     @DisplayName("an account update transaction changes nothing but what it names")
+    @Tag("testId:consensusnode.transactions.accounts/an-account-update-transaction-changes-nothing-but-what-it-names")
     void anAccountUpdateTransactionChangesNothingButWhatItNames() {
         // when
         final AccountUpdateTransaction transaction = new AccountUpdateTransaction(defaultAccountId(), null, null, null, null, null, null, null, null, null);
@@ -154,6 +160,7 @@ class TransactionsAccountsSpecTest {
     /// Instant.ofEpochSecond(1554158543)).
     @Test
     @DisplayName("an account update transaction keeps its auto renew period and expiration time")
+    @Tag("testId:consensusnode.transactions.accounts/an-account-update-transaction-keeps-its-auto-renew-period-and-expiration-time")
     void anAccountUpdateTransactionKeepsItsAutoRenewPeriodAndExpirationTime() {
         // when
         final AccountUpdateTransaction transaction = new AccountUpdateTransaction(defaultAccountId(), null, null, null, null, toSeconds(36000L), SDK_TEST_EXPIRATION_TIME(), null, null, null);
@@ -170,6 +177,7 @@ class TransactionsAccountsSpecTest {
     /// (AccountUpdateTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("an account update transaction survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.accounts/an-account-update-transaction-survives-tobytes-and-frombytes")
     void anAccountUpdateTransactionSurvivesToBytesAndFromBytes() {
         // given
         final PackedTransaction<AccountUpdateReceipt, AccountUpdateTransaction> packed = new AccountUpdateTransaction(defaultAccountId(), defaultAuthority(), "Some memo", true, 100, toSeconds(36000L), SDK_TEST_EXPIRATION_TIME(), null, 4L, true).pack(defaultAccount(), List.of(AccountId.fromString("0.0.3")));
@@ -189,6 +197,7 @@ class TransactionsAccountsSpecTest {
     /// Swift SDK (test_ToFromBytes).
     @Test
     @DisplayName("an account delete transaction keeps both accounts and survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.accounts/an-account-delete-transaction-keeps-both-accounts-and-survives-tobytes-and-frombytes")
     void anAccountDeleteTransactionKeepsBothAccountsAndSurvivesToBytesAndFromBytes() {
         // given
         final AccountDeleteTransaction transaction = new AccountDeleteTransaction(AccountId.fromString("0.0.1001"), AccountId.fromString("0.0.1002"));
@@ -208,6 +217,7 @@ class TransactionsAccountsSpecTest {
     /// Source: this spec (@@default([])); the Python SDK (test_constructor_default_values of TransferTransaction).
     @Test
     @DisplayName("a transfer transaction without legs has empty lists")
+    @Tag("testId:consensusnode.transactions.accounts/a-transfer-transaction-without-legs-has-empty-lists")
     void aTransferTransactionWithoutLegsHasEmptyLists() {
         // when
         final TransferTransaction transaction = new TransferTransaction(List.of(), List.of(), List.of());
@@ -224,6 +234,7 @@ class TransactionsAccountsSpecTest {
     /// test_add_token_transfer, test_add_nft_transfer, test_token_transfer_without_expected_decimals).
     @Test
     @DisplayName("a transfer leg is not approved and has no expected decimals unless given")
+    @Tag("testId:consensusnode.transactions.accounts/a-transfer-leg-is-not-approved-and-has-no-expected-decimals-unless-given")
     void aTransferLegIsNotApprovedAndHasNoExpectedDecimalsUnlessGiven() {
         // when
         final HbarTransfer hbarLeg = new HbarTransfer(defaultAccountId(), new Hbar(-10L, HbarUnit.HBAR), false);
@@ -243,6 +254,7 @@ class TransactionsAccountsSpecTest {
     /// test_nft_transfer_fields_preservation, test_expected_decimals_field_preservation).
     @Test
     @DisplayName("a transfer transaction keeps its legs in their order")
+    @Tag("testId:consensusnode.transactions.accounts/a-transfer-transaction-keeps-its-legs-in-their-order")
     void aTransferTransactionKeepsItsLegsInTheirOrder() {
         // given
         final Address token = Address.fromString("0.0.5005");
@@ -270,6 +282,7 @@ class TransactionsAccountsSpecTest {
     /// (TransferTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("a transfer of HBAR, a token and an NFT survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.accounts/a-transfer-of-hbar-a-token-and-an-nft-survives-tobytes-and-frombytes")
     void aTransferOfHBARATokenAndAnNFTSurvivesToBytesAndFromBytes() {
         // given
         final Address token = Address.fromString("0.0.5005");
@@ -291,6 +304,7 @@ class TransactionsAccountsSpecTest {
     /// test_build_proto_body_empty).
     @Test
     @DisplayName("an allowance approve transaction without allowances has empty lists")
+    @Tag("testId:consensusnode.transactions.accounts/an-allowance-approve-transaction-without-allowances-has-empty-lists")
     void anAllowanceApproveTransactionWithoutAllowancesHasEmptyLists() {
         // when
         final AccountAllowanceApproveTransaction transaction = new AccountAllowanceApproveTransaction(List.of(), List.of(), List.of());
@@ -308,6 +322,7 @@ class TransactionsAccountsSpecTest {
     /// (AccountAllowanceApproveTransactionTest.propertiesTest).
     @Test
     @DisplayName("an allowance approve transaction keeps HBAR, token, serial and collection allowances")
+    @Tag("testId:consensusnode.transactions.accounts/an-allowance-approve-transaction-keeps-hbar-token-serial-and-collection-allowances")
     void anAllowanceApproveTransactionKeepsHBARTokenSerialAndCollectionAllowances() {
         // given
         final AccountId owner = AccountId.fromString("0.0.1001");
@@ -336,6 +351,7 @@ class TransactionsAccountsSpecTest {
     /// Source: HIP-336 (a spender with a collection grant delegates serials onward); this spec (delegatingSpender).
     @Test
     @DisplayName("an NFT allowance keeps its delegating spender")
+    @Tag("testId:consensusnode.transactions.accounts/an-nft-allowance-keeps-its-delegating-spender")
     void anNFTAllowanceKeepsItsDelegatingSpender() {
         // given
         final AccountId delegatingSpender = AccountId.fromString("0.0.1003");
@@ -353,6 +369,7 @@ class TransactionsAccountsSpecTest {
     /// serials as in the current SDKs, e.g. the JavaScript SDK TokenNftAllowance "toProtobuf() with no serial numbers").
     @Test
     @DisplayName("a serial grant rejects an empty list of serials")
+    @Tag("testId:consensusnode.transactions.accounts/a-serial-grant-rejects-an-empty-list-of-serials")
     void aSerialGrantRejectsAnEmptyListOfSerials() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new NftSerialGrant(List.of()));
@@ -364,6 +381,7 @@ class TransactionsAccountsSpecTest {
     /// from bytes and maintain order") and the Swift SDK (test_ToFromBytes).
     @Test
     @DisplayName("an allowance approve transaction survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.accounts/an-allowance-approve-transaction-survives-tobytes-and-frombytes")
     void anAllowanceApproveTransactionSurvivesToBytesAndFromBytes() {
         // given
         final AccountId owner = AccountId.fromString("0.0.1001");
@@ -384,6 +402,7 @@ class TransactionsAccountsSpecTest {
     /// the Swift SDK (test_ToFromBytes) and the C++ SDK (DeleteNftAllowances).
     @Test
     @DisplayName("an allowance delete transaction keeps its deletions and survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.accounts/an-allowance-delete-transaction-keeps-its-deletions-and-survives-tobytes-and-frombytes")
     void anAllowanceDeleteTransactionKeepsItsDeletionsAndSurvivesToBytesAndFromBytes() {
         // given
         final NftAllowanceDeletion deletion = new NftAllowanceDeletion(Address.fromString("0.0.5005"), AccountId.fromString("0.0.1001"), List.of(1L, 2L, 3L));
@@ -405,6 +424,7 @@ class TransactionsAccountsSpecTest {
     /// oneof); the Java SDK (AccountUpdateTransaction.setStakedAccountId / setStakedNodeId: setting one clears the other).
     @Test
     @DisplayName("an account update transaction rejects being staked to an account and to a node")
+    @Tag("testId:consensusnode.transactions.accounts/an-account-update-transaction-rejects-being-staked-to-an-account-and-to-a-node")
     void anAccountUpdateTransactionRejectsBeingStakedToAnAccountAndToANode() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new AccountUpdateTransaction(defaultAccountId(), null, null, null, null, null, null, AccountId.fromString("0.0.3"), 4L, null));
@@ -416,6 +436,7 @@ class TransactionsAccountsSpecTest {
     /// MEMO_TOO_LONG): 50 characters "ä" are 100 bytes of UTF-8.
     @Test
     @DisplayName("an account create transaction accepts a memo of 100 UTF-8 bytes")
+    @Tag("testId:consensusnode.transactions.accounts/an-account-create-transaction-accepts-a-memo-of-100-utf-8-bytes")
     void anAccountCreateTransactionAcceptsAMemoOf100UTF8Bytes() {
         // given
         final String memo = repeat("ä", 50L);
@@ -433,6 +454,7 @@ class TransactionsAccountsSpecTest {
     /// MEMO_TOO_LONG): 51 characters "ä" are 102 bytes of UTF-8, although far fewer than 100 characters.
     @Test
     @DisplayName("an account create transaction rejects a memo of more than 100 UTF-8 bytes")
+    @Tag("testId:consensusnode.transactions.accounts/an-account-create-transaction-rejects-a-memo-of-more-than-100-utf-8-bytes")
     void anAccountCreateTransactionRejectsAMemoOfMoreThan100UTF8Bytes() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new AccountCreateTransaction(defaultAuthority(), null, repeat("ä", 51L), false, null, null, null, null, false, null));

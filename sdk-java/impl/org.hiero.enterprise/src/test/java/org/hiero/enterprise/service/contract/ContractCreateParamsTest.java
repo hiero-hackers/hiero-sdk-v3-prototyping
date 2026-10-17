@@ -35,6 +35,7 @@ import org.hiero.mirrornode.transaction.TransactionFactory;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ContractCreateParams`, generated from the specs.
@@ -43,6 +44,7 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("creates a ContractCreateParams and returns the values")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/create")
     void shouldCreateAndReturnTheValues() {
         final @Nullable Address fileId = fileIdValue();
         final byte @Nullable [] bytecode = (byte[]) null;
@@ -75,6 +77,7 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("creates a ContractCreateParams with the default values")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final ContractCreateParams subject = new ContractCreateParams(fileIdValue(), (byte[]) null, gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), (Long) null);
         assertValue(List.of(), subject.constructorParams());
@@ -83,6 +86,7 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final @Nullable Address fileId = fileIdValue();
         final byte @Nullable [] bytecode = (byte[]) null;
@@ -129,6 +133,7 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final ContractCreateParams subject = ContractCreateParams.builder()
                 .fileId(fileIdValue())
@@ -151,6 +156,7 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("the constructor copies bytecode; the accessor returns a copy")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/bytecode/copies-in")
     void shouldCopyBytecodeIn() {
         final byte[] value = bytecodeValue();
         final byte[] expected = value.clone();
@@ -165,12 +171,14 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("rejects null for constructorParams")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/constructorParams/rejects-null")
     void shouldRejectNullConstructorParams() {
         assertThrows(NullPointerException.class, () -> new ContractCreateParams(fileIdValue(), (byte[]) null, (List<Param<?, ?>>) null, gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
     }
 
     @Test
     @DisplayName("the constructor copies constructorParams; the accessor returns an unmodifiable collection")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/constructorParams/copies-in")
     void shouldCopyConstructorParamsIn() {
         final List<Param<?, ?>> value = new ArrayList<>(constructorParamsValue());
         final List<Param<?, ?>> expected = List.copyOf(value);
@@ -182,6 +190,7 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("gas: accepts the minimum (1)")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/gas/accepts-at-minimum")
     void shouldAcceptGasAtMinimum() {
         final @Nullable Long value = 1L;
         final ContractCreateParams subject = new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), value, initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
@@ -190,6 +199,7 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("gas: accepts the maximum (9223372036854775807)")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/gas/accepts-at-maximum")
     void shouldAcceptGasAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
         final ContractCreateParams subject = new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), value, initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
@@ -198,12 +208,14 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("gas: rejects a value below the minimum (0)")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/gas/rejects-below-minimum")
     void shouldRejectGasBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), 0L, initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
     }
 
     @Test
     @DisplayName("contractMemo: accepts more elements than the maximum")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/contractMemo/accepts-at-maximum-bytes")
     void shouldAcceptContractMemoAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final ContractCreateParams subject = new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), value, autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
@@ -212,12 +224,14 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("contractMemo: rejects more elements than the maximum")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/contractMemo/rejects-above-maximum-bytes")
     void shouldRejectContractMemoAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
     }
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the minimum (-2147483648)")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/maxAutomaticTokenAssociations/accepts-at-minimum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
         final ContractCreateParams subject = new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), value, stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
@@ -226,6 +240,7 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the maximum (2147483647)")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/maxAutomaticTokenAssociations/accepts-at-maximum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMaximum() {
         final @Nullable Integer value = 2147483647;
         final ContractCreateParams subject = new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), value, stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
@@ -234,6 +249,7 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("stakedNodeId: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/stakedNodeId/accepts-at-minimum")
     void shouldAcceptStakedNodeIdAtMinimum() {
         final @Nullable Long value = -9223372036854775808L;
         final ContractCreateParams subject = new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), (AccountId) null, value, declineStakingRewardValue());
@@ -242,6 +258,7 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("stakedNodeId: accepts the maximum (9223372036854775807)")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/stakedNodeId/accepts-at-maximum")
     void shouldAcceptStakedNodeIdAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
         final ContractCreateParams subject = new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), (AccountId) null, value, declineStakingRewardValue());
@@ -250,18 +267,21 @@ class ContractCreateParamsTest {
 
     @Test
     @DisplayName("rejects fileId and bytecode together (@@oneOf)")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/fileId-bytecode/rejects-two")
     void shouldRejectTwoOfFileIdOrBytecode() {
         assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(fileIdValue(), bytecodeValue(), constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
     }
 
     @Test
     @DisplayName("rejects none of fileId, bytecode (@@oneOf)")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/fileId-bytecode/rejects-none")
     void shouldRejectNoneOfFileIdOrBytecode() {
         assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams((Address) null, (byte[]) null, constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
     }
 
     @Test
     @DisplayName("rejects stakedAccountId and stakedNodeId together (@@oneOrNoneOf)")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/stakedAccountId-stakedNodeId/rejects-two")
     void shouldRejectTwoOfStakedAccountIdOrStakedNodeId() {
         assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue()));
     }

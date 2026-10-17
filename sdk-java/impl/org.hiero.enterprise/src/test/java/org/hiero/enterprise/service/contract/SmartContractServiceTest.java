@@ -24,6 +24,7 @@ import org.hiero.mirrornode.MirrornodeFactory;
 import org.hiero.mirrornode.network.NetworkFactory;
 import org.hiero.mirrornode.transaction.TransactionFactory;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `SmartContractService`, generated from the specs.
@@ -32,12 +33,14 @@ class SmartContractServiceTest {
 
     @Test
     @DisplayName("creates a SmartContractService and returns the values")
+    @Tag("testId:enterprise.service.contract.SmartContractService/create")
     void shouldCreateAndReturnTheValues() {
         final SmartContractService subject = new SmartContractService();
     }
 
     @Test
     @DisplayName("createContract(fileId, constructorParams) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.contract.SmartContractService/createContract/call")
     void shouldCallCreateContract() throws Exception {
         try {
             assertNotNull(create().createContract(fileIdValue(), constructorParamsValue()));
@@ -50,6 +53,7 @@ class SmartContractServiceTest {
 
     @Test
     @DisplayName("createContract(contents, constructorParams) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.contract.SmartContractService/createContract/call-2")
     void shouldCallCreateContract2() throws Exception {
         try {
             assertNotNull(create().createContract(contentsValue(), constructorParamsValue()));
@@ -62,6 +66,7 @@ class SmartContractServiceTest {
 
     @Test
     @DisplayName("createContract(params) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.contract.SmartContractService/createContract/call-3")
     void shouldCallCreateContract3() throws Exception {
         try {
             assertNotNull(create().createContract(paramsValue()));
@@ -74,6 +79,7 @@ class SmartContractServiceTest {
 
     @Test
     @DisplayName("callContractFunction(contract, functionName, params) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.contract.SmartContractService/callContractFunction/call")
     void shouldCallCallContractFunction() throws Exception {
         try {
             assertNotNull(create().callContractFunction(contractValue(), functionNameValue(), paramsValue2()));
@@ -86,6 +92,7 @@ class SmartContractServiceTest {
 
     @Test
     @DisplayName("callContractFunction(contractId, functionName, params) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.contract.SmartContractService/callContractFunction/call-2")
     void shouldCallCallContractFunction2() throws Exception {
         try {
             assertNotNull(create().callContractFunction(contractIdValue(), functionNameValue(), paramsValue2()));
@@ -98,6 +105,7 @@ class SmartContractServiceTest {
 
     @Test
     @DisplayName("findById(contractId) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.contract.SmartContractService/findById/call")
     void shouldCallFindById() throws Exception {
         try {
             create().findById(contractIdValue());
@@ -110,6 +118,7 @@ class SmartContractServiceTest {
 
     @Test
     @DisplayName("findAll() can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.contract.SmartContractService/findAll/call")
     void shouldCallFindAll() throws Exception {
         try {
             assertNotNull(create().findAll());

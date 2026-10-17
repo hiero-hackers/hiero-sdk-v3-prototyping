@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import org.hiero.hedera.HbarUnit;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `ledger`, generated from the `tests` blocks of its `## Testing` section.
@@ -50,6 +51,7 @@ class LedgerSpecTest {
     /// Source: HIP-15 (the checksum belongs to every entity id and to its ledger); the vectors of HIP15_CHECKSUMS.
     @Test
     @DisplayName("the HIP-15 checksums are valid on their ledger")
+    @Tag("testId:ledger/the-hip-15-checksums-are-valid-on-their-ledger")
     void theHIP15ChecksumsAreValidOnTheirLedger() {
         for (final String text : keys(HIP15_CHECKSUMS())) {
             // given
@@ -74,6 +76,7 @@ class LedgerSpecTest {
     /// topic, schedule and contract id tests of all SDKs.
     @Test
     @DisplayName("a HIP-15 checksum is not valid on another ledger")
+    @Tag("testId:ledger/a-hip-15-checksum-is-not-valid-on-another-ledger")
     void aHIP15ChecksumIsNotValidOnAnotherLedger() {
         // given
         final Network<HbarUnit> mainnet = new Network<>(new byte[] {(byte) 0}, "mainnet", HbarUnit.HBAR);
@@ -94,6 +97,7 @@ class LedgerSpecTest {
     /// Source: HIP-15 (five lowercase letters); rejected by the Java, Go, Rust and Swift SDKs.
     @Test
     @DisplayName("a malformed checksum is rejected")
+    @Tag("testId:ledger/a-malformed-checksum-is-rejected")
     void aMalformedChecksumIsRejected() {
         for (final String text : MALFORMED_CHECKSUMS()) {
             // when / then
@@ -108,6 +112,7 @@ class LedgerSpecTest {
     /// Source: the JavaScript, Python, C++, Java, Rust and Swift SDKs; the C++ and Python SDKs.
     @Test
     @DisplayName("text that is no entity id is rejected")
+    @Tag("testId:ledger/text-that-is-no-entity-id-is-rejected")
     void textThatIsNoEntityIdIsRejected() {
         for (final String text : MALFORMED_ENTITY_IDS()) {
             // when / then
@@ -122,6 +127,7 @@ class LedgerSpecTest {
     /// Source: all seven SDKs.
     @Test
     @DisplayName("an account id is read from and written as shard.realm.num")
+    @Tag("testId:ledger/an-account-id-is-read-from-and-written-as-shard-realm-num")
     void anAccountIdIsReadFromAndWrittenAsShardRealmNum() {
         for (final String text : List.of("0.0.5005", "1.2.3", "10.50.25050")) {
             // when
@@ -139,6 +145,7 @@ class LedgerSpecTest {
     /// Source: the Rust and Swift SDKs.
     @Test
     @DisplayName("an account id keeps its shard, realm and number")
+    @Tag("testId:ledger/an-account-id-keeps-its-shard-realm-and-number")
     void anAccountIdKeepsItsShardRealmAndNumber() {
         // when
         final AccountId id = AccountId.fromString("10.50.25050");
@@ -155,6 +162,7 @@ class LedgerSpecTest {
     /// Source: the Swift, Rust, Python and C++ SDKs.
     @Test
     @DisplayName("an EVM address is read from 40 hex digits with or without 0x")
+    @Tag("testId:ledger/an-evm-address-is-read-from-40-hex-digits-with-or-without-0x")
     void anEVMAddressIsReadFrom40HexDigitsWithOrWithout0x() {
         // given
         final byte[] bytes = hex("1234567890abcdef1234567890abcdef12345678");
@@ -174,6 +182,7 @@ class LedgerSpecTest {
     /// Source: the Swift, Rust, Python and C++ SDKs.
     @Test
     @DisplayName("an EVM address of the wrong length or with other characters is rejected")
+    @Tag("testId:ledger/an-evm-address-of-the-wrong-length-or-with-other-characters-is-rejected")
     void anEVMAddressOfTheWrongLengthOrWithOtherCharactersIsRejected() {
         for (final String text : List.of("", "0x1234", "0x0f0e0d0c0b0a09080706050403020100", "0xGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG")) {
             // when / then
@@ -190,6 +199,7 @@ class LedgerSpecTest {
     /// Source: the Java, Rust, Go and JavaScript SDKs. Following `@@oneOf(num, evmAddress)`, the number is absent.
     @Test
     @DisplayName("a contract id of an EVM address keeps its shard, realm and address")
+    @Tag("testId:ledger/a-contract-id-of-an-evm-address-keeps-its-shard-realm-and-address")
     void aContractIdOfAnEVMAddressKeepsItsShardRealmAndAddress() {
         // given
         final EvmAddress address = EvmAddress.fromString("98329e006610472e6B372C080833f6D79ED833cf");
@@ -209,6 +219,7 @@ class LedgerSpecTest {
     /// Source: the dotted-quad notation of IPv4 (RFC 791); the C++ SDK.
     @Test
     @DisplayName("an IPv4 address is written as dotted quad and needs four bytes")
+    @Tag("testId:ledger/an-ipv4-address-is-written-as-dotted-quad-and-needs-four-bytes")
     void anIPv4AddressIsWrittenAsDottedQuadAndNeedsFourBytes() {
         // when
         final IpAddress address = IpAddress.fromBytes(new byte[] {(byte) 192, (byte) 168, (byte) 1, (byte) 1});
@@ -227,6 +238,7 @@ class LedgerSpecTest {
     /// Source: the Java, Rust and Swift SDKs.
     @Test
     @DisplayName("a transaction id is read from and written as account@seconds.nanos")
+    @Tag("testId:ledger/a-transaction-id-is-read-from-and-written-as-account-seconds-nanos")
     void aTransactionIdIsReadFromAndWrittenAsAccountSecondsNanos() {
         // given
         final String text = "0.0.23847@1588539964.632521325";
@@ -245,6 +257,7 @@ class LedgerSpecTest {
     /// Source: the Java, Rust and Swift SDKs.
     @Test
     @DisplayName("a transaction id keeps its nonce")
+    @Tag("testId:ledger/a-transaction-id-keeps-its-nonce")
     void aTransactionIdKeepsItsNonce() {
         // given
         final String text = "0.0.23847@1588539964.632521325/4";
@@ -262,6 +275,7 @@ class LedgerSpecTest {
     /// Source: the Rust, Swift, Java and Python SDKs.
     @Test
     @DisplayName("text that is no transaction id is rejected")
+    @Tag("testId:ledger/text-that-is-no-transaction-id-is-rejected")
     void textThatIsNoTransactionIdIsRejected() {
         for (final String text : List.of("0.0.31415?1641088801.2", "0.0.31415/1641088801.2", "0.0.31415?scheduled/1412@1641088801.2", "0.0.23847.1588539964.632521325/4", "0.0.23847@1588539964/4", "0.0.123@abc.def")) {
             // when / then
@@ -274,6 +288,7 @@ class LedgerSpecTest {
     /// Source: the Java, Rust, Swift, JavaScript and Python SDKs (the canonical string form carries no checksum).
     @Test
     @DisplayName("toString omits the checksum and toStringWithChecksum keeps it")
+    @Tag("testId:ledger/tostring-omits-the-checksum-and-tostringwithchecksum-keeps-it")
     void toStringOmitsTheChecksumAndToStringWithChecksumKeepsIt() {
         // given
         final AccountId id = AccountId.fromString("0.0.123-esxsf");
@@ -288,6 +303,7 @@ class LedgerSpecTest {
     /// Source: the Swift, Java, Rust and Go SDKs (hex digits in either case denote the same address).
     @Test
     @DisplayName("an EVM address is the same in upper and lower case")
+    @Tag("testId:ledger/an-evm-address-is-the-same-in-upper-and-lower-case")
     void anEVMAddressIsTheSameInUpperAndLowerCase() {
         // when
         final EvmAddress upper = EvmAddress.fromString("0x1234567890ABCDEF1234567890ABCDEF12345678");
@@ -302,6 +318,7 @@ class LedgerSpecTest {
     /// Source: the C++ SDK (39 digits, 0x inside the digits, 22 bytes) and the Python SDK (42 digits).
     @Test
     @DisplayName("an EVM address of 39 or 42 digits, with a misplaced or doubled 0x, or of 22 bytes is rejected")
+    @Tag("testId:ledger/an-evm-address-of-39-or-42-digits-with-a-misplaced-or-doubled-0x-or-of-22-bytes-is-rejected")
     void anEVMAddressOf39Or42DigitsWithAMisplacedOrDoubled0xOrOf22BytesIsRejected() {
         for (final String text : List.of("303132333435363738396162636465666768696", "1234567890abcdef1234567890abcdef1234567890", "3031323334353637383961626364650x66676869", "0x0x1234567890abcdef1234567890abcdef12345678")) {
             // when / then
@@ -319,6 +336,7 @@ class LedgerSpecTest {
     /// addresses are those of EIP55_ADDRESSES.
     @Test
     @DisplayName("a contract id and an account id of an EVM address are read from and written as shard.realm.<address>")
+    @Tag("testId:ledger/a-contract-id-and-an-account-id-of-an-evm-address-are-read-from-and-written-as-shard-realm-address")
     void aContractIdAndAnAccountIdOfAnEVMAddressAreReadFromAndWrittenAsShardRealmAddress() {
         for (final String checksummed : EIP55_ADDRESSES()) {
             // given
@@ -344,6 +362,7 @@ class LedgerSpecTest {
     /// not to an id, and an id is written in lower case.
     @Test
     @DisplayName("an id with 0x or upper case hex digits in its EVM-address form is rejected")
+    @Tag("testId:ledger/an-id-with-0x-or-upper-case-hex-digits-in-its-evm-address-form-is-rejected")
     void anIdWith0xOrUpperCaseHexDigitsInItsEVMAddressFormIsRejected() {
         for (final String checksummed : EIP55_ADDRESSES()) {
             // when / then
@@ -362,6 +381,7 @@ class LedgerSpecTest {
     /// evmAddress and alias is set.
     @Test
     @DisplayName("an account id of a long-zero EVM address keeps the address and has no number")
+    @Tag("testId:ledger/an-account-id-of-a-long-zero-evm-address-keeps-the-address-and-has-no-number")
     void anAccountIdOfALongZeroEVMAddressKeepsTheAddressAndHasNoNumber() {
         // given
         final EvmAddress address = EvmAddress.fromString("0x00000000000000000000000000000000000004d2");
@@ -382,6 +402,7 @@ class LedgerSpecTest {
     /// (nanoseconds with a leading zero).
     @Test
     @DisplayName("the nanoseconds of a transaction id are a number of nanoseconds")
+    @Tag("testId:ledger/the-nanoseconds-of-a-transaction-id-are-a-number-of-nanoseconds")
     void theNanosecondsOfATransactionIdAreANumberOfNanoseconds() {
         // when
         final TransactionId short_ = TransactionId.fromString("0.0.31415@1641088801.2");
@@ -398,6 +419,7 @@ class LedgerSpecTest {
     /// Source: the Python and Java SDKs.
     @Test
     @DisplayName("a transaction id without a valid start of seconds and nanoseconds is rejected")
+    @Tag("testId:ledger/a-transaction-id-without-a-valid-start-of-seconds-and-nanoseconds-is-rejected")
     void aTransactionIdWithoutAValidStartOfSecondsAndNanosecondsIsRejected() {
         for (final String text : List.of("invalid_string", "0.0.123@12345", "0.0.123@1234567890.1234567890")) {
             // when / then
@@ -410,6 +432,7 @@ class LedgerSpecTest {
     /// Source: the C++ SDK (100,000 ids), the Go SDK (concurrently) and the Python SDK (the payer is kept).
     @Test
     @DisplayName("generated transaction ids keep their payer and differ")
+    @Tag("testId:ledger/generated-transaction-ids-keep-their-payer-and-differ")
     void generatedTransactionIdsKeepTheirPayerAndDiffer() {
         // given
         final Address payer = defaultAddress();
@@ -430,6 +453,7 @@ class LedgerSpecTest {
     /// formed and fails only the checksum validation), checked against its regex.
     @Test
     @DisplayName("the inputs that HIP-15 rejects are rejected")
+    @Tag("testId:ledger/the-inputs-that-hip-15-rejects-are-rejected")
     void theInputsThatHIP15RejectsAreRejected() {
         for (final String text : HIP15_REJECTED_IDS()) {
             // when / then
@@ -447,6 +471,7 @@ class LedgerSpecTest {
     /// Source: EIP-55, section "Test Cases", written from the bytes of the address.
     @Test
     @DisplayName("an EVM address is written in its EIP-55 form")
+    @Tag("testId:ledger/an-evm-address-is-written-in-its-eip-55-form")
     void anEVMAddressIsWrittenInItsEIP55Form() {
         for (final String checksummed : EIP55_ADDRESSES()) {
             // when: built from the bytes, so the case of the text plays no part
@@ -464,6 +489,7 @@ class LedgerSpecTest {
     /// one of the Go SDK's mirror node tests, which is not in EIP-55 form.
     @Test
     @DisplayName("an EVM address in mixed case that is not its EIP-55 form is rejected")
+    @Tag("testId:ledger/an-evm-address-in-mixed-case-that-is-not-its-eip-55-form-is-rejected")
     void anEVMAddressInMixedCaseThatIsNotItsEIP55FormIsRejected() {
         for (final String text : List.of("0x5aaeb6053F3E94C9b9A09f33669435E7Ef1BeAed", "7F2c5e0f4a3b9E8d1C6A5b4E3f2D1c0B9a8E7F6d")) {
             // when / then
@@ -476,6 +502,7 @@ class LedgerSpecTest {
     /// Source: the Java, JavaScript and Go SDKs (the nanoseconds are written with 9 digits, the nonce follows after "/").
     @Test
     @DisplayName("a transaction id is written with 9 digits of nanoseconds")
+    @Tag("testId:ledger/a-transaction-id-is-written-with-9-digits-of-nanoseconds")
     void aTransactionIdIsWrittenWith9DigitsOfNanoseconds() {
         // when
         final TransactionId id = TransactionId.fromString("0.0.31415@1641088801.2/4");
@@ -490,6 +517,7 @@ class LedgerSpecTest {
     /// zero is no dotted quad; the Swift SDK cannot read "127.0.0.1:50211" either).
     @Test
     @DisplayName("an IPv4 address is read only from a dotted quad of numbers up to 255")
+    @Tag("testId:ledger/an-ipv4-address-is-read-only-from-a-dotted-quad-of-numbers-up-to-255")
     void anIPv4AddressIsReadOnlyFromADottedQuadOfNumbersUpTo255() {
         // when
         final IpAddress localhost = IpAddress.fromString("127.0.0.1");

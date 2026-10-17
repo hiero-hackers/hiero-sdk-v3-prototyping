@@ -29,6 +29,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenWipeNftTransaction`, generated from the specs.
@@ -37,6 +38,7 @@ class TokenWipeNftTransactionTest {
 
     @Test
     @DisplayName("creates a TokenWipeNftTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final AccountId accountId = accountIdValue();
@@ -52,24 +54,28 @@ class TokenWipeNftTransactionTest {
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenWipeNftTransaction((Address) null, accountIdValue(), serialsValue()));
     }
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new TokenWipeNftTransaction(tokenIdValue(), (AccountId) null, serialsValue()));
     }
 
     @Test
     @DisplayName("rejects null for serials")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/serials/rejects-null")
     void shouldRejectNullSerials() {
         assertThrows(NullPointerException.class, () -> new TokenWipeNftTransaction(tokenIdValue(), accountIdValue(), (List<Long>) null));
     }
 
     @Test
     @DisplayName("serials: accepts the minimum number of elements")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/serials/accepts-at-minimum-size")
     void shouldAcceptSerialsAtMinimumSize() {
         final List<Long> value = List.of(1L);
         final TokenWipeNftTransaction subject = new TokenWipeNftTransaction(tokenIdValue(), accountIdValue(), value);
@@ -78,12 +84,14 @@ class TokenWipeNftTransactionTest {
 
     @Test
     @DisplayName("serials: rejects fewer elements than the minimum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/serials/rejects-below-minimum-size")
     void shouldRejectSerialsBelowMinimumSize() {
         assertThrows(IllegalArgumentException.class, () -> new TokenWipeNftTransaction(tokenIdValue(), accountIdValue(), List.of()));
     }
 
     @Test
     @DisplayName("serials: accepts the maximum number of elements")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/serials/accepts-at-maximum-size")
     void shouldAcceptSerialsAtMaximumSize() {
         final List<Long> value = List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L);
         final TokenWipeNftTransaction subject = new TokenWipeNftTransaction(tokenIdValue(), accountIdValue(), value);
@@ -92,12 +100,14 @@ class TokenWipeNftTransactionTest {
 
     @Test
     @DisplayName("serials: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/serials/rejects-above-maximum-size")
     void shouldRejectSerialsAboveMaximumSize() {
         assertThrows(IllegalArgumentException.class, () -> new TokenWipeNftTransaction(tokenIdValue(), accountIdValue(), List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L)));
     }
 
     @Test
     @DisplayName("the constructor copies serials; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/serials/copies-in")
     void shouldCopySerialsIn() {
         final List<Long> value = new ArrayList<>(serialsValue());
         final List<Long> expected = List.copyOf(value);
@@ -109,6 +119,7 @@ class TokenWipeNftTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final TokenWipeNftTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -118,6 +129,7 @@ class TokenWipeNftTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final TokenWipeNftTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -126,6 +138,7 @@ class TokenWipeNftTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final TokenWipeNftTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -135,6 +148,7 @@ class TokenWipeNftTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final TokenWipeNftTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -143,6 +157,7 @@ class TokenWipeNftTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/memo/set")
     void shouldSetMemo() {
         final TokenWipeNftTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -152,6 +167,7 @@ class TokenWipeNftTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final TokenWipeNftTransaction subject = create();
         subject.setMemo((String) null);
@@ -160,6 +176,7 @@ class TokenWipeNftTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final TokenWipeNftTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -169,6 +186,7 @@ class TokenWipeNftTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final TokenWipeNftTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -177,54 +195,63 @@ class TokenWipeNftTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeNftTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

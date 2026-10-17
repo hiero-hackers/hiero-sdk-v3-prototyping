@@ -18,6 +18,7 @@ import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;
 import org.hiero.ledger.EvmAddress;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `service-contract`, generated from the `tests` blocks of its `## Testing` section.
@@ -31,6 +32,7 @@ class ServiceContractSpecTest {
     /// target).
     @Test
     @DisplayName("contract parameters with bytecode from a file have the defaults of the spec")
+    @Tag("testId:enterprise.service.contract/contract-parameters-with-bytecode-from-a-file-have-the-defaults-of-the-spec")
     void contractParametersWithBytecodeFromAFileHaveTheDefaultsOfTheSpec() {
         // when
         final ContractCreateParams params = defaultContractCreateParams();
@@ -57,6 +59,7 @@ class ServiceContractSpecTest {
     /// test_build_transaction_body_with_bytecode and test_bytecode_setters_clear_each_other).
     @Test
     @DisplayName("contract parameters take the bytecode directly instead of from a file")
+    @Tag("testId:enterprise.service.contract/contract-parameters-take-the-bytecode-directly-instead-of-from-a-file")
     void contractParametersTakeTheBytecodeDirectlyInsteadOfFromAFile() {
         // given
         final byte[] bytecode = hex("608060405234801561001057600080fd5b50");
@@ -79,6 +82,7 @@ class ServiceContractSpecTest {
     /// one of the Java test (Duration.ofHours(10), which is exactly 36000 seconds).
     @Test
     @DisplayName("contract parameters keep the values they are created with")
+    @Tag("testId:enterprise.service.contract/contract-parameters-keep-the-values-they-are-created-with")
     void contractParametersKeepTheValuesTheyAreCreatedWith() {
         // given
         final Authority authority = defaultAuthority();
@@ -107,6 +111,7 @@ class ServiceContractSpecTest {
     /// ASCII text of 100 characters is.
     @Test
     @DisplayName("contract parameters accept a gas of 1 and a memo of 100 characters")
+    @Tag("testId:enterprise.service.contract/contract-parameters-accept-a-gas-of-1-and-a-memo-of-100-characters")
     void contractParametersAcceptAGasOf1AndAMemoOf100Characters() {
         // given
         final String memo = repeat("a", 100L);
@@ -125,6 +130,7 @@ class ServiceContractSpecTest {
     /// test_set_gas_rejects_negative_values and test_constructor_rejects_negative_gas reject a negative gas).
     @Test
     @DisplayName("contract parameters reject a gas of 0")
+    @Tag("testId:enterprise.service.contract/contract-parameters-reject-a-gas-of-0")
     void contractParametersRejectAGasOf0() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(defaultAddress(), null, List.of(), 0L, null, null, null, null, null, null, null, null, false));
@@ -135,6 +141,7 @@ class ServiceContractSpecTest {
     /// Source: this spec (@@maxBytes(100) of contractMemo); HAPI limits a memo to 100 bytes.
     @Test
     @DisplayName("contract parameters reject a memo of 101 characters")
+    @Tag("testId:enterprise.service.contract/contract-parameters-reject-a-memo-of-101-characters")
     void contractParametersRejectAMemoOf101Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(defaultAddress(), null, List.of(), null, null, null, repeat("a", 101L), null, null, null, null, null, false));
@@ -146,6 +153,7 @@ class ServiceContractSpecTest {
     /// initcode).
     @Test
     @DisplayName("contract parameters with bytecode both from a file and directly are rejected")
+    @Tag("testId:enterprise.service.contract/contract-parameters-with-bytecode-both-from-a-file-and-directly-are-rejected")
     void contractParametersWithBytecodeBothFromAFileAndDirectlyAreRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(defaultAddress(), hex("608060405234801561001057600080fd5b50"), List.of(), null, null, null, null, null, null, null, null, null, false));
@@ -156,6 +164,7 @@ class ServiceContractSpecTest {
     /// Source: this spec (@@oneOf(fileId, bytecode): the bytecode is required).
     @Test
     @DisplayName("contract parameters without bytecode are rejected")
+    @Tag("testId:enterprise.service.contract/contract-parameters-without-bytecode-are-rejected")
     void contractParametersWithoutBytecodeAreRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(null, null, List.of(), null, null, null, null, null, null, null, null, null, false));
@@ -167,6 +176,7 @@ class ServiceContractSpecTest {
     /// test_staked_setters_clear_each_other).
     @Test
     @DisplayName("a contract is staked to an account, to a node or to neither")
+    @Tag("testId:enterprise.service.contract/a-contract-is-staked-to-an-account-to-a-node-or-to-neither")
     void aContractIsStakedToAnAccountToANodeOrToNeither() {
         // given
         final AccountId stakedAccount = defaultAccountId();
@@ -190,6 +200,7 @@ class ServiceContractSpecTest {
     /// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI contract_create.proto (staked_id is a oneof).
     @Test
     @DisplayName("contract parameters staked to both an account and a node are rejected")
+    @Tag("testId:enterprise.service.contract/contract-parameters-staked-to-both-an-account-and-a-node-are-rejected")
     void contractParametersStakedToBothAnAccountAndANodeAreRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(defaultAddress(), null, List.of(), null, null, null, null, null, null, null, defaultAccountId(), 3L, false));
@@ -201,6 +212,7 @@ class ServiceContractSpecTest {
     /// a parameter is the given value).
     @Test
     @DisplayName("a parameter keeps the value it wraps")
+    @Tag("testId:enterprise.service.contract/a-parameter-keeps-the-value-it-wraps")
     void aParameterKeepsTheValueItWraps() {
         // given
         final String text = "Hello from Hiero.";
@@ -226,6 +238,7 @@ class ServiceContractSpecTest {
     /// 2**255-1).
     @Test
     @DisplayName("integer parameters accept the smallest and the largest value of their Solidity type")
+    @Tag("testId:enterprise.service.contract/integer-parameters-accept-the-smallest-and-the-largest-value-of-their-solidity-type")
     void integerParametersAcceptTheSmallestAndTheLargestValueOfTheirSolidityType() {
         // when / then
         assertEquals((short) 0, ContractFactory.uint8((short) 0).value());
@@ -243,6 +256,7 @@ class ServiceContractSpecTest {
     /// Source: this spec (Contract is a value of its contract id).
     @Test
     @DisplayName("contracts with the same contract id are equal")
+    @Tag("testId:enterprise.service.contract/contracts-with-the-same-contract-id-are-equal")
     void contractsWithTheSameContractIdAreEqual() {
         // given
         final ContractId contractId = defaultContractId();

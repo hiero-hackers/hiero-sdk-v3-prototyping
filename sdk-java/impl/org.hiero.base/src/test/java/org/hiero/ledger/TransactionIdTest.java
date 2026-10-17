@@ -3,6 +3,7 @@ package org.hiero.ledger;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TransactionId`, generated from the specs.
@@ -11,12 +12,14 @@ class TransactionIdTest {
 
     @Test
     @DisplayName("generateTransactionId(accountId) can be called and returns a value")
+    @Tag("testId:ledger.TransactionId/generateTransactionId/call")
     void shouldCallGenerateTransactionId() {
         assertNotNull(TransactionId.generateTransactionId(accountIdValue()));
     }
 
     @Test
     @DisplayName("fromString(transactionId) can be called and returns a value (only IllegalArgumentException may occur)")
+    @Tag("testId:ledger.TransactionId/fromString/call")
     void shouldCallFromString() throws Exception {
         try {
             assertNotNull(TransactionId.fromString(transactionIdValue()));

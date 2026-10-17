@@ -18,6 +18,7 @@ import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenMintReceipt`, generated from the specs.
@@ -26,6 +27,7 @@ class TokenMintReceiptTest {
 
     @Test
     @DisplayName("creates a TokenMintReceipt and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintReceipt/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -42,30 +44,35 @@ class TokenMintReceiptTest {
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintReceipt/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new TokenMintReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue(), totalSupplyValue()));
     }
 
     @Test
     @DisplayName("rejects null for status")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintReceipt/status/rejects-null")
     void shouldRejectNullStatus() {
         assertThrows(NullPointerException.class, () -> new TokenMintReceipt(transactionIdValue(), (TransactionStatus) null, exchangeRateValue(), nextExchangeRateValue(), totalSupplyValue()));
     }
 
     @Test
     @DisplayName("rejects null for exchangeRate")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintReceipt/exchangeRate/rejects-null")
     void shouldRejectNullExchangeRate() {
         assertThrows(NullPointerException.class, () -> new TokenMintReceipt(transactionIdValue(), statusValue(), (ExchangeRate) null, nextExchangeRateValue(), totalSupplyValue()));
     }
 
     @Test
     @DisplayName("rejects null for nextExchangeRate")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintReceipt/nextExchangeRate/rejects-null")
     void shouldRejectNullNextExchangeRate() {
         assertThrows(NullPointerException.class, () -> new TokenMintReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), (ExchangeRate) null, totalSupplyValue()));
     }
 
     @Test
     @DisplayName("totalSupply: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintReceipt/totalSupply/accepts-at-minimum")
     void shouldAcceptTotalSupplyAtMinimum() {
         final long value = -9223372036854775808L;
         final TokenMintReceipt subject = new TokenMintReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), value);
@@ -74,6 +81,7 @@ class TokenMintReceiptTest {
 
     @Test
     @DisplayName("totalSupply: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintReceipt/totalSupply/accepts-at-maximum")
     void shouldAcceptTotalSupplyAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenMintReceipt subject = new TokenMintReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), value);

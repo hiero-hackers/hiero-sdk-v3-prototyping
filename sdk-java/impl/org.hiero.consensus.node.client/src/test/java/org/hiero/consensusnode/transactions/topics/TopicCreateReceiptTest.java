@@ -18,6 +18,7 @@ import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TopicCreateReceipt`, generated from the specs.
@@ -26,6 +27,7 @@ class TopicCreateReceiptTest {
 
     @Test
     @DisplayName("creates a TopicCreateReceipt and returns the values")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateReceipt/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -42,6 +44,7 @@ class TopicCreateReceiptTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateReceipt/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -64,6 +67,7 @@ class TopicCreateReceiptTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateReceipt/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TopicCreateReceipt subject = TopicCreateReceipt.builder()
                 .transactionId(transactionIdValue())
@@ -76,36 +80,42 @@ class TopicCreateReceiptTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateReceipt/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TopicCreateReceipt.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateReceipt/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new TopicCreateReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue(), topicIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for status")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateReceipt/status/rejects-null")
     void shouldRejectNullStatus() {
         assertThrows(NullPointerException.class, () -> new TopicCreateReceipt(transactionIdValue(), (TransactionStatus) null, exchangeRateValue(), nextExchangeRateValue(), topicIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for exchangeRate")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateReceipt/exchangeRate/rejects-null")
     void shouldRejectNullExchangeRate() {
         assertThrows(NullPointerException.class, () -> new TopicCreateReceipt(transactionIdValue(), statusValue(), (ExchangeRate) null, nextExchangeRateValue(), topicIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for nextExchangeRate")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateReceipt/nextExchangeRate/rejects-null")
     void shouldRejectNullNextExchangeRate() {
         assertThrows(NullPointerException.class, () -> new TopicCreateReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), (ExchangeRate) null, topicIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for topicId")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateReceipt/topicId/rejects-null")
     void shouldRejectNullTopicId() {
         assertThrows(NullPointerException.class, () -> new TopicCreateReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), (Address) null));
     }

@@ -274,6 +274,7 @@ What no source states as a value (a signature of the default key) is checked by 
 See `docs/sdk-unit-test-analysis.md` for where the SDKs test the same.
 
 ```tests
+@@testId("a-private-key-imported-from-hex-has-these-raw-bytes")
 test "a private key imported from hex has these raw bytes" {
     for algorithm in keys(value: KEY_PAIRS) {
         let pairs = KEY_PAIRS[algorithm]
@@ -289,6 +290,7 @@ test "a private key imported from hex has these raw bytes" {
     }
 }
 
+@@testId("the-default-private-key-encodes-as-pkcs-8-der")
 test "the default private key encodes as PKCS#8 DER" {
     // given
     let key = DEFAULT(PrivateKey)
@@ -304,6 +306,7 @@ test "the default private key encodes as PKCS#8 DER" {
 
 // Source: the vectors of KEY_PAIRS (RFC 8032, SEC 2 and the tests of the Java, Go, JavaScript, Rust and Swift SDKs).
 // The public key of an ECDSA key is the compressed SEC 1 point (33 bytes) in every SDK.
+@@testId("a-private-key-derives-its-published-public-key")
 test "a private key derives its published public key" {
     for algorithm in keys(value: KEY_PAIRS) {
         let pairs = KEY_PAIRS[algorithm]
@@ -323,6 +326,7 @@ test "a private key derives its published public key" {
 
 // Source: the Go, C++ and Python SDKs (sign, verify, and a signature that no longer verifies for another message); the
 // C++ SDK (the empty message).
+@@testId("a-signature-verifies-with-the-public-key-and-only-for-its-message")
 test "a signature verifies with the public key and only for its message" {
     for algorithm in keys(value: KEY_PAIRS) {
         let pairs = KEY_PAIRS[algorithm]
@@ -346,6 +350,7 @@ test "a signature verifies with the public key and only for its message" {
 }
 
 // Source: the Java, Go and Python SDKs (a key read back from its own DER and PEM encoding).
+@@testId("a-key-survives-every-format-that-supports-its-type")
 test "a key survives every format that supports its type" {
     for algorithm in keys(value: KEY_PAIRS) {
         let pairs = KEY_PAIRS[algorithm]
@@ -392,6 +397,7 @@ test "a key survives every format that supports its type" {
     }
 }
 
+@@testId("a-hex-key-of-the-wrong-length-is-rejected")
 test "a hex key of the wrong length is rejected" {
     // given
     let tooShort = "d3671a1e"
@@ -408,6 +414,7 @@ test "a hex key of the wrong length is rejected" {
 
 // Source: the reference vectors of hashgraph/hedera-sdk-reference#93, read with the same results by the
 // Java, JavaScript, Rust, C++ and Swift SDKs; verified with OpenSSL.
+@@testId("an-ed25519-pkcs-8-der-key-derives-the-reference-public-key")
 test "an Ed25519 PKCS#8 DER key derives the reference public key" {
     // given
     let der = hex(text: "302e020100300506032b657004220420feb858a4a69600a5eef2d9c76f7fb84fc0b6627f29e0ab17e160f640c267d404")
@@ -423,6 +430,7 @@ test "an Ed25519 PKCS#8 DER key derives the reference public key" {
 }
 
 // Source: hedera-sdk-reference#93 (Java, JavaScript, Rust, C++, Swift); verified with OpenSSL.
+@@testId("an-ed25519-pkcs-8-pem-key-derives-the-reference-public-key")
 test "an Ed25519 PKCS#8 PEM key derives the reference public key" {
     // given
     let pem = "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIOgbjaHgEqF7PY0t2dUf2VU0u1MRoKii/fywDlze4lvl\n-----END PRIVATE KEY-----\n"
@@ -437,6 +445,7 @@ test "an Ed25519 PKCS#8 PEM key derives the reference public key" {
 }
 
 // Source: RFC 8410 (SPKI of Ed25519); the key is the one of the Java, Go, Rust and Swift tests.
+@@testId("an-ed25519-public-key-is-read-from-and-written-as-spki-der")
 test "an Ed25519 public key is read from and written as SPKI DER" {
     // given
     let raw = hex(text: "e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7")
@@ -452,6 +461,7 @@ test "an Ed25519 public key is read from and written as SPKI DER" {
 }
 
 // Source: RFC 8032, section 7.1, TEST 2.
+@@testId("an-rfc-8032-signature-verifies-only-for-its-message")
 test "an RFC 8032 signature verifies only for its message" {
     // given
     let publicKey = createPublicKey(algorithm: KeyAlgorithm.ED25519,
@@ -470,6 +480,7 @@ test "an RFC 8032 signature verifies only for its message" {
 
 // Source: RFC 5480 (SPKI of an EC key); the vectors of hedera-sdk-reference#93 (Java, JavaScript, Rust, C++, Swift),
 // verified with OpenSSL.
+@@testId("a-secp256k1-spki-der-key-with-a-compressed-or-uncompressed-point-is-read-as-the-compressed-point")
 test "a secp256k1 SPKI DER key with a compressed or uncompressed point is read as the compressed point" {
     // given
     let compressed = hex(text: "3036301006072a8648ce3d020106052b8104000a032200036843f5cb338bbb4cdb21b0da4ea739d910951d6e8a5f703d313efe31afe788f4")
@@ -485,6 +496,7 @@ test "a secp256k1 SPKI DER key with a compressed or uncompressed point is read a
 }
 
 // Source: SEC 1, section 3.2 (a private key is in [1, n - 1]); rejected by the Go and Python SDKs.
+@@testId("a-secp256k1-private-key-of-zero-or-of-the-group-order-is-rejected")
 test "a secp256k1 private key of zero or of the group order is rejected" {
     // given
     let zero = repeat(value: hex(text: "00"), count: 32)
@@ -498,6 +510,7 @@ test "a secp256k1 private key of zero or of the group order is rejected" {
 }
 
 // Source: SEC 1, section 2.3.4 (a point must be on the curve); rejected by the Go SDK (the Java SDK accepts it).
+@@testId("33-zero-bytes-are-no-secp256k1-public-key")
 test "33 zero bytes are no secp256k1 public key" {
     // given
     let rawBytes = repeat(value: hex(text: "00"), count: 33)
@@ -508,6 +521,7 @@ test "33 zero bytes are no secp256k1 public key" {
 }
 
 // Source: the C++ and Go SDKs.
+@@testId("text-that-is-no-hex-is-rejected")
 test "text that is no hex is rejected" {
     // given
     let noHex = "fdsakfdsalf"
@@ -521,6 +535,7 @@ test "text that is no hex is rejected" {
 }
 
 // Source: RFC 7468 (PEM labels); rejected by the Rust and Swift SDKs.
+@@testId("a-pem-key-with-an-unknown-label-is-rejected")
 test "a PEM key with an unknown label is rejected" {
     // given
     let pem = "-----BEGIN PRIVATE KEYS-----\nMC4CAQAwBQYDK2VwBCIEIOgbjaHgEqF7PY0t2dUf2VU0u1MRoKii/fywDlze4lvl\n-----END PRIVATE KEYS-----\n"
@@ -531,6 +546,7 @@ test "a PEM key with an unknown label is rejected" {
 }
 
 // Source: the Python SDK; a key is its algorithm and its bytes.
+@@testId("the-same-bytes-as-ed25519-and-as-secp256k1-key-are-different-keys")
 test "the same bytes as Ed25519 and as secp256k1 key are different keys" {
     // given
     let rawBytes = repeat(value: hex(text: "01"), count: 32)
@@ -545,6 +561,7 @@ test "the same bytes as Ed25519 and as secp256k1 key are different keys" {
 
 // Source: the known answer of the Go, Rust and Swift SDKs (Keccak-256, RFC 6979, low-s); the Java SDK computes the same r
 // and the s of the upper half, n - s.
+@@testId("a-secp256k1-signature-is-the-rfc-6979-low-s-signature-of-the-keccak-256-hash")
 test "a secp256k1 signature is the RFC 6979 low-s signature of the Keccak-256 hash" {
     // given
     let privateKey = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX,
@@ -560,6 +577,7 @@ test "a secp256k1 signature is the RFC 6979 low-s signature of the Keccak-256 ha
 
 // Source: the known answer of the Java SDK, which does not normalise s; the signature differs from the low-s one only
 // in s (n - s).
+@@testId("a-secp256k1-signature-with-a-high-s-verifies")
 test "a secp256k1 signature with a high s verifies" {
     // given
     let publicKey = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX,
@@ -573,6 +591,7 @@ test "a secp256k1 signature with a high s verifies" {
 
 // Source: this spec (ByteImportEncoding.BASE64, RFC 4648); no SDK imports raw key bytes from Base64. The text is the
 // default key in Base64.
+@@testId("a-private-key-imported-from-base64-is-the-key-of-the-same-bytes-in-hex")
 test "a private key imported from Base64 is the key of the same bytes in hex" {
     // given
     let base64Text = "02caHpi7IvARwOS89RJVkOFdjyGnAXMJu1WIUgObx1w="
@@ -586,6 +605,7 @@ test "a private key imported from Base64 is the key of the same bytes in hex" {
 
 // Source: RFC 5480 (an EC key in an SPKI: id-ecPublicKey, the named curve secp256k1, the compressed point); the key
 // of the test "a secp256k1 private key derives its compressed public key". OpenSSL writes exactly these bytes.
+@@testId("a-secp256k1-public-key-is-written-as-rfc-5480-spki-with-the-compressed-point")
 test "a secp256k1 public key is written as RFC 5480 SPKI with the compressed point" {
     // given
     let publicKey = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX,
@@ -601,6 +621,7 @@ test "a secp256k1 public key is written as RFC 5480 SPKI with the compressed poi
 
 // Source: RFC 5958 and RFC 5915 (the smallest PKCS#8 of an EC key: no curve and no public key inside the
 // ECPrivateKey); read by OpenSSL.
+@@testId("a-secp256k1-private-key-is-read-from-a-standard-pkcs-8-structure")
 test "a secp256k1 private key is read from a standard PKCS#8 structure" {
     // given
     let der = hex(text: "303e020100301006072a8648ce3d020106052b8104000a042730250201010420"
@@ -616,6 +637,7 @@ test "a secp256k1 private key is read from a standard PKCS#8 structure" {
 
 // Source: the form that most current Hiero SDKs write and read (see "The standards of the containers"); it is no PKCS#8
 // structure, and OpenSSL rejects it as well.
+@@testId("the-legacy-ecdsa-key-form-of-earlier-sdks-is-no-pkcs-8-and-is-rejected")
 test "the legacy ECDSA key form of earlier SDKs is no PKCS#8 and is rejected" {
     // given
     let der = hex(text: "3030020100300706052b8104000a04220420"
@@ -627,6 +649,7 @@ test "the legacy ECDSA key form of earlier SDKs is no PKCS#8 and is rejected" {
 }
 
 // Source: the Java and Go SDKs accept hex keys with a 0x prefix.
+@@testId("a-hex-key-may-have-a-0x-prefix")
 test "a hex key may have a 0x prefix" {
     for algorithm in keys(value: KEY_PAIRS) {
         let pairs = KEY_PAIRS[algorithm]
@@ -643,6 +666,7 @@ test "a hex key may have a 0x prefix" {
 
 // Source: the known answers of the Rust, Swift and JavaScript SDKs ("hello, world") and of the Java SDK ("This is a
 // message about the world."); checked by verification, since a deterministic Ed25519 nonce is not required.
+@@testId("the-ed25519-signatures-of-other-sdks-verify")
 test "the Ed25519 signatures of other SDKs verify" {
     // given
     let publicKey = createPublicKey(algorithm: KeyAlgorithm.ED25519, rawBytes: hex(text: "e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"))
@@ -657,6 +681,7 @@ test "the Ed25519 signatures of other SDKs verify" {
 }
 
 // Source: RFC 8032, section 7.1, TEST 1 (the empty message) and TEST 3; the C++ SDK runs these vectors.
+@@testId("the-rfc-8032-signatures-of-test-1-and-test-3-verify")
 test "the RFC 8032 signatures of TEST 1 and TEST 3 verify" {
     // given
     let test1 = createPrivateKey(algorithm: KeyAlgorithm.ED25519,
@@ -674,6 +699,7 @@ test "the RFC 8032 signatures of TEST 1 and TEST 3 verify" {
 }
 
 // Source: the known answer of the JavaScript SDK for a transaction body (Keccak-256, RFC 6979, low-s).
+@@testId("a-secp256k1-signature-of-a-transaction-body-is-the-rfc-6979-low-s-signature")
 test "a secp256k1 signature of a transaction body is the RFC 6979 low-s signature" {
     // given
     let privateKey = createPrivateKey(algorithm: KeyAlgorithm.ECDSA, encoding: ByteImportEncoding.HEX, value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
@@ -689,6 +715,7 @@ test "a secp256k1 signature of a transaction body is the RFC 6979 low-s signatur
 
 // Source: the Java, Go, Python and Rust SDKs (a signature with one changed byte no longer verifies). The signatures are
 // the known answers above with byte 5 increased by one.
+@@testId("a-signature-with-a-changed-byte-does-not-verify")
 test "a signature with a changed byte does not verify" {
     // given
     let ed25519 = createPublicKey(algorithm: KeyAlgorithm.ED25519, rawBytes: hex(text: "e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"))
@@ -705,6 +732,7 @@ test "a signature with a changed byte does not verify" {
 }
 
 // Source: the C++ and Go SDKs (a signature of the wrong length is invalid, not an error).
+@@testId("a-signature-of-the-wrong-length-does-not-verify")
 test "a signature of the wrong length does not verify" {
     for algorithm in keys(value: KEY_PAIRS) {
         let pairs = KEY_PAIRS[algorithm]
@@ -721,6 +749,7 @@ test "a signature of the wrong length does not verify" {
 }
 
 // Source: the Rust, Swift and Python SDKs (a signature of one algorithm does not verify with a key of the other).
+@@testId("a-signature-does-not-verify-with-a-key-of-the-other-algorithm")
 test "a signature does not verify with a key of the other algorithm" {
     // given
     let ed25519 = createPublicKey(algorithm: KeyAlgorithm.ED25519, rawBytes: hex(text: "e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"))
@@ -737,6 +766,7 @@ test "a signature does not verify with a key of the other algorithm" {
 }
 
 // Source: RFC 5958 (OneAsymmetricKey, version 1, with the public key); the Swift SDK reads it and writes version 0.
+@@testId("a-pkcs-8-version-2-key-with-its-public-key-is-read-and-written-as-version-1")
 test "a PKCS#8 version 2 key with its public key is read and written as version 1" {
     // given
     let der = hex(text: "3053020101300506032b65700422042092a736a341feb460a3906dec5b7eeaaf64111e6d9769e06b543986968465802f"
@@ -752,6 +782,7 @@ test "a PKCS#8 version 2 key with its public key is read and written as version 
 }
 
 // Source: the C++, Go and Swift SDKs (hex digits in upper case).
+@@testId("hex-digits-may-be-upper-case")
 test "hex digits may be upper case" {
     // when
     let key = createPrivateKey(algorithm: KeyAlgorithm.ED25519, encoding: ByteImportEncoding.HEX,
@@ -762,6 +793,7 @@ test "hex digits may be upper case" {
 }
 
 // Source: the JavaScript and Go SDKs (a secp256k1 scalar with leading zero bytes keeps its 32 bytes).
+@@testId("a-secp256k1-private-key-with-leading-zero-bytes-keeps-32-bytes")
 test "a secp256k1 private key with leading zero bytes keeps 32 bytes" {
     // given
     let hexText = "0000000000000000fd2fe3d732d3412140accab21b4b7303ff05f9c9127542cd"
@@ -777,6 +809,7 @@ test "a secp256k1 private key with leading zero bytes keeps 32 bytes" {
 
 // Source: the Go SDK (the range check uses the order of secp256k1: the order of P-256 plus one is a valid secp256k1
 // scalar, because it is below the order of secp256k1).
+@@testId("a-secp256k1-private-key-is-checked-against-the-order-of-secp256k1")
 test "a secp256k1 private key is checked against the order of secp256k1" {
     // given
     let hexText = "ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632552"
@@ -789,6 +822,7 @@ test "a secp256k1 private key is checked against the order of secp256k1" {
 }
 
 // Source: the Go, Java, Python and C++ SDKs (a generated key has its algorithm and 32 bytes, and signs).
+@@testId("a-generated-key-of-each-algorithm-signs-and-verifies")
 test "a generated key of each algorithm signs and verifies" {
     for algorithm in [KeyAlgorithm.ED25519, KeyAlgorithm.ECDSA] {
         // when
@@ -804,6 +838,7 @@ test "a generated key of each algorithm signs and verifies" {
 }
 
 // Source: the Go and Python SDKs (an EC key of another curve), the Go SDK (bytes after the DER structure).
+@@testId("an-spki-key-of-another-curve-or-with-trailing-bytes-is-rejected")
 test "an SPKI key of another curve or with trailing bytes is rejected" {
     // given: the RFC 5480 SPKI of the test "a secp256k1 public key is written as RFC 5480 SPKI with the compressed point"
     // with the curve 1.3.132.0.11 instead of 1.3.132.0.10, and the same SPKI followed by one byte
@@ -820,6 +855,7 @@ test "an SPKI key of another curve or with trailing bytes is rejected" {
 }
 
 // Source: the Go, Java and Python SDKs (raw keys of the wrong length), the Python SDK (an unknown point prefix).
+@@testId("raw-key-bytes-of-the-wrong-length-or-with-an-unknown-point-prefix-are-rejected")
 test "raw key bytes of the wrong length or with an unknown point prefix are rejected" {
     // when / then: an Ed25519 public key has 32 bytes
     @@expectThrows(illegal-format)
@@ -836,6 +872,7 @@ test "raw key bytes of the wrong length or with an unknown point prefix are reje
 }
 
 // Source: RFC 7468 (the labels of BEGIN and END must match); rejected by the Swift SDK.
+@@testId("a-pem-key-whose-end-label-differs-from-its-begin-label-is-rejected")
 test "a PEM key whose END label differs from its BEGIN label is rejected" {
     // given
     let pem = "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEINNnGh6YuyLwEcDkvPUSVZDhXY8hpwFzCbtViFIDm8dc\n-----END PUBLIC KEY-----\n"
@@ -846,6 +883,7 @@ test "a PEM key whose END label differs from its BEGIN label is rejected" {
 }
 
 // Source: RFC 7468, section 2 (parsers ignore whitespace around the lines); the JavaScript SDK.
+@@testId("a-pem-key-with-extra-whitespace-and-blank-lines-is-read")
 test "a PEM key with extra whitespace and blank lines is read" {
     // given: the default key in PEM (see "Key examples") with tabs, spaces and blank lines
     let pem = "\n-----BEGIN PRIVATE KEY-----  \n\t MC4CAQAwBQYDK2VwBCIEINNnGh6YuyLwEcDkvPUSVZDhXY8hpwFzCbtViFIDm8dc \t\n\n-----END PRIVATE KEY-----\n\n"

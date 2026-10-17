@@ -110,6 +110,7 @@ messages and are tested by each implementation.
 ```tests
 // Source: this spec (getAllTransactionSupports returns every registered support, getTransactionSupport the one of a
 // type).
+@@testId("every-registered-transaction-support-is-found-by-its-transaction-type")
 test "every registered transaction support is found by its transaction type" {
     for support in getAllTransactionSupports() {
         // when
@@ -122,6 +123,7 @@ test "every registered transaction support is found by its transaction type" {
 
 // Source: this spec (getTransactionSupport throws if no support is registered for the type). A receipt is no
 // transaction, so no support is registered for it.
+@@testId("a-type-without-a-registered-transaction-support-is-rejected")
 test "a type without a registered transaction support is rejected" {
     // when / then
     @@expectThrows(not-found-error)

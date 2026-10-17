@@ -196,6 +196,8 @@ class SpecTestGeneratorTest {
                 .contains("@DisplayName(\"a\")\nclass ASpecTest {\n")
                 .contains("    /// `a/a-record-returns-its-values`\n    ///\n    /// the attributes of a record\n"
                         + "    @Test\n    @DisplayName(\"a record returns its values\")\n"
+                        // the language-neutral id of the test, for the results (Open Test Reporting)
+                        + "    @Tag(\"testId:a/a-record-returns-its-values\")\n"
                         + "    void aRecordReturnsItsValues() {\n")
                 .contains("        // given\n        final Point p = defaultPoint();\n\n        // then\n"
                         + "        assertEquals(2, p.x()); // an int32\n")

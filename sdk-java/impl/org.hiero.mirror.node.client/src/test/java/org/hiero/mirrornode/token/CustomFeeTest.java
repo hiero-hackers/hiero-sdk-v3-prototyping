@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import org.hiero.mirrornode.common.FixedFee;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `CustomFee`, generated from the specs.
@@ -16,6 +17,7 @@ class CustomFeeTest {
 
     @Test
     @DisplayName("creates a CustomFee and returns the values")
+    @Tag("testId:mirrornode.token.CustomFee/create")
     void shouldCreateAndReturnTheValues() {
         final List<FixedFee> fixedFees = fixedFeesValue();
         final List<FractionalFee> fractionalFees = fractionalFeesValue();
@@ -28,12 +30,14 @@ class CustomFeeTest {
 
     @Test
     @DisplayName("rejects null for fixedFees")
+    @Tag("testId:mirrornode.token.CustomFee/fixedFees/rejects-null")
     void shouldRejectNullFixedFees() {
         assertThrows(NullPointerException.class, () -> new CustomFee((List<FixedFee>) null, fractionalFeesValue(), royaltyFeesValue()));
     }
 
     @Test
     @DisplayName("the constructor copies fixedFees; the accessor returns an unmodifiable collection")
+    @Tag("testId:mirrornode.token.CustomFee/fixedFees/copies-in")
     void shouldCopyFixedFeesIn() {
         final List<FixedFee> value = new ArrayList<>(fixedFeesValue());
         final List<FixedFee> expected = List.copyOf(value);
@@ -45,12 +49,14 @@ class CustomFeeTest {
 
     @Test
     @DisplayName("rejects null for fractionalFees")
+    @Tag("testId:mirrornode.token.CustomFee/fractionalFees/rejects-null")
     void shouldRejectNullFractionalFees() {
         assertThrows(NullPointerException.class, () -> new CustomFee(fixedFeesValue(), (List<FractionalFee>) null, royaltyFeesValue()));
     }
 
     @Test
     @DisplayName("the constructor copies fractionalFees; the accessor returns an unmodifiable collection")
+    @Tag("testId:mirrornode.token.CustomFee/fractionalFees/copies-in")
     void shouldCopyFractionalFeesIn() {
         final List<FractionalFee> value = new ArrayList<>(fractionalFeesValue());
         final List<FractionalFee> expected = List.copyOf(value);
@@ -62,12 +68,14 @@ class CustomFeeTest {
 
     @Test
     @DisplayName("rejects null for royaltyFees")
+    @Tag("testId:mirrornode.token.CustomFee/royaltyFees/rejects-null")
     void shouldRejectNullRoyaltyFees() {
         assertThrows(NullPointerException.class, () -> new CustomFee(fixedFeesValue(), fractionalFeesValue(), (List<RoyaltyFee>) null));
     }
 
     @Test
     @DisplayName("the constructor copies royaltyFees; the accessor returns an unmodifiable collection")
+    @Tag("testId:mirrornode.token.CustomFee/royaltyFees/copies-in")
     void shouldCopyRoyaltyFeesIn() {
         final List<RoyaltyFee> value = new ArrayList<>(royaltyFeesValue());
         final List<RoyaltyFee> expected = List.copyOf(value);
@@ -79,6 +87,7 @@ class CustomFeeTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.token.CustomFee/value-semantics")
     void shouldCompareByValue() {
         final CustomFee subject = create();
         final CustomFee other = create();

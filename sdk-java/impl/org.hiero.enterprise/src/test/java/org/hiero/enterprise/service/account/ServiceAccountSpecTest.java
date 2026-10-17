@@ -13,6 +13,7 @@ import org.hiero.keys.PrivateKey;
 import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `service-account`, generated from the `tests` blocks of its `## Testing` section.
@@ -24,6 +25,7 @@ class ServiceAccountSpecTest {
     /// Source: this spec (@@default and @@nullable of AccountCreateParams).
     @Test
     @DisplayName("account parameters with only an authority have the defaults of the spec")
+    @Tag("testId:enterprise.service.account/account-parameters-with-only-an-authority-have-the-defaults-of-the-spec")
     void accountParametersWithOnlyAnAuthorityHaveTheDefaultsOfTheSpec() {
         // when
         final AccountCreateParams params = defaultAccountCreateParams();
@@ -50,6 +52,7 @@ class ServiceAccountSpecTest {
     /// seconds).
     @Test
     @DisplayName("account parameters keep the values they are created with")
+    @Tag("testId:enterprise.service.account/account-parameters-keep-the-values-they-are-created-with")
     void accountParametersKeepTheValuesTheyAreCreatedWith() {
         // given
         final Authority authority = defaultAuthority();
@@ -75,6 +78,7 @@ class ServiceAccountSpecTest {
     /// the other).
     @Test
     @DisplayName("an account is staked to an account, to a node or to neither")
+    @Tag("testId:enterprise.service.account/an-account-is-staked-to-an-account-to-a-node-or-to-neither")
     void anAccountIsStakedToAnAccountToANodeOrToNeither() {
         // given
         final AccountId stakedAccount = defaultAccountId();
@@ -99,6 +103,7 @@ class ServiceAccountSpecTest {
     /// staked_account_id or staked_node_id).
     @Test
     @DisplayName("account parameters staked to both an account and a node are rejected")
+    @Tag("testId:enterprise.service.account/account-parameters-staked-to-both-an-account-and-a-node-are-rejected")
     void accountParametersStakedToBothAnAccountAndANodeAreRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new AccountCreateParams(defaultAuthority(), null, null, false, null, null, defaultAccountId(), 3L, false, null));

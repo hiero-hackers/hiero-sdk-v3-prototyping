@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.math.BigInteger;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `hedera`, generated from the `tests` blocks of its `## Testing` section.
@@ -26,6 +27,7 @@ class HederaSpecTest {
     /// Source: this spec (HbarUnit); the unit tests of the Java, JavaScript, Go, Rust and Swift SDKs.
     @Test
     @DisplayName("every unit has its symbol and its number of tinybars")
+    @Tag("testId:hedera/every-unit-has-its-symbol-and-its-number-of-tinybars")
     void everyUnitHasItsSymbolAndItsNumberOfTinybars() {
         for (final HbarUnit unit : keys(TINYBARS_PER_UNIT())) {
             // then
@@ -39,6 +41,7 @@ class HederaSpecTest {
     /// Source: this spec (toTinybars is toBaseUnits); the Java, JavaScript, Go and Rust SDKs (one of each unit in tinybars).
     @Test
     @DisplayName("one of each unit is its number of tinybars")
+    @Tag("testId:hedera/one-of-each-unit-is-its-number-of-tinybars")
     void oneOfEachUnitIsItsNumberOfTinybars() {
         for (final HbarUnit unit : keys(TINYBARS_PER_UNIT())) {
             // given
@@ -55,6 +58,7 @@ class HederaSpecTest {
     /// Source: the Java, JavaScript and Go SDKs (an amount is converted to every unit and back without loss).
     @Test
     @DisplayName("an amount of whole units converts to tinybars and back")
+    @Tag("testId:hedera/an-amount-of-whole-units-converts-to-tinybars-and-back")
     void anAmountOfWholeUnitsConvertsToTinybarsAndBack() {
         for (final HbarUnit unit : keys(TINYBARS_PER_UNIT())) {
             // given
@@ -75,6 +79,7 @@ class HederaSpecTest {
     /// Source: the Java and JavaScript SDKs (conversions between units other than tinybar).
     @Test
     @DisplayName("an amount converts between units by their factors")
+    @Tag("testId:hedera/an-amount-converts-between-units-by-their-factors")
     void anAmountConvertsBetweenUnitsByTheirFactors() {
         // given
         final Hbar hbar = defaultHbar();
@@ -91,6 +96,7 @@ class HederaSpecTest {
     /// Source: the Java, JavaScript, Go and Python SDKs (a negative amount, as used by the sender of a transfer).
     @Test
     @DisplayName("a negative amount converts like a positive one")
+    @Tag("testId:hedera/a-negative-amount-converts-like-a-positive-one")
     void aNegativeAmountConvertsLikeAPositiveOne() {
         // given
         final Hbar debit = new Hbar(-5L, HbarUnit.HBAR);
@@ -105,6 +111,7 @@ class HederaSpecTest {
     /// Source: the Java and Go SDKs (zero HBAR).
     @Test
     @DisplayName("zero is zero in every unit")
+    @Tag("testId:hedera/zero-is-zero-in-every-unit")
     void zeroIsZeroInEveryUnit() {
         for (final HbarUnit unit : keys(TINYBARS_PER_UNIT())) {
             // when / then
@@ -118,6 +125,7 @@ class HederaSpecTest {
     /// Source: this spec (amounts are int64 tinybars); the largest whole number of gigabars that fits.
     @Test
     @DisplayName("the largest amounts that fit into int64 tinybars convert exactly")
+    @Tag("testId:hedera/the-largest-amounts-that-fit-into-int64-tinybars-convert-exactly")
     void theLargestAmountsThatFitIntoInt64TinybarsConvertExactly() {
         // when / then
         assertEquals(9_200_000_000_000_000_000L, new Hbar(92L, HbarUnit.GIGABAR).toTinybars());
@@ -129,6 +137,7 @@ class HederaSpecTest {
     /// Source: this spec (an Hbar is its amount and its unit).
     @Test
     @DisplayName("an amount keeps its amount and its unit")
+    @Tag("testId:hedera/an-amount-keeps-its-amount-and-its-unit")
     void anAmountKeepsItsAmountAndItsUnit() {
         // given
         final Hbar hbar = new Hbar(42L, HbarUnit.KILOBAR);
@@ -143,6 +152,7 @@ class HederaSpecTest {
     /// Source: this spec (equals); the Java and JavaScript SDKs (amounts are compared in tinybars).
     @Test
     @DisplayName("amounts of the same number of tinybars are equal whatever their units")
+    @Tag("testId:hedera/amounts-of-the-same-number-of-tinybars-are-equal-whatever-their-units")
     void amountsOfTheSameNumberOfTinybarsAreEqualWhateverTheirUnits() {
         for (final HbarUnit unit : keys(TINYBARS_PER_UNIT())) {
             // given
@@ -164,6 +174,7 @@ class HederaSpecTest {
     /// an int64 holds.
     @Test
     @DisplayName("amounts beyond int64 tinybars are compared exactly")
+    @Tag("testId:hedera/amounts-beyond-int64-tinybars-are-compared-exactly")
     void amountsBeyondInt64TinybarsAreComparedExactly() {
         // given
         final Hbar gigabars = new Hbar(100L, HbarUnit.GIGABAR);
@@ -179,6 +190,7 @@ class HederaSpecTest {
     /// Source: this spec (a conversion never loses a part of the amount).
     @Test
     @DisplayName("a conversion to a unit of which the amount is no whole number fails")
+    @Tag("testId:hedera/a-conversion-to-a-unit-of-which-the-amount-is-no-whole-number-fails")
     void aConversionToAUnitOfWhichTheAmountIsNoWholeNumberFails() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new Hbar(1L, HbarUnit.TINYBAR).to(HbarUnit.HBAR));
@@ -191,6 +203,7 @@ class HederaSpecTest {
     /// Source: this spec (amounts are int64 in every unit): 93 gigabars are more tinybars than an int64 holds.
     @Test
     @DisplayName("an amount that does not fit into int64 tinybars fails to convert")
+    @Tag("testId:hedera/an-amount-that-does-not-fit-into-int64-tinybars-fails-to-convert")
     void anAmountThatDoesNotFitIntoInt64TinybarsFailsToConvert() {
         // given
         final Hbar tooMuch = new Hbar(93L, HbarUnit.GIGABAR);

@@ -7,6 +7,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `RoyaltyFee`, generated from the specs.
@@ -15,6 +16,7 @@ class RoyaltyFeeTest {
 
     @Test
     @DisplayName("creates a RoyaltyFee and returns the values")
+    @Tag("testId:mirrornode.token.RoyaltyFee/create")
     void shouldCreateAndReturnTheValues() {
         final long numeratorAmount = numeratorAmountValue();
         final long denominatorAmount = denominatorAmountValue();
@@ -31,6 +33,7 @@ class RoyaltyFeeTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.token.RoyaltyFee/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final long numeratorAmount = numeratorAmountValue();
         final long denominatorAmount = denominatorAmountValue();
@@ -53,6 +56,7 @@ class RoyaltyFeeTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.token.RoyaltyFee/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final RoyaltyFee subject = RoyaltyFee.builder()
                 .numeratorAmount(numeratorAmountValue())
@@ -65,12 +69,14 @@ class RoyaltyFeeTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.token.RoyaltyFee/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> RoyaltyFee.builder().build());
     }
 
     @Test
     @DisplayName("numeratorAmount: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.token.RoyaltyFee/numeratorAmount/accepts-at-minimum")
     void shouldAcceptNumeratorAmountAtMinimum() {
         final long value = -9223372036854775808L;
         final RoyaltyFee subject = new RoyaltyFee(value, denominatorAmountValue(), fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
@@ -79,6 +85,7 @@ class RoyaltyFeeTest {
 
     @Test
     @DisplayName("numeratorAmount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.token.RoyaltyFee/numeratorAmount/accepts-at-maximum")
     void shouldAcceptNumeratorAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final RoyaltyFee subject = new RoyaltyFee(value, denominatorAmountValue(), fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
@@ -87,6 +94,7 @@ class RoyaltyFeeTest {
 
     @Test
     @DisplayName("denominatorAmount: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.token.RoyaltyFee/denominatorAmount/accepts-at-minimum")
     void shouldAcceptDenominatorAmountAtMinimum() {
         final long value = -9223372036854775808L;
         final RoyaltyFee subject = new RoyaltyFee(numeratorAmountValue(), value, fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
@@ -95,6 +103,7 @@ class RoyaltyFeeTest {
 
     @Test
     @DisplayName("denominatorAmount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.token.RoyaltyFee/denominatorAmount/accepts-at-maximum")
     void shouldAcceptDenominatorAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final RoyaltyFee subject = new RoyaltyFee(numeratorAmountValue(), value, fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
@@ -103,6 +112,7 @@ class RoyaltyFeeTest {
 
     @Test
     @DisplayName("fallbackFeeAmount: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.token.RoyaltyFee/fallbackFeeAmount/accepts-at-minimum")
     void shouldAcceptFallbackFeeAmountAtMinimum() {
         final long value = -9223372036854775808L;
         final RoyaltyFee subject = new RoyaltyFee(numeratorAmountValue(), denominatorAmountValue(), value, collectorAccountIdValue(), denominatingTokenIdValue());
@@ -111,6 +121,7 @@ class RoyaltyFeeTest {
 
     @Test
     @DisplayName("fallbackFeeAmount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.token.RoyaltyFee/fallbackFeeAmount/accepts-at-maximum")
     void shouldAcceptFallbackFeeAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final RoyaltyFee subject = new RoyaltyFee(numeratorAmountValue(), denominatorAmountValue(), value, collectorAccountIdValue(), denominatingTokenIdValue());
@@ -119,6 +130,7 @@ class RoyaltyFeeTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.token.RoyaltyFee/value-semantics")
     void shouldCompareByValue() {
         final RoyaltyFee subject = create();
         final RoyaltyFee other = create();

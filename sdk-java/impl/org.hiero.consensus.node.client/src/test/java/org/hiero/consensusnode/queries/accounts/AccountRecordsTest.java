@@ -24,6 +24,7 @@ import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountRecords`, generated from the specs.
@@ -32,6 +33,7 @@ class AccountRecordsTest {
 
     @Test
     @DisplayName("creates an AccountRecords and returns the values")
+    @Tag("testId:consensusnode.queries.accounts.AccountRecords/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
         final List<Record<Receipt>> records = recordsValue();
@@ -42,6 +44,7 @@ class AccountRecordsTest {
 
     @Test
     @DisplayName("creates an AccountRecords with the default values")
+    @Tag("testId:consensusnode.queries.accounts.AccountRecords/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final AccountRecords subject = new AccountRecords(accountIdValue());
         assertValue(List.of(), subject.records());
@@ -49,18 +52,21 @@ class AccountRecordsTest {
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.queries.accounts.AccountRecords/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new AccountRecords((AccountId) null, recordsValue()));
     }
 
     @Test
     @DisplayName("rejects null for records")
+    @Tag("testId:consensusnode.queries.accounts.AccountRecords/records/rejects-null")
     void shouldRejectNullRecords() {
         assertThrows(NullPointerException.class, () -> new AccountRecords(accountIdValue(), (List<Record<Receipt>>) null));
     }
 
     @Test
     @DisplayName("the constructor copies records; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.queries.accounts.AccountRecords/records/copies-in")
     void shouldCopyRecordsIn() {
         final List<Record<Receipt>> value = new ArrayList<>(recordsValue());
         final List<Record<Receipt>> expected = List.copyOf(value);

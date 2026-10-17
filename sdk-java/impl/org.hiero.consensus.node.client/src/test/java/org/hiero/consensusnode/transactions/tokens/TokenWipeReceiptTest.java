@@ -18,6 +18,7 @@ import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenWipeReceipt`, generated from the specs.
@@ -26,6 +27,7 @@ class TokenWipeReceiptTest {
 
     @Test
     @DisplayName("creates a TokenWipeReceipt and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeReceipt/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -42,6 +44,7 @@ class TokenWipeReceiptTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeReceipt/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -64,6 +67,7 @@ class TokenWipeReceiptTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeReceipt/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TokenWipeReceipt subject = TokenWipeReceipt.builder()
                 .transactionId(transactionIdValue())
@@ -76,36 +80,42 @@ class TokenWipeReceiptTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeReceipt/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TokenWipeReceipt.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeReceipt/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new TokenWipeReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue(), totalSupplyValue()));
     }
 
     @Test
     @DisplayName("rejects null for status")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeReceipt/status/rejects-null")
     void shouldRejectNullStatus() {
         assertThrows(NullPointerException.class, () -> new TokenWipeReceipt(transactionIdValue(), (TransactionStatus) null, exchangeRateValue(), nextExchangeRateValue(), totalSupplyValue()));
     }
 
     @Test
     @DisplayName("rejects null for exchangeRate")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeReceipt/exchangeRate/rejects-null")
     void shouldRejectNullExchangeRate() {
         assertThrows(NullPointerException.class, () -> new TokenWipeReceipt(transactionIdValue(), statusValue(), (ExchangeRate) null, nextExchangeRateValue(), totalSupplyValue()));
     }
 
     @Test
     @DisplayName("rejects null for nextExchangeRate")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeReceipt/nextExchangeRate/rejects-null")
     void shouldRejectNullNextExchangeRate() {
         assertThrows(NullPointerException.class, () -> new TokenWipeReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), (ExchangeRate) null, totalSupplyValue()));
     }
 
     @Test
     @DisplayName("totalSupply: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeReceipt/totalSupply/accepts-at-minimum")
     void shouldAcceptTotalSupplyAtMinimum() {
         final long value = -9223372036854775808L;
         final TokenWipeReceipt subject = new TokenWipeReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), value);
@@ -114,6 +124,7 @@ class TokenWipeReceiptTest {
 
     @Test
     @DisplayName("totalSupply: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeReceipt/totalSupply/accepts-at-maximum")
     void shouldAcceptTotalSupplyAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenWipeReceipt subject = new TokenWipeReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), value);

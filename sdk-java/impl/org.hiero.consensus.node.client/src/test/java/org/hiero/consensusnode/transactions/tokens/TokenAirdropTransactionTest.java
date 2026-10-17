@@ -31,6 +31,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenAirdropTransaction`, generated from the specs.
@@ -39,6 +40,7 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("creates a TokenAirdropTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final List<TokenTransfer> tokenTransfers = tokenTransfersValue();
         final List<NftTransfer> nftTransfers = nftTransfersValue();
@@ -52,6 +54,7 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("creates a TokenAirdropTransaction with the default values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final TokenAirdropTransaction subject = new TokenAirdropTransaction();
         assertValue(List.of(), subject.tokenTransfers());
@@ -60,6 +63,7 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final List<TokenTransfer> tokenTransfers = tokenTransfersValue();
         final List<NftTransfer> nftTransfers = nftTransfersValue();
@@ -73,6 +77,7 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TokenAirdropTransaction subject = TokenAirdropTransaction.builder()
                 .build();
@@ -82,12 +87,14 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("rejects null for tokenTransfers")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/tokenTransfers/rejects-null")
     void shouldRejectNullTokenTransfers() {
         assertThrows(NullPointerException.class, () -> new TokenAirdropTransaction((List<TokenTransfer>) null, nftTransfersValue()));
     }
 
     @Test
     @DisplayName("the constructor copies tokenTransfers; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/tokenTransfers/copies-in")
     void shouldCopyTokenTransfersIn() {
         final List<TokenTransfer> value = new ArrayList<>(tokenTransfersValue());
         final List<TokenTransfer> expected = List.copyOf(value);
@@ -99,12 +106,14 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("rejects null for nftTransfers")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/nftTransfers/rejects-null")
     void shouldRejectNullNftTransfers() {
         assertThrows(NullPointerException.class, () -> new TokenAirdropTransaction(tokenTransfersValue(), (List<NftTransfer>) null));
     }
 
     @Test
     @DisplayName("the constructor copies nftTransfers; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/nftTransfers/copies-in")
     void shouldCopyNftTransfersIn() {
         final List<NftTransfer> value = new ArrayList<>(nftTransfersValue());
         final List<NftTransfer> expected = List.copyOf(value);
@@ -116,6 +125,7 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final TokenAirdropTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -125,6 +135,7 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final TokenAirdropTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -133,6 +144,7 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final TokenAirdropTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -142,6 +154,7 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final TokenAirdropTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -150,6 +163,7 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/memo/set")
     void shouldSetMemo() {
         final TokenAirdropTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -159,6 +173,7 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final TokenAirdropTransaction subject = create();
         subject.setMemo((String) null);
@@ -167,6 +182,7 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final TokenAirdropTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -176,6 +192,7 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final TokenAirdropTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -184,54 +201,63 @@ class TokenAirdropTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAirdropTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

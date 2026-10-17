@@ -694,7 +694,10 @@ part.
 `TestGenerator` writes a JUnit test class into `src/test/java` of the module, in the package of the tested type: one
 per record, class and enum (`<Type>Test`), one per abstraction with static methods and one per factory class
 (`<Namespace>FactoryTest`). The tests check the contract of the specs, both what the generator implements and what
-humans implement later:
+humans implement later. Every test carries its language-neutral id as tag (`@Tag("testId:ledger.AccountId/num/accepts-at-minimum")`,
+built with `TestIds` in `metalang-core`, which every generator uses), and the generated POMs make JUnit write the
+results as Open Test Reporting (`junit-platform-reporting`, `open-test-report.xml` next to the Surefire reports;
+ADR-0012):
 
 | Area | What the tests check |
 |---|---|

@@ -27,6 +27,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `FileAppendTransaction`, generated from the specs.
@@ -35,6 +36,7 @@ class FileAppendTransactionTest {
 
     @Test
     @DisplayName("creates a FileAppendTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final Address fileId = fileIdValue();
         final byte[] contents = contentsValue();
@@ -48,18 +50,21 @@ class FileAppendTransactionTest {
 
     @Test
     @DisplayName("rejects null for fileId")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/fileId/rejects-null")
     void shouldRejectNullFileId() {
         assertThrows(NullPointerException.class, () -> new FileAppendTransaction((Address) null, contentsValue()));
     }
 
     @Test
     @DisplayName("rejects null for contents")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/contents/rejects-null")
     void shouldRejectNullContents() {
         assertThrows(NullPointerException.class, () -> new FileAppendTransaction(fileIdValue(), (byte[]) null));
     }
 
     @Test
     @DisplayName("the constructor copies contents; the accessor returns a copy")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/contents/copies-in")
     void shouldCopyContentsIn() {
         final byte[] value = contentsValue();
         final byte[] expected = value.clone();
@@ -74,6 +79,7 @@ class FileAppendTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final FileAppendTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -83,6 +89,7 @@ class FileAppendTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final FileAppendTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -91,6 +98,7 @@ class FileAppendTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final FileAppendTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -100,6 +108,7 @@ class FileAppendTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final FileAppendTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -108,6 +117,7 @@ class FileAppendTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/memo/set")
     void shouldSetMemo() {
         final FileAppendTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -117,6 +127,7 @@ class FileAppendTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final FileAppendTransaction subject = create();
         subject.setMemo((String) null);
@@ -125,6 +136,7 @@ class FileAppendTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final FileAppendTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -134,6 +146,7 @@ class FileAppendTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final FileAppendTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -142,54 +155,63 @@ class FileAppendTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.files.FileAppendTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

@@ -27,6 +27,7 @@ import org.hiero.ledger.Address;
 import org.hiero.ledger.TransactionId;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ScheduleInfo`, generated from the specs.
@@ -35,6 +36,7 @@ class ScheduleInfoTest {
 
     @Test
     @DisplayName("creates a ScheduleInfo and returns the values")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/create")
     void shouldCreateAndReturnTheValues() {
         final Address scheduleId = scheduleIdValue();
         final AccountId creatorAccountId = creatorAccountIdValue();
@@ -65,6 +67,7 @@ class ScheduleInfoTest {
 
     @Test
     @DisplayName("creates a ScheduleInfo with the default values")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final ScheduleInfo subject = new ScheduleInfo(scheduleIdValue(), creatorAccountIdValue(), payerAccountIdValue(), scheduledTransactionValue(), scheduledTransactionIdValue(), adminKeyValue(), scheduleMemoValue(), expirationTimeValue(), executionTimeValue(), (ZonedDateTime) null);
         assertValue(List.of(), subject.signers());
@@ -73,6 +76,7 @@ class ScheduleInfoTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Address scheduleId = scheduleIdValue();
         final AccountId creatorAccountId = creatorAccountIdValue();
@@ -116,6 +120,7 @@ class ScheduleInfoTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final ScheduleInfo subject = ScheduleInfo.builder()
                 .scheduleId(scheduleIdValue())
@@ -136,48 +141,56 @@ class ScheduleInfoTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> ScheduleInfo.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for scheduleId")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/scheduleId/rejects-null")
     void shouldRejectNullScheduleId() {
         assertThrows(NullPointerException.class, () -> new ScheduleInfo((Address) null, creatorAccountIdValue(), payerAccountIdValue(), scheduledTransactionValue(), scheduledTransactionIdValue(), signersValue(), adminKeyValue(), scheduleMemoValue(), expirationTimeValue(), waitForExpiryValue(), executionTimeValue(), (ZonedDateTime) null));
     }
 
     @Test
     @DisplayName("rejects null for creatorAccountId")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/creatorAccountId/rejects-null")
     void shouldRejectNullCreatorAccountId() {
         assertThrows(NullPointerException.class, () -> new ScheduleInfo(scheduleIdValue(), (AccountId) null, payerAccountIdValue(), scheduledTransactionValue(), scheduledTransactionIdValue(), signersValue(), adminKeyValue(), scheduleMemoValue(), expirationTimeValue(), waitForExpiryValue(), executionTimeValue(), (ZonedDateTime) null));
     }
 
     @Test
     @DisplayName("rejects null for payerAccountId")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/payerAccountId/rejects-null")
     void shouldRejectNullPayerAccountId() {
         assertThrows(NullPointerException.class, () -> new ScheduleInfo(scheduleIdValue(), creatorAccountIdValue(), (AccountId) null, scheduledTransactionValue(), scheduledTransactionIdValue(), signersValue(), adminKeyValue(), scheduleMemoValue(), expirationTimeValue(), waitForExpiryValue(), executionTimeValue(), (ZonedDateTime) null));
     }
 
     @Test
     @DisplayName("rejects null for scheduledTransaction")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/scheduledTransaction/rejects-null")
     void shouldRejectNullScheduledTransaction() {
         assertThrows(NullPointerException.class, () -> new ScheduleInfo(scheduleIdValue(), creatorAccountIdValue(), payerAccountIdValue(), (Transaction<?, ?>) null, scheduledTransactionIdValue(), signersValue(), adminKeyValue(), scheduleMemoValue(), expirationTimeValue(), waitForExpiryValue(), executionTimeValue(), (ZonedDateTime) null));
     }
 
     @Test
     @DisplayName("rejects null for scheduledTransactionId")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/scheduledTransactionId/rejects-null")
     void shouldRejectNullScheduledTransactionId() {
         assertThrows(NullPointerException.class, () -> new ScheduleInfo(scheduleIdValue(), creatorAccountIdValue(), payerAccountIdValue(), scheduledTransactionValue(), (TransactionId) null, signersValue(), adminKeyValue(), scheduleMemoValue(), expirationTimeValue(), waitForExpiryValue(), executionTimeValue(), (ZonedDateTime) null));
     }
 
     @Test
     @DisplayName("rejects null for signers")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/signers/rejects-null")
     void shouldRejectNullSigners() {
         assertThrows(NullPointerException.class, () -> new ScheduleInfo(scheduleIdValue(), creatorAccountIdValue(), payerAccountIdValue(), scheduledTransactionValue(), scheduledTransactionIdValue(), (List<PublicKey>) null, adminKeyValue(), scheduleMemoValue(), expirationTimeValue(), waitForExpiryValue(), executionTimeValue(), (ZonedDateTime) null));
     }
 
     @Test
     @DisplayName("the constructor copies signers; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/signers/copies-in")
     void shouldCopySignersIn() {
         final List<PublicKey> value = new ArrayList<>(signersValue());
         final List<PublicKey> expected = List.copyOf(value);
@@ -189,12 +202,14 @@ class ScheduleInfoTest {
 
     @Test
     @DisplayName("rejects null for expirationTime")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/expirationTime/rejects-null")
     void shouldRejectNullExpirationTime() {
         assertThrows(NullPointerException.class, () -> new ScheduleInfo(scheduleIdValue(), creatorAccountIdValue(), payerAccountIdValue(), scheduledTransactionValue(), scheduledTransactionIdValue(), signersValue(), adminKeyValue(), scheduleMemoValue(), (ZonedDateTime) null, waitForExpiryValue(), executionTimeValue(), (ZonedDateTime) null));
     }
 
     @Test
     @DisplayName("rejects executionTime and deletionTime together (@@oneOrNoneOf)")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/executionTime-deletionTime/rejects-two")
     void shouldRejectTwoOfExecutionTimeOrDeletionTime() {
         assertThrows(IllegalArgumentException.class, () -> new ScheduleInfo(scheduleIdValue(), creatorAccountIdValue(), payerAccountIdValue(), scheduledTransactionValue(), scheduledTransactionIdValue(), signersValue(), adminKeyValue(), scheduleMemoValue(), expirationTimeValue(), waitForExpiryValue(), executionTimeValue(), deletionTimeValue()));
     }

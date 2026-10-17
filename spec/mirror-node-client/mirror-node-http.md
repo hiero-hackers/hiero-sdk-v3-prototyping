@@ -192,6 +192,7 @@ tested here.
 ```tests
 // Source: the Go SDK (TestUnitMirrorRestPathAcceptsRelativePaths), the Java SDK
 // (MirrorNodeRestPathTest.allowsDotDotInsideQueryString) and this spec's example; the values of RELATIVE_PATHS.
+@@testId("a-request-keeps-a-path-relative-to-the-rest-base-url-unchanged")
 test "a request keeps a path relative to the REST base URL unchanged" {
     for path in RELATIVE_PATHS {
         // when
@@ -207,6 +208,7 @@ test "a request keeps a path relative to the REST base URL unchanged" {
 }
 
 // Source: the Java SDK (MirrorNodeHttpClientTest: the POST body and the caller's headers are passed on unchanged).
+@@testId("a-post-request-keeps-its-body-and-headers")
 test "a POST request keeps its body and headers" {
     // given
     let body = utf8(text: "{\"data\":\"0xabc\"}")
@@ -223,6 +225,7 @@ test "a POST request keeps its body and headers" {
 
 // Source: the Java SDK (MirrorNodeHttpClientTest: calls with a deadline of 10 seconds); this spec (`timeout` is
 // optional, a request without one falls back to the default request timeout of the HttpClient).
+@@testId("a-request-keeps-its-timeout")
 test "a request keeps its timeout" {
     // when
     let request = MirrorNodeHttpRequest{method: HttpMethod.GET, path: "/accounts/0.0.1",
@@ -234,6 +237,7 @@ test "a request keeps its timeout" {
 }
 
 // Source: the API guideline (`duration` has millisecond precision).
+@@testId("a-request-keeps-a-timeout-with-millisecond-precision")
 test "a request keeps a timeout with millisecond precision" {
     // when
     let request = MirrorNodeHttpRequest{method: HttpMethod.GET, path: "/accounts/0.0.1",
@@ -249,6 +253,7 @@ test "a request keeps a timeout with millisecond precision" {
 
 // Source: the Go SDK (TestUnitMirrorRestPathRejectsHost), the Java SDK (MirrorNodeRestPathTest.rejectsAbsoluteUrl,
 // rejectsWhitespace), this spec's example and this spec (@@pattern("^/[^\s]*$")); the values of REJECTED_PATHS.
+@@testId("a-request-rejects-a-path-that-is-no-relative-rest-path")
 test "a request rejects a path that is no relative REST path" {
     for path in REJECTED_PATHS {
         // when / then
@@ -258,6 +263,7 @@ test "a request rejects a path that is no relative REST path" {
 }
 
 // Source: the Go SDK (TestUnitMirrorRestPathRejectsHost: "embedded newline"); this spec (@@pattern("^/[^\s]*$")).
+@@testId("a-request-rejects-a-path-with-an-embedded-newline")
 test "a request rejects a path with an embedded newline" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -265,6 +271,7 @@ test "a request rejects a path with an embedded newline" {
 }
 
 // Source: the Go SDK (TestUnitMirrorRestPathRejectsHost: "embedded tab"); this spec (@@pattern("^/[^\s]*$")).
+@@testId("a-request-rejects-a-path-with-an-embedded-tab")
 test "a request rejects a path with an embedded tab" {
     // when / then
     @@expectThrows(invalid-argument-error)

@@ -13,6 +13,7 @@ import org.hiero.ledger.IpAddress;
 import org.hiero.ledger.MirrorNode;
 import org.hiero.ledger.Network;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NetworkSetting`, generated from the specs.
@@ -21,6 +22,7 @@ class NetworkSettingTest {
 
     @Test
     @DisplayName("creates a NetworkSetting and returns the values")
+    @Tag("testId:ledger.config.NetworkSetting/create")
     void shouldCreateAndReturnTheValues() {
         final Network<?> network = networkValue();
         final Set<ConsensusNode> getConsensusNodes = getConsensusNodesValue();
@@ -33,18 +35,21 @@ class NetworkSettingTest {
 
     @Test
     @DisplayName("rejects null for network")
+    @Tag("testId:ledger.config.NetworkSetting/network/rejects-null")
     void shouldRejectNullNetwork() {
         assertThrows(NullPointerException.class, () -> new NetworkSetting((Network<?>) null, getConsensusNodesValue(), getMirrorNodesValue()));
     }
 
     @Test
     @DisplayName("rejects null for getConsensusNodes")
+    @Tag("testId:ledger.config.NetworkSetting/getConsensusNodes/rejects-null")
     void shouldRejectNullGetConsensusNodes() {
         assertThrows(NullPointerException.class, () -> new NetworkSetting(networkValue(), (Set<ConsensusNode>) null, getMirrorNodesValue()));
     }
 
     @Test
     @DisplayName("the constructor copies getConsensusNodes; the accessor returns an unmodifiable collection")
+    @Tag("testId:ledger.config.NetworkSetting/getConsensusNodes/copies-in")
     void shouldCopyGetConsensusNodesIn() {
         final Set<ConsensusNode> value = new LinkedHashSet<>(getConsensusNodesValue());
         final Set<ConsensusNode> expected = Set.copyOf(value);
@@ -56,12 +61,14 @@ class NetworkSettingTest {
 
     @Test
     @DisplayName("rejects null for getMirrorNodes")
+    @Tag("testId:ledger.config.NetworkSetting/getMirrorNodes/rejects-null")
     void shouldRejectNullGetMirrorNodes() {
         assertThrows(NullPointerException.class, () -> new NetworkSetting(networkValue(), getConsensusNodesValue(), (Set<MirrorNode>) null));
     }
 
     @Test
     @DisplayName("the constructor copies getMirrorNodes; the accessor returns an unmodifiable collection")
+    @Tag("testId:ledger.config.NetworkSetting/getMirrorNodes/copies-in")
     void shouldCopyGetMirrorNodesIn() {
         final Set<MirrorNode> value = new LinkedHashSet<>(getMirrorNodesValue());
         final Set<MirrorNode> expected = Set.copyOf(value);

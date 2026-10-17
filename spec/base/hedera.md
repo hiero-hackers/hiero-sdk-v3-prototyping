@@ -85,6 +85,7 @@ and their factors are those of this spec, which match the HBAR denominations of 
 
 ```tests
 // Source: this spec (HbarUnit); the unit tests of the Java, JavaScript, Go, Rust and Swift SDKs.
+@@testId("every-unit-has-its-symbol-and-its-number-of-tinybars")
 test "every unit has its symbol and its number of tinybars" {
     for unit in keys(value: TINYBARS_PER_UNIT) {
         // then
@@ -94,6 +95,7 @@ test "every unit has its symbol and its number of tinybars" {
 }
 
 // Source: this spec (toTinybars is toBaseUnits); the Java, JavaScript, Go and Rust SDKs (one of each unit in tinybars).
+@@testId("one-of-each-unit-is-its-number-of-tinybars")
 test "one of each unit is its number of tinybars" {
     for unit in keys(value: TINYBARS_PER_UNIT) {
         // given
@@ -106,6 +108,7 @@ test "one of each unit is its number of tinybars" {
 }
 
 // Source: the Java, JavaScript and Go SDKs (an amount is converted to every unit and back without loss).
+@@testId("an-amount-of-whole-units-converts-to-tinybars-and-back")
 test "an amount of whole units converts to tinybars and back" {
     for unit in keys(value: TINYBARS_PER_UNIT) {
         // given
@@ -122,6 +125,7 @@ test "an amount of whole units converts to tinybars and back" {
 }
 
 // Source: the Java and JavaScript SDKs (conversions between units other than tinybar).
+@@testId("an-amount-converts-between-units-by-their-factors")
 test "an amount converts between units by their factors" {
     // given
     let hbar = DEFAULT(Hbar)
@@ -136,6 +140,7 @@ test "an amount converts between units by their factors" {
 }
 
 // Source: the Java, JavaScript, Go and Python SDKs (a negative amount, as used by the sender of a transfer).
+@@testId("a-negative-amount-converts-like-a-positive-one")
 test "a negative amount converts like a positive one" {
     // given
     let debit = Hbar{amount: -5, unit: HbarUnit.HBAR}
@@ -146,6 +151,7 @@ test "a negative amount converts like a positive one" {
 }
 
 // Source: the Java and Go SDKs (zero HBAR).
+@@testId("zero-is-zero-in-every-unit")
 test "zero is zero in every unit" {
     for unit in keys(value: TINYBARS_PER_UNIT) {
         // when / then
@@ -156,6 +162,7 @@ test "zero is zero in every unit" {
 }
 
 // Source: this spec (amounts are int64 tinybars); the largest whole number of gigabars that fits.
+@@testId("the-largest-amounts-that-fit-into-int64-tinybars-convert-exactly")
 test "the largest amounts that fit into int64 tinybars convert exactly" {
     // when / then
     assertEquals(expected: 9_200_000_000_000_000_000, actual: Hbar{amount: 92, unit: HbarUnit.GIGABAR}.toTinybars())
@@ -164,6 +171,7 @@ test "the largest amounts that fit into int64 tinybars convert exactly" {
 }
 
 // Source: this spec (an Hbar is its amount and its unit).
+@@testId("an-amount-keeps-its-amount-and-its-unit")
 test "an amount keeps its amount and its unit" {
     // given
     let hbar = Hbar{amount: 42, unit: HbarUnit.KILOBAR}
@@ -174,6 +182,7 @@ test "an amount keeps its amount and its unit" {
 }
 
 // Source: this spec (equals); the Java and JavaScript SDKs (amounts are compared in tinybars).
+@@testId("amounts-of-the-same-number-of-tinybars-are-equal-whatever-their-units")
 test "amounts of the same number of tinybars are equal whatever their units" {
     for unit in keys(value: TINYBARS_PER_UNIT) {
         // given
@@ -191,6 +200,7 @@ test "amounts of the same number of tinybars are equal whatever their units" {
 
 // Source: this spec (equals compares exactly): 100 gigabars and 100,000 megabars are both 10^19 tinybars, more than
 // an int64 holds.
+@@testId("amounts-beyond-int64-tinybars-are-compared-exactly")
 test "amounts beyond int64 tinybars are compared exactly" {
     // given
     let gigabars = Hbar{amount: 100, unit: HbarUnit.GIGABAR}
@@ -202,6 +212,7 @@ test "amounts beyond int64 tinybars are compared exactly" {
 }
 
 // Source: this spec (a conversion never loses a part of the amount).
+@@testId("a-conversion-to-a-unit-of-which-the-amount-is-no-whole-number-fails")
 test "a conversion to a unit of which the amount is no whole number fails" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -213,6 +224,7 @@ test "a conversion to a unit of which the amount is no whole number fails" {
 }
 
 // Source: this spec (amounts are int64 in every unit): 93 gigabars are more tinybars than an int64 holds.
+@@testId("an-amount-that-does-not-fit-into-int64-tinybars-fails-to-convert")
 test "an amount that does not fit into int64 tinybars fails to convert" {
     // given
     let tooMuch = Hbar{amount: 93, unit: HbarUnit.GIGABAR}

@@ -213,6 +213,7 @@ schedule happen on the network and are tested by the TCK, not here.
 ```tests
 // Source: this spec (@@nullable, @@default(false) of waitForExpiry); the Python SDK (test_constructor_default_values
 // of ScheduleCreateTransaction).
+@@testId("a-schedule-create-transaction-leaves-out-what-is-not-given")
 test "a schedule create transaction leaves out what is not given" {
     // given
     let inner = consensusnode.transactions.utility.PrngTransaction{}
@@ -232,6 +233,7 @@ test "a schedule create transaction leaves out what is not given" {
 // waitForExpiry true, a transfer as inner transaction) and the Swift SDK (ScheduleCreateTransactionUnitTests
 // .test_GetSetPayerAccountId, test_GetSetAdminKey and test_GetSetExpirationTime: TestConstants.validStart =
 // 2019-04-01T22:42:22Z).
+@@testId("a-schedule-create-transaction-keeps-its-inner-transaction-and-attributes")
 test "a schedule create transaction keeps its inner transaction and attributes" {
     // given
     let inner: Transaction<ANY, ANY> = consensusnode.transactions.accounts.TransferTransaction{hbarTransfers: [
@@ -257,6 +259,7 @@ test "a schedule create transaction keeps its inner transaction and attributes" 
 // Source: the Java SDK (ScheduleCreateTransactionTest.shouldBytes and shouldBytesNoSetters; expiration time validStart
 // = Instant.ofEpochSecond(1554158542) = 2019-04-01T22:42:22Z) and the Swift SDK
 // (ScheduleCreateTransactionUnitTests.test_ToFromBytes).
+@@testId("a-schedule-create-transaction-survives-tobytes-and-frombytes")
 test "a schedule create transaction survives toBytes and fromBytes" {
     // given
     let inner: Transaction<ANY, ANY> = consensusnode.transactions.accounts.TransferTransaction{hbarTransfers: [
@@ -281,6 +284,7 @@ test "a schedule create transaction survives toBytes and fromBytes" {
 // Source: the Python SDK (test_constructor_with_schedule_id of ScheduleSignTransaction), the Java SDK
 // (ScheduleSignTransactionTest.shouldBytes) and the Swift SDK (ScheduleSignTransactionUnitTests.test_GetSetScheduleId
 // and test_ToFromBytes).
+@@testId("a-schedule-sign-transaction-keeps-its-schedule-and-survives-tobytes-and-frombytes")
 test "a schedule sign transaction keeps its schedule and survives toBytes and fromBytes" {
     // given
     let scheduleId = Address.fromString(address: "0.0.5005")
@@ -298,6 +302,7 @@ test "a schedule sign transaction keeps its schedule and survives toBytes and fr
 // Source: this spec (a ScheduleSign carries only the scheduleId; the signatures on it are credited to the schedule);
 // the Python SDK (test_sign_transaction of ScheduleSignTransaction). The second key is the secp256k1 key of the tests
 // of keys.md.
+@@testId("every-key-that-signs-a-schedule-sign-transaction-signs-each-body")
 test "every key that signs a schedule sign transaction signs each body" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
@@ -324,6 +329,7 @@ test "every key that signs a schedule sign transaction signs each body" {
 // Source: the Python SDK (test_constructor_with_parameters of ScheduleDeleteTransaction), the Java SDK
 // (ScheduleDeleteTransactionTest.shouldBytes) and the Swift SDK (ScheduleDeleteTransactionUnitTests
 // .test_GetSetScheduleId and test_ToFromBytes).
+@@testId("a-schedule-delete-transaction-keeps-its-schedule-and-survives-tobytes-and-frombytes")
 test "a schedule delete transaction keeps its schedule and survives toBytes and fromBytes" {
     // given
     let scheduleId = Address.fromString(address: "0.0.5005")

@@ -15,6 +15,7 @@ import org.hiero.ledger.MirrorNode;
 import org.hiero.ledger.Network;
 import org.hiero.ledger.config.NetworkSetting;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `client`, generated from the `tests` blocks of its `## Testing` section.
@@ -27,6 +28,7 @@ class ClientSpecTest {
     /// test_for_testnet_then_set_operator) and the C++ SDK (ClientUnitTests): a client keeps its operator.
     @Test
     @DisplayName("a client keeps the operator account it was created with")
+    @Tag("testId:consensusnode.client/a-client-keeps-the-operator-account-it-was-created-with")
     void aClientKeepsTheOperatorAccountItWasCreatedWith() {
         // given
         final Account operator = defaultAccount();
@@ -46,6 +48,7 @@ class ClientSpecTest {
     /// and the Python SDK (client_test.py, test_factory_basic_setup): a client is bound to the network it was created for.
     @Test
     @DisplayName("a client is bound to the network of its network setting")
+    @Tag("testId:consensusnode.client/a-client-is-bound-to-the-network-of-its-network-setting")
     void aClientIsBoundToTheNetworkOfItsNetworkSetting() {
         // given
         final NetworkSetting setting = defaultNetworkSetting();
@@ -63,6 +66,7 @@ class ClientSpecTest {
     /// (Client.setOperator signs with the operator's private key) and the Go SDK (the operator's key signs).
     @Test
     @DisplayName("the default signer signs with the private key of the operator account")
+    @Tag("testId:consensusnode.client/the-default-signer-signs-with-the-private-key-of-the-operator-account")
     void theDefaultSignerSignsWithThePrivateKeyOfTheOperatorAccount() {
         // given
         final Account operator = defaultAccount();
@@ -86,6 +90,7 @@ class ClientSpecTest {
     /// given signer instead of its private key). The second key is the secp256k1 key of the tests of keys.md.
     @Test
     @DisplayName("a client created with a signer signs with that signer")
+    @Tag("testId:consensusnode.client/a-client-created-with-a-signer-signs-with-that-signer")
     void aClientCreatedWithASignerSignsWithThatSigner() {
         // given
         final PrivateKey signerKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");

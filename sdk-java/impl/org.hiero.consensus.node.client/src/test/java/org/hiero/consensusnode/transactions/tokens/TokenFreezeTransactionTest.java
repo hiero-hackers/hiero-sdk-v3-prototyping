@@ -27,6 +27,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenFreezeTransaction`, generated from the specs.
@@ -35,6 +36,7 @@ class TokenFreezeTransactionTest {
 
     @Test
     @DisplayName("creates a TokenFreezeTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final AccountId accountId = accountIdValue();
@@ -48,18 +50,21 @@ class TokenFreezeTransactionTest {
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenFreezeTransaction((Address) null, accountIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new TokenFreezeTransaction(tokenIdValue(), (AccountId) null));
     }
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final TokenFreezeTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -69,6 +74,7 @@ class TokenFreezeTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final TokenFreezeTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -77,6 +83,7 @@ class TokenFreezeTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final TokenFreezeTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -86,6 +93,7 @@ class TokenFreezeTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final TokenFreezeTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -94,6 +102,7 @@ class TokenFreezeTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/memo/set")
     void shouldSetMemo() {
         final TokenFreezeTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -103,6 +112,7 @@ class TokenFreezeTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final TokenFreezeTransaction subject = create();
         subject.setMemo((String) null);
@@ -111,6 +121,7 @@ class TokenFreezeTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final TokenFreezeTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -120,6 +131,7 @@ class TokenFreezeTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final TokenFreezeTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -128,54 +140,63 @@ class TokenFreezeTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenFreezeTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

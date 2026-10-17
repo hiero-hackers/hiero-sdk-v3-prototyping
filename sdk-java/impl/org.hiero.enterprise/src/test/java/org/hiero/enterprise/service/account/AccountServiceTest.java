@@ -13,6 +13,7 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountService`, generated from the specs.
@@ -21,12 +22,14 @@ class AccountServiceTest {
 
     @Test
     @DisplayName("creates an AccountService and returns the values")
+    @Tag("testId:enterprise.service.account.AccountService/create")
     void shouldCreateAndReturnTheValues() {
         final AccountService subject = new AccountService();
     }
 
     @Test
     @DisplayName("createNewAccount(authority) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.account.AccountService/createNewAccount/call")
     void shouldCallCreateNewAccount() throws Exception {
         try {
             assertNotNull(create().createNewAccount(authorityValue()));
@@ -39,6 +42,7 @@ class AccountServiceTest {
 
     @Test
     @DisplayName("createNewAccount(authority, initialBalance) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.account.AccountService/createNewAccount/call-2")
     void shouldCallCreateNewAccount2() throws Exception {
         try {
             assertNotNull(create().createNewAccount(authorityValue(), initialBalanceValue()));
@@ -51,6 +55,7 @@ class AccountServiceTest {
 
     @Test
     @DisplayName("createNewAccount(params) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.account.AccountService/createNewAccount/call-3")
     void shouldCallCreateNewAccount3() throws Exception {
         try {
             assertNotNull(create().createNewAccount(paramsValue()));
@@ -63,6 +68,7 @@ class AccountServiceTest {
 
     @Test
     @DisplayName("updateAccountAuthority(accountId, newAuthority, oldAuthority) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.account.AccountService/updateAccountAuthority/call")
     void shouldCallUpdateAccountAuthority() throws Exception {
         try {
             create().updateAccountAuthority(accountIdValue(), newAuthorityValue(), oldAuthorityValue());
@@ -75,6 +81,7 @@ class AccountServiceTest {
 
     @Test
     @DisplayName("deleteAccount(account) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.account.AccountService/deleteAccount/call")
     void shouldCallDeleteAccount() throws Exception {
         try {
             create().deleteAccount(accountValue());
@@ -87,6 +94,7 @@ class AccountServiceTest {
 
     @Test
     @DisplayName("findById(account) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.account.AccountService/findById/call")
     void shouldCallFindById() throws Exception {
         try {
             assertNotNull(create().findById(accountValue()));
@@ -99,6 +107,7 @@ class AccountServiceTest {
 
     @Test
     @DisplayName("findAll() can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.account.AccountService/findAll/call")
     void shouldCallFindAll() throws Exception {
         try {
             assertNotNull(create().findAll());

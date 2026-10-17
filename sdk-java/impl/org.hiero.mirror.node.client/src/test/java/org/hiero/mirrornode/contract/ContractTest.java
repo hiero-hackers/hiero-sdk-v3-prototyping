@@ -16,6 +16,7 @@ import org.hiero.ledger.ContractId;
 import org.hiero.ledger.EvmAddress;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Contract`, generated from the specs.
@@ -24,6 +25,7 @@ class ContractTest {
 
     @Test
     @DisplayName("creates a Contract and returns the values")
+    @Tag("testId:mirrornode.contract.Contract/create")
     void shouldCreateAndReturnTheValues() {
         final ContractId contractId = contractIdValue();
         final @Nullable Authority adminAuthority = adminAuthorityValue();
@@ -68,6 +70,7 @@ class ContractTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.contract.Contract/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final ContractId contractId = contractIdValue();
         final @Nullable Authority adminAuthority = adminAuthorityValue();
@@ -132,6 +135,7 @@ class ContractTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.contract.Contract/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final Contract subject = Contract.builder()
                 .contractId(contractIdValue())
@@ -158,30 +162,35 @@ class ContractTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.contract.Contract/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> Contract.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for contractId")
+    @Tag("testId:mirrornode.contract.Contract/contractId/rejects-null")
     void shouldRejectNullContractId() {
         assertThrows(NullPointerException.class, () -> new Contract((ContractId) null, adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue()));
     }
 
     @Test
     @DisplayName("rejects null for autoRenewPeriod")
+    @Tag("testId:mirrornode.contract.Contract/autoRenewPeriod/rejects-null")
     void shouldRejectNullAutoRenewPeriod() {
         assertThrows(NullPointerException.class, () -> new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), (Duration) null, createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue()));
     }
 
     @Test
     @DisplayName("rejects null for createdTimestamp")
+    @Tag("testId:mirrornode.contract.Contract/createdTimestamp/rejects-null")
     void shouldRejectNullCreatedTimestamp() {
         assertThrows(NullPointerException.class, () -> new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), (ZonedDateTime) null, deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue()));
     }
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the minimum (-2147483648)")
+    @Tag("testId:mirrornode.contract.Contract/maxAutomaticTokenAssociations/accepts-at-minimum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
         final Contract subject = new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), value, nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue());
@@ -190,6 +199,7 @@ class ContractTest {
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the maximum (2147483647)")
+    @Tag("testId:mirrornode.contract.Contract/maxAutomaticTokenAssociations/accepts-at-maximum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMaximum() {
         final @Nullable Integer value = 2147483647;
         final Contract subject = new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), value, nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue());
@@ -198,6 +208,7 @@ class ContractTest {
 
     @Test
     @DisplayName("nonce: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.contract.Contract/nonce/accepts-at-minimum")
     void shouldAcceptNonceAtMinimum() {
         final @Nullable Long value = -9223372036854775808L;
         final Contract subject = new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), value, obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue());
@@ -206,6 +217,7 @@ class ContractTest {
 
     @Test
     @DisplayName("nonce: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.contract.Contract/nonce/accepts-at-maximum")
     void shouldAcceptNonceAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
         final Contract subject = new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), value, obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue());
@@ -214,12 +226,14 @@ class ContractTest {
 
     @Test
     @DisplayName("rejects null for fromTimestamp")
+    @Tag("testId:mirrornode.contract.Contract/fromTimestamp/rejects-null")
     void shouldRejectNullFromTimestamp() {
         assertThrows(NullPointerException.class, () -> new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), (ZonedDateTime) null, toTimestampValue(), bytecodeValue(), runtimeBytecodeValue()));
     }
 
     @Test
     @DisplayName("rejects null for toTimestamp")
+    @Tag("testId:mirrornode.contract.Contract/toTimestamp/rejects-null")
     void shouldRejectNullToTimestamp() {
         assertThrows(NullPointerException.class, () -> new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), (ZonedDateTime) null, bytecodeValue(), runtimeBytecodeValue()));
     }

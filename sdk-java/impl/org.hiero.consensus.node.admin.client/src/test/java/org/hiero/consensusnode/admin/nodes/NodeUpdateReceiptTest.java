@@ -18,6 +18,7 @@ import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NodeUpdateReceipt`, generated from the specs.
@@ -26,6 +27,7 @@ class NodeUpdateReceiptTest {
 
     @Test
     @DisplayName("creates a NodeUpdateReceipt and returns the values")
+    @Tag("testId:consensusnode.admin.nodes.NodeUpdateReceipt/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -40,24 +42,28 @@ class NodeUpdateReceiptTest {
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:consensusnode.admin.nodes.NodeUpdateReceipt/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new NodeUpdateReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue()));
     }
 
     @Test
     @DisplayName("rejects null for status")
+    @Tag("testId:consensusnode.admin.nodes.NodeUpdateReceipt/status/rejects-null")
     void shouldRejectNullStatus() {
         assertThrows(NullPointerException.class, () -> new NodeUpdateReceipt(transactionIdValue(), (TransactionStatus) null, exchangeRateValue(), nextExchangeRateValue()));
     }
 
     @Test
     @DisplayName("rejects null for exchangeRate")
+    @Tag("testId:consensusnode.admin.nodes.NodeUpdateReceipt/exchangeRate/rejects-null")
     void shouldRejectNullExchangeRate() {
         assertThrows(NullPointerException.class, () -> new NodeUpdateReceipt(transactionIdValue(), statusValue(), (ExchangeRate) null, nextExchangeRateValue()));
     }
 
     @Test
     @DisplayName("rejects null for nextExchangeRate")
+    @Tag("testId:consensusnode.admin.nodes.NodeUpdateReceipt/nextExchangeRate/rejects-null")
     void shouldRejectNullNextExchangeRate() {
         assertThrows(NullPointerException.class, () -> new NodeUpdateReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), (ExchangeRate) null));
     }

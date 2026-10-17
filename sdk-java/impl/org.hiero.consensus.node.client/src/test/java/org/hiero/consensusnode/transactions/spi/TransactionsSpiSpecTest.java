@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.NoSuchElementException;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions-spi`, generated from the `tests` blocks of its `## Testing` section.
@@ -18,6 +19,7 @@ class TransactionsSpiSpecTest {
     /// type).
     @Test
     @DisplayName("every registered transaction support is found by its transaction type")
+    @Tag("testId:consensusnode.transactions.spi/every-registered-transaction-support-is-found-by-its-transaction-type")
     void everyRegisteredTransactionSupportIsFoundByItsTransactionType() {
         for (final TransactionSupport<?, ?> support : SpiFactory.getAllTransactionSupports()) {
             // when
@@ -34,6 +36,7 @@ class TransactionsSpiSpecTest {
     /// transaction, so no support is registered for it.
     @Test
     @DisplayName("a type without a registered transaction support is rejected")
+    @Tag("testId:consensusnode.transactions.spi/a-type-without-a-registered-transaction-support-is-rejected")
     void aTypeWithoutARegisteredTransactionSupportIsRejected() {
         // when / then
         assertThrows(NoSuchElementException.class, () -> SpiFactory.getTransactionSupport(Receipt.class));

@@ -4,6 +4,7 @@ import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NetworkVersionInfo`, generated from the specs.
@@ -12,6 +13,7 @@ class NetworkVersionInfoTest {
 
     @Test
     @DisplayName("creates a NetworkVersionInfo and returns the values")
+    @Tag("testId:consensusnode.admin.network.NetworkVersionInfo/create")
     void shouldCreateAndReturnTheValues() {
         final SemanticVersion hapiVersion = hapiVersionValue();
         final SemanticVersion servicesVersion = servicesVersionValue();
@@ -22,18 +24,21 @@ class NetworkVersionInfoTest {
 
     @Test
     @DisplayName("rejects null for hapiVersion")
+    @Tag("testId:consensusnode.admin.network.NetworkVersionInfo/hapiVersion/rejects-null")
     void shouldRejectNullHapiVersion() {
         assertThrows(NullPointerException.class, () -> new NetworkVersionInfo((SemanticVersion) null, servicesVersionValue()));
     }
 
     @Test
     @DisplayName("rejects null for servicesVersion")
+    @Tag("testId:consensusnode.admin.network.NetworkVersionInfo/servicesVersion/rejects-null")
     void shouldRejectNullServicesVersion() {
         assertThrows(NullPointerException.class, () -> new NetworkVersionInfo(hapiVersionValue(), (SemanticVersion) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.admin.network.NetworkVersionInfo/value-semantics")
     void shouldCompareByValue() {
         final NetworkVersionInfo subject = create();
         final NetworkVersionInfo other = create();

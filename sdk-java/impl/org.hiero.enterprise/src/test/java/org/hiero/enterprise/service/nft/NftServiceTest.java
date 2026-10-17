@@ -15,6 +15,7 @@ import org.hiero.ledger.Address;
 import org.hiero.mirrornode.nft.Nft;
 import org.hiero.token.TokenSupplyType;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NftService`, generated from the specs.
@@ -23,12 +24,14 @@ class NftServiceTest {
 
     @Test
     @DisplayName("creates a NftService and returns the values")
+    @Tag("testId:enterprise.service.nft.NftService/create")
     void shouldCreateAndReturnTheValues() {
         final NftService subject = new NftService();
     }
 
     @Test
     @DisplayName("createNftType(name, symbol) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/createNftType/call")
     void shouldCallCreateNftType() throws Exception {
         try {
             assertNotNull(create().createNftType(nameValue(), symbolValue()));
@@ -41,6 +44,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("createNftType(name, symbol, supplyAuthority) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/createNftType/call-2")
     void shouldCallCreateNftType2() throws Exception {
         try {
             assertNotNull(create().createNftType(nameValue(), symbolValue(), supplyAuthorityValue()));
@@ -53,6 +57,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("createNftType(name, symbol, treasuryAccount, supplyAuthority) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/createNftType/call-3")
     void shouldCallCreateNftType3() throws Exception {
         try {
             assertNotNull(create().createNftType(nameValue(), symbolValue(), treasuryAccountValue(), supplyAuthorityValue()));
@@ -65,6 +70,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("createNftType(params) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/createNftType/call-4")
     void shouldCallCreateNftType4() throws Exception {
         try {
             assertNotNull(create().createNftType(paramsValue()));
@@ -77,6 +83,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("associateNft(accountId, tokenIds) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/associateNft/call")
     void shouldCallAssociateNft() throws Exception {
         try {
             create().associateNft(accountIdValue(), tokenIdsValue());
@@ -89,6 +96,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("dissociateNft(accountId, tokenIds) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/dissociateNft/call")
     void shouldCallDissociateNft() throws Exception {
         try {
             create().dissociateNft(accountIdValue(), tokenIdsValue());
@@ -101,6 +109,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("mintNft(tokenId, metadata) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/mintNft/call")
     void shouldCallMintNft() throws Exception {
         try {
             assertNotNull(create().mintNft(tokenIdValue(), metadataValue()));
@@ -113,6 +122,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("mintNfts(tokenId, metadata) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/mintNfts/call")
     void shouldCallMintNfts() throws Exception {
         try {
             assertNotNull(create().mintNfts(tokenIdValue(), metadataValue()));
@@ -125,6 +135,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("burnNft(tokenId, serialNumber) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/burnNft/call")
     void shouldCallBurnNft() throws Exception {
         try {
             create().burnNft(tokenIdValue(), serialNumberValue());
@@ -137,6 +148,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("burnNft(nft) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/burnNft/call-2")
     void shouldCallBurnNft2() throws Exception {
         try {
             create().burnNft(nftValue());
@@ -149,6 +161,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("burnNfts(tokenId, serialNumbers) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/burnNfts/call")
     void shouldCallBurnNfts() throws Exception {
         try {
             create().burnNfts(tokenIdValue(), serialNumbersValue());
@@ -161,6 +174,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("burnNfts(nfts) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/burnNfts/call-2")
     void shouldCallBurnNfts2() throws Exception {
         try {
             create().burnNfts(nftsValue());
@@ -173,6 +187,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("transferNft(tokenId, serialNumber, fromAccountId, toAccountId) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/transferNft/call")
     void shouldCallTransferNft() throws Exception {
         try {
             create().transferNft(tokenIdValue(), serialNumberValue(), fromAccountIdValue(), toAccountIdValue());
@@ -185,6 +200,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("transferNfts(nft, fromAccountId, toAccountId) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/transferNfts/call")
     void shouldCallTransferNfts() throws Exception {
         try {
             create().transferNfts(nftValue(), fromAccountIdValue(), toAccountIdValue());
@@ -197,6 +213,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("transferNfts(tokenId, serialNumbers, fromAccountId, toAccountId) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/transferNfts/call-2")
     void shouldCallTransferNfts2() throws Exception {
         try {
             create().transferNfts(tokenIdValue(), serialNumbersValue2(), fromAccountIdValue(), toAccountIdValue());
@@ -209,6 +226,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("transferNfts(nfts, fromAccountId, toAccountId) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/transferNfts/call-3")
     void shouldCallTransferNfts3() throws Exception {
         try {
             create().transferNfts(nftsValue(), fromAccountIdValue(), toAccountIdValue());
@@ -221,6 +239,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("findAllTypes() can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/findAllTypes/call")
     void shouldCallFindAllTypes() throws Exception {
         try {
             assertNotNull(create().findAllTypes());
@@ -233,6 +252,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("findTypesByOwner(ownerId) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/findTypesByOwner/call")
     void shouldCallFindTypesByOwner() throws Exception {
         try {
             assertNotNull(create().findTypesByOwner(ownerIdValue()));
@@ -245,6 +265,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("findTypeById(tokenId) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/findTypeById/call")
     void shouldCallFindTypeById() throws Exception {
         try {
             create().findTypeById(tokenIdValue());
@@ -257,6 +278,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("findByOwner(ownerId) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/findByOwner/call")
     void shouldCallFindByOwner() throws Exception {
         try {
             assertNotNull(create().findByOwner(ownerIdValue()));
@@ -269,6 +291,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("findByType(tokenId) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/findByType/call")
     void shouldCallFindByType() throws Exception {
         try {
             assertNotNull(create().findByType(tokenIdValue()));
@@ -281,6 +304,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("findByTypeAndSerial(tokenId, serialNumber) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/findByTypeAndSerial/call")
     void shouldCallFindByTypeAndSerial() throws Exception {
         try {
             create().findByTypeAndSerial(tokenIdValue(), serialNumberValue());
@@ -293,6 +317,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("findByOwnerAndType(ownerId, tokenId) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/findByOwnerAndType/call")
     void shouldCallFindByOwnerAndType() throws Exception {
         try {
             assertNotNull(create().findByOwnerAndType(ownerIdValue(), tokenIdValue()));
@@ -305,6 +330,7 @@ class NftServiceTest {
 
     @Test
     @DisplayName("findByOwnerAndTypeAndSerial(ownerId, tokenId, serialNumber) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.nft.NftService/findByOwnerAndTypeAndSerial/call")
     void shouldCallFindByOwnerAndTypeAndSerial() throws Exception {
         try {
             create().findByOwnerAndTypeAndSerial(ownerIdValue(), tokenIdValue(), serialNumberValue());

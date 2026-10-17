@@ -19,6 +19,7 @@ import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `PrngReceipt`, generated from the specs.
@@ -27,6 +28,7 @@ class PrngReceiptTest {
 
     @Test
     @DisplayName("creates a PrngReceipt and returns the values")
+    @Tag("testId:consensusnode.transactions.utility.PrngReceipt/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -45,6 +47,7 @@ class PrngReceiptTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.utility.PrngReceipt/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -70,6 +73,7 @@ class PrngReceiptTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.utility.PrngReceipt/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final PrngReceipt subject = PrngReceipt.builder()
                 .transactionId(transactionIdValue())
@@ -84,36 +88,42 @@ class PrngReceiptTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.transactions.utility.PrngReceipt/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> PrngReceipt.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:consensusnode.transactions.utility.PrngReceipt/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new PrngReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue(), prngNumberValue(), (byte[]) null));
     }
 
     @Test
     @DisplayName("rejects null for status")
+    @Tag("testId:consensusnode.transactions.utility.PrngReceipt/status/rejects-null")
     void shouldRejectNullStatus() {
         assertThrows(NullPointerException.class, () -> new PrngReceipt(transactionIdValue(), (TransactionStatus) null, exchangeRateValue(), nextExchangeRateValue(), prngNumberValue(), (byte[]) null));
     }
 
     @Test
     @DisplayName("rejects null for exchangeRate")
+    @Tag("testId:consensusnode.transactions.utility.PrngReceipt/exchangeRate/rejects-null")
     void shouldRejectNullExchangeRate() {
         assertThrows(NullPointerException.class, () -> new PrngReceipt(transactionIdValue(), statusValue(), (ExchangeRate) null, nextExchangeRateValue(), prngNumberValue(), (byte[]) null));
     }
 
     @Test
     @DisplayName("rejects null for nextExchangeRate")
+    @Tag("testId:consensusnode.transactions.utility.PrngReceipt/nextExchangeRate/rejects-null")
     void shouldRejectNullNextExchangeRate() {
         assertThrows(NullPointerException.class, () -> new PrngReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), (ExchangeRate) null, prngNumberValue(), (byte[]) null));
     }
 
     @Test
     @DisplayName("prngNumber: accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.transactions.utility.PrngReceipt/prngNumber/accepts-at-minimum")
     void shouldAcceptPrngNumberAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
         final PrngReceipt subject = new PrngReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), value, (byte[]) null);
@@ -122,6 +132,7 @@ class PrngReceiptTest {
 
     @Test
     @DisplayName("prngNumber: accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.transactions.utility.PrngReceipt/prngNumber/accepts-at-maximum")
     void shouldAcceptPrngNumberAtMaximum() {
         final @Nullable Integer value = 2147483647;
         final PrngReceipt subject = new PrngReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), value, (byte[]) null);
@@ -130,6 +141,7 @@ class PrngReceiptTest {
 
     @Test
     @DisplayName("the constructor copies prngBytes; the accessor returns a copy")
+    @Tag("testId:consensusnode.transactions.utility.PrngReceipt/prngBytes/copies-in")
     void shouldCopyPrngBytesIn() {
         final byte[] value = prngBytesValue();
         final byte[] expected = value.clone();
@@ -144,6 +156,7 @@ class PrngReceiptTest {
 
     @Test
     @DisplayName("rejects prngNumber and prngBytes together (@@oneOrNoneOf)")
+    @Tag("testId:consensusnode.transactions.utility.PrngReceipt/prngNumber-prngBytes/rejects-two")
     void shouldRejectTwoOfPrngNumberOrPrngBytes() {
         assertThrows(IllegalArgumentException.class, () -> new PrngReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), prngNumberValue(), prngBytesValue()));
     }

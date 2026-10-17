@@ -56,6 +56,7 @@ source. The registry is shared by the whole process, so a test registers its set
 ```tests
 // Source: this spec (getNetworkSetting returns the setting registered for the identifier); the Java and Go SDKs (a
 // client is created for the network of a name: Client.forName, ClientForName).
+@@testId("a-registered-network-setting-is-returned-for-its-identifier")
 test "a registered network setting is returned for its identifier" {
     // given
     let setting = DEFAULT(NetworkSetting)
@@ -70,6 +71,7 @@ test "a registered network setting is returned for its identifier" {
 
 // Source: this spec (getNetworkSetting throws if no setting exists for the identifier); the Java SDK (Client.forName
 // rejects an unknown name).
+@@testId("an-identifier-without-a-registered-network-setting-is-rejected")
 test "an identifier without a registered network setting is rejected" {
     // when / then
     @@expectThrows(not-found-error)

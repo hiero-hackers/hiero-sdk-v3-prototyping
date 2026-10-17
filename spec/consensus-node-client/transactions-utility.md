@@ -101,6 +101,7 @@ random value itself is produced by the network and is tested by the TCK, not her
 
 ```tests
 // Source: this spec (range is @@nullable); the Python SDK (test_constructor_default_values).
+@@testId("a-prng-transaction-without-a-range-asks-for-random-bytes")
 test "a PRNG transaction without a range asks for random bytes" {
     // when
     let transaction = PrngTransaction{}
@@ -110,6 +111,7 @@ test "a PRNG transaction without a range asks for random bytes" {
 }
 
 // Source: the Python SDK (test_constructor_with_parameters, range 1000) and the Go SDK (TestUnitPrngTransactionSetRange).
+@@testId("a-prng-transaction-keeps-its-range")
 test "a PRNG transaction keeps its range" {
     // when
     let transaction = PrngTransaction{range: 1000}
@@ -120,6 +122,7 @@ test "a PRNG transaction keeps its range" {
 
 // Source: the JavaScript SDK ("should return range when create transaction from Bytes", range 100) and the Go SDK
 // (TestUnitPrngTransactionFromToBytes).
+@@testId("a-prng-transaction-with-a-range-survives-tobytes-and-frombytes")
 test "a PRNG transaction with a range survives toBytes and fromBytes" {
     // given
     let packed = PrngTransaction{range: 100}
@@ -136,6 +139,7 @@ test "a PRNG transaction with a range survives toBytes and fromBytes" {
 
 // Source: this spec (@@min(1)); the Python SDK rejects a negative range
 // (test_build_proto_body_with_negative_range_raises_error).
+@@testId("a-prng-transaction-rejects-a-range-of-0")
 test "a PRNG transaction rejects a range of 0" {
     // when / then
     @@expectThrows(invalid-argument-error)

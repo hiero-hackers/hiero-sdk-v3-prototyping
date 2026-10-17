@@ -8,6 +8,7 @@ import org.hiero.hedera.HbarUnit;
 import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `PaidQueryResponse`, generated from the specs.
@@ -16,6 +17,7 @@ class PaidQueryResponseTest {
 
     @Test
     @DisplayName("creates a PaidQueryResponse and returns the values")
+    @Tag("testId:consensusnode.queries.PaidQueryResponse/create")
     void shouldCreateAndReturnTheValues() {
         final String valueArgument = valueValue();
         final AccountId answeredBy = answeredByValue();
@@ -28,18 +30,21 @@ class PaidQueryResponseTest {
 
     @Test
     @DisplayName("rejects null for value")
+    @Tag("testId:consensusnode.queries.PaidQueryResponse/value/rejects-null")
     void shouldRejectNullValue() {
         assertThrows(NullPointerException.class, () -> new PaidQueryResponse<>((String) null, answeredByValue(), costValue()));
     }
 
     @Test
     @DisplayName("rejects null for answeredBy")
+    @Tag("testId:consensusnode.queries.PaidQueryResponse/answeredBy/rejects-null")
     void shouldRejectNullAnsweredBy() {
         assertThrows(NullPointerException.class, () -> new PaidQueryResponse<>(valueValue(), (AccountId) null, costValue()));
     }
 
     @Test
     @DisplayName("rejects null for cost")
+    @Tag("testId:consensusnode.queries.PaidQueryResponse/cost/rejects-null")
     void shouldRejectNullCost() {
         assertThrows(NullPointerException.class, () -> new PaidQueryResponse<>(valueValue(), answeredByValue(), (NativeToken<?, ?>) null));
     }

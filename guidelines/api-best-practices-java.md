@@ -3726,7 +3726,7 @@ JUnit tests that look like the other generated tests:
 | Test language | Java |
 |---|---|
 | the tests of spec `keys.md` | class `KeysSpecTest` in `src/test/java`, package of the namespace (`org.hiero.keys`) |
-| `test "name" { … }` | `@Test @DisplayName("name") void name() { … }`; the id (`keys/name`) and the comment above the test as `///` comment |
+| `test "name" { … }` | `@Test @DisplayName("name") @Tag("testId:keys/<id>") void name() { … }`; the id (`keys/<id>`) and the comment above the test as `///` comment; the tag carries the id into the test results (Open Test Reporting, ADR-0012) |
 | `@@disabled("reason")` | `@Disabled("reason")` |
 | `// given`, `// when`, `// then` and every other comment inside a test | the same `//` comment at the same place; a comment after a statement starts a new paragraph (blank line), a comment behind a statement stays behind it |
 | `@@deprecated("reason")` | `/// Deprecated: reason` and `@SuppressWarnings("deprecation")` on the class |

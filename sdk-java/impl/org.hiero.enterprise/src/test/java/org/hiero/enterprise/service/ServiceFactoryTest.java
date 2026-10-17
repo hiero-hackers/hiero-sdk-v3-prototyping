@@ -17,6 +17,7 @@ import org.hiero.ledger.MirrorNode;
 import org.hiero.ledger.Network;
 import org.hiero.ledger.config.NetworkSetting;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ServiceFactory`, generated from the specs.
@@ -25,42 +26,49 @@ class ServiceFactoryTest {
 
     @Test
     @DisplayName("createSession(networkSettings, operatorAccount) can be called and returns a value")
+    @Tag("testId:enterprise.service/createSession/call")
     void shouldCallCreateSession() {
         assertNotNull(ServiceFactory.createSession(networkSettingsValue(), operatorAccountValue()));
     }
 
     @Test
     @DisplayName("createSession rejects null for networkSettings")
+    @Tag("testId:enterprise.service/createSession/networkSettings/rejects-null")
     void shouldRejectNullNetworkSettingsInCreateSession() {
         assertThrows(NullPointerException.class, () -> ServiceFactory.createSession((NetworkSetting) null, operatorAccountValue()));
     }
 
     @Test
     @DisplayName("createSession rejects null for operatorAccount")
+    @Tag("testId:enterprise.service/createSession/operatorAccount/rejects-null")
     void shouldRejectNullOperatorAccountInCreateSession() {
         assertThrows(NullPointerException.class, () -> ServiceFactory.createSession(networkSettingsValue(), (Account) null));
     }
 
     @Test
     @DisplayName("createSession(networkSettings, operatorAccount, transactionSigner) can be called and returns a value")
+    @Tag("testId:enterprise.service/createSession/call-2")
     void shouldCallCreateSession2() {
         assertNotNull(ServiceFactory.createSession(networkSettingsValue(), operatorAccountValue(), transactionSignerValue()));
     }
 
     @Test
     @DisplayName("createSession rejects null for networkSettings")
+    @Tag("testId:enterprise.service/createSession/networkSettings/rejects-null-2")
     void shouldRejectNullNetworkSettingsInCreateSession2() {
         assertThrows(NullPointerException.class, () -> ServiceFactory.createSession((NetworkSetting) null, operatorAccountValue(), transactionSignerValue()));
     }
 
     @Test
     @DisplayName("createSession rejects null for operatorAccount")
+    @Tag("testId:enterprise.service/createSession/operatorAccount/rejects-null-2")
     void shouldRejectNullOperatorAccountInCreateSession2() {
         assertThrows(NullPointerException.class, () -> ServiceFactory.createSession(networkSettingsValue(), (Account) null, transactionSignerValue()));
     }
 
     @Test
     @DisplayName("createSession rejects null for transactionSigner")
+    @Tag("testId:enterprise.service/createSession/transactionSigner/rejects-null")
     void shouldRejectNullTransactionSignerInCreateSession() {
         assertThrows(NullPointerException.class, () -> ServiceFactory.createSession(networkSettingsValue(), operatorAccountValue(), (TransactionSigner) null));
     }

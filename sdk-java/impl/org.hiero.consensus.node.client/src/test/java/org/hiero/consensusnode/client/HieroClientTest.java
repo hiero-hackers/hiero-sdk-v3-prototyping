@@ -21,6 +21,7 @@ import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeTokenUnit;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `HieroClient`, generated from the specs.
@@ -29,6 +30,7 @@ class HieroClientTest {
 
     @Test
     @DisplayName("creates a HieroClient and returns the values")
+    @Tag("testId:consensusnode.client.HieroClient/create")
     void shouldCreateAndReturnTheValues() {
         final Account operatorAccount = operatorAccountValue();
         final Network<NativeTokenUnit> network = networkValue();
@@ -41,18 +43,21 @@ class HieroClientTest {
 
     @Test
     @DisplayName("rejects null for operatorAccount")
+    @Tag("testId:consensusnode.client.HieroClient/operatorAccount/rejects-null")
     void shouldRejectNullOperatorAccount() {
         assertThrows(NullPointerException.class, () -> new HieroClient<>((Account) null, networkValue(), transactionSignerValue()));
     }
 
     @Test
     @DisplayName("rejects null for network")
+    @Tag("testId:consensusnode.client.HieroClient/network/rejects-null")
     void shouldRejectNullNetwork() {
         assertThrows(NullPointerException.class, () -> new HieroClient<>(operatorAccountValue(), (Network<NativeTokenUnit>) null, transactionSignerValue()));
     }
 
     @Test
     @DisplayName("rejects null for transactionSigner")
+    @Tag("testId:consensusnode.client.HieroClient/transactionSigner/rejects-null")
     void shouldRejectNullTransactionSigner() {
         assertThrows(NullPointerException.class, () -> new HieroClient<>(operatorAccountValue(), networkValue(), (TransactionSigner) null));
     }

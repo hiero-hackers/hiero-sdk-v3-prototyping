@@ -11,6 +11,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.IpAddress;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NodeAddress`, generated from the specs.
@@ -19,6 +20,7 @@ class NodeAddressTest {
 
     @Test
     @DisplayName("creates a NodeAddress and returns the values")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/create")
     void shouldCreateAndReturnTheValues() {
         final long nodeId = nodeIdValue();
         final AccountId accountId = accountIdValue();
@@ -39,6 +41,7 @@ class NodeAddressTest {
 
     @Test
     @DisplayName("creates a NodeAddress with the default values")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final NodeAddress subject = new NodeAddress(nodeIdValue(), accountIdValue(), descriptionValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), rsaPublicKeyValue());
         assertValue(List.of(), subject.serviceEndpoints());
@@ -46,6 +49,7 @@ class NodeAddressTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final long nodeId = nodeIdValue();
         final AccountId accountId = accountIdValue();
@@ -74,6 +78,7 @@ class NodeAddressTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final NodeAddress subject = NodeAddress.builder()
                 .nodeId(nodeIdValue())
@@ -88,12 +93,14 @@ class NodeAddressTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> NodeAddress.builder().build());
     }
 
     @Test
     @DisplayName("nodeId: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/nodeId/accepts-at-minimum")
     void shouldAcceptNodeIdAtMinimum() {
         final long value = -9223372036854775808L;
         final NodeAddress subject = new NodeAddress(value, accountIdValue(), serviceEndpointsValue(), descriptionValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), rsaPublicKeyValue());
@@ -102,6 +109,7 @@ class NodeAddressTest {
 
     @Test
     @DisplayName("nodeId: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/nodeId/accepts-at-maximum")
     void shouldAcceptNodeIdAtMaximum() {
         final long value = 9223372036854775807L;
         final NodeAddress subject = new NodeAddress(value, accountIdValue(), serviceEndpointsValue(), descriptionValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), rsaPublicKeyValue());
@@ -110,18 +118,21 @@ class NodeAddressTest {
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new NodeAddress(nodeIdValue(), (AccountId) null, serviceEndpointsValue(), descriptionValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), rsaPublicKeyValue()));
     }
 
     @Test
     @DisplayName("rejects null for serviceEndpoints")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/serviceEndpoints/rejects-null")
     void shouldRejectNullServiceEndpoints() {
         assertThrows(NullPointerException.class, () -> new NodeAddress(nodeIdValue(), accountIdValue(), (List<ServiceEndpoint>) null, descriptionValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), rsaPublicKeyValue()));
     }
 
     @Test
     @DisplayName("the constructor copies serviceEndpoints; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/serviceEndpoints/copies-in")
     void shouldCopyServiceEndpointsIn() {
         final List<ServiceEndpoint> value = new ArrayList<>(serviceEndpointsValue());
         final List<ServiceEndpoint> expected = List.copyOf(value);
@@ -133,12 +144,14 @@ class NodeAddressTest {
 
     @Test
     @DisplayName("rejects null for gossipCaCertificate")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/gossipCaCertificate/rejects-null")
     void shouldRejectNullGossipCaCertificate() {
         assertThrows(NullPointerException.class, () -> new NodeAddress(nodeIdValue(), accountIdValue(), serviceEndpointsValue(), descriptionValue(), (byte[]) null, grpcCertificateHashValue(), rsaPublicKeyValue()));
     }
 
     @Test
     @DisplayName("the constructor copies gossipCaCertificate; the accessor returns a copy")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/gossipCaCertificate/copies-in")
     void shouldCopyGossipCaCertificateIn() {
         final byte[] value = gossipCaCertificateValue();
         final byte[] expected = value.clone();
@@ -153,12 +166,14 @@ class NodeAddressTest {
 
     @Test
     @DisplayName("rejects null for grpcCertificateHash")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/grpcCertificateHash/rejects-null")
     void shouldRejectNullGrpcCertificateHash() {
         assertThrows(NullPointerException.class, () -> new NodeAddress(nodeIdValue(), accountIdValue(), serviceEndpointsValue(), descriptionValue(), gossipCaCertificateValue(), (byte[]) null, rsaPublicKeyValue()));
     }
 
     @Test
     @DisplayName("the constructor copies grpcCertificateHash; the accessor returns a copy")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/grpcCertificateHash/copies-in")
     void shouldCopyGrpcCertificateHashIn() {
         final byte[] value = grpcCertificateHashValue();
         final byte[] expected = value.clone();
@@ -173,12 +188,14 @@ class NodeAddressTest {
 
     @Test
     @DisplayName("rejects null for rsaPublicKey")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/rsaPublicKey/rejects-null")
     void shouldRejectNullRsaPublicKey() {
         assertThrows(NullPointerException.class, () -> new NodeAddress(nodeIdValue(), accountIdValue(), serviceEndpointsValue(), descriptionValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), (byte[]) null));
     }
 
     @Test
     @DisplayName("the constructor copies rsaPublicKey; the accessor returns a copy")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/rsaPublicKey/copies-in")
     void shouldCopyRsaPublicKeyIn() {
         final byte[] value = rsaPublicKeyValue();
         final byte[] expected = value.clone();
@@ -193,6 +210,7 @@ class NodeAddressTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/value-semantics")
     void shouldCompareByValue() {
         final NodeAddress subject = create();
         final NodeAddress other = create();

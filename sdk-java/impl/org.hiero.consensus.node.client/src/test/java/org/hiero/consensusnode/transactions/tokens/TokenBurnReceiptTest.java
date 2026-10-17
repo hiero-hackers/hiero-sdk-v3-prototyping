@@ -18,6 +18,7 @@ import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenBurnReceipt`, generated from the specs.
@@ -26,6 +27,7 @@ class TokenBurnReceiptTest {
 
     @Test
     @DisplayName("creates a TokenBurnReceipt and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnReceipt/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -42,6 +44,7 @@ class TokenBurnReceiptTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnReceipt/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -64,6 +67,7 @@ class TokenBurnReceiptTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnReceipt/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TokenBurnReceipt subject = TokenBurnReceipt.builder()
                 .transactionId(transactionIdValue())
@@ -76,36 +80,42 @@ class TokenBurnReceiptTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnReceipt/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TokenBurnReceipt.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnReceipt/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new TokenBurnReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue(), totalSupplyValue()));
     }
 
     @Test
     @DisplayName("rejects null for status")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnReceipt/status/rejects-null")
     void shouldRejectNullStatus() {
         assertThrows(NullPointerException.class, () -> new TokenBurnReceipt(transactionIdValue(), (TransactionStatus) null, exchangeRateValue(), nextExchangeRateValue(), totalSupplyValue()));
     }
 
     @Test
     @DisplayName("rejects null for exchangeRate")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnReceipt/exchangeRate/rejects-null")
     void shouldRejectNullExchangeRate() {
         assertThrows(NullPointerException.class, () -> new TokenBurnReceipt(transactionIdValue(), statusValue(), (ExchangeRate) null, nextExchangeRateValue(), totalSupplyValue()));
     }
 
     @Test
     @DisplayName("rejects null for nextExchangeRate")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnReceipt/nextExchangeRate/rejects-null")
     void shouldRejectNullNextExchangeRate() {
         assertThrows(NullPointerException.class, () -> new TokenBurnReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), (ExchangeRate) null, totalSupplyValue()));
     }
 
     @Test
     @DisplayName("totalSupply: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnReceipt/totalSupply/accepts-at-minimum")
     void shouldAcceptTotalSupplyAtMinimum() {
         final long value = -9223372036854775808L;
         final TokenBurnReceipt subject = new TokenBurnReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), value);
@@ -114,6 +124,7 @@ class TokenBurnReceiptTest {
 
     @Test
     @DisplayName("totalSupply: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnReceipt/totalSupply/accepts-at-maximum")
     void shouldAcceptTotalSupplyAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenBurnReceipt subject = new TokenBurnReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), value);

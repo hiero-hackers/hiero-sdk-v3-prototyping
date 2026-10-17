@@ -26,6 +26,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TopicCreateTransaction`, generated from the specs.
@@ -34,6 +35,7 @@ class TopicCreateTransactionTest {
 
     @Test
     @DisplayName("creates a TopicCreateTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final @Nullable Authority adminAuthority = adminAuthorityValue();
         final @Nullable Authority submitAuthority = submitAuthorityValue();
@@ -53,6 +55,7 @@ class TopicCreateTransactionTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final @Nullable Authority adminAuthority = adminAuthorityValue();
         final @Nullable Authority submitAuthority = submitAuthorityValue();
@@ -75,6 +78,7 @@ class TopicCreateTransactionTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TopicCreateTransaction subject = TopicCreateTransaction.builder()
                 .build();
@@ -87,6 +91,7 @@ class TopicCreateTransactionTest {
 
     @Test
     @DisplayName("topicMemo: accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/topicMemo/accepts-at-maximum-bytes")
     void shouldAcceptTopicMemoAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TopicCreateTransaction subject = new TopicCreateTransaction(adminAuthorityValue(), submitAuthorityValue(), value, autoRenewPeriodValue(), autoRenewAccountValue());
@@ -95,12 +100,14 @@ class TopicCreateTransactionTest {
 
     @Test
     @DisplayName("topicMemo: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/topicMemo/rejects-above-maximum-bytes")
     void shouldRejectTopicMemoAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new TopicCreateTransaction(adminAuthorityValue(), submitAuthorityValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", autoRenewPeriodValue(), autoRenewAccountValue()));
     }
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final TopicCreateTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -110,6 +117,7 @@ class TopicCreateTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final TopicCreateTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -118,6 +126,7 @@ class TopicCreateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final TopicCreateTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -127,6 +136,7 @@ class TopicCreateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final TopicCreateTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -135,6 +145,7 @@ class TopicCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/memo/set")
     void shouldSetMemo() {
         final TopicCreateTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -144,6 +155,7 @@ class TopicCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final TopicCreateTransaction subject = create();
         subject.setMemo((String) null);
@@ -152,6 +164,7 @@ class TopicCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final TopicCreateTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -161,6 +174,7 @@ class TopicCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final TopicCreateTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -169,54 +183,63 @@ class TopicCreateTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.topics.TopicCreateTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

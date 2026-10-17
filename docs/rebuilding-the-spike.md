@@ -115,6 +115,9 @@ In `sdk-java` (JDK 25, `sdk env`):
 - every test passes: the 386 tests of the specs (`<Spec>SpecTest`) and the 2,787 contract tests (`<Type>Test`).
   None of them needs a network. Keep `-Dmaven.test.failure.ignore=true` while working on a change, so one failure
   does not hide the others;
+- the results are also written as Open Test Reporting (ADR-0012), `target/surefire-reports/open-test-report.xml` per
+  module, every test tagged with its id; `scripts/test-report.sh sdk` renders them as
+  `sdk-java/impl/target/test-report.html`;
 - the conformance check still reports *provides the API of the specs*:
 
   ```bash

@@ -11,6 +11,7 @@ import org.hiero.ledger.Address;
 import org.hiero.token.TokenSupplyType;
 import org.hiero.token.TokenType;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `queries-tokens`, generated from the `tests` blocks of its `## Testing` section.
@@ -29,6 +30,7 @@ class QueriesTokensSpecTest {
     /// test_constructor and test_get_method) and the Swift SDK (TokenInfoQueryUnitTests, the get / set test).
     @Test
     @DisplayName("a token info query keeps the id of its token")
+    @Tag("testId:consensusnode.queries.tokens/a-token-info-query-keeps-the-id-of-its-token")
     void aTokenInfoQueryKeepsTheIdOfItsToken() {
         // given
         final Address token = defaultAddress();
@@ -46,6 +48,7 @@ class QueriesTokensSpecTest {
     /// test_constructor) and the JavaScript SDK (TokenNftInfoQuery); this spec (serials start at 1).
     @Test
     @DisplayName("an NFT info query keeps its token id and serial, and serial 1 is accepted")
+    @Tag("testId:consensusnode.queries.tokens/an-nft-info-query-keeps-its-token-id-and-serial-and-serial-1-is-accepted")
     void anNFTInfoQueryKeepsItsTokenIdAndSerialAndSerial1IsAccepted() {
         // given
         final Address token = defaultAddress();
@@ -65,6 +68,7 @@ class QueriesTokensSpecTest {
     /// Python SDK (token_info_test.py, test_token_info_initialization) and the Java SDK (TokenInfoTest).
     @Test
     @DisplayName("a token info has these defaults")
+    @Tag("testId:consensusnode.queries.tokens/a-token-info-has-these-defaults")
     void aTokenInfoHasTheseDefaults() {
         // when
         final TokenInfo info = new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, "ffff", "F", 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, null, new byte[0], ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, false, null, null, null, null, null, null, null, null, null, null, null);
@@ -95,6 +99,7 @@ class QueriesTokensSpecTest {
     /// Source: this spec (name and symbol have at most 100 characters).
     @Test
     @DisplayName("a token info accepts a name and a symbol of 100 characters")
+    @Tag("testId:consensusnode.queries.tokens/a-token-info-accepts-a-name-and-a-symbol-of-100-characters")
     void aTokenInfoAcceptsANameAndASymbolOf100Characters() {
         // given
         final String longest = repeat("a", 100L);
@@ -113,6 +118,7 @@ class QueriesTokensSpecTest {
     /// test_from_proto_without_spender_id) and the Java SDK (TokenNftInfoTest).
     @Test
     @DisplayName("an NFT info without allowance has no spender and empty metadata")
+    @Tag("testId:consensusnode.queries.tokens/an-nft-info-without-allowance-has-no-spender-and-empty-metadata")
     void anNFTInfoWithoutAllowanceHasNoSpenderAndEmptyMetadata() {
         // when
         final TokenNftInfo info = new TokenNftInfo(defaultAddress(), 1L, defaultAccountId(), ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), new byte[0], null);
@@ -129,6 +135,7 @@ class QueriesTokensSpecTest {
     /// i.e. 2019-04-01T22:42:22Z, and auto-renew period Duration.ofHours(10), i.e. 36000 seconds. Second precision.
     @Test
     @DisplayName("a token info keeps its expiration time and auto-renew period")
+    @Tag("testId:consensusnode.queries.tokens/a-token-info-keeps-its-expiration-time-and-auto-renew-period")
     void aTokenInfoKeepsItsExpirationTimeAndAutoRenewPeriod() {
         // when
         final TokenInfo info = new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, "ffff", "F", 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, null, new byte[0], TOKEN_TEST_TIME(), toSeconds(36000L), defaultAccountId(), false, null, null, null, null, null, null, null, null, null, null, null);
@@ -145,6 +152,7 @@ class QueriesTokensSpecTest {
     /// i.e. 2019-04-01T22:42:22Z. Second precision.
     @Test
     @DisplayName("an NFT info keeps the time at which its serial was minted")
+    @Tag("testId:consensusnode.queries.tokens/an-nft-info-keeps-the-time-at-which-its-serial-was-minted")
     void anNFTInfoKeepsTheTimeAtWhichItsSerialWasMinted() {
         // when
         final TokenNftInfo info = new TokenNftInfo(defaultAddress(), 1L, defaultAccountId(), TOKEN_TEST_TIME(), new byte[0], null);
@@ -158,6 +166,7 @@ class QueriesTokensSpecTest {
     /// Source: this spec (@@maxBytes(100) name).
     @Test
     @DisplayName("a token info with a name of 101 characters is rejected")
+    @Tag("testId:consensusnode.queries.tokens/a-token-info-with-a-name-of-101-characters-is-rejected")
     void aTokenInfoWithANameOf101CharactersIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, repeat("a", 101L), "F", 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, null, new byte[0], ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, false, null, null, null, null, null, null, null, null, null, null, null));
@@ -168,6 +177,7 @@ class QueriesTokensSpecTest {
     /// Source: this spec (@@maxBytes(100) symbol).
     @Test
     @DisplayName("a token info with a symbol of 101 characters is rejected")
+    @Tag("testId:consensusnode.queries.tokens/a-token-info-with-a-symbol-of-101-characters-is-rejected")
     void aTokenInfoWithASymbolOf101CharactersIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, "ffff", repeat("a", 101L), 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, null, new byte[0], ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, false, null, null, null, null, null, null, null, null, null, null, null));
@@ -179,6 +189,7 @@ class QueriesTokensSpecTest {
     /// rejects serial -1 with INVALID_TOKEN_NFT_SERIAL_NUMBER).
     @Test
     @DisplayName("an NFT info query rejects serial 0")
+    @Tag("testId:consensusnode.queries.tokens/an-nft-info-query-rejects-serial-0")
     void anNFTInfoQueryRejectsSerial0() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenNftInfoQuery(defaultAddress(), 0L));
@@ -189,6 +200,7 @@ class QueriesTokensSpecTest {
     /// Source: this spec (@@min(1) of serial: the network assigns serials from 1 on, TokenMintHandler of the consensus node).
     @Test
     @DisplayName("an NFT info rejects serial 0")
+    @Tag("testId:consensusnode.queries.tokens/an-nft-info-rejects-serial-0")
     void anNFTInfoRejectsSerial0() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenNftInfo(defaultAddress(), 0L, defaultAccountId(), ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), new byte[0], null));

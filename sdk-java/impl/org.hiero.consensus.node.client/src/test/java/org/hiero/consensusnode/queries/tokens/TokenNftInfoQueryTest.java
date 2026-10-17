@@ -22,6 +22,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenNftInfoQuery`, generated from the specs.
@@ -30,6 +31,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("creates a TokenNftInfoQuery and returns the values")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final long serial = serialValue();
@@ -45,12 +47,14 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenNftInfoQuery((Address) null, serialValue()));
     }
 
     @Test
     @DisplayName("serial: accepts the minimum (1)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/serial/accepts-at-minimum")
     void shouldAcceptSerialAtMinimum() {
         final long value = 1L;
         final TokenNftInfoQuery subject = new TokenNftInfoQuery(tokenIdValue(), value);
@@ -59,6 +63,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("serial: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/serial/accepts-at-maximum")
     void shouldAcceptSerialAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenNftInfoQuery subject = new TokenNftInfoQuery(tokenIdValue(), value);
@@ -67,12 +72,14 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("serial: rejects a value below the minimum (0)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/serial/rejects-below-minimum")
     void shouldRejectSerialBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new TokenNftInfoQuery(tokenIdValue(), 0L));
     }
 
     @Test
     @DisplayName("setMaxAttempts changes maxAttempts and returns the object")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/maxAttempts/set")
     void shouldSetMaxAttempts() {
         final TokenNftInfoQuery subject = create();
         final @Nullable Integer value = maxAttemptsOtherValue();
@@ -82,6 +89,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts null")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/maxAttempts/set-null")
     void shouldSetMaxAttemptsToNull() {
         final TokenNftInfoQuery subject = create();
         subject.setMaxAttempts((Integer) null);
@@ -90,6 +98,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/maxAttempts/set-accepts-at-minimum")
     void shouldSetMaxAttemptsAtMinimum() {
         final TokenNftInfoQuery subject = create();
         final @Nullable Integer value = Integer.MIN_VALUE;
@@ -99,6 +108,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/maxAttempts/set-accepts-at-maximum")
     void shouldSetMaxAttemptsAtMaximum() {
         final TokenNftInfoQuery subject = create();
         final @Nullable Integer value = 2147483647;
@@ -108,6 +118,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff changes maxBackoff and returns the object")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/maxBackoff/set")
     void shouldSetMaxBackoff() {
         final TokenNftInfoQuery subject = create();
         final @Nullable Long value = maxBackoffOtherValue();
@@ -117,6 +128,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts null")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/maxBackoff/set-null")
     void shouldSetMaxBackoffToNull() {
         final TokenNftInfoQuery subject = create();
         subject.setMaxBackoff((Long) null);
@@ -125,6 +137,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/maxBackoff/set-accepts-at-minimum")
     void shouldSetMaxBackoffAtMinimum() {
         final TokenNftInfoQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -134,6 +147,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/maxBackoff/set-accepts-at-maximum")
     void shouldSetMaxBackoffAtMaximum() {
         final TokenNftInfoQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -143,6 +157,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setMinBackoff changes minBackoff and returns the object")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/minBackoff/set")
     void shouldSetMinBackoff() {
         final TokenNftInfoQuery subject = create();
         final @Nullable Long value = minBackoffOtherValue();
@@ -152,6 +167,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts null")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/minBackoff/set-null")
     void shouldSetMinBackoffToNull() {
         final TokenNftInfoQuery subject = create();
         subject.setMinBackoff((Long) null);
@@ -160,6 +176,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/minBackoff/set-accepts-at-minimum")
     void shouldSetMinBackoffAtMinimum() {
         final TokenNftInfoQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -169,6 +186,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/minBackoff/set-accepts-at-maximum")
     void shouldSetMinBackoffAtMaximum() {
         final TokenNftInfoQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -178,6 +196,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout changes attemptTimeout and returns the object")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/attemptTimeout/set")
     void shouldSetAttemptTimeout() {
         final TokenNftInfoQuery subject = create();
         final @Nullable Long value = attemptTimeoutOtherValue();
@@ -187,6 +206,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts null")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/attemptTimeout/set-null")
     void shouldSetAttemptTimeoutToNull() {
         final TokenNftInfoQuery subject = create();
         subject.setAttemptTimeout((Long) null);
@@ -195,6 +215,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/attemptTimeout/set-accepts-at-minimum")
     void shouldSetAttemptTimeoutAtMinimum() {
         final TokenNftInfoQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -204,6 +225,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/attemptTimeout/set-accepts-at-maximum")
     void shouldSetAttemptTimeoutAtMaximum() {
         final TokenNftInfoQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -213,6 +235,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setMaxQueryPayment changes maxQueryPayment and returns the object")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/maxQueryPayment/set")
     void shouldSetMaxQueryPayment() {
         final TokenNftInfoQuery subject = create();
         final @Nullable NativeToken<?, ?> value = maxQueryPaymentOtherValue();
@@ -222,6 +245,7 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("setMaxQueryPayment accepts null")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/maxQueryPayment/set-null")
     void shouldSetMaxQueryPaymentToNull() {
         final TokenNftInfoQuery subject = create();
         subject.setMaxQueryPayment((NativeToken<?, ?>) null);
@@ -230,12 +254,14 @@ class TokenNftInfoQueryTest {
 
     @Test
     @DisplayName("submit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/submit/call")
     void shouldCallSubmit() {
         assertNotNull(create().submit(clientValue()));
     }
 
     @Test
     @DisplayName("getCost(client) can be called and returns a value")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfoQuery/getCost/call")
     void shouldCallGetCost() {
         assertNotNull(create().getCost(clientValue()));
     }

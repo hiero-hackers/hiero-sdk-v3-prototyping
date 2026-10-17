@@ -9,6 +9,7 @@ import java.util.Map;
 import org.hiero.http.HttpMethod;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `mirror-node-http`, generated from the `tests` blocks of its `## Testing` section.
@@ -36,6 +37,7 @@ class MirrorNodeHttpSpecTest {
     /// (MirrorNodeRestPathTest.allowsDotDotInsideQueryString) and this spec's example; the values of RELATIVE_PATHS.
     @Test
     @DisplayName("a request keeps a path relative to the REST base URL unchanged")
+    @Tag("testId:mirrornode.http/a-request-keeps-a-path-relative-to-the-rest-base-url-unchanged")
     void aRequestKeepsAPathRelativeToTheRESTBaseURLUnchanged() {
         for (final String path : RELATIVE_PATHS()) {
             // when
@@ -55,6 +57,7 @@ class MirrorNodeHttpSpecTest {
     /// Source: the Java SDK (MirrorNodeHttpClientTest: the POST body and the caller's headers are passed on unchanged).
     @Test
     @DisplayName("a POST request keeps its body and headers")
+    @Tag("testId:mirrornode.http/a-post-request-keeps-its-body-and-headers")
     void aPOSTRequestKeepsItsBodyAndHeaders() {
         // given
         final byte[] body = utf8("{\"data\":\"0xabc\"}");
@@ -74,6 +77,7 @@ class MirrorNodeHttpSpecTest {
     /// optional, a request without one falls back to the default request timeout of the HttpClient).
     @Test
     @DisplayName("a request keeps its timeout")
+    @Tag("testId:mirrornode.http/a-request-keeps-its-timeout")
     void aRequestKeepsItsTimeout() {
         // when
         final MirrorNodeHttpRequest request = new MirrorNodeHttpRequest(HttpMethod.GET, "/accounts/0.0.1", null, toDuration("PT10S"), Map.of());
@@ -88,6 +92,7 @@ class MirrorNodeHttpSpecTest {
     /// Source: the API guideline (`duration` has millisecond precision).
     @Test
     @DisplayName("a request keeps a timeout with millisecond precision")
+    @Tag("testId:mirrornode.http/a-request-keeps-a-timeout-with-millisecond-precision")
     void aRequestKeepsATimeoutWithMillisecondPrecision() {
         // when
         final MirrorNodeHttpRequest request = new MirrorNodeHttpRequest(HttpMethod.GET, "/accounts/0.0.1", null, toDuration("PT1.5S"), Map.of());
@@ -106,6 +111,7 @@ class MirrorNodeHttpSpecTest {
     /// rejectsWhitespace), this spec's example and this spec (@@pattern("^/[^\s]*$")); the values of REJECTED_PATHS.
     @Test
     @DisplayName("a request rejects a path that is no relative REST path")
+    @Tag("testId:mirrornode.http/a-request-rejects-a-path-that-is-no-relative-rest-path")
     void aRequestRejectsAPathThatIsNoRelativeRESTPath() {
         for (final String path : REJECTED_PATHS()) {
             // when / then
@@ -118,6 +124,7 @@ class MirrorNodeHttpSpecTest {
     /// Source: the Go SDK (TestUnitMirrorRestPathRejectsHost: "embedded newline"); this spec (@@pattern("^/[^\s]*$")).
     @Test
     @DisplayName("a request rejects a path with an embedded newline")
+    @Tag("testId:mirrornode.http/a-request-rejects-a-path-with-an-embedded-newline")
     void aRequestRejectsAPathWithAnEmbeddedNewline() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new MirrorNodeHttpRequest(HttpMethod.GET, "/accounts\n/0.0.1", null, null, Map.of()));
@@ -128,6 +135,7 @@ class MirrorNodeHttpSpecTest {
     /// Source: the Go SDK (TestUnitMirrorRestPathRejectsHost: "embedded tab"); this spec (@@pattern("^/[^\s]*$")).
     @Test
     @DisplayName("a request rejects a path with an embedded tab")
+    @Tag("testId:mirrornode.http/a-request-rejects-a-path-with-an-embedded-tab")
     void aRequestRejectsAPathWithAnEmbeddedTab() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new MirrorNodeHttpRequest(HttpMethod.GET, "/accounts\t0.0.1", null, null, Map.of()));

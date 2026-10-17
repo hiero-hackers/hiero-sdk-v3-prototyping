@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.util.List;
 import javax.annotation.processing.Generated;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Plan`, generated from the specs.
@@ -19,6 +20,7 @@ class PlanTest {
 
     @Test
     @DisplayName("the constants have the attribute values of the specs")
+    @Tag("testId:shop.money.Plan/constants")
     void shouldProvideTheAttributesOfTheConstants() {
         assertValue(Duration.ofSeconds(30L), Plan.BASIC.timeout());
         assertValue(new BigInteger("1000"), Plan.BASIC.limit());

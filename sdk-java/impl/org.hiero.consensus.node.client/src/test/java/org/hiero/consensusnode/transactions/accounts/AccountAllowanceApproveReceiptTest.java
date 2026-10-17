@@ -18,6 +18,7 @@ import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountAllowanceApproveReceipt`, generated from the specs.
@@ -26,6 +27,7 @@ class AccountAllowanceApproveReceiptTest {
 
     @Test
     @DisplayName("creates an AccountAllowanceApproveReceipt and returns the values")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveReceipt/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -40,24 +42,28 @@ class AccountAllowanceApproveReceiptTest {
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveReceipt/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new AccountAllowanceApproveReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue()));
     }
 
     @Test
     @DisplayName("rejects null for status")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveReceipt/status/rejects-null")
     void shouldRejectNullStatus() {
         assertThrows(NullPointerException.class, () -> new AccountAllowanceApproveReceipt(transactionIdValue(), (TransactionStatus) null, exchangeRateValue(), nextExchangeRateValue()));
     }
 
     @Test
     @DisplayName("rejects null for exchangeRate")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveReceipt/exchangeRate/rejects-null")
     void shouldRejectNullExchangeRate() {
         assertThrows(NullPointerException.class, () -> new AccountAllowanceApproveReceipt(transactionIdValue(), statusValue(), (ExchangeRate) null, nextExchangeRateValue()));
     }
 
     @Test
     @DisplayName("rejects null for nextExchangeRate")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveReceipt/nextExchangeRate/rejects-null")
     void shouldRejectNullNextExchangeRate() {
         assertThrows(NullPointerException.class, () -> new AccountAllowanceApproveReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), (ExchangeRate) null));
     }

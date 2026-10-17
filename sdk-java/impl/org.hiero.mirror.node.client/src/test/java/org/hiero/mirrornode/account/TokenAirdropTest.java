@@ -9,6 +9,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenAirdrop`, generated from the specs.
@@ -17,6 +18,7 @@ class TokenAirdropTest {
 
     @Test
     @DisplayName("creates a TokenAirdrop and returns the values")
+    @Tag("testId:mirrornode.account.TokenAirdrop/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId senderId = senderIdValue();
         final AccountId receiverId = receiverIdValue();
@@ -35,6 +37,7 @@ class TokenAirdropTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.account.TokenAirdrop/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final AccountId senderId = senderIdValue();
         final AccountId receiverId = receiverIdValue();
@@ -60,6 +63,7 @@ class TokenAirdropTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.account.TokenAirdrop/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TokenAirdrop subject = TokenAirdrop.builder()
                 .senderId(senderIdValue())
@@ -73,30 +77,35 @@ class TokenAirdropTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.account.TokenAirdrop/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TokenAirdrop.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for senderId")
+    @Tag("testId:mirrornode.account.TokenAirdrop/senderId/rejects-null")
     void shouldRejectNullSenderId() {
         assertThrows(NullPointerException.class, () -> new TokenAirdrop((AccountId) null, receiverIdValue(), tokenIdValue(), amountValue(), serialNumberValue(), timestampValue()));
     }
 
     @Test
     @DisplayName("rejects null for receiverId")
+    @Tag("testId:mirrornode.account.TokenAirdrop/receiverId/rejects-null")
     void shouldRejectNullReceiverId() {
         assertThrows(NullPointerException.class, () -> new TokenAirdrop(senderIdValue(), (AccountId) null, tokenIdValue(), amountValue(), serialNumberValue(), timestampValue()));
     }
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:mirrornode.account.TokenAirdrop/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenAirdrop(senderIdValue(), receiverIdValue(), (Address) null, amountValue(), serialNumberValue(), timestampValue()));
     }
 
     @Test
     @DisplayName("amount: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.account.TokenAirdrop/amount/accepts-at-minimum")
     void shouldAcceptAmountAtMinimum() {
         final @Nullable Long value = -9223372036854775808L;
         final TokenAirdrop subject = new TokenAirdrop(senderIdValue(), receiverIdValue(), tokenIdValue(), value, serialNumberValue(), timestampValue());
@@ -105,6 +114,7 @@ class TokenAirdropTest {
 
     @Test
     @DisplayName("amount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.account.TokenAirdrop/amount/accepts-at-maximum")
     void shouldAcceptAmountAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
         final TokenAirdrop subject = new TokenAirdrop(senderIdValue(), receiverIdValue(), tokenIdValue(), value, serialNumberValue(), timestampValue());
@@ -113,6 +123,7 @@ class TokenAirdropTest {
 
     @Test
     @DisplayName("serialNumber: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.account.TokenAirdrop/serialNumber/accepts-at-minimum")
     void shouldAcceptSerialNumberAtMinimum() {
         final @Nullable Long value = -9223372036854775808L;
         final TokenAirdrop subject = new TokenAirdrop(senderIdValue(), receiverIdValue(), tokenIdValue(), amountValue(), value, timestampValue());
@@ -121,6 +132,7 @@ class TokenAirdropTest {
 
     @Test
     @DisplayName("serialNumber: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.account.TokenAirdrop/serialNumber/accepts-at-maximum")
     void shouldAcceptSerialNumberAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
         final TokenAirdrop subject = new TokenAirdrop(senderIdValue(), receiverIdValue(), tokenIdValue(), amountValue(), value, timestampValue());
@@ -129,12 +141,14 @@ class TokenAirdropTest {
 
     @Test
     @DisplayName("rejects null for timestamp")
+    @Tag("testId:mirrornode.account.TokenAirdrop/timestamp/rejects-null")
     void shouldRejectNullTimestamp() {
         assertThrows(NullPointerException.class, () -> new TokenAirdrop(senderIdValue(), receiverIdValue(), tokenIdValue(), amountValue(), serialNumberValue(), (ZonedDateTime) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.account.TokenAirdrop/value-semantics")
     void shouldCompareByValue() {
         final TokenAirdrop subject = create();
         final TokenAirdrop other = create();

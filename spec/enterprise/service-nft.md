@@ -157,6 +157,7 @@ value that violates a validation annotation (`@@maxBytes`, `@@min`) is rejected 
 
 ```tests
 // Source: this spec (@@default and @@nullable of NftTypeCreateParams).
+@@testId("nft-type-parameters-with-only-name-and-symbol-have-the-defaults-of-the-spec")
 test "NFT type parameters with only name and symbol have the defaults of the spec" {
     // when
     let params = DEFAULT(NftTypeCreateParams)
@@ -189,6 +190,7 @@ test "NFT type parameters with only name and symbol have the defaults of the spe
 // set is read back unchanged. The expiration time and the auto-renew period are those of the Java test
 // (spawnTestTransactionNft: Instant.ofEpochSecond(1554158542) and Duration.ofHours(10), converted exactly to
 // 2019-04-01T22:42:22Z and 36000 seconds).
+@@testId("nft-type-parameters-keep-the-values-they-are-created-with")
 test "NFT type parameters keep the values they are created with" {
     // given
     let authority = DEFAULT(Authority)
@@ -229,6 +231,7 @@ test "NFT type parameters keep the values they are created with" {
 
 // Source: this spec (@@maxBytes(100) of name, symbol and tokenMemo); HAPI limits them to 100 bytes, which ASCII text
 // of 100 characters is.
+@@testId("an-nft-type-accepts-a-name-a-symbol-and-a-memo-of-100-characters")
 test "an NFT type accepts a name, a symbol and a memo of 100 characters" {
     // given
     let text = repeat(value: "a", count: 100)
@@ -243,6 +246,7 @@ test "an NFT type accepts a name, a symbol and a memo of 100 characters" {
 }
 
 // Source: this spec (@@min(1) of maxSupply, which applies to a FINITE supply type).
+@@testId("a-finite-nft-type-accepts-a-max-supply-of-1")
 test "a finite NFT type accepts a max supply of 1" {
     // when
     let params = NftTypeCreateParams{name: "Nft Tokens", symbol: "NT", supplyType: TokenSupplyType.FINITE,
@@ -254,6 +258,7 @@ test "a finite NFT type accepts a max supply of 1" {
 }
 
 // Source: this spec (@@maxBytes(100) of name); HAPI limits a token name to 100 bytes.
+@@testId("nft-type-parameters-reject-a-name-of-101-characters")
 test "NFT type parameters reject a name of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -261,6 +266,7 @@ test "NFT type parameters reject a name of 101 characters" {
 }
 
 // Source: this spec (@@maxBytes(100) of symbol); HAPI limits a token symbol to 100 bytes.
+@@testId("nft-type-parameters-reject-a-symbol-of-101-characters")
 test "NFT type parameters reject a symbol of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -268,6 +274,7 @@ test "NFT type parameters reject a symbol of 101 characters" {
 }
 
 // Source: this spec (@@maxBytes(100) of tokenMemo); HAPI limits a memo to 100 bytes.
+@@testId("nft-type-parameters-reject-a-memo-of-101-characters")
 test "NFT type parameters reject a memo of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -275,6 +282,7 @@ test "NFT type parameters reject a memo of 101 characters" {
 }
 
 // Source: this spec (@@min(1) of maxSupply).
+@@testId("a-finite-nft-type-rejects-a-max-supply-of-0")
 test "a finite NFT type rejects a max supply of 0" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -282,6 +290,7 @@ test "a finite NFT type rejects a max supply of 0" {
 }
 
 // Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100).
+@@testId("nft-type-parameters-reject-metadata-longer-than-100-bytes")
 test "NFT type parameters reject metadata longer than 100 bytes" {
     // when / then
     @@expectThrows(invalid-argument-error)

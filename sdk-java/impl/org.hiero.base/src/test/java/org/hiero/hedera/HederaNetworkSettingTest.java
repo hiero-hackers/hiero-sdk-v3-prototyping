@@ -12,6 +12,7 @@ import org.hiero.ledger.IpAddress;
 import org.hiero.ledger.MirrorNode;
 import org.hiero.ledger.Network;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `HederaNetworkSetting`, generated from the specs.
@@ -20,6 +21,7 @@ class HederaNetworkSettingTest {
 
     @Test
     @DisplayName("creates a HederaNetworkSetting and returns the values")
+    @Tag("testId:hedera.HederaNetworkSetting/create")
     void shouldCreateAndReturnTheValues() {
         final Network<?> network = networkValue();
         final Set<ConsensusNode> getConsensusNodes = getConsensusNodesValue();
@@ -32,18 +34,21 @@ class HederaNetworkSettingTest {
 
     @Test
     @DisplayName("rejects null for network")
+    @Tag("testId:hedera.HederaNetworkSetting/network/rejects-null")
     void shouldRejectNullNetwork() {
         assertThrows(NullPointerException.class, () -> new HederaNetworkSetting((Network<?>) null, getConsensusNodesValue(), getMirrorNodesValue()));
     }
 
     @Test
     @DisplayName("rejects null for getConsensusNodes")
+    @Tag("testId:hedera.HederaNetworkSetting/getConsensusNodes/rejects-null")
     void shouldRejectNullGetConsensusNodes() {
         assertThrows(NullPointerException.class, () -> new HederaNetworkSetting(networkValue(), (Set<ConsensusNode>) null, getMirrorNodesValue()));
     }
 
     @Test
     @DisplayName("the constructor copies getConsensusNodes; the accessor returns an unmodifiable collection")
+    @Tag("testId:hedera.HederaNetworkSetting/getConsensusNodes/copies-in")
     void shouldCopyGetConsensusNodesIn() {
         final Set<ConsensusNode> value = new LinkedHashSet<>(getConsensusNodesValue());
         final Set<ConsensusNode> expected = Set.copyOf(value);
@@ -55,12 +60,14 @@ class HederaNetworkSettingTest {
 
     @Test
     @DisplayName("rejects null for getMirrorNodes")
+    @Tag("testId:hedera.HederaNetworkSetting/getMirrorNodes/rejects-null")
     void shouldRejectNullGetMirrorNodes() {
         assertThrows(NullPointerException.class, () -> new HederaNetworkSetting(networkValue(), getConsensusNodesValue(), (Set<MirrorNode>) null));
     }
 
     @Test
     @DisplayName("the constructor copies getMirrorNodes; the accessor returns an unmodifiable collection")
+    @Tag("testId:hedera.HederaNetworkSetting/getMirrorNodes/copies-in")
     void shouldCopyGetMirrorNodesIn() {
         final Set<MirrorNode> value = new LinkedHashSet<>(getMirrorNodesValue());
         final Set<MirrorNode> expected = Set.copyOf(value);

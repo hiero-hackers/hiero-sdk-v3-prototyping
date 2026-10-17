@@ -202,6 +202,7 @@ network and is not tested here. The comment above each test names its source.
 ```tests
 // Source: the Rust (semantic_version display tests) and Swift (test_Basic, test_WithPrerelease, test_WithBuild,
 // test_WithPrereleaseAndBuild) SDKs; the example of `SemanticVersion.toString()` in this spec; semver.org.
+@@testId("a-semantic-version-is-written-in-its-canonical-semver-form")
 test "a semantic version is written in its canonical semver form" {
     for text in keys(value: SEMANTIC_VERSION_TEXTS) {
         // when
@@ -214,6 +215,7 @@ test "a semantic version is written in its canonical semver form" {
 
 // Source: the JavaScript ("constructor stores major, minor and patch"), C++ (ConstructWithValues) and Swift
 // (test_ParseWithPrereleaseAndBuild) SemanticVersion unit tests.
+@@testId("a-semantic-version-keeps-its-numbers-and-labels")
 test "a semantic version keeps its numbers and labels" {
     // when
     let version = SemanticVersion{major: 1, minor: 2, patch: 0, preReleaseLabel: "beta.10", buildMetadata: "d13fe780"}
@@ -228,6 +230,7 @@ test "a semantic version keeps its numbers and labels" {
 
 // Source: the Swift SemanticVersion unit tests (test_ParseMajorMinorPatch, test_ParseZeroMinorPatch: a release has no
 // labels); the API schema of this spec (both labels are absent for a release version).
+@@testId("a-release-version-has-no-labels-and-is-written-as-major-minor-patch")
 test "a release version has no labels and is written as major.minor.patch" {
     // when
     let version = SemanticVersion{major: 0, minor: 2, patch: 0, preReleaseLabel: null, buildMetadata: null}
@@ -240,6 +243,7 @@ test "a release version has no labels and is written as major.minor.patch" {
 
 // Source: the C++ NetworkVersionInfo unit tests (EqualityIdenticallyConstructed, InequalityDifferentProtobufVersion,
 // InequalityDifferentServicesVersion); the Equality of the test language.
+@@testId("versions-and-version-infos-are-equal-when-all-their-parts-are-equal")
 test "versions and version infos are equal when all their parts are equal" {
     // given
     let release = SemanticVersion{major: 0, minor: 49, patch: 1, preReleaseLabel: null, buildMetadata: null}
@@ -259,6 +263,7 @@ test "versions and version infos are equal when all their parts are equal" {
 
 // Source: the JavaScript ("constructor stores both versions"), C++ (ConstructWithValues) and Java (shouldSerialize)
 // NetworkVersionInfo unit tests.
+@@testId("a-network-version-info-keeps-the-hapi-and-the-services-version")
 test "a network version info keeps the HAPI and the services version" {
     // given
     let hapi = SemanticVersion{major: 0, minor: 50, patch: 0, preReleaseLabel: null, buildMetadata: null}
@@ -274,6 +279,7 @@ test "a network version info keeps the HAPI and the services version" {
 
 // Source: the C++ (GetSetNodeId, GetSetAccountId, GetSetCertHash, GetSetEndpoints, GetSetDescription, GetSetPublicKey)
 // and Python (test_init) NodeAddress unit tests.
+@@testId("a-node-address-keeps-all-its-attributes")
 test "a node address keeps all its attributes" {
     // given
     let account = AccountId{shard: 0, realm: 0, num: 3, checksum: ""}
@@ -298,6 +304,7 @@ test "a node address keeps all its attributes" {
 
 // Source: the Python NodeAddress unit test (test_empty_addresses); `@@default([])` of serviceEndpoints and
 // `@@nullable` of description.
+@@testId("a-node-address-has-no-endpoints-and-no-description-by-default")
 test "a node address has no endpoints and no description by default" {
     // when
     let address = NodeAddress{nodeId: 0, accountId: AccountId{shard: 0, realm: 0, num: 3, checksum: ""},
@@ -311,6 +318,7 @@ test "a node address has no endpoints and no description by default" {
 
 // Source: the Java AddressBookResponse test of the TCK and the C++ AddressBookQuery unit tests (an address book is a
 // list of node addresses).
+@@testId("an-address-book-keeps-its-nodes-in-order")
 test "an address book keeps its nodes in order" {
     // given
     let node0 = DEFAULT(NodeAddress)

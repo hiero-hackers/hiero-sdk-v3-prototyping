@@ -15,6 +15,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.token.TokenSupplyType;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenCreateParams`, generated from the specs.
@@ -23,6 +24,7 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("creates a TokenCreateParams and returns the values")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/create")
     void shouldCreateAndReturnTheValues() {
         final String name = nameValue();
         final String symbol = symbolValue();
@@ -71,6 +73,7 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("creates a TokenCreateParams with the default values")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final TokenCreateParams subject = new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), maxSupplyValue(), tokenMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
         assertValue(0, subject.decimals());
@@ -82,6 +85,7 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final String name = nameValue();
         final String symbol = symbolValue();
@@ -152,6 +156,7 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TokenCreateParams subject = TokenCreateParams.builder()
                 .name(nameValue())
@@ -180,18 +185,21 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TokenCreateParams.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for name")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/name/rejects-null")
     void shouldRejectNullName() {
         assertThrows(NullPointerException.class, () -> new TokenCreateParams((String) null, symbolValue(), treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("name: accepts more elements than the maximum")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/name/accepts-at-maximum-bytes")
     void shouldAcceptNameAtMaximumBytes() {
         final String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TokenCreateParams subject = new TokenCreateParams(value, symbolValue(), treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -200,18 +208,21 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("name: rejects more elements than the maximum")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/name/rejects-above-maximum-bytes")
     void shouldRejectNameAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams("ääääääääääääääääääääääääääääääääääääääääääääääääääa", symbolValue(), treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("rejects null for symbol")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/symbol/rejects-null")
     void shouldRejectNullSymbol() {
         assertThrows(NullPointerException.class, () -> new TokenCreateParams(nameValue(), (String) null, treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("symbol: accepts more elements than the maximum")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/symbol/accepts-at-maximum-bytes")
     void shouldAcceptSymbolAtMaximumBytes() {
         final String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TokenCreateParams subject = new TokenCreateParams(nameValue(), value, treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -220,12 +231,14 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("symbol: rejects more elements than the maximum")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/symbol/rejects-above-maximum-bytes")
     void shouldRejectSymbolAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams(nameValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("decimals: accepts the minimum (-2147483648)")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/decimals/accepts-at-minimum")
     void shouldAcceptDecimalsAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final TokenCreateParams subject = new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), value, initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -234,6 +247,7 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("decimals: accepts the maximum (2147483647)")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/decimals/accepts-at-maximum")
     void shouldAcceptDecimalsAtMaximum() {
         final int value = 2147483647;
         final TokenCreateParams subject = new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), value, initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -242,6 +256,7 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("initialSupply: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/initialSupply/accepts-at-minimum")
     void shouldAcceptInitialSupplyAtMinimum() {
         final long value = -9223372036854775808L;
         final TokenCreateParams subject = new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), decimalsValue(), value, supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -250,6 +265,7 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("initialSupply: accepts the maximum (9223372036854775807)")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/initialSupply/accepts-at-maximum")
     void shouldAcceptInitialSupplyAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenCreateParams subject = new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), decimalsValue(), value, supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -258,12 +274,14 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("rejects null for supplyType")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/supplyType/rejects-null")
     void shouldRejectNullSupplyType() {
         assertThrows(NullPointerException.class, () -> new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), (TokenSupplyType) null, maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("maxSupply: accepts the minimum (1)")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/maxSupply/accepts-at-minimum")
     void shouldAcceptMaxSupplyAtMinimum() {
         final @Nullable Long value = 1L;
         final TokenCreateParams subject = new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), value, freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -272,6 +290,7 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("maxSupply: accepts the maximum (9223372036854775807)")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/maxSupply/accepts-at-maximum")
     void shouldAcceptMaxSupplyAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
         final TokenCreateParams subject = new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), value, freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -280,12 +299,14 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("maxSupply: rejects a value below the minimum (0)")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/maxSupply/rejects-below-minimum")
     void shouldRejectMaxSupplyBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), 0L, freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("tokenMemo: accepts more elements than the maximum")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/tokenMemo/accepts-at-maximum-bytes")
     void shouldAcceptTokenMemoAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TokenCreateParams subject = new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), value, metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -294,18 +315,21 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("tokenMemo: rejects more elements than the maximum")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/tokenMemo/rejects-above-maximum-bytes")
     void shouldRejectTokenMemoAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("rejects null for metadata")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/metadata/rejects-null")
     void shouldRejectNullMetadata() {
         assertThrows(NullPointerException.class, () -> new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), (byte[]) null, expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("metadata: accepts the maximum number of elements")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/metadata/accepts-at-maximum-size")
     void shouldAcceptMetadataAtMaximumSize() {
         final byte[] value = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100};
         final TokenCreateParams subject = new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), value, expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -314,12 +338,14 @@ class TokenCreateParamsTest {
 
     @Test
     @DisplayName("metadata: rejects more elements than the maximum")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/metadata/rejects-above-maximum-size")
     void shouldRejectMetadataAboveMaximumSize() {
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), decimalsValue(), initialSupplyValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 1}, expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("the constructor copies metadata; the accessor returns a copy")
+    @Tag("testId:enterprise.service.token.TokenCreateParams/metadata/copies-in")
     void shouldCopyMetadataIn() {
         final byte[] value = metadataValue();
         final byte[] expected = value.clone();

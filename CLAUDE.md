@@ -206,7 +206,8 @@ points to keep specs valid and consistent:
   (`test "name" { let key = DEFAULT(PrivateKey) ... assertEquals(expected: ..., actual: ...) }`). The validator
   resolves them against the model (`test.*` rules); the Java generator turns them into `<Spec>SpecTest` classes.
   Expected values must come from the spec itself or a published test vector, never from a value computed for the
-  test (see the guideline's `## Questions & Comments`).
+  test (see the guideline's `## Questions & Comments`). Every test has a stable `@@testId("kebab-id")`, unique per
+  namespace (a tooling test checks it): it identifies the test across languages in the test results.
 - `## Default Instances for Testing` records the standard way to obtain an instance of the spec's types through the API
   (`instance PublicKey = DEFAULT(PrivateKey).createPublicKey()`), with concrete values where implementations check them
   (keys, addresses). Generated tests use them first; the validator warns (`instance.missing`) about types that cannot
@@ -330,6 +331,12 @@ Comments` of the respective spec files and are its real output:
   both equal) plus its implementation in `sdk-java/test-support` (`Testing`) and the Java mapping in
   `SpecTestGenerator` / `api-best-practices-java.md`, and the same for TypeScript (`sdk-ts/test-support`,
   `TsSpecTestGenerator`, `api-best-practices-ts.md`). Java and TypeScript generate spec tests so far.
+- **Test results** are written as Open Test Reporting next to the usual reports
+  ([ADR-0012](docs/adr/0012-open-test-reporting-as-common-test-result-format.md)): so far by the Java builds
+  (`open-test-report.xml` in `target/surefire-reports`, every test tagged `testId:<id>`); `scripts/test-report.sh`
+  renders them as HTML, separately for the SDK, the generated API and the tooling. TypeScript, the TCK and Rust
+  follow; the report with the matrix spec test × language and the classification passed / stub / network / other is
+  a required follow-up.
 - **Open design questions** belong under each file's `## Questions & Comments` (often attributed to a GitHub handle).
   Don't silently resolve them; surface them.
 - **Language best-practice docs** (`api-best-practices-*.md`) describe how a meta-language concept maps to one

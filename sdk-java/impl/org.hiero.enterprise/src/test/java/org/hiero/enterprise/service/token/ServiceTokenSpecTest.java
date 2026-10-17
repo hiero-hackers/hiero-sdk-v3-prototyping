@@ -15,6 +15,7 @@ import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.token.TokenSupplyType;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `service-token`, generated from the `tests` blocks of its `## Testing` section.
@@ -27,6 +28,7 @@ class ServiceTokenSpecTest {
     /// (token_create_transaction_test.py, test_overwrite_defaults: decimals and initial supply are 0, no expiration time).
     @Test
     @DisplayName("token parameters with only name and symbol have the defaults of the spec")
+    @Tag("testId:enterprise.service.token/token-parameters-with-only-name-and-symbol-have-the-defaults-of-the-spec")
     void tokenParametersWithOnlyNameAndSymbolHaveTheDefaultsOfTheSpec() {
         // when
         final TokenCreateParams params = defaultTokenCreateParams();
@@ -65,6 +67,7 @@ class ServiceTokenSpecTest {
     /// seconds).
     @Test
     @DisplayName("token parameters keep the values they are created with")
+    @Tag("testId:enterprise.service.token/token-parameters-keep-the-values-they-are-created-with")
     void tokenParametersKeepTheValuesTheyAreCreatedWith() {
         // given
         final Authority authority = defaultAuthority();
@@ -106,6 +109,7 @@ class ServiceTokenSpecTest {
     /// of 100 characters is.
     @Test
     @DisplayName("a name, a symbol and a memo of 100 characters are accepted")
+    @Tag("testId:enterprise.service.token/a-name-a-symbol-and-a-memo-of-100-characters-are-accepted")
     void aNameASymbolAndAMemoOf100CharactersAreAccepted() {
         // given
         final String text = repeat("a", 100L);
@@ -124,6 +128,7 @@ class ServiceTokenSpecTest {
     /// Source: this spec (@@min(1) of maxSupply, which applies to a FINITE supply type).
     @Test
     @DisplayName("a finite token accepts a max supply of 1")
+    @Tag("testId:enterprise.service.token/a-finite-token-accepts-a-max-supply-of-1")
     void aFiniteTokenAcceptsAMaxSupplyOf1() {
         // when
         final TokenCreateParams params = new TokenCreateParams("Token Name", "TKN", null, 0, 0L, TokenSupplyType.FINITE, 1L, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null);
@@ -138,6 +143,7 @@ class ServiceTokenSpecTest {
     /// Source: this spec (@@maxBytes(100) of name); HAPI limits a token name to 100 bytes.
     @Test
     @DisplayName("token parameters reject a name of 101 characters")
+    @Tag("testId:enterprise.service.token/token-parameters-reject-a-name-of-101-characters")
     void tokenParametersRejectANameOf101Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams(repeat("a", 101L), "TKN", null, 0, 0L, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
@@ -148,6 +154,7 @@ class ServiceTokenSpecTest {
     /// Source: this spec (@@maxBytes(100) of symbol); HAPI limits a token symbol to 100 bytes.
     @Test
     @DisplayName("token parameters reject a symbol of 101 characters")
+    @Tag("testId:enterprise.service.token/token-parameters-reject-a-symbol-of-101-characters")
     void tokenParametersRejectASymbolOf101Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams("Token Name", repeat("a", 101L), null, 0, 0L, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
@@ -158,6 +165,7 @@ class ServiceTokenSpecTest {
     /// Source: this spec (@@maxBytes(100) of tokenMemo); HAPI limits a memo to 100 bytes.
     @Test
     @DisplayName("token parameters reject a memo of 101 characters")
+    @Tag("testId:enterprise.service.token/token-parameters-reject-a-memo-of-101-characters")
     void tokenParametersRejectAMemoOf101Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams("Token Name", "TKN", null, 0, 0L, TokenSupplyType.INFINITE, null, false, repeat("a", 101L), new byte[0], null, null, null, null, null, null, null, null, null, null, null));
@@ -168,6 +176,7 @@ class ServiceTokenSpecTest {
     /// Source: this spec (@@min(1) of maxSupply).
     @Test
     @DisplayName("a finite token rejects a max supply of 0")
+    @Tag("testId:enterprise.service.token/a-finite-token-rejects-a-max-supply-of-0")
     void aFiniteTokenRejectsAMaxSupplyOf0() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams("Token Name", "TKN", null, 0, 0L, TokenSupplyType.FINITE, 0L, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
@@ -178,6 +187,7 @@ class ServiceTokenSpecTest {
     /// Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100).
     @Test
     @DisplayName("token parameters reject metadata longer than 100 bytes")
+    @Tag("testId:enterprise.service.token/token-parameters-reject-metadata-longer-than-100-bytes")
     void tokenParametersRejectMetadataLongerThan100Bytes() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams("Token Name", "TKN", null, 0, 0L, TokenSupplyType.INFINITE, null, false, null, repeat(hex("78"), 101L), null, null, null, null, null, null, null, null, null, null, null));
@@ -189,6 +199,7 @@ class ServiceTokenSpecTest {
     /// "ä" are 100 bytes of UTF-8, 51 are 102.
     @Test
     @DisplayName("token parameters count the name in UTF-8 bytes")
+    @Tag("testId:enterprise.service.token/token-parameters-count-the-name-in-utf-8-bytes")
     void tokenParametersCountTheNameInUTF8Bytes() {
         // given
         final String name = repeat("ä", 50L);

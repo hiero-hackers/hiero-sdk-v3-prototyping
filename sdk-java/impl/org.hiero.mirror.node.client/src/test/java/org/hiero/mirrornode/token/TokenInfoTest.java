@@ -14,6 +14,7 @@ import org.hiero.token.TokenSupplyType;
 import org.hiero.token.TokenType;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenInfo`, generated from the specs.
@@ -22,6 +23,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("creates a TokenInfo and returns the values")
+    @Tag("testId:mirrornode.token.TokenInfo/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final TokenType type = typeValue();
@@ -62,6 +64,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.token.TokenInfo/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Address tokenId = tokenIdValue();
         final TokenType type = typeValue();
@@ -120,6 +123,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.token.TokenInfo/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TokenInfo subject = TokenInfo.builder()
                 .tokenId(tokenIdValue())
@@ -144,36 +148,42 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.token.TokenInfo/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TokenInfo.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:mirrornode.token.TokenInfo/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenInfo((Address) null, typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("rejects null for type")
+    @Tag("testId:mirrornode.token.TokenInfo/type/rejects-null")
     void shouldRejectNullType() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), (TokenType) null, nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("rejects null for name")
+    @Tag("testId:mirrornode.token.TokenInfo/name/rejects-null")
     void shouldRejectNullName() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), (String) null, symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("rejects null for symbol")
+    @Tag("testId:mirrornode.token.TokenInfo/symbol/rejects-null")
     void shouldRejectNullSymbol() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), (String) null, memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("decimals: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.token.TokenInfo/decimals/accepts-at-minimum")
     void shouldAcceptDecimalsAtMinimum() {
         final long value = -9223372036854775808L;
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), value, metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue());
@@ -182,6 +192,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("decimals: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.token.TokenInfo/decimals/accepts-at-maximum")
     void shouldAcceptDecimalsAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), value, metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue());
@@ -190,12 +201,14 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("rejects null for metadata")
+    @Tag("testId:mirrornode.token.TokenInfo/metadata/rejects-null")
     void shouldRejectNullMetadata() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), (byte[]) null, createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("the constructor copies metadata; the accessor returns a copy")
+    @Tag("testId:mirrornode.token.TokenInfo/metadata/copies-in")
     void shouldCopyMetadataIn() {
         final byte[] value = metadataValue();
         final byte[] expected = value.clone();
@@ -210,30 +223,35 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("rejects null for createdTimestamp")
+    @Tag("testId:mirrornode.token.TokenInfo/createdTimestamp/rejects-null")
     void shouldRejectNullCreatedTimestamp() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), (ZonedDateTime) null, modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("rejects null for modifiedTimestamp")
+    @Tag("testId:mirrornode.token.TokenInfo/modifiedTimestamp/rejects-null")
     void shouldRejectNullModifiedTimestamp() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), (ZonedDateTime) null, expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("rejects null for supplyType")
+    @Tag("testId:mirrornode.token.TokenInfo/supplyType/rejects-null")
     void shouldRejectNullSupplyType() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), (TokenSupplyType) null, initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("rejects null for initialSupply")
+    @Tag("testId:mirrornode.token.TokenInfo/initialSupply/rejects-null")
     void shouldRejectNullInitialSupply() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), (BigInteger) null, totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("initialSupply: accepts the minimum (-57896044618658097711785492504343953926634992332820282019728792003956564819968)")
+    @Tag("testId:mirrornode.token.TokenInfo/initialSupply/accepts-at-minimum")
     void shouldAcceptInitialSupplyAtMinimum() {
         final BigInteger value = new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968");
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), value, totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue());
@@ -242,6 +260,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("initialSupply: accepts the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819967)")
+    @Tag("testId:mirrornode.token.TokenInfo/initialSupply/accepts-at-maximum")
     void shouldAcceptInitialSupplyAtMaximum() {
         final BigInteger value = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), value, totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue());
@@ -250,24 +269,28 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("initialSupply: rejects a value below the minimum (-57896044618658097711785492504343953926634992332820282019728792003956564819969)")
+    @Tag("testId:mirrornode.token.TokenInfo/initialSupply/rejects-below-minimum")
     void shouldRejectInitialSupplyBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819969"), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("initialSupply: rejects a value above the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819968)")
+    @Tag("testId:mirrornode.token.TokenInfo/initialSupply/rejects-above-maximum")
     void shouldRejectInitialSupplyAboveMaximum() {
         assertThrows(IllegalArgumentException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819968"), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("rejects null for totalSupply")
+    @Tag("testId:mirrornode.token.TokenInfo/totalSupply/rejects-null")
     void shouldRejectNullTotalSupply() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), (BigInteger) null, maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("totalSupply: accepts the minimum (-57896044618658097711785492504343953926634992332820282019728792003956564819968)")
+    @Tag("testId:mirrornode.token.TokenInfo/totalSupply/accepts-at-minimum")
     void shouldAcceptTotalSupplyAtMinimum() {
         final BigInteger value = new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968");
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), value, maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue());
@@ -276,6 +299,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("totalSupply: accepts the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819967)")
+    @Tag("testId:mirrornode.token.TokenInfo/totalSupply/accepts-at-maximum")
     void shouldAcceptTotalSupplyAtMaximum() {
         final BigInteger value = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), value, maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue());
@@ -284,24 +308,28 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("totalSupply: rejects a value below the minimum (-57896044618658097711785492504343953926634992332820282019728792003956564819969)")
+    @Tag("testId:mirrornode.token.TokenInfo/totalSupply/rejects-below-minimum")
     void shouldRejectTotalSupplyBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819969"), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("totalSupply: rejects a value above the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819968)")
+    @Tag("testId:mirrornode.token.TokenInfo/totalSupply/rejects-above-maximum")
     void shouldRejectTotalSupplyAboveMaximum() {
         assertThrows(IllegalArgumentException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819968"), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("rejects null for maxSupply")
+    @Tag("testId:mirrornode.token.TokenInfo/maxSupply/rejects-null")
     void shouldRejectNullMaxSupply() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), (BigInteger) null, treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("maxSupply: accepts the minimum (-57896044618658097711785492504343953926634992332820282019728792003956564819968)")
+    @Tag("testId:mirrornode.token.TokenInfo/maxSupply/accepts-at-minimum")
     void shouldAcceptMaxSupplyAtMinimum() {
         final BigInteger value = new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968");
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), value, treasuryAccountIdValue(), deletedValue(), customFeesValue());
@@ -310,6 +338,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("maxSupply: accepts the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819967)")
+    @Tag("testId:mirrornode.token.TokenInfo/maxSupply/accepts-at-maximum")
     void shouldAcceptMaxSupplyAtMaximum() {
         final BigInteger value = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), value, treasuryAccountIdValue(), deletedValue(), customFeesValue());
@@ -318,30 +347,35 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("maxSupply: rejects a value below the minimum (-57896044618658097711785492504343953926634992332820282019728792003956564819969)")
+    @Tag("testId:mirrornode.token.TokenInfo/maxSupply/rejects-below-minimum")
     void shouldRejectMaxSupplyBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819969"), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("maxSupply: rejects a value above the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819968)")
+    @Tag("testId:mirrornode.token.TokenInfo/maxSupply/rejects-above-maximum")
     void shouldRejectMaxSupplyAboveMaximum() {
         assertThrows(IllegalArgumentException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819968"), treasuryAccountIdValue(), deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("rejects null for treasuryAccountId")
+    @Tag("testId:mirrornode.token.TokenInfo/treasuryAccountId/rejects-null")
     void shouldRejectNullTreasuryAccountId() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), (AccountId) null, deletedValue(), customFeesValue()));
     }
 
     @Test
     @DisplayName("rejects null for customFees")
+    @Tag("testId:mirrornode.token.TokenInfo/customFees/rejects-null")
     void shouldRejectNullCustomFees() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), memoValue(), decimalsValue(), metadataValue(), createdTimestampValue(), modifiedTimestampValue(), expiryTimestampValue(), supplyTypeValue(), initialSupplyValue(), totalSupplyValue(), maxSupplyValue(), treasuryAccountIdValue(), deletedValue(), (CustomFee) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.token.TokenInfo/value-semantics")
     void shouldCompareByValue() {
         final TokenInfo subject = create();
         final TokenInfo other = create();

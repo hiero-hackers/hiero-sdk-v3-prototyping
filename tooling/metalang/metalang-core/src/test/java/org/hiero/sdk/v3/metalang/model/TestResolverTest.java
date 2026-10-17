@@ -97,6 +97,56 @@ class TestResolverTest {
     }
 
     @Test
+    void aTestIdShouldReplaceTheIdDerivedFromTheName() {
+        // GIVEN / WHEN
+        final List<TestDefinition> tests = tests("""
+                @@testId("stable-id")
+                test "a test that was renamed" {
+                    assertTrue(condition: true)
+                }
+
+                test "a test without id" {
+                    assertTrue(condition: true)
+                }
+                """);
+
+        // THEN the id stays when the name changes; without @@testId the name gives the id
+        assertThat(tests).extracting(TestDefinition::id).containsExactly("shop/stable-id", "shop/a-test-without-id");
+    }
+
+    @Test
+    void aTestIdShouldBeKebabCaseAndUniqueInItsNamespace() {
+        assertThat(rules("""
+                @@testId("Not Kebab")
+                test "a" {
+                    assertTrue(condition: true)
+                }
+                """)).containsExactly("test.invalid");
+        assertThat(rules("""
+                @@testId(1)
+                test "a" {
+                    assertTrue(condition: true)
+                }
+                """)).containsExactly("test.invalid");
+        // an explicit id collides with another explicit id and with an id derived from a name
+        assertThat(rules("""
+                @@testId("same")
+                test "a" {
+                    assertTrue(condition: true)
+                }
+
+                @@testId("same")
+                test "b" {
+                    assertTrue(condition: true)
+                }
+
+                test "same" {
+                    assertTrue(condition: true)
+                }
+                """)).containsExactly("test.duplicate-id", "test.duplicate-id");
+    }
+
+    @Test
     void namedTestValuesShouldBeVariablesOfTheTestsOfTheirSpec() {
         final ValidationReport report = validate("""
                 // the names to try

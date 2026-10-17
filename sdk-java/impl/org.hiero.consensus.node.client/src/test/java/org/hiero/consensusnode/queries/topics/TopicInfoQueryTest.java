@@ -22,6 +22,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TopicInfoQuery`, generated from the specs.
@@ -30,6 +31,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("creates a TopicInfoQuery and returns the values")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/create")
     void shouldCreateAndReturnTheValues() {
         final Address topicId = topicIdValue();
         final TopicInfoQuery subject = new TopicInfoQuery(topicId);
@@ -43,12 +45,14 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("rejects null for topicId")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/topicId/rejects-null")
     void shouldRejectNullTopicId() {
         assertThrows(NullPointerException.class, () -> new TopicInfoQuery((Address) null));
     }
 
     @Test
     @DisplayName("setMaxAttempts changes maxAttempts and returns the object")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/maxAttempts/set")
     void shouldSetMaxAttempts() {
         final TopicInfoQuery subject = create();
         final @Nullable Integer value = maxAttemptsOtherValue();
@@ -58,6 +62,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts null")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/maxAttempts/set-null")
     void shouldSetMaxAttemptsToNull() {
         final TopicInfoQuery subject = create();
         subject.setMaxAttempts((Integer) null);
@@ -66,6 +71,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/maxAttempts/set-accepts-at-minimum")
     void shouldSetMaxAttemptsAtMinimum() {
         final TopicInfoQuery subject = create();
         final @Nullable Integer value = Integer.MIN_VALUE;
@@ -75,6 +81,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/maxAttempts/set-accepts-at-maximum")
     void shouldSetMaxAttemptsAtMaximum() {
         final TopicInfoQuery subject = create();
         final @Nullable Integer value = 2147483647;
@@ -84,6 +91,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff changes maxBackoff and returns the object")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/maxBackoff/set")
     void shouldSetMaxBackoff() {
         final TopicInfoQuery subject = create();
         final @Nullable Long value = maxBackoffOtherValue();
@@ -93,6 +101,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts null")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/maxBackoff/set-null")
     void shouldSetMaxBackoffToNull() {
         final TopicInfoQuery subject = create();
         subject.setMaxBackoff((Long) null);
@@ -101,6 +110,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/maxBackoff/set-accepts-at-minimum")
     void shouldSetMaxBackoffAtMinimum() {
         final TopicInfoQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -110,6 +120,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/maxBackoff/set-accepts-at-maximum")
     void shouldSetMaxBackoffAtMaximum() {
         final TopicInfoQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -119,6 +130,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setMinBackoff changes minBackoff and returns the object")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/minBackoff/set")
     void shouldSetMinBackoff() {
         final TopicInfoQuery subject = create();
         final @Nullable Long value = minBackoffOtherValue();
@@ -128,6 +140,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts null")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/minBackoff/set-null")
     void shouldSetMinBackoffToNull() {
         final TopicInfoQuery subject = create();
         subject.setMinBackoff((Long) null);
@@ -136,6 +149,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/minBackoff/set-accepts-at-minimum")
     void shouldSetMinBackoffAtMinimum() {
         final TopicInfoQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -145,6 +159,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/minBackoff/set-accepts-at-maximum")
     void shouldSetMinBackoffAtMaximum() {
         final TopicInfoQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -154,6 +169,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout changes attemptTimeout and returns the object")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/attemptTimeout/set")
     void shouldSetAttemptTimeout() {
         final TopicInfoQuery subject = create();
         final @Nullable Long value = attemptTimeoutOtherValue();
@@ -163,6 +179,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts null")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/attemptTimeout/set-null")
     void shouldSetAttemptTimeoutToNull() {
         final TopicInfoQuery subject = create();
         subject.setAttemptTimeout((Long) null);
@@ -171,6 +188,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/attemptTimeout/set-accepts-at-minimum")
     void shouldSetAttemptTimeoutAtMinimum() {
         final TopicInfoQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -180,6 +198,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/attemptTimeout/set-accepts-at-maximum")
     void shouldSetAttemptTimeoutAtMaximum() {
         final TopicInfoQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -189,6 +208,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setMaxQueryPayment changes maxQueryPayment and returns the object")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/maxQueryPayment/set")
     void shouldSetMaxQueryPayment() {
         final TopicInfoQuery subject = create();
         final @Nullable NativeToken<?, ?> value = maxQueryPaymentOtherValue();
@@ -198,6 +218,7 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("setMaxQueryPayment accepts null")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/maxQueryPayment/set-null")
     void shouldSetMaxQueryPaymentToNull() {
         final TopicInfoQuery subject = create();
         subject.setMaxQueryPayment((NativeToken<?, ?>) null);
@@ -206,12 +227,14 @@ class TopicInfoQueryTest {
 
     @Test
     @DisplayName("submit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/submit/call")
     void shouldCallSubmit() {
         assertNotNull(create().submit(clientValue()));
     }
 
     @Test
     @DisplayName("getCost(client) can be called and returns a value")
+    @Tag("testId:consensusnode.queries.topics.TopicInfoQuery/getCost/call")
     void shouldCallGetCost() {
         assertNotNull(create().getCost(clientValue()));
     }

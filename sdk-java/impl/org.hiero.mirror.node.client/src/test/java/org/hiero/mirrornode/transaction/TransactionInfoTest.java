@@ -18,6 +18,7 @@ import org.hiero.mirrornode.common.TokenTransfer;
 import org.hiero.mirrornode.common.Transfer;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TransactionInfo`, generated from the specs.
@@ -26,6 +27,7 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("creates a TransactionInfo and returns the values")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final byte[] transactionHash = transactionHashValue();
@@ -70,6 +72,7 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final TransactionId transactionId = transactionIdValue();
         final byte[] transactionHash = transactionHashValue();
@@ -134,6 +137,7 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TransactionInfo subject = TransactionInfo.builder()
                 .transactionId(transactionIdValue())
@@ -160,24 +164,28 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TransactionInfo.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new TransactionInfo((TransactionId) null, transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue()));
     }
 
     @Test
     @DisplayName("rejects null for transactionHash")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/transactionHash/rejects-null")
     void shouldRejectNullTransactionHash() {
         assertThrows(NullPointerException.class, () -> new TransactionInfo(transactionIdValue(), (byte[]) null, chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue()));
     }
 
     @Test
     @DisplayName("the constructor copies transactionHash; the accessor returns a copy")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/transactionHash/copies-in")
     void shouldCopyTransactionHashIn() {
         final byte[] value = transactionHashValue();
         final byte[] expected = value.clone();
@@ -192,6 +200,7 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("chargedTxFee: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/chargedTxFee/accepts-at-minimum")
     void shouldAcceptChargedTxFeeAtMinimum() {
         final long value = -9223372036854775808L;
         final TransactionInfo subject = new TransactionInfo(transactionIdValue(), transactionHashValue(), value, consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue());
@@ -200,6 +209,7 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("chargedTxFee: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/chargedTxFee/accepts-at-maximum")
     void shouldAcceptChargedTxFeeAtMaximum() {
         final long value = 9223372036854775807L;
         final TransactionInfo subject = new TransactionInfo(transactionIdValue(), transactionHashValue(), value, consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue());
@@ -208,12 +218,14 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("rejects null for consensusTimestamp")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/consensusTimestamp/rejects-null")
     void shouldRejectNullConsensusTimestamp() {
         assertThrows(NullPointerException.class, () -> new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), (ZonedDateTime) null, entityIdValue(), maxFeeValue(), memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue()));
     }
 
     @Test
     @DisplayName("maxFee: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/maxFee/accepts-at-minimum")
     void shouldAcceptMaxFeeAtMinimum() {
         final long value = -9223372036854775808L;
         final TransactionInfo subject = new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), value, memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue());
@@ -222,6 +234,7 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("maxFee: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/maxFee/accepts-at-maximum")
     void shouldAcceptMaxFeeAtMaximum() {
         final long value = 9223372036854775807L;
         final TransactionInfo subject = new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), value, memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue());
@@ -230,12 +243,14 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("rejects null for memo")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/memo/rejects-null")
     void shouldRejectNullMemo() {
         assertThrows(NullPointerException.class, () -> new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), (byte[]) null, nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue()));
     }
 
     @Test
     @DisplayName("the constructor copies memo; the accessor returns a copy")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/memo/copies-in")
     void shouldCopyMemoIn() {
         final byte[] value = memoValue();
         final byte[] expected = value.clone();
@@ -250,12 +265,14 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("rejects null for name")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/name/rejects-null")
     void shouldRejectNullName() {
         assertThrows(NullPointerException.class, () -> new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), (TransactionType) null, nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue()));
     }
 
     @Test
     @DisplayName("nonce: accepts the minimum (-2147483648)")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/nonce/accepts-at-minimum")
     void shouldAcceptNonceAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final TransactionInfo subject = new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), value, nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue());
@@ -264,6 +281,7 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("nonce: accepts the maximum (2147483647)")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/nonce/accepts-at-maximum")
     void shouldAcceptNonceAtMaximum() {
         final int value = 2147483647;
         final TransactionInfo subject = new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), value, nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue());
@@ -272,30 +290,35 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("rejects null for result")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/result/rejects-null")
     void shouldRejectNullResult() {
         assertThrows(NullPointerException.class, () -> new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), (TransactionResult) null, scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue()));
     }
 
     @Test
     @DisplayName("rejects null for validDuration")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/validDuration/rejects-null")
     void shouldRejectNullValidDuration() {
         assertThrows(NullPointerException.class, () -> new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), (Duration) null, validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue()));
     }
 
     @Test
     @DisplayName("rejects null for validStartTimestamp")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/validStartTimestamp/rejects-null")
     void shouldRejectNullValidStartTimestamp() {
         assertThrows(NullPointerException.class, () -> new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), (ZonedDateTime) null, transfersValue(), tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue()));
     }
 
     @Test
     @DisplayName("rejects null for transfers")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/transfers/rejects-null")
     void shouldRejectNullTransfers() {
         assertThrows(NullPointerException.class, () -> new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), (List<Transfer>) null, tokenTransfersValue(), nftTransfersValue(), stakingRewardTransfersValue()));
     }
 
     @Test
     @DisplayName("the constructor copies transfers; the accessor returns an unmodifiable collection")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/transfers/copies-in")
     void shouldCopyTransfersIn() {
         final List<Transfer> value = new ArrayList<>(transfersValue());
         final List<Transfer> expected = List.copyOf(value);
@@ -307,12 +330,14 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("rejects null for tokenTransfers")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/tokenTransfers/rejects-null")
     void shouldRejectNullTokenTransfers() {
         assertThrows(NullPointerException.class, () -> new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), (List<TokenTransfer>) null, nftTransfersValue(), stakingRewardTransfersValue()));
     }
 
     @Test
     @DisplayName("the constructor copies tokenTransfers; the accessor returns an unmodifiable collection")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/tokenTransfers/copies-in")
     void shouldCopyTokenTransfersIn() {
         final List<TokenTransfer> value = new ArrayList<>(tokenTransfersValue());
         final List<TokenTransfer> expected = List.copyOf(value);
@@ -324,12 +349,14 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("rejects null for nftTransfers")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/nftTransfers/rejects-null")
     void shouldRejectNullNftTransfers() {
         assertThrows(NullPointerException.class, () -> new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), (List<NftTransfer>) null, stakingRewardTransfersValue()));
     }
 
     @Test
     @DisplayName("the constructor copies nftTransfers; the accessor returns an unmodifiable collection")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/nftTransfers/copies-in")
     void shouldCopyNftTransfersIn() {
         final List<NftTransfer> value = new ArrayList<>(nftTransfersValue());
         final List<NftTransfer> expected = List.copyOf(value);
@@ -341,12 +368,14 @@ class TransactionInfoTest {
 
     @Test
     @DisplayName("rejects null for stakingRewardTransfers")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/stakingRewardTransfers/rejects-null")
     void shouldRejectNullStakingRewardTransfers() {
         assertThrows(NullPointerException.class, () -> new TransactionInfo(transactionIdValue(), transactionHashValue(), chargedTxFeeValue(), consensusTimestampValue(), entityIdValue(), maxFeeValue(), memoValue(), nameValue(), nonceValue(), nodeValue(), parentConsensusTimestampValue(), resultValue(), scheduledValue(), validDurationValue(), validStartTimestampValue(), transfersValue(), tokenTransfersValue(), nftTransfersValue(), (List<StakingRewardTransfer>) null));
     }
 
     @Test
     @DisplayName("the constructor copies stakingRewardTransfers; the accessor returns an unmodifiable collection")
+    @Tag("testId:mirrornode.transaction.TransactionInfo/stakingRewardTransfers/copies-in")
     void shouldCopyStakingRewardTransfersIn() {
         final List<StakingRewardTransfer> value = new ArrayList<>(stakingRewardTransfersValue());
         final List<StakingRewardTransfer> expected = List.copyOf(value);

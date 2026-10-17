@@ -12,6 +12,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.nativeToken.NativeToken;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountBalance`, generated from the specs.
@@ -20,6 +21,7 @@ class AccountBalanceTest {
 
     @Test
     @DisplayName("creates an AccountBalance and returns the values")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalance/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
         final NativeToken<?, ?> balance = balanceValue();
@@ -32,24 +34,28 @@ class AccountBalanceTest {
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalance/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new AccountBalance((AccountId) null, balanceValue(), tokenBalancesValue()));
     }
 
     @Test
     @DisplayName("rejects null for balance")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalance/balance/rejects-null")
     void shouldRejectNullBalance() {
         assertThrows(NullPointerException.class, () -> new AccountBalance(accountIdValue(), (NativeToken<?, ?>) null, tokenBalancesValue()));
     }
 
     @Test
     @DisplayName("rejects null for tokenBalances")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalance/tokenBalances/rejects-null")
     void shouldRejectNullTokenBalances() {
         assertThrows(NullPointerException.class, () -> new AccountBalance(accountIdValue(), balanceValue(), (Map<Address, Long>) null));
     }
 
     @Test
     @DisplayName("the constructor copies tokenBalances; the accessor returns an unmodifiable map")
+    @Tag("testId:consensusnode.queries.accounts.AccountBalance/tokenBalances/copies-in")
     void shouldCopyTokenBalancesIn() {
         final Map<Address, Long> value = new LinkedHashMap<>(tokenBalancesValue());
         final Map<Address, Long> expected = Map.copyOf(value);

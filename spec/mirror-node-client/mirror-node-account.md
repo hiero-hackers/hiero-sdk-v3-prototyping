@@ -171,6 +171,7 @@ The queries of `AccountRepository` need a Mirror Node; only the value types are 
 
 ```tests
 // Source: this spec (`declineReward` and `deleted` default to false; the other optional values are nullable).
+@@testId("an-account-info-without-optional-values-does-not-decline-rewards-and-is-not-deleted")
 test "an account info without optional values does not decline rewards and is not deleted" {
     // given
     let account = DEFAULT(AccountId)
@@ -197,6 +198,7 @@ test "an account info without optional values does not decline rewards and is no
 // Source: the Hiero Enterprise Java test fixture account-info.json (created "1605733260.898372007", expiry
 // "1612733260.898372007", balance timestamp "1742896287.333154756", auto-renew period 7000000 seconds, no stake period
 // start), the values of TIMES; millisecond precision.
+@@testId("an-account-info-keeps-its-timestamps-and-its-auto-renew-period")
 test "an account info keeps its timestamps and its auto-renew period" {
     // given
     let created = TIMES[0]
@@ -218,6 +220,7 @@ test "an account info keeps its timestamps and its auto-renew period" {
 
 // Source: this spec (a staking reward is a payout of tinybars to the account at a consensus time); the values of
 // TIMES.
+@@testId("a-staking-reward-keeps-its-account-amount-and-payout-time")
 test "a staking reward keeps its account, amount and payout time" {
     // given
     let account = DEFAULT(AccountId)
@@ -236,6 +239,7 @@ test "a staking reward keeps its account, amount and payout time" {
 
 // Source: this spec (an HBAR allowance has a remaining and an originally approved amount and the time it was granted
 // or last modified).
+@@testId("a-crypto-allowance-keeps-its-owner-spender-remaining-and-granted-amounts-and-its-time")
 test "a crypto allowance keeps its owner, spender, remaining and granted amounts and its time" {
     // given
     let owner = AccountId.fromString(value: "0.0.1001")
@@ -255,6 +259,7 @@ test "a crypto allowance keeps its owner, spender, remaining and granted amounts
 
 // Source: this spec (a fungible-token allowance has the token, a remaining and an originally approved amount and the
 // time it was granted or last modified).
+@@testId("a-token-allowance-keeps-its-token-remaining-and-granted-amounts-and-its-time")
 test "a token allowance keeps its token, remaining and granted amounts and its time" {
     // given
     let token = Address.fromString(address: "0.0.5005")
@@ -273,6 +278,7 @@ test "a token allowance keeps its token, remaining and granted amounts and its t
 }
 
 // Source: this spec (an NFT allowance is approved for all serials of the collection or not).
+@@testId("an-nft-allowance-keeps-whether-it-is-approved-for-the-whole-collection")
 test "an NFT allowance keeps whether it is approved for the whole collection" {
     // given
     let token = Address.fromString(address: "0.0.5005")
@@ -293,6 +299,7 @@ test "an NFT allowance keeps whether it is approved for the whole collection" {
 
 // Source: this spec (exactly one of `amount` and `serialNumber` is set; `serialNumber` is null for a fungible
 // airdrop); HIP-904.
+@@testId("a-fungible-airdrop-has-an-amount-and-no-serial-number")
 test "a fungible airdrop has an amount and no serial number" {
     // given
     let time = DEFAULT(zonedDateTime)
@@ -310,6 +317,7 @@ test "a fungible airdrop has an amount and no serial number" {
 
 // Source: this spec (exactly one of `amount` and `serialNumber` is set; `amount` is null for an NFT airdrop);
 // HIP-904.
+@@testId("an-nft-airdrop-has-a-serial-number-and-no-amount")
 test "an NFT airdrop has a serial number and no amount" {
     // given
     let sender = AccountId.fromString(value: "0.0.1001")
@@ -327,6 +335,7 @@ test "an NFT airdrop has a serial number and no amount" {
 }
 
 // Source: this spec (`tokens` defaults to an empty list).
+@@testId("an-account-balance-without-token-balances-has-an-empty-token-list")
 test "an account balance without token balances has an empty token list" {
     // when
     let balance = AccountBalance{account: DEFAULT(AccountId), balance: 100}
@@ -337,6 +346,7 @@ test "an account balance without token balances has an empty token list" {
 }
 
 // Source: this spec (an account balance lists its token balances in the token's smallest unit).
+@@testId("an-account-balance-keeps-its-token-balances")
 test "an account balance keeps its token balances" {
     // given
     let tokens = [TokenBalance{tokenId: Address.fromString(address: "0.0.5005"), balance: 10},

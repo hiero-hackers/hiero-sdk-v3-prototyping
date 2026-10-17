@@ -21,6 +21,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountInfoQuery`, generated from the specs.
@@ -29,6 +30,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("creates an AccountInfoQuery and returns the values")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
         final AccountInfoQuery subject = new AccountInfoQuery(accountId);
@@ -42,12 +44,14 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new AccountInfoQuery((AccountId) null));
     }
 
     @Test
     @DisplayName("setMaxAttempts changes maxAttempts and returns the object")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/maxAttempts/set")
     void shouldSetMaxAttempts() {
         final AccountInfoQuery subject = create();
         final @Nullable Integer value = maxAttemptsOtherValue();
@@ -57,6 +61,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts null")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/maxAttempts/set-null")
     void shouldSetMaxAttemptsToNull() {
         final AccountInfoQuery subject = create();
         subject.setMaxAttempts((Integer) null);
@@ -65,6 +70,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/maxAttempts/set-accepts-at-minimum")
     void shouldSetMaxAttemptsAtMinimum() {
         final AccountInfoQuery subject = create();
         final @Nullable Integer value = Integer.MIN_VALUE;
@@ -74,6 +80,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/maxAttempts/set-accepts-at-maximum")
     void shouldSetMaxAttemptsAtMaximum() {
         final AccountInfoQuery subject = create();
         final @Nullable Integer value = 2147483647;
@@ -83,6 +90,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff changes maxBackoff and returns the object")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/maxBackoff/set")
     void shouldSetMaxBackoff() {
         final AccountInfoQuery subject = create();
         final @Nullable Long value = maxBackoffOtherValue();
@@ -92,6 +100,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts null")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/maxBackoff/set-null")
     void shouldSetMaxBackoffToNull() {
         final AccountInfoQuery subject = create();
         subject.setMaxBackoff((Long) null);
@@ -100,6 +109,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/maxBackoff/set-accepts-at-minimum")
     void shouldSetMaxBackoffAtMinimum() {
         final AccountInfoQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -109,6 +119,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/maxBackoff/set-accepts-at-maximum")
     void shouldSetMaxBackoffAtMaximum() {
         final AccountInfoQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -118,6 +129,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setMinBackoff changes minBackoff and returns the object")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/minBackoff/set")
     void shouldSetMinBackoff() {
         final AccountInfoQuery subject = create();
         final @Nullable Long value = minBackoffOtherValue();
@@ -127,6 +139,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts null")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/minBackoff/set-null")
     void shouldSetMinBackoffToNull() {
         final AccountInfoQuery subject = create();
         subject.setMinBackoff((Long) null);
@@ -135,6 +148,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/minBackoff/set-accepts-at-minimum")
     void shouldSetMinBackoffAtMinimum() {
         final AccountInfoQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -144,6 +158,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/minBackoff/set-accepts-at-maximum")
     void shouldSetMinBackoffAtMaximum() {
         final AccountInfoQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -153,6 +168,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout changes attemptTimeout and returns the object")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/attemptTimeout/set")
     void shouldSetAttemptTimeout() {
         final AccountInfoQuery subject = create();
         final @Nullable Long value = attemptTimeoutOtherValue();
@@ -162,6 +178,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts null")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/attemptTimeout/set-null")
     void shouldSetAttemptTimeoutToNull() {
         final AccountInfoQuery subject = create();
         subject.setAttemptTimeout((Long) null);
@@ -170,6 +187,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/attemptTimeout/set-accepts-at-minimum")
     void shouldSetAttemptTimeoutAtMinimum() {
         final AccountInfoQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -179,6 +197,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/attemptTimeout/set-accepts-at-maximum")
     void shouldSetAttemptTimeoutAtMaximum() {
         final AccountInfoQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -188,6 +207,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setMaxQueryPayment changes maxQueryPayment and returns the object")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/maxQueryPayment/set")
     void shouldSetMaxQueryPayment() {
         final AccountInfoQuery subject = create();
         final @Nullable NativeToken<?, ?> value = maxQueryPaymentOtherValue();
@@ -197,6 +217,7 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("setMaxQueryPayment accepts null")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/maxQueryPayment/set-null")
     void shouldSetMaxQueryPaymentToNull() {
         final AccountInfoQuery subject = create();
         subject.setMaxQueryPayment((NativeToken<?, ?>) null);
@@ -205,12 +226,14 @@ class AccountInfoQueryTest {
 
     @Test
     @DisplayName("submit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/submit/call")
     void shouldCallSubmit() {
         assertNotNull(create().submit(clientValue()));
     }
 
     @Test
     @DisplayName("getCost(client) can be called and returns a value")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfoQuery/getCost/call")
     void shouldCallGetCost() {
         assertNotNull(create().getCost(clientValue()));
     }

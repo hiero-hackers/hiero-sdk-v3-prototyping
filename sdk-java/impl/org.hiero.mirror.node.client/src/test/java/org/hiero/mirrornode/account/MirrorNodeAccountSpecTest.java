@@ -8,6 +8,7 @@ import java.util.List;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `mirror-node-account`, generated from the `tests` blocks of its `## Testing` section.
@@ -25,6 +26,7 @@ class MirrorNodeAccountSpecTest {
     /// Source: this spec (`declineReward` and `deleted` default to false; the other optional values are nullable).
     @Test
     @DisplayName("an account info without optional values does not decline rewards and is not deleted")
+    @Tag("testId:mirrornode.account/an-account-info-without-optional-values-does-not-decline-rewards-and-is-not-deleted")
     void anAccountInfoWithoutOptionalValuesDoesNotDeclineRewardsAndIsNotDeleted() {
         // given
         final AccountId account = defaultAccountId();
@@ -55,6 +57,7 @@ class MirrorNodeAccountSpecTest {
     /// start), the values of TIMES; millisecond precision.
     @Test
     @DisplayName("an account info keeps its timestamps and its auto-renew period")
+    @Tag("testId:mirrornode.account/an-account-info-keeps-its-timestamps-and-its-auto-renew-period")
     void anAccountInfoKeepsItsTimestampsAndItsAutoRenewPeriod() {
         // given
         final ZonedDateTime created = get(TIMES(), 0L);
@@ -78,6 +81,7 @@ class MirrorNodeAccountSpecTest {
     /// TIMES.
     @Test
     @DisplayName("a staking reward keeps its account, amount and payout time")
+    @Tag("testId:mirrornode.account/a-staking-reward-keeps-its-account-amount-and-payout-time")
     void aStakingRewardKeepsItsAccountAmountAndPayoutTime() {
         // given
         final AccountId account = defaultAccountId();
@@ -100,6 +104,7 @@ class MirrorNodeAccountSpecTest {
     /// or last modified).
     @Test
     @DisplayName("a crypto allowance keeps its owner, spender, remaining and granted amounts and its time")
+    @Tag("testId:mirrornode.account/a-crypto-allowance-keeps-its-owner-spender-remaining-and-granted-amounts-and-its-time")
     void aCryptoAllowanceKeepsItsOwnerSpenderRemainingAndGrantedAmountsAndItsTime() {
         // given
         final AccountId owner = AccountId.fromString("0.0.1001");
@@ -123,6 +128,7 @@ class MirrorNodeAccountSpecTest {
     /// time it was granted or last modified).
     @Test
     @DisplayName("a token allowance keeps its token, remaining and granted amounts and its time")
+    @Tag("testId:mirrornode.account/a-token-allowance-keeps-its-token-remaining-and-granted-amounts-and-its-time")
     void aTokenAllowanceKeepsItsTokenRemainingAndGrantedAmountsAndItsTime() {
         // given
         final Address token = Address.fromString("0.0.5005");
@@ -143,6 +149,7 @@ class MirrorNodeAccountSpecTest {
     /// Source: this spec (an NFT allowance is approved for all serials of the collection or not).
     @Test
     @DisplayName("an NFT allowance keeps whether it is approved for the whole collection")
+    @Tag("testId:mirrornode.account/an-nft-allowance-keeps-whether-it-is-approved-for-the-whole-collection")
     void anNFTAllowanceKeepsWhetherItIsApprovedForTheWholeCollection() {
         // given
         final Address token = Address.fromString("0.0.5005");
@@ -164,6 +171,7 @@ class MirrorNodeAccountSpecTest {
     /// airdrop); HIP-904.
     @Test
     @DisplayName("a fungible airdrop has an amount and no serial number")
+    @Tag("testId:mirrornode.account/a-fungible-airdrop-has-an-amount-and-no-serial-number")
     void aFungibleAirdropHasAnAmountAndNoSerialNumber() {
         // given
         final ZonedDateTime time = ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
@@ -183,6 +191,7 @@ class MirrorNodeAccountSpecTest {
     /// HIP-904.
     @Test
     @DisplayName("an NFT airdrop has a serial number and no amount")
+    @Tag("testId:mirrornode.account/an-nft-airdrop-has-a-serial-number-and-no-amount")
     void anNFTAirdropHasASerialNumberAndNoAmount() {
         // given
         final AccountId sender = AccountId.fromString("0.0.1001");
@@ -203,6 +212,7 @@ class MirrorNodeAccountSpecTest {
     /// Source: this spec (`tokens` defaults to an empty list).
     @Test
     @DisplayName("an account balance without token balances has an empty token list")
+    @Tag("testId:mirrornode.account/an-account-balance-without-token-balances-has-an-empty-token-list")
     void anAccountBalanceWithoutTokenBalancesHasAnEmptyTokenList() {
         // when
         final AccountBalance balance = new AccountBalance(defaultAccountId(), 100L, List.of());
@@ -217,6 +227,7 @@ class MirrorNodeAccountSpecTest {
     /// Source: this spec (an account balance lists its token balances in the token's smallest unit).
     @Test
     @DisplayName("an account balance keeps its token balances")
+    @Tag("testId:mirrornode.account/an-account-balance-keeps-its-token-balances")
     void anAccountBalanceKeepsItsTokenBalances() {
         // given
         final List<TokenBalance> tokens = List.of(new TokenBalance(Address.fromString("0.0.5005"), 10L), new TokenBalance(Address.fromString("0.0.5006"), 0L));

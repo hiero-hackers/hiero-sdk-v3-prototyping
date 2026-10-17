@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `mirror-node-network`, generated from the `tests` blocks of its `## Testing` section.
@@ -19,6 +20,7 @@ class MirrorNodeNetworkSpecTest {
     /// HIP-1046 (an endpoint is published either with an IP address or with a domain name).
     @Test
     @DisplayName("a service endpoint keeps either its IPv4 address or its domain name and its port")
+    @Tag("testId:mirrornode.network/a-service-endpoint-keeps-either-its-ipv4-address-or-its-domain-name-and-its-port")
     void aServiceEndpointKeepsEitherItsIPv4AddressOrItsDomainNameAndItsPort() {
         // when
         final ServiceEndpoint byAddress = new ServiceEndpoint("1.2.3.4", 443, null);
@@ -38,6 +40,7 @@ class MirrorNodeNetworkSpecTest {
     /// Source: this spec (`serviceEndpoints` defaults to an empty list; `adminKey` is null on entries from before HIP-869).
     @Test
     @DisplayName("a network node without service endpoints and admin key has an empty endpoint list and no admin key")
+    @Tag("testId:mirrornode.network/a-network-node-without-service-endpoints-and-admin-key-has-an-empty-endpoint-list-and-no-admin-key")
     void aNetworkNodeWithoutServiceEndpointsAndAdminKeyHasAnEmptyEndpointListAndNoAdminKey() {
         // given
         final AccountId account = AccountId.fromString("0.0.3");
@@ -58,6 +61,7 @@ class MirrorNodeNetworkSpecTest {
     /// Source: the Java SDK (MirrorNodeServiceEndpointTest); this spec (the address book entry lists its endpoints).
     @Test
     @DisplayName("a network node keeps its service endpoints in order")
+    @Tag("testId:mirrornode.network/a-network-node-keeps-its-service-endpoints-in-order")
     void aNetworkNodeKeepsItsServiceEndpointsInOrder() {
         // given
         final List<ServiceEndpoint> endpoints = List.of(new ServiceEndpoint("1.2.3.4", 443, null), new ServiceEndpoint(null, 443, "test.mirror.com"));
@@ -74,6 +78,7 @@ class MirrorNodeNetworkSpecTest {
     /// Source: this spec (`timestamp` is the consensus time of the address-book entry).
     @Test
     @DisplayName("a network node keeps the consensus time of its address-book entry")
+    @Tag("testId:mirrornode.network/a-network-node-keeps-the-consensus-time-of-its-address-book-entry")
     void aNetworkNodeKeepsTheConsensusTimeOfItsAddressBookEntry() {
         // given
         final ZonedDateTime time = ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
@@ -91,6 +96,7 @@ class MirrorNodeNetworkSpecTest {
     /// at 1785852000, next rate 211949 cents for 30000 HBAR expiring at 1785855600; the epoch seconds written as ISO 8601).
     @Test
     @DisplayName("exchange rates keep the current and the next rate with their expiration times")
+    @Tag("testId:mirrornode.network/exchange-rates-keep-the-current-and-the-next-rate-with-their-expiration-times")
     void exchangeRatesKeepTheCurrentAndTheNextRateWithTheirExpirationTimes() {
         // given
         final ExchangeRate current = new ExchangeRate(212848, 30000, toZonedDateTime("2026-08-04T14:00:00Z"));
@@ -114,6 +120,7 @@ class MirrorNodeNetworkSpecTest {
     /// Source: this spec (exchange rates are values: rates that differ only in their expiration time are different).
     @Test
     @DisplayName("exchange rates that differ only in their expiration time are different")
+    @Tag("testId:mirrornode.network/exchange-rates-that-differ-only-in-their-expiration-time-are-different")
     void exchangeRatesThatDifferOnlyInTheirExpirationTimeAreDifferent() {
         // when
         final ExchangeRate first = new ExchangeRate(212848, 30000, toZonedDateTime("2026-08-04T14:00:00Z"));
@@ -130,6 +137,7 @@ class MirrorNodeNetworkSpecTest {
     /// minutes, i.e. one day, is the staking period of 86400 seconds).
     @Test
     @DisplayName("network stake keeps its staking parameters and its staking period")
+    @Tag("testId:mirrornode.network/network-stake-keeps-its-staking-parameters-and-its-staking-period")
     void networkStakeKeepsItsStakingParametersAndItsStakingPeriod() {
         // when
         final NetworkStake stake = new NetworkStake(650000000000000000L, 5287L, 44512288670430L, 0.1, 2781375493493491L, 8500000000000000L, 1465970599400000000L, toSeconds(86400L), 365L, 0.1, 44512288670430L, 25000000000000000L, 14652305964403937L);

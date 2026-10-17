@@ -29,6 +29,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenBurnNftTransaction`, generated from the specs.
@@ -37,6 +38,7 @@ class TokenBurnNftTransactionTest {
 
     @Test
     @DisplayName("creates a TokenBurnNftTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final List<Long> serials = serialsValue();
@@ -50,18 +52,21 @@ class TokenBurnNftTransactionTest {
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenBurnNftTransaction((Address) null, serialsValue()));
     }
 
     @Test
     @DisplayName("rejects null for serials")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/serials/rejects-null")
     void shouldRejectNullSerials() {
         assertThrows(NullPointerException.class, () -> new TokenBurnNftTransaction(tokenIdValue(), (List<Long>) null));
     }
 
     @Test
     @DisplayName("serials: accepts the minimum number of elements")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/serials/accepts-at-minimum-size")
     void shouldAcceptSerialsAtMinimumSize() {
         final List<Long> value = List.of(1L);
         final TokenBurnNftTransaction subject = new TokenBurnNftTransaction(tokenIdValue(), value);
@@ -70,12 +75,14 @@ class TokenBurnNftTransactionTest {
 
     @Test
     @DisplayName("serials: rejects fewer elements than the minimum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/serials/rejects-below-minimum-size")
     void shouldRejectSerialsBelowMinimumSize() {
         assertThrows(IllegalArgumentException.class, () -> new TokenBurnNftTransaction(tokenIdValue(), List.of()));
     }
 
     @Test
     @DisplayName("serials: accepts the maximum number of elements")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/serials/accepts-at-maximum-size")
     void shouldAcceptSerialsAtMaximumSize() {
         final List<Long> value = List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L);
         final TokenBurnNftTransaction subject = new TokenBurnNftTransaction(tokenIdValue(), value);
@@ -84,12 +91,14 @@ class TokenBurnNftTransactionTest {
 
     @Test
     @DisplayName("serials: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/serials/rejects-above-maximum-size")
     void shouldRejectSerialsAboveMaximumSize() {
         assertThrows(IllegalArgumentException.class, () -> new TokenBurnNftTransaction(tokenIdValue(), List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L)));
     }
 
     @Test
     @DisplayName("the constructor copies serials; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/serials/copies-in")
     void shouldCopySerialsIn() {
         final List<Long> value = new ArrayList<>(serialsValue());
         final List<Long> expected = List.copyOf(value);
@@ -101,6 +110,7 @@ class TokenBurnNftTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final TokenBurnNftTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -110,6 +120,7 @@ class TokenBurnNftTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final TokenBurnNftTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -118,6 +129,7 @@ class TokenBurnNftTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final TokenBurnNftTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -127,6 +139,7 @@ class TokenBurnNftTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final TokenBurnNftTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -135,6 +148,7 @@ class TokenBurnNftTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/memo/set")
     void shouldSetMemo() {
         final TokenBurnNftTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -144,6 +158,7 @@ class TokenBurnNftTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final TokenBurnNftTransaction subject = create();
         subject.setMemo((String) null);
@@ -152,6 +167,7 @@ class TokenBurnNftTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final TokenBurnNftTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -161,6 +177,7 @@ class TokenBurnNftTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final TokenBurnNftTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -169,54 +186,63 @@ class TokenBurnNftTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenBurnNftTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

@@ -112,6 +112,7 @@ The queries of `TransactionRepository` need a Mirror Node; only the value types 
 ```tests
 // Source: this spec (BasicTransactionType, whose protocol names are those of the `TransactionTypes` enum of the Mirror
 // Node REST OpenAPI spec).
+@@testId("the-basic-transaction-types-carry-the-names-of-the-mirror-node-rest-api")
 test "the basic transaction types carry the names of the Mirror Node REST API" {
     // when / then
     assertEquals(expected: "CRYPTOCREATEACCOUNT", actual: BasicTransactionType.ACCOUNT_CREATE.protocolName)
@@ -129,6 +130,7 @@ test "the basic transaction types carry the names of the Mirror Node REST API" {
 }
 
 // Source: this spec (a BasicTransactionType is a TransactionType and can be used as a filter).
+@@testId("a-basic-transaction-type-is-a-transaction-type-with-its-protocol-name")
 test "a basic transaction type is a transaction type with its protocol name" {
     // when
     let type: TransactionType = BasicTransactionType.CRYPTO_TRANSFER
@@ -141,6 +143,7 @@ test "a basic transaction type is a transaction type with its protocol name" {
 // Source: the Hiero Enterprise Java test fixture transaction-list.json, first transaction (CRYPTOTRANSFER, SUCCESS,
 // charged fee 140686, max fee 1000000, node 0.0.13, consensus timestamp "1785848389.057282104", valid start
 // "1785848378.760000732", valid duration 120 seconds, no parent, no entity); millisecond precision.
+@@testId("a-transaction-info-keeps-its-timestamps-and-its-valid-duration")
 test "a transaction info keeps its timestamps and its valid duration" {
     // given
     let consensus = toZonedDateTime(text: "2026-08-04T12:59:49.057Z")
@@ -168,6 +171,7 @@ test "a transaction info keeps its timestamps and its valid duration" {
 
 // Source: this spec (`parentConsensusTimestamp` is nullable); the Mirror Node REST API (`parent_consensus_timestamp`
 // is set for a child transaction, with its `nonce` greater than 0).
+@@testId("a-child-transaction-info-keeps-the-consensus-timestamp-of-its-parent")
 test "a child transaction info keeps the consensus timestamp of its parent" {
     // given
     let parent = toZonedDateTime(text: "2026-08-04T12:59:49.057Z")

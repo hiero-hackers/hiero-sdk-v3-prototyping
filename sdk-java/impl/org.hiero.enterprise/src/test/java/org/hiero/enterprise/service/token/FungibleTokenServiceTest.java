@@ -12,6 +12,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.token.TokenSupplyType;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `FungibleTokenService`, generated from the specs.
@@ -20,12 +21,14 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("creates a FungibleTokenService and returns the values")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/create")
     void shouldCreateAndReturnTheValues() {
         final FungibleTokenService subject = new FungibleTokenService();
     }
 
     @Test
     @DisplayName("createToken(name, symbol) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/createToken/call")
     void shouldCallCreateToken() throws Exception {
         try {
             assertNotNull(create().createToken(nameValue(), symbolValue()));
@@ -38,6 +41,7 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("createToken(name, symbol, supplyAuthority) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/createToken/call-2")
     void shouldCallCreateToken2() throws Exception {
         try {
             assertNotNull(create().createToken(nameValue(), symbolValue(), supplyAuthorityValue()));
@@ -50,6 +54,7 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("createToken(name, symbol, treasuryAccount, supplyAuthority) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/createToken/call-3")
     void shouldCallCreateToken3() throws Exception {
         try {
             assertNotNull(create().createToken(nameValue(), symbolValue(), treasuryAccountValue(), supplyAuthorityValue()));
@@ -62,6 +67,7 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("createToken(params) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/createToken/call-4")
     void shouldCallCreateToken4() throws Exception {
         try {
             assertNotNull(create().createToken(paramsValue()));
@@ -74,6 +80,7 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("associateToken(accountId, tokenIds) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/associateToken/call")
     void shouldCallAssociateToken() throws Exception {
         try {
             create().associateToken(accountIdValue(), tokenIdsValue());
@@ -86,6 +93,7 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("dissociateToken(accountId, tokenIds) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/dissociateToken/call")
     void shouldCallDissociateToken() throws Exception {
         try {
             create().dissociateToken(accountIdValue(), tokenIdsValue());
@@ -98,6 +106,7 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("mintToken(tokenId, amount) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/mintToken/call")
     void shouldCallMintToken() throws Exception {
         try {
             create().mintToken(tokenIdValue(), amountValue());
@@ -110,6 +119,7 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("burnToken(tokenId, amount) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/burnToken/call")
     void shouldCallBurnToken() throws Exception {
         try {
             create().burnToken(tokenIdValue(), amountValue());
@@ -122,6 +132,7 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("transferToken(tokenId, toAccountId, amount) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/transferToken/call")
     void shouldCallTransferToken() throws Exception {
         try {
             create().transferToken(tokenIdValue(), toAccountIdValue(), amountValue());
@@ -134,6 +145,7 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("transferToken(tokenId, fromAccountId, toAccountId, amount) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/transferToken/call-2")
     void shouldCallTransferToken2() throws Exception {
         try {
             create().transferToken(tokenIdValue(), fromAccountIdValue(), toAccountIdValue(), amountValue());
@@ -146,6 +158,7 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("findById(tokenId) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/findById/call")
     void shouldCallFindById() throws Exception {
         try {
             create().findById(tokenIdValue());
@@ -158,6 +171,7 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("findByAccount(accountId) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/findByAccount/call")
     void shouldCallFindByAccount() throws Exception {
         try {
             assertNotNull(create().findByAccount(accountIdValue()));
@@ -170,6 +184,7 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("getBalances(tokenId) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/getBalances/call")
     void shouldCallGetBalances() throws Exception {
         try {
             assertNotNull(create().getBalances(tokenIdValue()));
@@ -182,6 +197,7 @@ class FungibleTokenServiceTest {
 
     @Test
     @DisplayName("getBalancesForAccount(tokenId, accountId) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.token.FungibleTokenService/getBalancesForAccount/call")
     void shouldCallGetBalancesForAccount() throws Exception {
         try {
             assertNotNull(create().getBalancesForAccount(tokenIdValue(), accountIdValue()));

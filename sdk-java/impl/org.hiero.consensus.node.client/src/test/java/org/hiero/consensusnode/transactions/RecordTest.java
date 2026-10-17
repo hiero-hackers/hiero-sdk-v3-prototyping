@@ -17,6 +17,7 @@ import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Record`, generated from the specs.
@@ -25,6 +26,7 @@ class RecordTest {
 
     @Test
     @DisplayName("creates a Record and returns the values")
+    @Tag("testId:consensusnode.transactions.Record/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final ZonedDateTime consensusTimestamp = consensusTimestampValue();
@@ -39,18 +41,21 @@ class RecordTest {
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:consensusnode.transactions.Record/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new Record<>((TransactionId) null, consensusTimestampValue(), receiptValue(), parentConsensusTimestampValue()));
     }
 
     @Test
     @DisplayName("rejects null for consensusTimestamp")
+    @Tag("testId:consensusnode.transactions.Record/consensusTimestamp/rejects-null")
     void shouldRejectNullConsensusTimestamp() {
         assertThrows(NullPointerException.class, () -> new Record<>(transactionIdValue(), (ZonedDateTime) null, receiptValue(), parentConsensusTimestampValue()));
     }
 
     @Test
     @DisplayName("rejects null for receipt")
+    @Tag("testId:consensusnode.transactions.Record/receipt/rejects-null")
     void shouldRejectNullReceipt() {
         assertThrows(NullPointerException.class, () -> new Record<>(transactionIdValue(), consensusTimestampValue(), (Receipt) null, parentConsensusTimestampValue()));
     }

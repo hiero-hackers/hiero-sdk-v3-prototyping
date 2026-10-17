@@ -10,6 +10,7 @@ import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TopicService`, generated from the specs.
@@ -18,12 +19,14 @@ class TopicServiceTest {
 
     @Test
     @DisplayName("creates a TopicService and returns the values")
+    @Tag("testId:enterprise.service.topic.TopicService/create")
     void shouldCreateAndReturnTheValues() {
         final TopicService subject = new TopicService();
     }
 
     @Test
     @DisplayName("createTopic() can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.topic.TopicService/createTopic/call")
     void shouldCallCreateTopic() throws Exception {
         try {
             assertNotNull(create().createTopic());
@@ -36,6 +39,7 @@ class TopicServiceTest {
 
     @Test
     @DisplayName("createTopic(memo) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.topic.TopicService/createTopic/call-2")
     void shouldCallCreateTopic2() throws Exception {
         try {
             assertNotNull(create().createTopic(memoValue()));
@@ -48,6 +52,7 @@ class TopicServiceTest {
 
     @Test
     @DisplayName("createTopic(adminAuthority, memo) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.topic.TopicService/createTopic/call-3")
     void shouldCallCreateTopic3() throws Exception {
         try {
             assertNotNull(create().createTopic(adminAuthorityValue(), memoValue()));
@@ -60,6 +65,7 @@ class TopicServiceTest {
 
     @Test
     @DisplayName("createTopic(params) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.topic.TopicService/createTopic/call-4")
     void shouldCallCreateTopic4() throws Exception {
         try {
             assertNotNull(create().createTopic(paramsValue()));
@@ -72,6 +78,7 @@ class TopicServiceTest {
 
     @Test
     @DisplayName("findById(topicId) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.topic.TopicService/findById/call")
     void shouldCallFindById() throws Exception {
         try {
             create().findById(topicIdValue());
@@ -84,6 +91,7 @@ class TopicServiceTest {
 
     @Test
     @DisplayName("getAll() can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.topic.TopicService/getAll/call")
     void shouldCallGetAll() throws Exception {
         try {
             assertNotNull(create().getAll());
@@ -96,6 +104,7 @@ class TopicServiceTest {
 
     @Test
     @DisplayName("deleteTopic(topicId) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.topic.TopicService/deleteTopic/call")
     void shouldCallDeleteTopic() throws Exception {
         try {
             create().deleteTopic(topicIdValue());
@@ -108,6 +117,7 @@ class TopicServiceTest {
 
     @Test
     @DisplayName("submitMessage(topicId, message) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.topic.TopicService/submitMessage/call")
     void shouldCallSubmitMessage() throws Exception {
         try {
             assertNotNull(create().submitMessage(topicIdValue(), messageValue()));
@@ -120,6 +130,7 @@ class TopicServiceTest {
 
     @Test
     @DisplayName("getMessages(topicId) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.topic.TopicService/getMessages/call")
     void shouldCallGetMessages() throws Exception {
         try {
             assertNotNull(create().getMessages(topicIdValue()));
@@ -132,6 +143,7 @@ class TopicServiceTest {
 
     @Test
     @DisplayName("getMessageBySequenceNumber(topicId, sequenceNumber) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.topic.TopicService/getMessageBySequenceNumber/call")
     void shouldCallGetMessageBySequenceNumber() throws Exception {
         try {
             assertNotNull(create().getMessageBySequenceNumber(topicIdValue(), sequenceNumberValue()));
@@ -144,6 +156,7 @@ class TopicServiceTest {
 
     @Test
     @DisplayName("subscribe(topicId) can be called and returns a value")
+    @Tag("testId:enterprise.service.topic.TopicService/subscribe/call")
     void shouldCallSubscribe() {
         assertNotNull(create().subscribe(topicIdValue()));
     }

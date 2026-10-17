@@ -9,6 +9,7 @@ import java.math.BigInteger;
 import javax.annotation.processing.Generated;
 import org.hiero.shop.money.Money;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Product`, generated from the specs.
@@ -21,6 +22,7 @@ class ProductTest {
 
     @Test
     @DisplayName("creates a Product and returns the values")
+    @Tag("testId:shop.Product/create")
     void shouldCreateAndReturnTheValues() {
         final Long id = idValue();
         final String name = nameValue();
@@ -33,12 +35,14 @@ class ProductTest {
 
     @Test
     @DisplayName("rejects null for id")
+    @Tag("testId:shop.Product/id/rejects-null")
     void shouldRejectNullId() {
         assertThrows(NullPointerException.class, () -> new Product((Long) null, nameValue(), priceValue()));
     }
 
     @Test
     @DisplayName("id: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:shop.Product/id/accepts-at-minimum")
     void shouldAcceptIdAtMinimum() {
         final Long value = -9223372036854775808L;
         final Product subject = new Product(value, nameValue(), priceValue());
@@ -47,6 +51,7 @@ class ProductTest {
 
     @Test
     @DisplayName("id: accepts the maximum (9223372036854775807)")
+    @Tag("testId:shop.Product/id/accepts-at-maximum")
     void shouldAcceptIdAtMaximum() {
         final Long value = 9223372036854775807L;
         final Product subject = new Product(value, nameValue(), priceValue());
@@ -55,12 +60,14 @@ class ProductTest {
 
     @Test
     @DisplayName("rejects null for name")
+    @Tag("testId:shop.Product/name/rejects-null")
     void shouldRejectNullName() {
         assertThrows(NullPointerException.class, () -> new Product(idValue(), (String) null, priceValue()));
     }
 
     @Test
     @DisplayName("name: accepts a value with the maximum length")
+    @Tag("testId:shop.Product/name/accepts-at-maximum-length")
     void shouldAcceptNameAtMaximumLength() {
         final String value = "valueaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
         final Product subject = new Product(idValue(), value, priceValue());
@@ -69,18 +76,21 @@ class ProductTest {
 
     @Test
     @DisplayName("name: rejects a value longer than the maximum length")
+    @Tag("testId:shop.Product/name/rejects-above-maximum-length")
     void shouldRejectNameAboveMaximumLength() {
         assertThrows(IllegalArgumentException.class, () -> new Product(idValue(), "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", priceValue()));
     }
 
     @Test
     @DisplayName("rejects null for price")
+    @Tag("testId:shop.Product/price/rejects-null")
     void shouldRejectNullPrice() {
         assertThrows(NullPointerException.class, () -> new Product(idValue(), nameValue(), (Money) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:shop.Product/value-semantics")
     void shouldCompareByValue() {
         final Product subject = create();
         final Product other = create();
@@ -90,6 +100,7 @@ class ProductTest {
 
     @Test
     @DisplayName("related(limit) can be called and returns a value")
+    @Tag("testId:shop.Product/related/call")
     void shouldCallRelated() {
         assertNotNull(create().related(limitValue()));
     }

@@ -60,6 +60,7 @@ The queries of `ContractRepository` need a Mirror Node; only the value type is t
 // seconds, created "1785753223.568147754", expiration "1793529223.568147754", timestamp range from the creation,
 // memo "0.0.10790537", nonce 1, max. automatic token associations 0); millisecond precision. The fixture has no end
 // of the timestamp range, which this spec requires, so the expiration time stands in for it.
+@@testId("a-contract-keeps-its-auto-renew-period-and-its-lifecycle-timestamps")
 test "a contract keeps its auto-renew period and its lifecycle timestamps" {
     // given
     let created = toZonedDateTime(text: "2026-08-03T10:33:43.568Z")
@@ -84,6 +85,7 @@ test "a contract keeps its auto-renew period and its lifecycle timestamps" {
 }
 
 // Source: this spec (the optional values of a contract are nullable).
+@@testId("a-contract-without-optional-values-has-no-admin-authority-expiration-evm-address-and-bytecode")
 test "a contract without optional values has no admin authority, expiration, EVM address and bytecode" {
     // given
     let time = DEFAULT(zonedDateTime)

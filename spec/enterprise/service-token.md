@@ -132,6 +132,7 @@ A value that violates a validation annotation (`@@maxBytes`, `@@min`) is rejecte
 ```tests
 // Source: this spec (@@default and @@nullable of TokenCreateParams); the Python SDK
 // (token_create_transaction_test.py, test_overwrite_defaults: decimals and initial supply are 0, no expiration time).
+@@testId("token-parameters-with-only-name-and-symbol-have-the-defaults-of-the-spec")
 test "token parameters with only name and symbol have the defaults of the spec" {
     // when
     let params = DEFAULT(TokenCreateParams)
@@ -166,6 +167,7 @@ test "token parameters with only name and symbol have the defaults of the spec" 
 // read back unchanged. The expiration time and the auto-renew period are those of the Java test (spawnTestTransactionFungible:
 // Instant.ofEpochSecond(1554158542) and Duration.ofHours(10), converted exactly to 2019-04-01T22:42:22Z and 36000
 // seconds).
+@@testId("token-parameters-keep-the-values-they-are-created-with")
 test "token parameters keep the values they are created with" {
     // given
     let authority = DEFAULT(Authority)
@@ -209,6 +211,7 @@ test "token parameters keep the values they are created with" {
 
 // Source: this spec (@@maxBytes(100) of name, symbol and tokenMemo); HAPI limits them to 100 bytes, which ASCII text
 // of 100 characters is.
+@@testId("a-name-a-symbol-and-a-memo-of-100-characters-are-accepted")
 test "a name, a symbol and a memo of 100 characters are accepted" {
     // given
     let text = repeat(value: "a", count: 100)
@@ -223,6 +226,7 @@ test "a name, a symbol and a memo of 100 characters are accepted" {
 }
 
 // Source: this spec (@@min(1) of maxSupply, which applies to a FINITE supply type).
+@@testId("a-finite-token-accepts-a-max-supply-of-1")
 test "a finite token accepts a max supply of 1" {
     // when
     let params = TokenCreateParams{name: "Token Name", symbol: "TKN", supplyType: TokenSupplyType.FINITE,
@@ -234,6 +238,7 @@ test "a finite token accepts a max supply of 1" {
 }
 
 // Source: this spec (@@maxBytes(100) of name); HAPI limits a token name to 100 bytes.
+@@testId("token-parameters-reject-a-name-of-101-characters")
 test "token parameters reject a name of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -241,6 +246,7 @@ test "token parameters reject a name of 101 characters" {
 }
 
 // Source: this spec (@@maxBytes(100) of symbol); HAPI limits a token symbol to 100 bytes.
+@@testId("token-parameters-reject-a-symbol-of-101-characters")
 test "token parameters reject a symbol of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -248,6 +254,7 @@ test "token parameters reject a symbol of 101 characters" {
 }
 
 // Source: this spec (@@maxBytes(100) of tokenMemo); HAPI limits a memo to 100 bytes.
+@@testId("token-parameters-reject-a-memo-of-101-characters")
 test "token parameters reject a memo of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -255,6 +262,7 @@ test "token parameters reject a memo of 101 characters" {
 }
 
 // Source: this spec (@@min(1) of maxSupply).
+@@testId("a-finite-token-rejects-a-max-supply-of-0")
 test "a finite token rejects a max supply of 0" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -262,6 +270,7 @@ test "a finite token rejects a max supply of 0" {
 }
 
 // Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100).
+@@testId("token-parameters-reject-metadata-longer-than-100-bytes")
 test "token parameters reject metadata longer than 100 bytes" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -270,6 +279,7 @@ test "token parameters reject metadata longer than 100 bytes" {
 
 // Source: this spec (@@maxBytes(100) of name); the consensus node (tokens.maxTokenNameUtf8Bytes = 100): 50 characters
 // "ä" are 100 bytes of UTF-8, 51 are 102.
+@@testId("token-parameters-count-the-name-in-utf-8-bytes")
 test "token parameters count the name in UTF-8 bytes" {
     // given
     let name = repeat(value: "ä", count: 50)

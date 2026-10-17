@@ -18,6 +18,7 @@ import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ScheduleCreateReceipt`, generated from the specs.
@@ -26,6 +27,7 @@ class ScheduleCreateReceiptTest {
 
     @Test
     @DisplayName("creates a ScheduleCreateReceipt and returns the values")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateReceipt/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -44,6 +46,7 @@ class ScheduleCreateReceiptTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateReceipt/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -69,6 +72,7 @@ class ScheduleCreateReceiptTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateReceipt/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final ScheduleCreateReceipt subject = ScheduleCreateReceipt.builder()
                 .transactionId(transactionIdValue())
@@ -82,42 +86,49 @@ class ScheduleCreateReceiptTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateReceipt/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> ScheduleCreateReceipt.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateReceipt/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new ScheduleCreateReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue(), scheduleIdValue(), scheduledTransactionIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for status")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateReceipt/status/rejects-null")
     void shouldRejectNullStatus() {
         assertThrows(NullPointerException.class, () -> new ScheduleCreateReceipt(transactionIdValue(), (TransactionStatus) null, exchangeRateValue(), nextExchangeRateValue(), scheduleIdValue(), scheduledTransactionIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for exchangeRate")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateReceipt/exchangeRate/rejects-null")
     void shouldRejectNullExchangeRate() {
         assertThrows(NullPointerException.class, () -> new ScheduleCreateReceipt(transactionIdValue(), statusValue(), (ExchangeRate) null, nextExchangeRateValue(), scheduleIdValue(), scheduledTransactionIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for nextExchangeRate")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateReceipt/nextExchangeRate/rejects-null")
     void shouldRejectNullNextExchangeRate() {
         assertThrows(NullPointerException.class, () -> new ScheduleCreateReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), (ExchangeRate) null, scheduleIdValue(), scheduledTransactionIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for scheduleId")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateReceipt/scheduleId/rejects-null")
     void shouldRejectNullScheduleId() {
         assertThrows(NullPointerException.class, () -> new ScheduleCreateReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), (Address) null, scheduledTransactionIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for scheduledTransactionId")
+    @Tag("testId:consensusnode.transactions.schedule.ScheduleCreateReceipt/scheduledTransactionId/rejects-null")
     void shouldRejectNullScheduledTransactionId() {
         assertThrows(NullPointerException.class, () -> new ScheduleCreateReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), scheduleIdValue(), (TransactionId) null));
     }

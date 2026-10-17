@@ -9,6 +9,7 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.keys.PrivateKey;
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Account`, generated from the specs.
@@ -17,6 +18,7 @@ class AccountTest {
 
     @Test
     @DisplayName("creates an Account and returns the values")
+    @Tag("testId:consensusnode.client.Account/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
         final PrivateKey privateKey = privateKeyValue();
@@ -27,18 +29,21 @@ class AccountTest {
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.client.Account/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new Account((AccountId) null, privateKeyValue()));
     }
 
     @Test
     @DisplayName("rejects null for privateKey")
+    @Tag("testId:consensusnode.client.Account/privateKey/rejects-null")
     void shouldRejectNullPrivateKey() {
         assertThrows(NullPointerException.class, () -> new Account(accountIdValue(), (PrivateKey) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.client.Account/value-semantics")
     void shouldCompareByValue() {
         final Account subject = create();
         final Account other = create();

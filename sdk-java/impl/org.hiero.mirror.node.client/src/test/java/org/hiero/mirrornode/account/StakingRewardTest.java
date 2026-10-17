@@ -7,6 +7,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `StakingReward`, generated from the specs.
@@ -15,6 +16,7 @@ class StakingRewardTest {
 
     @Test
     @DisplayName("creates a StakingReward and returns the values")
+    @Tag("testId:mirrornode.account.StakingReward/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
         final long amount = amountValue();
@@ -27,12 +29,14 @@ class StakingRewardTest {
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:mirrornode.account.StakingReward/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new StakingReward((AccountId) null, amountValue(), timestampValue()));
     }
 
     @Test
     @DisplayName("amount: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.account.StakingReward/amount/accepts-at-minimum")
     void shouldAcceptAmountAtMinimum() {
         final long value = -9223372036854775808L;
         final StakingReward subject = new StakingReward(accountIdValue(), value, timestampValue());
@@ -41,6 +45,7 @@ class StakingRewardTest {
 
     @Test
     @DisplayName("amount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.account.StakingReward/amount/accepts-at-maximum")
     void shouldAcceptAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final StakingReward subject = new StakingReward(accountIdValue(), value, timestampValue());
@@ -49,12 +54,14 @@ class StakingRewardTest {
 
     @Test
     @DisplayName("rejects null for timestamp")
+    @Tag("testId:mirrornode.account.StakingReward/timestamp/rejects-null")
     void shouldRejectNullTimestamp() {
         assertThrows(NullPointerException.class, () -> new StakingReward(accountIdValue(), amountValue(), (ZonedDateTime) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.account.StakingReward/value-semantics")
     void shouldCompareByValue() {
         final StakingReward subject = create();
         final StakingReward other = create();

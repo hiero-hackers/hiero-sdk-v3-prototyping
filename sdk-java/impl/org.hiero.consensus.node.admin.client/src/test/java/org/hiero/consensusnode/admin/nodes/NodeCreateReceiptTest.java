@@ -18,6 +18,7 @@ import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NodeCreateReceipt`, generated from the specs.
@@ -26,6 +27,7 @@ class NodeCreateReceiptTest {
 
     @Test
     @DisplayName("creates a NodeCreateReceipt and returns the values")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateReceipt/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -42,6 +44,7 @@ class NodeCreateReceiptTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateReceipt/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -64,6 +67,7 @@ class NodeCreateReceiptTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateReceipt/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final NodeCreateReceipt subject = NodeCreateReceipt.builder()
                 .transactionId(transactionIdValue())
@@ -76,36 +80,42 @@ class NodeCreateReceiptTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateReceipt/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> NodeCreateReceipt.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateReceipt/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new NodeCreateReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue(), nodeIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for status")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateReceipt/status/rejects-null")
     void shouldRejectNullStatus() {
         assertThrows(NullPointerException.class, () -> new NodeCreateReceipt(transactionIdValue(), (TransactionStatus) null, exchangeRateValue(), nextExchangeRateValue(), nodeIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for exchangeRate")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateReceipt/exchangeRate/rejects-null")
     void shouldRejectNullExchangeRate() {
         assertThrows(NullPointerException.class, () -> new NodeCreateReceipt(transactionIdValue(), statusValue(), (ExchangeRate) null, nextExchangeRateValue(), nodeIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for nextExchangeRate")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateReceipt/nextExchangeRate/rejects-null")
     void shouldRejectNullNextExchangeRate() {
         assertThrows(NullPointerException.class, () -> new NodeCreateReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), (ExchangeRate) null, nodeIdValue()));
     }
 
     @Test
     @DisplayName("nodeId: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateReceipt/nodeId/accepts-at-minimum")
     void shouldAcceptNodeIdAtMinimum() {
         final long value = -9223372036854775808L;
         final NodeCreateReceipt subject = new NodeCreateReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), value);
@@ -114,6 +124,7 @@ class NodeCreateReceiptTest {
 
     @Test
     @DisplayName("nodeId: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateReceipt/nodeId/accepts-at-maximum")
     void shouldAcceptNodeIdAtMaximum() {
         final long value = 9223372036854775807L;
         final NodeCreateReceipt subject = new NodeCreateReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), value);

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigInteger;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NetworkSupplies`, generated from the specs.
@@ -13,6 +14,7 @@ class NetworkSuppliesTest {
 
     @Test
     @DisplayName("creates a NetworkSupplies and returns the values")
+    @Tag("testId:mirrornode.network.NetworkSupplies/create")
     void shouldCreateAndReturnTheValues() {
         final BigInteger releasedSupply = releasedSupplyValue();
         final BigInteger totalSupply = totalSupplyValue();
@@ -23,12 +25,14 @@ class NetworkSuppliesTest {
 
     @Test
     @DisplayName("rejects null for releasedSupply")
+    @Tag("testId:mirrornode.network.NetworkSupplies/releasedSupply/rejects-null")
     void shouldRejectNullReleasedSupply() {
         assertThrows(NullPointerException.class, () -> new NetworkSupplies((BigInteger) null, totalSupplyValue()));
     }
 
     @Test
     @DisplayName("releasedSupply: accepts the minimum (-57896044618658097711785492504343953926634992332820282019728792003956564819968)")
+    @Tag("testId:mirrornode.network.NetworkSupplies/releasedSupply/accepts-at-minimum")
     void shouldAcceptReleasedSupplyAtMinimum() {
         final BigInteger value = new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968");
         final NetworkSupplies subject = new NetworkSupplies(value, totalSupplyValue());
@@ -37,6 +41,7 @@ class NetworkSuppliesTest {
 
     @Test
     @DisplayName("releasedSupply: accepts the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819967)")
+    @Tag("testId:mirrornode.network.NetworkSupplies/releasedSupply/accepts-at-maximum")
     void shouldAcceptReleasedSupplyAtMaximum() {
         final BigInteger value = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
         final NetworkSupplies subject = new NetworkSupplies(value, totalSupplyValue());
@@ -45,24 +50,28 @@ class NetworkSuppliesTest {
 
     @Test
     @DisplayName("releasedSupply: rejects a value below the minimum (-57896044618658097711785492504343953926634992332820282019728792003956564819969)")
+    @Tag("testId:mirrornode.network.NetworkSupplies/releasedSupply/rejects-below-minimum")
     void shouldRejectReleasedSupplyBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new NetworkSupplies(new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819969"), totalSupplyValue()));
     }
 
     @Test
     @DisplayName("releasedSupply: rejects a value above the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819968)")
+    @Tag("testId:mirrornode.network.NetworkSupplies/releasedSupply/rejects-above-maximum")
     void shouldRejectReleasedSupplyAboveMaximum() {
         assertThrows(IllegalArgumentException.class, () -> new NetworkSupplies(new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819968"), totalSupplyValue()));
     }
 
     @Test
     @DisplayName("rejects null for totalSupply")
+    @Tag("testId:mirrornode.network.NetworkSupplies/totalSupply/rejects-null")
     void shouldRejectNullTotalSupply() {
         assertThrows(NullPointerException.class, () -> new NetworkSupplies(releasedSupplyValue(), (BigInteger) null));
     }
 
     @Test
     @DisplayName("totalSupply: accepts the minimum (-57896044618658097711785492504343953926634992332820282019728792003956564819968)")
+    @Tag("testId:mirrornode.network.NetworkSupplies/totalSupply/accepts-at-minimum")
     void shouldAcceptTotalSupplyAtMinimum() {
         final BigInteger value = new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968");
         final NetworkSupplies subject = new NetworkSupplies(releasedSupplyValue(), value);
@@ -71,6 +80,7 @@ class NetworkSuppliesTest {
 
     @Test
     @DisplayName("totalSupply: accepts the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819967)")
+    @Tag("testId:mirrornode.network.NetworkSupplies/totalSupply/accepts-at-maximum")
     void shouldAcceptTotalSupplyAtMaximum() {
         final BigInteger value = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
         final NetworkSupplies subject = new NetworkSupplies(releasedSupplyValue(), value);
@@ -79,18 +89,21 @@ class NetworkSuppliesTest {
 
     @Test
     @DisplayName("totalSupply: rejects a value below the minimum (-57896044618658097711785492504343953926634992332820282019728792003956564819969)")
+    @Tag("testId:mirrornode.network.NetworkSupplies/totalSupply/rejects-below-minimum")
     void shouldRejectTotalSupplyBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new NetworkSupplies(releasedSupplyValue(), new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819969")));
     }
 
     @Test
     @DisplayName("totalSupply: rejects a value above the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819968)")
+    @Tag("testId:mirrornode.network.NetworkSupplies/totalSupply/rejects-above-maximum")
     void shouldRejectTotalSupplyAboveMaximum() {
         assertThrows(IllegalArgumentException.class, () -> new NetworkSupplies(releasedSupplyValue(), new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819968")));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.network.NetworkSupplies/value-semantics")
     void shouldCompareByValue() {
         final NetworkSupplies subject = create();
         final NetworkSupplies other = create();

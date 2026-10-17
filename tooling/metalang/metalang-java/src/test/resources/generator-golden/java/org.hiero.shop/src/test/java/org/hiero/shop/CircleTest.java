@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import javax.annotation.processing.Generated;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Circle`, generated from the specs.
@@ -16,6 +17,7 @@ class CircleTest {
 
     @Test
     @DisplayName("creates a Circle and returns the values")
+    @Tag("testId:shop.Circle/create")
     void shouldCreateAndReturnTheValues() {
         final Integer size = sizeValue();
         final Circle subject = new Circle(size);
@@ -24,12 +26,14 @@ class CircleTest {
 
     @Test
     @DisplayName("rejects null for size")
+    @Tag("testId:shop.Circle/size/rejects-null")
     void shouldRejectNullSize() {
         assertThrows(NullPointerException.class, () -> new Circle((Integer) null));
     }
 
     @Test
     @DisplayName("size: accepts the minimum (-2147483648)")
+    @Tag("testId:shop.Circle/size/accepts-at-minimum")
     void shouldAcceptSizeAtMinimum() {
         final Integer value = Integer.MIN_VALUE;
         final Circle subject = new Circle(value);
@@ -38,6 +42,7 @@ class CircleTest {
 
     @Test
     @DisplayName("size: accepts the maximum (2147483647)")
+    @Tag("testId:shop.Circle/size/accepts-at-maximum")
     void shouldAcceptSizeAtMaximum() {
         final Integer value = 2147483647;
         final Circle subject = new Circle(value);
@@ -46,6 +51,7 @@ class CircleTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:shop.Circle/value-semantics")
     void shouldCompareByValue() {
         final Circle subject = create();
         final Circle other = create();

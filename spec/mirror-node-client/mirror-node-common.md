@@ -61,6 +61,7 @@ FixedFee {
 ```tests
 // Source: the Python SDK (hbar_transfer_test: test_hbar_transfer_constructor); this spec (a negative amount is debited,
 // a positive one credited).
+@@testId("an-hbar-transfer-keeps-its-account-its-signed-amount-and-its-approval-flag")
 test "an HBAR transfer keeps its account, its signed amount and its approval flag" {
     // given
     let account = DEFAULT(AccountId)
@@ -79,6 +80,7 @@ test "an HBAR transfer keeps its account, its signed amount and its approval fla
 }
 
 // Source: the Python SDK (token_transfer_test: test_token_transfer_constructor).
+@@testId("a-token-transfer-keeps-its-token-account-amount-and-approval-flag")
 test "a token transfer keeps its token, account, amount and approval flag" {
     // given
     let token = Address.fromString(address: "0.0.5005")
@@ -97,6 +99,7 @@ test "a token transfer keeps its token, account, amount and approval flag" {
 }
 
 // Source: the Python SDK (token_nft_transfer_test: test_token_nft_transfer_constructor, approved and not approved).
+@@testId("an-nft-transfer-keeps-its-sender-receiver-token-serial-number-and-approval-flag")
 test "an NFT transfer keeps its sender, receiver, token, serial number and approval flag" {
     // given
     let parties = NftTransferParties{senderAccountId: AccountId.fromString(value: "0.0.1001"),
@@ -114,6 +117,7 @@ test "an NFT transfer keeps its sender, receiver, token, serial number and appro
 }
 
 // Source: this spec (`parties` is @@nullable).
+@@testId("an-nft-transfer-can-be-created-without-its-parties")
 test "an NFT transfer can be created without its parties" {
     // when
     let transfer = NftTransfer{isApproval: false, serialNumber: 1}
@@ -124,6 +128,7 @@ test "an NFT transfer can be created without its parties" {
 
 // Source: the Java SDK (CustomFixedFeeTest: amount 4, collector 1.2.3, denominating token 5.6.7); this spec (the
 // denominating token is absent if the fee is charged in HBAR).
+@@testId("a-fixed-fee-in-hbar-has-no-denominating-token-and-a-fixed-fee-in-a-token-has-one")
 test "a fixed fee in HBAR has no denominating token and a fixed fee in a token has one" {
     // given
     let collector = AccountId.fromString(value: "1.2.3")

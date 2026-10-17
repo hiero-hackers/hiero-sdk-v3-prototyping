@@ -13,6 +13,7 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.Address;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Topic`, generated from the specs.
@@ -21,6 +22,7 @@ class TopicTest {
 
     @Test
     @DisplayName("creates a Topic and returns the values")
+    @Tag("testId:enterprise.service.topic.Topic/create")
     void shouldCreateAndReturnTheValues() {
         final Address topicId = topicIdValue();
         final @Nullable Authority adminAuthority = adminAuthorityValue();
@@ -37,6 +39,7 @@ class TopicTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:enterprise.service.topic.Topic/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Address topicId = topicIdValue();
         final @Nullable Authority adminAuthority = adminAuthorityValue();
@@ -59,6 +62,7 @@ class TopicTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:enterprise.service.topic.Topic/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final Topic subject = Topic.builder()
                 .topicId(topicIdValue())
@@ -71,24 +75,28 @@ class TopicTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:enterprise.service.topic.Topic/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> Topic.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for topicId")
+    @Tag("testId:enterprise.service.topic.Topic/topicId/rejects-null")
     void shouldRejectNullTopicId() {
         assertThrows(NullPointerException.class, () -> new Topic((Address) null, adminAuthorityValue(), submitAuthorityValue(), createdTimestampValue(), memoValue()));
     }
 
     @Test
     @DisplayName("rejects null for createdTimestamp")
+    @Tag("testId:enterprise.service.topic.Topic/createdTimestamp/rejects-null")
     void shouldRejectNullCreatedTimestamp() {
         assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), (ZonedDateTime) null, memoValue()));
     }
 
     @Test
     @DisplayName("rejects null for memo")
+    @Tag("testId:enterprise.service.topic.Topic/memo/rejects-null")
     void shouldRejectNullMemo() {
         assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), createdTimestampValue(), (String) null));
     }

@@ -29,6 +29,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenUpdateTransaction`, generated from the specs.
@@ -37,6 +38,7 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("creates a TokenUpdateTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final @Nullable String name = nameValue();
@@ -80,6 +82,7 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Address tokenId = tokenIdValue();
         final @Nullable String name = nameValue();
@@ -138,6 +141,7 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TokenUpdateTransaction subject = TokenUpdateTransaction.builder()
                 .tokenId(tokenIdValue())
@@ -162,18 +166,21 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TokenUpdateTransaction.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenUpdateTransaction((Address) null, nameValue(), symbolValue(), treasuryAccountIdValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("name: accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/name/accepts-at-maximum-bytes")
     void shouldAcceptNameAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TokenUpdateTransaction subject = new TokenUpdateTransaction(tokenIdValue(), value, symbolValue(), treasuryAccountIdValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -182,12 +189,14 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("name: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/name/rejects-above-maximum-bytes")
     void shouldRejectNameAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new TokenUpdateTransaction(tokenIdValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", symbolValue(), treasuryAccountIdValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("symbol: accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/symbol/accepts-at-maximum-bytes")
     void shouldAcceptSymbolAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TokenUpdateTransaction subject = new TokenUpdateTransaction(tokenIdValue(), nameValue(), value, treasuryAccountIdValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -196,12 +205,14 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("symbol: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/symbol/rejects-above-maximum-bytes")
     void shouldRejectSymbolAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new TokenUpdateTransaction(tokenIdValue(), nameValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", treasuryAccountIdValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("tokenMemo: accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/tokenMemo/accepts-at-maximum-bytes")
     void shouldAcceptTokenMemoAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TokenUpdateTransaction subject = new TokenUpdateTransaction(tokenIdValue(), nameValue(), symbolValue(), treasuryAccountIdValue(), value, metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -210,12 +221,14 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("tokenMemo: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/tokenMemo/rejects-above-maximum-bytes")
     void shouldRejectTokenMemoAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new TokenUpdateTransaction(tokenIdValue(), nameValue(), symbolValue(), treasuryAccountIdValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("metadata: accepts the maximum number of elements")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/metadata/accepts-at-maximum-size")
     void shouldAcceptMetadataAtMaximumSize() {
         final byte @Nullable [] value = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100};
         final TokenUpdateTransaction subject = new TokenUpdateTransaction(tokenIdValue(), nameValue(), symbolValue(), treasuryAccountIdValue(), tokenMemoValue(), value, expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -224,12 +237,14 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("metadata: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/metadata/rejects-above-maximum-size")
     void shouldRejectMetadataAboveMaximumSize() {
         assertThrows(IllegalArgumentException.class, () -> new TokenUpdateTransaction(tokenIdValue(), nameValue(), symbolValue(), treasuryAccountIdValue(), tokenMemoValue(), new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 1}, expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("the constructor copies metadata; the accessor returns a copy")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/metadata/copies-in")
     void shouldCopyMetadataIn() {
         final byte[] value = metadataValue();
         final byte[] expected = value.clone();
@@ -244,6 +259,7 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final TokenUpdateTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -253,6 +269,7 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final TokenUpdateTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -261,6 +278,7 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final TokenUpdateTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -270,6 +288,7 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final TokenUpdateTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -278,6 +297,7 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/memo/set")
     void shouldSetMemo() {
         final TokenUpdateTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -287,6 +307,7 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final TokenUpdateTransaction subject = create();
         subject.setMemo((String) null);
@@ -295,6 +316,7 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final TokenUpdateTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -304,6 +326,7 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final TokenUpdateTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -312,54 +335,63 @@ class TokenUpdateTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.hiero.hedera.HbarUnit;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ContractId`, generated from the specs.
@@ -14,6 +15,7 @@ class ContractIdTest {
 
     @Test
     @DisplayName("creates a ContractId and returns the values")
+    @Tag("testId:ledger.ContractId/create")
     void shouldCreateAndReturnTheValues() {
         final long shard = shardValue();
         final long realm = realmValue();
@@ -30,6 +32,7 @@ class ContractIdTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:ledger.ContractId/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final long shard = shardValue();
         final long realm = realmValue();
@@ -52,6 +55,7 @@ class ContractIdTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:ledger.ContractId/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final ContractId subject = ContractId.builder()
                 .shard(shardValue())
@@ -65,12 +69,14 @@ class ContractIdTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:ledger.ContractId/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> ContractId.builder().build());
     }
 
     @Test
     @DisplayName("shard: accepts the minimum (0)")
+    @Tag("testId:ledger.ContractId/shard/accepts-at-minimum")
     void shouldAcceptShardAtMinimum() {
         final long value = 0L;
         final ContractId subject = new ContractId(value, realmValue(), checksumValue(), numValue(), (EvmAddress) null);
@@ -79,6 +85,7 @@ class ContractIdTest {
 
     @Test
     @DisplayName("shard: accepts the maximum (18446744073709551615)")
+    @Tag("testId:ledger.ContractId/shard/accepts-at-maximum")
     void shouldAcceptShardAtMaximum() {
         final long value = Long.parseUnsignedLong("18446744073709551615");
         final ContractId subject = new ContractId(value, realmValue(), checksumValue(), numValue(), (EvmAddress) null);
@@ -87,6 +94,7 @@ class ContractIdTest {
 
     @Test
     @DisplayName("realm: accepts the minimum (0)")
+    @Tag("testId:ledger.ContractId/realm/accepts-at-minimum")
     void shouldAcceptRealmAtMinimum() {
         final long value = 0L;
         final ContractId subject = new ContractId(shardValue(), value, checksumValue(), numValue(), (EvmAddress) null);
@@ -95,6 +103,7 @@ class ContractIdTest {
 
     @Test
     @DisplayName("realm: accepts the maximum (18446744073709551615)")
+    @Tag("testId:ledger.ContractId/realm/accepts-at-maximum")
     void shouldAcceptRealmAtMaximum() {
         final long value = Long.parseUnsignedLong("18446744073709551615");
         final ContractId subject = new ContractId(shardValue(), value, checksumValue(), numValue(), (EvmAddress) null);
@@ -103,12 +112,14 @@ class ContractIdTest {
 
     @Test
     @DisplayName("rejects null for checksum")
+    @Tag("testId:ledger.ContractId/checksum/rejects-null")
     void shouldRejectNullChecksum() {
         assertThrows(NullPointerException.class, () -> new ContractId(shardValue(), realmValue(), (String) null, numValue(), (EvmAddress) null));
     }
 
     @Test
     @DisplayName("num: accepts the minimum (0)")
+    @Tag("testId:ledger.ContractId/num/accepts-at-minimum")
     void shouldAcceptNumAtMinimum() {
         final @Nullable Long value = 0L;
         final ContractId subject = new ContractId(shardValue(), realmValue(), checksumValue(), value, (EvmAddress) null);
@@ -117,6 +128,7 @@ class ContractIdTest {
 
     @Test
     @DisplayName("num: accepts the maximum (18446744073709551615)")
+    @Tag("testId:ledger.ContractId/num/accepts-at-maximum")
     void shouldAcceptNumAtMaximum() {
         final @Nullable Long value = Long.parseUnsignedLong("18446744073709551615");
         final ContractId subject = new ContractId(shardValue(), realmValue(), checksumValue(), value, (EvmAddress) null);
@@ -125,18 +137,21 @@ class ContractIdTest {
 
     @Test
     @DisplayName("rejects num and evmAddress together (@@oneOf)")
+    @Tag("testId:ledger.ContractId/num-evmAddress/rejects-two")
     void shouldRejectTwoOfNumOrEvmAddress() {
         assertThrows(IllegalArgumentException.class, () -> new ContractId(shardValue(), realmValue(), checksumValue(), numValue(), evmAddressValue()));
     }
 
     @Test
     @DisplayName("rejects none of num, evmAddress (@@oneOf)")
+    @Tag("testId:ledger.ContractId/num-evmAddress/rejects-none")
     void shouldRejectNoneOfNumOrEvmAddress() {
         assertThrows(IllegalArgumentException.class, () -> new ContractId(shardValue(), realmValue(), checksumValue(), (Long) null, (EvmAddress) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:ledger.ContractId/value-semantics")
     void shouldCompareByValue() {
         final ContractId subject = create();
         final ContractId other = create();
@@ -146,24 +161,28 @@ class ContractIdTest {
 
     @Test
     @DisplayName("validateChecksum(network) can be called")
+    @Tag("testId:ledger.ContractId/validateChecksum/call")
     void shouldCallValidateChecksum() {
         defaultSubject().validateChecksum(networkValue());
     }
 
     @Test
     @DisplayName("toString() can be called and returns a value")
+    @Tag("testId:ledger.ContractId/toString/call")
     void shouldCallToString() {
         assertNotNull(defaultSubject().toString());
     }
 
     @Test
     @DisplayName("toStringWithChecksum() can be called and returns a value")
+    @Tag("testId:ledger.ContractId/toStringWithChecksum/call")
     void shouldCallToStringWithChecksum() {
         assertNotNull(defaultSubject().toStringWithChecksum());
     }
 
     @Test
     @DisplayName("fromString(value) can be called and returns a value (only IllegalArgumentException may occur)")
+    @Tag("testId:ledger.ContractId/fromString/call")
     void shouldCallFromString() throws Exception {
         try {
             assertNotNull(ContractId.fromString(valueValue()));
@@ -176,6 +195,7 @@ class ContractIdTest {
 
     @Test
     @DisplayName("fromEvmAddress(shard, realm, address) can be called and returns a value")
+    @Tag("testId:ledger.ContractId/fromEvmAddress/call")
     void shouldCallFromEvmAddress() {
         assertNotNull(ContractId.fromEvmAddress(shardValue(), realmValue(), addressValue()));
     }

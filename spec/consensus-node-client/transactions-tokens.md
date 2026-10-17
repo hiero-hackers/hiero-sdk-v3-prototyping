@@ -543,6 +543,7 @@ names where.
 // Source: the @@default values of TokenCreateTransaction; the Python SDK (TokenParams: decimals 0, initial supply 0,
 // supply type INFINITE, freeze default false) and HAPI TokenCreateTransactionBody (no key, no maximum supply, no memo
 // and no auto-renew account unless set).
+@@testId("a-token-create-transaction-without-optional-values-has-the-defaults-of-the-spec")
 test "a token create transaction without optional values has the defaults of the spec" {
     // when
     let transaction = TokenCreateTransaction{name: "test name", symbol: "test symbol",
@@ -574,6 +575,7 @@ test "a token create transaction without optional values has the defaults of the
 // spawnTestTransactionFungible, Instant.ofEpochSecond(1554158542) = 2019-04-01T22:42:22Z, because the protobuf test uses
 // Instant.now()); the Rust SDK (token_create_transaction.rs make_transaction: an expiration time and an auto-renew
 // period together); the getter / setter tests of the Python, Go and Swift SDKs.
+@@testId("a-token-create-transaction-for-a-fungible-token-keeps-its-values-and-each-key-in-its-own-field")
 test "a token create transaction for a fungible token keeps its values and each key in its own field" {
     // given
     let authorities = JAVA_SDK_TOKEN_AUTHORITIES
@@ -613,6 +615,7 @@ test "a token create transaction for a fungible token keeps its values and each 
 
 // Source: the Java SDK (TokenCreateTransactionTest, constructTokenCreateTransactionNftFromTransactionBodyProtobuf:
 // NON_FUNGIBLE_UNIQUE, FINITE, maximum supply 500); the NFT variants of the Python and Swift SDKs.
+@@testId("a-token-create-transaction-for-a-finite-nft-collection-keeps-its-supply-type-and-maximum-supply")
 test "a token create transaction for a finite NFT collection keeps its supply type and maximum supply" {
     // when
     let transaction = TokenCreateTransaction{name: "test name", symbol: "test symbol",
@@ -629,6 +632,7 @@ test "a token create transaction for a finite NFT collection keeps its supply ty
 
 // Source: TokenUpdateTransaction ("every nullable field is leave unchanged when null"); HAPI TokenUpdateTransactionBody
 // (an unset field is not changed); the Python SDK (test_build_transaction_body: only the fields that are set).
+@@testId("a-token-update-transaction-with-only-a-token-id-changes-nothing")
 test "a token update transaction with only a token id changes nothing" {
     // when
     let transaction = TokenUpdateTransaction{tokenId: Address.fromString(address: "4.2.0")}
@@ -657,6 +661,7 @@ test "a token update transaction with only a token id changes nothing" {
 // same keys and values, an auto-renew period of Duration.ofHours(10) = 36000 seconds); the Rust SDK
 // (token_update_transaction.rs: TEST_EXPIRATION_TIME = VALID_START = 2019-04-01T22:42:22Z, because the Java test uses
 // Instant.now()); the getter / setter tests of the Python SDK (test_set_methods, test_single_key_fields).
+@@testId("a-token-update-transaction-keeps-each-rotated-key-in-its-own-field")
 test "a token update transaction keeps each rotated key in its own field" {
     // given
     let authorities = JAVA_SDK_TOKEN_AUTHORITIES
@@ -691,6 +696,7 @@ test "a token update transaction keeps each rotated key in its own field" {
 
 // Source: TokenAssociateTransaction.tokens ("order is irrelevant — hence a set"); the Java SDK
 // (TokenAssociateTransactionTest and TokenDissociateTransactionTest: the same account and token ids).
+@@testId("token-associate-and-dissociate-transactions-keep-the-account-and-the-set-of-tokens-in-any-order")
 test "token associate and dissociate transactions keep the account and the set of tokens in any order" {
     // given
     let first = Address.fromString(address: "4.5.6")
@@ -713,6 +719,7 @@ test "token associate and dissociate transactions keep the account and the set o
 
 // Source: the JavaScript SDK (TokenMintTransaction and TokenBurnTransaction, "should handle large bigint amounts":
 // 9000000000000000000); the Java SDK (TokenMintTransactionTest, TokenBurnTransactionTest: token 4.2.0).
+@@testId("fungible-mint-and-burn-transactions-keep-amounts-beyond-the-53-bits-of-a-javascript-number")
 test "fungible mint and burn transactions keep amounts beyond the 53 bits of a JavaScript number" {
     // given
     let token = Address.fromString(address: "4.2.0")
@@ -730,6 +737,7 @@ test "fungible mint and burn transactions keep amounts beyond the 53 bits of a J
 
 // Source: TokenMintNftTransaction ("one metadata blob per new serial"); the Java SDK (TokenMintTransactionTest,
 // getSetMetadata: [1, 2, 3, 4, 5]) and the Python SDK (test_build_transaction_body_nft: several entries in order).
+@@testId("an-nft-mint-transaction-keeps-one-metadata-entry-per-new-serial-in-order")
 test "an NFT mint transaction keeps one metadata entry per new serial in order" {
     // given
     let metadata = [hex(text: "0102030405"), utf8(text: "ipfs://QmHash1"), utf8(text: "ipfs://QmHash2")]
@@ -743,6 +751,7 @@ test "an NFT mint transaction keeps one metadata entry per new serial in order" 
 }
 
 // Source: the Java SDK (TokenBurnTransactionTest: serial 420) and the Python SDK (token_burn_transaction_test).
+@@testId("an-nft-burn-transaction-keeps-its-serials-in-order")
 test "an NFT burn transaction keeps its serials in order" {
     // when
     let burn = TokenBurnNftTransaction{tokenId: Address.fromString(address: "4.2.0"), serials: [420, 1, 2]}
@@ -753,6 +762,7 @@ test "an NFT burn transaction keeps its serials in order" {
 }
 
 // Source: this spec (@@maxBytes(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
+@@testId("a-token-create-transaction-rejects-a-name-longer-than-100-characters")
 test "a token create transaction rejects a name longer than 100 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -761,6 +771,7 @@ test "a token create transaction rejects a name longer than 100 characters" {
 }
 
 // Source: this spec (@@maxBytes(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
+@@testId("a-token-create-transaction-rejects-a-symbol-longer-than-100-characters")
 test "a token create transaction rejects a symbol longer than 100 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -769,6 +780,7 @@ test "a token create transaction rejects a symbol longer than 100 characters" {
 }
 
 // Source: this spec (@@maxBytes(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
+@@testId("a-token-create-transaction-rejects-a-memo-longer-than-100-characters")
 test "a token create transaction rejects a memo longer than 100 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -778,6 +790,7 @@ test "a token create transaction rejects a memo longer than 100 characters" {
 
 // Source: this spec (@@min(1) of maxSupply); the network rejects a finite token without a positive maximum supply
 // (INVALID_TOKEN_MAX_SUPPLY).
+@@testId("a-token-create-transaction-rejects-a-maximum-supply-of-0")
 test "a token create transaction rejects a maximum supply of 0" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -786,6 +799,7 @@ test "a token create transaction rejects a maximum supply of 0" {
 }
 
 // Source: this spec (@@maxBytes(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
+@@testId("a-token-update-transaction-rejects-a-name-longer-than-100-characters")
 test "a token update transaction rejects a name longer than 100 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -793,6 +807,7 @@ test "a token update transaction rejects a name longer than 100 characters" {
 }
 
 // Source: this spec (@@maxBytes(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
+@@testId("a-token-update-transaction-rejects-a-symbol-longer-than-100-characters")
 test "a token update transaction rejects a symbol longer than 100 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -800,6 +815,7 @@ test "a token update transaction rejects a symbol longer than 100 characters" {
 }
 
 // Source: this spec (@@maxBytes(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
+@@testId("a-token-update-transaction-rejects-a-memo-longer-than-100-characters")
 test "a token update transaction rejects a memo longer than 100 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -807,6 +823,7 @@ test "a token update transaction rejects a memo longer than 100 characters" {
 }
 
 // Source: this spec (@@min(1) of amount).
+@@testId("a-fungible-mint-transaction-rejects-an-amount-of-0")
 test "a fungible mint transaction rejects an amount of 0" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -814,6 +831,7 @@ test "a fungible mint transaction rejects an amount of 0" {
 }
 
 // Source: this spec (@@minSize(1): one metadata entry per new serial).
+@@testId("an-nft-mint-transaction-rejects-an-empty-list-of-metadata")
 test "an NFT mint transaction rejects an empty list of metadata" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -821,6 +839,7 @@ test "an NFT mint transaction rejects an empty list of metadata" {
 }
 
 // Source: this spec (@@maxSize(10): the network caps a mint at 10 NFTs, TOKEN_MAX_BATCH_SIZE_REACHED).
+@@testId("an-nft-mint-transaction-rejects-more-than-10-metadata-entries")
 test "an NFT mint transaction rejects more than 10 metadata entries" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -828,6 +847,7 @@ test "an NFT mint transaction rejects more than 10 metadata entries" {
 }
 
 // Source: this spec (@@min(1) of amount).
+@@testId("a-fungible-burn-transaction-rejects-an-amount-of-0")
 test "a fungible burn transaction rejects an amount of 0" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -835,6 +855,7 @@ test "a fungible burn transaction rejects an amount of 0" {
 }
 
 // Source: this spec (@@minSize(1)).
+@@testId("an-nft-burn-transaction-rejects-an-empty-list-of-serials")
 test "an NFT burn transaction rejects an empty list of serials" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -842,6 +863,7 @@ test "an NFT burn transaction rejects an empty list of serials" {
 }
 
 // Source: this spec (@@maxSize(10): the network caps a burn at 10 NFTs, TOKEN_MAX_BATCH_SIZE_REACHED).
+@@testId("an-nft-burn-transaction-rejects-more-than-10-serials")
 test "an NFT burn transaction rejects more than 10 serials" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -854,6 +876,7 @@ test "an NFT burn transaction rejects more than 10 serials" {
 // which clears its auto-renew period there, TokenUpdate with the auto-renew period Duration.ofHours(10) = 36000
 // seconds); the Rust SDK (token_update_transaction.rs to_from_bytes: the expiration time VALID_START); the JavaScript
 // SDK ("should round trip from bytes") and the to / from bytes tests of the Go SDK.
+@@testId("every-token-lifecycle-transaction-survives-tobytes-and-frombytes-unchanged")
 test "every token lifecycle transaction survives toBytes and fromBytes unchanged" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
@@ -888,6 +911,7 @@ test "every token lifecycle transaction survives toBytes and fromBytes unchanged
 
 // Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100,
 // METADATA_TOO_LONG); the Python SDK (TokenCreateTransaction.set_metadata rejects more than 100 bytes).
+@@testId("a-token-create-transaction-rejects-metadata-longer-than-100-bytes")
 test "a token create transaction rejects metadata longer than 100 bytes" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -896,6 +920,7 @@ test "a token create transaction rejects metadata longer than 100 bytes" {
 }
 
 // Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100).
+@@testId("a-token-update-transaction-rejects-metadata-longer-than-100-bytes")
 test "a token update transaction rejects metadata longer than 100 bytes" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -905,6 +930,7 @@ test "a token update transaction rejects metadata longer than 100 bytes" {
 
 // Source: this spec (@@maxBytes(100) of name); the consensus node (tokens.maxTokenNameUtf8Bytes = 100,
 // TOKEN_NAME_TOO_LONG): 51 characters "ä" are 102 bytes of UTF-8.
+@@testId("a-token-create-transaction-rejects-a-name-of-more-than-100-utf-8-bytes")
 test "a token create transaction rejects a name of more than 100 UTF-8 bytes" {
     // when / then
     @@expectThrows(invalid-argument-error)

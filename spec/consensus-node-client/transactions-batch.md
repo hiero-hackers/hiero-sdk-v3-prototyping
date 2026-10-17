@@ -228,6 +228,7 @@ by the TCK, not here.
 ```tests
 // Source: HIP-551 (an inner transaction has one body for node 0.0.0, signed by its payer); the Python SDK
 // (test_batchify_sets_required_fields).
+@@testId("an-inner-transaction-signed-for-a-batch-has-one-body-for-node-0-0-0-and-its-payer-s-signature")
 test "an inner transaction signed for a batch has one body for node 0.0.0 and its payer's signature" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
@@ -249,6 +250,7 @@ test "an inner transaction signed for a batch has one body for node 0.0.0 and it
 // Source: this spec (innerTransactions is executed in list order); the Java SDK (BatchTransactionTest
 // .shouldPreserveTransactionOrder and getInnerTransactionIdsShouldReturnCorrectIds) and the Python SDK
 // (test_get_inner_transactions_ids_returns_transaction_ids).
+@@testId("a-batch-keeps-its-inner-transactions-in-their-order-each-with-its-own-payer")
 test "a batch keeps its inner transactions in their order, each with its own payer" {
     // given
     let first = DEFAULT(consensusnode.client.Account)
@@ -273,6 +275,7 @@ test "a batch keeps its inner transactions in their order, each with its own pay
 // Source: the Python SDK (test_round_trip_to_bytes_and_back_preserves_inner_transactions), the Java SDK
 // (BatchTransactionTest.shouldBytes: the same transaction id, valid start included, after the round trip) and the
 // Swift SDK (BatchTransactionUnitTests.test_ToFromBytes).
+@@testId("a-signed-batch-survives-tobytes-and-frombytes")
 test "a signed batch survives toBytes and fromBytes" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
@@ -294,6 +297,7 @@ test "a signed batch survives toBytes and fromBytes" {
 
 // Source: HIP-551 (AtomicBatchTransactionBody.transactions holds the signed inner transactions); the Python SDK
 // (test_build_batch_transaction_body).
+@@testId("the-body-of-a-batch-contains-the-bytes-of-its-inner-transactions")
 test "the body of a batch contains the bytes of its inner transactions" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
@@ -311,6 +315,7 @@ test "the body of a batch contains the bytes of its inner transactions" {
 // Source: this spec (@@minSize(1)); the network rejects an empty batch with BATCH_LIST_EMPTY (the Java SDK,
 // BatchTransactionIntegrationTest "Batch Transaction with empty inner transaction's list should throw an error", and
 // the same test of the JavaScript, Python and Swift SDKs).
+@@testId("a-batch-rejects-an-empty-list-of-inner-transactions")
 test "a batch rejects an empty list of inner transactions" {
     // when / then
     @@expectThrows(invalid-argument-error)

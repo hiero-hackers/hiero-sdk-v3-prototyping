@@ -342,6 +342,7 @@ spec. The exchange itself (`execute`, `close`) needs a server and is not tested 
 
 ```tests
 // Source: this spec (Cancellation.none() is the cancellation that never fires).
+@@testId("the-cancellation-that-never-fires-is-not-cancelled")
 test "the cancellation that never fires is not cancelled" {
     // when
     let cancellation = Cancellation.none()
@@ -351,6 +352,7 @@ test "the cancellation that never fires is not cancelled" {
 }
 
 // Source: this spec (a CancellationSource owns the right to cancel; only its cancellation is handed out).
+@@testId("a-new-cancellation-source-is-not-cancelled")
 test "a new cancellation source is not cancelled" {
     // when
     let source = CancellationSource.create()
@@ -360,6 +362,7 @@ test "a new cancellation source is not cancelled" {
 }
 
 // Source: this spec (cancel() requests cancellation; it is idempotent, a second call does nothing).
+@@testId("cancelling-a-source-cancels-its-cancellation-also-when-cancelled-twice")
 test "cancelling a source cancels its cancellation, also when cancelled twice" {
     // given
     let source = CancellationSource.create()
@@ -373,6 +376,7 @@ test "cancelling a source cancels its cancellation, also when cancelled twice" {
 }
 
 // Source: this spec (a source owns its own cancellation; cancelling one source cancels no other).
+@@testId("cancelling-a-source-cancels-no-other-cancellation")
 test "cancelling a source cancels no other cancellation" {
     // given
     let cancelled = CancellationSource.create()
@@ -388,6 +392,7 @@ test "cancelling a source cancels no other cancellation" {
 
 // Source: this spec (@@urlPattern: url is an absolute, well-formed URL; the URLs of the examples of this spec and of the
 // default mirror node of `ledger`).
+@@testId("a-request-keeps-its-absolute-url")
 test "a request keeps its absolute URL" {
     for url in ["https://mainnet.mirrornode.hedera.com/api/v1/accounts/0.0.1234", "https://example.org/api/v1/submit",
             "http://127.0.0.1:38081"] {
@@ -404,6 +409,7 @@ test "a request keeps its absolute URL" {
 
 // Source: this spec (the configuration of the first example: connectTimeout 5s, defaultRequestTimeout 10s and an
 // "accept" default header).
+@@testId("an-http-configuration-keeps-its-timeouts-and-default-headers")
 test "an HTTP configuration keeps its timeouts and default headers" {
     // when
     let configuration = HttpConfiguration{defaultHeaders: {"accept": "application/json"},
@@ -417,6 +423,7 @@ test "an HTTP configuration keeps its timeouts and default headers" {
 
 // Source: this spec (the second example: a POST request with its own timeout of 30s and its own headers). The body is
 // a stand-in for the JSON payload of the example.
+@@testId("a-request-keeps-its-own-timeout-and-headers")
 test "a request keeps its own timeout and headers" {
     // given
     let body = utf8(text: "{}")
@@ -433,6 +440,7 @@ test "a request keeps its own timeout and headers" {
 
 // Source: this spec (@@urlPattern: url is absolute; no base-URL resolution happens here). The path of the first
 // example without scheme and host.
+@@testId("a-request-with-a-relative-url-is-rejected")
 test "a request with a relative URL is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -440,6 +448,7 @@ test "a request with a relative URL is rejected" {
 }
 
 // Source: this spec (@@urlPattern: an absolute URL has a scheme). The URL of the first example without its scheme.
+@@testId("a-request-with-a-url-without-scheme-is-rejected")
 test "a request with a URL without scheme is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -449,6 +458,7 @@ test "a request with a URL without scheme is rejected" {
 
 // Source: this spec (an HttpClient carries the configuration it applies to every exchange; createHttpClient creates
 // the default client for a configuration).
+@@testId("the-default-client-applies-the-configuration-it-was-created-with")
 test "the default client applies the configuration it was created with" {
     // when
     let client = createHttpClient(configuration: EXAMPLE_CONFIGURATION)
@@ -460,6 +470,7 @@ test "the default client applies the configuration it was created with" {
 
 // Source: this spec (client-closed-error: the client was closed before the request was submitted; close(closeTimeout)
 // completes normally and is idempotent like close(); the request and the 5s close timeout of the first example).
+@@testId("a-client-closed-with-a-timeout-rejects-a-request")
 test "a client closed with a timeout rejects a request" {
     // given
     let client = createHttpClient(configuration: EXAMPLE_CONFIGURATION)

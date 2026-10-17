@@ -18,6 +18,7 @@ import org.hiero.ledger.EvmAddress;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountInfo`, generated from the specs.
@@ -26,6 +27,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("creates an AccountInfo and returns the values")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
         final @Nullable EvmAddress evmAddress = evmAddressValue();
@@ -60,6 +62,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("creates an AccountInfo with the default values")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null);
         assertValue(0, subject.maxAutomaticTokenAssociations());
@@ -71,6 +74,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final AccountId accountId = accountIdValue();
         final @Nullable EvmAddress evmAddress = evmAddressValue();
@@ -120,6 +124,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final AccountInfo subject = AccountInfo.builder()
                 .accountId(accountIdValue())
@@ -142,30 +147,35 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> AccountInfo.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new AccountInfo((AccountId) null, evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
     }
 
     @Test
     @DisplayName("rejects null for balance")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/balance/rejects-null")
     void shouldRejectNullBalance() {
         assertThrows(NullPointerException.class, () -> new AccountInfo(accountIdValue(), evmAddressValue(), (NativeToken<?, ?>) null, authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
     }
 
     @Test
     @DisplayName("rejects null for expirationTime")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/expirationTime/rejects-null")
     void shouldRejectNullExpirationTime() {
         assertThrows(NullPointerException.class, () -> new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), (ZonedDateTime) null, autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
     }
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/maxAutomaticTokenAssociations/accepts-at-minimum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), value, receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
@@ -174,6 +184,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/maxAutomaticTokenAssociations/accepts-at-maximum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMaximum() {
         final int value = 2147483647;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), value, receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
@@ -182,6 +193,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("ownedNfts: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/ownedNfts/accepts-at-minimum")
     void shouldAcceptOwnedNftsAtMinimum() {
         final long value = -9223372036854775808L;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), value, deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
@@ -190,6 +202,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("ownedNfts: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/ownedNfts/accepts-at-maximum")
     void shouldAcceptOwnedNftsAtMaximum() {
         final long value = 9223372036854775807L;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), value, deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
@@ -198,6 +211,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("stakedNodeId: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/stakedNodeId/accepts-at-minimum")
     void shouldAcceptStakedNodeIdAtMinimum() {
         final @Nullable Long value = -9223372036854775808L;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), (AccountId) null, value, declineStakingRewardValue());
@@ -206,6 +220,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("stakedNodeId: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/stakedNodeId/accepts-at-maximum")
     void shouldAcceptStakedNodeIdAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
         final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), (AccountId) null, value, declineStakingRewardValue());
@@ -214,6 +229,7 @@ class AccountInfoTest {
 
     @Test
     @DisplayName("rejects stakedAccountId and stakedNodeId together (@@oneOrNoneOf)")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/stakedAccountId-stakedNodeId/rejects-two")
     void shouldRejectTwoOfStakedAccountIdOrStakedNodeId() {
         assertThrows(IllegalArgumentException.class, () -> new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue()));
     }

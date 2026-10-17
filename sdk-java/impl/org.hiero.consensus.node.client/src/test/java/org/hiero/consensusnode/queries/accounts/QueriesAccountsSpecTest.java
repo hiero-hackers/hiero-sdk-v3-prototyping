@@ -12,6 +12,7 @@ import org.hiero.hedera.HbarUnit;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.ContractId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `queries-accounts`, generated from the `tests` blocks of its `## Testing` section.
@@ -25,6 +26,7 @@ class QueriesAccountsSpecTest {
     /// query targets either an account or a contract.
     @Test
     @DisplayName("a balance query for an account has no contract id")
+    @Tag("testId:consensusnode.queries.accounts/a-balance-query-for-an-account-has-no-contract-id")
     void aBalanceQueryForAnAccountHasNoContractId() {
         // given
         final AccountId account = defaultAccountId();
@@ -43,6 +45,7 @@ class QueriesAccountsSpecTest {
     /// SDK (AccountBalanceQueryUnitTests).
     @Test
     @DisplayName("a balance query for a contract has no account id")
+    @Tag("testId:consensusnode.queries.accounts/a-balance-query-for-a-contract-has-no-account-id")
     void aBalanceQueryForAContractHasNoAccountId() {
         // given
         final ContractId contract = defaultContractId();
@@ -61,6 +64,7 @@ class QueriesAccountsSpecTest {
     /// test_get_method) and the Swift and Go SDKs (the get / set tests of AccountInfoQuery and AccountRecordsQuery).
     @Test
     @DisplayName("the info and records queries keep their account id")
+    @Tag("testId:consensusnode.queries.accounts/the-info-and-records-queries-keep-their-account-id")
     void theInfoAndRecordsQueriesKeepTheirAccountId() {
         // given
         final AccountId account = defaultAccountId();
@@ -80,6 +84,7 @@ class QueriesAccountsSpecTest {
     /// AccountInfo).
     @Test
     @DisplayName("an account info has these defaults")
+    @Tag("testId:consensusnode.queries.accounts/an-account-info-has-these-defaults")
     void anAccountInfoHasTheseDefaults() {
         // when
         final AccountInfo info = new AccountInfo(defaultAccountId(), null, defaultHbar(), null, null, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, 0, false, 0L, false, null, null, false);
@@ -104,6 +109,7 @@ class QueriesAccountsSpecTest {
     /// i.e. 1970-01-01T00:00:00.006Z, and auto-renew period Duration.ofDays(7), i.e. 604800 seconds. Millisecond precision.
     @Test
     @DisplayName("an account info keeps its expiration time and auto-renew period")
+    @Tag("testId:consensusnode.queries.accounts/an-account-info-keeps-its-expiration-time-and-auto-renew-period")
     void anAccountInfoKeepsItsExpirationTimeAndAutoRenewPeriod() {
         // given
         final ZonedDateTime expirationTime = toZonedDateTime("1970-01-01T00:00:00.006Z");
@@ -123,6 +129,7 @@ class QueriesAccountsSpecTest {
     /// (account_records_query_test.py, test_account_record_query_empty_records).
     @Test
     @DisplayName("account records without records have an empty list")
+    @Tag("testId:consensusnode.queries.accounts/account-records-without-records-have-an-empty-list")
     void accountRecordsWithoutRecordsHaveAnEmptyList() {
         // when
         final AccountRecords records = new AccountRecords(defaultAccountId(), List.of());
@@ -138,6 +145,7 @@ class QueriesAccountsSpecTest {
     /// either account_id or contract_id, not both.").
     @Test
     @DisplayName("a balance query for both an account and a contract is rejected")
+    @Tag("testId:consensusnode.queries.accounts/a-balance-query-for-both-an-account-and-a-contract-is-rejected")
     void aBalanceQueryForBothAnAccountAndAContractIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new AccountBalanceQuery(defaultAccountId(), defaultContractId()));
@@ -149,6 +157,7 @@ class QueriesAccountsSpecTest {
     /// test_integration_balance_query_raises_when_neither_source_set: the network rejects it with INVALID_ACCOUNT_ID).
     @Test
     @DisplayName("a balance query for neither an account nor a contract is rejected")
+    @Tag("testId:consensusnode.queries.accounts/a-balance-query-for-neither-an-account-nor-a-contract-is-rejected")
     void aBalanceQueryForNeitherAnAccountNorAContractIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new AccountBalanceQuery(null, null));
@@ -160,6 +169,7 @@ class QueriesAccountsSpecTest {
     /// oneof).
     @Test
     @DisplayName("an account info rejects being staked to an account and to a node")
+    @Tag("testId:consensusnode.queries.accounts/an-account-info-rejects-being-staked-to-an-account-and-to-a-node")
     void anAccountInfoRejectsBeingStakedToAnAccountAndToANode() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new AccountInfo(defaultAccountId(), null, defaultHbar(), null, null, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, 0, false, 0L, false, AccountId.fromString("0.0.3"), 4L, false));

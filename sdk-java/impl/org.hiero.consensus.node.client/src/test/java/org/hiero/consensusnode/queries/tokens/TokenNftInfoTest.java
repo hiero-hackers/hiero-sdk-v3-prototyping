@@ -9,6 +9,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenNftInfo`, generated from the specs.
@@ -17,6 +18,7 @@ class TokenNftInfoTest {
 
     @Test
     @DisplayName("creates a TokenNftInfo and returns the values")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final long serial = serialValue();
@@ -35,6 +37,7 @@ class TokenNftInfoTest {
 
     @Test
     @DisplayName("creates a TokenNftInfo with the default values")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final TokenNftInfo subject = new TokenNftInfo(tokenIdValue(), serialValue(), accountIdValue(), creationTimeValue(), spenderIdValue());
         assertValue(new byte[0], subject.metadata());
@@ -42,6 +45,7 @@ class TokenNftInfoTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Address tokenId = tokenIdValue();
         final long serial = serialValue();
@@ -67,6 +71,7 @@ class TokenNftInfoTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TokenNftInfo subject = TokenNftInfo.builder()
                 .tokenId(tokenIdValue())
@@ -80,18 +85,21 @@ class TokenNftInfoTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TokenNftInfo.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenNftInfo((Address) null, serialValue(), accountIdValue(), creationTimeValue(), metadataValue(), spenderIdValue()));
     }
 
     @Test
     @DisplayName("serial: accepts the minimum (1)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/serial/accepts-at-minimum")
     void shouldAcceptSerialAtMinimum() {
         final long value = 1L;
         final TokenNftInfo subject = new TokenNftInfo(tokenIdValue(), value, accountIdValue(), creationTimeValue(), metadataValue(), spenderIdValue());
@@ -100,6 +108,7 @@ class TokenNftInfoTest {
 
     @Test
     @DisplayName("serial: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/serial/accepts-at-maximum")
     void shouldAcceptSerialAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenNftInfo subject = new TokenNftInfo(tokenIdValue(), value, accountIdValue(), creationTimeValue(), metadataValue(), spenderIdValue());
@@ -108,30 +117,35 @@ class TokenNftInfoTest {
 
     @Test
     @DisplayName("serial: rejects a value below the minimum (0)")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/serial/rejects-below-minimum")
     void shouldRejectSerialBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new TokenNftInfo(tokenIdValue(), 0L, accountIdValue(), creationTimeValue(), metadataValue(), spenderIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new TokenNftInfo(tokenIdValue(), serialValue(), (AccountId) null, creationTimeValue(), metadataValue(), spenderIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for creationTime")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/creationTime/rejects-null")
     void shouldRejectNullCreationTime() {
         assertThrows(NullPointerException.class, () -> new TokenNftInfo(tokenIdValue(), serialValue(), accountIdValue(), (ZonedDateTime) null, metadataValue(), spenderIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for metadata")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/metadata/rejects-null")
     void shouldRejectNullMetadata() {
         assertThrows(NullPointerException.class, () -> new TokenNftInfo(tokenIdValue(), serialValue(), accountIdValue(), creationTimeValue(), (byte[]) null, spenderIdValue()));
     }
 
     @Test
     @DisplayName("the constructor copies metadata; the accessor returns a copy")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/metadata/copies-in")
     void shouldCopyMetadataIn() {
         final byte[] value = metadataValue();
         final byte[] expected = value.clone();
@@ -146,6 +160,7 @@ class TokenNftInfoTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.queries.tokens.TokenNftInfo/value-semantics")
     void shouldCompareByValue() {
         final TokenNftInfo subject = create();
         final TokenNftInfo other = create();

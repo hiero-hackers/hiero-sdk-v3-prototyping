@@ -231,6 +231,7 @@ same behaviour with their getter / setter and `fromBytes(toBytes())` tests; the 
 ```tests
 // Source: the Java SDK (TokenWipeTransactionTest: token 4.2.0, account 0.6.9, amount 4) and the JavaScript SDK
 // (TokenWipeTransaction, "should handle large bigint amounts": 9000000000000000000).
+@@testId("a-fungible-wipe-transaction-keeps-the-token-the-account-and-the-amount")
 test "a fungible wipe transaction keeps the token, the account and the amount" {
     // given
     let token = Address.fromString(address: "4.2.0")
@@ -249,6 +250,7 @@ test "a fungible wipe transaction keeps the token, the account and the amount" {
 
 // Source: the Java SDK (TokenWipeTransactionTest: serials 8, 9 and 10) and the Python SDK
 // (test_constructor_with_serial_numbers).
+@@testId("an-nft-wipe-transaction-keeps-its-serials-in-order")
 test "an NFT wipe transaction keeps its serials in order" {
     // when
     let wipe = TokenWipeNftTransaction{tokenId: Address.fromString(address: "4.2.0"),
@@ -262,6 +264,7 @@ test "an NFT wipe transaction keeps its serials in order" {
 
 // Source: the Java SDK (TokenFreezeTransactionTest and TokenUnfreezeTransactionTest: token 6.5.4, account 0.0.222;
 // TokenGrantKycTransactionTest and TokenRevokeKycTransactionTest: token 4.2.0, account 6.9.0).
+@@testId("freeze-unfreeze-grant-kyc-and-revoke-kyc-transactions-keep-the-token-and-the-account")
 test "freeze, unfreeze, grant KYC and revoke KYC transactions keep the token and the account" {
     // given
     let frozenToken = Address.fromString(address: "6.5.4")
@@ -288,6 +291,7 @@ test "freeze, unfreeze, grant KYC and revoke KYC transactions keep the token and
 
 // Source: the Java SDK (TokenPauseTransactionTest and TokenUnpauseTransactionTest: token 4.2.0) and the Python SDK
 // (test__from_proto_restores_token_id).
+@@testId("pause-and-unpause-transactions-keep-the-token")
 test "pause and unpause transactions keep the token" {
     // when
     let pause = TokenPauseTransaction{tokenId: Address.fromString(address: "4.2.0")}
@@ -300,6 +304,7 @@ test "pause and unpause transactions keep the token" {
 
 // Source: TokenUpdateNftsTransaction.metadata ("null → leave unchanged"); the JavaScript SDK
 // (TokenUpdateNftsTransaction, "should _metadata equal to null").
+@@testId("an-nft-metadata-update-without-metadata-leaves-the-metadata-unchanged")
 test "an NFT metadata update without metadata leaves the metadata unchanged" {
     // when
     let update = TokenUpdateNftsTransaction{tokenId: Address.fromString(address: "4.2.0"), serials: [8, 9, 10]}
@@ -310,6 +315,7 @@ test "an NFT metadata update without metadata leaves the metadata unchanged" {
 
 // Source: the Java SDK (TokenUpdateNftsTransactionTest: token 4.2.0, serials 8, 9 and 10, metadata 1, 2, 3, 4, 5) and
 // the Python SDK (test_constructor_with_parameters).
+@@testId("an-nft-metadata-update-keeps-the-token-the-serials-and-the-metadata")
 test "an NFT metadata update keeps the token, the serials and the metadata" {
     // when
     let update = TokenUpdateNftsTransaction{tokenId: Address.fromString(address: "4.2.0"), serials: [8, 9, 10],
@@ -322,6 +328,7 @@ test "an NFT metadata update keeps the token, the serials and the metadata" {
 }
 
 // Source: this spec (@@min(1) of amount).
+@@testId("a-fungible-wipe-transaction-rejects-an-amount-of-0")
 test "a fungible wipe transaction rejects an amount of 0" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -330,6 +337,7 @@ test "a fungible wipe transaction rejects an amount of 0" {
 }
 
 // Source: this spec (@@minSize(1)).
+@@testId("an-nft-wipe-transaction-rejects-an-empty-list-of-serials")
 test "an NFT wipe transaction rejects an empty list of serials" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -338,6 +346,7 @@ test "an NFT wipe transaction rejects an empty list of serials" {
 }
 
 // Source: this spec (@@maxSize(10): the network caps a wipe at 10 NFTs).
+@@testId("an-nft-wipe-transaction-rejects-more-than-10-serials")
 test "an NFT wipe transaction rejects more than 10 serials" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -347,6 +356,7 @@ test "an NFT wipe transaction rejects more than 10 serials" {
 
 // Source: this spec (@@minSize(1)); the Python SDK (test_build_transaction_body_validation_errors of
 // TokenUpdateNftsTransaction: "Missing serial numbers").
+@@testId("an-nft-metadata-update-rejects-an-empty-list-of-serials")
 test "an NFT metadata update rejects an empty list of serials" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -354,6 +364,7 @@ test "an NFT metadata update rejects an empty list of serials" {
 }
 
 // Source: this spec (@@maxSize(10): the network caps an update at 10 NFTs).
+@@testId("an-nft-metadata-update-rejects-more-than-10-serials")
 test "an NFT metadata update rejects more than 10 serials" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -362,6 +373,7 @@ test "an NFT metadata update rejects more than 10 serials" {
 
 // Source: this spec (@@maxSize(100)); HIP-657 (NFT metadata of at most 100 bytes); the Python SDK
 // (test_build_transaction_body_validation_errors of TokenUpdateNftsTransaction: b"x" * 101).
+@@testId("an-nft-metadata-update-rejects-metadata-longer-than-100-bytes")
 test "an NFT metadata update rejects metadata longer than 100 bytes" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -373,6 +385,7 @@ test "an NFT metadata update rejects metadata longer than 100 bytes" {
 // TokenUnfreeze, TokenGrantKyc, TokenRevokeKyc, TokenPause, TokenUnpause and TokenUpdateNfts tests:
 // fromBytes(toBytes()) gives the same transaction); the JavaScript SDK (TokenWipeTransaction, "should round trip from
 // bytes") and the to / from bytes tests of the Go SDK.
+@@testId("every-token-management-transaction-survives-tobytes-and-frombytes-unchanged")
 test "every token management transaction survives toBytes and fromBytes unchanged" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)

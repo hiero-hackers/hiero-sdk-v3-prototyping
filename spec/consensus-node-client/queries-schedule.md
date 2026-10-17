@@ -141,6 +141,7 @@ comment above each test names where the current SDKs test the same.
 ```tests
 // Source: the Python SDK (schedule_info_query_test.py, test_constructor and test_set_schedule_id) and the Swift SDK
 // (ScheduleInfoQueryUnitTests, the get / set test).
+@@testId("a-schedule-info-query-keeps-the-id-of-its-schedule")
 test "a schedule info query keeps the id of its schedule" {
     // given
     let schedule = DEFAULT(Address)
@@ -154,6 +155,7 @@ test "a schedule info query keeps the id of its schedule" {
 
 // Source: this spec (the defaults of ScheduleInfo; neither time is set while the schedule is pending); the Python SDK
 // (schedule_info_test.py, test_schedule_info_default_initialization).
+@@testId("a-pending-schedule-info-has-these-defaults")
 test "a pending schedule info has these defaults" {
     // when
     let info = ScheduleInfo{scheduleId: DEFAULT, creatorAccountId: DEFAULT, payerAccountId: DEFAULT,
@@ -172,6 +174,7 @@ test "a pending schedule info has these defaults" {
 // Source: the Java SDK (ScheduleInfoTest.shouldSerialize, spawnScheduleInfoExample): expiration and execution time
 // Instant.ofEpochSecond(1554158542), i.e. 2019-04-01T22:42:22Z, no deletion time; this spec (an executed schedule
 // has its executionTime set). Second precision.
+@@testId("an-executed-schedule-info-keeps-its-execution-time-and-has-no-deletion-time")
 test "an executed schedule info keeps its execution time and has no deletion time" {
     // when
     let info = ScheduleInfo{scheduleId: DEFAULT, creatorAccountId: DEFAULT, payerAccountId: DEFAULT,
@@ -189,6 +192,7 @@ test "an executed schedule info keeps its execution time and has no deletion tim
 // Source: the Java SDK (ScheduleInfoTest.shouldSerializeDeleted, spawnScheduleInfoDeletedExample): expiration and
 // deletion time Instant.ofEpochSecond(1554158542), i.e. 2019-04-01T22:42:22Z, no execution time; this spec (a deleted
 // schedule has its deletionTime set). Second precision.
+@@testId("a-deleted-schedule-info-keeps-its-deletion-time-and-has-no-execution-time")
 test "a deleted schedule info keeps its deletion time and has no execution time" {
     // when
     let info = ScheduleInfo{scheduleId: DEFAULT, creatorAccountId: DEFAULT, payerAccountId: DEFAULT,
@@ -204,6 +208,7 @@ test "a deleted schedule info keeps its deletion time and has no execution time"
 
 // Source: this spec (@@oneOrNoneOf(executionTime, deletionTime)); HAPI (schedule_get_info.proto, ScheduleInfo: the
 // deletion and the execution time are one `oneof data`).
+@@testId("a-schedule-info-with-both-an-execution-and-a-deletion-time-is-rejected")
 test "a schedule info with both an execution and a deletion time is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)

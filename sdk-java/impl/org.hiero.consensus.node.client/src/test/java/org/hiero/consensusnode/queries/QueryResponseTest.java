@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `QueryResponse`, generated from the specs.
@@ -13,6 +14,7 @@ class QueryResponseTest {
 
     @Test
     @DisplayName("creates a QueryResponse and returns the values")
+    @Tag("testId:consensusnode.queries.QueryResponse/create")
     void shouldCreateAndReturnTheValues() {
         final String valueArgument = valueValue();
         final AccountId answeredBy = answeredByValue();
@@ -23,18 +25,21 @@ class QueryResponseTest {
 
     @Test
     @DisplayName("rejects null for value")
+    @Tag("testId:consensusnode.queries.QueryResponse/value/rejects-null")
     void shouldRejectNullValue() {
         assertThrows(NullPointerException.class, () -> new QueryResponse<>((String) null, answeredByValue()));
     }
 
     @Test
     @DisplayName("rejects null for answeredBy")
+    @Tag("testId:consensusnode.queries.QueryResponse/answeredBy/rejects-null")
     void shouldRejectNullAnsweredBy() {
         assertThrows(NullPointerException.class, () -> new QueryResponse<>(valueValue(), (AccountId) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.queries.QueryResponse/value-semantics")
     void shouldCompareByValue() {
         final QueryResponse<String> subject = create();
         final QueryResponse<String> other = create();

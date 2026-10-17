@@ -21,6 +21,7 @@ import org.hiero.ledger.Address;
 import org.hiero.token.TokenSupplyType;
 import org.hiero.token.TokenType;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions-tokens`, generated from the `tests` blocks of its `## Testing` section.
@@ -64,6 +65,7 @@ class TransactionsTokensSpecTest {
     /// and no auto-renew account unless set).
     @Test
     @DisplayName("a token create transaction without optional values has the defaults of the spec")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-create-transaction-without-optional-values-has-the-defaults-of-the-spec")
     void aTokenCreateTransactionWithoutOptionalValuesHasTheDefaultsOfTheSpec() {
         // when
         final TokenCreateTransaction transaction = new TokenCreateTransaction("test name", "test symbol", TokenType.FUNGIBLE_COMMON, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null);
@@ -98,6 +100,7 @@ class TransactionsTokensSpecTest {
     /// period together); the getter / setter tests of the Python, Go and Swift SDKs.
     @Test
     @DisplayName("a token create transaction for a fungible token keeps its values and each key in its own field")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-create-transaction-for-a-fungible-token-keeps-its-values-and-each-key-in-its-own-field")
     void aTokenCreateTransactionForAFungibleTokenKeepsItsValuesAndEachKeyInItsOwnField() {
         // given
         final List<Authority> authorities = JAVA_SDK_TOKEN_AUTHORITIES();
@@ -134,6 +137,7 @@ class TransactionsTokensSpecTest {
     /// NON_FUNGIBLE_UNIQUE, FINITE, maximum supply 500); the NFT variants of the Python and Swift SDKs.
     @Test
     @DisplayName("a token create transaction for a finite NFT collection keeps its supply type and maximum supply")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-create-transaction-for-a-finite-nft-collection-keeps-its-supply-type-and-maximum-supply")
     void aTokenCreateTransactionForAFiniteNFTCollectionKeepsItsSupplyTypeAndMaximumSupply() {
         // when
         final TokenCreateTransaction transaction = new TokenCreateTransaction("test name", "test symbol", TokenType.NON_FUNGIBLE_UNIQUE, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.FINITE, 500L, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null);
@@ -152,6 +156,7 @@ class TransactionsTokensSpecTest {
     /// (an unset field is not changed); the Python SDK (test_build_transaction_body: only the fields that are set).
     @Test
     @DisplayName("a token update transaction with only a token id changes nothing")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-update-transaction-with-only-a-token-id-changes-nothing")
     void aTokenUpdateTransactionWithOnlyATokenIdChangesNothing() {
         // when
         final TokenUpdateTransaction transaction = new TokenUpdateTransaction(Address.fromString("4.2.0"), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
@@ -184,6 +189,7 @@ class TransactionsTokensSpecTest {
     /// Instant.now()); the getter / setter tests of the Python SDK (test_set_methods, test_single_key_fields).
     @Test
     @DisplayName("a token update transaction keeps each rotated key in its own field")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-update-transaction-keeps-each-rotated-key-in-its-own-field")
     void aTokenUpdateTransactionKeepsEachRotatedKeyInItsOwnField() {
         // given
         final List<Authority> authorities = JAVA_SDK_TOKEN_AUTHORITIES();
@@ -216,6 +222,7 @@ class TransactionsTokensSpecTest {
     /// (TokenAssociateTransactionTest and TokenDissociateTransactionTest: the same account and token ids).
     @Test
     @DisplayName("token associate and dissociate transactions keep the account and the set of tokens in any order")
+    @Tag("testId:consensusnode.transactions.tokens/token-associate-and-dissociate-transactions-keep-the-account-and-the-set-of-tokens-in-any-order")
     void tokenAssociateAndDissociateTransactionsKeepTheAccountAndTheSetOfTokensInAnyOrder() {
         // given
         final Address first = Address.fromString("4.5.6");
@@ -240,6 +247,7 @@ class TransactionsTokensSpecTest {
     /// 9000000000000000000); the Java SDK (TokenMintTransactionTest, TokenBurnTransactionTest: token 4.2.0).
     @Test
     @DisplayName("fungible mint and burn transactions keep amounts beyond the 53 bits of a JavaScript number")
+    @Tag("testId:consensusnode.transactions.tokens/fungible-mint-and-burn-transactions-keep-amounts-beyond-the-53-bits-of-a-javascript-number")
     void fungibleMintAndBurnTransactionsKeepAmountsBeyondThe53BitsOfAJavaScriptNumber() {
         // given
         final Address token = Address.fromString("4.2.0");
@@ -261,6 +269,7 @@ class TransactionsTokensSpecTest {
     /// getSetMetadata: [1, 2, 3, 4, 5]) and the Python SDK (test_build_transaction_body_nft: several entries in order).
     @Test
     @DisplayName("an NFT mint transaction keeps one metadata entry per new serial in order")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-mint-transaction-keeps-one-metadata-entry-per-new-serial-in-order")
     void anNFTMintTransactionKeepsOneMetadataEntryPerNewSerialInOrder() {
         // given
         final List<byte[]> metadata = List.of(hex("0102030405"), utf8("ipfs://QmHash1"), utf8("ipfs://QmHash2"));
@@ -278,6 +287,7 @@ class TransactionsTokensSpecTest {
     /// Source: the Java SDK (TokenBurnTransactionTest: serial 420) and the Python SDK (token_burn_transaction_test).
     @Test
     @DisplayName("an NFT burn transaction keeps its serials in order")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-burn-transaction-keeps-its-serials-in-order")
     void anNFTBurnTransactionKeepsItsSerialsInOrder() {
         // when
         final TokenBurnNftTransaction burn = new TokenBurnNftTransaction(Address.fromString("4.2.0"), List.of(420L, 1L, 2L));
@@ -292,6 +302,7 @@ class TransactionsTokensSpecTest {
     /// Source: this spec (@@maxBytes(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
     @Test
     @DisplayName("a token create transaction rejects a name longer than 100 characters")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-create-transaction-rejects-a-name-longer-than-100-characters")
     void aTokenCreateTransactionRejectsANameLongerThan100Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction(TEXT_OF_101_CHARACTERS(), "test symbol", TokenType.FUNGIBLE_COMMON, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
@@ -302,6 +313,7 @@ class TransactionsTokensSpecTest {
     /// Source: this spec (@@maxBytes(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
     @Test
     @DisplayName("a token create transaction rejects a symbol longer than 100 characters")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-create-transaction-rejects-a-symbol-longer-than-100-characters")
     void aTokenCreateTransactionRejectsASymbolLongerThan100Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction("test name", TEXT_OF_101_CHARACTERS(), TokenType.FUNGIBLE_COMMON, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
@@ -312,6 +324,7 @@ class TransactionsTokensSpecTest {
     /// Source: this spec (@@maxBytes(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
     @Test
     @DisplayName("a token create transaction rejects a memo longer than 100 characters")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-create-transaction-rejects-a-memo-longer-than-100-characters")
     void aTokenCreateTransactionRejectsAMemoLongerThan100Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction("test name", "test symbol", TokenType.FUNGIBLE_COMMON, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.INFINITE, null, false, TEXT_OF_101_CHARACTERS(), new byte[0], null, null, null, null, null, null, null, null, null, null, null));
@@ -323,6 +336,7 @@ class TransactionsTokensSpecTest {
     /// (INVALID_TOKEN_MAX_SUPPLY).
     @Test
     @DisplayName("a token create transaction rejects a maximum supply of 0")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-create-transaction-rejects-a-maximum-supply-of-0")
     void aTokenCreateTransactionRejectsAMaximumSupplyOf0() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction("test name", "test symbol", TokenType.NON_FUNGIBLE_UNIQUE, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.FINITE, 0L, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
@@ -333,6 +347,7 @@ class TransactionsTokensSpecTest {
     /// Source: this spec (@@maxBytes(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
     @Test
     @DisplayName("a token update transaction rejects a name longer than 100 characters")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-update-transaction-rejects-a-name-longer-than-100-characters")
     void aTokenUpdateTransactionRejectsANameLongerThan100Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenUpdateTransaction(Address.fromString("4.2.0"), TEXT_OF_101_CHARACTERS(), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null));
@@ -343,6 +358,7 @@ class TransactionsTokensSpecTest {
     /// Source: this spec (@@maxBytes(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
     @Test
     @DisplayName("a token update transaction rejects a symbol longer than 100 characters")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-update-transaction-rejects-a-symbol-longer-than-100-characters")
     void aTokenUpdateTransactionRejectsASymbolLongerThan100Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenUpdateTransaction(Address.fromString("4.2.0"), null, TEXT_OF_101_CHARACTERS(), null, null, null, null, null, null, null, null, null, null, null, null, null, null));
@@ -353,6 +369,7 @@ class TransactionsTokensSpecTest {
     /// Source: this spec (@@maxBytes(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
     @Test
     @DisplayName("a token update transaction rejects a memo longer than 100 characters")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-update-transaction-rejects-a-memo-longer-than-100-characters")
     void aTokenUpdateTransactionRejectsAMemoLongerThan100Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenUpdateTransaction(Address.fromString("4.2.0"), null, null, null, TEXT_OF_101_CHARACTERS(), null, null, null, null, null, null, null, null, null, null, null, null));
@@ -363,6 +380,7 @@ class TransactionsTokensSpecTest {
     /// Source: this spec (@@min(1) of amount).
     @Test
     @DisplayName("a fungible mint transaction rejects an amount of 0")
+    @Tag("testId:consensusnode.transactions.tokens/a-fungible-mint-transaction-rejects-an-amount-of-0")
     void aFungibleMintTransactionRejectsAnAmountOf0() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenMintFungibleTransaction(Address.fromString("4.2.0"), 0L));
@@ -373,6 +391,7 @@ class TransactionsTokensSpecTest {
     /// Source: this spec (@@minSize(1): one metadata entry per new serial).
     @Test
     @DisplayName("an NFT mint transaction rejects an empty list of metadata")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-mint-transaction-rejects-an-empty-list-of-metadata")
     void anNFTMintTransactionRejectsAnEmptyListOfMetadata() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenMintNftTransaction(Address.fromString("4.2.0"), List.of()));
@@ -383,6 +402,7 @@ class TransactionsTokensSpecTest {
     /// Source: this spec (@@maxSize(10): the network caps a mint at 10 NFTs, TOKEN_MAX_BATCH_SIZE_REACHED).
     @Test
     @DisplayName("an NFT mint transaction rejects more than 10 metadata entries")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-mint-transaction-rejects-more-than-10-metadata-entries")
     void anNFTMintTransactionRejectsMoreThan10MetadataEntries() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenMintNftTransaction(Address.fromString("4.2.0"), ELEVEN_METADATA_ENTRIES()));
@@ -393,6 +413,7 @@ class TransactionsTokensSpecTest {
     /// Source: this spec (@@min(1) of amount).
     @Test
     @DisplayName("a fungible burn transaction rejects an amount of 0")
+    @Tag("testId:consensusnode.transactions.tokens/a-fungible-burn-transaction-rejects-an-amount-of-0")
     void aFungibleBurnTransactionRejectsAnAmountOf0() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenBurnFungibleTransaction(Address.fromString("4.2.0"), 0L));
@@ -403,6 +424,7 @@ class TransactionsTokensSpecTest {
     /// Source: this spec (@@minSize(1)).
     @Test
     @DisplayName("an NFT burn transaction rejects an empty list of serials")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-burn-transaction-rejects-an-empty-list-of-serials")
     void anNFTBurnTransactionRejectsAnEmptyListOfSerials() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenBurnNftTransaction(Address.fromString("4.2.0"), List.of()));
@@ -413,6 +435,7 @@ class TransactionsTokensSpecTest {
     /// Source: this spec (@@maxSize(10): the network caps a burn at 10 NFTs, TOKEN_MAX_BATCH_SIZE_REACHED).
     @Test
     @DisplayName("an NFT burn transaction rejects more than 10 serials")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-burn-transaction-rejects-more-than-10-serials")
     void anNFTBurnTransactionRejectsMoreThan10Serials() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenBurnNftTransaction(Address.fromString("4.2.0"), ELEVEN_SERIALS()));
@@ -428,6 +451,7 @@ class TransactionsTokensSpecTest {
     /// SDK ("should round trip from bytes") and the to / from bytes tests of the Go SDK.
     @Test
     @DisplayName("every token lifecycle transaction survives toBytes and fromBytes unchanged")
+    @Tag("testId:consensusnode.transactions.tokens/every-token-lifecycle-transaction-survives-tobytes-and-frombytes-unchanged")
     void everyTokenLifecycleTransactionSurvivesToBytesAndFromBytesUnchanged() {
         // given
         final Account payer = defaultAccount();
@@ -453,6 +477,7 @@ class TransactionsTokensSpecTest {
     /// METADATA_TOO_LONG); the Python SDK (TokenCreateTransaction.set_metadata rejects more than 100 bytes).
     @Test
     @DisplayName("a token create transaction rejects metadata longer than 100 bytes")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-create-transaction-rejects-metadata-longer-than-100-bytes")
     void aTokenCreateTransactionRejectsMetadataLongerThan100Bytes() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction("test name", "test symbol", TokenType.FUNGIBLE_COMMON, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.INFINITE, null, false, null, repeat(hex("78"), 101L), null, null, null, null, null, null, null, null, null, null, null));
@@ -463,6 +488,7 @@ class TransactionsTokensSpecTest {
     /// Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100).
     @Test
     @DisplayName("a token update transaction rejects metadata longer than 100 bytes")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-update-transaction-rejects-metadata-longer-than-100-bytes")
     void aTokenUpdateTransactionRejectsMetadataLongerThan100Bytes() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenUpdateTransaction(Address.fromString("4.2.0"), null, null, null, null, repeat(hex("78"), 101L), null, null, null, null, null, null, null, null, null, null, null));
@@ -474,6 +500,7 @@ class TransactionsTokensSpecTest {
     /// TOKEN_NAME_TOO_LONG): 51 characters "ä" are 102 bytes of UTF-8.
     @Test
     @DisplayName("a token create transaction rejects a name of more than 100 UTF-8 bytes")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-create-transaction-rejects-a-name-of-more-than-100-utf-8-bytes")
     void aTokenCreateTransactionRejectsANameOfMoreThan100UTF8Bytes() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction(repeat("ä", 51L), "test symbol", TokenType.FUNGIBLE_COMMON, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));

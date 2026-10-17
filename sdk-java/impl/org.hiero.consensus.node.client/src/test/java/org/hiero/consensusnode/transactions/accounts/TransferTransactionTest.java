@@ -29,6 +29,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TransferTransaction`, generated from the specs.
@@ -37,6 +38,7 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("creates a TransferTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final List<HbarTransfer> hbarTransfers = hbarTransfersValue();
         final List<TokenTransfer> tokenTransfers = tokenTransfersValue();
@@ -52,6 +54,7 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("creates a TransferTransaction with the default values")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final TransferTransaction subject = new TransferTransaction();
         assertValue(List.of(), subject.hbarTransfers());
@@ -61,6 +64,7 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final List<HbarTransfer> hbarTransfers = hbarTransfersValue();
         final List<TokenTransfer> tokenTransfers = tokenTransfersValue();
@@ -77,6 +81,7 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TransferTransaction subject = TransferTransaction.builder()
                 .build();
@@ -87,12 +92,14 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("rejects null for hbarTransfers")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/hbarTransfers/rejects-null")
     void shouldRejectNullHbarTransfers() {
         assertThrows(NullPointerException.class, () -> new TransferTransaction((List<HbarTransfer>) null, tokenTransfersValue(), nftTransfersValue()));
     }
 
     @Test
     @DisplayName("the constructor copies hbarTransfers; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/hbarTransfers/copies-in")
     void shouldCopyHbarTransfersIn() {
         final List<HbarTransfer> value = new ArrayList<>(hbarTransfersValue());
         final List<HbarTransfer> expected = List.copyOf(value);
@@ -104,12 +111,14 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("rejects null for tokenTransfers")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/tokenTransfers/rejects-null")
     void shouldRejectNullTokenTransfers() {
         assertThrows(NullPointerException.class, () -> new TransferTransaction(hbarTransfersValue(), (List<TokenTransfer>) null, nftTransfersValue()));
     }
 
     @Test
     @DisplayName("the constructor copies tokenTransfers; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/tokenTransfers/copies-in")
     void shouldCopyTokenTransfersIn() {
         final List<TokenTransfer> value = new ArrayList<>(tokenTransfersValue());
         final List<TokenTransfer> expected = List.copyOf(value);
@@ -121,12 +130,14 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("rejects null for nftTransfers")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/nftTransfers/rejects-null")
     void shouldRejectNullNftTransfers() {
         assertThrows(NullPointerException.class, () -> new TransferTransaction(hbarTransfersValue(), tokenTransfersValue(), (List<NftTransfer>) null));
     }
 
     @Test
     @DisplayName("the constructor copies nftTransfers; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/nftTransfers/copies-in")
     void shouldCopyNftTransfersIn() {
         final List<NftTransfer> value = new ArrayList<>(nftTransfersValue());
         final List<NftTransfer> expected = List.copyOf(value);
@@ -138,6 +149,7 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final TransferTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -147,6 +159,7 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final TransferTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -155,6 +168,7 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final TransferTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -164,6 +178,7 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final TransferTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -172,6 +187,7 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/memo/set")
     void shouldSetMemo() {
         final TransferTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -181,6 +197,7 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final TransferTransaction subject = create();
         subject.setMemo((String) null);
@@ -189,6 +206,7 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final TransferTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -198,6 +216,7 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final TransferTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -206,54 +225,63 @@ class TransferTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.TransferTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

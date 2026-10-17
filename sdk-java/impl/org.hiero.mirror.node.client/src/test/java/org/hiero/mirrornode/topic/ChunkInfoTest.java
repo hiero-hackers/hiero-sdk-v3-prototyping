@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.TransactionId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ChunkInfo`, generated from the specs.
@@ -14,6 +15,7 @@ class ChunkInfoTest {
 
     @Test
     @DisplayName("creates a ChunkInfo and returns the values")
+    @Tag("testId:mirrornode.topic.ChunkInfo/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId initialTransactionId = initialTransactionIdValue();
         final int nonce = nonceValue();
@@ -30,6 +32,7 @@ class ChunkInfoTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.topic.ChunkInfo/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final TransactionId initialTransactionId = initialTransactionIdValue();
         final int nonce = nonceValue();
@@ -52,6 +55,7 @@ class ChunkInfoTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.topic.ChunkInfo/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final ChunkInfo subject = ChunkInfo.builder()
                 .initialTransactionId(initialTransactionIdValue())
@@ -64,18 +68,21 @@ class ChunkInfoTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.topic.ChunkInfo/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> ChunkInfo.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for initialTransactionId")
+    @Tag("testId:mirrornode.topic.ChunkInfo/initialTransactionId/rejects-null")
     void shouldRejectNullInitialTransactionId() {
         assertThrows(NullPointerException.class, () -> new ChunkInfo((TransactionId) null, nonceValue(), numberValue(), totalValue(), scheduledValue()));
     }
 
     @Test
     @DisplayName("nonce: accepts the minimum (-2147483648)")
+    @Tag("testId:mirrornode.topic.ChunkInfo/nonce/accepts-at-minimum")
     void shouldAcceptNonceAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final ChunkInfo subject = new ChunkInfo(initialTransactionIdValue(), value, numberValue(), totalValue(), scheduledValue());
@@ -84,6 +91,7 @@ class ChunkInfoTest {
 
     @Test
     @DisplayName("nonce: accepts the maximum (2147483647)")
+    @Tag("testId:mirrornode.topic.ChunkInfo/nonce/accepts-at-maximum")
     void shouldAcceptNonceAtMaximum() {
         final int value = 2147483647;
         final ChunkInfo subject = new ChunkInfo(initialTransactionIdValue(), value, numberValue(), totalValue(), scheduledValue());
@@ -92,6 +100,7 @@ class ChunkInfoTest {
 
     @Test
     @DisplayName("number: accepts the minimum (-2147483648)")
+    @Tag("testId:mirrornode.topic.ChunkInfo/number/accepts-at-minimum")
     void shouldAcceptNumberAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final ChunkInfo subject = new ChunkInfo(initialTransactionIdValue(), nonceValue(), value, totalValue(), scheduledValue());
@@ -100,6 +109,7 @@ class ChunkInfoTest {
 
     @Test
     @DisplayName("number: accepts the maximum (2147483647)")
+    @Tag("testId:mirrornode.topic.ChunkInfo/number/accepts-at-maximum")
     void shouldAcceptNumberAtMaximum() {
         final int value = 2147483647;
         final ChunkInfo subject = new ChunkInfo(initialTransactionIdValue(), nonceValue(), value, totalValue(), scheduledValue());
@@ -108,6 +118,7 @@ class ChunkInfoTest {
 
     @Test
     @DisplayName("total: accepts the minimum (-2147483648)")
+    @Tag("testId:mirrornode.topic.ChunkInfo/total/accepts-at-minimum")
     void shouldAcceptTotalAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final ChunkInfo subject = new ChunkInfo(initialTransactionIdValue(), nonceValue(), numberValue(), value, scheduledValue());
@@ -116,6 +127,7 @@ class ChunkInfoTest {
 
     @Test
     @DisplayName("total: accepts the maximum (2147483647)")
+    @Tag("testId:mirrornode.topic.ChunkInfo/total/accepts-at-maximum")
     void shouldAcceptTotalAtMaximum() {
         final int value = 2147483647;
         final ChunkInfo subject = new ChunkInfo(initialTransactionIdValue(), nonceValue(), numberValue(), value, scheduledValue());

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `SemanticVersion`, generated from the specs.
@@ -13,6 +14,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("creates a SemanticVersion and returns the values")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/create")
     void shouldCreateAndReturnTheValues() {
         final int major = majorValue();
         final int minor = minorValue();
@@ -29,6 +31,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final int major = majorValue();
         final int minor = minorValue();
@@ -51,6 +54,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final SemanticVersion subject = SemanticVersion.builder()
                 .major(majorValue())
@@ -63,12 +67,14 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> SemanticVersion.builder().build());
     }
 
     @Test
     @DisplayName("major: accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/major/accepts-at-minimum")
     void shouldAcceptMajorAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final SemanticVersion subject = new SemanticVersion(value, minorValue(), patchValue(), preReleaseLabelValue(), buildMetadataValue());
@@ -77,6 +83,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("major: accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/major/accepts-at-maximum")
     void shouldAcceptMajorAtMaximum() {
         final int value = 2147483647;
         final SemanticVersion subject = new SemanticVersion(value, minorValue(), patchValue(), preReleaseLabelValue(), buildMetadataValue());
@@ -85,6 +92,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("minor: accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/minor/accepts-at-minimum")
     void shouldAcceptMinorAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final SemanticVersion subject = new SemanticVersion(majorValue(), value, patchValue(), preReleaseLabelValue(), buildMetadataValue());
@@ -93,6 +101,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("minor: accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/minor/accepts-at-maximum")
     void shouldAcceptMinorAtMaximum() {
         final int value = 2147483647;
         final SemanticVersion subject = new SemanticVersion(majorValue(), value, patchValue(), preReleaseLabelValue(), buildMetadataValue());
@@ -101,6 +110,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("patch: accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/patch/accepts-at-minimum")
     void shouldAcceptPatchAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final SemanticVersion subject = new SemanticVersion(majorValue(), minorValue(), value, preReleaseLabelValue(), buildMetadataValue());
@@ -109,6 +119,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("patch: accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/patch/accepts-at-maximum")
     void shouldAcceptPatchAtMaximum() {
         final int value = 2147483647;
         final SemanticVersion subject = new SemanticVersion(majorValue(), minorValue(), value, preReleaseLabelValue(), buildMetadataValue());
@@ -117,6 +128,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/value-semantics")
     void shouldCompareByValue() {
         final SemanticVersion subject = create();
         final SemanticVersion other = create();
@@ -126,6 +138,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("toString() can be called and returns a value")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/toString/call")
     void shouldCallToString() {
         assertNotNull(defaultSubject().toString());
     }

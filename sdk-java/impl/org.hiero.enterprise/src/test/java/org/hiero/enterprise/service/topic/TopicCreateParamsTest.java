@@ -12,6 +12,7 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.AccountId;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TopicCreateParams`, generated from the specs.
@@ -20,6 +21,7 @@ class TopicCreateParamsTest {
 
     @Test
     @DisplayName("creates a TopicCreateParams and returns the values")
+    @Tag("testId:enterprise.service.topic.TopicCreateParams/create")
     void shouldCreateAndReturnTheValues() {
         final @Nullable Authority adminAuthority = adminAuthorityValue();
         final @Nullable Authority submitAuthority = submitAuthorityValue();
@@ -36,6 +38,7 @@ class TopicCreateParamsTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:enterprise.service.topic.TopicCreateParams/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final @Nullable Authority adminAuthority = adminAuthorityValue();
         final @Nullable Authority submitAuthority = submitAuthorityValue();
@@ -58,6 +61,7 @@ class TopicCreateParamsTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:enterprise.service.topic.TopicCreateParams/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TopicCreateParams subject = TopicCreateParams.builder()
                 .build();
@@ -70,6 +74,7 @@ class TopicCreateParamsTest {
 
     @Test
     @DisplayName("topicMemo: accepts more elements than the maximum")
+    @Tag("testId:enterprise.service.topic.TopicCreateParams/topicMemo/accepts-at-maximum-bytes")
     void shouldAcceptTopicMemoAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TopicCreateParams subject = new TopicCreateParams(adminAuthorityValue(), submitAuthorityValue(), value, autoRenewPeriodValue(), autoRenewAccountValue());
@@ -78,6 +83,7 @@ class TopicCreateParamsTest {
 
     @Test
     @DisplayName("topicMemo: rejects more elements than the maximum")
+    @Tag("testId:enterprise.service.topic.TopicCreateParams/topicMemo/rejects-above-maximum-bytes")
     void shouldRejectTopicMemoAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new TopicCreateParams(adminAuthorityValue(), submitAuthorityValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", autoRenewPeriodValue(), autoRenewAccountValue()));
     }

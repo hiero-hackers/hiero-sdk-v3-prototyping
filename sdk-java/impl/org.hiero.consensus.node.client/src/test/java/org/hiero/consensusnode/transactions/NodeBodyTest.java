@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NodeBody`, generated from the specs.
@@ -13,6 +14,7 @@ class NodeBodyTest {
 
     @Test
     @DisplayName("creates a NodeBody and returns the values")
+    @Tag("testId:consensusnode.transactions.NodeBody/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId node = nodeValue();
         final byte[] bytes = bytesValue();
@@ -23,18 +25,21 @@ class NodeBodyTest {
 
     @Test
     @DisplayName("rejects null for node")
+    @Tag("testId:consensusnode.transactions.NodeBody/node/rejects-null")
     void shouldRejectNullNode() {
         assertThrows(NullPointerException.class, () -> new NodeBody((AccountId) null, bytesValue()));
     }
 
     @Test
     @DisplayName("rejects null for bytes")
+    @Tag("testId:consensusnode.transactions.NodeBody/bytes/rejects-null")
     void shouldRejectNullBytes() {
         assertThrows(NullPointerException.class, () -> new NodeBody(nodeValue(), (byte[]) null));
     }
 
     @Test
     @DisplayName("the constructor copies bytes; the accessor returns a copy")
+    @Tag("testId:consensusnode.transactions.NodeBody/bytes/copies-in")
     void shouldCopyBytesIn() {
         final byte[] value = bytesValue();
         final byte[] expected = value.clone();
@@ -49,6 +54,7 @@ class NodeBodyTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.transactions.NodeBody/value-semantics")
     void shouldCompareByValue() {
         final NodeBody subject = create();
         final NodeBody other = create();

@@ -186,6 +186,7 @@ comment above each test names where the current SDKs test the same.
 // Source: the Python SDK (account_balance_query_test.py, test_build_account_balance_query and
 // test_set_contract_id_method_chaining_resets_account_id) and the C++ SDK (AccountBalanceQueryUnitTests): a balance
 // query targets either an account or a contract.
+@@testId("a-balance-query-for-an-account-has-no-contract-id")
 test "a balance query for an account has no contract id" {
     // given
     let account = DEFAULT(AccountId)
@@ -200,6 +201,7 @@ test "a balance query for an account has no contract id" {
 
 // Source: the Python SDK (account_balance_query_test.py, test_build_account_balance_query_with_contract_id) and the C++
 // SDK (AccountBalanceQueryUnitTests).
+@@testId("a-balance-query-for-a-contract-has-no-account-id")
 test "a balance query for a contract has no account id" {
     // given
     let contract = DEFAULT(ContractId)
@@ -214,6 +216,7 @@ test "a balance query for a contract has no account id" {
 
 // Source: the Python SDK (account_info_query_test.py and account_records_query_test.py, test_constructor and
 // test_get_method) and the Swift and Go SDKs (the get / set tests of AccountInfoQuery and AccountRecordsQuery).
+@@testId("the-info-and-records-queries-keep-their-account-id")
 test "the info and records queries keep their account id" {
     // given
     let account = DEFAULT(AccountId)
@@ -229,6 +232,7 @@ test "the info and records queries keep their account id" {
 
 // Source: this spec (the defaults of AccountInfo); the Python SDK (account_info_test.py, the initialization of
 // AccountInfo).
+@@testId("an-account-info-has-these-defaults")
 test "an account info has these defaults" {
     // when
     let info = AccountInfo{accountId: DEFAULT, balance: DEFAULT(hedera.Hbar), expirationTime: DEFAULT}
@@ -249,6 +253,7 @@ test "an account info has these defaults" {
 
 // Source: the Java SDK (AccountInfoTest, the account info of its fixture): expiration time Instant.ofEpochMilli(6),
 // i.e. 1970-01-01T00:00:00.006Z, and auto-renew period Duration.ofDays(7), i.e. 604800 seconds. Millisecond precision.
+@@testId("an-account-info-keeps-its-expiration-time-and-auto-renew-period")
 test "an account info keeps its expiration time and auto-renew period" {
     // given
     let expirationTime = toZonedDateTime(text: "1970-01-01T00:00:00.006Z")
@@ -265,6 +270,7 @@ test "an account info keeps its expiration time and auto-renew period" {
 
 // Source: this spec (an account without qualifying records yields an empty list); the Python SDK
 // (account_records_query_test.py, test_account_record_query_empty_records).
+@@testId("account-records-without-records-have-an-empty-list")
 test "account records without records have an empty list" {
     // when
     let records = AccountRecords{accountId: DEFAULT}
@@ -276,6 +282,7 @@ test "account records without records have an empty list" {
 
 // Source: this spec (@@oneOf(accountId, contractId)); the Python SDK (account_balance_query.py, _make_request: "Specify
 // either account_id or contract_id, not both.").
+@@testId("a-balance-query-for-both-an-account-and-a-contract-is-rejected")
 test "a balance query for both an account and a contract is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -284,6 +291,7 @@ test "a balance query for both an account and a contract is rejected" {
 
 // Source: this spec (@@oneOf(accountId, contractId)); the Python SDK (account_balance_query_e2e_test.py,
 // test_integration_balance_query_raises_when_neither_source_set: the network rejects it with INVALID_ACCOUNT_ID).
+@@testId("a-balance-query-for-neither-an-account-nor-a-contract-is-rejected")
 test "a balance query for neither an account nor a contract is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -292,6 +300,7 @@ test "a balance query for neither an account nor a contract is rejected" {
 
 // Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI basic_types.proto (StakingInfo.staked_id is a
 // oneof).
+@@testId("an-account-info-rejects-being-staked-to-an-account-and-to-a-node")
 test "an account info rejects being staked to an account and to a node" {
     // when / then
     @@expectThrows(invalid-argument-error)

@@ -9,6 +9,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.TransactionId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `mirror-node-topic`, generated from the `tests` blocks of its `## Testing` section.
@@ -21,6 +22,7 @@ class MirrorNodeTopicSpecTest {
     /// chunks, and the id of the transaction of its first chunk).
     @Test
     @DisplayName("chunk info keeps the initial transaction id, the chunk number and the total")
+    @Tag("testId:mirrornode.topic/chunk-info-keeps-the-initial-transaction-id-the-chunk-number-and-the-total")
     void chunkInfoKeepsTheInitialTransactionIdTheChunkNumberAndTheTotal() {
         // given
         final TransactionId initial = defaultTransactionId();
@@ -43,6 +45,7 @@ class MirrorNodeTopicSpecTest {
     /// spec requires, so the test uses some valid time for it.
     @Test
     @DisplayName("a topic keeps its auto-renew period and its creation time")
+    @Tag("testId:mirrornode.topic/a-topic-keeps-its-auto-renew-period-and-its-creation-time")
     void aTopicKeepsItsAutoRenewPeriodAndItsCreationTime() {
         // given
         final ZonedDateTime created = toZonedDateTime("2024-02-01T19:44:33.106Z");
@@ -69,6 +72,7 @@ class MirrorNodeTopicSpecTest {
     /// A running hash of version 3 is a SHA-384 hash of 48 bytes (HAPI, TransactionReceipt.topicRunningHashVersion).
     @Test
     @DisplayName("a topic message keeps its consensus timestamp, payer, running hash and sequence number")
+    @Tag("testId:mirrornode.topic/a-topic-message-keeps-its-consensus-timestamp-payer-running-hash-and-sequence-number")
     void aTopicMessageKeepsItsConsensusTimestampPayerRunningHashAndSequenceNumber() {
         // given
         final ZonedDateTime consensus = toZonedDateTime("2026-07-03T10:47:54.960Z");
@@ -95,6 +99,7 @@ class MirrorNodeTopicSpecTest {
     /// a value, two messages that differ only in their consensus timestamp are different).
     @Test
     @DisplayName("a topic message submitted in one piece has no chunk info")
+    @Tag("testId:mirrornode.topic/a-topic-message-submitted-in-one-piece-has-no-chunk-info")
     void aTopicMessageSubmittedInOnePieceHasNoChunkInfo() {
         // given
         final Address topic = Address.fromString("0.0.9411905");

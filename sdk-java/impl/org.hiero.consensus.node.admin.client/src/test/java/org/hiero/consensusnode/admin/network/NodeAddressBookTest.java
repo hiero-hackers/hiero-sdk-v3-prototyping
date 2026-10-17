@@ -9,6 +9,7 @@ import java.util.Objects;
 import org.hiero.consensusnode.admin.nodes.ServiceEndpoint;
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NodeAddressBook`, generated from the specs.
@@ -17,6 +18,7 @@ class NodeAddressBookTest {
 
     @Test
     @DisplayName("creates a NodeAddressBook and returns the values")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBook/create")
     void shouldCreateAndReturnTheValues() {
         final List<NodeAddress> nodes = nodesValue();
         final NodeAddressBook subject = new NodeAddressBook(nodes);
@@ -25,12 +27,14 @@ class NodeAddressBookTest {
 
     @Test
     @DisplayName("rejects null for nodes")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBook/nodes/rejects-null")
     void shouldRejectNullNodes() {
         assertThrows(NullPointerException.class, () -> new NodeAddressBook((List<NodeAddress>) null));
     }
 
     @Test
     @DisplayName("the constructor copies nodes; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBook/nodes/copies-in")
     void shouldCopyNodesIn() {
         final List<NodeAddress> value = new ArrayList<>(nodesValue());
         final List<NodeAddress> expected = List.copyOf(value);
@@ -42,6 +46,7 @@ class NodeAddressBookTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBook/value-semantics")
     void shouldCompareByValue() {
         final NodeAddressBook subject = create();
         final NodeAddressBook other = create();

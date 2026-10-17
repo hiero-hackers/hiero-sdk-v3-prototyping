@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.regex.Pattern;
 import org.hiero.sdk.v3.metalang.ast.Annotation;
 import org.hiero.sdk.v3.metalang.ast.Expression;
 import org.hiero.sdk.v3.metalang.ast.Literal;
@@ -32,7 +33,10 @@ import org.jspecify.annotations.Nullable;
  */
 final class TestResolver {
 
-    private static final Set<String> TEST_ANNOTATIONS = Set.of("disabled", "deprecated");
+    private static final Set<String> TEST_ANNOTATIONS = Set.of("disabled", "deprecated", "testId");
+
+    /** The form of a test id: lowercase words of letters and digits, joined by hyphens. */
+    private static final Pattern TEST_ID = Pattern.compile("[a-z0-9]+(-[a-z0-9]+)*");
     private static final String EXPECT_THROWS = "expectThrows";
 
     /** The error of a value that violates a validation annotation or a @@oneOf/@@oneOrNoneOf group. */
@@ -89,7 +93,7 @@ final class TestResolver {
             allValues.addAll(values.values());
             final Set<String> used = new HashSet<>();
             for (final TestCase test : file.tests()) {
-                final String id = file.namespace() + "/" + kebab(test.name());
+                final String id = file.namespace() + "/" + testId(test);
                 final SourceLocation previous = ids.putIfAbsent(id, test.location());
                 if (previous != null) {
                     diagnostics.report(Rule.TEST_DUPLICATE_ID, "Another test of namespace '" + file.namespace()
@@ -203,7 +207,15 @@ final class TestResolver {
         for (final Annotation annotation : test.annotations()) {
             if (!TEST_ANNOTATIONS.contains(annotation.name())) {
                 out.report(Rule.TEST_INVALID, "A test cannot be annotated with @@" + annotation.name()
-                        + "; allowed are @@disabled(\"reason\") and @@deprecated(\"reason\")", annotation.location());
+                        + "; allowed are @@testId(\"id\"), @@disabled(\"reason\") and @@deprecated(\"reason\")",
+                        annotation.location());
+            } else if (annotation.name().equals("testId")) {
+                if (annotation.arguments().size() != 1
+                        || !(annotation.arguments().getFirst() instanceof Literal.StringLiteral id)
+                        || !TEST_ID.matcher(id.value()).matches()) {
+                    out.report(Rule.TEST_INVALID, "@@testId needs the id as a string of lowercase words joined by "
+                            + "hyphens, e.g. @@testId(\"hex-key-with-0x-prefix\")", annotation.location());
+                }
             } else if (annotation.arguments().size() != 1
                     || !(annotation.arguments().getFirst() instanceof Literal.StringLiteral)) {
                 out.report(Rule.TEST_INVALID, "@@" + annotation.name() + " needs the reason as a string: @@"
@@ -448,6 +460,17 @@ final class TestResolver {
     private static void throwsOf(final MethodDefinition method, final Set<String> out) {
         method.annotations().stream().filter(a -> a.name().equals("throws"))
                 .flatMap(a -> a.arguments().stream()).map(Literal::text).forEach(out::add);
+    }
+
+    /**
+     * The id of a test within its namespace: the value of its {@code @@testId}, otherwise its name in kebab-case. An
+     * invalid {@code @@testId} is reported by {@code annotations}; the name is used then.
+     */
+    private static String testId(final TestCase test) {
+        return test.annotations().stream().filter(a -> a.name().equals("testId") && a.arguments().size() == 1)
+                .map(a -> a.arguments().getFirst()).filter(Literal.StringLiteral.class::isInstance)
+                .map(a -> ((Literal.StringLiteral) a).value()).filter(v -> TEST_ID.matcher(v).matches())
+                .findFirst().orElseGet(() -> kebab(test.name()));
     }
 
     /** The name of a test in kebab-case: {@code fromString rejects "x"} becomes {@code fromstring-rejects-x}. */

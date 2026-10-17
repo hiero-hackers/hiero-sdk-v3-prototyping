@@ -12,6 +12,7 @@ import org.hiero.ledger.IpAddress;
 import org.hiero.ledger.MirrorNode;
 import org.hiero.ledger.Network;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `ledger-config`, generated from the `tests` blocks of its `## Testing` section.
@@ -24,6 +25,7 @@ class LedgerConfigSpecTest {
     /// client is created for the network of a name: Client.forName, ClientForName).
     @Test
     @DisplayName("a registered network setting is returned for its identifier")
+    @Tag("testId:ledger.config/a-registered-network-setting-is-returned-for-its-identifier")
     void aRegisteredNetworkSettingIsReturnedForItsIdentifier() {
         // given
         final NetworkSetting setting = defaultNetworkSetting();
@@ -42,6 +44,7 @@ class LedgerConfigSpecTest {
     /// rejects an unknown name).
     @Test
     @DisplayName("an identifier without a registered network setting is rejected")
+    @Tag("testId:ledger.config/an-identifier-without-a-registered-network-setting-is-rejected")
     void anIdentifierWithoutARegisteredNetworkSettingIsRejected() {
         // when / then
         assertThrows(NoSuchElementException.class, () -> ConfigFactory.getNetworkSetting("ledger-config-test-unknown"));

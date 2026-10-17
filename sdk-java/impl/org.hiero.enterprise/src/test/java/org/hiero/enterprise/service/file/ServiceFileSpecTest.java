@@ -12,6 +12,7 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.keys.PrivateKey;
 import org.hiero.keys.PublicKey;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `service-file`, generated from the `tests` blocks of its `## Testing` section.
@@ -25,6 +26,7 @@ class ServiceFileSpecTest {
     /// memo are accepted).
     @Test
     @DisplayName("file parameters without values have empty contents and nothing else")
+    @Tag("testId:enterprise.service.file/file-parameters-without-values-have-empty-contents-and-nothing-else")
     void fileParametersWithoutValuesHaveEmptyContentsAndNothingElse() {
         // when
         final FileCreateParams params = defaultFileCreateParams();
@@ -45,6 +47,7 @@ class ServiceFileSpecTest {
     /// 2019-04-01T22:45:28Z).
     @Test
     @DisplayName("file parameters keep the values they are created with")
+    @Tag("testId:enterprise.service.file/file-parameters-keep-the-values-they-are-created-with")
     void fileParametersKeepTheValuesTheyAreCreatedWith() {
         // given
         final byte[] contents = utf8("Hello, Hiero!");
@@ -68,6 +71,7 @@ class ServiceFileSpecTest {
     /// network default if absent").
     @Test
     @DisplayName("file parameters keep an expiration time given without other values")
+    @Tag("testId:enterprise.service.file/file-parameters-keep-an-expiration-time-given-without-other-values")
     void fileParametersKeepAnExpirationTimeGivenWithoutOtherValues() {
         // given
         final ZonedDateTime expirationTime = toZonedDateTime("2024-01-01T00:00:00Z");
@@ -88,6 +92,7 @@ class ServiceFileSpecTest {
     /// characters is.
     @Test
     @DisplayName("a file memo of 100 characters is accepted")
+    @Tag("testId:enterprise.service.file/a-file-memo-of-100-characters-is-accepted")
     void aFileMemoOf100CharactersIsAccepted() {
         // given
         final String memo = repeat("a", 100L);
@@ -104,6 +109,7 @@ class ServiceFileSpecTest {
     /// Source: this spec (@@maxBytes(100) of fileMemo); HAPI limits a memo to 100 bytes.
     @Test
     @DisplayName("a file memo of 101 characters is rejected")
+    @Tag("testId:enterprise.service.file/a-file-memo-of-101-characters-is-rejected")
     void aFileMemoOf101CharactersIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new FileCreateParams(new byte[0], null, null, repeat("a", 101L)));

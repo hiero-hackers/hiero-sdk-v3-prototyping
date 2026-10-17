@@ -24,6 +24,7 @@ import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions-schedule`, generated from the `tests` blocks of its `## Testing` section.
@@ -44,6 +45,7 @@ class TransactionsScheduleSpecTest {
     /// of ScheduleCreateTransaction).
     @Test
     @DisplayName("a schedule create transaction leaves out what is not given")
+    @Tag("testId:consensusnode.transactions.schedule/a-schedule-create-transaction-leaves-out-what-is-not-given")
     void aScheduleCreateTransactionLeavesOutWhatIsNotGiven() {
         // given
         final PrngTransaction inner = new PrngTransaction(null);
@@ -67,6 +69,7 @@ class TransactionsScheduleSpecTest {
     /// 2019-04-01T22:42:22Z).
     @Test
     @DisplayName("a schedule create transaction keeps its inner transaction and attributes")
+    @Tag("testId:consensusnode.transactions.schedule/a-schedule-create-transaction-keeps-its-inner-transaction-and-attributes")
     void aScheduleCreateTransactionKeepsItsInnerTransactionAndAttributes() {
         // given
         final Transaction<?, ?> inner = new TransferTransaction(List.of(new HbarTransfer(AccountId.fromString("0.0.1001"), new Hbar(-1L, HbarUnit.HBAR), false), new HbarTransfer(AccountId.fromString("0.0.1002"), new Hbar(1L, HbarUnit.HBAR), false)), List.of(), List.of());
@@ -90,6 +93,7 @@ class TransactionsScheduleSpecTest {
     /// (ScheduleCreateTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("a schedule create transaction survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.schedule/a-schedule-create-transaction-survives-tobytes-and-frombytes")
     void aScheduleCreateTransactionSurvivesToBytesAndFromBytes() {
         // given
         final Transaction<?, ?> inner = new TransferTransaction(List.of(new HbarTransfer(AccountId.fromString("0.0.1001"), new Hbar(-1L, HbarUnit.HBAR), false), new HbarTransfer(AccountId.fromString("0.0.1002"), new Hbar(1L, HbarUnit.HBAR), false)), List.of(), List.of());
@@ -110,6 +114,7 @@ class TransactionsScheduleSpecTest {
     /// and test_ToFromBytes).
     @Test
     @DisplayName("a schedule sign transaction keeps its schedule and survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.schedule/a-schedule-sign-transaction-keeps-its-schedule-and-survives-tobytes-and-frombytes")
     void aScheduleSignTransactionKeepsItsScheduleAndSurvivesToBytesAndFromBytes() {
         // given
         final Address scheduleId = Address.fromString("0.0.5005");
@@ -131,6 +136,7 @@ class TransactionsScheduleSpecTest {
     /// of keys.md.
     @Test
     @DisplayName("every key that signs a schedule sign transaction signs each body")
+    @Tag("testId:consensusnode.transactions.schedule/every-key-that-signs-a-schedule-sign-transaction-signs-each-body")
     void everyKeyThatSignsAScheduleSignTransactionSignsEachBody() {
         // given
         final Account payer = defaultAccount();
@@ -158,6 +164,7 @@ class TransactionsScheduleSpecTest {
     /// .test_GetSetScheduleId and test_ToFromBytes).
     @Test
     @DisplayName("a schedule delete transaction keeps its schedule and survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.schedule/a-schedule-delete-transaction-keeps-its-schedule-and-survives-tobytes-and-frombytes")
     void aScheduleDeleteTransactionKeepsItsScheduleAndSurvivesToBytesAndFromBytes() {
         // given
         final Address scheduleId = Address.fromString("0.0.5005");

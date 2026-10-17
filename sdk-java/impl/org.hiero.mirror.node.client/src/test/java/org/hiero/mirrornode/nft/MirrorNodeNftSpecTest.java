@@ -5,6 +5,7 @@ import static org.hiero.sdk.testing.Testing.*;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `mirror-node-nft`, generated from the `tests` blocks of its `## Testing` section.
@@ -16,6 +17,7 @@ class MirrorNodeNftSpecTest {
     /// Source: this spec (an NFT is identified by the token id of its type plus its serial number).
     @Test
     @DisplayName("NFTs of the same type with different serial numbers are different")
+    @Tag("testId:mirrornode.nft/nfts-of-the-same-type-with-different-serial-numbers-are-different")
     void nFTsOfTheSameTypeWithDifferentSerialNumbersAreDifferent() {
         // given
         final Address token = Address.fromString("0.0.5005");

@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions-system`, generated from the `tests` blocks of its `## Testing` section.
@@ -22,6 +23,7 @@ class TransactionsSystemSpecTest {
     /// (see Questions & Comments).
     @Test
     @DisplayName("a system delete of a file keeps the file and the expiration time")
+    @Tag("testId:consensusnode.admin.system/a-system-delete-of-a-file-keeps-the-file-and-the-expiration-time")
     void aSystemDeleteOfAFileKeepsTheFileAndTheExpirationTime() {
         // given
         final Address file = defaultAddress();
@@ -43,6 +45,7 @@ class TransactionsSystemSpecTest {
     /// ignored for contracts).
     @Test
     @DisplayName("a system delete of a contract keeps the contract and needs no expiration time")
+    @Tag("testId:consensusnode.admin.system/a-system-delete-of-a-contract-keeps-the-contract-and-needs-no-expiration-time")
     void aSystemDeleteOfAContractKeepsTheContractAndNeedsNoExpirationTime() {
         // given
         final ContractId contract = defaultContractId();
@@ -62,6 +65,7 @@ class TransactionsSystemSpecTest {
     /// contractID are a protobuf oneof); `@@oneOf(fileId, contractId)` of this spec.
     @Test
     @DisplayName("a system delete of both a file and a contract is rejected")
+    @Tag("testId:consensusnode.admin.system/a-system-delete-of-both-a-file-and-a-contract-is-rejected")
     void aSystemDeleteOfBothAFileAndAContractIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new SystemDeleteTransaction(defaultAddress(), defaultContractId(), toZonedDateTime("2019-04-01T22:42:22Z")));
@@ -72,6 +76,7 @@ class TransactionsSystemSpecTest {
     /// Source: this spec (`@@oneOf(fileId, contractId)`: exactly one target).
     @Test
     @DisplayName("a system delete without a file and without a contract is rejected")
+    @Tag("testId:consensusnode.admin.system/a-system-delete-without-a-file-and-without-a-contract-is-rejected")
     void aSystemDeleteWithoutAFileAndWithoutAContractIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new SystemDeleteTransaction(null, null, null));
@@ -82,6 +87,7 @@ class TransactionsSystemSpecTest {
     /// Source: the Java (shouldSerializeFile), C++, Go and Swift (test_GetSetFileId) SystemUndeleteTransaction unit tests.
     @Test
     @DisplayName("a system undelete of a file keeps the file")
+    @Tag("testId:consensusnode.admin.system/a-system-undelete-of-a-file-keeps-the-file")
     void aSystemUndeleteOfAFileKeepsTheFile() {
         // given
         final Address file = defaultAddress();
@@ -100,6 +106,7 @@ class TransactionsSystemSpecTest {
     /// tests.
     @Test
     @DisplayName("a system undelete of a contract keeps the contract")
+    @Tag("testId:consensusnode.admin.system/a-system-undelete-of-a-contract-keeps-the-contract")
     void aSystemUndeleteOfAContractKeepsTheContract() {
         // given
         final ContractId contract = defaultContractId();
@@ -117,6 +124,7 @@ class TransactionsSystemSpecTest {
     /// Source: HAPI system_undelete.proto (fileID and contractID are a oneof); `@@oneOf(fileId, contractId)` of this spec.
     @Test
     @DisplayName("a system undelete of both a file and a contract is rejected")
+    @Tag("testId:consensusnode.admin.system/a-system-undelete-of-both-a-file-and-a-contract-is-rejected")
     void aSystemUndeleteOfBothAFileAndAContractIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new SystemUndeleteTransaction(defaultAddress(), defaultContractId()));
@@ -127,6 +135,7 @@ class TransactionsSystemSpecTest {
     /// Source: this spec (`@@oneOf(fileId, contractId)`: exactly one target).
     @Test
     @DisplayName("a system undelete without a file and without a contract is rejected")
+    @Tag("testId:consensusnode.admin.system/a-system-undelete-without-a-file-and-without-a-contract-is-rejected")
     void aSystemUndeleteWithoutAFileAndWithoutAContractIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new SystemUndeleteTransaction(null, null));

@@ -103,6 +103,7 @@ have millisecond precision, the precision every target language can hold.
 // Source: this spec (TopicCreateParams: "Nothing is required: without values the topic is public and cannot be
 // changed"); the Python SDK (topic_create_transaction_test.py, test_constructor_default_values: no admin and no submit
 // key).
+@@testId("topic-parameters-without-values-describe-a-public-topic-that-cannot-be-changed")
 test "topic parameters without values describe a public topic that cannot be changed" {
     // when
     let params = DEFAULT(TopicCreateParams)
@@ -120,6 +121,7 @@ test "topic parameters without values describe a public topic that cannot be cha
 // (TopicCreateTransactionUnitTests) and Python (topic_create_transaction_test.py, test_constructor) SDKs: every value
 // that is set is read back unchanged. The auto-renew period is the one of the Java test (Duration.ofHours(24), which
 // is exactly 86400 seconds).
+@@testId("topic-parameters-keep-the-values-they-are-created-with")
 test "topic parameters keep the values they are created with" {
     // given
     let authority = DEFAULT(Authority)
@@ -140,6 +142,7 @@ test "topic parameters keep the values they are created with" {
 
 // Source: this spec (@@maxBytes(100) of topicMemo); HAPI limits a memo to 100 bytes, which ASCII text of 100
 // characters is.
+@@testId("a-topic-memo-of-100-characters-is-accepted")
 test "a topic memo of 100 characters is accepted" {
     // given
     let memo = repeat(value: "a", count: 100)
@@ -152,6 +155,7 @@ test "a topic memo of 100 characters is accepted" {
 }
 
 // Source: this spec (@@maxBytes(100) of topicMemo); HAPI limits a memo to 100 bytes.
+@@testId("a-topic-memo-of-101-characters-is-rejected")
 test "a topic memo of 101 characters is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -161,6 +165,7 @@ test "a topic memo of 101 characters is rejected" {
 // Source: hiero-enterprise-java (Topic, and the Mirror Node fixture topic.json of MirrorNodeJsonConverterTest: topic
 // 0.0.1926 with an admin key, a submit key and the memo "1706816668096 Mirror node created test topic"). The created
 // timestamp of the fixture has nanosecond precision, so the test uses some valid point in time instead.
+@@testId("a-topic-keeps-the-values-it-is-created-with")
 test "a topic keeps the values it is created with" {
     // given
     let topicId = Address{shard: 0, realm: 0, num: 1926, checksum: ""}
@@ -181,6 +186,7 @@ test "a topic keeps the values it is created with" {
 
 // Source: this spec (Description: "A topic without a submit authority is public"; TopicCreateParams.adminAuthority:
 // "without it the topic cannot be changed").
+@@testId("a-topic-without-authorities-has-neither-an-admin-nor-a-submit-authority")
 test "a topic without authorities has neither an admin nor a submit authority" {
     // when
     let topic = Topic{topicId: DEFAULT(Address), adminAuthority: null, submitAuthority: null,
@@ -194,6 +200,7 @@ test "a topic without authorities has neither an admin nor a submit authority" {
 // Source: this spec (Topic is a value of its attributes); the points in time are the fixed timestamps of the Java
 // SDK tests (TopicMessageTest: Instant.ofEpochSecond(1554158542), FileCreateTransactionTest:
 // Instant.ofEpochSecond(1554158728); converted exactly to 2019-04-01T22:42:22Z and 2019-04-01T22:45:28Z).
+@@testId("topics-created-at-different-times-are-not-equal")
 test "topics created at different times are not equal" {
     // given
     let created = toZonedDateTime(text: "2019-04-01T22:42:22Z")
@@ -216,6 +223,7 @@ test "topics created at different times are not equal" {
 // Source: the Java SDK (TopicMessageTest, constructWithArgs: consensus timestamp Instant.ofEpochSecond(1554158542),
 // converted exactly to 2019-04-01T22:42:22Z, sequence number 7, payer 0.0.1 of the transaction id); every value that
 // is set is read back unchanged.
+@@testId("a-topic-message-keeps-the-values-it-is-created-with")
 test "a topic message keeps the values it is created with" {
     // given
     let consensusTimestamp = toZonedDateTime(text: "2019-04-01T22:42:22Z")

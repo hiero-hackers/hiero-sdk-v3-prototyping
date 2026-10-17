@@ -185,6 +185,7 @@ one transaction; chunking and the network's key checks are tested by the TCK, no
 
 ```tests
 // Source: this spec (@@default([]) of contents, @@nullable).
+@@testId("a-file-create-transaction-without-attributes-has-empty-contents-and-nothing-else")
 test "a file create transaction without attributes has empty contents and nothing else" {
     // when
     let transaction = FileCreateTransaction{}
@@ -199,6 +200,7 @@ test "a file create transaction without attributes has empty contents and nothin
 // Source: the Python SDK (test_constructor_with_parameters of FileCreateTransaction: "Test file content",
 // "Test memo") and the Swift SDK (FileCreateTransactionUnitTests.test_GetSetContents and test_GetSetExpirationTime:
 // Timestamp(seconds: 1_554_158_728) = 2019-04-01T22:45:28Z).
+@@testId("a-file-create-transaction-keeps-its-contents-authority-expiration-time-and-memo")
 test "a file create transaction keeps its contents, authority, expiration time and memo" {
     // given
     let contents = utf8(text: "Test file content")
@@ -217,6 +219,7 @@ test "a file create transaction keeps its contents, authority, expiration time a
 // Source: the Java SDK (FileCreateTransactionTest.shouldBytes and shouldBytesNoSetters; expiration time
 // Instant.ofEpochSecond(1554158728) = 2019-04-01T22:45:28Z) and the Swift SDK
 // (FileCreateTransactionUnitTests.test_ToFromBytes).
+@@testId("a-file-create-transaction-survives-tobytes-and-frombytes")
 test "a file create transaction survives toBytes and fromBytes" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
@@ -240,6 +243,7 @@ test "a file create transaction survives toBytes and fromBytes" {
 // Source: the Python SDK (test_constructor_with_parameters of FileAppendTransaction: file 0.0.12345,
 // "Test append content"), the Java SDK (FileAppendTransactionTest.shouldBytes) and the Swift SDK
 // (FileAppendTransactionUnitTests.test_GetSetFileId, test_GetSetContents and test_ToFromBytes).
+@@testId("a-file-append-transaction-keeps-its-file-and-contents-and-survives-tobytes-and-frombytes")
 test "a file append transaction keeps its file and contents and survives toBytes and fromBytes" {
     // given
     let fileId = Address.fromString(address: "0.0.12345")
@@ -260,6 +264,7 @@ test "a file append transaction keeps its file and contents and survives toBytes
 
 // Source: this spec (every nullable field of an update is "leave unchanged"); the Python SDK
 // (test_constructor_without_parameters of FileUpdateTransaction).
+@@testId("a-file-update-transaction-changes-nothing-but-what-it-names")
 test "a file update transaction changes nothing but what it names" {
     // when
     let transaction = FileUpdateTransaction{fileId: DEFAULT(Address)}
@@ -275,6 +280,7 @@ test "a file update transaction changes nothing but what it names" {
 // Source: the Python SDK (test_constructor_with_parameters of FileUpdateTransaction: "Updated content", "Updated memo")
 // and the Swift SDK (FileUpdateTransactionUnitTests.test_GetSetExpirationTime); the expiration time of the Java SDK
 // (FileUpdateTransactionTest: Instant.ofEpochSecond(1554158728) = 2019-04-01T22:45:28Z).
+@@testId("a-file-update-transaction-keeps-its-contents-authority-expiration-time-and-memo")
 test "a file update transaction keeps its contents, authority, expiration time and memo" {
     // given
     let contents = utf8(text: "Updated content")
@@ -293,6 +299,7 @@ test "a file update transaction keeps its contents, authority, expiration time a
 // Source: the Python SDK (test_constructor_with_parameters of FileUpdateTransaction), the Java SDK
 // (FileUpdateTransactionTest.shouldBytes: expiration time Instant.ofEpochSecond(1554158728) = 2019-04-01T22:45:28Z)
 // and the Swift SDK (FileUpdateTransactionUnitTests.test_ToFromBytes).
+@@testId("a-file-update-transaction-survives-tobytes-and-frombytes")
 test "a file update transaction survives toBytes and fromBytes" {
     // given
     let packed = FileUpdateTransaction{fileId: DEFAULT(Address), contents: utf8(text: "Updated content"),
@@ -309,6 +316,7 @@ test "a file update transaction survives toBytes and fromBytes" {
 
 // Source: the Python SDK (test_constructor_with_file_id of FileDeleteTransaction), the Java SDK
 // (FileDeleteTransactionTest.shouldBytes) and the Swift SDK (FileDeleteTransactionUnitTests.test_ToFromBytes).
+@@testId("a-file-delete-transaction-keeps-its-file-and-survives-tobytes-and-frombytes")
 test "a file delete transaction keeps its file and survives toBytes and fromBytes" {
     // given
     let transaction = FileDeleteTransaction{fileId: DEFAULT(Address)}

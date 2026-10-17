@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import javax.annotation.processing.Generated;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ShopFactory`, generated from the specs.
@@ -15,12 +16,14 @@ class ShopFactoryTest {
 
     @Test
     @DisplayName("create(name, tags) can be called and returns a value")
+    @Tag("testId:shop/create/call")
     void shouldCallCreate() {
         assertNotNull(ShopFactory.create(nameValue(), tagsValue()));
     }
 
     @Test
     @DisplayName("create rejects null for name")
+    @Tag("testId:shop/create/name/rejects-null")
     void shouldRejectNullNameInCreate() {
         assertThrows(NullPointerException.class, () -> ShopFactory.create((String) null, tagsValue()));
     }

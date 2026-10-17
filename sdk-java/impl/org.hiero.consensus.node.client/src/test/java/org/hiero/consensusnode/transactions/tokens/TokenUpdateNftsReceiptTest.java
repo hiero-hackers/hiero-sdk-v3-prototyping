@@ -18,6 +18,7 @@ import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenUpdateNftsReceipt`, generated from the specs.
@@ -26,6 +27,7 @@ class TokenUpdateNftsReceiptTest {
 
     @Test
     @DisplayName("creates a TokenUpdateNftsReceipt and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateNftsReceipt/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -40,24 +42,28 @@ class TokenUpdateNftsReceiptTest {
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateNftsReceipt/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new TokenUpdateNftsReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue()));
     }
 
     @Test
     @DisplayName("rejects null for status")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateNftsReceipt/status/rejects-null")
     void shouldRejectNullStatus() {
         assertThrows(NullPointerException.class, () -> new TokenUpdateNftsReceipt(transactionIdValue(), (TransactionStatus) null, exchangeRateValue(), nextExchangeRateValue()));
     }
 
     @Test
     @DisplayName("rejects null for exchangeRate")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateNftsReceipt/exchangeRate/rejects-null")
     void shouldRejectNullExchangeRate() {
         assertThrows(NullPointerException.class, () -> new TokenUpdateNftsReceipt(transactionIdValue(), statusValue(), (ExchangeRate) null, nextExchangeRateValue()));
     }
 
     @Test
     @DisplayName("rejects null for nextExchangeRate")
+    @Tag("testId:consensusnode.transactions.tokens.TokenUpdateNftsReceipt/nextExchangeRate/rejects-null")
     void shouldRejectNullNextExchangeRate() {
         assertThrows(NullPointerException.class, () -> new TokenUpdateNftsReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), (ExchangeRate) null));
     }

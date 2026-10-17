@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NftTransfer`, generated from the specs.
@@ -14,6 +15,7 @@ class NftTransferTest {
 
     @Test
     @DisplayName("creates a NftTransfer and returns the values")
+    @Tag("testId:consensusnode.transactions.accounts.NftTransfer/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final long serial = serialValue();
@@ -30,6 +32,7 @@ class NftTransferTest {
 
     @Test
     @DisplayName("creates a NftTransfer with the default values")
+    @Tag("testId:consensusnode.transactions.accounts.NftTransfer/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final NftTransfer subject = new NftTransfer(tokenIdValue(), serialValue(), senderValue(), receiverValue());
         assertValue(false, subject.approved());
@@ -37,6 +40,7 @@ class NftTransferTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.accounts.NftTransfer/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Address tokenId = tokenIdValue();
         final long serial = serialValue();
@@ -59,6 +63,7 @@ class NftTransferTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.accounts.NftTransfer/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final NftTransfer subject = NftTransfer.builder()
                 .tokenId(tokenIdValue())
@@ -71,18 +76,21 @@ class NftTransferTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.transactions.accounts.NftTransfer/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> NftTransfer.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.transactions.accounts.NftTransfer/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new NftTransfer((Address) null, serialValue(), senderValue(), receiverValue(), approvedValue()));
     }
 
     @Test
     @DisplayName("serial: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.transactions.accounts.NftTransfer/serial/accepts-at-minimum")
     void shouldAcceptSerialAtMinimum() {
         final long value = -9223372036854775808L;
         final NftTransfer subject = new NftTransfer(tokenIdValue(), value, senderValue(), receiverValue(), approvedValue());
@@ -91,6 +99,7 @@ class NftTransferTest {
 
     @Test
     @DisplayName("serial: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.transactions.accounts.NftTransfer/serial/accepts-at-maximum")
     void shouldAcceptSerialAtMaximum() {
         final long value = 9223372036854775807L;
         final NftTransfer subject = new NftTransfer(tokenIdValue(), value, senderValue(), receiverValue(), approvedValue());
@@ -99,18 +108,21 @@ class NftTransferTest {
 
     @Test
     @DisplayName("rejects null for sender")
+    @Tag("testId:consensusnode.transactions.accounts.NftTransfer/sender/rejects-null")
     void shouldRejectNullSender() {
         assertThrows(NullPointerException.class, () -> new NftTransfer(tokenIdValue(), serialValue(), (AccountId) null, receiverValue(), approvedValue()));
     }
 
     @Test
     @DisplayName("rejects null for receiver")
+    @Tag("testId:consensusnode.transactions.accounts.NftTransfer/receiver/rejects-null")
     void shouldRejectNullReceiver() {
         assertThrows(NullPointerException.class, () -> new NftTransfer(tokenIdValue(), serialValue(), senderValue(), (AccountId) null, approvedValue()));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.transactions.accounts.NftTransfer/value-semantics")
     void shouldCompareByValue() {
         final NftTransfer subject = create();
         final NftTransfer other = create();

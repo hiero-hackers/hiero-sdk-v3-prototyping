@@ -28,6 +28,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NodeCreateTransaction`, generated from the specs.
@@ -36,6 +37,7 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("creates a NodeCreateTransaction and returns the values")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
         final @Nullable String description = descriptionValue();
@@ -63,6 +65,7 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("creates a NodeCreateTransaction with the default values")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final NodeCreateTransaction subject = new NodeCreateTransaction(accountIdValue(), descriptionValue(), gossipEndpointsValue(), serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), grpcWebProxyEndpointValue());
         assertValue(false, subject.declineReward());
@@ -70,6 +73,7 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final AccountId accountId = accountIdValue();
         final @Nullable String description = descriptionValue();
@@ -104,6 +108,7 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final NodeCreateTransaction subject = NodeCreateTransaction.builder()
                 .accountId(accountIdValue())
@@ -120,18 +125,21 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> NodeCreateTransaction.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new NodeCreateTransaction((AccountId) null, descriptionValue(), gossipEndpointsValue(), serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
     }
 
     @Test
     @DisplayName("description: accepts more elements than the maximum")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/description/accepts-at-maximum-bytes")
     void shouldAcceptDescriptionAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final NodeCreateTransaction subject = new NodeCreateTransaction(accountIdValue(), value, gossipEndpointsValue(), serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue());
@@ -140,18 +148,21 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("description: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/description/rejects-above-maximum-bytes")
     void shouldRejectDescriptionAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(accountIdValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", gossipEndpointsValue(), serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
     }
 
     @Test
     @DisplayName("rejects null for gossipEndpoints")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/gossipEndpoints/rejects-null")
     void shouldRejectNullGossipEndpoints() {
         assertThrows(NullPointerException.class, () -> new NodeCreateTransaction(accountIdValue(), descriptionValue(), (List<ServiceEndpoint>) null, serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
     }
 
     @Test
     @DisplayName("gossipEndpoints: accepts the minimum number of elements")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/gossipEndpoints/accepts-at-minimum-size")
     void shouldAcceptGossipEndpointsAtMinimumSize() {
         final List<ServiceEndpoint> value = List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211));
         final NodeCreateTransaction subject = new NodeCreateTransaction(accountIdValue(), descriptionValue(), value, serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue());
@@ -160,12 +171,14 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("gossipEndpoints: rejects fewer elements than the minimum")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/gossipEndpoints/rejects-below-minimum-size")
     void shouldRejectGossipEndpointsBelowMinimumSize() {
         assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(accountIdValue(), descriptionValue(), List.of(), serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
     }
 
     @Test
     @DisplayName("gossipEndpoints: accepts the maximum number of elements")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/gossipEndpoints/accepts-at-maximum-size")
     void shouldAcceptGossipEndpointsAtMaximumSize() {
         final List<ServiceEndpoint> value = List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211));
         final NodeCreateTransaction subject = new NodeCreateTransaction(accountIdValue(), descriptionValue(), value, serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue());
@@ -174,12 +187,14 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("gossipEndpoints: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/gossipEndpoints/rejects-above-maximum-size")
     void shouldRejectGossipEndpointsAboveMaximumSize() {
         assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(accountIdValue(), descriptionValue(), List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211)), serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
     }
 
     @Test
     @DisplayName("the constructor copies gossipEndpoints; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/gossipEndpoints/copies-in")
     void shouldCopyGossipEndpointsIn() {
         final List<ServiceEndpoint> value = new ArrayList<>(gossipEndpointsValue());
         final List<ServiceEndpoint> expected = List.copyOf(value);
@@ -191,12 +206,14 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("rejects null for serviceEndpoints")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/serviceEndpoints/rejects-null")
     void shouldRejectNullServiceEndpoints() {
         assertThrows(NullPointerException.class, () -> new NodeCreateTransaction(accountIdValue(), descriptionValue(), gossipEndpointsValue(), (List<ServiceEndpoint>) null, gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
     }
 
     @Test
     @DisplayName("serviceEndpoints: accepts the minimum number of elements")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/serviceEndpoints/accepts-at-minimum-size")
     void shouldAcceptServiceEndpointsAtMinimumSize() {
         final List<ServiceEndpoint> value = List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211));
         final NodeCreateTransaction subject = new NodeCreateTransaction(accountIdValue(), descriptionValue(), gossipEndpointsValue(), value, gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue());
@@ -205,12 +222,14 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("serviceEndpoints: rejects fewer elements than the minimum")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/serviceEndpoints/rejects-below-minimum-size")
     void shouldRejectServiceEndpointsBelowMinimumSize() {
         assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(accountIdValue(), descriptionValue(), gossipEndpointsValue(), List.of(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
     }
 
     @Test
     @DisplayName("serviceEndpoints: accepts the maximum number of elements")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/serviceEndpoints/accepts-at-maximum-size")
     void shouldAcceptServiceEndpointsAtMaximumSize() {
         final List<ServiceEndpoint> value = List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211));
         final NodeCreateTransaction subject = new NodeCreateTransaction(accountIdValue(), descriptionValue(), gossipEndpointsValue(), value, gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue());
@@ -219,12 +238,14 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("serviceEndpoints: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/serviceEndpoints/rejects-above-maximum-size")
     void shouldRejectServiceEndpointsAboveMaximumSize() {
         assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(accountIdValue(), descriptionValue(), gossipEndpointsValue(), List.of(new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211), new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211)), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
     }
 
     @Test
     @DisplayName("the constructor copies serviceEndpoints; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/serviceEndpoints/copies-in")
     void shouldCopyServiceEndpointsIn() {
         final List<ServiceEndpoint> value = new ArrayList<>(serviceEndpointsValue());
         final List<ServiceEndpoint> expected = List.copyOf(value);
@@ -236,12 +257,14 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("rejects null for gossipCaCertificate")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/gossipCaCertificate/rejects-null")
     void shouldRejectNullGossipCaCertificate() {
         assertThrows(NullPointerException.class, () -> new NodeCreateTransaction(accountIdValue(), descriptionValue(), gossipEndpointsValue(), serviceEndpointsValue(), (byte[]) null, grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
     }
 
     @Test
     @DisplayName("the constructor copies gossipCaCertificate; the accessor returns a copy")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/gossipCaCertificate/copies-in")
     void shouldCopyGossipCaCertificateIn() {
         final byte[] value = gossipCaCertificateValue();
         final byte[] expected = value.clone();
@@ -256,12 +279,14 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("rejects null for grpcCertificateHash")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/grpcCertificateHash/rejects-null")
     void shouldRejectNullGrpcCertificateHash() {
         assertThrows(NullPointerException.class, () -> new NodeCreateTransaction(accountIdValue(), descriptionValue(), gossipEndpointsValue(), serviceEndpointsValue(), gossipCaCertificateValue(), (byte[]) null, adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
     }
 
     @Test
     @DisplayName("the constructor copies grpcCertificateHash; the accessor returns a copy")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/grpcCertificateHash/copies-in")
     void shouldCopyGrpcCertificateHashIn() {
         final byte[] value = grpcCertificateHashValue();
         final byte[] expected = value.clone();
@@ -276,12 +301,14 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("rejects null for adminAuthority")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/adminAuthority/rejects-null")
     void shouldRejectNullAdminAuthority() {
         assertThrows(NullPointerException.class, () -> new NodeCreateTransaction(accountIdValue(), descriptionValue(), gossipEndpointsValue(), serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), (Authority) null, declineRewardValue(), grpcWebProxyEndpointValue()));
     }
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final NodeCreateTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -291,6 +318,7 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final NodeCreateTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -299,6 +327,7 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final NodeCreateTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -308,6 +337,7 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final NodeCreateTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -316,6 +346,7 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/memo/set")
     void shouldSetMemo() {
         final NodeCreateTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -325,6 +356,7 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final NodeCreateTransaction subject = create();
         subject.setMemo((String) null);
@@ -333,6 +365,7 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final NodeCreateTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -342,6 +375,7 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final NodeCreateTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -350,54 +384,63 @@ class NodeCreateTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

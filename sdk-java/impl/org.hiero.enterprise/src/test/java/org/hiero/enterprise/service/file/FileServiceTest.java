@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import org.hiero.enterprise.service.ServiceException;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `FileService`, generated from the specs.
@@ -15,12 +16,14 @@ class FileServiceTest {
 
     @Test
     @DisplayName("creates a FileService and returns the values")
+    @Tag("testId:enterprise.service.file.FileService/create")
     void shouldCreateAndReturnTheValues() {
         final FileService subject = new FileService();
     }
 
     @Test
     @DisplayName("createFile(contents) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.file.FileService/createFile/call")
     void shouldCallCreateFile() throws Exception {
         try {
             assertNotNull(create().createFile(contentsValue()));
@@ -33,6 +36,7 @@ class FileServiceTest {
 
     @Test
     @DisplayName("createFile(contents, expirationTime) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.file.FileService/createFile/call-2")
     void shouldCallCreateFile2() throws Exception {
         try {
             assertNotNull(create().createFile(contentsValue(), expirationTimeValue()));
@@ -45,6 +49,7 @@ class FileServiceTest {
 
     @Test
     @DisplayName("createFile(params) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.file.FileService/createFile/call-3")
     void shouldCallCreateFile3() throws Exception {
         try {
             assertNotNull(create().createFile(paramsValue()));
@@ -57,6 +62,7 @@ class FileServiceTest {
 
     @Test
     @DisplayName("readFile(fileId) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.file.FileService/readFile/call")
     void shouldCallReadFile() throws Exception {
         try {
             assertNotNull(create().readFile(fileIdValue()));
@@ -69,6 +75,7 @@ class FileServiceTest {
 
     @Test
     @DisplayName("updateFile(fileId, contents) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.file.FileService/updateFile/call")
     void shouldCallUpdateFile() throws Exception {
         try {
             create().updateFile(fileIdValue(), contentsValue());
@@ -81,6 +88,7 @@ class FileServiceTest {
 
     @Test
     @DisplayName("updateExpirationTime(fileId, expirationTime) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.file.FileService/updateExpirationTime/call")
     void shouldCallUpdateExpirationTime() throws Exception {
         try {
             create().updateExpirationTime(fileIdValue(), expirationTimeValue());
@@ -93,6 +101,7 @@ class FileServiceTest {
 
     @Test
     @DisplayName("deleteFile(fileId) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.file.FileService/deleteFile/call")
     void shouldCallDeleteFile() throws Exception {
         try {
             create().deleteFile(fileIdValue());
@@ -105,6 +114,7 @@ class FileServiceTest {
 
     @Test
     @DisplayName("isDeleted(fileId) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.file.FileService/isDeleted/call")
     void shouldCallIsDeleted() throws Exception {
         try {
             create().isDeleted(fileIdValue());
@@ -117,6 +127,7 @@ class FileServiceTest {
 
     @Test
     @DisplayName("getSize(fileId) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.file.FileService/getSize/call")
     void shouldCallGetSize() throws Exception {
         try {
             create().getSize(fileIdValue());
@@ -129,6 +140,7 @@ class FileServiceTest {
 
     @Test
     @DisplayName("getExpirationTime(fileId) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.file.FileService/getExpirationTime/call")
     void shouldCallGetExpirationTime() throws Exception {
         try {
             assertNotNull(create().getExpirationTime(fileIdValue()));

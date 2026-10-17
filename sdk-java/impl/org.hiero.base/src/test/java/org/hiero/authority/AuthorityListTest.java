@@ -10,6 +10,7 @@ import org.hiero.keys.ByteImportEncoding;
 import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AuthorityList`, generated from the specs.
@@ -18,6 +19,7 @@ class AuthorityListTest {
 
     @Test
     @DisplayName("creates an AuthorityList and returns the values")
+    @Tag("testId:authority.AuthorityList/create")
     void shouldCreateAndReturnTheValues() {
         final List<Authority> children = childrenValue();
         final int threshold = thresholdValue();
@@ -28,12 +30,14 @@ class AuthorityListTest {
 
     @Test
     @DisplayName("rejects null for children")
+    @Tag("testId:authority.AuthorityList/children/rejects-null")
     void shouldRejectNullChildren() {
         assertThrows(NullPointerException.class, () -> new AuthorityList((List<Authority>) null, thresholdValue()));
     }
 
     @Test
     @DisplayName("children: accepts the minimum number of elements")
+    @Tag("testId:authority.AuthorityList/children/accepts-at-minimum-size")
     void shouldAcceptChildrenAtMinimumSize() {
         final List<Authority> value = List.of(new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c").createPublicKey()));
         final AuthorityList subject = new AuthorityList(value, thresholdValue());
@@ -42,12 +46,14 @@ class AuthorityListTest {
 
     @Test
     @DisplayName("children: rejects fewer elements than the minimum")
+    @Tag("testId:authority.AuthorityList/children/rejects-below-minimum-size")
     void shouldRejectChildrenBelowMinimumSize() {
         assertThrows(IllegalArgumentException.class, () -> new AuthorityList(List.of(), thresholdValue()));
     }
 
     @Test
     @DisplayName("the constructor copies children; the accessor returns an unmodifiable collection")
+    @Tag("testId:authority.AuthorityList/children/copies-in")
     void shouldCopyChildrenIn() {
         final List<Authority> value = new ArrayList<>(childrenValue());
         final List<Authority> expected = List.copyOf(value);
@@ -59,6 +65,7 @@ class AuthorityListTest {
 
     @Test
     @DisplayName("threshold: accepts the minimum (1)")
+    @Tag("testId:authority.AuthorityList/threshold/accepts-at-minimum")
     void shouldAcceptThresholdAtMinimum() {
         final int value = 1;
         final AuthorityList subject = new AuthorityList(childrenValue(), value);
@@ -67,6 +74,7 @@ class AuthorityListTest {
 
     @Test
     @DisplayName("threshold: accepts the maximum (2147483647)")
+    @Tag("testId:authority.AuthorityList/threshold/accepts-at-maximum")
     void shouldAcceptThresholdAtMaximum() {
         final int value = 2147483647;
         final AuthorityList subject = new AuthorityList(childrenValue(), value);
@@ -75,6 +83,7 @@ class AuthorityListTest {
 
     @Test
     @DisplayName("threshold: rejects a value below the minimum (0)")
+    @Tag("testId:authority.AuthorityList/threshold/rejects-below-minimum")
     void shouldRejectThresholdBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new AuthorityList(childrenValue(), 0));
     }

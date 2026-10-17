@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ExchangeRates`, generated from the specs.
@@ -14,6 +15,7 @@ class ExchangeRatesTest {
 
     @Test
     @DisplayName("creates an ExchangeRates and returns the values")
+    @Tag("testId:mirrornode.network.ExchangeRates/create")
     void shouldCreateAndReturnTheValues() {
         final ExchangeRate currentRate = currentRateValue();
         final ExchangeRate nextRate = nextRateValue();
@@ -24,18 +26,21 @@ class ExchangeRatesTest {
 
     @Test
     @DisplayName("rejects null for currentRate")
+    @Tag("testId:mirrornode.network.ExchangeRates/currentRate/rejects-null")
     void shouldRejectNullCurrentRate() {
         assertThrows(NullPointerException.class, () -> new ExchangeRates((ExchangeRate) null, nextRateValue()));
     }
 
     @Test
     @DisplayName("rejects null for nextRate")
+    @Tag("testId:mirrornode.network.ExchangeRates/nextRate/rejects-null")
     void shouldRejectNullNextRate() {
         assertThrows(NullPointerException.class, () -> new ExchangeRates(currentRateValue(), (ExchangeRate) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.network.ExchangeRates/value-semantics")
     void shouldCompareByValue() {
         final ExchangeRates subject = create();
         final ExchangeRates other = create();

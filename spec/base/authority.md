@@ -179,6 +179,7 @@ have one child; compositions of several children are built with `AuthorityList{â
 
 ```tests
 // Source: this spec (of(publicKey) is the single-key leaf); the Java, Go, Python and C++ SDKs (a public key is a key).
+@@testId("a-single-key-becomes-a-public-key-authority-of-that-key")
 test "a single key becomes a public key authority of that key" {
     // given
     let publicKey = PUBLIC_KEYS[0]
@@ -194,6 +195,7 @@ test "a single key becomes a public key authority of that key" {
 
 // Source: this spec (n-of-n: threshold is set to children.size()); the Java, JavaScript, Go and Python SDKs (a key list
 // without a threshold requires all of its keys).
+@@testId("a-composition-without-a-threshold-requires-all-of-its-children")
 test "a composition without a threshold requires all of its children" {
     // given
     let child = of(publicKey: PUBLIC_KEYS[0])
@@ -208,6 +210,7 @@ test "a composition without a threshold requires all of its children" {
 }
 
 // Source: this spec (m-of-n composition); the Go, Python, JavaScript and C++ SDKs (a key list keeps its threshold).
+@@testId("a-composition-with-a-threshold-keeps-its-threshold-and-its-child")
 test "a composition with a threshold keeps its threshold and its child" {
     // given
     let child = of(publicKey: PUBLIC_KEYS[0])
@@ -222,6 +225,7 @@ test "a composition with a threshold keeps its threshold and its child" {
 
 // Source: this spec (ofContract maps to HAPI ContractID, ofDelegatable to DelegatableContractID); the Go, Python and C++
 // SDKs (a delegatable contract id becomes a key of its own kind).
+@@testId("a-contract-leaf-is-delegatable-only-when-created-as-delegatable")
 test "a contract leaf is delegatable only when created as delegatable" {
     // given
     let contractId = DEFAULT(ContractId)
@@ -239,6 +243,7 @@ test "a contract leaf is delegatable only when created as delegatable" {
 }
 
 // Source: this spec (@@default(false) delegatable).
+@@testId("a-contract-authority-is-not-delegatable-by-default")
 test "a contract authority is not delegatable by default" {
     // when
     let authority = ContractAuthority{contractId: DEFAULT(ContractId)}
@@ -250,6 +255,7 @@ test "a contract authority is not delegatable by default" {
 
 // Source: this spec (structural equality: two authorities are equal iff their trees match); the Python and C++ SDKs
 // (equality of contract ids and key lists).
+@@testId("authorities-are-equal-when-their-trees-match")
 test "authorities are equal when their trees match" {
     // given
     let alice = of(publicKey: PUBLIC_KEYS[0])
@@ -275,6 +281,7 @@ test "authorities are equal when their trees match" {
 }
 
 // Source: this spec (@@minSize(1) children: an empty AuthorityList is forbidden, "remove this key" is no Authority).
+@@testId("a-composition-without-children-is-rejected")
 test "a composition without children is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -282,6 +289,7 @@ test "a composition without children is rejected" {
 }
 
 // Source: this spec (@@min(1) threshold of AuthorityList).
+@@testId("a-composition-with-threshold-0-is-rejected")
 test "a composition with threshold 0 is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -289,6 +297,7 @@ test "a composition with threshold 0 is rejected" {
 }
 
 // Source: this spec (@@min(1) threshold of the m-of-n factory of(threshold, children)).
+@@testId("the-m-of-n-factory-rejects-threshold-0")
 test "the m-of-n factory rejects threshold 0" {
     // given
     let child = of(publicKey: PUBLIC_KEYS[0])

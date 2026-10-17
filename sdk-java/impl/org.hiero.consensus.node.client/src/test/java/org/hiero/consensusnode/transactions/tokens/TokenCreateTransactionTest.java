@@ -30,6 +30,7 @@ import org.hiero.token.TokenSupplyType;
 import org.hiero.token.TokenType;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenCreateTransaction`, generated from the specs.
@@ -38,6 +39,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("creates a TokenCreateTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final String name = nameValue();
         final String symbol = symbolValue();
@@ -91,6 +93,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("creates a TokenCreateTransaction with the default values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final TokenCreateTransaction subject = new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), treasuryAccountIdValue(), maxSupplyValue(), tokenMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
         assertValue(0, subject.decimals());
@@ -102,6 +105,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final String name = nameValue();
         final String symbol = symbolValue();
@@ -175,6 +179,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TokenCreateTransaction subject = TokenCreateTransaction.builder()
                 .name(nameValue())
@@ -204,18 +209,21 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TokenCreateTransaction.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for name")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/name/rejects-null")
     void shouldRejectNullName() {
         assertThrows(NullPointerException.class, () -> new TokenCreateTransaction((String) null, symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("name: accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/name/accepts-at-maximum-bytes")
     void shouldAcceptNameAtMaximumBytes() {
         final String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TokenCreateTransaction subject = new TokenCreateTransaction(value, symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -224,18 +232,21 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("name: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/name/rejects-above-maximum-bytes")
     void shouldRejectNameAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction("ääääääääääääääääääääääääääääääääääääääääääääääääääa", symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("rejects null for symbol")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/symbol/rejects-null")
     void shouldRejectNullSymbol() {
         assertThrows(NullPointerException.class, () -> new TokenCreateTransaction(nameValue(), (String) null, tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("symbol: accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/symbol/accepts-at-maximum-bytes")
     void shouldAcceptSymbolAtMaximumBytes() {
         final String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TokenCreateTransaction subject = new TokenCreateTransaction(nameValue(), value, tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -244,18 +255,21 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("symbol: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/symbol/rejects-above-maximum-bytes")
     void shouldRejectSymbolAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction(nameValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("rejects null for tokenType")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/tokenType/rejects-null")
     void shouldRejectNullTokenType() {
         assertThrows(NullPointerException.class, () -> new TokenCreateTransaction(nameValue(), symbolValue(), (TokenType) null, decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("decimals: accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/decimals/accepts-at-minimum")
     void shouldAcceptDecimalsAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final TokenCreateTransaction subject = new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), value, initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -264,6 +278,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("decimals: accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/decimals/accepts-at-maximum")
     void shouldAcceptDecimalsAtMaximum() {
         final int value = 2147483647;
         final TokenCreateTransaction subject = new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), value, initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -272,6 +287,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("initialSupply: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/initialSupply/accepts-at-minimum")
     void shouldAcceptInitialSupplyAtMinimum() {
         final long value = -9223372036854775808L;
         final TokenCreateTransaction subject = new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), decimalsValue(), value, treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -280,6 +296,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("initialSupply: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/initialSupply/accepts-at-maximum")
     void shouldAcceptInitialSupplyAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenCreateTransaction subject = new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), decimalsValue(), value, treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -288,18 +305,21 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("rejects null for treasuryAccountId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/treasuryAccountId/rejects-null")
     void shouldRejectNullTreasuryAccountId() {
         assertThrows(NullPointerException.class, () -> new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), (AccountId) null, supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("rejects null for supplyType")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/supplyType/rejects-null")
     void shouldRejectNullSupplyType() {
         assertThrows(NullPointerException.class, () -> new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), (TokenSupplyType) null, maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("maxSupply: accepts the minimum (1)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/maxSupply/accepts-at-minimum")
     void shouldAcceptMaxSupplyAtMinimum() {
         final @Nullable Long value = 1L;
         final TokenCreateTransaction subject = new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), value, freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -308,6 +328,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("maxSupply: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/maxSupply/accepts-at-maximum")
     void shouldAcceptMaxSupplyAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
         final TokenCreateTransaction subject = new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), value, freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -316,12 +337,14 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("maxSupply: rejects a value below the minimum (0)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/maxSupply/rejects-below-minimum")
     void shouldRejectMaxSupplyBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), 0L, freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("tokenMemo: accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/tokenMemo/accepts-at-maximum-bytes")
     void shouldAcceptTokenMemoAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TokenCreateTransaction subject = new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), value, metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -330,18 +353,21 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("tokenMemo: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/tokenMemo/rejects-above-maximum-bytes")
     void shouldRejectTokenMemoAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("rejects null for metadata")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/metadata/rejects-null")
     void shouldRejectNullMetadata() {
         assertThrows(NullPointerException.class, () -> new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), (byte[]) null, expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("metadata: accepts the maximum number of elements")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/metadata/accepts-at-maximum-size")
     void shouldAcceptMetadataAtMaximumSize() {
         final byte[] value = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100};
         final TokenCreateTransaction subject = new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), value, expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
@@ -350,12 +376,14 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("metadata: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/metadata/rejects-above-maximum-size")
     void shouldRejectMetadataAboveMaximumSize() {
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction(nameValue(), symbolValue(), tokenTypeValue(), decimalsValue(), initialSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 1}, expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
     @DisplayName("the constructor copies metadata; the accessor returns a copy")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/metadata/copies-in")
     void shouldCopyMetadataIn() {
         final byte[] value = metadataValue();
         final byte[] expected = value.clone();
@@ -370,6 +398,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final TokenCreateTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -379,6 +408,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final TokenCreateTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -387,6 +417,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final TokenCreateTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -396,6 +427,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final TokenCreateTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -404,6 +436,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/memo/set")
     void shouldSetMemo() {
         final TokenCreateTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -413,6 +446,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final TokenCreateTransaction subject = create();
         subject.setMemo((String) null);
@@ -421,6 +455,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final TokenCreateTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -430,6 +465,7 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final TokenCreateTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -438,54 +474,63 @@ class TokenCreateTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenCreateTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

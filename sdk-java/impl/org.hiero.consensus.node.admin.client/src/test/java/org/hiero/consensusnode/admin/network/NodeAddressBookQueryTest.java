@@ -21,6 +21,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NodeAddressBookQuery`, generated from the specs.
@@ -29,6 +30,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("creates a NodeAddressBookQuery and returns the values")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/create")
     void shouldCreateAndReturnTheValues() {
         final NodeAddressBookQuery subject = new NodeAddressBookQuery();
         assertNull(subject.maxAttempts());
@@ -40,6 +42,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts changes maxAttempts and returns the object")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/maxAttempts/set")
     void shouldSetMaxAttempts() {
         final NodeAddressBookQuery subject = create();
         final @Nullable Integer value = maxAttemptsOtherValue();
@@ -49,6 +52,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts null")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/maxAttempts/set-null")
     void shouldSetMaxAttemptsToNull() {
         final NodeAddressBookQuery subject = create();
         subject.setMaxAttempts((Integer) null);
@@ -57,6 +61,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/maxAttempts/set-accepts-at-minimum")
     void shouldSetMaxAttemptsAtMinimum() {
         final NodeAddressBookQuery subject = create();
         final @Nullable Integer value = Integer.MIN_VALUE;
@@ -66,6 +71,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMaxAttempts accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/maxAttempts/set-accepts-at-maximum")
     void shouldSetMaxAttemptsAtMaximum() {
         final NodeAddressBookQuery subject = create();
         final @Nullable Integer value = 2147483647;
@@ -75,6 +81,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff changes maxBackoff and returns the object")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/maxBackoff/set")
     void shouldSetMaxBackoff() {
         final NodeAddressBookQuery subject = create();
         final @Nullable Long value = maxBackoffOtherValue();
@@ -84,6 +91,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts null")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/maxBackoff/set-null")
     void shouldSetMaxBackoffToNull() {
         final NodeAddressBookQuery subject = create();
         subject.setMaxBackoff((Long) null);
@@ -92,6 +100,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/maxBackoff/set-accepts-at-minimum")
     void shouldSetMaxBackoffAtMinimum() {
         final NodeAddressBookQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -101,6 +110,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMaxBackoff accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/maxBackoff/set-accepts-at-maximum")
     void shouldSetMaxBackoffAtMaximum() {
         final NodeAddressBookQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -110,6 +120,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMinBackoff changes minBackoff and returns the object")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/minBackoff/set")
     void shouldSetMinBackoff() {
         final NodeAddressBookQuery subject = create();
         final @Nullable Long value = minBackoffOtherValue();
@@ -119,6 +130,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts null")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/minBackoff/set-null")
     void shouldSetMinBackoffToNull() {
         final NodeAddressBookQuery subject = create();
         subject.setMinBackoff((Long) null);
@@ -127,6 +139,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/minBackoff/set-accepts-at-minimum")
     void shouldSetMinBackoffAtMinimum() {
         final NodeAddressBookQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -136,6 +149,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMinBackoff accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/minBackoff/set-accepts-at-maximum")
     void shouldSetMinBackoffAtMaximum() {
         final NodeAddressBookQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -145,6 +159,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout changes attemptTimeout and returns the object")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/attemptTimeout/set")
     void shouldSetAttemptTimeout() {
         final NodeAddressBookQuery subject = create();
         final @Nullable Long value = attemptTimeoutOtherValue();
@@ -154,6 +169,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts null")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/attemptTimeout/set-null")
     void shouldSetAttemptTimeoutToNull() {
         final NodeAddressBookQuery subject = create();
         subject.setAttemptTimeout((Long) null);
@@ -162,6 +178,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/attemptTimeout/set-accepts-at-minimum")
     void shouldSetAttemptTimeoutAtMinimum() {
         final NodeAddressBookQuery subject = create();
         final @Nullable Long value = -9223372036854775808L;
@@ -171,6 +188,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setAttemptTimeout accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/attemptTimeout/set-accepts-at-maximum")
     void shouldSetAttemptTimeoutAtMaximum() {
         final NodeAddressBookQuery subject = create();
         final @Nullable Long value = 9223372036854775807L;
@@ -180,6 +198,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMaxQueryPayment changes maxQueryPayment and returns the object")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/maxQueryPayment/set")
     void shouldSetMaxQueryPayment() {
         final NodeAddressBookQuery subject = create();
         final @Nullable NativeToken<?, ?> value = maxQueryPaymentOtherValue();
@@ -189,6 +208,7 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("setMaxQueryPayment accepts null")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/maxQueryPayment/set-null")
     void shouldSetMaxQueryPaymentToNull() {
         final NodeAddressBookQuery subject = create();
         subject.setMaxQueryPayment((NativeToken<?, ?>) null);
@@ -197,12 +217,14 @@ class NodeAddressBookQueryTest {
 
     @Test
     @DisplayName("submit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/submit/call")
     void shouldCallSubmit() {
         assertNotNull(create().submit(clientValue()));
     }
 
     @Test
     @DisplayName("getCost(client) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.network.NodeAddressBookQuery/getCost/call")
     void shouldCallGetCost() {
         assertNotNull(create().getCost(clientValue()));
     }

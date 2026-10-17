@@ -21,6 +21,7 @@ import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenMintNftReceipt`, generated from the specs.
@@ -29,6 +30,7 @@ class TokenMintNftReceiptTest {
 
     @Test
     @DisplayName("creates a TokenMintNftReceipt and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftReceipt/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -47,6 +49,7 @@ class TokenMintNftReceiptTest {
 
     @Test
     @DisplayName("creates a TokenMintNftReceipt with the default values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftReceipt/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final TokenMintNftReceipt subject = new TokenMintNftReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), totalSupplyValue());
         assertValue(List.of(), subject.serials());
@@ -54,6 +57,7 @@ class TokenMintNftReceiptTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftReceipt/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final TransactionId transactionId = transactionIdValue();
         final TransactionStatus status = statusValue();
@@ -79,6 +83,7 @@ class TokenMintNftReceiptTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftReceipt/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TokenMintNftReceipt subject = TokenMintNftReceipt.builder()
                 .transactionId(transactionIdValue())
@@ -92,36 +97,42 @@ class TokenMintNftReceiptTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftReceipt/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TokenMintNftReceipt.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftReceipt/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new TokenMintNftReceipt((TransactionId) null, statusValue(), exchangeRateValue(), nextExchangeRateValue(), totalSupplyValue(), serialsValue()));
     }
 
     @Test
     @DisplayName("rejects null for status")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftReceipt/status/rejects-null")
     void shouldRejectNullStatus() {
         assertThrows(NullPointerException.class, () -> new TokenMintNftReceipt(transactionIdValue(), (TransactionStatus) null, exchangeRateValue(), nextExchangeRateValue(), totalSupplyValue(), serialsValue()));
     }
 
     @Test
     @DisplayName("rejects null for exchangeRate")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftReceipt/exchangeRate/rejects-null")
     void shouldRejectNullExchangeRate() {
         assertThrows(NullPointerException.class, () -> new TokenMintNftReceipt(transactionIdValue(), statusValue(), (ExchangeRate) null, nextExchangeRateValue(), totalSupplyValue(), serialsValue()));
     }
 
     @Test
     @DisplayName("rejects null for nextExchangeRate")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftReceipt/nextExchangeRate/rejects-null")
     void shouldRejectNullNextExchangeRate() {
         assertThrows(NullPointerException.class, () -> new TokenMintNftReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), (ExchangeRate) null, totalSupplyValue(), serialsValue()));
     }
 
     @Test
     @DisplayName("totalSupply: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftReceipt/totalSupply/accepts-at-minimum")
     void shouldAcceptTotalSupplyAtMinimum() {
         final long value = -9223372036854775808L;
         final TokenMintNftReceipt subject = new TokenMintNftReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), value, serialsValue());
@@ -130,6 +141,7 @@ class TokenMintNftReceiptTest {
 
     @Test
     @DisplayName("totalSupply: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftReceipt/totalSupply/accepts-at-maximum")
     void shouldAcceptTotalSupplyAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenMintNftReceipt subject = new TokenMintNftReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), value, serialsValue());
@@ -138,12 +150,14 @@ class TokenMintNftReceiptTest {
 
     @Test
     @DisplayName("rejects null for serials")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftReceipt/serials/rejects-null")
     void shouldRejectNullSerials() {
         assertThrows(NullPointerException.class, () -> new TokenMintNftReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), totalSupplyValue(), (List<Long>) null));
     }
 
     @Test
     @DisplayName("the constructor copies serials; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftReceipt/serials/copies-in")
     void shouldCopySerialsIn() {
         final List<Long> value = new ArrayList<>(serialsValue());
         final List<Long> expected = List.copyOf(value);

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.hiero.ledger.MirrorNode;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `MirrornodeFactory`, generated from the specs.
@@ -12,6 +13,7 @@ class MirrornodeFactoryTest {
 
     @Test
     @DisplayName("createMirrorNodeClient(mirrorNode) can be called and returns a value (only MirrorNodeException may occur)")
+    @Tag("testId:mirrornode/createMirrorNodeClient/call")
     void shouldCallCreateMirrorNodeClient() throws Exception {
         try {
             assertNotNull(MirrornodeFactory.createMirrorNodeClient(mirrorNodeValue()));
@@ -24,6 +26,7 @@ class MirrornodeFactoryTest {
 
     @Test
     @DisplayName("createMirrorNodeClient rejects null for mirrorNode")
+    @Tag("testId:mirrornode/createMirrorNodeClient/mirrorNode/rejects-null")
     void shouldRejectNullMirrorNodeInCreateMirrorNodeClient() {
         assertThrows(NullPointerException.class, () -> MirrornodeFactory.createMirrorNodeClient((MirrorNode) null));
     }

@@ -4,6 +4,7 @@ import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `PublicKey`, generated from the specs.
@@ -12,6 +13,7 @@ class PublicKeyTest {
 
     @Test
     @DisplayName("creates a PublicKey and returns the values")
+    @Tag("testId:keys.PublicKey/create")
     void shouldCreateAndReturnTheValues() {
         final byte[] bytes = bytesValue();
         final KeyAlgorithm algorithm = algorithmValue();
@@ -24,12 +26,14 @@ class PublicKeyTest {
 
     @Test
     @DisplayName("rejects null for bytes")
+    @Tag("testId:keys.PublicKey/bytes/rejects-null")
     void shouldRejectNullBytes() {
         assertThrows(NullPointerException.class, () -> new PublicKey((byte[]) null, algorithmValue(), typeValue()));
     }
 
     @Test
     @DisplayName("the constructor copies bytes; the accessor returns a copy")
+    @Tag("testId:keys.PublicKey/bytes/copies-in")
     void shouldCopyBytesIn() {
         final byte[] value = bytesValue();
         final byte[] expected = value.clone();
@@ -44,18 +48,21 @@ class PublicKeyTest {
 
     @Test
     @DisplayName("rejects null for algorithm")
+    @Tag("testId:keys.PublicKey/algorithm/rejects-null")
     void shouldRejectNullAlgorithm() {
         assertThrows(NullPointerException.class, () -> new PublicKey(bytesValue(), (KeyAlgorithm) null, typeValue()));
     }
 
     @Test
     @DisplayName("rejects null for type")
+    @Tag("testId:keys.PublicKey/type/rejects-null")
     void shouldRejectNullType() {
         assertThrows(NullPointerException.class, () -> new PublicKey(bytesValue(), algorithmValue(), (KeyType) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:keys.PublicKey/value-semantics")
     void shouldCompareByValue() {
         final PublicKey subject = create();
         final PublicKey other = create();
@@ -65,12 +72,14 @@ class PublicKeyTest {
 
     @Test
     @DisplayName("toRawBytes() can be called and returns a value")
+    @Tag("testId:keys.PublicKey/toRawBytes/call")
     void shouldCallToRawBytes() {
         assertNotNull(defaultSubject().toRawBytes());
     }
 
     @Test
     @DisplayName("toBytes(container) can be called and returns a value (only IllegalArgumentException may occur)")
+    @Tag("testId:keys.PublicKey/toBytes/call")
     void shouldCallToBytes() throws Exception {
         try {
             assertNotNull(defaultSubject().toBytes(containerValue()));
@@ -83,6 +92,7 @@ class PublicKeyTest {
 
     @Test
     @DisplayName("toString(container) can be called and returns a value (only IllegalArgumentException may occur)")
+    @Tag("testId:keys.PublicKey/toString/call")
     void shouldCallToString() throws Exception {
         try {
             assertNotNull(defaultSubject().toString(containerValue()));
@@ -95,6 +105,7 @@ class PublicKeyTest {
 
     @Test
     @DisplayName("verify(message, signature) can be called")
+    @Tag("testId:keys.PublicKey/verify/call")
     void shouldCallVerify() {
         defaultSubject().verify(messageValue(), signatureValue());
     }

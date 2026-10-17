@@ -12,6 +12,7 @@ import org.hiero.mirrornode.common.FixedFee;
 import org.hiero.token.TokenSupplyType;
 import org.hiero.token.TokenType;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `mirror-node-token`, generated from the `tests` blocks of its `## Testing` section.
@@ -24,6 +25,7 @@ class MirrorNodeTokenSpecTest {
     /// 4, fraction 4/5, fallback fee 6); this spec (CustomFee groups the fees into fixed, fractional and royalty fees).
     @Test
     @DisplayName("custom fees keep their fixed, fractional and royalty fees")
+    @Tag("testId:mirrornode.token/custom-fees-keep-their-fixed-fractional-and-royalty-fees")
     void customFeesKeepTheirFixedFractionalAndRoyaltyFees() {
         // given
         final AccountId collector = AccountId.fromString("1.2.3");
@@ -49,6 +51,7 @@ class MirrorNodeTokenSpecTest {
     /// Source: the API guideline (a collection is never null: a token without custom fees has empty fee lists).
     @Test
     @DisplayName("custom fees without fees have three empty lists")
+    @Tag("testId:mirrornode.token/custom-fees-without-fees-have-three-empty-lists")
     void customFeesWithoutFeesHaveThreeEmptyLists() {
         // when
         final CustomFee fees = new CustomFee(List.of(), List.of(), List.of());
@@ -66,6 +69,7 @@ class MirrorNodeTokenSpecTest {
     /// "1706816444.138081003", expiry 1713816185275486248 ns); millisecond precision.
     @Test
     @DisplayName("a token info keeps its created, modified and expiry timestamps")
+    @Tag("testId:mirrornode.token/a-token-info-keeps-its-created-modified-and-expiry-timestamps")
     void aTokenInfoKeepsItsCreatedModifiedAndExpiryTimestamps() {
         // given
         final ZonedDateTime created = toZonedDateTime("2024-02-01T19:36:26.275Z");
@@ -93,6 +97,7 @@ class MirrorNodeTokenSpecTest {
     /// Source: this spec (`expiryTimestamp` and `memo` are nullable).
     @Test
     @DisplayName("a token info without expiry has no expiry timestamp and no memo")
+    @Tag("testId:mirrornode.token/a-token-info-without-expiry-has-no-expiry-timestamp-and-no-memo")
     void aTokenInfoWithoutExpiryHasNoExpiryTimestampAndNoMemo() {
         // given
         final ZonedDateTime time = ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);

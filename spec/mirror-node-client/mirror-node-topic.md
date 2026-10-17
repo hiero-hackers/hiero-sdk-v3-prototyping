@@ -77,6 +77,7 @@ The queries of `TopicRepository` need a Mirror Node; only the value types are te
 ```tests
 // Source: this spec (a message submitted in several chunks carries the chunk's number and the total number of
 // chunks, and the id of the transaction of its first chunk).
+@@testId("chunk-info-keeps-the-initial-transaction-id-the-chunk-number-and-the-total")
 test "chunk info keeps the initial transaction id, the chunk number and the total" {
     // given
     let initial = DEFAULT(TransactionId)
@@ -95,6 +96,7 @@ test "chunk info keeps the initial transaction id, the chunk number and the tota
 // "1706816673.106110015", timestamp range from the creation, memo "1706816668096 Mirror node created test topic", no
 // custom fees, no fee-exempt keys); millisecond precision. The fixture has no end of the timestamp range, which this
 // spec requires, so the test uses some valid time for it.
+@@testId("a-topic-keeps-its-auto-renew-period-and-its-creation-time")
 test "a topic keeps its auto-renew period and its creation time" {
     // given
     let created = toZonedDateTime(text: "2024-02-01T19:44:33.106Z")
@@ -119,6 +121,7 @@ test "a topic keeps its auto-renew period and its creation time" {
 // Source: the Hiero Enterprise Java test fixture topic-message.json (topic 0.0.9411905, payer 0.0.6105114, consensus
 // timestamp "1783075674.960707349", running hash version 3, sequence number 3, chunk 3 of 14); millisecond precision.
 // A running hash of version 3 is a SHA-384 hash of 48 bytes (HAPI, TransactionReceipt.topicRunningHashVersion).
+@@testId("a-topic-message-keeps-its-consensus-timestamp-payer-running-hash-and-sequence-number")
 test "a topic message keeps its consensus timestamp, payer, running hash and sequence number" {
     // given
     let consensus = toZonedDateTime(text: "2026-07-03T10:47:54.960Z")
@@ -144,6 +147,7 @@ test "a topic message keeps its consensus timestamp, payer, running hash and seq
 
 // Source: this spec (`chunkInfo` is nullable: only a message submitted in several chunks carries it; a topic message is
 // a value, two messages that differ only in their consensus timestamp are different).
+@@testId("a-topic-message-submitted-in-one-piece-has-no-chunk-info")
 test "a topic message submitted in one piece has no chunk info" {
     // given
     let topic = Address.fromString(address: "0.0.9411905")

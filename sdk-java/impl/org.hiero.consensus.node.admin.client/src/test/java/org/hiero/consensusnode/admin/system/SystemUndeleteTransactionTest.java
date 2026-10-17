@@ -28,6 +28,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `SystemUndeleteTransaction`, generated from the specs.
@@ -36,6 +37,7 @@ class SystemUndeleteTransactionTest {
 
     @Test
     @DisplayName("creates a SystemUndeleteTransaction and returns the values")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final @Nullable Address fileId = fileIdValue();
         final @Nullable ContractId contractId = (ContractId) null;
@@ -49,6 +51,7 @@ class SystemUndeleteTransactionTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final @Nullable Address fileId = fileIdValue();
         final @Nullable ContractId contractId = (ContractId) null;
@@ -62,6 +65,7 @@ class SystemUndeleteTransactionTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final SystemUndeleteTransaction subject = SystemUndeleteTransaction.builder()
                 .fileId(fileIdValue())
@@ -72,18 +76,21 @@ class SystemUndeleteTransactionTest {
 
     @Test
     @DisplayName("rejects fileId and contractId together (@@oneOf)")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/fileId-contractId/rejects-two")
     void shouldRejectTwoOfFileIdOrContractId() {
         assertThrows(IllegalArgumentException.class, () -> new SystemUndeleteTransaction(fileIdValue(), contractIdValue()));
     }
 
     @Test
     @DisplayName("rejects none of fileId, contractId (@@oneOf)")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/fileId-contractId/rejects-none")
     void shouldRejectNoneOfFileIdOrContractId() {
         assertThrows(IllegalArgumentException.class, () -> new SystemUndeleteTransaction((Address) null, (ContractId) null));
     }
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final SystemUndeleteTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -93,6 +100,7 @@ class SystemUndeleteTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final SystemUndeleteTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -101,6 +109,7 @@ class SystemUndeleteTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final SystemUndeleteTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -110,6 +119,7 @@ class SystemUndeleteTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final SystemUndeleteTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -118,6 +128,7 @@ class SystemUndeleteTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/memo/set")
     void shouldSetMemo() {
         final SystemUndeleteTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -127,6 +138,7 @@ class SystemUndeleteTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final SystemUndeleteTransaction subject = create();
         subject.setMemo((String) null);
@@ -135,6 +147,7 @@ class SystemUndeleteTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final SystemUndeleteTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -144,6 +157,7 @@ class SystemUndeleteTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final SystemUndeleteTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -152,54 +166,63 @@ class SystemUndeleteTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.admin.system.SystemUndeleteTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

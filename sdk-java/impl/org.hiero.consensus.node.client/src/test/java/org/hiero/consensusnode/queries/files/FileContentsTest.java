@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `FileContents`, generated from the specs.
@@ -13,6 +14,7 @@ class FileContentsTest {
 
     @Test
     @DisplayName("creates a FileContents and returns the values")
+    @Tag("testId:consensusnode.queries.files.FileContents/create")
     void shouldCreateAndReturnTheValues() {
         final Address fileId = fileIdValue();
         final byte[] contents = contentsValue();
@@ -23,18 +25,21 @@ class FileContentsTest {
 
     @Test
     @DisplayName("rejects null for fileId")
+    @Tag("testId:consensusnode.queries.files.FileContents/fileId/rejects-null")
     void shouldRejectNullFileId() {
         assertThrows(NullPointerException.class, () -> new FileContents((Address) null, contentsValue()));
     }
 
     @Test
     @DisplayName("rejects null for contents")
+    @Tag("testId:consensusnode.queries.files.FileContents/contents/rejects-null")
     void shouldRejectNullContents() {
         assertThrows(NullPointerException.class, () -> new FileContents(fileIdValue(), (byte[]) null));
     }
 
     @Test
     @DisplayName("the constructor copies contents; the accessor returns a copy")
+    @Tag("testId:consensusnode.queries.files.FileContents/contents/copies-in")
     void shouldCopyContentsIn() {
         final byte[] value = contentsValue();
         final byte[] expected = value.clone();
@@ -49,6 +54,7 @@ class FileContentsTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.queries.files.FileContents/value-semantics")
     void shouldCompareByValue() {
         final FileContents subject = create();
         final FileContents other = create();

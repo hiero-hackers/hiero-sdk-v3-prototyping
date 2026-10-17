@@ -4,6 +4,7 @@ import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NetworkFee`, generated from the specs.
@@ -12,6 +13,7 @@ class NetworkFeeTest {
 
     @Test
     @DisplayName("creates a NetworkFee and returns the values")
+    @Tag("testId:mirrornode.network.NetworkFee/create")
     void shouldCreateAndReturnTheValues() {
         final long gas = gasValue();
         final String transactionType = transactionTypeValue();
@@ -22,6 +24,7 @@ class NetworkFeeTest {
 
     @Test
     @DisplayName("gas: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.network.NetworkFee/gas/accepts-at-minimum")
     void shouldAcceptGasAtMinimum() {
         final long value = -9223372036854775808L;
         final NetworkFee subject = new NetworkFee(value, transactionTypeValue());
@@ -30,6 +33,7 @@ class NetworkFeeTest {
 
     @Test
     @DisplayName("gas: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.network.NetworkFee/gas/accepts-at-maximum")
     void shouldAcceptGasAtMaximum() {
         final long value = 9223372036854775807L;
         final NetworkFee subject = new NetworkFee(value, transactionTypeValue());
@@ -38,12 +42,14 @@ class NetworkFeeTest {
 
     @Test
     @DisplayName("rejects null for transactionType")
+    @Tag("testId:mirrornode.network.NetworkFee/transactionType/rejects-null")
     void shouldRejectNullTransactionType() {
         assertThrows(NullPointerException.class, () -> new NetworkFee(gasValue(), (String) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.network.NetworkFee/value-semantics")
     void shouldCompareByValue() {
         final NetworkFee subject = create();
         final NetworkFee other = create();

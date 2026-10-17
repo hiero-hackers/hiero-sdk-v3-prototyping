@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions-freeze`, generated from the `tests` blocks of its `## Testing` section.
@@ -29,6 +30,7 @@ class TransactionsFreezeSpecTest {
     /// Java test (Instant.ofEpochSecond(1554158542), converted exactly to 2019-04-01T22:42:22Z).
     @Test
     @DisplayName("a freeze upgrade keeps its type, start time, update file and file hash")
+    @Tag("testId:consensusnode.admin.freeze/a-freeze-upgrade-keeps-its-type-start-time-update-file-and-file-hash")
     void aFreezeUpgradeKeepsItsTypeStartTimeUpdateFileAndFileHash() {
         // given
         final ZonedDateTime startTime = toZonedDateTime("2019-04-01T22:42:22Z");
@@ -49,6 +51,7 @@ class TransactionsFreezeSpecTest {
     /// unit tests; the Description of this spec (PREPARE_UPGRADE ignores startTime).
     @Test
     @DisplayName("a prepared upgrade needs no start time")
+    @Tag("testId:consensusnode.admin.freeze/a-prepared-upgrade-needs-no-start-time")
     void aPreparedUpgradeNeedsNoStartTime() {
         // when
         final FreezeTransaction transaction = new FreezeTransaction(FreezeType.PREPARE_UPGRADE, null, UPGRADE_FILE(), UPGRADE_FILE_HASH());
@@ -67,6 +70,7 @@ class TransactionsFreezeSpecTest {
     /// Description of this spec (FREEZE_ONLY needs no upgrade payload).
     @Test
     @DisplayName("a freeze without upgrade needs no update file and no file hash")
+    @Tag("testId:consensusnode.admin.freeze/a-freeze-without-upgrade-needs-no-update-file-and-no-file-hash")
     void aFreezeWithoutUpgradeNeedsNoUpdateFileAndNoFileHash() {
         // given
         final ZonedDateTime startTime = toZonedDateTime("2022-01-01T00:00:00Z");
@@ -88,6 +92,7 @@ class TransactionsFreezeSpecTest {
     /// deserialize from protobuf with all fields": Timestamp(1624430225, 0), converted exactly to 2021-06-23T06:37:05Z).
     @Test
     @DisplayName("a telemetry upgrade keeps its start time, update file and file hash")
+    @Tag("testId:consensusnode.admin.freeze/a-telemetry-upgrade-keeps-its-start-time-update-file-and-file-hash")
     void aTelemetryUpgradeKeepsItsStartTimeUpdateFileAndFileHash() {
         // given
         final ZonedDateTime startTime = toZonedDateTime("2021-06-23T06:37:05Z");
@@ -108,6 +113,7 @@ class TransactionsFreezeSpecTest {
     /// FreezeType unit tests: every freeze type is kept as given.
     @Test
     @DisplayName("a freeze transaction keeps every freeze type")
+    @Tag("testId:consensusnode.admin.freeze/a-freeze-transaction-keeps-every-freeze-type")
     void aFreezeTransactionKeepsEveryFreezeType() {
         for (final FreezeType freezeType : List.of(FreezeType.FREEZE_ONLY, FreezeType.PREPARE_UPGRADE, FreezeType.FREEZE_UPGRADE, FreezeType.FREEZE_ABORT, FreezeType.TELEMETRY_UPGRADE)) {
             // when

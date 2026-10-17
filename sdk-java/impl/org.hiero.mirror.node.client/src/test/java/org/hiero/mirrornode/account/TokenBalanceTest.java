@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenBalance`, generated from the specs.
@@ -13,6 +14,7 @@ class TokenBalanceTest {
 
     @Test
     @DisplayName("creates a TokenBalance and returns the values")
+    @Tag("testId:mirrornode.account.TokenBalance/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final long balance = balanceValue();
@@ -23,12 +25,14 @@ class TokenBalanceTest {
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:mirrornode.account.TokenBalance/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenBalance((Address) null, balanceValue()));
     }
 
     @Test
     @DisplayName("balance: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.account.TokenBalance/balance/accepts-at-minimum")
     void shouldAcceptBalanceAtMinimum() {
         final long value = -9223372036854775808L;
         final TokenBalance subject = new TokenBalance(tokenIdValue(), value);
@@ -37,6 +41,7 @@ class TokenBalanceTest {
 
     @Test
     @DisplayName("balance: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.account.TokenBalance/balance/accepts-at-maximum")
     void shouldAcceptBalanceAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenBalance subject = new TokenBalance(tokenIdValue(), value);
@@ -45,6 +50,7 @@ class TokenBalanceTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.account.TokenBalance/value-semantics")
     void shouldCompareByValue() {
         final TokenBalance subject = create();
         final TokenBalance other = create();

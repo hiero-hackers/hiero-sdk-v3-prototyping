@@ -7,6 +7,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `PendingAirdrop`, generated from the specs.
@@ -15,6 +16,7 @@ class PendingAirdropTest {
 
     @Test
     @DisplayName("creates a PendingAirdrop and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.PendingAirdrop/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId senderId = senderIdValue();
         final AccountId receiverId = receiverIdValue();
@@ -29,24 +31,28 @@ class PendingAirdropTest {
 
     @Test
     @DisplayName("rejects null for senderId")
+    @Tag("testId:consensusnode.transactions.tokens.PendingAirdrop/senderId/rejects-null")
     void shouldRejectNullSenderId() {
         assertThrows(NullPointerException.class, () -> new PendingAirdrop((AccountId) null, receiverIdValue(), tokenIdValue(), serialValue()));
     }
 
     @Test
     @DisplayName("rejects null for receiverId")
+    @Tag("testId:consensusnode.transactions.tokens.PendingAirdrop/receiverId/rejects-null")
     void shouldRejectNullReceiverId() {
         assertThrows(NullPointerException.class, () -> new PendingAirdrop(senderIdValue(), (AccountId) null, tokenIdValue(), serialValue()));
     }
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.transactions.tokens.PendingAirdrop/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new PendingAirdrop(senderIdValue(), receiverIdValue(), (Address) null, serialValue()));
     }
 
     @Test
     @DisplayName("serial: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.transactions.tokens.PendingAirdrop/serial/accepts-at-minimum")
     void shouldAcceptSerialAtMinimum() {
         final @Nullable Long value = -9223372036854775808L;
         final PendingAirdrop subject = new PendingAirdrop(senderIdValue(), receiverIdValue(), tokenIdValue(), value);
@@ -55,6 +61,7 @@ class PendingAirdropTest {
 
     @Test
     @DisplayName("serial: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.transactions.tokens.PendingAirdrop/serial/accepts-at-maximum")
     void shouldAcceptSerialAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
         final PendingAirdrop subject = new PendingAirdrop(senderIdValue(), receiverIdValue(), tokenIdValue(), value);
@@ -63,6 +70,7 @@ class PendingAirdropTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.transactions.tokens.PendingAirdrop/value-semantics")
     void shouldCompareByValue() {
         final PendingAirdrop subject = create();
         final PendingAirdrop other = create();

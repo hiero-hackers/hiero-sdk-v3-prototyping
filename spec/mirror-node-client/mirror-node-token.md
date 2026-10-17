@@ -106,6 +106,7 @@ The queries of `TokenRepository` need a Mirror Node; only the value types are te
 ```tests
 // Source: the Java SDK (CustomFixedFeeTest, CustomFractionalFeeTest and CustomRoyaltyFeeTest: collector 1.2.3, amount
 // 4, fraction 4/5, fallback fee 6); this spec (CustomFee groups the fees into fixed, fractional and royalty fees).
+@@testId("custom-fees-keep-their-fixed-fractional-and-royalty-fees")
 test "custom fees keep their fixed, fractional and royalty fees" {
     // given
     let collector = AccountId.fromString(value: "1.2.3")
@@ -128,6 +129,7 @@ test "custom fees keep their fixed, fractional and royalty fees" {
 }
 
 // Source: the API guideline (a collection is never null: a token without custom fees has empty fee lists).
+@@testId("custom-fees-without-fees-have-three-empty-lists")
 test "custom fees without fees have three empty lists" {
     // when
     let fees = CustomFee{fixedFees: [], fractionalFees: [], royaltyFees: []}
@@ -141,6 +143,7 @@ test "custom fees without fees have three empty lists" {
 // Source: the Hiero Enterprise Java test fixture token-info.json (token 0.0.1267, fungible, infinite supply, 10
 // decimals, initial supply 1000000, treasury 0.0.1245, deleted, created "1706816186.275486248", modified
 // "1706816444.138081003", expiry 1713816185275486248 ns); millisecond precision.
+@@testId("a-token-info-keeps-its-created-modified-and-expiry-timestamps")
 test "a token info keeps its created, modified and expiry timestamps" {
     // given
     let created = toZonedDateTime(text: "2024-02-01T19:36:26.275Z")
@@ -168,6 +171,7 @@ test "a token info keeps its created, modified and expiry timestamps" {
 }
 
 // Source: this spec (`expiryTimestamp` and `memo` are nullable).
+@@testId("a-token-info-without-expiry-has-no-expiry-timestamp-and-no-memo")
 test "a token info without expiry has no expiry timestamp and no memo" {
     // given
     let time = DEFAULT(zonedDateTime)

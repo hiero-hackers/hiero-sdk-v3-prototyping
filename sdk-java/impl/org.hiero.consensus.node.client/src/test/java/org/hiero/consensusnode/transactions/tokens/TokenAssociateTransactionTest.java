@@ -29,6 +29,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenAssociateTransaction`, generated from the specs.
@@ -37,6 +38,7 @@ class TokenAssociateTransactionTest {
 
     @Test
     @DisplayName("creates a TokenAssociateTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
         final Set<Address> tokens = tokensValue();
@@ -50,18 +52,21 @@ class TokenAssociateTransactionTest {
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new TokenAssociateTransaction((AccountId) null, tokensValue()));
     }
 
     @Test
     @DisplayName("rejects null for tokens")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/tokens/rejects-null")
     void shouldRejectNullTokens() {
         assertThrows(NullPointerException.class, () -> new TokenAssociateTransaction(accountIdValue(), (Set<Address>) null));
     }
 
     @Test
     @DisplayName("the constructor copies tokens; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/tokens/copies-in")
     void shouldCopyTokensIn() {
         final Set<Address> value = new LinkedHashSet<>(tokensValue());
         final Set<Address> expected = Set.copyOf(value);
@@ -73,6 +78,7 @@ class TokenAssociateTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final TokenAssociateTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -82,6 +88,7 @@ class TokenAssociateTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final TokenAssociateTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -90,6 +97,7 @@ class TokenAssociateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final TokenAssociateTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -99,6 +107,7 @@ class TokenAssociateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final TokenAssociateTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -107,6 +116,7 @@ class TokenAssociateTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/memo/set")
     void shouldSetMemo() {
         final TokenAssociateTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -116,6 +126,7 @@ class TokenAssociateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final TokenAssociateTransaction subject = create();
         subject.setMemo((String) null);
@@ -124,6 +135,7 @@ class TokenAssociateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final TokenAssociateTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -133,6 +145,7 @@ class TokenAssociateTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final TokenAssociateTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -141,54 +154,63 @@ class TokenAssociateTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenAssociateTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

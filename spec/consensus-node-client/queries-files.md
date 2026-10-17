@@ -117,6 +117,7 @@ comment above each test names where the current SDKs test the same.
 ```tests
 // Source: the Python SDK (file_contents_query_test.py and file_info_query_test.py, test_constructor and
 // test_get_method) and the Swift SDK (FileContentsQueryUnitTests and FileInfoQueryUnitTests, the get / set tests).
+@@testId("the-file-queries-keep-the-id-of-their-file")
 test "the file queries keep the id of their file" {
     // given
     let file = DEFAULT(Address)
@@ -132,6 +133,7 @@ test "the file queries keep the id of their file" {
 
 // Source: this spec (the authority is absent if the file is immutable); the Python SDK (file_info_test.py,
 // test_file_info_default_initialization and test_to_proto_with_none_values).
+@@testId("a-file-info-of-an-immutable-file-without-memo-has-no-authority-and-no-memo")
 test "a file info of an immutable file without memo has no authority and no memo" {
     // when
     let info = FileInfo{fileId: DEFAULT, size: 0, expirationTime: DEFAULT, deleted: false, authority: null,
@@ -147,6 +149,7 @@ test "a file info of an immutable file without memo has no authority and no memo
 
 // Source: the Java SDK (FileInfoTest, the file info of its fixture): expiration time Instant.ofEpochMilli(3), i.e.
 // 1970-01-01T00:00:00.003Z. Millisecond precision.
+@@testId("a-file-info-keeps-its-expiration-time")
 test "a file info keeps its expiration time" {
     // given
     let expirationTime = toZonedDateTime(text: "1970-01-01T00:00:00.003Z")

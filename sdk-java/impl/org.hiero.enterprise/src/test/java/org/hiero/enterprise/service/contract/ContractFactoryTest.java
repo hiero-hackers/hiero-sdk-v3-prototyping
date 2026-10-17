@@ -33,6 +33,7 @@ import org.hiero.mirrornode.MirrornodeFactory;
 import org.hiero.mirrornode.network.NetworkFactory;
 import org.hiero.mirrornode.transaction.TransactionFactory;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ContractFactory`, generated from the specs.
@@ -41,228 +42,266 @@ class ContractFactoryTest {
 
     @Test
     @DisplayName("ofString(value) can be called and returns a value")
+    @Tag("testId:enterprise.service.contract/ofString/call")
     void shouldCallOfString() {
         assertNotNull(ContractFactory.ofString(valueValue()));
     }
 
     @Test
     @DisplayName("ofString rejects null for value")
+    @Tag("testId:enterprise.service.contract/ofString/value/rejects-null")
     void shouldRejectNullValueInOfString() {
         assertThrows(NullPointerException.class, () -> ContractFactory.ofString((String) null));
     }
 
     @Test
     @DisplayName("ofBytes(value) can be called and returns a value")
+    @Tag("testId:enterprise.service.contract/ofBytes/call")
     void shouldCallOfBytes() {
         assertNotNull(ContractFactory.ofBytes(valueValue()));
     }
 
     @Test
     @DisplayName("ofBytes rejects null for value")
+    @Tag("testId:enterprise.service.contract/ofBytes/value/rejects-null")
     void shouldRejectNullValueInOfBytes() {
         assertThrows(NullPointerException.class, () -> ContractFactory.ofBytes((String) null));
     }
 
     @Test
     @DisplayName("ofBytes23(value) can be called and returns a value")
+    @Tag("testId:enterprise.service.contract/ofBytes23/call")
     void shouldCallOfBytes23() {
         assertNotNull(ContractFactory.ofBytes23(valueValue()));
     }
 
     @Test
     @DisplayName("ofBytes23 rejects null for value")
+    @Tag("testId:enterprise.service.contract/ofBytes23/value/rejects-null")
     void shouldRejectNullValueInOfBytes23() {
         assertThrows(NullPointerException.class, () -> ContractFactory.ofBytes23((String) null));
     }
 
     @Test
     @DisplayName("ofBytes(value) can be called and returns a value")
+    @Tag("testId:enterprise.service.contract/ofBytes/call-2")
     void shouldCallOfBytes2() {
         assertNotNull(ContractFactory.ofBytes(valueValue2()));
     }
 
     @Test
     @DisplayName("ofBytes rejects null for value")
+    @Tag("testId:enterprise.service.contract/ofBytes/value/rejects-null-2")
     void shouldRejectNullValueInOfBytes2() {
         assertThrows(NullPointerException.class, () -> ContractFactory.ofBytes((byte[]) null));
     }
 
     @Test
     @DisplayName("ofBytes23(value) can be called and returns a value")
+    @Tag("testId:enterprise.service.contract/ofBytes23/call-2")
     void shouldCallOfBytes232() {
         assertNotNull(ContractFactory.ofBytes23(valueValue2()));
     }
 
     @Test
     @DisplayName("ofBytes23 rejects null for value")
+    @Tag("testId:enterprise.service.contract/ofBytes23/value/rejects-null-2")
     void shouldRejectNullValueInOfBytes232() {
         assertThrows(NullPointerException.class, () -> ContractFactory.ofBytes23((byte[]) null));
     }
 
     @Test
     @DisplayName("ofAddress(value) can be called and returns a value")
+    @Tag("testId:enterprise.service.contract/ofAddress/call")
     void shouldCallOfAddress() {
         assertNotNull(ContractFactory.ofAddress(valueValue3()));
     }
 
     @Test
     @DisplayName("ofAddress rejects null for value")
+    @Tag("testId:enterprise.service.contract/ofAddress/value/rejects-null")
     void shouldRejectNullValueInOfAddress() {
         assertThrows(NullPointerException.class, () -> ContractFactory.ofAddress((String) null));
     }
 
     @Test
     @DisplayName("ofAddress: value rejects a value that does not match the pattern")
+    @Tag("testId:enterprise.service.contract/ofAddress/value/rejects-not-matching-the-pattern")
     void shouldRejectValueNotMatchingThePatternInOfAddress() {
         assertThrows(IllegalArgumentException.class, () -> ContractFactory.ofAddress(""));
     }
 
     @Test
     @DisplayName("ofAddress(value) can be called and returns a value")
+    @Tag("testId:enterprise.service.contract/ofAddress/call-2")
     void shouldCallOfAddress2() {
         assertNotNull(ContractFactory.ofAddress(valueValue4()));
     }
 
     @Test
     @DisplayName("ofAddress rejects null for value")
+    @Tag("testId:enterprise.service.contract/ofAddress/value/rejects-null-2")
     void shouldRejectNullValueInOfAddress2() {
         assertThrows(NullPointerException.class, () -> ContractFactory.ofAddress((EvmAddress) null));
     }
 
     @Test
     @DisplayName("ofBool(value) can be called and returns a value")
+    @Tag("testId:enterprise.service.contract/ofBool/call")
     void shouldCallOfBool() {
         assertNotNull(ContractFactory.ofBool(valueValue5()));
     }
 
     @Test
     @DisplayName("uint8(value) can be called and returns a value")
+    @Tag("testId:enterprise.service.contract/uint8/call")
     void shouldCallUint8() {
         assertNotNull(ContractFactory.uint8(valueValue6()));
     }
 
     @Test
     @DisplayName("uint8: value accepts the minimum (0)")
+    @Tag("testId:enterprise.service.contract/uint8/value/accepts-at-minimum")
     void shouldAcceptValueAtMinimumInUint8() {
         assertNotNull(ContractFactory.uint8((short) 0));
     }
 
     @Test
     @DisplayName("uint8: value accepts the maximum (255)")
+    @Tag("testId:enterprise.service.contract/uint8/value/accepts-at-maximum")
     void shouldAcceptValueAtMaximumInUint8() {
         assertNotNull(ContractFactory.uint8((short) 255));
     }
 
     @Test
     @DisplayName("uint8: value rejects a value below the minimum (-1)")
+    @Tag("testId:enterprise.service.contract/uint8/value/rejects-below-minimum")
     void shouldRejectValueBelowMinimumInUint8() {
         assertThrows(IllegalArgumentException.class, () -> ContractFactory.uint8((short) (-1)));
     }
 
     @Test
     @DisplayName("uint8: value rejects a value above the maximum (256)")
+    @Tag("testId:enterprise.service.contract/uint8/value/rejects-above-maximum")
     void shouldRejectValueAboveMaximumInUint8() {
         assertThrows(IllegalArgumentException.class, () -> ContractFactory.uint8((short) 256));
     }
 
     @Test
     @DisplayName("int8(value) can be called and returns a value")
+    @Tag("testId:enterprise.service.contract/int8/call")
     void shouldCallInt8() {
         assertNotNull(ContractFactory.int8(valueValue7()));
     }
 
     @Test
     @DisplayName("int8: value accepts the minimum (-128)")
+    @Tag("testId:enterprise.service.contract/int8/value/accepts-at-minimum")
     void shouldAcceptValueAtMinimumInInt8() {
         assertNotNull(ContractFactory.int8((byte) (-128)));
     }
 
     @Test
     @DisplayName("int8: value accepts the maximum (127)")
+    @Tag("testId:enterprise.service.contract/int8/value/accepts-at-maximum")
     void shouldAcceptValueAtMaximumInInt8() {
         assertNotNull(ContractFactory.int8((byte) 127));
     }
 
     @Test
     @DisplayName("uint256(value) can be called and returns a value")
+    @Tag("testId:enterprise.service.contract/uint256/call")
     void shouldCallUint256() {
         assertNotNull(ContractFactory.uint256(valueValue8()));
     }
 
     @Test
     @DisplayName("uint256 rejects null for value")
+    @Tag("testId:enterprise.service.contract/uint256/value/rejects-null")
     void shouldRejectNullValueInUint256() {
         assertThrows(NullPointerException.class, () -> ContractFactory.uint256((BigInteger) null));
     }
 
     @Test
     @DisplayName("uint256: value accepts the minimum (0)")
+    @Tag("testId:enterprise.service.contract/uint256/value/accepts-at-minimum")
     void shouldAcceptValueAtMinimumInUint256() {
         assertNotNull(ContractFactory.uint256(new BigInteger("0")));
     }
 
     @Test
     @DisplayName("uint256: value accepts the maximum (115792089237316195423570985008687907853269984665640564039457584007913129639935)")
+    @Tag("testId:enterprise.service.contract/uint256/value/accepts-at-maximum")
     void shouldAcceptValueAtMaximumInUint256() {
         assertNotNull(ContractFactory.uint256(new BigInteger("115792089237316195423570985008687907853269984665640564039457584007913129639935")));
     }
 
     @Test
     @DisplayName("uint256: value rejects a value below the minimum (-1)")
+    @Tag("testId:enterprise.service.contract/uint256/value/rejects-below-minimum")
     void shouldRejectValueBelowMinimumInUint256() {
         assertThrows(IllegalArgumentException.class, () -> ContractFactory.uint256(new BigInteger("-1")));
     }
 
     @Test
     @DisplayName("uint256: value rejects a value above the maximum (115792089237316195423570985008687907853269984665640564039457584007913129639936)")
+    @Tag("testId:enterprise.service.contract/uint256/value/rejects-above-maximum")
     void shouldRejectValueAboveMaximumInUint256() {
         assertThrows(IllegalArgumentException.class, () -> ContractFactory.uint256(new BigInteger("115792089237316195423570985008687907853269984665640564039457584007913129639936")));
     }
 
     @Test
     @DisplayName("int256(value) can be called and returns a value")
+    @Tag("testId:enterprise.service.contract/int256/call")
     void shouldCallInt256() {
         assertNotNull(ContractFactory.int256(valueValue8()));
     }
 
     @Test
     @DisplayName("int256 rejects null for value")
+    @Tag("testId:enterprise.service.contract/int256/value/rejects-null")
     void shouldRejectNullValueInInt256() {
         assertThrows(NullPointerException.class, () -> ContractFactory.int256((BigInteger) null));
     }
 
     @Test
     @DisplayName("int256: value accepts the minimum (-57896044618658097711785492504343953926634992332820282019728792003956564819968)")
+    @Tag("testId:enterprise.service.contract/int256/value/accepts-at-minimum")
     void shouldAcceptValueAtMinimumInInt256() {
         assertNotNull(ContractFactory.int256(new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968")));
     }
 
     @Test
     @DisplayName("int256: value accepts the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819967)")
+    @Tag("testId:enterprise.service.contract/int256/value/accepts-at-maximum")
     void shouldAcceptValueAtMaximumInInt256() {
         assertNotNull(ContractFactory.int256(new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967")));
     }
 
     @Test
     @DisplayName("int256: value rejects a value below the minimum (-57896044618658097711785492504343953926634992332820282019728792003956564819969)")
+    @Tag("testId:enterprise.service.contract/int256/value/rejects-below-minimum")
     void shouldRejectValueBelowMinimumInInt256() {
         assertThrows(IllegalArgumentException.class, () -> ContractFactory.int256(new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819969")));
     }
 
     @Test
     @DisplayName("int256: value rejects a value above the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819968)")
+    @Tag("testId:enterprise.service.contract/int256/value/rejects-above-maximum")
     void shouldRejectValueAboveMaximumInInt256() {
         assertThrows(IllegalArgumentException.class, () -> ContractFactory.int256(new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819968")));
     }
 
     @Test
     @DisplayName("createService(session) can be called and returns a value")
+    @Tag("testId:enterprise.service.contract/createService/call")
     void shouldCallCreateService() {
         assertNotNull(ContractFactory.createService(sessionValue()));
     }
 
     @Test
     @DisplayName("createService rejects null for session")
+    @Tag("testId:enterprise.service.contract/createService/session/rejects-null")
     void shouldRejectNullSessionInCreateService() {
         assertThrows(NullPointerException.class, () -> ContractFactory.createService((Session) null));
     }

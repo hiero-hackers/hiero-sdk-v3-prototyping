@@ -17,6 +17,7 @@ import javax.annotation.processing.Generated;
 import org.hiero.shop.money.Money;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Cart`, generated from the specs.
@@ -27,6 +28,7 @@ class CartTest {
 
     @Test
     @DisplayName("creates a Cart and returns the values")
+    @Tag("testId:shop.Cart/create")
     void shouldCreateAndReturnTheValues() {
         final List<String> items = itemsValue();
         final Set<String> coupons = couponsValue();
@@ -49,6 +51,7 @@ class CartTest {
 
     @Test
     @DisplayName("creates a Cart with the default values")
+    @Tag("testId:shop.Cart/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final Cart<String> subject = new Cart<>(itemsValue(), notesValue(), discountValue(), legacyValue(), categoryValue(), totalValue());
         assertValue(Set.of(), subject.coupons());
@@ -57,6 +60,7 @@ class CartTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:shop.Cart/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final List<String> items = itemsValue();
         final Set<String> coupons = couponsValue();
@@ -88,6 +92,7 @@ class CartTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:shop.Cart/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final Cart<String> subject = Cart.<String>builder()
                 .items(itemsValue())
@@ -103,18 +108,21 @@ class CartTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:shop.Cart/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> Cart.<String>builder().build());
     }
 
     @Test
     @DisplayName("rejects null for items")
+    @Tag("testId:shop.Cart/items/rejects-null")
     void shouldRejectNullItems() {
         assertThrows(NullPointerException.class, () -> new Cart<>((List<String>) null, couponsValue(), notesValue(), quantityValue(), discountValue(), legacyValue(), categoryValue(), totalValue()));
     }
 
     @Test
     @DisplayName("items: accepts the minimum number of elements")
+    @Tag("testId:shop.Cart/items/accepts-at-minimum-size")
     void shouldAcceptItemsAtMinimumSize() {
         final List<String> value = List.of("value");
         final Cart<String> subject = new Cart<>(value, couponsValue(), notesValue(), quantityValue(), discountValue(), legacyValue(), categoryValue(), totalValue());
@@ -123,12 +131,14 @@ class CartTest {
 
     @Test
     @DisplayName("items: rejects fewer elements than the minimum")
+    @Tag("testId:shop.Cart/items/rejects-below-minimum-size")
     void shouldRejectItemsBelowMinimumSize() {
         assertThrows(IllegalArgumentException.class, () -> new Cart<>(List.of(), couponsValue(), notesValue(), quantityValue(), discountValue(), legacyValue(), categoryValue(), totalValue()));
     }
 
     @Test
     @DisplayName("items: accepts the maximum number of elements")
+    @Tag("testId:shop.Cart/items/accepts-at-maximum-size")
     void shouldAcceptItemsAtMaximumSize() {
         final List<String> value = List.of("value", "value1", "value2", "value3", "value4", "value5", "value6", "value7", "value8", "value9", "value10", "value11", "value12", "value13", "value14", "value15", "value16", "value17", "value18", "value19", "value20", "value21", "value22", "value23", "value24", "value25", "value26", "value27", "value28", "value29", "value30", "value31", "value32", "value33", "value34", "value35", "value36", "value37", "value38", "value39", "value40", "value41", "value42", "value43", "value44", "value45", "value46", "value47", "value48", "value49", "value50", "value51", "value52", "value53", "value54", "value55", "value56", "value57", "value58", "value59", "value60", "value61", "value62", "value63", "value64", "value65", "value66", "value67", "value68", "value69", "value70", "value71", "value72", "value73", "value74", "value75", "value76", "value77", "value78", "value79", "value80", "value81", "value82", "value83", "value84", "value85", "value86", "value87", "value88", "value89", "value90", "value91", "value92", "value93", "value94", "value95", "value96", "value97", "value98", "value99");
         final Cart<String> subject = new Cart<>(value, couponsValue(), notesValue(), quantityValue(), discountValue(), legacyValue(), categoryValue(), totalValue());
@@ -137,12 +147,14 @@ class CartTest {
 
     @Test
     @DisplayName("items: rejects more elements than the maximum")
+    @Tag("testId:shop.Cart/items/rejects-above-maximum-size")
     void shouldRejectItemsAboveMaximumSize() {
         assertThrows(IllegalArgumentException.class, () -> new Cart<>(List.of("value", "value1", "value2", "value3", "value4", "value5", "value6", "value7", "value8", "value9", "value10", "value11", "value12", "value13", "value14", "value15", "value16", "value17", "value18", "value19", "value20", "value21", "value22", "value23", "value24", "value25", "value26", "value27", "value28", "value29", "value30", "value31", "value32", "value33", "value34", "value35", "value36", "value37", "value38", "value39", "value40", "value41", "value42", "value43", "value44", "value45", "value46", "value47", "value48", "value49", "value50", "value51", "value52", "value53", "value54", "value55", "value56", "value57", "value58", "value59", "value60", "value61", "value62", "value63", "value64", "value65", "value66", "value67", "value68", "value69", "value70", "value71", "value72", "value73", "value74", "value75", "value76", "value77", "value78", "value79", "value80", "value81", "value82", "value83", "value84", "value85", "value86", "value87", "value88", "value89", "value90", "value91", "value92", "value93", "value94", "value95", "value96", "value97", "value98", "value99", "value100"), couponsValue(), notesValue(), quantityValue(), discountValue(), legacyValue(), categoryValue(), totalValue()));
     }
 
     @Test
     @DisplayName("the constructor copies items; the accessor returns an unmodifiable collection")
+    @Tag("testId:shop.Cart/items/copies-in")
     void shouldCopyItemsIn() {
         final List<String> value = new ArrayList<>(itemsValue());
         final List<String> expected = List.copyOf(value);
@@ -154,12 +166,14 @@ class CartTest {
 
     @Test
     @DisplayName("rejects null for coupons")
+    @Tag("testId:shop.Cart/coupons/rejects-null")
     void shouldRejectNullCoupons() {
         assertThrows(NullPointerException.class, () -> new Cart<>(itemsValue(), (Set<String>) null, notesValue(), quantityValue(), discountValue(), legacyValue(), categoryValue(), totalValue()));
     }
 
     @Test
     @DisplayName("the constructor copies coupons; the accessor returns an unmodifiable collection")
+    @Tag("testId:shop.Cart/coupons/copies-in")
     void shouldCopyCouponsIn() {
         final Set<String> value = new LinkedHashSet<>(couponsValue());
         final Set<String> expected = Set.copyOf(value);
@@ -171,12 +185,14 @@ class CartTest {
 
     @Test
     @DisplayName("rejects null for notes")
+    @Tag("testId:shop.Cart/notes/rejects-null")
     void shouldRejectNullNotes() {
         assertThrows(NullPointerException.class, () -> new Cart<>(itemsValue(), couponsValue(), (Map<String, String>) null, quantityValue(), discountValue(), legacyValue(), categoryValue(), totalValue()));
     }
 
     @Test
     @DisplayName("the constructor copies notes; the accessor returns an unmodifiable map")
+    @Tag("testId:shop.Cart/notes/copies-in")
     void shouldCopyNotesIn() {
         final Map<String, String> value = new LinkedHashMap<>(notesValue());
         final Map<String, String> expected = Map.copyOf(value);
@@ -188,6 +204,7 @@ class CartTest {
 
     @Test
     @DisplayName("quantity: accepts the minimum (1)")
+    @Tag("testId:shop.Cart/quantity/accepts-at-minimum")
     void shouldAcceptQuantityAtMinimum() {
         final int value = 1;
         final Cart<String> subject = new Cart<>(itemsValue(), couponsValue(), notesValue(), value, discountValue(), legacyValue(), categoryValue(), totalValue());
@@ -196,6 +213,7 @@ class CartTest {
 
     @Test
     @DisplayName("quantity: accepts the maximum (10)")
+    @Tag("testId:shop.Cart/quantity/accepts-at-maximum")
     void shouldAcceptQuantityAtMaximum() {
         final int value = 10;
         final Cart<String> subject = new Cart<>(itemsValue(), couponsValue(), notesValue(), value, discountValue(), legacyValue(), categoryValue(), totalValue());
@@ -204,18 +222,21 @@ class CartTest {
 
     @Test
     @DisplayName("quantity: rejects a value below the minimum (0)")
+    @Tag("testId:shop.Cart/quantity/rejects-below-minimum")
     void shouldRejectQuantityBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new Cart<>(itemsValue(), couponsValue(), notesValue(), 0, discountValue(), legacyValue(), categoryValue(), totalValue()));
     }
 
     @Test
     @DisplayName("quantity: rejects a value above the maximum (11)")
+    @Tag("testId:shop.Cart/quantity/rejects-above-maximum")
     void shouldRejectQuantityAboveMaximum() {
         assertThrows(IllegalArgumentException.class, () -> new Cart<>(itemsValue(), couponsValue(), notesValue(), 11, discountValue(), legacyValue(), categoryValue(), totalValue()));
     }
 
     @Test
     @DisplayName("discount: accepts the minimum (0)")
+    @Tag("testId:shop.Cart/discount/accepts-at-minimum")
     void shouldAcceptDiscountAtMinimum() {
         final @Nullable Integer value = 0;
         final Cart<String> subject = new Cart<>(itemsValue(), couponsValue(), notesValue(), quantityValue(), value, legacyValue(), categoryValue(), totalValue());
@@ -224,6 +245,7 @@ class CartTest {
 
     @Test
     @DisplayName("discount: accepts the maximum (2147483647)")
+    @Tag("testId:shop.Cart/discount/accepts-at-maximum")
     void shouldAcceptDiscountAtMaximum() {
         final @Nullable Integer value = 2147483647;
         final Cart<String> subject = new Cart<>(itemsValue(), couponsValue(), notesValue(), quantityValue(), value, legacyValue(), categoryValue(), totalValue());
@@ -232,24 +254,28 @@ class CartTest {
 
     @Test
     @DisplayName("discount: rejects a value below the minimum (-1)")
+    @Tag("testId:shop.Cart/discount/rejects-below-minimum")
     void shouldRejectDiscountBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new Cart<>(itemsValue(), couponsValue(), notesValue(), quantityValue(), -1, legacyValue(), categoryValue(), totalValue()));
     }
 
     @Test
     @DisplayName("rejects null for category")
+    @Tag("testId:shop.Cart/category/rejects-null")
     void shouldRejectNullCategory() {
         assertThrows(NullPointerException.class, () -> new Cart<>(itemsValue(), couponsValue(), notesValue(), quantityValue(), discountValue(), legacyValue(), (Category) null, totalValue()));
     }
 
     @Test
     @DisplayName("rejects null for total")
+    @Tag("testId:shop.Cart/total/rejects-null")
     void shouldRejectNullTotal() {
         assertThrows(NullPointerException.class, () -> new Cart<>(itemsValue(), couponsValue(), notesValue(), quantityValue(), discountValue(), legacyValue(), categoryValue(), (Money) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:shop.Cart/value-semantics")
     void shouldCompareByValue() {
         final Cart<String> subject = create();
         final Cart<String> other = create();
@@ -259,12 +285,14 @@ class CartTest {
 
     @Test
     @DisplayName("sum() can be called and returns a value")
+    @Tag("testId:shop.Cart/sum/call")
     void shouldCallSum() {
         assertNotNull(create().sum());
     }
 
     @Test
     @DisplayName("empty() can be called and returns a value")
+    @Tag("testId:shop.Cart/empty/call")
     void shouldCallEmpty() {
         assertNotNull(Cart.empty());
     }

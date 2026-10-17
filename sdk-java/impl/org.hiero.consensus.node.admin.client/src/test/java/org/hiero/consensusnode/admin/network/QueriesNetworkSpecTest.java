@@ -7,6 +7,7 @@ import java.util.Map;
 import org.hiero.consensusnode.admin.nodes.ServiceEndpoint;
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `queries-network`, generated from the `tests` blocks of its `## Testing` section.
@@ -26,6 +27,7 @@ class QueriesNetworkSpecTest {
     /// test_WithPrereleaseAndBuild) SDKs; the example of `SemanticVersion.toString()` in this spec; semver.org.
     @Test
     @DisplayName("a semantic version is written in its canonical semver form")
+    @Tag("testId:consensusnode.admin.network/a-semantic-version-is-written-in-its-canonical-semver-form")
     void aSemanticVersionIsWrittenInItsCanonicalSemverForm() {
         for (final String text : keys(SEMANTIC_VERSION_TEXTS())) {
             // when
@@ -42,6 +44,7 @@ class QueriesNetworkSpecTest {
     /// (test_ParseWithPrereleaseAndBuild) SemanticVersion unit tests.
     @Test
     @DisplayName("a semantic version keeps its numbers and labels")
+    @Tag("testId:consensusnode.admin.network/a-semantic-version-keeps-its-numbers-and-labels")
     void aSemanticVersionKeepsItsNumbersAndLabels() {
         // when
         final SemanticVersion version = new SemanticVersion(1, 2, 0, "beta.10", "d13fe780");
@@ -60,6 +63,7 @@ class QueriesNetworkSpecTest {
     /// labels); the API schema of this spec (both labels are absent for a release version).
     @Test
     @DisplayName("a release version has no labels and is written as major.minor.patch")
+    @Tag("testId:consensusnode.admin.network/a-release-version-has-no-labels-and-is-written-as-major-minor-patch")
     void aReleaseVersionHasNoLabelsAndIsWrittenAsMajorMinorPatch() {
         // when
         final SemanticVersion version = new SemanticVersion(0, 2, 0, null, null);
@@ -76,6 +80,7 @@ class QueriesNetworkSpecTest {
     /// InequalityDifferentServicesVersion); the Equality of the test language.
     @Test
     @DisplayName("versions and version infos are equal when all their parts are equal")
+    @Tag("testId:consensusnode.admin.network/versions-and-version-infos-are-equal-when-all-their-parts-are-equal")
     void versionsAndVersionInfosAreEqualWhenAllTheirPartsAreEqual() {
         // given
         final SemanticVersion release = new SemanticVersion(0, 49, 1, null, null);
@@ -99,6 +104,7 @@ class QueriesNetworkSpecTest {
     /// NetworkVersionInfo unit tests.
     @Test
     @DisplayName("a network version info keeps the HAPI and the services version")
+    @Tag("testId:consensusnode.admin.network/a-network-version-info-keeps-the-hapi-and-the-services-version")
     void aNetworkVersionInfoKeepsTheHAPIAndTheServicesVersion() {
         // given
         final SemanticVersion hapi = new SemanticVersion(0, 50, 0, null, null);
@@ -118,6 +124,7 @@ class QueriesNetworkSpecTest {
     /// and Python (test_init) NodeAddress unit tests.
     @Test
     @DisplayName("a node address keeps all its attributes")
+    @Tag("testId:consensusnode.admin.network/a-node-address-keeps-all-its-attributes")
     void aNodeAddressKeepsAllItsAttributes() {
         // given
         final AccountId account = new AccountId(0L, 0L, "", 3L, null, null);
@@ -145,6 +152,7 @@ class QueriesNetworkSpecTest {
     /// `@@nullable` of description.
     @Test
     @DisplayName("a node address has no endpoints and no description by default")
+    @Tag("testId:consensusnode.admin.network/a-node-address-has-no-endpoints-and-no-description-by-default")
     void aNodeAddressHasNoEndpointsAndNoDescriptionByDefault() {
         // when
         final NodeAddress address = new NodeAddress(0L, new AccountId(0L, 0L, "", 3L, null, null), List.of(), null, utf8("gossip CA certificate"), repeat(hex("cd"), 48L), utf8("RSA public key"));
@@ -160,6 +168,7 @@ class QueriesNetworkSpecTest {
     /// list of node addresses).
     @Test
     @DisplayName("an address book keeps its nodes in order")
+    @Tag("testId:consensusnode.admin.network/an-address-book-keeps-its-nodes-in-order")
     void anAddressBookKeepsItsNodesInOrder() {
         // given
         final NodeAddress node0 = defaultNodeAddress();

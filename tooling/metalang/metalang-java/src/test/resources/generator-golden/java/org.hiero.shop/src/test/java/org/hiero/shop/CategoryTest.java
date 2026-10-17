@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.NoSuchElementException;
 import javax.annotation.processing.Generated;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Category`, generated from the specs.
@@ -18,6 +19,7 @@ class CategoryTest {
 
     @Test
     @DisplayName("the constants have the attribute values of the specs")
+    @Tag("testId:shop.Category/constants")
     void shouldProvideTheAttributesOfTheConstants() {
         assertValue((byte) 1, Category.FOOD.code());
         assertValue("Food", Category.FOOD.label());
@@ -31,12 +33,14 @@ class CategoryTest {
 
     @Test
     @DisplayName("isFood() can be called")
+    @Tag("testId:shop.Category/isFood/call")
     void shouldCallIsFood() {
         Category.FOOD.isFood();
     }
 
     @Test
     @DisplayName("byCode(code) can be called and returns a value (only NoSuchElementException may occur)")
+    @Tag("testId:shop.Category/byCode/call")
     void shouldCallByCode() throws Exception {
         try {
             assertNotNull(Category.byCode(codeValue()));

@@ -4,6 +4,7 @@ import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `IpAddress`, generated from the specs.
@@ -12,6 +13,7 @@ class IpAddressTest {
 
     @Test
     @DisplayName("creates an IpAddress and returns the values")
+    @Tag("testId:ledger.IpAddress/create")
     void shouldCreateAndReturnTheValues() {
         final byte[] bytes = bytesValue();
         final IpAddress subject = new IpAddress(bytes);
@@ -20,12 +22,14 @@ class IpAddressTest {
 
     @Test
     @DisplayName("rejects null for bytes")
+    @Tag("testId:ledger.IpAddress/bytes/rejects-null")
     void shouldRejectNullBytes() {
         assertThrows(NullPointerException.class, () -> new IpAddress((byte[]) null));
     }
 
     @Test
     @DisplayName("bytes: accepts the minimum number of elements")
+    @Tag("testId:ledger.IpAddress/bytes/accepts-at-minimum-size")
     void shouldAcceptBytesAtMinimumSize() {
         final byte[] value = new byte[] {1, 2, 3, 4};
         final IpAddress subject = new IpAddress(value);
@@ -34,18 +38,21 @@ class IpAddressTest {
 
     @Test
     @DisplayName("bytes: rejects fewer elements than the minimum")
+    @Tag("testId:ledger.IpAddress/bytes/rejects-below-minimum-size")
     void shouldRejectBytesBelowMinimumSize() {
         assertThrows(IllegalArgumentException.class, () -> new IpAddress(new byte[] {1, 2, 3}));
     }
 
     @Test
     @DisplayName("bytes: rejects more elements than the maximum")
+    @Tag("testId:ledger.IpAddress/bytes/rejects-above-maximum-size")
     void shouldRejectBytesAboveMaximumSize() {
         assertThrows(IllegalArgumentException.class, () -> new IpAddress(new byte[] {1, 2, 3, 4, 5}));
     }
 
     @Test
     @DisplayName("the constructor copies bytes; the accessor returns a copy")
+    @Tag("testId:ledger.IpAddress/bytes/copies-in")
     void shouldCopyBytesIn() {
         final byte[] value = bytesValue();
         final byte[] expected = value.clone();
@@ -60,6 +67,7 @@ class IpAddressTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:ledger.IpAddress/value-semantics")
     void shouldCompareByValue() {
         final IpAddress subject = create();
         final IpAddress other = create();
@@ -69,12 +77,14 @@ class IpAddressTest {
 
     @Test
     @DisplayName("toString() can be called and returns a value")
+    @Tag("testId:ledger.IpAddress/toString/call")
     void shouldCallToString() {
         assertNotNull(defaultSubject().toString());
     }
 
     @Test
     @DisplayName("fromString(value) can be called and returns a value (only IllegalArgumentException may occur)")
+    @Tag("testId:ledger.IpAddress/fromString/call")
     void shouldCallFromString() throws Exception {
         try {
             assertNotNull(IpAddress.fromString(valueValue()));
@@ -87,6 +97,7 @@ class IpAddressTest {
 
     @Test
     @DisplayName("fromBytes(value) can be called and returns a value (only IllegalArgumentException may occur)")
+    @Tag("testId:ledger.IpAddress/fromBytes/call")
     void shouldCallFromBytes() throws Exception {
         try {
             assertNotNull(IpAddress.fromBytes(valueValue2()));

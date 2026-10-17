@@ -122,6 +122,7 @@ The comment above each test names the SDK tests it comes from.
 // Go and Swift SystemDeleteTransaction unit tests. The expiration time is the one of the Java test
 // (Instant.ofEpochSecond(1554158542), converted exactly to 2019-04-01T22:42:22Z); whole seconds, as HAPI carries it
 // (see Questions & Comments).
+@@testId("a-system-delete-of-a-file-keeps-the-file-and-the-expiration-time")
 test "a system delete of a file keeps the file and the expiration time" {
     // given
     let file = DEFAULT(Address)
@@ -139,6 +140,7 @@ test "a system delete of a file keeps the file and the expiration time" {
 // Source: the Java (getSetContractId), JavaScript ("should carry the contract id and leave the file id null"), C++
 // (GetSetContractId), Go and Swift SystemDeleteTransaction unit tests; the API schema of this spec (expirationTime is
 // ignored for contracts).
+@@testId("a-system-delete-of-a-contract-keeps-the-contract-and-needs-no-expiration-time")
 test "a system delete of a contract keeps the contract and needs no expiration time" {
     // given
     let contract = DEFAULT(ContractId)
@@ -154,6 +156,7 @@ test "a system delete of a contract keeps the contract and needs no expiration t
 
 // Source: the JavaScript SystemDeleteTransaction unit tests ("should never encode both ids at once": fileID and
 // contractID are a protobuf oneof); `@@oneOf(fileId, contractId)` of this spec.
+@@testId("a-system-delete-of-both-a-file-and-a-contract-is-rejected")
 test "a system delete of both a file and a contract is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -162,6 +165,7 @@ test "a system delete of both a file and a contract is rejected" {
 }
 
 // Source: this spec (`@@oneOf(fileId, contractId)`: exactly one target).
+@@testId("a-system-delete-without-a-file-and-without-a-contract-is-rejected")
 test "a system delete without a file and without a contract is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -169,6 +173,7 @@ test "a system delete without a file and without a contract is rejected" {
 }
 
 // Source: the Java (shouldSerializeFile), C++, Go and Swift (test_GetSetFileId) SystemUndeleteTransaction unit tests.
+@@testId("a-system-undelete-of-a-file-keeps-the-file")
 test "a system undelete of a file keeps the file" {
     // given
     let file = DEFAULT(Address)
@@ -183,6 +188,7 @@ test "a system undelete of a file keeps the file" {
 
 // Source: the Java (shouldSerializeContract), C++, Go and Swift (test_GetSetContractId) SystemUndeleteTransaction unit
 // tests.
+@@testId("a-system-undelete-of-a-contract-keeps-the-contract")
 test "a system undelete of a contract keeps the contract" {
     // given
     let contract = DEFAULT(ContractId)
@@ -196,6 +202,7 @@ test "a system undelete of a contract keeps the contract" {
 }
 
 // Source: HAPI system_undelete.proto (fileID and contractID are a oneof); `@@oneOf(fileId, contractId)` of this spec.
+@@testId("a-system-undelete-of-both-a-file-and-a-contract-is-rejected")
 test "a system undelete of both a file and a contract is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -203,6 +210,7 @@ test "a system undelete of both a file and a contract is rejected" {
 }
 
 // Source: this spec (`@@oneOf(fileId, contractId)`: exactly one target).
+@@testId("a-system-undelete-without-a-file-and-without-a-contract-is-rejected")
 test "a system undelete without a file and without a contract is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)

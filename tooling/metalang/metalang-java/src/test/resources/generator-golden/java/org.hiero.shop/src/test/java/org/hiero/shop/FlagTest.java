@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import javax.annotation.processing.Generated;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Flag`, generated from the specs.
@@ -16,6 +17,7 @@ class FlagTest {
 
     @Test
     @DisplayName("the constants have the attribute values of the specs")
+    @Tag("testId:shop.Flag/constants")
     void shouldProvideTheAttributesOfTheConstants() {
         assertValue(true, Flag.ON.default_());
         assertValue(false, Flag.OFF.default_());

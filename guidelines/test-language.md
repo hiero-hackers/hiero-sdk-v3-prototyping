@@ -104,14 +104,20 @@ test "name" {
 
 - **Name.** A string that describes the behaviour in one sentence, written like a method comment: `"fromString
   rejects text that is no account id"`. It is the display name of the generated test.
-- **Id.** `<namespace>/<name in kebab-case>`, e.g. `ledger/fromstring-rejects-text-that-is-no-account-id`. Ids are
-  unique per namespace (`test.duplicate-id`). Generators derive the test's identifier from the name (`fromStringRejects…`
-  in Java, `from_string_rejects_…` in Rust and Python, `TestFromStringRejects…` in Go); an identifier that becomes
-  unusable in a language (too long, collides) is shortened by the generator, never by the author.
+- **Id.** `<namespace>/<test id>`, where the test id is the value of `@@testId("…")` (lowercase words of letters and
+  digits joined by hyphens), e.g. `ledger/fromstring-rejects-text-that-is-no-account-id`. Without `@@testId` the name
+  in kebab-case is the test id — the id then changes when the test is renamed, so every test of the specs of this
+  repository has a `@@testId` (a tooling test checks it). Ids are unique per namespace, across all spec files of the
+  namespace (`test.duplicate-id`). The id identifies the test across languages: the generators write it into the
+  results of a test run as the tag `testId:<id>` (Open Test Reporting, ADR-0012). Generators derive the test's
+  identifier from the name (`fromStringRejects…` in Java, `from_string_rejects_…` in Rust and Python,
+  `TestFromStringRejects…` in Go); an identifier that becomes unusable in a language (too long, collides) is shortened
+  by the generator, never by the author.
 - **Annotations** precede `test`:
 
 | Annotation | Meaning |
 |---|---|
+| `@@testId("id")` | The stable id of the test within its namespace (see **Id**); the name may change, the id stays. |
 | `@@deprecated("reason")` | The test still runs but is scheduled for removal, e.g. together with a deprecated method. |
 | `@@disabled("reason")` | The test is generated but not run (`@Disabled`, `test.skip`, `#[ignore]`, `t.Skip`, `pytest.mark.skip`). The reason is mandatory. |
 

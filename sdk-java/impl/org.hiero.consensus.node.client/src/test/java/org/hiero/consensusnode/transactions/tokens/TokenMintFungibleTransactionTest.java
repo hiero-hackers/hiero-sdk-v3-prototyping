@@ -27,6 +27,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenMintFungibleTransaction`, generated from the specs.
@@ -35,6 +36,7 @@ class TokenMintFungibleTransactionTest {
 
     @Test
     @DisplayName("creates a TokenMintFungibleTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final long amount = amountValue();
@@ -48,12 +50,14 @@ class TokenMintFungibleTransactionTest {
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenMintFungibleTransaction((Address) null, amountValue()));
     }
 
     @Test
     @DisplayName("amount: accepts the minimum (1)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/amount/accepts-at-minimum")
     void shouldAcceptAmountAtMinimum() {
         final long value = 1L;
         final TokenMintFungibleTransaction subject = new TokenMintFungibleTransaction(tokenIdValue(), value);
@@ -62,6 +66,7 @@ class TokenMintFungibleTransactionTest {
 
     @Test
     @DisplayName("amount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/amount/accepts-at-maximum")
     void shouldAcceptAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenMintFungibleTransaction subject = new TokenMintFungibleTransaction(tokenIdValue(), value);
@@ -70,12 +75,14 @@ class TokenMintFungibleTransactionTest {
 
     @Test
     @DisplayName("amount: rejects a value below the minimum (0)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/amount/rejects-below-minimum")
     void shouldRejectAmountBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new TokenMintFungibleTransaction(tokenIdValue(), 0L));
     }
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final TokenMintFungibleTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -85,6 +92,7 @@ class TokenMintFungibleTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final TokenMintFungibleTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -93,6 +101,7 @@ class TokenMintFungibleTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final TokenMintFungibleTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -102,6 +111,7 @@ class TokenMintFungibleTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final TokenMintFungibleTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -110,6 +120,7 @@ class TokenMintFungibleTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/memo/set")
     void shouldSetMemo() {
         final TokenMintFungibleTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -119,6 +130,7 @@ class TokenMintFungibleTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final TokenMintFungibleTransaction subject = create();
         subject.setMemo((String) null);
@@ -127,6 +139,7 @@ class TokenMintFungibleTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final TokenMintFungibleTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -136,6 +149,7 @@ class TokenMintFungibleTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final TokenMintFungibleTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -144,54 +158,63 @@ class TokenMintFungibleTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintFungibleTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

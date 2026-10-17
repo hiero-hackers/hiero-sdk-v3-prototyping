@@ -7,6 +7,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NftTransfer`, generated from the specs.
@@ -15,6 +16,7 @@ class NftTransferTest {
 
     @Test
     @DisplayName("creates a NftTransfer and returns the values")
+    @Tag("testId:mirrornode.common.NftTransfer/create")
     void shouldCreateAndReturnTheValues() {
         final boolean isApproval = isApprovalValue();
         final @Nullable NftTransferParties parties = partiesValue();
@@ -27,6 +29,7 @@ class NftTransferTest {
 
     @Test
     @DisplayName("serialNumber: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.common.NftTransfer/serialNumber/accepts-at-minimum")
     void shouldAcceptSerialNumberAtMinimum() {
         final long value = -9223372036854775808L;
         final NftTransfer subject = new NftTransfer(isApprovalValue(), partiesValue(), value);
@@ -35,6 +38,7 @@ class NftTransferTest {
 
     @Test
     @DisplayName("serialNumber: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.common.NftTransfer/serialNumber/accepts-at-maximum")
     void shouldAcceptSerialNumberAtMaximum() {
         final long value = 9223372036854775807L;
         final NftTransfer subject = new NftTransfer(isApprovalValue(), partiesValue(), value);
@@ -43,6 +47,7 @@ class NftTransferTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.common.NftTransfer/value-semantics")
     void shouldCompareByValue() {
         final NftTransfer subject = create();
         final NftTransfer other = create();

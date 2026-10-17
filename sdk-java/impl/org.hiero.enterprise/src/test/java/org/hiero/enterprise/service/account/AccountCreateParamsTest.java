@@ -15,6 +15,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountCreateParams`, generated from the specs.
@@ -23,6 +24,7 @@ class AccountCreateParamsTest {
 
     @Test
     @DisplayName("creates an AccountCreateParams and returns the values")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/create")
     void shouldCreateAndReturnTheValues() {
         final Authority authority = authorityValue();
         final @Nullable NativeToken<?, ?> initialBalance = initialBalanceValue();
@@ -49,6 +51,7 @@ class AccountCreateParamsTest {
 
     @Test
     @DisplayName("creates an AccountCreateParams with the default values")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, aliasValue());
         assertValue(false, subject.receiverSignatureRequired());
@@ -57,6 +60,7 @@ class AccountCreateParamsTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Authority authority = authorityValue();
         final @Nullable NativeToken<?, ?> initialBalance = initialBalanceValue();
@@ -94,6 +98,7 @@ class AccountCreateParamsTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final AccountCreateParams subject = AccountCreateParams.builder()
                 .authority(authorityValue())
@@ -112,18 +117,21 @@ class AccountCreateParamsTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> AccountCreateParams.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for authority")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/authority/rejects-null")
     void shouldRejectNullAuthority() {
         assertThrows(NullPointerException.class, () -> new AccountCreateParams((Authority) null, initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue()));
     }
 
     @Test
     @DisplayName("accountMemo: accepts more elements than the maximum")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/accountMemo/accepts-at-maximum-bytes")
     void shouldAcceptAccountMemoAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), value, receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
@@ -132,12 +140,14 @@ class AccountCreateParamsTest {
 
     @Test
     @DisplayName("accountMemo: rejects more elements than the maximum")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/accountMemo/rejects-above-maximum-bytes")
     void shouldRejectAccountMemoAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new AccountCreateParams(authorityValue(), initialBalanceValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue()));
     }
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the minimum (-2147483648)")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/maxAutomaticTokenAssociations/accepts-at-minimum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
         final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), value, autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
@@ -146,6 +156,7 @@ class AccountCreateParamsTest {
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the maximum (2147483647)")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/maxAutomaticTokenAssociations/accepts-at-maximum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMaximum() {
         final @Nullable Integer value = 2147483647;
         final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), value, autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
@@ -154,6 +165,7 @@ class AccountCreateParamsTest {
 
     @Test
     @DisplayName("stakedNodeId: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/stakedNodeId/accepts-at-minimum")
     void shouldAcceptStakedNodeIdAtMinimum() {
         final @Nullable Long value = -9223372036854775808L;
         final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), (AccountId) null, value, declineStakingRewardValue(), aliasValue());
@@ -162,6 +174,7 @@ class AccountCreateParamsTest {
 
     @Test
     @DisplayName("stakedNodeId: accepts the maximum (9223372036854775807)")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/stakedNodeId/accepts-at-maximum")
     void shouldAcceptStakedNodeIdAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
         final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), (AccountId) null, value, declineStakingRewardValue(), aliasValue());
@@ -170,6 +183,7 @@ class AccountCreateParamsTest {
 
     @Test
     @DisplayName("the constructor copies alias; the accessor returns a copy")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/alias/copies-in")
     void shouldCopyAliasIn() {
         final byte[] value = aliasValue();
         final byte[] expected = value.clone();
@@ -184,6 +198,7 @@ class AccountCreateParamsTest {
 
     @Test
     @DisplayName("rejects stakedAccountId and stakedNodeId together (@@oneOrNoneOf)")
+    @Tag("testId:enterprise.service.account.AccountCreateParams/stakedAccountId-stakedNodeId/rejects-two")
     void shouldRejectTwoOfStakedAccountIdOrStakedNodeId() {
         assertThrows(IllegalArgumentException.class, () -> new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue(), aliasValue()));
     }

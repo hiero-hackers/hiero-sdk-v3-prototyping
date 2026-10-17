@@ -29,6 +29,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenMintNftTransaction`, generated from the specs.
@@ -37,6 +38,7 @@ class TokenMintNftTransactionTest {
 
     @Test
     @DisplayName("creates a TokenMintNftTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final List<byte[]> metadata = metadataValue();
@@ -50,18 +52,21 @@ class TokenMintNftTransactionTest {
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenMintNftTransaction((Address) null, metadataValue()));
     }
 
     @Test
     @DisplayName("rejects null for metadata")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/metadata/rejects-null")
     void shouldRejectNullMetadata() {
         assertThrows(NullPointerException.class, () -> new TokenMintNftTransaction(tokenIdValue(), (List<byte[]>) null));
     }
 
     @Test
     @DisplayName("metadata: accepts the minimum number of elements")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/metadata/accepts-at-minimum-size")
     void shouldAcceptMetadataAtMinimumSize() {
         final List<byte[]> value = List.of(new byte[] {1, 2, 3});
         final TokenMintNftTransaction subject = new TokenMintNftTransaction(tokenIdValue(), value);
@@ -70,12 +75,14 @@ class TokenMintNftTransactionTest {
 
     @Test
     @DisplayName("metadata: rejects fewer elements than the minimum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/metadata/rejects-below-minimum-size")
     void shouldRejectMetadataBelowMinimumSize() {
         assertThrows(IllegalArgumentException.class, () -> new TokenMintNftTransaction(tokenIdValue(), List.of()));
     }
 
     @Test
     @DisplayName("metadata: accepts the maximum number of elements")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/metadata/accepts-at-maximum-size")
     void shouldAcceptMetadataAtMaximumSize() {
         final List<byte[]> value = List.of(new byte[] {1, 2, 3}, new byte[] {2, 3, 4}, new byte[] {3, 4, 5}, new byte[] {4, 5, 6}, new byte[] {5, 6, 7}, new byte[] {6, 7, 8}, new byte[] {7, 8, 9}, new byte[] {8, 9, 10}, new byte[] {9, 10, 11}, new byte[] {10, 11, 12});
         final TokenMintNftTransaction subject = new TokenMintNftTransaction(tokenIdValue(), value);
@@ -84,12 +91,14 @@ class TokenMintNftTransactionTest {
 
     @Test
     @DisplayName("metadata: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/metadata/rejects-above-maximum-size")
     void shouldRejectMetadataAboveMaximumSize() {
         assertThrows(IllegalArgumentException.class, () -> new TokenMintNftTransaction(tokenIdValue(), List.of(new byte[] {1, 2, 3}, new byte[] {2, 3, 4}, new byte[] {3, 4, 5}, new byte[] {4, 5, 6}, new byte[] {5, 6, 7}, new byte[] {6, 7, 8}, new byte[] {7, 8, 9}, new byte[] {8, 9, 10}, new byte[] {9, 10, 11}, new byte[] {10, 11, 12}, new byte[] {11, 12, 13})));
     }
 
     @Test
     @DisplayName("the constructor copies metadata; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/metadata/copies-in")
     void shouldCopyMetadataIn() {
         final List<byte[]> value = new ArrayList<>(metadataValue());
         final List<byte[]> expected = List.copyOf(value);
@@ -101,6 +110,7 @@ class TokenMintNftTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final TokenMintNftTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -110,6 +120,7 @@ class TokenMintNftTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final TokenMintNftTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -118,6 +129,7 @@ class TokenMintNftTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final TokenMintNftTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -127,6 +139,7 @@ class TokenMintNftTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final TokenMintNftTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -135,6 +148,7 @@ class TokenMintNftTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/memo/set")
     void shouldSetMemo() {
         final TokenMintNftTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -144,6 +158,7 @@ class TokenMintNftTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final TokenMintNftTransaction subject = create();
         subject.setMemo((String) null);
@@ -152,6 +167,7 @@ class TokenMintNftTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final TokenMintNftTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -161,6 +177,7 @@ class TokenMintNftTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final TokenMintNftTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -169,54 +186,63 @@ class TokenMintNftTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenMintNftTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

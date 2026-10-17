@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NftTransferParties`, generated from the specs.
@@ -14,6 +15,7 @@ class NftTransferPartiesTest {
 
     @Test
     @DisplayName("creates a NftTransferParties and returns the values")
+    @Tag("testId:mirrornode.common.NftTransferParties/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId senderAccountId = senderAccountIdValue();
         final AccountId receiverAccountId = receiverAccountIdValue();
@@ -26,24 +28,28 @@ class NftTransferPartiesTest {
 
     @Test
     @DisplayName("rejects null for senderAccountId")
+    @Tag("testId:mirrornode.common.NftTransferParties/senderAccountId/rejects-null")
     void shouldRejectNullSenderAccountId() {
         assertThrows(NullPointerException.class, () -> new NftTransferParties((AccountId) null, receiverAccountIdValue(), tokenIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for receiverAccountId")
+    @Tag("testId:mirrornode.common.NftTransferParties/receiverAccountId/rejects-null")
     void shouldRejectNullReceiverAccountId() {
         assertThrows(NullPointerException.class, () -> new NftTransferParties(senderAccountIdValue(), (AccountId) null, tokenIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:mirrornode.common.NftTransferParties/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new NftTransferParties(senderAccountIdValue(), receiverAccountIdValue(), (Address) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.common.NftTransferParties/value-semantics")
     void shouldCompareByValue() {
         final NftTransferParties subject = create();
         final NftTransferParties other = create();

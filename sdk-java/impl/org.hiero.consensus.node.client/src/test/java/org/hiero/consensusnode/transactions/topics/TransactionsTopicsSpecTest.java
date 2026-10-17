@@ -16,6 +16,7 @@ import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions-topics`, generated from the `tests` blocks of its `## Testing` section.
@@ -35,6 +36,7 @@ class TransactionsTopicsSpecTest {
     /// (test_constructor_default_values of TopicCreateTransaction).
     @Test
     @DisplayName("a topic create transaction without attributes creates a public, immutable topic")
+    @Tag("testId:consensusnode.transactions.topics/a-topic-create-transaction-without-attributes-creates-a-public-immutable-topic")
     void aTopicCreateTransactionWithoutAttributesCreatesAPublicImmutableTopic() {
         // when
         final TopicCreateTransaction transaction = new TopicCreateTransaction(null, null, null, null, null);
@@ -54,6 +56,7 @@ class TransactionsTopicsSpecTest {
     /// and test_GetSetAutoRenewPeriod: testAutoRenewPeriod = .days(1) = 86400 seconds).
     @Test
     @DisplayName("a topic create transaction keeps its authorities, memo, auto-renew period and auto-renew account")
+    @Tag("testId:consensusnode.transactions.topics/a-topic-create-transaction-keeps-its-authorities-memo-auto-renew-period-and-auto-renew-account")
     void aTopicCreateTransactionKeepsItsAuthoritiesMemoAutoRenewPeriodAndAutoRenewAccount() {
         // given
         final Authority submitAuthority = new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048").createPublicKey());
@@ -75,6 +78,7 @@ class TransactionsTopicsSpecTest {
     /// Duration.ofHours(24) = 86400 seconds) and the Swift SDK (TopicCreateTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("a topic create transaction survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.topics/a-topic-create-transaction-survives-tobytes-and-frombytes")
     void aTopicCreateTransactionSurvivesToBytesAndFromBytes() {
         // given
         final Account payer = defaultAccount();
@@ -99,6 +103,7 @@ class TransactionsTopicsSpecTest {
     /// (test_auto_renew_period_omitted_when_unset, test_topic_memo_serialization_distinguishes_unset_and_empty).
     @Test
     @DisplayName("a topic update transaction changes nothing but what it names")
+    @Tag("testId:consensusnode.transactions.topics/a-topic-update-transaction-changes-nothing-but-what-it-names")
     void aTopicUpdateTransactionChangesNothingButWhatItNames() {
         // when
         final TopicUpdateTransaction transaction = new TopicUpdateTransaction(defaultAddress(), null, null, null, null, null, null);
@@ -120,6 +125,7 @@ class TransactionsTopicsSpecTest {
     /// seconds) and the Swift SDK (TopicUpdateTransactionUnitTests: the same values in makeTransaction2).
     @Test
     @DisplayName("a topic update transaction keeps its expiration time and auto-renew period")
+    @Tag("testId:consensusnode.transactions.topics/a-topic-update-transaction-keeps-its-expiration-time-and-auto-renew-period")
     void aTopicUpdateTransactionKeepsItsExpirationTimeAndAutoRenewPeriod() {
         // when
         final TopicUpdateTransaction transaction = new TopicUpdateTransaction(defaultAddress(), null, null, null, SDK_TEST_EXPIRATION_TIME(), toSeconds(86400L), null);
@@ -137,6 +143,7 @@ class TransactionsTopicsSpecTest {
     /// auto-renew period .days(1) = 86400 seconds).
     @Test
     @DisplayName("a topic update transaction survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.topics/a-topic-update-transaction-survives-tobytes-and-frombytes")
     void aTopicUpdateTransactionSurvivesToBytesAndFromBytes() {
         // given
         final PackedTransaction<TopicUpdateReceipt, TopicUpdateTransaction> packed = new TopicUpdateTransaction(defaultAddress(), defaultAuthority(), defaultAuthority(), "Comprehensive update", SDK_TEST_EXPIRATION_TIME(), toSeconds(86400L), AccountId.fromString("0.0.5678")).pack(defaultAccount(), List.of(AccountId.fromString("0.0.3")));
@@ -155,6 +162,7 @@ class TransactionsTopicsSpecTest {
     /// .test_GetSetTopicId and test_ToFromBytes).
     @Test
     @DisplayName("a topic delete transaction keeps its topic and survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.topics/a-topic-delete-transaction-keeps-its-topic-and-survives-tobytes-and-frombytes")
     void aTopicDeleteTransactionKeepsItsTopicAndSurvivesToBytesAndFromBytes() {
         // given
         final TopicDeleteTransaction transaction = new TopicDeleteTransaction(defaultAddress());

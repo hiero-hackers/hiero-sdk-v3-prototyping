@@ -13,6 +13,7 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.Address;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `FileInfo`, generated from the specs.
@@ -21,6 +22,7 @@ class FileInfoTest {
 
     @Test
     @DisplayName("creates a FileInfo and returns the values")
+    @Tag("testId:consensusnode.queries.files.FileInfo/create")
     void shouldCreateAndReturnTheValues() {
         final Address fileId = fileIdValue();
         final long size = sizeValue();
@@ -39,6 +41,7 @@ class FileInfoTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.queries.files.FileInfo/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Address fileId = fileIdValue();
         final long size = sizeValue();
@@ -64,6 +67,7 @@ class FileInfoTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.queries.files.FileInfo/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final FileInfo subject = FileInfo.builder()
                 .fileId(fileIdValue())
@@ -77,18 +81,21 @@ class FileInfoTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.queries.files.FileInfo/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> FileInfo.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for fileId")
+    @Tag("testId:consensusnode.queries.files.FileInfo/fileId/rejects-null")
     void shouldRejectNullFileId() {
         assertThrows(NullPointerException.class, () -> new FileInfo((Address) null, sizeValue(), expirationTimeValue(), deletedValue(), authorityValue(), fileMemoValue()));
     }
 
     @Test
     @DisplayName("size: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.files.FileInfo/size/accepts-at-minimum")
     void shouldAcceptSizeAtMinimum() {
         final long value = -9223372036854775808L;
         final FileInfo subject = new FileInfo(fileIdValue(), value, expirationTimeValue(), deletedValue(), authorityValue(), fileMemoValue());
@@ -97,6 +104,7 @@ class FileInfoTest {
 
     @Test
     @DisplayName("size: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.files.FileInfo/size/accepts-at-maximum")
     void shouldAcceptSizeAtMaximum() {
         final long value = 9223372036854775807L;
         final FileInfo subject = new FileInfo(fileIdValue(), value, expirationTimeValue(), deletedValue(), authorityValue(), fileMemoValue());
@@ -105,6 +113,7 @@ class FileInfoTest {
 
     @Test
     @DisplayName("rejects null for expirationTime")
+    @Tag("testId:consensusnode.queries.files.FileInfo/expirationTime/rejects-null")
     void shouldRejectNullExpirationTime() {
         assertThrows(NullPointerException.class, () -> new FileInfo(fileIdValue(), sizeValue(), (ZonedDateTime) null, deletedValue(), authorityValue(), fileMemoValue()));
     }

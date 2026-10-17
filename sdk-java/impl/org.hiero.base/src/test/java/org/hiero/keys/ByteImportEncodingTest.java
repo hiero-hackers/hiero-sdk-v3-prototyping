@@ -3,6 +3,7 @@ package org.hiero.keys;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ByteImportEncoding`, generated from the specs.
@@ -11,6 +12,7 @@ class ByteImportEncodingTest {
 
     @Test
     @DisplayName("decode(value) can be called and returns a value (only IllegalArgumentException may occur)")
+    @Tag("testId:keys.ByteImportEncoding/decode/call")
     void shouldCallDecode() throws Exception {
         try {
             assertNotNull(ByteImportEncoding.HEX.decode(valueValue()));

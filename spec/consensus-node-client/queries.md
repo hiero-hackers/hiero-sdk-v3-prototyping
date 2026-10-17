@@ -230,6 +230,7 @@ Offline tests of the settings that every query carries, written as given / when 
 ```tests
 // Source: the Python SDK (query_test.py, test_set_max_query_payment_valid_param: no limit before one is set) and
 // this spec (if a retry setting is absent, the SDK default is used).
+@@testId("a-new-query-has-no-payment-limit-and-no-retry-settings")
 test "a new query has no payment limit and no retry settings" {
     // when
     let paid = consensusnode.queries.accounts.AccountInfoQuery{accountId: DEFAULT}
@@ -249,6 +250,7 @@ test "a new query has no payment limit and no retry settings" {
 
 // Source: the Python SDK (query_test.py, test_set_max_query_payment_valid_param) and the Java SDK (Query
 // setMaxQueryPayment): a payment limit set on a paid query is kept.
+@@testId("a-paid-query-keeps-its-payment-limit")
 test "a paid query keeps its payment limit" {
     // given
     let limit: NativeToken<ANY, ANY> = DEFAULT(hedera.Hbar)
@@ -263,6 +265,7 @@ test "a paid query keeps its payment limit" {
 // Source: the Python SDK (client_test.py, test_set_max_attempts_with_valid_param, test_set_min_backoff_with_valid_param,
 // test_set_max_backoff_with_valid_param) and the Java SDK (ClientTest.setMaxAttempts, setMinBackoffValid,
 // setMaxBackoffValid): retry settings that are set are kept.
+@@testId("a-query-keeps-its-retry-settings")
 test "a query keeps its retry settings" {
     // when
     let query = consensusnode.queries.accounts.AccountInfoQuery{accountId: DEFAULT, maxAttempts: 5, minBackoff: 250,

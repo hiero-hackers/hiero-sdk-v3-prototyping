@@ -59,6 +59,7 @@ contract = await client.contracts.findById(ContractId.fromString("0.0.1234"))
 ```tests
 // Source: the Go SDK (TestUnitClientMirrorRestClientResolvesBaseURL) and the Java SDK (ClientMirrorBaseUrlTest): the
 // REST client of a client talks to the configured mirror node. Creating the client sends no request.
+@@testId("a-mirror-node-client-talks-to-the-mirror-node-it-was-created-for")
 test "a mirror node client talks to the mirror node it was created for" {
     // given
     let mirrorNode = MirrorNode{restBaseUrl: "https://mainnet.mirrornode.hedera.com/api/v1"}

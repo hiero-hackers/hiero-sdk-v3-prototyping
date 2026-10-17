@@ -17,6 +17,7 @@ import org.hiero.token.TokenSupplyType;
 import org.hiero.token.TokenType;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenInfo`, generated from the specs.
@@ -25,6 +26,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("creates a TokenInfo and returns the values")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final TokenType type = typeValue();
@@ -83,6 +85,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("creates a TokenInfo with the default values")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
         assertValue(0, subject.decimals());
@@ -92,6 +95,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Address tokenId = tokenIdValue();
         final TokenType type = typeValue();
@@ -177,6 +181,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TokenInfo subject = TokenInfo.builder()
                 .tokenId(tokenIdValue())
@@ -210,30 +215,35 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TokenInfo.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenInfo((Address) null, typeValue(), nameValue(), symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
     }
 
     @Test
     @DisplayName("rejects null for type")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/type/rejects-null")
     void shouldRejectNullType() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), (TokenType) null, nameValue(), symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
     }
 
     @Test
     @DisplayName("rejects null for name")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/name/rejects-null")
     void shouldRejectNullName() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), (String) null, symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
     }
 
     @Test
     @DisplayName("name: accepts more elements than the maximum")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/name/accepts-at-maximum-bytes")
     void shouldAcceptNameAtMaximumBytes() {
         final String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), value, symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
@@ -242,18 +252,21 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("name: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/name/rejects-above-maximum-bytes")
     void shouldRejectNameAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
     }
 
     @Test
     @DisplayName("rejects null for symbol")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/symbol/rejects-null")
     void shouldRejectNullSymbol() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), (String) null, decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
     }
 
     @Test
     @DisplayName("symbol: accepts more elements than the maximum")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/symbol/accepts-at-maximum-bytes")
     void shouldAcceptSymbolAtMaximumBytes() {
         final String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), value, decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
@@ -262,12 +275,14 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("symbol: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/symbol/rejects-above-maximum-bytes")
     void shouldRejectSymbolAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
     }
 
     @Test
     @DisplayName("decimals: accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/decimals/accepts-at-minimum")
     void shouldAcceptDecimalsAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), value, totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
@@ -276,6 +291,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("decimals: accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/decimals/accepts-at-maximum")
     void shouldAcceptDecimalsAtMaximum() {
         final int value = 2147483647;
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), value, totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
@@ -284,6 +300,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("totalSupply: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/totalSupply/accepts-at-minimum")
     void shouldAcceptTotalSupplyAtMinimum() {
         final long value = -9223372036854775808L;
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), decimalsValue(), value, treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
@@ -292,6 +309,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("totalSupply: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/totalSupply/accepts-at-maximum")
     void shouldAcceptTotalSupplyAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), decimalsValue(), value, treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
@@ -300,18 +318,21 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("rejects null for treasuryAccountId")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/treasuryAccountId/rejects-null")
     void shouldRejectNullTreasuryAccountId() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), decimalsValue(), totalSupplyValue(), (AccountId) null, supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
     }
 
     @Test
     @DisplayName("rejects null for supplyType")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/supplyType/rejects-null")
     void shouldRejectNullSupplyType() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), (TokenSupplyType) null, maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
     }
 
     @Test
     @DisplayName("maxSupply: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/maxSupply/accepts-at-minimum")
     void shouldAcceptMaxSupplyAtMinimum() {
         final @Nullable Long value = -9223372036854775808L;
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), value, tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
@@ -320,6 +341,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("maxSupply: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/maxSupply/accepts-at-maximum")
     void shouldAcceptMaxSupplyAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), value, tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
@@ -328,12 +350,14 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("rejects null for metadata")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/metadata/rejects-null")
     void shouldRejectNullMetadata() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), (byte[]) null, expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
     }
 
     @Test
     @DisplayName("the constructor copies metadata; the accessor returns a copy")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/metadata/copies-in")
     void shouldCopyMetadataIn() {
         final byte[] value = metadataValue();
         final byte[] expected = value.clone();
@@ -348,6 +372,7 @@ class TokenInfoTest {
 
     @Test
     @DisplayName("rejects null for expirationTime")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/expirationTime/rejects-null")
     void shouldRejectNullExpirationTime() {
         assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), (ZonedDateTime) null, autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
     }

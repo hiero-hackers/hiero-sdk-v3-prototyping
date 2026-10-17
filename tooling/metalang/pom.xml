@@ -121,6 +121,12 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- writes the results of the tests as Open Test Reporting (ADR-0012) -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-reporting</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-launcher</artifactId>
@@ -156,6 +162,12 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.5.3</version>
                     <configuration>
+                        <properties>
+                            <configurationParameters>
+                                junit.platform.reporting.open.xml.enabled = true
+                                junit.platform.reporting.output.dir = ${project.build.directory}/surefire-reports
+                            </configurationParameters>
+                        </properties>
                         <systemPropertyVariables>
                             <spec.root>${spec.root}</spec.root>
                             <metalang.test.resources>${metalang.test.resources}</metalang.test.resources>

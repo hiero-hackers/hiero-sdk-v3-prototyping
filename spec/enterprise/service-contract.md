@@ -153,6 +153,7 @@ from them. A violation of `@@oneOf`, `@@oneOrNoneOf`, `@@min` or `@@maxBytes` is
 // Source: this spec (@@oneOf(fileId, bytecode), @@default and @@nullable of ContractCreateParams); the Python SDK
 // (contract_create_transaction_test.py, test_constructor_default_values: no bytecode, gas, admin key, memo or staking
 // target).
+@@testId("contract-parameters-with-bytecode-from-a-file-have-the-defaults-of-the-spec")
 test "contract parameters with bytecode from a file have the defaults of the spec" {
     // when
     let params = DEFAULT(ContractCreateParams)
@@ -175,6 +176,7 @@ test "contract parameters with bytecode from a file have the defaults of the spe
 
 // Source: this spec (@@oneOf(fileId, bytecode)); the Python SDK (contract_create_transaction_test.py,
 // test_build_transaction_body_with_bytecode and test_bytecode_setters_clear_each_other).
+@@testId("contract-parameters-take-the-bytecode-directly-instead-of-from-a-file")
 test "contract parameters take the bytecode directly instead of from a file" {
     // given
     let bytecode = hex(text: "608060405234801561001057600080fd5b50")
@@ -193,6 +195,7 @@ test "contract parameters take the bytecode directly instead of from a file" {
 // SDKs; hiero-enterprise-java (ProtocolLayerDataCreationTests, testContractCreateRequestCreation: a file id, gas, an
 // admin key and constructor parameters): every value that is set is read back unchanged. The auto-renew period is the
 // one of the Java test (Duration.ofHours(10), which is exactly 36000 seconds).
+@@testId("contract-parameters-keep-the-values-they-are-created-with")
 test "contract parameters keep the values they are created with" {
     // given
     let authority = DEFAULT(Authority)
@@ -219,6 +222,7 @@ test "contract parameters keep the values they are created with" {
 
 // Source: this spec (@@min(1) of gas and @@maxBytes(100) of contractMemo); HAPI limits a memo to 100 bytes, which
 // ASCII text of 100 characters is.
+@@testId("contract-parameters-accept-a-gas-of-1-and-a-memo-of-100-characters")
 test "contract parameters accept a gas of 1 and a memo of 100 characters" {
     // given
     let memo = repeat(value: "a", count: 100)
@@ -233,6 +237,7 @@ test "contract parameters accept a gas of 1 and a memo of 100 characters" {
 
 // Source: this spec (@@min(1) of gas); the Python SDK (contract_create_transaction_test.py,
 // test_set_gas_rejects_negative_values and test_constructor_rejects_negative_gas reject a negative gas).
+@@testId("contract-parameters-reject-a-gas-of-0")
 test "contract parameters reject a gas of 0" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -240,6 +245,7 @@ test "contract parameters reject a gas of 0" {
 }
 
 // Source: this spec (@@maxBytes(100) of contractMemo); HAPI limits a memo to 100 bytes.
+@@testId("contract-parameters-reject-a-memo-of-101-characters")
 test "contract parameters reject a memo of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -248,6 +254,7 @@ test "contract parameters reject a memo of 101 characters" {
 
 // Source: this spec (@@oneOf(fileId, bytecode)); HAPI contract_create.proto (initcodeSource is a oneof of fileID and
 // initcode).
+@@testId("contract-parameters-with-bytecode-both-from-a-file-and-directly-are-rejected")
 test "contract parameters with bytecode both from a file and directly are rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -255,6 +262,7 @@ test "contract parameters with bytecode both from a file and directly are reject
 }
 
 // Source: this spec (@@oneOf(fileId, bytecode): the bytecode is required).
+@@testId("contract-parameters-without-bytecode-are-rejected")
 test "contract parameters without bytecode are rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -263,6 +271,7 @@ test "contract parameters without bytecode are rejected" {
 
 // Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); the Python SDK (contract_create_transaction_test.py,
 // test_staked_setters_clear_each_other).
+@@testId("a-contract-is-staked-to-an-account-to-a-node-or-to-neither")
 test "a contract is staked to an account, to a node or to neither" {
     // given
     let stakedAccount = DEFAULT(AccountId)
@@ -282,6 +291,7 @@ test "a contract is staked to an account, to a node or to neither" {
 }
 
 // Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI contract_create.proto (staked_id is a oneof).
+@@testId("contract-parameters-staked-to-both-an-account-and-a-node-are-rejected")
 test "contract parameters staked to both an account and a node are rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -290,6 +300,7 @@ test "contract parameters staked to both an account and a node are rejected" {
 
 // Source: this spec (a Param wraps the value of the host language); hiero-enterprise-java (ContractParam: the value of
 // a parameter is the given value).
+@@testId("a-parameter-keeps-the-value-it-wraps")
 test "a parameter keeps the value it wraps" {
     // given
     let text = "Hello from Hiero."
@@ -311,6 +322,7 @@ test "a parameter keeps the value it wraps" {
 // testInt256Range accept the smallest and the largest value of each type); the Solidity documentation (an intN holds
 // -2^(N-1) to 2^(N-1)-1, a uintN 0 to 2^N-1). The 256-bit bounds were computed with Python (2**256-1, -2**255,
 // 2**255-1).
+@@testId("integer-parameters-accept-the-smallest-and-the-largest-value-of-their-solidity-type")
 test "integer parameters accept the smallest and the largest value of their Solidity type" {
     // when / then
     assertEquals(expected: 0, actual: uint8(value: 0).value)
@@ -327,6 +339,7 @@ test "integer parameters accept the smallest and the largest value of their Soli
 }
 
 // Source: this spec (Contract is a value of its contract id).
+@@testId("contracts-with-the-same-contract-id-are-equal")
 test "contracts with the same contract id are equal" {
     // given
     let contractId = DEFAULT(ContractId)

@@ -7,6 +7,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenTransfer`, generated from the specs.
@@ -15,6 +16,7 @@ class TokenTransferTest {
 
     @Test
     @DisplayName("creates a TokenTransfer and returns the values")
+    @Tag("testId:consensusnode.transactions.accounts.TokenTransfer/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final AccountId accountId = accountIdValue();
@@ -31,6 +33,7 @@ class TokenTransferTest {
 
     @Test
     @DisplayName("creates a TokenTransfer with the default values")
+    @Tag("testId:consensusnode.transactions.accounts.TokenTransfer/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final TokenTransfer subject = new TokenTransfer(tokenIdValue(), accountIdValue(), amountValue(), expectedDecimalsValue());
         assertValue(false, subject.approved());
@@ -38,6 +41,7 @@ class TokenTransferTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.accounts.TokenTransfer/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Address tokenId = tokenIdValue();
         final AccountId accountId = accountIdValue();
@@ -60,6 +64,7 @@ class TokenTransferTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.accounts.TokenTransfer/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TokenTransfer subject = TokenTransfer.builder()
                 .tokenId(tokenIdValue())
@@ -72,24 +77,28 @@ class TokenTransferTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.transactions.accounts.TokenTransfer/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TokenTransfer.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.transactions.accounts.TokenTransfer/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenTransfer((Address) null, accountIdValue(), amountValue(), expectedDecimalsValue(), approvedValue()));
     }
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.transactions.accounts.TokenTransfer/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new TokenTransfer(tokenIdValue(), (AccountId) null, amountValue(), expectedDecimalsValue(), approvedValue()));
     }
 
     @Test
     @DisplayName("amount: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.transactions.accounts.TokenTransfer/amount/accepts-at-minimum")
     void shouldAcceptAmountAtMinimum() {
         final long value = -9223372036854775808L;
         final TokenTransfer subject = new TokenTransfer(tokenIdValue(), accountIdValue(), value, expectedDecimalsValue(), approvedValue());
@@ -98,6 +107,7 @@ class TokenTransferTest {
 
     @Test
     @DisplayName("amount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.transactions.accounts.TokenTransfer/amount/accepts-at-maximum")
     void shouldAcceptAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenTransfer subject = new TokenTransfer(tokenIdValue(), accountIdValue(), value, expectedDecimalsValue(), approvedValue());
@@ -106,6 +116,7 @@ class TokenTransferTest {
 
     @Test
     @DisplayName("expectedDecimals: accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.transactions.accounts.TokenTransfer/expectedDecimals/accepts-at-minimum")
     void shouldAcceptExpectedDecimalsAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
         final TokenTransfer subject = new TokenTransfer(tokenIdValue(), accountIdValue(), amountValue(), value, approvedValue());
@@ -114,6 +125,7 @@ class TokenTransferTest {
 
     @Test
     @DisplayName("expectedDecimals: accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.transactions.accounts.TokenTransfer/expectedDecimals/accepts-at-maximum")
     void shouldAcceptExpectedDecimalsAtMaximum() {
         final @Nullable Integer value = 2147483647;
         final TokenTransfer subject = new TokenTransfer(tokenIdValue(), accountIdValue(), amountValue(), value, approvedValue());
@@ -122,6 +134,7 @@ class TokenTransferTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.transactions.accounts.TokenTransfer/value-semantics")
     void shouldCompareByValue() {
         final TokenTransfer subject = create();
         final TokenTransfer other = create();

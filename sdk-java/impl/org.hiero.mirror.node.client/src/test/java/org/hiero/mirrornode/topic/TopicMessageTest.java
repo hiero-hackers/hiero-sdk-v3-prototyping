@@ -10,6 +10,7 @@ import org.hiero.ledger.Address;
 import org.hiero.ledger.TransactionId;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TopicMessage`, generated from the specs.
@@ -18,6 +19,7 @@ class TopicMessageTest {
 
     @Test
     @DisplayName("creates a TopicMessage and returns the values")
+    @Tag("testId:mirrornode.topic.TopicMessage/create")
     void shouldCreateAndReturnTheValues() {
         final @Nullable ChunkInfo chunkInfo = chunkInfoValue();
         final ZonedDateTime consensusTimestamp = consensusTimestampValue();
@@ -40,6 +42,7 @@ class TopicMessageTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.topic.TopicMessage/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final @Nullable ChunkInfo chunkInfo = chunkInfoValue();
         final ZonedDateTime consensusTimestamp = consensusTimestampValue();
@@ -71,6 +74,7 @@ class TopicMessageTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.topic.TopicMessage/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final TopicMessage subject = TopicMessage.builder()
                 .consensusTimestamp(consensusTimestampValue())
@@ -86,36 +90,42 @@ class TopicMessageTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.topic.TopicMessage/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> TopicMessage.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for consensusTimestamp")
+    @Tag("testId:mirrornode.topic.TopicMessage/consensusTimestamp/rejects-null")
     void shouldRejectNullConsensusTimestamp() {
         assertThrows(NullPointerException.class, () -> new TopicMessage(chunkInfoValue(), (ZonedDateTime) null, messageValue(), payerAccountIdValue(), runningHashValue(), runningHashVersionValue(), sequenceNumberValue(), topicIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for message")
+    @Tag("testId:mirrornode.topic.TopicMessage/message/rejects-null")
     void shouldRejectNullMessage() {
         assertThrows(NullPointerException.class, () -> new TopicMessage(chunkInfoValue(), consensusTimestampValue(), (String) null, payerAccountIdValue(), runningHashValue(), runningHashVersionValue(), sequenceNumberValue(), topicIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for payerAccountId")
+    @Tag("testId:mirrornode.topic.TopicMessage/payerAccountId/rejects-null")
     void shouldRejectNullPayerAccountId() {
         assertThrows(NullPointerException.class, () -> new TopicMessage(chunkInfoValue(), consensusTimestampValue(), messageValue(), (AccountId) null, runningHashValue(), runningHashVersionValue(), sequenceNumberValue(), topicIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for runningHash")
+    @Tag("testId:mirrornode.topic.TopicMessage/runningHash/rejects-null")
     void shouldRejectNullRunningHash() {
         assertThrows(NullPointerException.class, () -> new TopicMessage(chunkInfoValue(), consensusTimestampValue(), messageValue(), payerAccountIdValue(), (byte[]) null, runningHashVersionValue(), sequenceNumberValue(), topicIdValue()));
     }
 
     @Test
     @DisplayName("the constructor copies runningHash; the accessor returns a copy")
+    @Tag("testId:mirrornode.topic.TopicMessage/runningHash/copies-in")
     void shouldCopyRunningHashIn() {
         final byte[] value = runningHashValue();
         final byte[] expected = value.clone();
@@ -130,6 +140,7 @@ class TopicMessageTest {
 
     @Test
     @DisplayName("runningHashVersion: accepts the minimum (-2147483648)")
+    @Tag("testId:mirrornode.topic.TopicMessage/runningHashVersion/accepts-at-minimum")
     void shouldAcceptRunningHashVersionAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final TopicMessage subject = new TopicMessage(chunkInfoValue(), consensusTimestampValue(), messageValue(), payerAccountIdValue(), runningHashValue(), value, sequenceNumberValue(), topicIdValue());
@@ -138,6 +149,7 @@ class TopicMessageTest {
 
     @Test
     @DisplayName("runningHashVersion: accepts the maximum (2147483647)")
+    @Tag("testId:mirrornode.topic.TopicMessage/runningHashVersion/accepts-at-maximum")
     void shouldAcceptRunningHashVersionAtMaximum() {
         final int value = 2147483647;
         final TopicMessage subject = new TopicMessage(chunkInfoValue(), consensusTimestampValue(), messageValue(), payerAccountIdValue(), runningHashValue(), value, sequenceNumberValue(), topicIdValue());
@@ -146,6 +158,7 @@ class TopicMessageTest {
 
     @Test
     @DisplayName("sequenceNumber: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.topic.TopicMessage/sequenceNumber/accepts-at-minimum")
     void shouldAcceptSequenceNumberAtMinimum() {
         final long value = -9223372036854775808L;
         final TopicMessage subject = new TopicMessage(chunkInfoValue(), consensusTimestampValue(), messageValue(), payerAccountIdValue(), runningHashValue(), runningHashVersionValue(), value, topicIdValue());
@@ -154,6 +167,7 @@ class TopicMessageTest {
 
     @Test
     @DisplayName("sequenceNumber: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.topic.TopicMessage/sequenceNumber/accepts-at-maximum")
     void shouldAcceptSequenceNumberAtMaximum() {
         final long value = 9223372036854775807L;
         final TopicMessage subject = new TopicMessage(chunkInfoValue(), consensusTimestampValue(), messageValue(), payerAccountIdValue(), runningHashValue(), runningHashVersionValue(), value, topicIdValue());
@@ -162,6 +176,7 @@ class TopicMessageTest {
 
     @Test
     @DisplayName("rejects null for topicId")
+    @Tag("testId:mirrornode.topic.TopicMessage/topicId/rejects-null")
     void shouldRejectNullTopicId() {
         assertThrows(NullPointerException.class, () -> new TopicMessage(chunkInfoValue(), consensusTimestampValue(), messageValue(), payerAccountIdValue(), runningHashValue(), runningHashVersionValue(), sequenceNumberValue(), (Address) null));
     }

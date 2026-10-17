@@ -7,6 +7,7 @@ import org.hiero.hedera.HbarUnit;
 import org.hiero.nativeToken.NativeTokenUnit;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Network`, generated from the specs.
@@ -15,6 +16,7 @@ class NetworkTest {
 
     @Test
     @DisplayName("creates a Network and returns the values")
+    @Tag("testId:ledger.Network/create")
     void shouldCreateAndReturnTheValues() {
         final byte[] id = idValue();
         final @Nullable String name = nameValue();
@@ -27,12 +29,14 @@ class NetworkTest {
 
     @Test
     @DisplayName("rejects null for id")
+    @Tag("testId:ledger.Network/id/rejects-null")
     void shouldRejectNullId() {
         assertThrows(NullPointerException.class, () -> new Network<>((byte[]) null, nameValue(), nativeTokenUnitValue()));
     }
 
     @Test
     @DisplayName("the constructor copies id; the accessor returns a copy")
+    @Tag("testId:ledger.Network/id/copies-in")
     void shouldCopyIdIn() {
         final byte[] value = idValue();
         final byte[] expected = value.clone();
@@ -47,6 +51,7 @@ class NetworkTest {
 
     @Test
     @DisplayName("rejects null for nativeTokenUnit")
+    @Tag("testId:ledger.Network/nativeTokenUnit/rejects-null")
     void shouldRejectNullNativeTokenUnit() {
         assertThrows(NullPointerException.class, () -> new Network<>(idValue(), nameValue(), (NativeTokenUnit) null));
     }

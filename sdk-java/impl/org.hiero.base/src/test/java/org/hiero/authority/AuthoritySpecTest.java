@@ -9,6 +9,7 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.keys.PublicKey;
 import org.hiero.ledger.ContractId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `authority`, generated from the `tests` blocks of its `## Testing` section.
@@ -25,6 +26,7 @@ class AuthoritySpecTest {
     /// Source: this spec (of(publicKey) is the single-key leaf); the Java, Go, Python and C++ SDKs (a public key is a key).
     @Test
     @DisplayName("a single key becomes a public key authority of that key")
+    @Tag("testId:authority/a-single-key-becomes-a-public-key-authority-of-that-key")
     void aSingleKeyBecomesAPublicKeyAuthorityOfThatKey() {
         // given
         final PublicKey publicKey = get(PUBLIC_KEYS(), 0L);
@@ -44,6 +46,7 @@ class AuthoritySpecTest {
     /// without a threshold requires all of its keys).
     @Test
     @DisplayName("a composition without a threshold requires all of its children")
+    @Tag("testId:authority/a-composition-without-a-threshold-requires-all-of-its-children")
     void aCompositionWithoutAThresholdRequiresAllOfItsChildren() {
         // given
         final Authority child = AuthorityFactory.of(get(PUBLIC_KEYS(), 0L));
@@ -62,6 +65,7 @@ class AuthoritySpecTest {
     /// Source: this spec (m-of-n composition); the Go, Python, JavaScript and C++ SDKs (a key list keeps its threshold).
     @Test
     @DisplayName("a composition with a threshold keeps its threshold and its child")
+    @Tag("testId:authority/a-composition-with-a-threshold-keeps-its-threshold-and-its-child")
     void aCompositionWithAThresholdKeepsItsThresholdAndItsChild() {
         // given
         final Authority child = AuthorityFactory.of(get(PUBLIC_KEYS(), 0L));
@@ -80,6 +84,7 @@ class AuthoritySpecTest {
     /// SDKs (a delegatable contract id becomes a key of its own kind).
     @Test
     @DisplayName("a contract leaf is delegatable only when created as delegatable")
+    @Tag("testId:authority/a-contract-leaf-is-delegatable-only-when-created-as-delegatable")
     void aContractLeafIsDelegatableOnlyWhenCreatedAsDelegatable() {
         // given
         final ContractId contractId = defaultContractId();
@@ -101,6 +106,7 @@ class AuthoritySpecTest {
     /// Source: this spec (@@default(false) delegatable).
     @Test
     @DisplayName("a contract authority is not delegatable by default")
+    @Tag("testId:authority/a-contract-authority-is-not-delegatable-by-default")
     void aContractAuthorityIsNotDelegatableByDefault() {
         // when
         final ContractAuthority authority = new ContractAuthority(defaultContractId(), false);
@@ -116,6 +122,7 @@ class AuthoritySpecTest {
     /// (equality of contract ids and key lists).
     @Test
     @DisplayName("authorities are equal when their trees match")
+    @Tag("testId:authority/authorities-are-equal-when-their-trees-match")
     void authoritiesAreEqualWhenTheirTreesMatch() {
         // given
         final Authority alice = AuthorityFactory.of(get(PUBLIC_KEYS(), 0L));
@@ -141,6 +148,7 @@ class AuthoritySpecTest {
     /// Source: this spec (@@minSize(1) children: an empty AuthorityList is forbidden, "remove this key" is no Authority).
     @Test
     @DisplayName("a composition without children is rejected")
+    @Tag("testId:authority/a-composition-without-children-is-rejected")
     void aCompositionWithoutChildrenIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new AuthorityList(List.of(), 1));
@@ -151,6 +159,7 @@ class AuthoritySpecTest {
     /// Source: this spec (@@min(1) threshold of AuthorityList).
     @Test
     @DisplayName("a composition with threshold 0 is rejected")
+    @Tag("testId:authority/a-composition-with-threshold-0-is-rejected")
     void aCompositionWithThreshold0IsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new AuthorityList(List.of(AuthorityFactory.of(get(PUBLIC_KEYS(), 0L))), 0));
@@ -161,6 +170,7 @@ class AuthoritySpecTest {
     /// Source: this spec (@@min(1) threshold of the m-of-n factory of(threshold, children)).
     @Test
     @DisplayName("the m-of-n factory rejects threshold 0")
+    @Tag("testId:authority/the-m-of-n-factory-rejects-threshold-0")
     void theMOfNFactoryRejectsThreshold0() {
         // given
         final Authority child = AuthorityFactory.of(get(PUBLIC_KEYS(), 0L));

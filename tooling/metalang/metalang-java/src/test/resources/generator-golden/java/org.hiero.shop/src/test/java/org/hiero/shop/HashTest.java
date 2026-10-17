@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import javax.annotation.processing.Generated;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Hash`, generated from the specs.
@@ -16,6 +17,7 @@ class HashTest {
 
     @Test
     @DisplayName("creates a Hash and returns the values")
+    @Tag("testId:shop.Hash/create")
     void shouldCreateAndReturnTheValues() {
         final byte[] valueArgument = valueValue();
         final Hash subject = new Hash(valueArgument);
@@ -24,12 +26,14 @@ class HashTest {
 
     @Test
     @DisplayName("rejects null for value")
+    @Tag("testId:shop.Hash/value/rejects-null")
     void shouldRejectNullValue() {
         assertThrows(NullPointerException.class, () -> new Hash((byte[]) null));
     }
 
     @Test
     @DisplayName("the constructor copies value; the accessor returns a copy")
+    @Tag("testId:shop.Hash/value/copies-in")
     void shouldCopyValueIn() {
         final byte[] value = valueValue();
         final byte[] expected = value.clone();
@@ -44,6 +48,7 @@ class HashTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:shop.Hash/value-semantics")
     void shouldCompareByValue() {
         final Hash subject = create();
         final Hash other = create();
@@ -53,6 +58,7 @@ class HashTest {
 
     @Test
     @DisplayName("toString() can be called and returns a value")
+    @Tag("testId:shop.Hash/toString/call")
     void shouldCallToString() {
         assertNotNull(create().toString());
     }

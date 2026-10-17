@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Balance`, generated from the specs.
@@ -13,6 +14,7 @@ class BalanceTest {
 
     @Test
     @DisplayName("creates a Balance and returns the values")
+    @Tag("testId:mirrornode.token.Balance/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
         final long balance = balanceValue();
@@ -25,12 +27,14 @@ class BalanceTest {
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:mirrornode.token.Balance/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new Balance((AccountId) null, balanceValue(), decimalsValue()));
     }
 
     @Test
     @DisplayName("balance: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.token.Balance/balance/accepts-at-minimum")
     void shouldAcceptBalanceAtMinimum() {
         final long value = -9223372036854775808L;
         final Balance subject = new Balance(accountIdValue(), value, decimalsValue());
@@ -39,6 +43,7 @@ class BalanceTest {
 
     @Test
     @DisplayName("balance: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.token.Balance/balance/accepts-at-maximum")
     void shouldAcceptBalanceAtMaximum() {
         final long value = 9223372036854775807L;
         final Balance subject = new Balance(accountIdValue(), value, decimalsValue());
@@ -47,6 +52,7 @@ class BalanceTest {
 
     @Test
     @DisplayName("decimals: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.token.Balance/decimals/accepts-at-minimum")
     void shouldAcceptDecimalsAtMinimum() {
         final long value = -9223372036854775808L;
         final Balance subject = new Balance(accountIdValue(), balanceValue(), value);
@@ -55,6 +61,7 @@ class BalanceTest {
 
     @Test
     @DisplayName("decimals: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.token.Balance/decimals/accepts-at-maximum")
     void shouldAcceptDecimalsAtMaximum() {
         final long value = 9223372036854775807L;
         final Balance subject = new Balance(accountIdValue(), balanceValue(), value);
@@ -63,6 +70,7 @@ class BalanceTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.token.Balance/value-semantics")
     void shouldCompareByValue() {
         final Balance subject = create();
         final Balance other = create();

@@ -12,6 +12,7 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.keys.PrivateKey;
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions-utility`, generated from the `tests` blocks of its `## Testing` section.
@@ -23,6 +24,7 @@ class TransactionsUtilitySpecTest {
     /// Source: this spec (range is @@nullable); the Python SDK (test_constructor_default_values).
     @Test
     @DisplayName("a PRNG transaction without a range asks for random bytes")
+    @Tag("testId:consensusnode.transactions.utility/a-prng-transaction-without-a-range-asks-for-random-bytes")
     void aPRNGTransactionWithoutARangeAsksForRandomBytes() {
         // when
         final PrngTransaction transaction = new PrngTransaction(null);
@@ -36,6 +38,7 @@ class TransactionsUtilitySpecTest {
     /// Source: the Python SDK (test_constructor_with_parameters, range 1000) and the Go SDK (TestUnitPrngTransactionSetRange).
     @Test
     @DisplayName("a PRNG transaction keeps its range")
+    @Tag("testId:consensusnode.transactions.utility/a-prng-transaction-keeps-its-range")
     void aPRNGTransactionKeepsItsRange() {
         // when
         final PrngTransaction transaction = new PrngTransaction(1000);
@@ -50,6 +53,7 @@ class TransactionsUtilitySpecTest {
     /// (TestUnitPrngTransactionFromToBytes).
     @Test
     @DisplayName("a PRNG transaction with a range survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.utility/a-prng-transaction-with-a-range-survives-tobytes-and-frombytes")
     void aPRNGTransactionWithARangeSurvivesToBytesAndFromBytes() {
         // given
         final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(100).pack(defaultAccount(), List.of(AccountId.fromString("0.0.3")));
@@ -69,6 +73,7 @@ class TransactionsUtilitySpecTest {
     /// (test_build_proto_body_with_negative_range_raises_error).
     @Test
     @DisplayName("a PRNG transaction rejects a range of 0")
+    @Tag("testId:consensusnode.transactions.utility/a-prng-transaction-rejects-a-range-of-0")
     void aPRNGTransactionRejectsARangeOf0() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new PrngTransaction(0));

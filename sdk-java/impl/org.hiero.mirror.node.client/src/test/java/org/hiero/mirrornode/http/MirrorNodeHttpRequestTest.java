@@ -10,6 +10,7 @@ import java.util.Objects;
 import org.hiero.http.HttpMethod;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `MirrorNodeHttpRequest`, generated from the specs.
@@ -18,6 +19,7 @@ class MirrorNodeHttpRequestTest {
 
     @Test
     @DisplayName("creates a MirrorNodeHttpRequest and returns the values")
+    @Tag("testId:mirrornode.http.MirrorNodeHttpRequest/create")
     void shouldCreateAndReturnTheValues() {
         final HttpMethod method = methodValue();
         final String path = pathValue();
@@ -34,6 +36,7 @@ class MirrorNodeHttpRequestTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.http.MirrorNodeHttpRequest/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final HttpMethod method = methodValue();
         final String path = pathValue();
@@ -56,6 +59,7 @@ class MirrorNodeHttpRequestTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.http.MirrorNodeHttpRequest/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final MirrorNodeHttpRequest subject = MirrorNodeHttpRequest.builder()
                 .method(methodValue())
@@ -68,30 +72,35 @@ class MirrorNodeHttpRequestTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.http.MirrorNodeHttpRequest/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> MirrorNodeHttpRequest.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for method")
+    @Tag("testId:mirrornode.http.MirrorNodeHttpRequest/method/rejects-null")
     void shouldRejectNullMethod() {
         assertThrows(NullPointerException.class, () -> new MirrorNodeHttpRequest((HttpMethod) null, pathValue(), bodyValue(), timeoutValue(), headersValue()));
     }
 
     @Test
     @DisplayName("rejects null for path")
+    @Tag("testId:mirrornode.http.MirrorNodeHttpRequest/path/rejects-null")
     void shouldRejectNullPath() {
         assertThrows(NullPointerException.class, () -> new MirrorNodeHttpRequest(methodValue(), (String) null, bodyValue(), timeoutValue(), headersValue()));
     }
 
     @Test
     @DisplayName("path: rejects a value that does not match the pattern")
+    @Tag("testId:mirrornode.http.MirrorNodeHttpRequest/path/rejects-not-matching-the-pattern")
     void shouldRejectPathNotMatchingThePattern() {
         assertThrows(IllegalArgumentException.class, () -> new MirrorNodeHttpRequest(methodValue(), "", bodyValue(), timeoutValue(), headersValue()));
     }
 
     @Test
     @DisplayName("the constructor copies body; the accessor returns a copy")
+    @Tag("testId:mirrornode.http.MirrorNodeHttpRequest/body/copies-in")
     void shouldCopyBodyIn() {
         final byte[] value = bodyValue();
         final byte[] expected = value.clone();
@@ -106,12 +115,14 @@ class MirrorNodeHttpRequestTest {
 
     @Test
     @DisplayName("rejects null for headers")
+    @Tag("testId:mirrornode.http.MirrorNodeHttpRequest/headers/rejects-null")
     void shouldRejectNullHeaders() {
         assertThrows(NullPointerException.class, () -> new MirrorNodeHttpRequest(methodValue(), pathValue(), bodyValue(), timeoutValue(), (Map<String, String>) null));
     }
 
     @Test
     @DisplayName("the constructor copies headers; the accessor returns an unmodifiable map")
+    @Tag("testId:mirrornode.http.MirrorNodeHttpRequest/headers/copies-in")
     void shouldCopyHeadersIn() {
         final Map<String, String> value = new LinkedHashMap<>(headersValue());
         final Map<String, String> expected = Map.copyOf(value);
@@ -123,6 +134,7 @@ class MirrorNodeHttpRequestTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.http.MirrorNodeHttpRequest/value-semantics")
     void shouldCompareByValue() {
         final MirrorNodeHttpRequest subject = create();
         final MirrorNodeHttpRequest other = create();

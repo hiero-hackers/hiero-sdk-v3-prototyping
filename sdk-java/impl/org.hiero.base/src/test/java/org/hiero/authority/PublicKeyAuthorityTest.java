@@ -8,6 +8,7 @@ import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
 import org.hiero.keys.PublicKey;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `PublicKeyAuthority`, generated from the specs.
@@ -16,6 +17,7 @@ class PublicKeyAuthorityTest {
 
     @Test
     @DisplayName("creates a PublicKeyAuthority and returns the values")
+    @Tag("testId:authority.PublicKeyAuthority/create")
     void shouldCreateAndReturnTheValues() {
         final PublicKey publicKey = publicKeyValue();
         final PublicKeyAuthority subject = new PublicKeyAuthority(publicKey);
@@ -24,12 +26,14 @@ class PublicKeyAuthorityTest {
 
     @Test
     @DisplayName("rejects null for publicKey")
+    @Tag("testId:authority.PublicKeyAuthority/publicKey/rejects-null")
     void shouldRejectNullPublicKey() {
         assertThrows(NullPointerException.class, () -> new PublicKeyAuthority((PublicKey) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:authority.PublicKeyAuthority/value-semantics")
     void shouldCompareByValue() {
         final PublicKeyAuthority subject = create();
         final PublicKeyAuthority other = create();

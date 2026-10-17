@@ -26,6 +26,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `PrngTransaction`, generated from the specs.
@@ -34,6 +35,7 @@ class PrngTransactionTest {
 
     @Test
     @DisplayName("creates a PrngTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final @Nullable Integer range = rangeValue();
         final PrngTransaction subject = new PrngTransaction(range);
@@ -45,6 +47,7 @@ class PrngTransactionTest {
 
     @Test
     @DisplayName("range: accepts the minimum (1)")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/range/accepts-at-minimum")
     void shouldAcceptRangeAtMinimum() {
         final @Nullable Integer value = 1;
         final PrngTransaction subject = new PrngTransaction(value);
@@ -53,6 +56,7 @@ class PrngTransactionTest {
 
     @Test
     @DisplayName("range: accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/range/accepts-at-maximum")
     void shouldAcceptRangeAtMaximum() {
         final @Nullable Integer value = 2147483647;
         final PrngTransaction subject = new PrngTransaction(value);
@@ -61,12 +65,14 @@ class PrngTransactionTest {
 
     @Test
     @DisplayName("range: rejects a value below the minimum (0)")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/range/rejects-below-minimum")
     void shouldRejectRangeBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new PrngTransaction(0));
     }
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final PrngTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -76,6 +82,7 @@ class PrngTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final PrngTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -84,6 +91,7 @@ class PrngTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final PrngTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -93,6 +101,7 @@ class PrngTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final PrngTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -101,6 +110,7 @@ class PrngTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/memo/set")
     void shouldSetMemo() {
         final PrngTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -110,6 +120,7 @@ class PrngTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final PrngTransaction subject = create();
         subject.setMemo((String) null);
@@ -118,6 +129,7 @@ class PrngTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final PrngTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -127,6 +139,7 @@ class PrngTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final PrngTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -135,54 +148,63 @@ class PrngTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.utility.PrngTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

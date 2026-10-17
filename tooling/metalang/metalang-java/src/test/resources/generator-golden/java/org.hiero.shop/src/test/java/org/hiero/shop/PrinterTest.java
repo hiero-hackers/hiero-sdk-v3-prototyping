@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import javax.annotation.processing.Generated;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Printer`, generated from the specs.
@@ -15,12 +16,14 @@ class PrinterTest {
 
     @Test
     @DisplayName("creates a Printer and returns the values")
+    @Tag("testId:shop.Printer/create")
     void shouldCreateAndReturnTheValues() {
         final Printer subject = new Printer();
     }
 
     @Test
     @DisplayName("print() can be called")
+    @Tag("testId:shop.Printer/print/call")
     void shouldCallPrint() {
         create().print();
     }

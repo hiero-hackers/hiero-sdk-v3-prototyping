@@ -26,6 +26,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountCreateTransaction`, generated from the specs.
@@ -34,6 +35,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("creates an AccountCreateTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final Authority authority = authorityValue();
         final @Nullable NativeToken<?, ?> initialBalance = initialBalanceValue();
@@ -63,6 +65,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("creates an AccountCreateTransaction with the default values")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final AccountCreateTransaction subject = new AccountCreateTransaction(authorityValue(), initialBalanceValue(), accountMemoValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, aliasValue());
         assertValue(false, subject.receiverSignatureRequired());
@@ -71,6 +74,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Authority authority = authorityValue();
         final @Nullable NativeToken<?, ?> initialBalance = initialBalanceValue();
@@ -108,6 +112,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final AccountCreateTransaction subject = AccountCreateTransaction.builder()
                 .authority(authorityValue())
@@ -126,18 +131,21 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> AccountCreateTransaction.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for authority")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/authority/rejects-null")
     void shouldRejectNullAuthority() {
         assertThrows(NullPointerException.class, () -> new AccountCreateTransaction((Authority) null, initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue()));
     }
 
     @Test
     @DisplayName("accountMemo: accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/accountMemo/accepts-at-maximum-bytes")
     void shouldAcceptAccountMemoAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final AccountCreateTransaction subject = new AccountCreateTransaction(authorityValue(), initialBalanceValue(), value, receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
@@ -146,12 +154,14 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("accountMemo: rejects more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/accountMemo/rejects-above-maximum-bytes")
     void shouldRejectAccountMemoAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new AccountCreateTransaction(authorityValue(), initialBalanceValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue()));
     }
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the minimum (-2147483648)")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/maxAutomaticTokenAssociations/accepts-at-minimum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
         final AccountCreateTransaction subject = new AccountCreateTransaction(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), value, autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
@@ -160,6 +170,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the maximum (2147483647)")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/maxAutomaticTokenAssociations/accepts-at-maximum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMaximum() {
         final @Nullable Integer value = 2147483647;
         final AccountCreateTransaction subject = new AccountCreateTransaction(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), value, autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
@@ -168,6 +179,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("stakedNodeId: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/stakedNodeId/accepts-at-minimum")
     void shouldAcceptStakedNodeIdAtMinimum() {
         final @Nullable Long value = -9223372036854775808L;
         final AccountCreateTransaction subject = new AccountCreateTransaction(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), (AccountId) null, value, declineStakingRewardValue(), aliasValue());
@@ -176,6 +188,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("stakedNodeId: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/stakedNodeId/accepts-at-maximum")
     void shouldAcceptStakedNodeIdAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
         final AccountCreateTransaction subject = new AccountCreateTransaction(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), (AccountId) null, value, declineStakingRewardValue(), aliasValue());
@@ -184,6 +197,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("the constructor copies alias; the accessor returns a copy")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/alias/copies-in")
     void shouldCopyAliasIn() {
         final byte[] value = aliasValue();
         final byte[] expected = value.clone();
@@ -198,12 +212,14 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("rejects stakedAccountId and stakedNodeId together (@@oneOrNoneOf)")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/stakedAccountId-stakedNodeId/rejects-two")
     void shouldRejectTwoOfStakedAccountIdOrStakedNodeId() {
         assertThrows(IllegalArgumentException.class, () -> new AccountCreateTransaction(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue(), aliasValue()));
     }
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final AccountCreateTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -213,6 +229,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final AccountCreateTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -221,6 +238,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final AccountCreateTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -230,6 +248,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final AccountCreateTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -238,6 +257,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/memo/set")
     void shouldSetMemo() {
         final AccountCreateTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -247,6 +267,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final AccountCreateTransaction subject = create();
         subject.setMemo((String) null);
@@ -255,6 +276,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final AccountCreateTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -264,6 +286,7 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final AccountCreateTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -272,54 +295,63 @@ class AccountCreateTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

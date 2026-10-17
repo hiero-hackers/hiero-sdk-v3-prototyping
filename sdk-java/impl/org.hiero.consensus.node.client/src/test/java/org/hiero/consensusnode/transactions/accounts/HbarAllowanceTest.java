@@ -8,6 +8,7 @@ import org.hiero.hedera.HbarUnit;
 import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `HbarAllowance`, generated from the specs.
@@ -16,6 +17,7 @@ class HbarAllowanceTest {
 
     @Test
     @DisplayName("creates a HbarAllowance and returns the values")
+    @Tag("testId:consensusnode.transactions.accounts.HbarAllowance/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId ownerAccountId = ownerAccountIdValue();
         final AccountId spenderAccountId = spenderAccountIdValue();
@@ -28,18 +30,21 @@ class HbarAllowanceTest {
 
     @Test
     @DisplayName("rejects null for ownerAccountId")
+    @Tag("testId:consensusnode.transactions.accounts.HbarAllowance/ownerAccountId/rejects-null")
     void shouldRejectNullOwnerAccountId() {
         assertThrows(NullPointerException.class, () -> new HbarAllowance((AccountId) null, spenderAccountIdValue(), amountValue()));
     }
 
     @Test
     @DisplayName("rejects null for spenderAccountId")
+    @Tag("testId:consensusnode.transactions.accounts.HbarAllowance/spenderAccountId/rejects-null")
     void shouldRejectNullSpenderAccountId() {
         assertThrows(NullPointerException.class, () -> new HbarAllowance(ownerAccountIdValue(), (AccountId) null, amountValue()));
     }
 
     @Test
     @DisplayName("rejects null for amount")
+    @Tag("testId:consensusnode.transactions.accounts.HbarAllowance/amount/rejects-null")
     void shouldRejectNullAmount() {
         assertThrows(NullPointerException.class, () -> new HbarAllowance(ownerAccountIdValue(), spenderAccountIdValue(), (NativeToken<?, ?>) null));
     }

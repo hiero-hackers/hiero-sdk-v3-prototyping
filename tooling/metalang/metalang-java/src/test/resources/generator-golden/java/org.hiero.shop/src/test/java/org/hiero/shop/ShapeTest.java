@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import javax.annotation.processing.Generated;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Shape`, generated from the specs.
@@ -15,6 +16,7 @@ class ShapeTest {
 
     @Test
     @DisplayName("unit() can be called and returns a value")
+    @Tag("testId:shop.Shape/unit/call")
     void shouldCallUnit() {
         assertNotNull(Shape.unit());
     }

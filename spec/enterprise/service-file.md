@@ -83,6 +83,7 @@ the splitting of large contents into chunks). A memo of more UTF-8 bytes than it
 // Source: this spec (@@default and @@nullable of FileCreateParams, "Nothing is required"); hiero-enterprise-java
 // (ProtocolLayerDataCreationTests, testFileCreateRequestCreation: empty contents without an expiration time and a
 // memo are accepted).
+@@testId("file-parameters-without-values-have-empty-contents-and-nothing-else")
 test "file parameters without values have empty contents and nothing else" {
     // when
     let params = DEFAULT(FileCreateParams)
@@ -99,6 +100,7 @@ test "file parameters without values have empty contents and nothing else" {
 // (file_create_transaction_test.py, test_constructor_with_parameters) SDKs: every value that is set is read back
 // unchanged. The expiration time is the one of the Java test (Instant.ofEpochSecond(1554158728), converted exactly to
 // 2019-04-01T22:45:28Z).
+@@testId("file-parameters-keep-the-values-they-are-created-with")
 test "file parameters keep the values they are created with" {
     // given
     let contents = utf8(text: "Hello, Hiero!")
@@ -119,6 +121,7 @@ test "file parameters keep the values they are created with" {
 // Source: the Python SDK (file_create_transaction_test.py, test_constructor_with_custom_expiration_time: the given
 // expiration time Timestamp(1704067200, 0), "Jan 1, 2024", replaces the default); this spec (expirationTime: "the
 // network default if absent").
+@@testId("file-parameters-keep-an-expiration-time-given-without-other-values")
 test "file parameters keep an expiration time given without other values" {
     // given
     let expirationTime = toZonedDateTime(text: "2024-01-01T00:00:00Z")
@@ -135,6 +138,7 @@ test "file parameters keep an expiration time given without other values" {
 
 // Source: this spec (@@maxBytes(100) of fileMemo); HAPI limits a memo to 100 bytes, which ASCII text of 100
 // characters is.
+@@testId("a-file-memo-of-100-characters-is-accepted")
 test "a file memo of 100 characters is accepted" {
     // given
     let memo = repeat(value: "a", count: 100)
@@ -147,6 +151,7 @@ test "a file memo of 100 characters is accepted" {
 }
 
 // Source: this spec (@@maxBytes(100) of fileMemo); HAPI limits a memo to 100 bytes.
+@@testId("a-file-memo-of-101-characters-is-rejected")
 test "a file memo of 101 characters is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)

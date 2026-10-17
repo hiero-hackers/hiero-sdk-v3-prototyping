@@ -16,6 +16,7 @@ import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions-files`, generated from the `tests` blocks of its `## Testing` section.
@@ -34,6 +35,7 @@ class TransactionsFilesSpecTest {
     /// Source: this spec (@@default([]) of contents, @@nullable).
     @Test
     @DisplayName("a file create transaction without attributes has empty contents and nothing else")
+    @Tag("testId:consensusnode.transactions.files/a-file-create-transaction-without-attributes-has-empty-contents-and-nothing-else")
     void aFileCreateTransactionWithoutAttributesHasEmptyContentsAndNothingElse() {
         // when
         final FileCreateTransaction transaction = new FileCreateTransaction(new byte[0], null, null, null);
@@ -52,6 +54,7 @@ class TransactionsFilesSpecTest {
     /// Timestamp(seconds: 1_554_158_728) = 2019-04-01T22:45:28Z).
     @Test
     @DisplayName("a file create transaction keeps its contents, authority, expiration time and memo")
+    @Tag("testId:consensusnode.transactions.files/a-file-create-transaction-keeps-its-contents-authority-expiration-time-and-memo")
     void aFileCreateTransactionKeepsItsContentsAuthorityExpirationTimeAndMemo() {
         // given
         final byte[] contents = utf8("Test file content");
@@ -73,6 +76,7 @@ class TransactionsFilesSpecTest {
     /// (FileCreateTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("a file create transaction survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.files/a-file-create-transaction-survives-tobytes-and-frombytes")
     void aFileCreateTransactionSurvivesToBytesAndFromBytes() {
         // given
         final Account payer = defaultAccount();
@@ -98,6 +102,7 @@ class TransactionsFilesSpecTest {
     /// (FileAppendTransactionUnitTests.test_GetSetFileId, test_GetSetContents and test_ToFromBytes).
     @Test
     @DisplayName("a file append transaction keeps its file and contents and survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.files/a-file-append-transaction-keeps-its-file-and-contents-and-survives-tobytes-and-frombytes")
     void aFileAppendTransactionKeepsItsFileAndContentsAndSurvivesToBytesAndFromBytes() {
         // given
         final Address fileId = Address.fromString("0.0.12345");
@@ -121,6 +126,7 @@ class TransactionsFilesSpecTest {
     /// (test_constructor_without_parameters of FileUpdateTransaction).
     @Test
     @DisplayName("a file update transaction changes nothing but what it names")
+    @Tag("testId:consensusnode.transactions.files/a-file-update-transaction-changes-nothing-but-what-it-names")
     void aFileUpdateTransactionChangesNothingButWhatItNames() {
         // when
         final FileUpdateTransaction transaction = new FileUpdateTransaction(defaultAddress(), null, null, null, null);
@@ -140,6 +146,7 @@ class TransactionsFilesSpecTest {
     /// (FileUpdateTransactionTest: Instant.ofEpochSecond(1554158728) = 2019-04-01T22:45:28Z).
     @Test
     @DisplayName("a file update transaction keeps its contents, authority, expiration time and memo")
+    @Tag("testId:consensusnode.transactions.files/a-file-update-transaction-keeps-its-contents-authority-expiration-time-and-memo")
     void aFileUpdateTransactionKeepsItsContentsAuthorityExpirationTimeAndMemo() {
         // given
         final byte[] contents = utf8("Updated content");
@@ -161,6 +168,7 @@ class TransactionsFilesSpecTest {
     /// and the Swift SDK (FileUpdateTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("a file update transaction survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.files/a-file-update-transaction-survives-tobytes-and-frombytes")
     void aFileUpdateTransactionSurvivesToBytesAndFromBytes() {
         // given
         final PackedTransaction<FileUpdateReceipt, FileUpdateTransaction> packed = new FileUpdateTransaction(defaultAddress(), utf8("Updated content"), defaultAuthority(), SDK_TEST_EXPIRATION_TIME(), "Updated memo").pack(defaultAccount(), List.of(AccountId.fromString("0.0.3")));
@@ -179,6 +187,7 @@ class TransactionsFilesSpecTest {
     /// (FileDeleteTransactionTest.shouldBytes) and the Swift SDK (FileDeleteTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("a file delete transaction keeps its file and survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.files/a-file-delete-transaction-keeps-its-file-and-survives-tobytes-and-frombytes")
     void aFileDeleteTransactionKeepsItsFileAndSurvivesToBytesAndFromBytes() {
         // given
         final FileDeleteTransaction transaction = new FileDeleteTransaction(defaultAddress());

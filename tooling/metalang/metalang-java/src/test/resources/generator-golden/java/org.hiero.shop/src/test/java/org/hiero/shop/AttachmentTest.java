@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Attachment`, generated from the specs.
@@ -17,6 +18,7 @@ class AttachmentTest {
 
     @Test
     @DisplayName("creates an Attachment and returns the values")
+    @Tag("testId:shop.Attachment/create")
     void shouldCreateAndReturnTheValues() {
         final byte[] content = contentValue();
         final byte @Nullable [] checksum = checksumValue();
@@ -31,6 +33,7 @@ class AttachmentTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:shop.Attachment/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final byte[] content = contentValue();
         final byte @Nullable [] checksum = checksumValue();
@@ -50,6 +53,7 @@ class AttachmentTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:shop.Attachment/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final Attachment subject = Attachment.builder()
                 .content(contentValue())
@@ -61,18 +65,21 @@ class AttachmentTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:shop.Attachment/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> Attachment.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for content")
+    @Tag("testId:shop.Attachment/content/rejects-null")
     void shouldRejectNullContent() {
         assertThrows(NullPointerException.class, () -> new Attachment((byte[]) null, checksumValue(), weightValue(), countValue()));
     }
 
     @Test
     @DisplayName("content: accepts the minimum number of elements")
+    @Tag("testId:shop.Attachment/content/accepts-at-minimum-size")
     void shouldAcceptContentAtMinimumSize() {
         final byte[] value = new byte[] {1};
         final Attachment subject = new Attachment(value, checksumValue(), weightValue(), countValue());
@@ -81,12 +88,14 @@ class AttachmentTest {
 
     @Test
     @DisplayName("content: rejects fewer elements than the minimum")
+    @Tag("testId:shop.Attachment/content/rejects-below-minimum-size")
     void shouldRejectContentBelowMinimumSize() {
         assertThrows(IllegalArgumentException.class, () -> new Attachment(new byte[0], checksumValue(), weightValue(), countValue()));
     }
 
     @Test
     @DisplayName("the constructor copies content; the accessor returns a copy")
+    @Tag("testId:shop.Attachment/content/copies-in")
     void shouldCopyContentIn() {
         final byte[] value = contentValue();
         final byte[] expected = value.clone();
@@ -101,6 +110,7 @@ class AttachmentTest {
 
     @Test
     @DisplayName("the constructor copies checksum; the accessor returns a copy")
+    @Tag("testId:shop.Attachment/checksum/copies-in")
     void shouldCopyChecksumIn() {
         final byte[] value = checksumValue();
         final byte[] expected = value.clone();
@@ -115,6 +125,7 @@ class AttachmentTest {
 
     @Test
     @DisplayName("count: accepts the minimum (-2147483648)")
+    @Tag("testId:shop.Attachment/count/accepts-at-minimum")
     void shouldAcceptCountAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
         final Attachment subject = new Attachment(contentValue(), checksumValue(), weightValue(), value);
@@ -123,6 +134,7 @@ class AttachmentTest {
 
     @Test
     @DisplayName("count: accepts the maximum (2147483647)")
+    @Tag("testId:shop.Attachment/count/accepts-at-maximum")
     void shouldAcceptCountAtMaximum() {
         final @Nullable Integer value = 2147483647;
         final Attachment subject = new Attachment(contentValue(), checksumValue(), weightValue(), value);
@@ -131,6 +143,7 @@ class AttachmentTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:shop.Attachment/value-semantics")
     void shouldCompareByValue() {
         final Attachment subject = create();
         final Attachment other = create();

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenTransfer`, generated from the specs.
@@ -14,6 +15,7 @@ class TokenTransferTest {
 
     @Test
     @DisplayName("creates a TokenTransfer and returns the values")
+    @Tag("testId:mirrornode.common.TokenTransfer/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final AccountId account = accountValue();
@@ -28,18 +30,21 @@ class TokenTransferTest {
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:mirrornode.common.TokenTransfer/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenTransfer((Address) null, accountValue(), amountValue(), isApprovalValue()));
     }
 
     @Test
     @DisplayName("rejects null for account")
+    @Tag("testId:mirrornode.common.TokenTransfer/account/rejects-null")
     void shouldRejectNullAccount() {
         assertThrows(NullPointerException.class, () -> new TokenTransfer(tokenIdValue(), (AccountId) null, amountValue(), isApprovalValue()));
     }
 
     @Test
     @DisplayName("amount: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.common.TokenTransfer/amount/accepts-at-minimum")
     void shouldAcceptAmountAtMinimum() {
         final long value = -9223372036854775808L;
         final TokenTransfer subject = new TokenTransfer(tokenIdValue(), accountValue(), value, isApprovalValue());
@@ -48,6 +53,7 @@ class TokenTransferTest {
 
     @Test
     @DisplayName("amount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.common.TokenTransfer/amount/accepts-at-maximum")
     void shouldAcceptAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenTransfer subject = new TokenTransfer(tokenIdValue(), accountValue(), value, isApprovalValue());
@@ -56,6 +62,7 @@ class TokenTransferTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.common.TokenTransfer/value-semantics")
     void shouldCompareByValue() {
         final TokenTransfer subject = create();
         final TokenTransfer other = create();

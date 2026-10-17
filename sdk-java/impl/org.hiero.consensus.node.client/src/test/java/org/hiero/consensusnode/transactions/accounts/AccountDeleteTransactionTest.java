@@ -26,6 +26,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountDeleteTransaction`, generated from the specs.
@@ -34,6 +35,7 @@ class AccountDeleteTransactionTest {
 
     @Test
     @DisplayName("creates an AccountDeleteTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
         final AccountId transferAccountId = transferAccountIdValue();
@@ -47,18 +49,21 @@ class AccountDeleteTransactionTest {
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new AccountDeleteTransaction((AccountId) null, transferAccountIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for transferAccountId")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/transferAccountId/rejects-null")
     void shouldRejectNullTransferAccountId() {
         assertThrows(NullPointerException.class, () -> new AccountDeleteTransaction(accountIdValue(), (AccountId) null));
     }
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final AccountDeleteTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -68,6 +73,7 @@ class AccountDeleteTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final AccountDeleteTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -76,6 +82,7 @@ class AccountDeleteTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final AccountDeleteTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -85,6 +92,7 @@ class AccountDeleteTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final AccountDeleteTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -93,6 +101,7 @@ class AccountDeleteTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/memo/set")
     void shouldSetMemo() {
         final AccountDeleteTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -102,6 +111,7 @@ class AccountDeleteTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final AccountDeleteTransaction subject = create();
         subject.setMemo((String) null);
@@ -110,6 +120,7 @@ class AccountDeleteTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final AccountDeleteTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -119,6 +130,7 @@ class AccountDeleteTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final AccountDeleteTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -127,54 +139,63 @@ class AccountDeleteTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountDeleteTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

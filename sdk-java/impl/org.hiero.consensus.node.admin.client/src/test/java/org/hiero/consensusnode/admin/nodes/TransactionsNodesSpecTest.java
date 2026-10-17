@@ -14,6 +14,7 @@ import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.IpAddress;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions-nodes`, generated from the `tests` blocks of its `## Testing` section.
@@ -51,6 +52,7 @@ class TransactionsNodesSpecTest {
     /// JavaScript ("should create EndPoint with both address and port") and C++ Endpoint unit tests.
     @Test
     @DisplayName("an endpoint by IP address keeps the address and the port")
+    @Tag("testId:consensusnode.admin.nodes/an-endpoint-by-ip-address-keeps-the-address-and-the-port")
     void anEndpointByIPAddressKeepsTheAddressAndThePort() {
         // given
         final IpAddress ipAddress = new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7});
@@ -70,6 +72,7 @@ class TransactionsNodesSpecTest {
     /// Python and Java (validateAllowsOnlyDomain) Endpoint unit tests.
     @Test
     @DisplayName("an endpoint by domain name keeps the name and the port")
+    @Tag("testId:consensusnode.admin.nodes/an-endpoint-by-domain-name-keeps-the-name-and-the-port")
     void anEndpointByDomainNameKeepsTheNameAndThePort() {
         // when
         final ServiceEndpoint endpoint = new ServiceEndpoint(null, "node7.consensus.example", 50211);
@@ -86,6 +89,7 @@ class TransactionsNodesSpecTest {
     /// compare endpoints by value; the Equality of the test language.
     @Test
     @DisplayName("endpoints are equal when address, name and port are equal")
+    @Tag("testId:consensusnode.admin.nodes/endpoints-are-equal-when-address-name-and-port-are-equal")
     void endpointsAreEqualWhenAddressNameAndPortAreEqual() {
         // given
         final ServiceEndpoint endpoint = defaultServiceEndpoint();
@@ -107,6 +111,7 @@ class TransactionsNodesSpecTest {
     /// of this spec.
     @Test
     @DisplayName("an endpoint with both an IP address and a domain name is rejected")
+    @Tag("testId:consensusnode.admin.nodes/an-endpoint-with-both-an-ip-address-and-a-domain-name-is-rejected")
     void anEndpointWithBothAnIPAddressAndADomainNameIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), "node7.consensus.example", 50211));
@@ -118,6 +123,7 @@ class TransactionsNodesSpecTest {
     /// `@@oneOf(ipAddress, domainName)` of this spec.
     @Test
     @DisplayName("an endpoint with neither an IP address nor a domain name is rejected")
+    @Tag("testId:consensusnode.admin.nodes/an-endpoint-with-neither-an-ip-address-nor-a-domain-name-is-rejected")
     void anEndpointWithNeitherAnIPAddressNorADomainNameIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new ServiceEndpoint(null, null, 50211));
@@ -129,6 +135,7 @@ class TransactionsNodesSpecTest {
     /// and Swift NodeCreateTransaction unit tests.
     @Test
     @DisplayName("a node create transaction keeps all its attributes")
+    @Tag("testId:consensusnode.admin.nodes/a-node-create-transaction-keeps-all-its-attributes")
     void aNodeCreateTransactionKeepsAllItsAttributes() {
         // given
         final AccountId account = defaultAccountId();
@@ -155,6 +162,7 @@ class TransactionsNodesSpecTest {
     /// NodeCreateTransaction unit tests; `@@default(false)` of declineReward.
     @Test
     @DisplayName("a node create transaction takes the reward and has no description and no proxy by default")
+    @Tag("testId:consensusnode.admin.nodes/a-node-create-transaction-takes-the-reward-and-has-no-description-and-no-proxy-by-default")
     void aNodeCreateTransactionTakesTheRewardAndHasNoDescriptionAndNoProxyByDefault() {
         // when
         final NodeCreateTransaction transaction = new NodeCreateTransaction(defaultAccountId(), null, List.of(defaultServiceEndpoint()), List.of(NODE_DOMAIN_ENDPOINT()), GOSSIP_CA_CERTIFICATE(), GRPC_CERTIFICATE_HASH(), defaultAuthority(), false, null);
@@ -170,6 +178,7 @@ class TransactionsNodesSpecTest {
     /// Source: HAPI node_create.proto (gossip_endpoint: "This list MUST NOT be empty"); `@@minSize(1)` of this spec.
     @Test
     @DisplayName("a node create transaction without gossip endpoints is rejected")
+    @Tag("testId:consensusnode.admin.nodes/a-node-create-transaction-without-gossip-endpoints-is-rejected")
     void aNodeCreateTransactionWithoutGossipEndpointsIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(defaultAccountId(), null, List.of(), List.of(NODE_DOMAIN_ENDPOINT()), GOSSIP_CA_CERTIFICATE(), GRPC_CERTIFICATE_HASH(), defaultAuthority(), false, null));
@@ -180,6 +189,7 @@ class TransactionsNodesSpecTest {
     /// Source: HAPI node_create.proto (service_endpoint: "This list MUST NOT be empty"); `@@minSize(1)` of this spec.
     @Test
     @DisplayName("a node create transaction without service endpoints is rejected")
+    @Tag("testId:consensusnode.admin.nodes/a-node-create-transaction-without-service-endpoints-is-rejected")
     void aNodeCreateTransactionWithoutServiceEndpointsIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(defaultAccountId(), null, List.of(defaultServiceEndpoint()), List.of(), GOSSIP_CA_CERTIFICATE(), GRPC_CERTIFICATE_HASH(), defaultAuthority(), false, null));
@@ -192,6 +202,7 @@ class TransactionsNodesSpecTest {
     /// endpoint list leaves the list unchanged).
     @Test
     @DisplayName("a node update transaction changes nothing but what is set")
+    @Tag("testId:consensusnode.admin.nodes/a-node-update-transaction-changes-nothing-but-what-is-set")
     void aNodeUpdateTransactionChangesNothingButWhatIsSet() {
         // when
         final NodeUpdateTransaction transaction = new NodeUpdateTransaction(7L, null, null, List.of(), List.of(), null, null, null, null, null);
@@ -215,6 +226,7 @@ class TransactionsNodesSpecTest {
     /// and Swift NodeUpdateTransaction unit tests.
     @Test
     @DisplayName("a node update transaction keeps the attributes it sets")
+    @Tag("testId:consensusnode.admin.nodes/a-node-update-transaction-keeps-the-attributes-it-sets")
     void aNodeUpdateTransactionKeepsTheAttributesItSets() {
         // given
         final AccountId account = defaultAccountId();
@@ -241,6 +253,7 @@ class TransactionsNodesSpecTest {
     /// kept and differ from "not set".
     @Test
     @DisplayName("a node update transaction keeps declineReward true and false")
+    @Tag("testId:consensusnode.admin.nodes/a-node-update-transaction-keeps-declinereward-true-and-false")
     void aNodeUpdateTransactionKeepsDeclineRewardTrueAndFalse() {
         for (final boolean declineReward : List.of(true, false)) {
             // when
@@ -257,6 +270,7 @@ class TransactionsNodesSpecTest {
     /// tests.
     @Test
     @DisplayName("a node delete transaction keeps its node id")
+    @Tag("testId:consensusnode.admin.nodes/a-node-delete-transaction-keeps-its-node-id")
     void aNodeDeleteTransactionKeepsItsNodeId() {
         // when
         final NodeDeleteTransaction transaction = new NodeDeleteTransaction(7L);
@@ -272,6 +286,7 @@ class TransactionsNodesSpecTest {
     /// Go and Python SDKs reject more than 10 gossip endpoints.
     @Test
     @DisplayName("a node create transaction with more than 10 gossip endpoints is rejected")
+    @Tag("testId:consensusnode.admin.nodes/a-node-create-transaction-with-more-than-10-gossip-endpoints-is-rejected")
     void aNodeCreateTransactionWithMoreThan10GossipEndpointsIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(defaultAccountId(), null, ELEVEN_ENDPOINTS(), List.of(NODE_DOMAIN_ENDPOINT()), GOSSIP_CA_CERTIFICATE(), GRPC_CERTIFICATE_HASH(), defaultAuthority(), false, null));
@@ -284,6 +299,7 @@ class TransactionsNodesSpecTest {
     /// JavaScript, Go and Python SDKs reject more than 8 service endpoints.
     @Test
     @DisplayName("a node create transaction with more than 8 service endpoints is rejected")
+    @Tag("testId:consensusnode.admin.nodes/a-node-create-transaction-with-more-than-8-service-endpoints-is-rejected")
     void aNodeCreateTransactionWithMoreThan8ServiceEndpointsIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(defaultAccountId(), null, List.of(defaultServiceEndpoint()), NINE_ENDPOINTS(), GOSSIP_CA_CERTIFICATE(), GRPC_CERTIFICATE_HASH(), defaultAuthority(), false, null));
@@ -295,6 +311,7 @@ class TransactionsNodesSpecTest {
     /// setServiceEndpoints reject more than 10 resp. 8 entries).
     @Test
     @DisplayName("a node update transaction with too many endpoints is rejected")
+    @Tag("testId:consensusnode.admin.nodes/a-node-update-transaction-with-too-many-endpoints-is-rejected")
     void aNodeUpdateTransactionWithTooManyEndpointsIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new NodeUpdateTransaction(7L, null, null, ELEVEN_ENDPOINTS(), List.of(), null, null, null, null, null));
@@ -307,6 +324,7 @@ class TransactionsNodesSpecTest {
     /// INVALID_NODE_DESCRIPTION); the Java, Go and Python SDKs check the UTF-8 length: 34 characters "€" are 102 bytes.
     @Test
     @DisplayName("a node create transaction with a description of more than 100 UTF-8 bytes is rejected")
+    @Tag("testId:consensusnode.admin.nodes/a-node-create-transaction-with-a-description-of-more-than-100-utf-8-bytes-is-rejected")
     void aNodeCreateTransactionWithADescriptionOfMoreThan100UTF8BytesIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(defaultAccountId(), repeat("€", 34L), List.of(defaultServiceEndpoint()), List.of(NODE_DOMAIN_ENDPOINT()), GOSSIP_CA_CERTIFICATE(), GRPC_CERTIFICATE_HASH(), defaultAuthority(), false, null));

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.hiero.ledger.IpAddress;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ServiceEndpoint`, generated from the specs.
@@ -14,6 +15,7 @@ class ServiceEndpointTest {
 
     @Test
     @DisplayName("creates a ServiceEndpoint and returns the values")
+    @Tag("testId:consensusnode.admin.nodes.ServiceEndpoint/create")
     void shouldCreateAndReturnTheValues() {
         final @Nullable IpAddress ipAddress = ipAddressValue();
         final @Nullable String domainName = (String) null;
@@ -26,6 +28,7 @@ class ServiceEndpointTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.admin.nodes.ServiceEndpoint/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final @Nullable IpAddress ipAddress = ipAddressValue();
         final @Nullable String domainName = (String) null;
@@ -42,6 +45,7 @@ class ServiceEndpointTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.admin.nodes.ServiceEndpoint/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final ServiceEndpoint subject = ServiceEndpoint.builder()
                 .ipAddress(ipAddressValue())
@@ -53,12 +57,14 @@ class ServiceEndpointTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:consensusnode.admin.nodes.ServiceEndpoint/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> ServiceEndpoint.builder().build());
     }
 
     @Test
     @DisplayName("port: accepts the minimum (0)")
+    @Tag("testId:consensusnode.admin.nodes.ServiceEndpoint/port/accepts-at-minimum")
     void shouldAcceptPortAtMinimum() {
         final int value = 0;
         final ServiceEndpoint subject = new ServiceEndpoint(ipAddressValue(), (String) null, value);
@@ -67,6 +73,7 @@ class ServiceEndpointTest {
 
     @Test
     @DisplayName("port: accepts the maximum (65535)")
+    @Tag("testId:consensusnode.admin.nodes.ServiceEndpoint/port/accepts-at-maximum")
     void shouldAcceptPortAtMaximum() {
         final int value = 65535;
         final ServiceEndpoint subject = new ServiceEndpoint(ipAddressValue(), (String) null, value);
@@ -75,30 +82,35 @@ class ServiceEndpointTest {
 
     @Test
     @DisplayName("port: rejects a value below the minimum (-1)")
+    @Tag("testId:consensusnode.admin.nodes.ServiceEndpoint/port/rejects-below-minimum")
     void shouldRejectPortBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new ServiceEndpoint(ipAddressValue(), (String) null, -1));
     }
 
     @Test
     @DisplayName("port: rejects a value above the maximum (65536)")
+    @Tag("testId:consensusnode.admin.nodes.ServiceEndpoint/port/rejects-above-maximum")
     void shouldRejectPortAboveMaximum() {
         assertThrows(IllegalArgumentException.class, () -> new ServiceEndpoint(ipAddressValue(), (String) null, 65536));
     }
 
     @Test
     @DisplayName("rejects ipAddress and domainName together (@@oneOf)")
+    @Tag("testId:consensusnode.admin.nodes.ServiceEndpoint/ipAddress-domainName/rejects-two")
     void shouldRejectTwoOfIpAddressOrDomainName() {
         assertThrows(IllegalArgumentException.class, () -> new ServiceEndpoint(ipAddressValue(), domainNameValue(), portValue()));
     }
 
     @Test
     @DisplayName("rejects none of ipAddress, domainName (@@oneOf)")
+    @Tag("testId:consensusnode.admin.nodes.ServiceEndpoint/ipAddress-domainName/rejects-none")
     void shouldRejectNoneOfIpAddressOrDomainName() {
         assertThrows(IllegalArgumentException.class, () -> new ServiceEndpoint((IpAddress) null, (String) null, portValue()));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.admin.nodes.ServiceEndpoint/value-semantics")
     void shouldCompareByValue() {
         final ServiceEndpoint subject = create();
         final ServiceEndpoint other = create();

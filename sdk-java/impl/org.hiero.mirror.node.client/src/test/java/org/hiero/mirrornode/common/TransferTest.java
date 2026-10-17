@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Transfer`, generated from the specs.
@@ -13,6 +14,7 @@ class TransferTest {
 
     @Test
     @DisplayName("creates a Transfer and returns the values")
+    @Tag("testId:mirrornode.common.Transfer/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId account = accountValue();
         final long amount = amountValue();
@@ -25,12 +27,14 @@ class TransferTest {
 
     @Test
     @DisplayName("rejects null for account")
+    @Tag("testId:mirrornode.common.Transfer/account/rejects-null")
     void shouldRejectNullAccount() {
         assertThrows(NullPointerException.class, () -> new Transfer((AccountId) null, amountValue(), isApprovalValue()));
     }
 
     @Test
     @DisplayName("amount: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.common.Transfer/amount/accepts-at-minimum")
     void shouldAcceptAmountAtMinimum() {
         final long value = -9223372036854775808L;
         final Transfer subject = new Transfer(accountValue(), value, isApprovalValue());
@@ -39,6 +43,7 @@ class TransferTest {
 
     @Test
     @DisplayName("amount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.common.Transfer/amount/accepts-at-maximum")
     void shouldAcceptAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final Transfer subject = new Transfer(accountValue(), value, isApprovalValue());
@@ -47,6 +52,7 @@ class TransferTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.common.Transfer/value-semantics")
     void shouldCompareByValue() {
         final Transfer subject = create();
         final Transfer other = create();

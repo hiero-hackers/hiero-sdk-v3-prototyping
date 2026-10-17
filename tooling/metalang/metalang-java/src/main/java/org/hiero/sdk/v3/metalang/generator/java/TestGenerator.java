@@ -17,6 +17,7 @@ import org.hiero.sdk.v3.metalang.ast.Annotation;
 import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 import org.hiero.sdk.v3.metalang.generator.OneOfGroups;
+import org.hiero.sdk.v3.metalang.generator.TestIds;
 import org.hiero.sdk.v3.metalang.generator.IntegerRange;
 import org.hiero.sdk.v3.metalang.model.EnumValueDefinition;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
@@ -121,7 +122,8 @@ public final class TestGenerator {
         if (context.model().type(new QualifiedName(type.name().namespace(), className)).isPresent()) {
             return Optional.empty(); // a spec type with the name of the test class
         }
-        final TestFile file = new TestFile(type.name().namespace(), className, context, visible, functions);
+        final TestFile file = new TestFile(type.name().namespace(), TestIds.scope(type.name()), className, context,
+                visible, functions);
         final boolean tested = switch (type) {
             case TypeDefinition.EnumDefinition enumType -> file.enumTests(enumType);
             case TypeDefinition.ComplexTypeDefinition complex when complex.abstraction() ->
@@ -147,7 +149,7 @@ public final class TestGenerator {
                                  final JavaContext context, final Set<String> visible,
                                  final List<FunctionDefinition> all) {
         final String factory = FactoryGenerator.className(namespace);
-        final TestFile file = new TestFile(namespace, factory + "Test", context, visible, all);
+        final TestFile file = new TestFile(namespace, namespace, factory + "Test", context, visible, all);
         file.factoryTests(factory, functions);
         return new GeneratedFile(path(module, namespace, factory + "Test"), file.render("`" + factory + "`", false));
     }
@@ -215,6 +217,7 @@ public final class TestGenerator {
     private static final class TestFile {
 
         private final String namespace;
+        private final String scope;
         private final String className;
         private final JavaContext context;
         private final Imports imports;
@@ -223,13 +226,16 @@ public final class TestGenerator {
         private final Map<String, String> helpers = new LinkedHashMap<>();
         private final Map<String, String> helperNames = new HashMap<>();
         private final Set<String> testNames = new HashSet<>();
+        private final Set<String> testIds = new HashSet<>();
         private final List<String> notes = new ArrayList<>();
         private boolean deprecated;
         private boolean usesAssertValue;
 
-        private TestFile(final String namespace, final String className, final JavaContext context,
-                         final Set<String> visible, final List<FunctionDefinition> functions) {
+        private TestFile(final String namespace, final String scope, final String className,
+                         final JavaContext context, final Set<String> visible,
+                         final List<FunctionDefinition> functions) {
             this.namespace = namespace;
+            this.scope = scope;
             this.className = className;
             this.context = context;
             this.imports = context.imports(JavaNames.packageName(namespace), className);
@@ -317,7 +323,7 @@ public final class TestGenerator {
                     create.append(initialValue(definitions.get(field.name()), field));
                 }
             }
-            test("shouldCreateAndReturnTheValues", "creates " + article(type.name().name())
+            test(id(TestIds.CREATE), "shouldCreateAndReturnTheValues", "creates " + article(type.name().name())
                     + " and returns the values", "", create.toString());
             defaultConstructorTest(type, parameters, arguments, definitions, constructor, typeName);
             if (BuilderGenerator.hasBuilder(type, samples.constructorParameters(type), context)) {
@@ -329,21 +335,21 @@ public final class TestGenerator {
                 final java.util.function.Function<String, String> call = value -> constructor + "("
                         + exclusive(type, parameters, arguments, index, value) + ")";
                 if (!parameter.nullable() && !JavaTypes.isPrimitive(parameter.declaration())) {
-                    test("shouldRejectNull" + parameter.capitalized(), "rejects null for " + parameter.name(), "",
+                    test(id(parameter.name(), TestIds.REJECTS_NULL), "shouldRejectNull" + parameter.capitalized(), "rejects null for " + parameter.name(), "",
                             INDENT + INDENT
                             + "assertThrows(NullPointerException.class, () -> " + call.apply(nullOf(parameter))
                             + ");\n");
                 }
                 for (final Case c : cases(parameter)) {
                     if (c.accepted()) {
-                        test("shouldAccept" + parameter.capitalized() + c.label(), parameter.name() + ": accepts "
+                        test(id(parameter.name(), TestIds.accepts(c.label())), "shouldAccept" + parameter.capitalized() + c.label(), parameter.name() + ": accepts "
                                         + c.text(), "",
                                 INDENT + INDENT + "final " + parameter.declaration() + " value = " + c.expression()
                                         + ";\n" + INDENT + INDENT + "final " + typeName + " subject = "
                                         + call.apply("value") + ";\n"
                                         + assertValue("value", "subject." + parameter.identifier() + "()"));
                     } else {
-                        test("shouldReject" + parameter.capitalized() + c.label(), parameter.name() + ": rejects "
+                        test(id(parameter.name(), TestIds.rejects(c.label())), "shouldReject" + parameter.capitalized() + c.label(), parameter.name() + ": rejects "
                                 + c.text(), "", INDENT + INDENT
                                 + "assertThrows(IllegalArgumentException.class, () -> "
                                 + call.apply(c.expression()) + ");\n");
@@ -370,7 +376,7 @@ public final class TestGenerator {
                     final List<String> two = new ArrayList<>(arguments);
                     two.set(withValue.get(0), values.get(withValue.get(0)));
                     two.set(withValue.get(1), values.get(withValue.get(1)));
-                    test("shouldRejectTwoOf" + label, "rejects " + parameters.get(withValue.get(0)).name() + " and "
+                    test(id(String.join("-", group.fields()), "rejects-two"), "shouldRejectTwoOf" + label, "rejects " + parameters.get(withValue.get(0)).name() + " and "
                             + parameters.get(withValue.get(1)).name() + " together (" + (group.exactlyOne()
                             ? "@@oneOf" : "@@oneOrNoneOf") + ")", "", INDENT + INDENT
                             + "assertThrows(IllegalArgumentException.class, () -> " + constructor + "("
@@ -379,7 +385,7 @@ public final class TestGenerator {
                 if (group.exactlyOne()) {
                     final List<String> none = new ArrayList<>(arguments);
                     members.forEach(i -> none.set(i, nullOf(parameters.get(i))));
-                    test("shouldRejectNoneOf" + label, "rejects none of " + String.join(", ", group.fields())
+                    test(id(String.join("-", group.fields()), "rejects-none"), "shouldRejectNoneOf" + label, "rejects none of " + String.join(", ", group.fields())
                             + " (@@oneOf)", "", INDENT + INDENT + "assertThrows(IllegalArgumentException.class, () -> "
                             + constructor + "(" + String.join(", ", none) + "));\n");
                 }
@@ -397,7 +403,7 @@ public final class TestGenerator {
             if (type.fields().stream().allMatch(f -> f.hasAnnotation("immutable")) && !type.fields().isEmpty()
                     && type.methods("equals").isEmpty() && type.methods("hashCode").isEmpty()
                     && fields.stream().allMatch(f -> hasValueSemantics(f.type(), new HashSet<>()))) {
-                test("shouldCompareByValue", "equal values give equal objects and hash codes", "", INDENT + INDENT + "final " + typeName + " subject = create();\n"
+                test(id(TestIds.VALUE_SEMANTICS), "shouldCompareByValue", "equal values give equal objects and hash codes", "", INDENT + INDENT + "final " + typeName + " subject = create();\n"
                         + INDENT + INDENT + "final " + typeName + " other = create();\n"
                         + INDENT + INDENT + "assertEquals(subject, other);\n"
                         + INDENT + INDENT + "assertEquals(subject.hashCode(), other.hashCode());\n");
@@ -454,7 +460,7 @@ public final class TestGenerator {
                             + "()"));
                 }
             }
-            test("shouldCreateWithTheDefaultValues", "creates " + article(type.name().name())
+            test(id(TestIds.CREATE_WITH_DEFAULTS), "shouldCreateWithTheDefaultValues", "creates " + article(type.name().name())
                     + " with the default values", "", body.toString());
         }
 
@@ -484,7 +490,7 @@ public final class TestGenerator {
             for (int i = 0; i < parameters.size(); i++) {
                 all.append(assertValue(locals.get(i), "subject." + parameters.get(i).identifier() + "()"));
             }
-            test("shouldBuildTheValuesOfTheConstructor", "the builder builds the values of the constructor", "",
+            test(id(TestIds.BUILDER_BUILDS), "shouldBuildTheValuesOfTheConstructor", "the builder builds the values of the constructor", "",
                     all.toString());
 
             // only the required values
@@ -510,10 +516,10 @@ public final class TestGenerator {
                     required.append(initialValue(definition, parameter));
                 }
             }
-            test("shouldBuildWithoutTheOptionalValues", "a value that is not set is null or its default value", "",
+            test(id(TestIds.BUILDER_OPTIONAL), "shouldBuildWithoutTheOptionalValues", "a value that is not set is null or its default value", "",
                     required.toString());
             if (anyRequired) {
-                test("shouldRejectAMissingRequiredValue", "the builder rejects a missing required value", "",
+                test(id(TestIds.BUILDER_MISSING), "shouldRejectAMissingRequiredValue", "the builder rejects a missing required value", "",
                         INDENT + INDENT + "assertThrows(NullPointerException.class, () -> " + builder
                                 + ".build());\n");
             }
@@ -552,7 +558,7 @@ public final class TestGenerator {
             final String accessor = "subject." + field.identifier() + "()";
             final Optional<String> other = helper(field, 1, true);
             if (other.isPresent()) {
-                test("shouldSet" + field.capitalized(), setterName(field) + " changes " + field.name()
+                test(id(field.name(), TestIds.SET), "shouldSet" + field.capitalized(), setterName(field) + " changes " + field.name()
                         + " and returns the object", "", INDENT + INDENT + "final " + typeName
                         + " subject = create();\n"
                         + INDENT + INDENT + "final " + field.declaration() + " value = " + other.get() + "();\n"
@@ -560,12 +566,12 @@ public final class TestGenerator {
                         + assertValue("value", accessor));
             }
             if (field.nullable()) {
-                test("shouldSet" + field.capitalized() + "ToNull", setterName(field) + " accepts null", "", INDENT + INDENT + "final " + typeName
+                test(id(field.name(), TestIds.SET_NULL), "shouldSet" + field.capitalized() + "ToNull", setterName(field) + " accepts null", "", INDENT + INDENT + "final " + typeName
                         + " subject = create();\n"
                         + INDENT + INDENT + "subject." + setter + "(" + nullOf(field) + ");\n"
                         + INDENT + INDENT + "assertNull(" + accessor + ");\n");
             } else if (!JavaTypes.isPrimitive(field.declaration())) {
-                test("shouldRejectNull" + field.capitalized() + "InSetter", setterName(field)
+                test(id(field.name(), TestIds.SET_REJECTS_NULL), "shouldRejectNull" + field.capitalized() + "InSetter", setterName(field)
                         + " rejects null and keeps the value", "", INDENT + INDENT + "final "
                         + typeName + " subject = create();\n"
                         + INDENT + INDENT + "assertThrows(NullPointerException.class, () -> subject." + setter
@@ -574,14 +580,14 @@ public final class TestGenerator {
             }
             for (final Case c : cases(field)) {
                 if (c.accepted()) {
-                    test("shouldSet" + field.capitalized() + c.label(), setterName(field) + " accepts " + c.text(),
+                    test(id(field.name(), "set-" + TestIds.accepts(c.label())), "shouldSet" + field.capitalized() + c.label(), setterName(field) + " accepts " + c.text(),
                             "", INDENT + INDENT + "final " + typeName
                             + " subject = create();\n"
                             + INDENT + INDENT + "final " + field.declaration() + " value = " + c.expression() + ";\n"
                             + INDENT + INDENT + "subject." + setter + "(value);\n"
                             + assertValue("value", accessor));
                 } else {
-                    test("shouldNotSet" + field.capitalized() + c.label(), setterName(field) + " rejects " + c.text()
+                    test(id(field.name(), "set-" + TestIds.rejects(c.label())), "shouldNotSet" + field.capitalized() + c.label(), setterName(field) + " rejects " + c.text()
                             + " and keeps the value", "", INDENT + INDENT + "final "
                             + typeName + " subject = create();\n"
                             + INDENT + INDENT + "assertThrows(IllegalArgumentException.class, () -> subject."
@@ -637,7 +643,7 @@ public final class TestGenerator {
                         .append(imports.use("java.util", "Objects")).append(".requireNonNull(").append(accessor)
                         .append(").clear());\n");
             }
-            test("shouldCopy" + input.capitalized() + suffix, (suffix.equals("InSetter") ? setterName(input)
+            test(id(input.name(), suffix.isEmpty() ? TestIds.COPIES : TestIds.COPIES + "-" + TestIds.kebab(suffix)), "shouldCopy" + input.capitalized() + suffix, (suffix.equals("InSetter") ? setterName(input)
                     : "the constructor") + " copies " + input.name() + (bytes ? "; the accessor returns a copy"
                     : "; the accessor returns an unmodifiable " + (input.type() instanceof Type.BasicType basic
                     && basic.builtin().category() == BuiltinType.Category.MAP ? "map" : "collection")), "",
@@ -686,7 +692,7 @@ public final class TestGenerator {
                                 + JavaKeywords.identifier(attribute.name()) + "()"));
                     }
                 }
-                test("shouldProvideTheAttributesOfTheConstants", "the constants have the attribute values of the "
+                test(id(TestIds.CONSTANTS), "shouldProvideTheAttributesOfTheConstants", "the constants have the attribute values of the "
                         + "specs", "", body.toString());
             }
             final Optional<EnumValueDefinition> first = type.values().stream()
@@ -760,16 +766,16 @@ public final class TestGenerator {
                     .map(context::exception).map(e -> imports.use(e.packageName(), e.simpleName())).distinct()
                     .toList();
             if (errors.isEmpty() && !async) {
-                test("shouldCall" + capitalize(method.name()), display, "",
+                test(id(method.name(), TestIds.CALL), "shouldCall" + capitalize(method.name()), display, "",
                         statements.toString().substring(INDENT.length()));
                 return;
             }
             if (errors.isEmpty()) {
-                test("shouldCall" + capitalize(method.name()), display, "", statements.toString());
+                test(id(method.name(), TestIds.CALL), "shouldCall" + capitalize(method.name()), display, "", statements.toString());
                 return;
             }
             // the declared errors are an allowed result
-            test("shouldCall" + capitalize(method.name()), display + " (only " + String.join(", ", errors)
+            test(id(method.name(), TestIds.CALL), "shouldCall" + capitalize(method.name()), display + " (only " + String.join(", ", errors)
                     + " may occur)", " throws Exception", INDENT + INDENT + "try {\n"
                     + statements
                     + INDENT + INDENT + "} catch (final Exception e) {\n"
@@ -816,19 +822,19 @@ public final class TestGenerator {
                             + ")";
                     if (!parameter.nullable() && !parameter.varargs()
                             && !JavaTypes.isPrimitive(parameter.declaration())) {
-                        test("shouldRejectNull" + parameter.capitalized() + "In" + name, method.name()
+                        test(id(method.name(), parameter.name(), TestIds.REJECTS_NULL), "shouldRejectNull" + parameter.capitalized() + "In" + name, method.name()
                                 + " rejects null for " + parameter.name(), "", INDENT + INDENT
                                 + "assertThrows(NullPointerException.class, () -> " + call.apply(nullOf(parameter))
                                 + ");\n");
                     }
                     for (final Case c : parameter.varargs() ? List.<Case>of() : cases(parameter)) {
                         if (c.accepted()) {
-                            test("shouldAccept" + parameter.capitalized() + c.label() + "In" + name, method.name()
+                            test(id(method.name(), parameter.name(), TestIds.accepts(c.label())), "shouldAccept" + parameter.capitalized() + c.label() + "In" + name, method.name()
                                             + ": " + parameter.name() + " accepts " + c.text(), "",
                                     INDENT + INDENT + (returnsReference(method) ? "assertNotNull("
                                             + call.apply(c.expression()) + ")" : call.apply(c.expression())) + ";\n");
                         } else {
-                            test("shouldReject" + parameter.capitalized() + c.label() + "In" + name, method.name()
+                            test(id(method.name(), parameter.name(), TestIds.rejects(c.label())), "shouldReject" + parameter.capitalized() + c.label() + "In" + name, method.name()
                                             + ": " + parameter.name() + " rejects " + c.text(), "",
                                     INDENT + INDENT + "assertThrows(IllegalArgumentException.class, () -> "
                                             + call.apply(c.expression()) + ");\n");
@@ -1099,19 +1105,32 @@ public final class TestGenerator {
         /**
          * Adds a test method.
          *
+         * @param id           the language-neutral id of the test ({@link TestIds}; made unique)
          * @param name         the method name (made unique)
          * @param display      the readable description ({@code @DisplayName})
          * @param throwsClause the throws clause, empty if none
          * @param body         the statements
          */
-        private void test(final String name, final String display, final String throwsClause, final String body) {
+        private void test(final String id, final String name, final String display, final String throwsClause,
+                          final String body) {
             String unique = name;
             for (int i = 2; !testNames.add(unique); i++) {
                 unique = name + i;
             }
+            String uniqueId = id;
+            for (int i = 2; !testIds.add(uniqueId); i++) {
+                uniqueId = id + "-" + i;
+            }
             tests.add(INDENT + "@" + imports.use(JUNIT, "Test") + "\n" + INDENT + "@"
                     + imports.use(JUNIT, "DisplayName") + "(" + JavaLiterals.quote(display) + ")\n"
+                    + INDENT + "@" + imports.use(JUNIT, "Tag") + "(" + JavaLiterals.quote(TestIds.tag(uniqueId))
+                    + ")\n"
                     + INDENT + "void " + unique + "()" + throwsClause + " {\n" + body + INDENT + "}\n");
+        }
+
+        /** The language-neutral id of a test of this class: its scope plus the element and the check. */
+        private String id(final String... parts) {
+            return TestIds.contract(scope, parts);
         }
 
         private static String setterName(final Input input) {

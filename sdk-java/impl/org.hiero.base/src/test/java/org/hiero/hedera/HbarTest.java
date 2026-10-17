@@ -4,6 +4,7 @@ import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Hbar`, generated from the specs.
@@ -12,6 +13,7 @@ class HbarTest {
 
     @Test
     @DisplayName("creates a Hbar and returns the values")
+    @Tag("testId:hedera.Hbar/create")
     void shouldCreateAndReturnTheValues() {
         final long amount = amountValue();
         final HbarUnit unit = unitValue();
@@ -22,6 +24,7 @@ class HbarTest {
 
     @Test
     @DisplayName("amount: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:hedera.Hbar/amount/accepts-at-minimum")
     void shouldAcceptAmountAtMinimum() {
         final long value = -9223372036854775808L;
         final Hbar subject = new Hbar(value, unitValue());
@@ -30,6 +33,7 @@ class HbarTest {
 
     @Test
     @DisplayName("amount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:hedera.Hbar/amount/accepts-at-maximum")
     void shouldAcceptAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final Hbar subject = new Hbar(value, unitValue());
@@ -38,12 +42,14 @@ class HbarTest {
 
     @Test
     @DisplayName("rejects null for unit")
+    @Tag("testId:hedera.Hbar/unit/rejects-null")
     void shouldRejectNullUnit() {
         assertThrows(NullPointerException.class, () -> new Hbar(amountValue(), (HbarUnit) null));
     }
 
     @Test
     @DisplayName("to(targetUnit) can be called and returns a value (only IllegalArgumentException may occur)")
+    @Tag("testId:hedera.Hbar/to/call")
     void shouldCallTo() throws Exception {
         try {
             assertNotNull(defaultSubject().to(targetUnitValue()));
@@ -56,6 +62,7 @@ class HbarTest {
 
     @Test
     @DisplayName("toBaseUnits() can be called (only IllegalArgumentException may occur)")
+    @Tag("testId:hedera.Hbar/toBaseUnits/call")
     void shouldCallToBaseUnits() throws Exception {
         try {
             defaultSubject().toBaseUnits();
@@ -68,6 +75,7 @@ class HbarTest {
 
     @Test
     @DisplayName("toTinybars() can be called (only IllegalArgumentException may occur)")
+    @Tag("testId:hedera.Hbar/toTinybars/call")
     void shouldCallToTinybars() throws Exception {
         try {
             defaultSubject().toTinybars();
@@ -80,12 +88,14 @@ class HbarTest {
 
     @Test
     @DisplayName("equals(other) can be called")
+    @Tag("testId:hedera.Hbar/equals/call")
     void shouldCallEquals() {
         defaultSubject().equals(otherValue());
     }
 
     @Test
     @DisplayName("hashCode() can be called")
+    @Tag("testId:hedera.Hbar/hashCode/call")
     void shouldCallHashCode() {
         defaultSubject().hashCode();
     }

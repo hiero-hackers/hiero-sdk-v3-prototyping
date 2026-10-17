@@ -191,6 +191,7 @@ comment above each test names where the current SDKs test the same.
 ```tests
 // Source: the Java SDK (TokenInfoQueryTest.getSetTokenId), the Python SDK (token_info_query_test.py,
 // test_constructor and test_get_method) and the Swift SDK (TokenInfoQueryUnitTests, the get / set test).
+@@testId("a-token-info-query-keeps-the-id-of-its-token")
 test "a token info query keeps the id of its token" {
     // given
     let token = DEFAULT(Address)
@@ -204,6 +205,7 @@ test "a token info query keeps the id of its token" {
 
 // Source: the Java SDK (TokenNftInfoQueryTest.propertiesTest), the Python SDK (token_nft_info_query_test.py,
 // test_constructor) and the JavaScript SDK (TokenNftInfoQuery); this spec (serials start at 1).
+@@testId("an-nft-info-query-keeps-its-token-id-and-serial-and-serial-1-is-accepted")
 test "an NFT info query keeps its token id and serial, and serial 1 is accepted" {
     // given
     let token = DEFAULT(Address)
@@ -220,6 +222,7 @@ test "an NFT info query keeps its token id and serial, and serial 1 is accepted"
 
 // Source: this spec (the defaults of TokenInfo; a key that was never granted is absent, and so is its status); the
 // Python SDK (token_info_test.py, test_token_info_initialization) and the Java SDK (TokenInfoTest).
+@@testId("a-token-info-has-these-defaults")
 test "a token info has these defaults" {
     // when
     let info = TokenInfo{tokenId: DEFAULT, type: TokenType.FUNGIBLE_COMMON, name: "ffff", symbol: "F",
@@ -247,6 +250,7 @@ test "a token info has these defaults" {
 }
 
 // Source: this spec (name and symbol have at most 100 characters).
+@@testId("a-token-info-accepts-a-name-and-a-symbol-of-100-characters")
 test "a token info accepts a name and a symbol of 100 characters" {
     // given
     let longest = repeat(value: "a", count: 100)
@@ -262,6 +266,7 @@ test "a token info accepts a name and a symbol of 100 characters" {
 
 // Source: this spec (the defaults of TokenNftInfo); the Python SDK (token_nft_info_test.py,
 // test_from_proto_without_spender_id) and the Java SDK (TokenNftInfoTest).
+@@testId("an-nft-info-without-allowance-has-no-spender-and-empty-metadata")
 test "an NFT info without allowance has no spender and empty metadata" {
     // when
     let info = TokenNftInfo{tokenId: DEFAULT, serial: 1, accountId: DEFAULT, creationTime: DEFAULT}
@@ -274,6 +279,7 @@ test "an NFT info without allowance has no spender and empty metadata" {
 
 // Source: the Java SDK (TokenInfoTest, the token info of its fixture): expiration time Instant.ofEpochSecond(1554158542),
 // i.e. 2019-04-01T22:42:22Z, and auto-renew period Duration.ofHours(10), i.e. 36000 seconds. Second precision.
+@@testId("a-token-info-keeps-its-expiration-time-and-auto-renew-period")
 test "a token info keeps its expiration time and auto-renew period" {
     // when
     let info = TokenInfo{tokenId: DEFAULT, type: TokenType.FUNGIBLE_COMMON, name: "ffff", symbol: "F",
@@ -288,6 +294,7 @@ test "a token info keeps its expiration time and auto-renew period" {
 
 // Source: the Java SDK (TokenNftInfoTest, the NFT info of its fixture): creation time Instant.ofEpochSecond(1554158542),
 // i.e. 2019-04-01T22:42:22Z. Second precision.
+@@testId("an-nft-info-keeps-the-time-at-which-its-serial-was-minted")
 test "an NFT info keeps the time at which its serial was minted" {
     // when
     let info = TokenNftInfo{tokenId: DEFAULT, serial: 1, accountId: DEFAULT, creationTime: TOKEN_TEST_TIME}
@@ -297,6 +304,7 @@ test "an NFT info keeps the time at which its serial was minted" {
 }
 
 // Source: this spec (@@maxBytes(100) name).
+@@testId("a-token-info-with-a-name-of-101-characters-is-rejected")
 test "a token info with a name of 101 characters is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -305,6 +313,7 @@ test "a token info with a name of 101 characters is rejected" {
 }
 
 // Source: this spec (@@maxBytes(100) symbol).
+@@testId("a-token-info-with-a-symbol-of-101-characters-is-rejected")
 test "a token info with a symbol of 101 characters is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -314,6 +323,7 @@ test "a token info with a symbol of 101 characters is rejected" {
 
 // Source: this spec (@@min(1) serial: serials start at 1); the Java SDK (TokenNftInfoIntegrationTest: the network
 // rejects serial -1 with INVALID_TOKEN_NFT_SERIAL_NUMBER).
+@@testId("an-nft-info-query-rejects-serial-0")
 test "an NFT info query rejects serial 0" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -321,6 +331,7 @@ test "an NFT info query rejects serial 0" {
 }
 
 // Source: this spec (@@min(1) of serial: the network assigns serials from 1 on, TokenMintHandler of the consensus node).
+@@testId("an-nft-info-rejects-serial-0")
 test "an NFT info rejects serial 0" {
     // when / then
     @@expectThrows(invalid-argument-error)

@@ -110,6 +110,7 @@ comment above each test names where the current SDKs test the same.
 ```tests
 // Source: the Python SDK (topic_info_query_test.py, test_topic_info_query) and the Swift SDK
 // (TopicInfoQueryUnitTests, the get / set test).
+@@testId("a-topic-info-query-keeps-the-id-of-its-topic")
 test "a topic info query keeps the id of its topic" {
     // given
     let topic = DEFAULT(Address)
@@ -123,6 +124,7 @@ test "a topic info query keeps the id of its topic" {
 
 // Source: this spec (an absent admin authority means an immutable topic, an absent submit authority a public one); the
 // Python SDK (topic_info_test.py, test_topic_info_initialization_with_none_values).
+@@testId("a-topic-info-of-a-public-immutable-topic-has-no-authorities")
 test "a topic info of a public immutable topic has no authorities" {
     // given
     let runningHash = repeat(value: hex(text: "00"), count: 48)
@@ -142,6 +144,7 @@ test "a topic info of a public immutable topic has no authorities" {
 
 // Source: the Java SDK (TopicInfoTest, the topic info of its fixture): expiration time Instant.ofEpochMilli(4), i.e.
 // 1970-01-01T00:00:00.004Z, and auto-renew period Duration.ofDays(5), i.e. 432000 seconds. Millisecond precision.
+@@testId("a-topic-info-keeps-its-expiration-time-and-auto-renew-period")
 test "a topic info keeps its expiration time and auto-renew period" {
     // given
     let expirationTime = toZonedDateTime(text: "1970-01-01T00:00:00.004Z")

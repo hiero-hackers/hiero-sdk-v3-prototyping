@@ -114,7 +114,17 @@ final class MavenGenerator {
                                                 </compilerArgs>
                                             </configuration>
                         """)
-                + plugin("maven-surefire-plugin", "3.5.3", "")
+                // the results of the tests also as Open Test Reporting (ADR-0012), next to the reports of Surefire
+                + plugin("maven-surefire-plugin", "3.5.3", """
+                                            <configuration>
+                                                <properties>
+                                                    <configurationParameters>
+                                                        junit.platform.reporting.open.xml.enabled = true
+                                                        junit.platform.reporting.output.dir = ${project.build.directory}/surefire-reports
+                                                    </configurationParameters>
+                                                </properties>
+                                            </configuration>
+                        """)
                 + plugin("maven-jar-plugin", "3.4.2", "")
                 + plugin("maven-javadoc-plugin", "3.12.0", """
                                             <configuration>
@@ -167,6 +177,12 @@ final class MavenGenerator {
                 + "        <dependency>\n"
                 + "            <groupId>org.junit.jupiter</groupId>\n"
                 + "            <artifactId>junit-jupiter</artifactId>\n"
+                + "            <scope>test</scope>\n"
+                + "        </dependency>\n"
+                // writes the results as Open Test Reporting (ADR-0012)
+                + "        <dependency>\n"
+                + "            <groupId>org.junit.platform</groupId>\n"
+                + "            <artifactId>junit-platform-reporting</artifactId>\n"
                 + "            <scope>test</scope>\n"
                 + "        </dependency>\n"
                 // the generated tests use the hand-written test support (sdk-java/test-support)

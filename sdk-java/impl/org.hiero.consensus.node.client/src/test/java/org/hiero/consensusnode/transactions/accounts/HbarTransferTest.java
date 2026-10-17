@@ -8,6 +8,7 @@ import org.hiero.hedera.HbarUnit;
 import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `HbarTransfer`, generated from the specs.
@@ -16,6 +17,7 @@ class HbarTransferTest {
 
     @Test
     @DisplayName("creates a HbarTransfer and returns the values")
+    @Tag("testId:consensusnode.transactions.accounts.HbarTransfer/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
         final NativeToken<?, ?> amount = amountValue();
@@ -28,6 +30,7 @@ class HbarTransferTest {
 
     @Test
     @DisplayName("creates a HbarTransfer with the default values")
+    @Tag("testId:consensusnode.transactions.accounts.HbarTransfer/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final HbarTransfer subject = new HbarTransfer(accountIdValue(), amountValue());
         assertValue(false, subject.approved());
@@ -35,12 +38,14 @@ class HbarTransferTest {
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.transactions.accounts.HbarTransfer/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new HbarTransfer((AccountId) null, amountValue(), approvedValue()));
     }
 
     @Test
     @DisplayName("rejects null for amount")
+    @Tag("testId:consensusnode.transactions.accounts.HbarTransfer/amount/rejects-null")
     void shouldRejectNullAmount() {
         assertThrows(NullPointerException.class, () -> new HbarTransfer(accountIdValue(), (NativeToken<?, ?>) null, approvedValue()));
     }

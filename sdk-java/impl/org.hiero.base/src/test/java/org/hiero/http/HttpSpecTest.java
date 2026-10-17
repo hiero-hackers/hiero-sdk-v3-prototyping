@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionException;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `http`, generated from the `tests` blocks of its `## Testing` section.
@@ -23,6 +24,7 @@ class HttpSpecTest {
     /// Source: this spec (Cancellation.none() is the cancellation that never fires).
     @Test
     @DisplayName("the cancellation that never fires is not cancelled")
+    @Tag("testId:http/the-cancellation-that-never-fires-is-not-cancelled")
     void theCancellationThatNeverFiresIsNotCancelled() {
         // when
         final Cancellation cancellation = Cancellation.none();
@@ -36,6 +38,7 @@ class HttpSpecTest {
     /// Source: this spec (a CancellationSource owns the right to cancel; only its cancellation is handed out).
     @Test
     @DisplayName("a new cancellation source is not cancelled")
+    @Tag("testId:http/a-new-cancellation-source-is-not-cancelled")
     void aNewCancellationSourceIsNotCancelled() {
         // when
         final CancellationSource source = CancellationSource.create();
@@ -49,6 +52,7 @@ class HttpSpecTest {
     /// Source: this spec (cancel() requests cancellation; it is idempotent, a second call does nothing).
     @Test
     @DisplayName("cancelling a source cancels its cancellation, also when cancelled twice")
+    @Tag("testId:http/cancelling-a-source-cancels-its-cancellation-also-when-cancelled-twice")
     void cancellingASourceCancelsItsCancellationAlsoWhenCancelledTwice() {
         // given
         final CancellationSource source = CancellationSource.create();
@@ -66,6 +70,7 @@ class HttpSpecTest {
     /// Source: this spec (a source owns its own cancellation; cancelling one source cancels no other).
     @Test
     @DisplayName("cancelling a source cancels no other cancellation")
+    @Tag("testId:http/cancelling-a-source-cancels-no-other-cancellation")
     void cancellingASourceCancelsNoOtherCancellation() {
         // given
         final CancellationSource cancelled = CancellationSource.create();
@@ -85,6 +90,7 @@ class HttpSpecTest {
     /// default mirror node of `ledger`).
     @Test
     @DisplayName("a request keeps its absolute URL")
+    @Tag("testId:http/a-request-keeps-its-absolute-url")
     void aRequestKeepsItsAbsoluteURL() {
         for (final String url : List.of("https://mainnet.mirrornode.hedera.com/api/v1/accounts/0.0.1234", "https://example.org/api/v1/submit", "http://127.0.0.1:38081")) {
             // when
@@ -104,6 +110,7 @@ class HttpSpecTest {
     /// "accept" default header).
     @Test
     @DisplayName("an HTTP configuration keeps its timeouts and default headers")
+    @Tag("testId:http/an-http-configuration-keeps-its-timeouts-and-default-headers")
     void anHTTPConfigurationKeepsItsTimeoutsAndDefaultHeaders() {
         // when
         final HttpConfiguration configuration = new HttpConfiguration(Map.of("accept", "application/json"), toDuration("PT5S"), toDuration("PT10S"));
@@ -120,6 +127,7 @@ class HttpSpecTest {
     /// a stand-in for the JSON payload of the example.
     @Test
     @DisplayName("a request keeps its own timeout and headers")
+    @Tag("testId:http/a-request-keeps-its-own-timeout-and-headers")
     void aRequestKeepsItsOwnTimeoutAndHeaders() {
         // given
         final byte[] body = utf8("{}");
@@ -139,6 +147,7 @@ class HttpSpecTest {
     /// example without scheme and host.
     @Test
     @DisplayName("a request with a relative URL is rejected")
+    @Tag("testId:http/a-request-with-a-relative-url-is-rejected")
     void aRequestWithARelativeURLIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new HttpRequest(HttpMethod.GET, "/api/v1/accounts/0.0.1234", null, null, Map.of()));
@@ -149,6 +158,7 @@ class HttpSpecTest {
     /// Source: this spec (@@urlPattern: an absolute URL has a scheme). The URL of the first example without its scheme.
     @Test
     @DisplayName("a request with a URL without scheme is rejected")
+    @Tag("testId:http/a-request-with-a-url-without-scheme-is-rejected")
     void aRequestWithAURLWithoutSchemeIsRejected() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new HttpRequest(HttpMethod.GET, "mainnet.mirrornode.hedera.com/api/v1/accounts/0.0.1234", null, null, Map.of()));
@@ -160,6 +170,7 @@ class HttpSpecTest {
     /// the default client for a configuration).
     @Test
     @DisplayName("the default client applies the configuration it was created with")
+    @Tag("testId:http/the-default-client-applies-the-configuration-it-was-created-with")
     void theDefaultClientAppliesTheConfigurationItWasCreatedWith() {
         // when
         final HttpClient client = HttpFactory.createHttpClient(EXAMPLE_CONFIGURATION());
@@ -175,6 +186,7 @@ class HttpSpecTest {
     /// completes normally and is idempotent like close(); the request and the 5s close timeout of the first example).
     @Test
     @DisplayName("a client closed with a timeout rejects a request")
+    @Tag("testId:http/a-client-closed-with-a-timeout-rejects-a-request")
     void aClientClosedWithATimeoutRejectsARequest() throws Exception {
         // given
         final HttpClient client = HttpFactory.createHttpClient(EXAMPLE_CONFIGURATION());

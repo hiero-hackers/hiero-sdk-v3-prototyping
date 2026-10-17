@@ -19,6 +19,7 @@ import org.hiero.ledger.Address;
 import org.hiero.mirrornode.common.FixedFee;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Topic`, generated from the specs.
@@ -27,6 +28,7 @@ class TopicTest {
 
     @Test
     @DisplayName("creates a Topic and returns the values")
+    @Tag("testId:mirrornode.topic.Topic/create")
     void shouldCreateAndReturnTheValues() {
         final Address topicId = topicIdValue();
         final @Nullable Authority adminAuthority = adminAuthorityValue();
@@ -59,6 +61,7 @@ class TopicTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.topic.Topic/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Address topicId = topicIdValue();
         final @Nullable Authority adminAuthority = adminAuthorityValue();
@@ -105,6 +108,7 @@ class TopicTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.topic.Topic/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final Topic subject = Topic.builder()
                 .topicId(topicIdValue())
@@ -125,42 +129,49 @@ class TopicTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.topic.Topic/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> Topic.builder().build());
     }
 
     @Test
     @DisplayName("rejects null for topicId")
+    @Tag("testId:mirrornode.topic.Topic/topicId/rejects-null")
     void shouldRejectNullTopicId() {
         assertThrows(NullPointerException.class, () -> new Topic((Address) null, adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue()));
     }
 
     @Test
     @DisplayName("rejects null for autoRenewPeriod")
+    @Tag("testId:mirrornode.topic.Topic/autoRenewPeriod/rejects-null")
     void shouldRejectNullAutoRenewPeriod() {
         assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), (Duration) null, createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue()));
     }
 
     @Test
     @DisplayName("rejects null for createdTimestamp")
+    @Tag("testId:mirrornode.topic.Topic/createdTimestamp/rejects-null")
     void shouldRejectNullCreatedTimestamp() {
         assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), (ZonedDateTime) null, deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue()));
     }
 
     @Test
     @DisplayName("rejects null for memo")
+    @Tag("testId:mirrornode.topic.Topic/memo/rejects-null")
     void shouldRejectNullMemo() {
         assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), (String) null, fixedFeesValue(), feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue()));
     }
 
     @Test
     @DisplayName("rejects null for fixedFees")
+    @Tag("testId:mirrornode.topic.Topic/fixedFees/rejects-null")
     void shouldRejectNullFixedFees() {
         assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), (List<FixedFee>) null, feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue()));
     }
 
     @Test
     @DisplayName("the constructor copies fixedFees; the accessor returns an unmodifiable collection")
+    @Tag("testId:mirrornode.topic.Topic/fixedFees/copies-in")
     void shouldCopyFixedFeesIn() {
         final List<FixedFee> value = new ArrayList<>(fixedFeesValue());
         final List<FixedFee> expected = List.copyOf(value);
@@ -172,12 +183,14 @@ class TopicTest {
 
     @Test
     @DisplayName("rejects null for feeExemptAuthorities")
+    @Tag("testId:mirrornode.topic.Topic/feeExemptAuthorities/rejects-null")
     void shouldRejectNullFeeExemptAuthorities() {
         assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), (List<Authority>) null, fromTimestampValue(), toTimestampValue()));
     }
 
     @Test
     @DisplayName("the constructor copies feeExemptAuthorities; the accessor returns an unmodifiable collection")
+    @Tag("testId:mirrornode.topic.Topic/feeExemptAuthorities/copies-in")
     void shouldCopyFeeExemptAuthoritiesIn() {
         final List<Authority> value = new ArrayList<>(feeExemptAuthoritiesValue());
         final List<Authority> expected = List.copyOf(value);
@@ -189,12 +202,14 @@ class TopicTest {
 
     @Test
     @DisplayName("rejects null for fromTimestamp")
+    @Tag("testId:mirrornode.topic.Topic/fromTimestamp/rejects-null")
     void shouldRejectNullFromTimestamp() {
         assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), (ZonedDateTime) null, toTimestampValue()));
     }
 
     @Test
     @DisplayName("rejects null for toTimestamp")
+    @Tag("testId:mirrornode.topic.Topic/toTimestamp/rejects-null")
     void shouldRejectNullToTimestamp() {
         assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), fromTimestampValue(), (ZonedDateTime) null));
     }

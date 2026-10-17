@@ -14,6 +14,7 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.keys.PrivateKey;
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions`, generated from the `tests` blocks of its `## Testing` section.
@@ -26,6 +27,7 @@ class TransactionsSpecTest {
     /// Python SDKs.
     @Test
     @DisplayName("packing gives one body per target node, in the order of the nodes")
+    @Tag("testId:consensusnode.transactions/packing-gives-one-body-per-target-node-in-the-order-of-the-nodes")
     void packingGivesOneBodyPerTargetNodeInTheOrderOfTheNodes() {
         // given
         final Account payer = defaultAccount();
@@ -50,6 +52,7 @@ class TransactionsSpecTest {
     /// Source: HAPI (a signature covers the bodyBytes of its SignedTransaction); the Java, Python, C++ and Go SDKs.
     @Test
     @DisplayName("signing adds one signature per node that verifies over the body of that node")
+    @Tag("testId:consensusnode.transactions/signing-adds-one-signature-per-node-that-verifies-over-the-body-of-that-node")
     void signingAddsOneSignaturePerNodeThatVerifiesOverTheBodyOfThatNode() {
         // given
         final Account payer = defaultAccount();
@@ -76,6 +79,7 @@ class TransactionsSpecTest {
     /// Source: the Python, Java and Go SDKs (a key in a SignatureMap only once).
     @Test
     @DisplayName("signing again with the same key adds no signature")
+    @Tag("testId:consensusnode.transactions/signing-again-with-the-same-key-adds-no-signature")
     void signingAgainWithTheSameKeyAddsNoSignature() {
         // given
         final Account payer = defaultAccount();
@@ -94,6 +98,7 @@ class TransactionsSpecTest {
     /// secp256k1 key of the tests of keys.md.
     @Test
     @DisplayName("an Ed25519 and a secp256k1 key both sign every body")
+    @Tag("testId:consensusnode.transactions/an-ed25519-and-a-secp256k1-key-both-sign-every-body")
     void anEd25519AndASecp256k1KeyBothSignEveryBody() {
         // given
         final Account payer = defaultAccount();
@@ -120,6 +125,7 @@ class TransactionsSpecTest {
     /// break).
     @Test
     @DisplayName("a signed transaction survives toBytes and fromBytes unchanged")
+    @Tag("testId:consensusnode.transactions/a-signed-transaction-survives-tobytes-and-frombytes-unchanged")
     void aSignedTransactionSurvivesToBytesAndFromBytesUnchanged() {
         // given
         final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).sign(defaultAccount(), List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4")));
@@ -140,6 +146,7 @@ class TransactionsSpecTest {
     /// Source: the multi-party flow of the Python SDK: a transaction is packed by one party and signed by another.
     @Test
     @DisplayName("a restored transaction can be signed by another party")
+    @Tag("testId:consensusnode.transactions/a-restored-transaction-can-be-signed-by-another-party")
     void aRestoredTransactionCanBeSignedByAnotherParty() {
         // given
         final Account payer = defaultAccount();
@@ -162,6 +169,7 @@ class TransactionsSpecTest {
     /// signatures).
     @Test
     @DisplayName("signatures made outside the SDK are attached to their bodies")
+    @Tag("testId:consensusnode.transactions/signatures-made-outside-the-sdk-are-attached-to-their-bodies")
     void signaturesMadeOutsideTheSDKAreAttachedToTheirBodies() {
         // given
         final Account payer = defaultAccount();
@@ -182,6 +190,7 @@ class TransactionsSpecTest {
     /// Source: HIP-551 (an inner batch transaction is addressed to node 0.0.0); the Python SDK.
     @Test
     @DisplayName("a transaction packed for a batch has one body for node 0.0.0")
+    @Tag("testId:consensusnode.transactions/a-transaction-packed-for-a-batch-has-one-body-for-node-0-0-0")
     void aTransactionPackedForABatchHasOneBodyForNode000() {
         // given
         final Account payer = defaultAccount();
@@ -203,6 +212,7 @@ class TransactionsSpecTest {
     /// beyond 32-bit seconds.
     @Test
     @DisplayName("a transaction of another SDK is read with a valid start in 2125")
+    @Tag("testId:consensusnode.transactions/a-transaction-of-another-sdk-is-read-with-a-valid-start-in-2125")
     void aTransactionOfAnotherSDKIsReadWithAValidStartIn2125() {
         // given
         final byte[] bytes = hex((("0acc012ac9010a5f0a0d0a0608808fb19c12120318d209120218031880c2d72f2202087832235472616e73616374" + "696f6e20776974682076616c6964537461727420696e2032313235721c0a1a0a0b0a0318d20910ffa7d6b9070a0b0a0318ae2c1080") + "a8d6b90712660a640a205afd59dfc4401b63272c050535457495841ba2d414891cb8609549d3f08ef6671a40a82b1257b5476a98c6") + "5fe73e802150e9526eed77c11b377da642893e0004db096c258636a47327d986084a5044409220d68dde2ea34b1b1b097b39129d83d302");
@@ -223,6 +233,7 @@ class TransactionsSpecTest {
     /// Source: ResponseCodeEnum of the HAPI (response_code.proto).
     @Test
     @DisplayName("the basic transaction statuses have the codes of the protocol")
+    @Tag("testId:consensusnode.transactions/the-basic-transaction-statuses-have-the-codes-of-the-protocol")
     void theBasicTransactionStatusesHaveTheCodesOfTheProtocol() {
         assertEquals(0, BasicTransactionStatus.OK.code());
         assertEquals(1, BasicTransactionStatus.INVALID_TRANSACTION.code());

@@ -268,6 +268,7 @@ comment above each test names the SDK tests it comes from.
 ```tests
 // Source: the Go (TestEndpointSetAndGetAddress, TestEndpointSetAndGetPort), Python (test_constructor_with_values),
 // JavaScript ("should create EndPoint with both address and port") and C++ Endpoint unit tests.
+@@testId("an-endpoint-by-ip-address-keeps-the-address-and-the-port")
 test "an endpoint by IP address keeps the address and the port" {
     // given
     let ipAddress = IpAddress{bytes: [10, 0, 0, 7]}
@@ -283,6 +284,7 @@ test "an endpoint by IP address keeps the address and the port" {
 
 // Source: the Go (TestEndpointSetAndGetDomainName), JavaScript ("should create EndPoint from domain name JSON"),
 // Python and Java (validateAllowsOnlyDomain) Endpoint unit tests.
+@@testId("an-endpoint-by-domain-name-keeps-the-name-and-the-port")
 test "an endpoint by domain name keeps the name and the port" {
     // when
     let endpoint = ServiceEndpoint{ipAddress: null, domainName: "node7.consensus.example", port: 50211}
@@ -295,6 +297,7 @@ test "an endpoint by domain name keeps the name and the port" {
 
 // Source: the Go (TestEndpointRoundTripProtobuf) and Python (test_serialization_roundtrip) Endpoint unit tests, which
 // compare endpoints by value; the Equality of the test language.
+@@testId("endpoints-are-equal-when-address-name-and-port-are-equal")
 test "endpoints are equal when address, name and port are equal" {
     // given
     let endpoint = DEFAULT(ServiceEndpoint)
@@ -312,6 +315,7 @@ test "endpoints are equal when address, name and port are equal" {
 // Source: the Java (validateThrowsOnIpAndDomain), Go (TestEndpointValidateFailure "BothAddressAndDomain") and Python
 // (test_validate_no_ip_and_domain_containing_both_ip_and_domain) Endpoint unit tests; `@@oneOf(ipAddress, domainName)`
 // of this spec.
+@@testId("an-endpoint-with-both-an-ip-address-and-a-domain-name-is-rejected")
 test "an endpoint with both an IP address and a domain name is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -320,6 +324,7 @@ test "an endpoint with both an IP address and a domain name is rejected" {
 
 // Source: the Go Endpoint unit test (TestEndpointValidateFailure "NeitherAddressNorDomain");
 // `@@oneOf(ipAddress, domainName)` of this spec.
+@@testId("an-endpoint-with-neither-an-ip-address-nor-a-domain-name-is-rejected")
 test "an endpoint with neither an IP address nor a domain name is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -328,6 +333,7 @@ test "an endpoint with neither an IP address nor a domain name is rejected" {
 
 // Source: the Java, Go (TestUnitNodeCreateTransactionGet), Python (test_constructor_with_parameters), C++, JavaScript
 // and Swift NodeCreateTransaction unit tests.
+@@testId("a-node-create-transaction-keeps-all-its-attributes")
 test "a node create transaction keeps all its attributes" {
     // given
     let account = DEFAULT(AccountId)
@@ -353,6 +359,7 @@ test "a node create transaction keeps all its attributes" {
 
 // Source: the Python (test_constructor_default_values) and Go (TestUnitNodeCreateTransactionDeclineReward)
 // NodeCreateTransaction unit tests; `@@default(false)` of declineReward.
+@@testId("a-node-create-transaction-takes-the-reward-and-has-no-description-and-no-proxy-by-default")
 test "a node create transaction takes the reward and has no description and no proxy by default" {
     // when
     let transaction = NodeCreateTransaction{accountId: DEFAULT(AccountId), gossipEndpoints: [DEFAULT(ServiceEndpoint)],
@@ -366,6 +373,7 @@ test "a node create transaction takes the reward and has no description and no p
 }
 
 // Source: HAPI node_create.proto (gossip_endpoint: "This list MUST NOT be empty"); `@@minSize(1)` of this spec.
+@@testId("a-node-create-transaction-without-gossip-endpoints-is-rejected")
 test "a node create transaction without gossip endpoints is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -375,6 +383,7 @@ test "a node create transaction without gossip endpoints is rejected" {
 }
 
 // Source: HAPI node_create.proto (service_endpoint: "This list MUST NOT be empty"); `@@minSize(1)` of this spec.
+@@testId("a-node-create-transaction-without-service-endpoints-is-rejected")
 test "a node create transaction without service endpoints is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -386,6 +395,7 @@ test "a node create transaction without service endpoints is rejected" {
 // Source: the Python (test_constructor_default_values), Go (TestUnitNodeUpdateTransactionSetNothing) and JavaScript
 // NodeUpdateTransaction unit tests; the API schema of this spec (fields that are not set are left unchanged, an empty
 // endpoint list leaves the list unchanged).
+@@testId("a-node-update-transaction-changes-nothing-but-what-is-set")
 test "a node update transaction changes nothing but what is set" {
     // when
     let transaction = NodeUpdateTransaction{nodeId: 7}
@@ -405,6 +415,7 @@ test "a node update transaction changes nothing but what is set" {
 
 // Source: the Java, Go (TestUnitNodeUpdateTransactionGet), Python (test_constructor_with_parameters), C++, JavaScript
 // and Swift NodeUpdateTransaction unit tests.
+@@testId("a-node-update-transaction-keeps-the-attributes-it-sets")
 test "a node update transaction keeps the attributes it sets" {
     // given
     let account = DEFAULT(AccountId)
@@ -430,6 +441,7 @@ test "a node update transaction keeps the attributes it sets" {
 
 // Source: the Go NodeUpdateTransaction unit test (TestUnitNodeUpdateTransactionDeclineReward): true and false are both
 // kept and differ from "not set".
+@@testId("a-node-update-transaction-keeps-declinereward-true-and-false")
 test "a node update transaction keeps declineReward true and false" {
     for declineReward in [true, false] {
         // when
@@ -442,6 +454,7 @@ test "a node update transaction keeps declineReward true and false" {
 
 // Source: the Java, Go, Python (test_constructor_with_parameter), C++, JavaScript and Swift NodeDeleteTransaction unit
 // tests.
+@@testId("a-node-delete-transaction-keeps-its-node-id")
 test "a node delete transaction keeps its node id" {
     // when
     let transaction = NodeDeleteTransaction{nodeId: 7}
@@ -453,6 +466,7 @@ test "a node delete transaction keeps its node id" {
 // Source: this spec (@@maxSize(10)); HAPI node_create.proto (gossip_endpoint: "MUST NOT contain more than 10
 // entries"); the consensus node (nodes.maxGossipEndpoint = 10, GOSSIP_ENDPOINTS_EXCEEDED_LIMIT); the Java, JavaScript,
 // Go and Python SDKs reject more than 10 gossip endpoints.
+@@testId("a-node-create-transaction-with-more-than-10-gossip-endpoints-is-rejected")
 test "a node create transaction with more than 10 gossip endpoints is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -464,6 +478,7 @@ test "a node create transaction with more than 10 gossip endpoints is rejected" 
 // Source: this spec (@@maxSize(8)); HAPI node_create.proto (service_endpoint: "MUST NOT contain more than 8
 // entries"); the consensus node (nodes.maxServiceEndpoint = 8, SERVICE_ENDPOINTS_EXCEEDED_LIMIT); the Java,
 // JavaScript, Go and Python SDKs reject more than 8 service endpoints.
+@@testId("a-node-create-transaction-with-more-than-8-service-endpoints-is-rejected")
 test "a node create transaction with more than 8 service endpoints is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -474,6 +489,7 @@ test "a node create transaction with more than 8 service endpoints is rejected" 
 
 // Source: this spec (@@maxSize(10) and @@maxSize(8)); the Java SDK (NodeUpdateTransaction.setGossipEndpoints and
 // setServiceEndpoints reject more than 10 resp. 8 entries).
+@@testId("a-node-update-transaction-with-too-many-endpoints-is-rejected")
 test "a node update transaction with too many endpoints is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -484,6 +500,7 @@ test "a node update transaction with too many endpoints is rejected" {
 
 // Source: this spec (@@maxBytes(100) of description); the consensus node (nodes.nodeMaxDescriptionUtf8Bytes = 100,
 // INVALID_NODE_DESCRIPTION); the Java, Go and Python SDKs check the UTF-8 length: 34 characters "€" are 102 bytes.
+@@testId("a-node-create-transaction-with-a-description-of-more-than-100-utf-8-bytes-is-rejected")
 test "a node create transaction with a description of more than 100 UTF-8 bytes is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)

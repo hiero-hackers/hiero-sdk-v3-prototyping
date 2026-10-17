@@ -18,6 +18,7 @@ import org.hiero.keys.PrivateKey;
 import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions-batch`, generated from the `tests` blocks of its `## Testing` section.
@@ -30,6 +31,7 @@ class TransactionsBatchSpecTest {
     /// (test_batchify_sets_required_fields).
     @Test
     @DisplayName("an inner transaction signed for a batch has one body for node 0.0.0 and its payer's signature")
+    @Tag("testId:consensusnode.transactions.batch/an-inner-transaction-signed-for-a-batch-has-one-body-for-node-0-0-0-and-its-payer-s-signature")
     void anInnerTransactionSignedForABatchHasOneBodyForNode000AndItsPayerSSignature() {
         // given
         final Account payer = defaultAccount();
@@ -53,6 +55,7 @@ class TransactionsBatchSpecTest {
     /// (test_get_inner_transactions_ids_returns_transaction_ids).
     @Test
     @DisplayName("a batch keeps its inner transactions in their order, each with its own payer")
+    @Tag("testId:consensusnode.transactions.batch/a-batch-keeps-its-inner-transactions-in-their-order-each-with-its-own-payer")
     void aBatchKeepsItsInnerTransactionsInTheirOrderEachWithItsOwnPayer() {
         // given
         final Account first = defaultAccount();
@@ -78,6 +81,7 @@ class TransactionsBatchSpecTest {
     /// Swift SDK (BatchTransactionUnitTests.test_ToFromBytes).
     @Test
     @DisplayName("a signed batch survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.transactions.batch/a-signed-batch-survives-tobytes-and-frombytes")
     void aSignedBatchSurvivesToBytesAndFromBytes() {
         // given
         final Account payer = defaultAccount();
@@ -101,6 +105,7 @@ class TransactionsBatchSpecTest {
     /// (test_build_batch_transaction_body).
     @Test
     @DisplayName("the body of a batch contains the bytes of its inner transactions")
+    @Tag("testId:consensusnode.transactions.batch/the-body-of-a-batch-contains-the-bytes-of-its-inner-transactions")
     void theBodyOfABatchContainsTheBytesOfItsInnerTransactions() {
         // given
         final Account payer = defaultAccount();
@@ -120,6 +125,7 @@ class TransactionsBatchSpecTest {
     /// the same test of the JavaScript, Python and Swift SDKs).
     @Test
     @DisplayName("a batch rejects an empty list of inner transactions")
+    @Tag("testId:consensusnode.transactions.batch/a-batch-rejects-an-empty-list-of-inner-transactions")
     void aBatchRejectsAnEmptyListOfInnerTransactions() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new BatchTransaction(List.of()));

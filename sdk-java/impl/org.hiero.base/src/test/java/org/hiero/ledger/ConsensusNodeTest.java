@@ -4,6 +4,7 @@ import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ConsensusNode`, generated from the specs.
@@ -12,6 +13,7 @@ class ConsensusNodeTest {
 
     @Test
     @DisplayName("creates a ConsensusNode and returns the values")
+    @Tag("testId:ledger.ConsensusNode/create")
     void shouldCreateAndReturnTheValues() {
         final IpAddress ip = ipValue();
         final int port = portValue();
@@ -24,12 +26,14 @@ class ConsensusNodeTest {
 
     @Test
     @DisplayName("rejects null for ip")
+    @Tag("testId:ledger.ConsensusNode/ip/rejects-null")
     void shouldRejectNullIp() {
         assertThrows(NullPointerException.class, () -> new ConsensusNode((IpAddress) null, portValue(), accountValue()));
     }
 
     @Test
     @DisplayName("port: accepts the minimum (0)")
+    @Tag("testId:ledger.ConsensusNode/port/accepts-at-minimum")
     void shouldAcceptPortAtMinimum() {
         final int value = 0;
         final ConsensusNode subject = new ConsensusNode(ipValue(), value, accountValue());
@@ -38,6 +42,7 @@ class ConsensusNodeTest {
 
     @Test
     @DisplayName("port: accepts the maximum (65535)")
+    @Tag("testId:ledger.ConsensusNode/port/accepts-at-maximum")
     void shouldAcceptPortAtMaximum() {
         final int value = 65535;
         final ConsensusNode subject = new ConsensusNode(ipValue(), value, accountValue());
@@ -46,24 +51,28 @@ class ConsensusNodeTest {
 
     @Test
     @DisplayName("port: rejects a value below the minimum (-1)")
+    @Tag("testId:ledger.ConsensusNode/port/rejects-below-minimum")
     void shouldRejectPortBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new ConsensusNode(ipValue(), -1, accountValue()));
     }
 
     @Test
     @DisplayName("port: rejects a value above the maximum (65536)")
+    @Tag("testId:ledger.ConsensusNode/port/rejects-above-maximum")
     void shouldRejectPortAboveMaximum() {
         assertThrows(IllegalArgumentException.class, () -> new ConsensusNode(ipValue(), 65536, accountValue()));
     }
 
     @Test
     @DisplayName("rejects null for account")
+    @Tag("testId:ledger.ConsensusNode/account/rejects-null")
     void shouldRejectNullAccount() {
         assertThrows(NullPointerException.class, () -> new ConsensusNode(ipValue(), portValue(), (AccountId) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:ledger.ConsensusNode/value-semantics")
     void shouldCompareByValue() {
         final ConsensusNode subject = create();
         final ConsensusNode other = create();

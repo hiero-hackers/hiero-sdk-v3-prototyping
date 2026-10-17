@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NftMetadata`, generated from the specs.
@@ -14,6 +15,7 @@ class NftMetadataTest {
 
     @Test
     @DisplayName("creates a NftMetadata and returns the values")
+    @Tag("testId:mirrornode.nft.NftMetadata/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final String name = nameValue();
@@ -28,30 +30,35 @@ class NftMetadataTest {
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:mirrornode.nft.NftMetadata/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new NftMetadata((Address) null, nameValue(), symbolValue(), treasuryAccountIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for name")
+    @Tag("testId:mirrornode.nft.NftMetadata/name/rejects-null")
     void shouldRejectNullName() {
         assertThrows(NullPointerException.class, () -> new NftMetadata(tokenIdValue(), (String) null, symbolValue(), treasuryAccountIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for symbol")
+    @Tag("testId:mirrornode.nft.NftMetadata/symbol/rejects-null")
     void shouldRejectNullSymbol() {
         assertThrows(NullPointerException.class, () -> new NftMetadata(tokenIdValue(), nameValue(), (String) null, treasuryAccountIdValue()));
     }
 
     @Test
     @DisplayName("rejects null for treasuryAccountId")
+    @Tag("testId:mirrornode.nft.NftMetadata/treasuryAccountId/rejects-null")
     void shouldRejectNullTreasuryAccountId() {
         assertThrows(NullPointerException.class, () -> new NftMetadata(tokenIdValue(), nameValue(), symbolValue(), (AccountId) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.nft.NftMetadata/value-semantics")
     void shouldCompareByValue() {
         final NftMetadata subject = create();
         final NftMetadata other = create();

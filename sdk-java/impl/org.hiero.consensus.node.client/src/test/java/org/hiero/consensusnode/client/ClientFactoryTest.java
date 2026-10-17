@@ -14,6 +14,7 @@ import org.hiero.ledger.MirrorNode;
 import org.hiero.ledger.Network;
 import org.hiero.ledger.config.NetworkSetting;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ClientFactory`, generated from the specs.
@@ -22,42 +23,49 @@ class ClientFactoryTest {
 
     @Test
     @DisplayName("createClient(networkSettings, operatorAccount) can be called and returns a value")
+    @Tag("testId:consensusnode.client/createClient/call")
     void shouldCallCreateClient() {
         assertNotNull(ClientFactory.createClient(networkSettingsValue(), operatorAccountValue()));
     }
 
     @Test
     @DisplayName("createClient rejects null for networkSettings")
+    @Tag("testId:consensusnode.client/createClient/networkSettings/rejects-null")
     void shouldRejectNullNetworkSettingsInCreateClient() {
         assertThrows(NullPointerException.class, () -> ClientFactory.createClient((NetworkSetting) null, operatorAccountValue()));
     }
 
     @Test
     @DisplayName("createClient rejects null for operatorAccount")
+    @Tag("testId:consensusnode.client/createClient/operatorAccount/rejects-null")
     void shouldRejectNullOperatorAccountInCreateClient() {
         assertThrows(NullPointerException.class, () -> ClientFactory.createClient(networkSettingsValue(), (Account) null));
     }
 
     @Test
     @DisplayName("createClient(networkSettings, operatorAccount, transactionSigner) can be called and returns a value")
+    @Tag("testId:consensusnode.client/createClient/call-2")
     void shouldCallCreateClient2() {
         assertNotNull(ClientFactory.createClient(networkSettingsValue(), operatorAccountValue(), transactionSignerValue()));
     }
 
     @Test
     @DisplayName("createClient rejects null for networkSettings")
+    @Tag("testId:consensusnode.client/createClient/networkSettings/rejects-null-2")
     void shouldRejectNullNetworkSettingsInCreateClient2() {
         assertThrows(NullPointerException.class, () -> ClientFactory.createClient((NetworkSetting) null, operatorAccountValue(), transactionSignerValue()));
     }
 
     @Test
     @DisplayName("createClient rejects null for operatorAccount")
+    @Tag("testId:consensusnode.client/createClient/operatorAccount/rejects-null-2")
     void shouldRejectNullOperatorAccountInCreateClient2() {
         assertThrows(NullPointerException.class, () -> ClientFactory.createClient(networkSettingsValue(), (Account) null, transactionSignerValue()));
     }
 
     @Test
     @DisplayName("createClient rejects null for transactionSigner")
+    @Tag("testId:consensusnode.client/createClient/transactionSigner/rejects-null")
     void shouldRejectNullTransactionSignerInCreateClient() {
         assertThrows(NullPointerException.class, () -> ClientFactory.createClient(networkSettingsValue(), operatorAccountValue(), (TransactionSigner) null));
     }

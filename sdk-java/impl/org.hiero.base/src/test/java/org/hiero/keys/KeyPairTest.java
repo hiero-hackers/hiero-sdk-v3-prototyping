@@ -4,6 +4,7 @@ import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `KeyPair`, generated from the specs.
@@ -12,6 +13,7 @@ class KeyPairTest {
 
     @Test
     @DisplayName("creates a KeyPair and returns the values")
+    @Tag("testId:keys.KeyPair/create")
     void shouldCreateAndReturnTheValues() {
         final PublicKey publicKey = publicKeyValue();
         final PrivateKey privateKey = privateKeyValue();
@@ -22,18 +24,21 @@ class KeyPairTest {
 
     @Test
     @DisplayName("rejects null for publicKey")
+    @Tag("testId:keys.KeyPair/publicKey/rejects-null")
     void shouldRejectNullPublicKey() {
         assertThrows(NullPointerException.class, () -> new KeyPair((PublicKey) null, privateKeyValue()));
     }
 
     @Test
     @DisplayName("rejects null for privateKey")
+    @Tag("testId:keys.KeyPair/privateKey/rejects-null")
     void shouldRejectNullPrivateKey() {
         assertThrows(NullPointerException.class, () -> new KeyPair(publicKeyValue(), (PrivateKey) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:keys.KeyPair/value-semantics")
     void shouldCompareByValue() {
         final KeyPair subject = create();
         final KeyPair other = create();

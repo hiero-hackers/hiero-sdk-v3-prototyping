@@ -6,6 +6,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `queries-topics`, generated from the `tests` blocks of its `## Testing` section.
@@ -18,6 +19,7 @@ class QueriesTopicsSpecTest {
     /// (TopicInfoQueryUnitTests, the get / set test).
     @Test
     @DisplayName("a topic info query keeps the id of its topic")
+    @Tag("testId:consensusnode.queries.topics/a-topic-info-query-keeps-the-id-of-its-topic")
     void aTopicInfoQueryKeepsTheIdOfItsTopic() {
         // given
         final Address topic = defaultAddress();
@@ -35,6 +37,7 @@ class QueriesTopicsSpecTest {
     /// Python SDK (topic_info_test.py, test_topic_info_initialization_with_none_values).
     @Test
     @DisplayName("a topic info of a public immutable topic has no authorities")
+    @Tag("testId:consensusnode.queries.topics/a-topic-info-of-a-public-immutable-topic-has-no-authorities")
     void aTopicInfoOfAPublicImmutableTopicHasNoAuthorities() {
         // given
         final byte[] runningHash = repeat(hex("00"), 48L);
@@ -58,6 +61,7 @@ class QueriesTopicsSpecTest {
     /// 1970-01-01T00:00:00.004Z, and auto-renew period Duration.ofDays(5), i.e. 432000 seconds. Millisecond precision.
     @Test
     @DisplayName("a topic info keeps its expiration time and auto-renew period")
+    @Tag("testId:consensusnode.queries.topics/a-topic-info-keeps-its-expiration-time-and-auto-renew-period")
     void aTopicInfoKeepsItsExpirationTimeAndAutoRenewPeriod() {
         // given
         final ZonedDateTime expirationTime = toZonedDateTime("1970-01-01T00:00:00.004Z");

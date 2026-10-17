@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.TransactionId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Response`, generated from the specs.
@@ -14,6 +15,7 @@ class ResponseTest {
 
     @Test
     @DisplayName("creates a Response and returns the values")
+    @Tag("testId:consensusnode.transactions.Response/create")
     void shouldCreateAndReturnTheValues() {
         final TransactionId transactionId = transactionIdValue();
         final Response<Receipt> subject = new Response<>(transactionId);
@@ -22,18 +24,21 @@ class ResponseTest {
 
     @Test
     @DisplayName("rejects null for transactionId")
+    @Tag("testId:consensusnode.transactions.Response/transactionId/rejects-null")
     void shouldRejectNullTransactionId() {
         assertThrows(NullPointerException.class, () -> new Response<>((TransactionId) null));
     }
 
     @Test
     @DisplayName("queryReceipt() can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.Response/queryReceipt/call")
     void shouldCallQueryReceipt() {
         assertNotNull(create().queryReceipt());
     }
 
     @Test
     @DisplayName("queryRecord() can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.Response/queryRecord/call")
     void shouldCallQueryRecord() {
         assertNotNull(create().queryRecord());
     }

@@ -4,6 +4,7 @@ import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `BasicTransactionType`, generated from the specs.
@@ -12,6 +13,7 @@ class BasicTransactionTypeTest {
 
     @Test
     @DisplayName("the constants have the attribute values of the specs")
+    @Tag("testId:mirrornode.transaction.BasicTransactionType/constants")
     void shouldProvideTheAttributesOfTheConstants() {
         assertValue("CRYPTOCREATEACCOUNT", BasicTransactionType.ACCOUNT_CREATE.protocolName());
         assertValue("CRYPTODELETE", BasicTransactionType.ACCOUNT_DELETE.protocolName());

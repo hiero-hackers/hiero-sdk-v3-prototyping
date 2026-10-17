@@ -123,6 +123,7 @@ The queries of `NetworkRepository` need a Mirror Node; only the value types are 
 ```tests
 // Source: the Java SDK (MirrorNodeServiceEndpointTest: IP address 1.2.3.4, domain name "test.mirror.com", port 443);
 // HIP-1046 (an endpoint is published either with an IP address or with a domain name).
+@@testId("a-service-endpoint-keeps-either-its-ipv4-address-or-its-domain-name-and-its-port")
 test "a service endpoint keeps either its IPv4 address or its domain name and its port" {
     // when
     let byAddress = ServiceEndpoint{ipAddressV4: "1.2.3.4", port: 443}
@@ -138,6 +139,7 @@ test "a service endpoint keeps either its IPv4 address or its domain name and it
 }
 
 // Source: this spec (`serviceEndpoints` defaults to an empty list; `adminKey` is null on entries from before HIP-869).
+@@testId("a-network-node-without-service-endpoints-and-admin-key-has-an-empty-endpoint-list-and-no-admin-key")
 test "a network node without service endpoints and admin key has an empty endpoint list and no admin key" {
     // given
     let account = AccountId.fromString(value: "0.0.3")
@@ -154,6 +156,7 @@ test "a network node without service endpoints and admin key has an empty endpoi
 }
 
 // Source: the Java SDK (MirrorNodeServiceEndpointTest); this spec (the address book entry lists its endpoints).
+@@testId("a-network-node-keeps-its-service-endpoints-in-order")
 test "a network node keeps its service endpoints in order" {
     // given
     let endpoints = [ServiceEndpoint{ipAddressV4: "1.2.3.4", port: 443},
@@ -168,6 +171,7 @@ test "a network node keeps its service endpoints in order" {
 }
 
 // Source: this spec (`timestamp` is the consensus time of the address-book entry).
+@@testId("a-network-node-keeps-the-consensus-time-of-its-address-book-entry")
 test "a network node keeps the consensus time of its address-book entry" {
     // given
     let time = DEFAULT(zonedDateTime)
@@ -181,6 +185,7 @@ test "a network node keeps the consensus time of its address-book entry" {
 
 // Source: the Hiero Enterprise Java test fixture exchange-rate.json (current rate 212848 cents for 30000 HBAR expiring
 // at 1785852000, next rate 211949 cents for 30000 HBAR expiring at 1785855600; the epoch seconds written as ISO 8601).
+@@testId("exchange-rates-keep-the-current-and-the-next-rate-with-their-expiration-times")
 test "exchange rates keep the current and the next rate with their expiration times" {
     // given
     let current = ExchangeRate{centEquivalent: 212848, hbarEquivalent: 30000,
@@ -202,6 +207,7 @@ test "exchange rates keep the current and the next rate with their expiration ti
 }
 
 // Source: this spec (exchange rates are values: rates that differ only in their expiration time are different).
+@@testId("exchange-rates-that-differ-only-in-their-expiration-time-are-different")
 test "exchange rates that differ only in their expiration time are different" {
     // when
     let first = ExchangeRate{centEquivalent: 212848, hbarEquivalent: 30000,
@@ -217,6 +223,7 @@ test "exchange rates that differ only in their expiration time are different" {
 
 // Source: the Hiero Enterprise Java test fixture network-stake.json (its values; `staking_period_duration` 1440
 // minutes, i.e. one day, is the staking period of 86400 seconds).
+@@testId("network-stake-keeps-its-staking-parameters-and-its-staking-period")
 test "network stake keeps its staking parameters and its staking period" {
     // when
     let stake = NetworkStake{maxStakeReward: 650000000000000000, maxStakeRewardPerHbar: 5287,

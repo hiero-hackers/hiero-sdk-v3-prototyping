@@ -12,6 +12,7 @@ import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `FileCreateParams`, generated from the specs.
@@ -20,6 +21,7 @@ class FileCreateParamsTest {
 
     @Test
     @DisplayName("creates a FileCreateParams and returns the values")
+    @Tag("testId:enterprise.service.file.FileCreateParams/create")
     void shouldCreateAndReturnTheValues() {
         final byte[] contents = contentsValue();
         final @Nullable Authority authority = authorityValue();
@@ -34,6 +36,7 @@ class FileCreateParamsTest {
 
     @Test
     @DisplayName("creates a FileCreateParams with the default values")
+    @Tag("testId:enterprise.service.file.FileCreateParams/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final FileCreateParams subject = new FileCreateParams(authorityValue(), expirationTimeValue(), fileMemoValue());
         assertValue(new byte[0], subject.contents());
@@ -41,6 +44,7 @@ class FileCreateParamsTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:enterprise.service.file.FileCreateParams/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final byte[] contents = contentsValue();
         final @Nullable Authority authority = authorityValue();
@@ -60,6 +64,7 @@ class FileCreateParamsTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:enterprise.service.file.FileCreateParams/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final FileCreateParams subject = FileCreateParams.builder()
                 .build();
@@ -71,12 +76,14 @@ class FileCreateParamsTest {
 
     @Test
     @DisplayName("rejects null for contents")
+    @Tag("testId:enterprise.service.file.FileCreateParams/contents/rejects-null")
     void shouldRejectNullContents() {
         assertThrows(NullPointerException.class, () -> new FileCreateParams((byte[]) null, authorityValue(), expirationTimeValue(), fileMemoValue()));
     }
 
     @Test
     @DisplayName("the constructor copies contents; the accessor returns a copy")
+    @Tag("testId:enterprise.service.file.FileCreateParams/contents/copies-in")
     void shouldCopyContentsIn() {
         final byte[] value = contentsValue();
         final byte[] expected = value.clone();
@@ -91,6 +98,7 @@ class FileCreateParamsTest {
 
     @Test
     @DisplayName("fileMemo: accepts more elements than the maximum")
+    @Tag("testId:enterprise.service.file.FileCreateParams/fileMemo/accepts-at-maximum-bytes")
     void shouldAcceptFileMemoAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final FileCreateParams subject = new FileCreateParams(contentsValue(), authorityValue(), expirationTimeValue(), value);
@@ -99,6 +107,7 @@ class FileCreateParamsTest {
 
     @Test
     @DisplayName("fileMemo: rejects more elements than the maximum")
+    @Tag("testId:enterprise.service.file.FileCreateParams/fileMemo/rejects-above-maximum-bytes")
     void shouldRejectFileMemoAboveMaximumBytes() {
         assertThrows(IllegalArgumentException.class, () -> new FileCreateParams(contentsValue(), authorityValue(), expirationTimeValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
     }

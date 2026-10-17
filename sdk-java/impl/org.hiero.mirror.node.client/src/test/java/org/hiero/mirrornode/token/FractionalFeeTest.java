@@ -7,6 +7,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `FractionalFee`, generated from the specs.
@@ -15,6 +16,7 @@ class FractionalFeeTest {
 
     @Test
     @DisplayName("creates a FractionalFee and returns the values")
+    @Tag("testId:mirrornode.token.FractionalFee/create")
     void shouldCreateAndReturnTheValues() {
         final long numeratorAmount = numeratorAmountValue();
         final long denominatorAmount = denominatorAmountValue();
@@ -29,6 +31,7 @@ class FractionalFeeTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.token.FractionalFee/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final long numeratorAmount = numeratorAmountValue();
         final long denominatorAmount = denominatorAmountValue();
@@ -48,6 +51,7 @@ class FractionalFeeTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.token.FractionalFee/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final FractionalFee subject = FractionalFee.builder()
                 .numeratorAmount(numeratorAmountValue())
@@ -59,12 +63,14 @@ class FractionalFeeTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.token.FractionalFee/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> FractionalFee.builder().build());
     }
 
     @Test
     @DisplayName("numeratorAmount: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.token.FractionalFee/numeratorAmount/accepts-at-minimum")
     void shouldAcceptNumeratorAmountAtMinimum() {
         final long value = -9223372036854775808L;
         final FractionalFee subject = new FractionalFee(value, denominatorAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
@@ -73,6 +79,7 @@ class FractionalFeeTest {
 
     @Test
     @DisplayName("numeratorAmount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.token.FractionalFee/numeratorAmount/accepts-at-maximum")
     void shouldAcceptNumeratorAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final FractionalFee subject = new FractionalFee(value, denominatorAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
@@ -81,6 +88,7 @@ class FractionalFeeTest {
 
     @Test
     @DisplayName("denominatorAmount: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.token.FractionalFee/denominatorAmount/accepts-at-minimum")
     void shouldAcceptDenominatorAmountAtMinimum() {
         final long value = -9223372036854775808L;
         final FractionalFee subject = new FractionalFee(numeratorAmountValue(), value, collectorAccountIdValue(), denominatingTokenIdValue());
@@ -89,6 +97,7 @@ class FractionalFeeTest {
 
     @Test
     @DisplayName("denominatorAmount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.token.FractionalFee/denominatorAmount/accepts-at-maximum")
     void shouldAcceptDenominatorAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final FractionalFee subject = new FractionalFee(numeratorAmountValue(), value, collectorAccountIdValue(), denominatingTokenIdValue());
@@ -97,6 +106,7 @@ class FractionalFeeTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.token.FractionalFee/value-semantics")
     void shouldCompareByValue() {
         final FractionalFee subject = create();
         final FractionalFee other = create();

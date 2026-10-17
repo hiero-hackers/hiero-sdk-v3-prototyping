@@ -425,6 +425,7 @@ Tests of the ids, written as given / when / then. The checksums are those of HIP
 
 ```tests
 // Source: HIP-15 (the checksum belongs to every entity id and to its ledger); the vectors of HIP15_CHECKSUMS.
+@@testId("the-hip-15-checksums-are-valid-on-their-ledger")
 test "the HIP-15 checksums are valid on their ledger" {
     for text in keys(value: HIP15_CHECKSUMS) {
         // given
@@ -447,6 +448,7 @@ test "the HIP-15 checksums are valid on their ledger" {
 // Source: HIP-15; the vectors of the Java, JavaScript, Rust, Swift, Go and Python SDKs (a checksum of another ledger),
 // of the Python SDK (ledgers 0 to 3) and of the Rust and Swift SDKs (a ledger id of more than one byte); the token,
 // topic, schedule and contract id tests of all SDKs.
+@@testId("a-hip-15-checksum-is-not-valid-on-another-ledger")
 test "a HIP-15 checksum is not valid on another ledger" {
     // given
     let mainnet = Network<hedera.HbarUnit>{id: [0], name: "mainnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
@@ -463,6 +465,7 @@ test "a HIP-15 checksum is not valid on another ledger" {
 }
 
 // Source: HIP-15 (five lowercase letters); rejected by the Java, Go, Rust and Swift SDKs.
+@@testId("a-malformed-checksum-is-rejected")
 test "a malformed checksum is rejected" {
     for text in MALFORMED_CHECKSUMS {
         // when / then
@@ -476,6 +479,7 @@ test "a malformed checksum is rejected" {
 }
 
 // Source: the JavaScript, Python, C++, Java, Rust and Swift SDKs; the C++ and Python SDKs.
+@@testId("text-that-is-no-entity-id-is-rejected")
 test "text that is no entity id is rejected" {
     for text in MALFORMED_ENTITY_IDS {
         // when / then
@@ -489,6 +493,7 @@ test "text that is no entity id is rejected" {
 }
 
 // Source: all seven SDKs.
+@@testId("an-account-id-is-read-from-and-written-as-shard-realm-num")
 test "an account id is read from and written as shard.realm.num" {
     for text in ["0.0.5005", "1.2.3", "10.50.25050"] {
         // when
@@ -502,6 +507,7 @@ test "an account id is read from and written as shard.realm.num" {
 }
 
 // Source: the Rust and Swift SDKs.
+@@testId("an-account-id-keeps-its-shard-realm-and-number")
 test "an account id keeps its shard, realm and number" {
     // when
     let id = AccountId.fromString(value: "10.50.25050")
@@ -514,6 +520,7 @@ test "an account id keeps its shard, realm and number" {
 }
 
 // Source: the Swift, Rust, Python and C++ SDKs.
+@@testId("an-evm-address-is-read-from-40-hex-digits-with-or-without-0x")
 test "an EVM address is read from 40 hex digits with or without 0x" {
     // given
     let bytes = hex(text: "1234567890abcdef1234567890abcdef12345678")
@@ -529,6 +536,7 @@ test "an EVM address is read from 40 hex digits with or without 0x" {
 }
 
 // Source: the Swift, Rust, Python and C++ SDKs.
+@@testId("an-evm-address-of-the-wrong-length-or-with-other-characters-is-rejected")
 test "an EVM address of the wrong length or with other characters is rejected" {
     for text in ["", "0x1234", "0x0f0e0d0c0b0a09080706050403020100", "0xGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG"] {
         // when / then
@@ -543,6 +551,7 @@ test "an EVM address of the wrong length or with other characters is rejected" {
 }
 
 // Source: the Java, Rust, Go and JavaScript SDKs. Following `@@oneOf(num, evmAddress)`, the number is absent.
+@@testId("a-contract-id-of-an-evm-address-keeps-its-shard-realm-and-address")
 test "a contract id of an EVM address keeps its shard, realm and address" {
     // given
     let address = EvmAddress.fromString(value: "98329e006610472e6B372C080833f6D79ED833cf")
@@ -558,6 +567,7 @@ test "a contract id of an EVM address keeps its shard, realm and address" {
 }
 
 // Source: the dotted-quad notation of IPv4 (RFC 791); the C++ SDK.
+@@testId("an-ipv4-address-is-written-as-dotted-quad-and-needs-four-bytes")
 test "an IPv4 address is written as dotted quad and needs four bytes" {
     // when
     let address = IpAddress.fromBytes(value: [192, 168, 1, 1])
@@ -573,6 +583,7 @@ test "an IPv4 address is written as dotted quad and needs four bytes" {
 }
 
 // Source: the Java, Rust and Swift SDKs.
+@@testId("a-transaction-id-is-read-from-and-written-as-account-seconds-nanos")
 test "a transaction id is read from and written as account@seconds.nanos" {
     // given
     let text = "0.0.23847@1588539964.632521325"
@@ -587,6 +598,7 @@ test "a transaction id is read from and written as account@seconds.nanos" {
 }
 
 // Source: the Java, Rust and Swift SDKs.
+@@testId("a-transaction-id-keeps-its-nonce")
 test "a transaction id keeps its nonce" {
     // given
     let text = "0.0.23847@1588539964.632521325/4"
@@ -600,6 +612,7 @@ test "a transaction id keeps its nonce" {
 }
 
 // Source: the Rust, Swift, Java and Python SDKs.
+@@testId("text-that-is-no-transaction-id-is-rejected")
 test "text that is no transaction id is rejected" {
     for text in ["0.0.31415?1641088801.2", "0.0.31415/1641088801.2", "0.0.31415?scheduled/1412@1641088801.2",
             "0.0.23847.1588539964.632521325/4", "0.0.23847@1588539964/4", "0.0.123@abc.def"] {
@@ -610,6 +623,7 @@ test "text that is no transaction id is rejected" {
 }
 
 // Source: the Java, Rust, Swift, JavaScript and Python SDKs (the canonical string form carries no checksum).
+@@testId("tostring-omits-the-checksum-and-tostringwithchecksum-keeps-it")
 test "toString omits the checksum and toStringWithChecksum keeps it" {
     // given
     let id = AccountId.fromString(value: "0.0.123-esxsf")
@@ -620,6 +634,7 @@ test "toString omits the checksum and toStringWithChecksum keeps it" {
 }
 
 // Source: the Swift, Java, Rust and Go SDKs (hex digits in either case denote the same address).
+@@testId("an-evm-address-is-the-same-in-upper-and-lower-case")
 test "an EVM address is the same in upper and lower case" {
     // when
     let upper = EvmAddress.fromString(value: "0x1234567890ABCDEF1234567890ABCDEF12345678")
@@ -630,6 +645,7 @@ test "an EVM address is the same in upper and lower case" {
 }
 
 // Source: the C++ SDK (39 digits, 0x inside the digits, 22 bytes) and the Python SDK (42 digits).
+@@testId("an-evm-address-of-39-or-42-digits-with-a-misplaced-or-doubled-0x-or-of-22-bytes-is-rejected")
 test "an EVM address of 39 or 42 digits, with a misplaced or doubled 0x, or of 22 bytes is rejected" {
     for text in ["303132333435363738396162636465666768696", "1234567890abcdef1234567890abcdef1234567890",
             "3031323334353637383961626364650x66676869", "0x0x1234567890abcdef1234567890abcdef12345678"] {
@@ -646,6 +662,7 @@ test "an EVM address of 39 or 42 digits, with a misplaced or doubled 0x, or of 2
 // Source: HIP-583 (the EVM-address form of an id is shard.realm and the address without "0x", in lower case:
 // 0.0.b794f5ea0ba39494ce839613fffba74279579268); the Java, Rust, JavaScript, Go and Python SDKs write it so. The
 // addresses are those of EIP55_ADDRESSES.
+@@testId("a-contract-id-and-an-account-id-of-an-evm-address-are-read-from-and-written-as-shard-realm-address")
 test "a contract id and an account id of an EVM address are read from and written as shard.realm.<address>" {
     for checksummed in EIP55_ADDRESSES {
         // given
@@ -667,6 +684,7 @@ test "a contract id and an account id of an EVM address are read from and writte
 
 // Source: HIP-583 and HIP-15 (no other formats are accepted): the "0x" belongs to the stand-alone Ethereum address,
 // not to an id, and an id is written in lower case.
+@@testId("an-id-with-0x-or-upper-case-hex-digits-in-its-evm-address-form-is-rejected")
 test "an id with 0x or upper case hex digits in its EVM-address form is rejected" {
     for checksummed in EIP55_ADDRESSES {
         // when / then
@@ -684,6 +702,7 @@ test "an id with 0x or upper case hex digits in its EVM-address form is rejected
 // Source: the Java, Go and Swift SDKs (an account id built from an EVM address keeps that address, even a long-zero
 // one, and has no number; the JavaScript SDK decodes a long-zero address to its number instead). Exactly one of num,
 // evmAddress and alias is set.
+@@testId("an-account-id-of-a-long-zero-evm-address-keeps-the-address-and-has-no-number")
 test "an account id of a long-zero EVM address keeps the address and has no number" {
     // given
     let address = EvmAddress.fromString(value: "0x00000000000000000000000000000000000004d2")
@@ -700,6 +719,7 @@ test "an account id of a long-zero EVM address keeps the address and has no numb
 
 // Source: the Rust and Swift SDKs (the digits after the dot are the nanoseconds as a number) and the Java and Go SDKs
 // (nanoseconds with a leading zero).
+@@testId("the-nanoseconds-of-a-transaction-id-are-a-number-of-nanoseconds")
 test "the nanoseconds of a transaction id are a number of nanoseconds" {
     // when
     let short = TransactionId.fromString(transactionId: "0.0.31415@1641088801.2")
@@ -712,6 +732,7 @@ test "the nanoseconds of a transaction id are a number of nanoseconds" {
 }
 
 // Source: the Python and Java SDKs.
+@@testId("a-transaction-id-without-a-valid-start-of-seconds-and-nanoseconds-is-rejected")
 test "a transaction id without a valid start of seconds and nanoseconds is rejected" {
     for text in ["invalid_string", "0.0.123@12345", "0.0.123@1234567890.1234567890"] {
         // when / then
@@ -721,6 +742,7 @@ test "a transaction id without a valid start of seconds and nanoseconds is rejec
 }
 
 // Source: the C++ SDK (100,000 ids), the Go SDK (concurrently) and the Python SDK (the payer is kept).
+@@testId("generated-transaction-ids-keep-their-payer-and-differ")
 test "generated transaction ids keep their payer and differ" {
     // given
     let payer = DEFAULT(Address)
@@ -737,6 +759,7 @@ test "generated transaction ids keep their payer and differ" {
 
 // Source: HIP-15, section "Specification": the inputs that must be rejected (all but "0.0.123-abcde", which is well
 // formed and fails only the checksum validation), checked against its regex.
+@@testId("the-inputs-that-hip-15-rejects-are-rejected")
 test "the inputs that HIP-15 rejects are rejected" {
     for text in HIP15_REJECTED_IDS {
         // when / then
@@ -754,6 +777,7 @@ test "the inputs that HIP-15 rejects are rejected" {
 }
 
 // Source: EIP-55, section "Test Cases", written from the bytes of the address.
+@@testId("an-evm-address-is-written-in-its-eip-55-form")
 test "an EVM address is written in its EIP-55 form" {
     for checksummed in EIP55_ADDRESSES {
         // when: built from the bytes, so the case of the text plays no part
@@ -767,6 +791,7 @@ test "an EVM address is written in its EIP-55 form" {
 
 // Source: EIP-55 (mixed case carries a checksum); rejected by ethers.js, web3.js and viem. The second address is the
 // one of the Go SDK's mirror node tests, which is not in EIP-55 form.
+@@testId("an-evm-address-in-mixed-case-that-is-not-its-eip-55-form-is-rejected")
 test "an EVM address in mixed case that is not its EIP-55 form is rejected" {
     for text in ["0x5aaeb6053F3E94C9b9A09f33669435E7Ef1BeAed", "7F2c5e0f4a3b9E8d1C6A5b4E3f2D1c0B9a8E7F6d"] {
         // when / then
@@ -776,6 +801,7 @@ test "an EVM address in mixed case that is not its EIP-55 form is rejected" {
 }
 
 // Source: the Java, JavaScript and Go SDKs (the nanoseconds are written with 9 digits, the nonce follows after "/").
+@@testId("a-transaction-id-is-written-with-9-digits-of-nanoseconds")
 test "a transaction id is written with 9 digits of nanoseconds" {
     // when
     let id = TransactionId.fromString(transactionId: "0.0.31415@1641088801.2/4")
@@ -786,6 +812,7 @@ test "a transaction id is written with 9 digits of nanoseconds" {
 
 // Source: the C++ SDK (127.0.0.1); the rejections follow from "only dotted-quad IPv4" of this spec (a port or a leading
 // zero is no dotted quad; the Swift SDK cannot read "127.0.0.1:50211" either).
+@@testId("an-ipv4-address-is-read-only-from-a-dotted-quad-of-numbers-up-to-255")
 test "an IPv4 address is read only from a dotted quad of numbers up to 255" {
     // when
     let localhost = IpAddress.fromString(value: "127.0.0.1")

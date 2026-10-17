@@ -4,6 +4,7 @@ import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `PrivateKey`, generated from the specs.
@@ -12,6 +13,7 @@ class PrivateKeyTest {
 
     @Test
     @DisplayName("creates a PrivateKey and returns the values")
+    @Tag("testId:keys.PrivateKey/create")
     void shouldCreateAndReturnTheValues() {
         final byte[] bytes = bytesValue();
         final KeyAlgorithm algorithm = algorithmValue();
@@ -24,12 +26,14 @@ class PrivateKeyTest {
 
     @Test
     @DisplayName("rejects null for bytes")
+    @Tag("testId:keys.PrivateKey/bytes/rejects-null")
     void shouldRejectNullBytes() {
         assertThrows(NullPointerException.class, () -> new PrivateKey((byte[]) null, algorithmValue(), typeValue()));
     }
 
     @Test
     @DisplayName("the constructor copies bytes; the accessor returns a copy")
+    @Tag("testId:keys.PrivateKey/bytes/copies-in")
     void shouldCopyBytesIn() {
         final byte[] value = bytesValue();
         final byte[] expected = value.clone();
@@ -44,18 +48,21 @@ class PrivateKeyTest {
 
     @Test
     @DisplayName("rejects null for algorithm")
+    @Tag("testId:keys.PrivateKey/algorithm/rejects-null")
     void shouldRejectNullAlgorithm() {
         assertThrows(NullPointerException.class, () -> new PrivateKey(bytesValue(), (KeyAlgorithm) null, typeValue()));
     }
 
     @Test
     @DisplayName("rejects null for type")
+    @Tag("testId:keys.PrivateKey/type/rejects-null")
     void shouldRejectNullType() {
         assertThrows(NullPointerException.class, () -> new PrivateKey(bytesValue(), algorithmValue(), (KeyType) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:keys.PrivateKey/value-semantics")
     void shouldCompareByValue() {
         final PrivateKey subject = create();
         final PrivateKey other = create();
@@ -65,12 +72,14 @@ class PrivateKeyTest {
 
     @Test
     @DisplayName("toRawBytes() can be called and returns a value")
+    @Tag("testId:keys.PrivateKey/toRawBytes/call")
     void shouldCallToRawBytes() {
         assertNotNull(defaultSubject().toRawBytes());
     }
 
     @Test
     @DisplayName("toBytes(container) can be called and returns a value (only IllegalArgumentException may occur)")
+    @Tag("testId:keys.PrivateKey/toBytes/call")
     void shouldCallToBytes() throws Exception {
         try {
             assertNotNull(defaultSubject().toBytes(containerValue()));
@@ -83,6 +92,7 @@ class PrivateKeyTest {
 
     @Test
     @DisplayName("toString(container) can be called and returns a value (only IllegalArgumentException may occur)")
+    @Tag("testId:keys.PrivateKey/toString/call")
     void shouldCallToString() throws Exception {
         try {
             assertNotNull(defaultSubject().toString(containerValue()));
@@ -95,12 +105,14 @@ class PrivateKeyTest {
 
     @Test
     @DisplayName("sign(message) can be called and returns a value")
+    @Tag("testId:keys.PrivateKey/sign/call")
     void shouldCallSign() {
         assertNotNull(defaultSubject().sign(messageValue()));
     }
 
     @Test
     @DisplayName("createPublicKey() can be called and returns a value")
+    @Tag("testId:keys.PrivateKey/createPublicKey/call")
     void shouldCallCreatePublicKey() {
         assertNotNull(defaultSubject().createPublicKey());
     }

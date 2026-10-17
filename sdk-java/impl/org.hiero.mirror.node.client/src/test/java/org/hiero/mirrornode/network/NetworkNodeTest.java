@@ -16,6 +16,7 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.AccountId;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NetworkNode`, generated from the specs.
@@ -24,6 +25,7 @@ class NetworkNodeTest {
 
     @Test
     @DisplayName("creates a NetworkNode and returns the values")
+    @Tag("testId:mirrornode.network.NetworkNode/create")
     void shouldCreateAndReturnTheValues() {
         final long nodeId = nodeIdValue();
         final AccountId accountId = accountIdValue();
@@ -48,6 +50,7 @@ class NetworkNodeTest {
 
     @Test
     @DisplayName("creates a NetworkNode with the default values")
+    @Tag("testId:mirrornode.network.NetworkNode/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final NetworkNode subject = new NetworkNode(nodeIdValue(), accountIdValue(), descriptionValue(), publicKeyValue(), nodeCertHashValue(), adminKeyValue(), stakeValue(), timestampValue());
         assertValue(List.of(), subject.serviceEndpoints());
@@ -55,6 +58,7 @@ class NetworkNodeTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.network.NetworkNode/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final long nodeId = nodeIdValue();
         final AccountId accountId = accountIdValue();
@@ -89,6 +93,7 @@ class NetworkNodeTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.network.NetworkNode/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final NetworkNode subject = NetworkNode.builder()
                 .nodeId(nodeIdValue())
@@ -105,12 +110,14 @@ class NetworkNodeTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.network.NetworkNode/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> NetworkNode.builder().build());
     }
 
     @Test
     @DisplayName("nodeId: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.network.NetworkNode/nodeId/accepts-at-minimum")
     void shouldAcceptNodeIdAtMinimum() {
         final long value = -9223372036854775808L;
         final NetworkNode subject = new NetworkNode(value, accountIdValue(), descriptionValue(), publicKeyValue(), nodeCertHashValue(), serviceEndpointsValue(), adminKeyValue(), stakeValue(), timestampValue());
@@ -119,6 +126,7 @@ class NetworkNodeTest {
 
     @Test
     @DisplayName("nodeId: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.network.NetworkNode/nodeId/accepts-at-maximum")
     void shouldAcceptNodeIdAtMaximum() {
         final long value = 9223372036854775807L;
         final NetworkNode subject = new NetworkNode(value, accountIdValue(), descriptionValue(), publicKeyValue(), nodeCertHashValue(), serviceEndpointsValue(), adminKeyValue(), stakeValue(), timestampValue());
@@ -127,18 +135,21 @@ class NetworkNodeTest {
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:mirrornode.network.NetworkNode/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new NetworkNode(nodeIdValue(), (AccountId) null, descriptionValue(), publicKeyValue(), nodeCertHashValue(), serviceEndpointsValue(), adminKeyValue(), stakeValue(), timestampValue()));
     }
 
     @Test
     @DisplayName("rejects null for serviceEndpoints")
+    @Tag("testId:mirrornode.network.NetworkNode/serviceEndpoints/rejects-null")
     void shouldRejectNullServiceEndpoints() {
         assertThrows(NullPointerException.class, () -> new NetworkNode(nodeIdValue(), accountIdValue(), descriptionValue(), publicKeyValue(), nodeCertHashValue(), (List<ServiceEndpoint>) null, adminKeyValue(), stakeValue(), timestampValue()));
     }
 
     @Test
     @DisplayName("the constructor copies serviceEndpoints; the accessor returns an unmodifiable collection")
+    @Tag("testId:mirrornode.network.NetworkNode/serviceEndpoints/copies-in")
     void shouldCopyServiceEndpointsIn() {
         final List<ServiceEndpoint> value = new ArrayList<>(serviceEndpointsValue());
         final List<ServiceEndpoint> expected = List.copyOf(value);
@@ -150,6 +161,7 @@ class NetworkNodeTest {
 
     @Test
     @DisplayName("stake: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.network.NetworkNode/stake/accepts-at-minimum")
     void shouldAcceptStakeAtMinimum() {
         final long value = -9223372036854775808L;
         final NetworkNode subject = new NetworkNode(nodeIdValue(), accountIdValue(), descriptionValue(), publicKeyValue(), nodeCertHashValue(), serviceEndpointsValue(), adminKeyValue(), value, timestampValue());
@@ -158,6 +170,7 @@ class NetworkNodeTest {
 
     @Test
     @DisplayName("stake: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.network.NetworkNode/stake/accepts-at-maximum")
     void shouldAcceptStakeAtMaximum() {
         final long value = 9223372036854775807L;
         final NetworkNode subject = new NetworkNode(nodeIdValue(), accountIdValue(), descriptionValue(), publicKeyValue(), nodeCertHashValue(), serviceEndpointsValue(), adminKeyValue(), value, timestampValue());

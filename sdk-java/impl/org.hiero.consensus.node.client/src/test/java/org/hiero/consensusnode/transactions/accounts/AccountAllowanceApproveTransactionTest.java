@@ -29,6 +29,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountAllowanceApproveTransaction`, generated from the specs.
@@ -37,6 +38,7 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("creates an AccountAllowanceApproveTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final List<HbarAllowance> hbarAllowances = hbarAllowancesValue();
         final List<TokenAllowance> tokenAllowances = tokenAllowancesValue();
@@ -52,6 +54,7 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("creates an AccountAllowanceApproveTransaction with the default values")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final AccountAllowanceApproveTransaction subject = new AccountAllowanceApproveTransaction();
         assertValue(List.of(), subject.hbarAllowances());
@@ -61,6 +64,7 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final List<HbarAllowance> hbarAllowances = hbarAllowancesValue();
         final List<TokenAllowance> tokenAllowances = tokenAllowancesValue();
@@ -77,6 +81,7 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final AccountAllowanceApproveTransaction subject = AccountAllowanceApproveTransaction.builder()
                 .build();
@@ -87,12 +92,14 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("rejects null for hbarAllowances")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/hbarAllowances/rejects-null")
     void shouldRejectNullHbarAllowances() {
         assertThrows(NullPointerException.class, () -> new AccountAllowanceApproveTransaction((List<HbarAllowance>) null, tokenAllowancesValue(), nftAllowancesValue()));
     }
 
     @Test
     @DisplayName("the constructor copies hbarAllowances; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/hbarAllowances/copies-in")
     void shouldCopyHbarAllowancesIn() {
         final List<HbarAllowance> value = new ArrayList<>(hbarAllowancesValue());
         final List<HbarAllowance> expected = List.copyOf(value);
@@ -104,12 +111,14 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("rejects null for tokenAllowances")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/tokenAllowances/rejects-null")
     void shouldRejectNullTokenAllowances() {
         assertThrows(NullPointerException.class, () -> new AccountAllowanceApproveTransaction(hbarAllowancesValue(), (List<TokenAllowance>) null, nftAllowancesValue()));
     }
 
     @Test
     @DisplayName("the constructor copies tokenAllowances; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/tokenAllowances/copies-in")
     void shouldCopyTokenAllowancesIn() {
         final List<TokenAllowance> value = new ArrayList<>(tokenAllowancesValue());
         final List<TokenAllowance> expected = List.copyOf(value);
@@ -121,12 +130,14 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("rejects null for nftAllowances")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/nftAllowances/rejects-null")
     void shouldRejectNullNftAllowances() {
         assertThrows(NullPointerException.class, () -> new AccountAllowanceApproveTransaction(hbarAllowancesValue(), tokenAllowancesValue(), (List<NftAllowance>) null));
     }
 
     @Test
     @DisplayName("the constructor copies nftAllowances; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/nftAllowances/copies-in")
     void shouldCopyNftAllowancesIn() {
         final List<NftAllowance> value = new ArrayList<>(nftAllowancesValue());
         final List<NftAllowance> expected = List.copyOf(value);
@@ -138,6 +149,7 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final AccountAllowanceApproveTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -147,6 +159,7 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final AccountAllowanceApproveTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -155,6 +168,7 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final AccountAllowanceApproveTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -164,6 +178,7 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final AccountAllowanceApproveTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -172,6 +187,7 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/memo/set")
     void shouldSetMemo() {
         final AccountAllowanceApproveTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -181,6 +197,7 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final AccountAllowanceApproveTransaction subject = create();
         subject.setMemo((String) null);
@@ -189,6 +206,7 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final AccountAllowanceApproveTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -198,6 +216,7 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final AccountAllowanceApproveTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -206,54 +225,63 @@ class AccountAllowanceApproveTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.accounts.AccountAllowanceApproveTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

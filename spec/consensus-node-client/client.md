@@ -117,6 +117,7 @@ each test names where the current SDKs test the same.
 ```tests
 // Source: the Go SDK (TestUnitClientFromConfigWithOperator), the Python SDK (client_test.py,
 // test_for_testnet_then_set_operator) and the C++ SDK (ClientUnitTests): a client keeps its operator.
+@@testId("a-client-keeps-the-operator-account-it-was-created-with")
 test "a client keeps the operator account it was created with" {
     // given
     let operator = DEFAULT(Account)
@@ -132,6 +133,7 @@ test "a client keeps the operator account it was created with" {
 
 // Source: the Java SDK (ClientTest.forMainnet, forNameReturnsCorrectNetwork), the Go SDK (TestUnitClientFromConfig)
 // and the Python SDK (client_test.py, test_factory_basic_setup): a client is bound to the network it was created for.
+@@testId("a-client-is-bound-to-the-network-of-its-network-setting")
 test "a client is bound to the network of its network setting" {
     // given
     let setting = DEFAULT(NetworkSetting)
@@ -145,6 +147,7 @@ test "a client is bound to the network of its network setting" {
 
 // Source: this spec (by default the operator account's private key signs); the Java and JavaScript SDKs
 // (Client.setOperator signs with the operator's private key) and the Go SDK (the operator's key signs).
+@@testId("the-default-signer-signs-with-the-private-key-of-the-operator-account")
 test "the default signer signs with the private key of the operator account" {
     // given
     let operator = DEFAULT(Account)
@@ -165,6 +168,7 @@ test "the default signer signs with the private key of the operator account" {
 
 // Source: the Java and JavaScript SDKs (Client.setOperatorWith: an operator whose transactions are signed by a
 // given signer instead of its private key). The second key is the secp256k1 key of the tests of keys.md.
+@@testId("a-client-created-with-a-signer-signs-with-that-signer")
 test "a client created with a signer signs with that signer" {
     // given
     let signerKey = keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,

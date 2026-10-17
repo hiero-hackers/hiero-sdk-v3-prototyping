@@ -13,6 +13,7 @@ import org.hiero.keys.PrivateKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions-tokens-management`, generated from the `tests` blocks of its `## Testing` section.
@@ -30,6 +31,7 @@ class TransactionsTokensManagementSpecTest {
     /// (TokenWipeTransaction, "should handle large bigint amounts": 9000000000000000000).
     @Test
     @DisplayName("a fungible wipe transaction keeps the token, the account and the amount")
+    @Tag("testId:consensusnode.transactions.tokens/a-fungible-wipe-transaction-keeps-the-token-the-account-and-the-amount")
     void aFungibleWipeTransactionKeepsTheTokenTheAccountAndTheAmount() {
         // given
         final Address token = Address.fromString("4.2.0");
@@ -52,6 +54,7 @@ class TransactionsTokensManagementSpecTest {
     /// (test_constructor_with_serial_numbers).
     @Test
     @DisplayName("an NFT wipe transaction keeps its serials in order")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-wipe-transaction-keeps-its-serials-in-order")
     void anNFTWipeTransactionKeepsItsSerialsInOrder() {
         // when
         final TokenWipeNftTransaction wipe = new TokenWipeNftTransaction(Address.fromString("4.2.0"), AccountId.fromString("0.6.9"), List.of(8L, 9L, 10L));
@@ -68,6 +71,7 @@ class TransactionsTokensManagementSpecTest {
     /// TokenGrantKycTransactionTest and TokenRevokeKycTransactionTest: token 4.2.0, account 6.9.0).
     @Test
     @DisplayName("freeze, unfreeze, grant KYC and revoke KYC transactions keep the token and the account")
+    @Tag("testId:consensusnode.transactions.tokens/freeze-unfreeze-grant-kyc-and-revoke-kyc-transactions-keep-the-token-and-the-account")
     void freezeUnfreezeGrantKYCAndRevokeKYCTransactionsKeepTheTokenAndTheAccount() {
         // given
         final Address frozenToken = Address.fromString("6.5.4");
@@ -98,6 +102,7 @@ class TransactionsTokensManagementSpecTest {
     /// (test__from_proto_restores_token_id).
     @Test
     @DisplayName("pause and unpause transactions keep the token")
+    @Tag("testId:consensusnode.transactions.tokens/pause-and-unpause-transactions-keep-the-token")
     void pauseAndUnpauseTransactionsKeepTheToken() {
         // when
         final TokenPauseTransaction pause = new TokenPauseTransaction(Address.fromString("4.2.0"));
@@ -114,6 +119,7 @@ class TransactionsTokensManagementSpecTest {
     /// (TokenUpdateNftsTransaction, "should _metadata equal to null").
     @Test
     @DisplayName("an NFT metadata update without metadata leaves the metadata unchanged")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-metadata-update-without-metadata-leaves-the-metadata-unchanged")
     void anNFTMetadataUpdateWithoutMetadataLeavesTheMetadataUnchanged() {
         // when
         final TokenUpdateNftsTransaction update = new TokenUpdateNftsTransaction(Address.fromString("4.2.0"), List.of(8L, 9L, 10L), null);
@@ -128,6 +134,7 @@ class TransactionsTokensManagementSpecTest {
     /// the Python SDK (test_constructor_with_parameters).
     @Test
     @DisplayName("an NFT metadata update keeps the token, the serials and the metadata")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-metadata-update-keeps-the-token-the-serials-and-the-metadata")
     void anNFTMetadataUpdateKeepsTheTokenTheSerialsAndTheMetadata() {
         // when
         final TokenUpdateNftsTransaction update = new TokenUpdateNftsTransaction(Address.fromString("4.2.0"), List.of(8L, 9L, 10L), new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5});
@@ -143,6 +150,7 @@ class TransactionsTokensManagementSpecTest {
     /// Source: this spec (@@min(1) of amount).
     @Test
     @DisplayName("a fungible wipe transaction rejects an amount of 0")
+    @Tag("testId:consensusnode.transactions.tokens/a-fungible-wipe-transaction-rejects-an-amount-of-0")
     void aFungibleWipeTransactionRejectsAnAmountOf0() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenWipeFungibleTransaction(Address.fromString("4.2.0"), AccountId.fromString("0.6.9"), 0L));
@@ -153,6 +161,7 @@ class TransactionsTokensManagementSpecTest {
     /// Source: this spec (@@minSize(1)).
     @Test
     @DisplayName("an NFT wipe transaction rejects an empty list of serials")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-wipe-transaction-rejects-an-empty-list-of-serials")
     void anNFTWipeTransactionRejectsAnEmptyListOfSerials() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenWipeNftTransaction(Address.fromString("4.2.0"), AccountId.fromString("0.6.9"), List.of()));
@@ -163,6 +172,7 @@ class TransactionsTokensManagementSpecTest {
     /// Source: this spec (@@maxSize(10): the network caps a wipe at 10 NFTs).
     @Test
     @DisplayName("an NFT wipe transaction rejects more than 10 serials")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-wipe-transaction-rejects-more-than-10-serials")
     void anNFTWipeTransactionRejectsMoreThan10Serials() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenWipeNftTransaction(Address.fromString("4.2.0"), AccountId.fromString("0.6.9"), ELEVEN_SERIALS()));
@@ -174,6 +184,7 @@ class TransactionsTokensManagementSpecTest {
     /// TokenUpdateNftsTransaction: "Missing serial numbers").
     @Test
     @DisplayName("an NFT metadata update rejects an empty list of serials")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-metadata-update-rejects-an-empty-list-of-serials")
     void anNFTMetadataUpdateRejectsAnEmptyListOfSerials() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenUpdateNftsTransaction(Address.fromString("4.2.0"), List.of(), null));
@@ -184,6 +195,7 @@ class TransactionsTokensManagementSpecTest {
     /// Source: this spec (@@maxSize(10): the network caps an update at 10 NFTs).
     @Test
     @DisplayName("an NFT metadata update rejects more than 10 serials")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-metadata-update-rejects-more-than-10-serials")
     void anNFTMetadataUpdateRejectsMoreThan10Serials() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenUpdateNftsTransaction(Address.fromString("4.2.0"), ELEVEN_SERIALS(), null));
@@ -195,6 +207,7 @@ class TransactionsTokensManagementSpecTest {
     /// (test_build_transaction_body_validation_errors of TokenUpdateNftsTransaction: b"x" * 101).
     @Test
     @DisplayName("an NFT metadata update rejects metadata longer than 100 bytes")
+    @Tag("testId:consensusnode.transactions.tokens/an-nft-metadata-update-rejects-metadata-longer-than-100-bytes")
     void anNFTMetadataUpdateRejectsMetadataLongerThan100Bytes() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenUpdateNftsTransaction(Address.fromString("4.2.0"), List.of(8L, 9L, 10L), repeat(hex("78"), 101L)));
@@ -208,6 +221,7 @@ class TransactionsTokensManagementSpecTest {
     /// bytes") and the to / from bytes tests of the Go SDK.
     @Test
     @DisplayName("every token management transaction survives toBytes and fromBytes unchanged")
+    @Tag("testId:consensusnode.transactions.tokens/every-token-management-transaction-survives-tobytes-and-frombytes-unchanged")
     void everyTokenManagementTransactionSurvivesToBytesAndFromBytesUnchanged() {
         // given
         final Account payer = defaultAccount();

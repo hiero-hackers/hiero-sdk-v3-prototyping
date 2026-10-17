@@ -9,6 +9,7 @@ import java.util.List;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.TransactionId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `mirror-node-transaction`, generated from the `tests` blocks of its `## Testing` section.
@@ -21,6 +22,7 @@ class MirrorNodeTransactionSpecTest {
     /// Node REST OpenAPI spec).
     @Test
     @DisplayName("the basic transaction types carry the names of the Mirror Node REST API")
+    @Tag("testId:mirrornode.transaction/the-basic-transaction-types-carry-the-names-of-the-mirror-node-rest-api")
     void theBasicTransactionTypesCarryTheNamesOfTheMirrorNodeRESTAPI() {
         // when / then
         assertEquals("CRYPTOCREATEACCOUNT", BasicTransactionType.ACCOUNT_CREATE.protocolName());
@@ -42,6 +44,7 @@ class MirrorNodeTransactionSpecTest {
     /// Source: this spec (a BasicTransactionType is a TransactionType and can be used as a filter).
     @Test
     @DisplayName("a basic transaction type is a transaction type with its protocol name")
+    @Tag("testId:mirrornode.transaction/a-basic-transaction-type-is-a-transaction-type-with-its-protocol-name")
     void aBasicTransactionTypeIsATransactionTypeWithItsProtocolName() {
         // when
         final TransactionType type = BasicTransactionType.CRYPTO_TRANSFER;
@@ -58,6 +61,7 @@ class MirrorNodeTransactionSpecTest {
     /// "1785848378.760000732", valid duration 120 seconds, no parent, no entity); millisecond precision.
     @Test
     @DisplayName("a transaction info keeps its timestamps and its valid duration")
+    @Tag("testId:mirrornode.transaction/a-transaction-info-keeps-its-timestamps-and-its-valid-duration")
     void aTransactionInfoKeepsItsTimestampsAndItsValidDuration() {
         // given
         final ZonedDateTime consensus = toZonedDateTime("2026-08-04T12:59:49.057Z");
@@ -85,6 +89,7 @@ class MirrorNodeTransactionSpecTest {
     /// is set for a child transaction, with its `nonce` greater than 0).
     @Test
     @DisplayName("a child transaction info keeps the consensus timestamp of its parent")
+    @Tag("testId:mirrornode.transaction/a-child-transaction-info-keeps-the-consensus-timestamp-of-its-parent")
     void aChildTransactionInfoKeepsTheConsensusTimestampOfItsParent() {
         // given
         final ZonedDateTime parent = toZonedDateTime("2026-08-04T12:59:49.057Z");

@@ -147,6 +147,7 @@ missing field. The comment above each test names the SDK tests it comes from.
 // Source: the Java (getSetFreezeType, getSetStartTime, getSetFileId, getSetFileHash), Python
 // (test_constructor_with_parameters), C++, Go and Swift FreezeTransaction unit tests. The start time is the one of the
 // Java test (Instant.ofEpochSecond(1554158542), converted exactly to 2019-04-01T22:42:22Z).
+@@testId("a-freeze-upgrade-keeps-its-type-start-time-update-file-and-file-hash")
 test "a freeze upgrade keeps its type, start time, update file and file hash" {
     // given
     let startTime = toZonedDateTime(text: "2019-04-01T22:42:22Z")
@@ -164,6 +165,7 @@ test "a freeze upgrade keeps its type, start time, update file and file hash" {
 
 // Source: the Python (test_build_transaction_body_with_none_values) and Java (shouldBytesNoSetters) FreezeTransaction
 // unit tests; the Description of this spec (PREPARE_UPGRADE ignores startTime).
+@@testId("a-prepared-upgrade-needs-no-start-time")
 test "a prepared upgrade needs no start time" {
     // when
     let transaction = FreezeTransaction{freezeType: FreezeType.PREPARE_UPGRADE, startTime: null,
@@ -179,6 +181,7 @@ test "a prepared upgrade needs no start time" {
 // Source: the Python FreezeTransaction unit test (test_build_proto_body_with_none_fields, with the FREEZE_ONLY type and
 // the start time Timestamp(1640995200, 0) of its freeze_params fixture, converted exactly to 2022-01-01T00:00:00Z); the
 // Description of this spec (FREEZE_ONLY needs no upgrade payload).
+@@testId("a-freeze-without-upgrade-needs-no-update-file-and-no-file-hash")
 test "a freeze without upgrade needs no update file and no file hash" {
     // given
     let startTime = toZonedDateTime(text: "2022-01-01T00:00:00Z")
@@ -197,6 +200,7 @@ test "a freeze without upgrade needs no update file and no file hash" {
 // Source: the Description of this spec (TELEMETRY_UPGRADE requires a start time, updateFile and fileHash like
 // FREEZE_UPGRADE); the start time is the one of the JavaScript FreezeTransaction unit test ("should correctly
 // deserialize from protobuf with all fields": Timestamp(1624430225, 0), converted exactly to 2021-06-23T06:37:05Z).
+@@testId("a-telemetry-upgrade-keeps-its-start-time-update-file-and-file-hash")
 test "a telemetry upgrade keeps its start time, update file and file hash" {
     // given
     let startTime = toZonedDateTime(text: "2021-06-23T06:37:05Z")
@@ -214,6 +218,7 @@ test "a telemetry upgrade keeps its start time, update file and file hash" {
 
 // Source: the Go (TestUnitFreezeTypeString) and Python (test_freeze_type_values, test_round_trip_conversion)
 // FreezeType unit tests: every freeze type is kept as given.
+@@testId("a-freeze-transaction-keeps-every-freeze-type")
 test "a freeze transaction keeps every freeze type" {
     for freezeType in [FreezeType.FREEZE_ONLY, FreezeType.PREPARE_UPGRADE, FreezeType.FREEZE_UPGRADE,
             FreezeType.FREEZE_ABORT, FreezeType.TELEMETRY_UPGRADE] {

@@ -22,6 +22,7 @@ SoloNetworkSetting extends NetworkSetting {
 ```tests
 // Source: this spec (SOLO_IDENTIFIER is "solo" and looks up the network setting of a Solo network); the Go SDK (the
 // "localhost" name of ClientForName targets the local Solo network).
+@@testId("the-solo-identifier-looks-up-a-solo-network-setting")
 test "the Solo identifier looks up a Solo network setting" {
     // when
     let setting = ledger.config.getNetworkSetting(identifier: SOLO_IDENTIFIER)

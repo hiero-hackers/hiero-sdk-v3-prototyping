@@ -63,6 +63,7 @@ The queries of `NftRepository` need a Mirror Node; only the value types are test
 
 ```tests
 // Source: this spec (an NFT is identified by the token id of its type plus its serial number).
+@@testId("nfts-of-the-same-type-with-different-serial-numbers-are-different")
 test "NFTs of the same type with different serial numbers are different" {
     // given
     let token = Address.fromString(address: "0.0.5005")

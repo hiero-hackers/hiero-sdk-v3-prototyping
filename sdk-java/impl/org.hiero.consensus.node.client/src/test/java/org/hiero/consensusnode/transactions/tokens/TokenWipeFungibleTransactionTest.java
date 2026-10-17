@@ -27,6 +27,7 @@ import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `TokenWipeFungibleTransaction`, generated from the specs.
@@ -35,6 +36,7 @@ class TokenWipeFungibleTransactionTest {
 
     @Test
     @DisplayName("creates a TokenWipeFungibleTransaction and returns the values")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final AccountId accountId = accountIdValue();
@@ -50,18 +52,21 @@ class TokenWipeFungibleTransactionTest {
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new TokenWipeFungibleTransaction((Address) null, accountIdValue(), amountValue()));
     }
 
     @Test
     @DisplayName("rejects null for accountId")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/accountId/rejects-null")
     void shouldRejectNullAccountId() {
         assertThrows(NullPointerException.class, () -> new TokenWipeFungibleTransaction(tokenIdValue(), (AccountId) null, amountValue()));
     }
 
     @Test
     @DisplayName("amount: accepts the minimum (1)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/amount/accepts-at-minimum")
     void shouldAcceptAmountAtMinimum() {
         final long value = 1L;
         final TokenWipeFungibleTransaction subject = new TokenWipeFungibleTransaction(tokenIdValue(), accountIdValue(), value);
@@ -70,6 +75,7 @@ class TokenWipeFungibleTransactionTest {
 
     @Test
     @DisplayName("amount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/amount/accepts-at-maximum")
     void shouldAcceptAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final TokenWipeFungibleTransaction subject = new TokenWipeFungibleTransaction(tokenIdValue(), accountIdValue(), value);
@@ -78,12 +84,14 @@ class TokenWipeFungibleTransactionTest {
 
     @Test
     @DisplayName("amount: rejects a value below the minimum (0)")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/amount/rejects-below-minimum")
     void shouldRejectAmountBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new TokenWipeFungibleTransaction(tokenIdValue(), accountIdValue(), 0L));
     }
 
     @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/maxTransactionFee/set")
     void shouldSetMaxTransactionFee() {
         final TokenWipeFungibleTransaction subject = create();
         final @Nullable NativeToken<?, ?> value = maxTransactionFeeOtherValue();
@@ -93,6 +101,7 @@ class TokenWipeFungibleTransactionTest {
 
     @Test
     @DisplayName("setMaxTransactionFee accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/maxTransactionFee/set-null")
     void shouldSetMaxTransactionFeeToNull() {
         final TokenWipeFungibleTransaction subject = create();
         subject.setMaxTransactionFee((NativeToken<?, ?>) null);
@@ -101,6 +110,7 @@ class TokenWipeFungibleTransactionTest {
 
     @Test
     @DisplayName("setValidDuration changes validDuration and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/validDuration/set")
     void shouldSetValidDuration() {
         final TokenWipeFungibleTransaction subject = create();
         final @Nullable Duration value = validDurationOtherValue();
@@ -110,6 +120,7 @@ class TokenWipeFungibleTransactionTest {
 
     @Test
     @DisplayName("setValidDuration accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/validDuration/set-null")
     void shouldSetValidDurationToNull() {
         final TokenWipeFungibleTransaction subject = create();
         subject.setValidDuration((Duration) null);
@@ -118,6 +129,7 @@ class TokenWipeFungibleTransactionTest {
 
     @Test
     @DisplayName("setMemo changes memo and returns the object")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/memo/set")
     void shouldSetMemo() {
         final TokenWipeFungibleTransaction subject = create();
         final @Nullable String value = memoOtherValue();
@@ -127,6 +139,7 @@ class TokenWipeFungibleTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts null")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/memo/set-null")
     void shouldSetMemoToNull() {
         final TokenWipeFungibleTransaction subject = create();
         subject.setMemo((String) null);
@@ -135,6 +148,7 @@ class TokenWipeFungibleTransactionTest {
 
     @Test
     @DisplayName("setMemo accepts more elements than the maximum")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/memo/set-accepts-at-maximum-bytes")
     void shouldSetMemoAtMaximumBytes() {
         final TokenWipeFungibleTransaction subject = create();
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
@@ -144,6 +158,7 @@ class TokenWipeFungibleTransactionTest {
 
     @Test
     @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/memo/set-rejects-above-maximum-bytes")
     void shouldNotSetMemoAboveMaximumBytes() {
         final TokenWipeFungibleTransaction subject = create();
         assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
@@ -152,54 +167,63 @@ class TokenWipeFungibleTransactionTest {
 
     @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/pack/call")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperator(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/signWithOperator/call")
     void shouldCallSignWithOperator() {
         assertNotNull(create().signWithOperator(clientValue()));
     }
 
     @Test
     @DisplayName("sign(payer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/sign/call")
     void shouldCallSign() {
         assertNotNull(create().sign(payerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/sign/call-2")
     void shouldCallSign2() {
         assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
     }
 
     @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
         assertNotNull(create().signWithOperatorAndSubmit(clientValue()));
     }
 
     @Test
     @DisplayName("packForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/packForBatch/call")
     void shouldCallPackForBatch() {
         assertNotNull(create().packForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatchWithOperator(client, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/signForBatchWithOperator/call")
     void shouldCallSignForBatchWithOperator() {
         assertNotNull(create().signForBatchWithOperator(clientValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
     }
 
     @Test
     @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
+    @Tag("testId:consensusnode.transactions.tokens.TokenWipeFungibleTransaction/signForBatch/call-2")
     void shouldCallSignForBatch2() {
         assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }

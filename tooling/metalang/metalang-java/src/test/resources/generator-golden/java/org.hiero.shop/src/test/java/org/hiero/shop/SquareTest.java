@@ -11,6 +11,7 @@ import javax.annotation.processing.Generated;
 import org.hiero.shop.money.Money;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Square`, generated from the specs.
@@ -20,6 +21,7 @@ class SquareTest {
 
     @Test
     @DisplayName("creates a Square and returns the values")
+    @Tag("testId:shop.Square/create")
     void shouldCreateAndReturnTheValues() {
         final @Nullable Integer size = sizeValue();
         final Money price = priceValue();
@@ -30,6 +32,7 @@ class SquareTest {
 
     @Test
     @DisplayName("size: accepts the minimum (-2147483648)")
+    @Tag("testId:shop.Square/size/accepts-at-minimum")
     void shouldAcceptSizeAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
         final Square subject = new Square(value, priceValue());
@@ -38,6 +41,7 @@ class SquareTest {
 
     @Test
     @DisplayName("size: accepts the maximum (2147483647)")
+    @Tag("testId:shop.Square/size/accepts-at-maximum")
     void shouldAcceptSizeAtMaximum() {
         final @Nullable Integer value = 2147483647;
         final Square subject = new Square(value, priceValue());
@@ -46,12 +50,14 @@ class SquareTest {
 
     @Test
     @DisplayName("rejects null for price")
+    @Tag("testId:shop.Square/price/rejects-null")
     void shouldRejectNullPrice() {
         assertThrows(NullPointerException.class, () -> new Square(sizeValue(), (Money) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:shop.Square/value-semantics")
     void shouldCompareByValue() {
         final Square subject = create();
         final Square other = create();
@@ -61,6 +67,7 @@ class SquareTest {
 
     @Test
     @DisplayName("gross(taxRate) can be called and returns a value (only PricingException, TimeoutException may occur)")
+    @Tag("testId:shop.Square/gross/call")
     void shouldCallGross() throws Exception {
         try {
             assertNotNull(create().gross(taxRateValue()));

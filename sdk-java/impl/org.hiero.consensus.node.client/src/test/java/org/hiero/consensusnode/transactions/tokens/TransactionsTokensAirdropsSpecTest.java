@@ -15,6 +15,7 @@ import org.hiero.keys.PrivateKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `transactions-tokens-airdrops`, generated from the `tests` blocks of its `## Testing` section.
@@ -39,6 +40,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// test_from_proto_without_token_transfer) and the Java SDK (TokenAirdropTransactionTest, shouldBytesNoSetters).
     @Test
     @DisplayName("an airdrop transaction without transfers has no token and no NFT legs")
+    @Tag("testId:consensusnode.transactions.tokens/an-airdrop-transaction-without-transfers-has-no-token-and-no-nft-legs")
     void anAirdropTransactionWithoutTransfersHasNoTokenAndNoNFTLegs() {
         // when
         final TokenAirdropTransaction airdrop = new TokenAirdropTransaction(List.of(), List.of());
@@ -55,6 +57,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// test_build_transaction_body_with_expected_decimal).
     @Test
     @DisplayName("an airdrop transaction keeps its fungible and NFT legs in order")
+    @Tag("testId:consensusnode.transactions.tokens/an-airdrop-transaction-keeps-its-fungible-and-nft-legs-in-order")
     void anAirdropTransactionKeepsItsFungibleAndNFTLegsInOrder() {
         // given
         final Address token5 = Address.fromString("0.0.5");
@@ -85,6 +88,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// SDK (TestPendingAirdropId_FromProtobuf) and the Python SDK (test_pending_airdrop_id_constructor).
     @Test
     @DisplayName("a fungible pending airdrop has no serial and an NFT pending airdrop has its serial")
+    @Tag("testId:consensusnode.transactions.tokens/a-fungible-pending-airdrop-has-no-serial-and-an-nft-pending-airdrop-has-its-serial")
     void aFungiblePendingAirdropHasNoSerialAndAnNFTPendingAirdropHasItsSerial() {
         // given
         final AccountId sender = AccountId.fromString("0.0.1001");
@@ -110,6 +114,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// Token: the same accounts and tokens).
     @Test
     @DisplayName("pending airdrops are equal exactly when sender, receiver, token and serial are equal")
+    @Tag("testId:consensusnode.transactions.tokens/pending-airdrops-are-equal-exactly-when-sender-receiver-token-and-serial-are-equal")
     void pendingAirdropsAreEqualExactlyWhenSenderReceiverTokenAndSerialAreEqual() {
         // given
         final AccountId sender = AccountId.fromString("1.2.3");
@@ -136,6 +141,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// testGetAndSetPendingAirdropIds).
     @Test
     @DisplayName("claim and cancel airdrop transactions keep their pending airdrops in order")
+    @Tag("testId:consensusnode.transactions.tokens/claim-and-cancel-airdrop-transactions-keep-their-pending-airdrops-in-order")
     void claimAndCancelAirdropTransactionsKeepTheirPendingAirdropsInOrder() {
         // given
         final AccountId sender = AccountId.fromString("0.0.9031");
@@ -157,6 +163,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// owner is the payer) and the JavaScript SDK (TokenReference, "initializes fungibleToken and nft to null").
     @Test
     @DisplayName("a token reject transaction without owner leaves the owner unset")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-reject-transaction-without-owner-leaves-the-owner-unset")
     void aTokenRejectTransactionWithoutOwnerLeavesTheOwnerUnset() {
         // when
         final TokenRejectTransaction reject = new TokenRejectTransaction(null, List.of(new TokenReference(Address.fromString("1.2.3"), null)));
@@ -172,6 +179,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// 4.5.6/2 and 7.8.9/3) and the Python SDK (test_constructor_with_parameters).
     @Test
     @DisplayName("a token reject transaction keeps the owner and its fungible and NFT references in order")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-reject-transaction-keeps-the-owner-and-its-fungible-and-nft-references-in-order")
     void aTokenRejectTransactionKeepsTheOwnerAndItsFungibleAndNFTReferencesInOrder() {
         // given
         final List<TokenReference> rejections = List.of(new TokenReference(Address.fromString("1.2.3"), null), new TokenReference(Address.fromString("4.5.6"), null), new TokenReference(Address.fromString("7.8.9"), null), new TokenReference(Address.fromString("4.5.6"), 2L), new TokenReference(Address.fromString("7.8.9"), 3L));
@@ -191,6 +199,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// (test_min_ids_enforced_on_build_hits_validation).
     @Test
     @DisplayName("a claim airdrop transaction rejects an empty list of pending airdrops")
+    @Tag("testId:consensusnode.transactions.tokens/a-claim-airdrop-transaction-rejects-an-empty-list-of-pending-airdrops")
     void aClaimAirdropTransactionRejectsAnEmptyListOfPendingAirdrops() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenClaimAirdropTransaction(List.of()));
@@ -201,6 +210,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// Source: this spec (@@maxSize(10)); the Python SDK (token_airdrop_claim_test, test_cannot_exceed_max_airdrops).
     @Test
     @DisplayName("a claim airdrop transaction rejects more than 10 pending airdrops")
+    @Tag("testId:consensusnode.transactions.tokens/a-claim-airdrop-transaction-rejects-more-than-10-pending-airdrops")
     void aClaimAirdropTransactionRejectsMoreThan10PendingAirdrops() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenClaimAirdropTransaction(ELEVEN_PENDING_AIRDROPS()));
@@ -212,6 +222,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// SDK, TokenAirdropCancelIntegrationTest "Cannot cancel the tokens with empty list").
     @Test
     @DisplayName("a cancel airdrop transaction rejects an empty list of pending airdrops")
+    @Tag("testId:consensusnode.transactions.tokens/a-cancel-airdrop-transaction-rejects-an-empty-list-of-pending-airdrops")
     void aCancelAirdropTransactionRejectsAnEmptyListOfPendingAirdrops() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCancelAirdropTransaction(List.of()));
@@ -222,6 +233,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// Source: this spec (@@maxSize(10), the same protocol cap as a claim).
     @Test
     @DisplayName("a cancel airdrop transaction rejects more than 10 pending airdrops")
+    @Tag("testId:consensusnode.transactions.tokens/a-cancel-airdrop-transaction-rejects-more-than-10-pending-airdrops")
     void aCancelAirdropTransactionRejectsMoreThan10PendingAirdrops() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCancelAirdropTransaction(ELEVEN_PENDING_AIRDROPS()));
@@ -233,6 +245,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// (the Java SDK, TokenRejectIntegrationTest "Cannot Reject a Token when Token Or NFT ID is not set").
     @Test
     @DisplayName("a token reject transaction rejects an empty list of references")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-reject-transaction-rejects-an-empty-list-of-references")
     void aTokenRejectTransactionRejectsAnEmptyListOfReferences() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenRejectTransaction(null, List.of()));
@@ -245,6 +258,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// Size Exceeded", and the same test of the Go, JavaScript, Python, Rust and Swift SDKs).
     @Test
     @DisplayName("a token reject transaction rejects more than 10 references")
+    @Tag("testId:consensusnode.transactions.tokens/a-token-reject-transaction-rejects-more-than-10-references")
     void aTokenRejectTransactionRejectsMoreThan10References() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenRejectTransaction(null, ELEVEN_TOKEN_REFERENCES()));
@@ -257,6 +271,7 @@ class TransactionsTokensAirdropsSpecTest {
     /// JavaScript SDK (TokenAirdropTransaction, "from | toBytes").
     @Test
     @DisplayName("every airdrop transaction survives toBytes and fromBytes unchanged")
+    @Tag("testId:consensusnode.transactions.tokens/every-airdrop-transaction-survives-tobytes-and-frombytes-unchanged")
     void everyAirdropTransactionSurvivesToBytesAndFromBytesUnchanged() {
         // given
         final Account payer = defaultAccount();

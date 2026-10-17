@@ -189,6 +189,7 @@ tested by the TCK, not here.
 ```tests
 // Source: this spec (adminAuthority unset: an immutable topic, submitAuthority unset: a public topic); the Python SDK
 // (test_constructor_default_values of TopicCreateTransaction).
+@@testId("a-topic-create-transaction-without-attributes-creates-a-public-immutable-topic")
 test "a topic create transaction without attributes creates a public, immutable topic" {
     // when
     let transaction = TopicCreateTransaction{}
@@ -204,6 +205,7 @@ test "a topic create transaction without attributes creates a public, immutable 
 // Source: the Python SDK (test_constructor of TopicCreateTransaction: "Test Topic", an admin and a submit key) and the
 // Swift SDK (TopicCreateTransactionUnitTests.test_GetSetSubmitKey, test_GetSetAdminKey, test_GetSetAutoRenewAccountId
 // and test_GetSetAutoRenewPeriod: testAutoRenewPeriod = .days(1) = 86400 seconds).
+@@testId("a-topic-create-transaction-keeps-its-authorities-memo-auto-renew-period-and-auto-renew-account")
 test "a topic create transaction keeps its authorities, memo, auto-renew period and auto-renew account" {
     // given
     let submitAuthority: Authority = authority.PublicKeyAuthority{publicKey: keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA,
@@ -225,6 +227,7 @@ test "a topic create transaction keeps its authorities, memo, auto-renew period 
 
 // Source: the Java SDK (TopicCreateTransactionTest.shouldBytes and shouldBytesNoSetters; auto-renew period
 // Duration.ofHours(24) = 86400 seconds) and the Swift SDK (TopicCreateTransactionUnitTests.test_ToFromBytes).
+@@testId("a-topic-create-transaction-survives-tobytes-and-frombytes")
 test "a topic create transaction survives toBytes and fromBytes" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
@@ -248,6 +251,7 @@ test "a topic create transaction survives toBytes and fromBytes" {
 
 // Source: this spec (every nullable field of an update is "leave unchanged"); the Python SDK
 // (test_auto_renew_period_omitted_when_unset, test_topic_memo_serialization_distinguishes_unset_and_empty).
+@@testId("a-topic-update-transaction-changes-nothing-but-what-it-names")
 test "a topic update transaction changes nothing but what it names" {
     // when
     let transaction = TopicUpdateTransaction{topicId: DEFAULT(Address)}
@@ -265,6 +269,7 @@ test "a topic update transaction changes nothing but what it names" {
 // Source: the Rust SDK (topic_update_transaction.rs get_set_expiration_time and get_set_auto_renew_period:
 // TEST_EXPIRATION_TIME = VALID_START = 2019-04-01T22:42:22Z, TEST_AUTO_RENEW_PERIOD = Duration::days(1) = 86400
 // seconds) and the Swift SDK (TopicUpdateTransactionUnitTests: the same values in makeTransaction2).
+@@testId("a-topic-update-transaction-keeps-its-expiration-time-and-auto-renew-period")
 test "a topic update transaction keeps its expiration time and auto-renew period" {
     // when
     let transaction = TopicUpdateTransaction{topicId: DEFAULT(Address), expirationTime: SDK_TEST_EXPIRATION_TIME,
@@ -279,6 +284,7 @@ test "a topic update transaction keeps its expiration time and auto-renew period
 // 0.0.5678), the Java SDK (TopicUpdateTransactionTest.shouldBytes) and the Swift SDK
 // (TopicUpdateTransactionUnitTests.test_ToFromBytes2: expiration time TestConstants.validStart = 2019-04-01T22:42:22Z,
 // auto-renew period .days(1) = 86400 seconds).
+@@testId("a-topic-update-transaction-survives-tobytes-and-frombytes")
 test "a topic update transaction survives toBytes and fromBytes" {
     // given
     let packed = TopicUpdateTransaction{topicId: DEFAULT(Address), adminAuthority: DEFAULT(Authority),
@@ -297,6 +303,7 @@ test "a topic update transaction survives toBytes and fromBytes" {
 
 // Source: the Java SDK (TopicDeleteTransactionTest.shouldBytes) and the Swift SDK (TopicDeleteTransactionUnitTests
 // .test_GetSetTopicId and test_ToFromBytes).
+@@testId("a-topic-delete-transaction-keeps-its-topic-and-survives-tobytes-and-frombytes")
 test "a topic delete transaction keeps its topic and survives toBytes and fromBytes" {
     // given
     let transaction = TopicDeleteTransaction{topicId: DEFAULT(Address)}

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.hiero.hedera.HbarUnit;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountId`, generated from the specs.
@@ -14,6 +15,7 @@ class AccountIdTest {
 
     @Test
     @DisplayName("creates an AccountId and returns the values")
+    @Tag("testId:ledger.AccountId/create")
     void shouldCreateAndReturnTheValues() {
         final long shard = shardValue();
         final long realm = realmValue();
@@ -32,6 +34,7 @@ class AccountIdTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:ledger.AccountId/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final long shard = shardValue();
         final long realm = realmValue();
@@ -57,6 +60,7 @@ class AccountIdTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:ledger.AccountId/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final AccountId subject = AccountId.builder()
                 .shard(shardValue())
@@ -71,12 +75,14 @@ class AccountIdTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:ledger.AccountId/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> AccountId.builder().build());
     }
 
     @Test
     @DisplayName("shard: accepts the minimum (0)")
+    @Tag("testId:ledger.AccountId/shard/accepts-at-minimum")
     void shouldAcceptShardAtMinimum() {
         final long value = 0L;
         final AccountId subject = new AccountId(value, realmValue(), checksumValue(), numValue(), (EvmAddress) null, (byte[]) null);
@@ -85,6 +91,7 @@ class AccountIdTest {
 
     @Test
     @DisplayName("shard: accepts the maximum (18446744073709551615)")
+    @Tag("testId:ledger.AccountId/shard/accepts-at-maximum")
     void shouldAcceptShardAtMaximum() {
         final long value = Long.parseUnsignedLong("18446744073709551615");
         final AccountId subject = new AccountId(value, realmValue(), checksumValue(), numValue(), (EvmAddress) null, (byte[]) null);
@@ -93,6 +100,7 @@ class AccountIdTest {
 
     @Test
     @DisplayName("realm: accepts the minimum (0)")
+    @Tag("testId:ledger.AccountId/realm/accepts-at-minimum")
     void shouldAcceptRealmAtMinimum() {
         final long value = 0L;
         final AccountId subject = new AccountId(shardValue(), value, checksumValue(), numValue(), (EvmAddress) null, (byte[]) null);
@@ -101,6 +109,7 @@ class AccountIdTest {
 
     @Test
     @DisplayName("realm: accepts the maximum (18446744073709551615)")
+    @Tag("testId:ledger.AccountId/realm/accepts-at-maximum")
     void shouldAcceptRealmAtMaximum() {
         final long value = Long.parseUnsignedLong("18446744073709551615");
         final AccountId subject = new AccountId(shardValue(), value, checksumValue(), numValue(), (EvmAddress) null, (byte[]) null);
@@ -109,12 +118,14 @@ class AccountIdTest {
 
     @Test
     @DisplayName("rejects null for checksum")
+    @Tag("testId:ledger.AccountId/checksum/rejects-null")
     void shouldRejectNullChecksum() {
         assertThrows(NullPointerException.class, () -> new AccountId(shardValue(), realmValue(), (String) null, numValue(), (EvmAddress) null, (byte[]) null));
     }
 
     @Test
     @DisplayName("num: accepts the minimum (0)")
+    @Tag("testId:ledger.AccountId/num/accepts-at-minimum")
     void shouldAcceptNumAtMinimum() {
         final @Nullable Long value = 0L;
         final AccountId subject = new AccountId(shardValue(), realmValue(), checksumValue(), value, (EvmAddress) null, (byte[]) null);
@@ -123,6 +134,7 @@ class AccountIdTest {
 
     @Test
     @DisplayName("num: accepts the maximum (18446744073709551615)")
+    @Tag("testId:ledger.AccountId/num/accepts-at-maximum")
     void shouldAcceptNumAtMaximum() {
         final @Nullable Long value = Long.parseUnsignedLong("18446744073709551615");
         final AccountId subject = new AccountId(shardValue(), realmValue(), checksumValue(), value, (EvmAddress) null, (byte[]) null);
@@ -131,6 +143,7 @@ class AccountIdTest {
 
     @Test
     @DisplayName("the constructor copies alias; the accessor returns a copy")
+    @Tag("testId:ledger.AccountId/alias/copies-in")
     void shouldCopyAliasIn() {
         final byte[] value = aliasValue();
         final byte[] expected = value.clone();
@@ -145,18 +158,21 @@ class AccountIdTest {
 
     @Test
     @DisplayName("rejects num and evmAddress together (@@oneOf)")
+    @Tag("testId:ledger.AccountId/num-evmAddress-alias/rejects-two")
     void shouldRejectTwoOfNumOrEvmAddressOrAlias() {
         assertThrows(IllegalArgumentException.class, () -> new AccountId(shardValue(), realmValue(), checksumValue(), numValue(), evmAddressValue(), (byte[]) null));
     }
 
     @Test
     @DisplayName("rejects none of num, evmAddress, alias (@@oneOf)")
+    @Tag("testId:ledger.AccountId/num-evmAddress-alias/rejects-none")
     void shouldRejectNoneOfNumOrEvmAddressOrAlias() {
         assertThrows(IllegalArgumentException.class, () -> new AccountId(shardValue(), realmValue(), checksumValue(), (Long) null, (EvmAddress) null, (byte[]) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:ledger.AccountId/value-semantics")
     void shouldCompareByValue() {
         final AccountId subject = create();
         final AccountId other = create();
@@ -166,24 +182,28 @@ class AccountIdTest {
 
     @Test
     @DisplayName("validateChecksum(network) can be called")
+    @Tag("testId:ledger.AccountId/validateChecksum/call")
     void shouldCallValidateChecksum() {
         defaultSubject().validateChecksum(networkValue());
     }
 
     @Test
     @DisplayName("toString() can be called and returns a value")
+    @Tag("testId:ledger.AccountId/toString/call")
     void shouldCallToString() {
         assertNotNull(defaultSubject().toString());
     }
 
     @Test
     @DisplayName("toStringWithChecksum() can be called and returns a value")
+    @Tag("testId:ledger.AccountId/toStringWithChecksum/call")
     void shouldCallToStringWithChecksum() {
         assertNotNull(defaultSubject().toStringWithChecksum());
     }
 
     @Test
     @DisplayName("fromString(value) can be called and returns a value (only IllegalArgumentException may occur)")
+    @Tag("testId:ledger.AccountId/fromString/call")
     void shouldCallFromString() throws Exception {
         try {
             assertNotNull(AccountId.fromString(valueValue()));
@@ -196,6 +216,7 @@ class AccountIdTest {
 
     @Test
     @DisplayName("fromEvmAddress(shard, realm, address) can be called and returns a value")
+    @Tag("testId:ledger.AccountId/fromEvmAddress/call")
     void shouldCallFromEvmAddress() {
         assertNotNull(AccountId.fromEvmAddress(shardValue(), realmValue(), addressValue()));
     }

@@ -4,6 +4,7 @@ import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NftCollectionGrant`, generated from the specs.
@@ -12,6 +13,7 @@ class NftCollectionGrantTest {
 
     @Test
     @DisplayName("creates a NftCollectionGrant and returns the values")
+    @Tag("testId:consensusnode.transactions.accounts.NftCollectionGrant/create")
     void shouldCreateAndReturnTheValues() {
         final boolean approved = approvedValue();
         final NftCollectionGrant subject = new NftCollectionGrant(approved);
@@ -20,6 +22,7 @@ class NftCollectionGrantTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.transactions.accounts.NftCollectionGrant/value-semantics")
     void shouldCompareByValue() {
         final NftCollectionGrant subject = create();
         final NftCollectionGrant other = create();

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import javax.annotation.processing.Generated;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Base`, generated from the specs.
@@ -16,6 +17,7 @@ class BaseTest {
 
     @Test
     @DisplayName("creates a Base and returns the values")
+    @Tag("testId:shop.Base/create")
     void shouldCreateAndReturnTheValues() {
         final int a = aValue();
         final Base subject = new Base(a);
@@ -24,6 +26,7 @@ class BaseTest {
 
     @Test
     @DisplayName("a: accepts the minimum (-2147483648)")
+    @Tag("testId:shop.Base/a/accepts-at-minimum")
     void shouldAcceptAAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final Base subject = new Base(value);
@@ -32,6 +35,7 @@ class BaseTest {
 
     @Test
     @DisplayName("a: accepts the maximum (2147483647)")
+    @Tag("testId:shop.Base/a/accepts-at-maximum")
     void shouldAcceptAAtMaximum() {
         final int value = 2147483647;
         final Base subject = new Base(value);
@@ -40,6 +44,7 @@ class BaseTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:shop.Base/value-semantics")
     void shouldCompareByValue() {
         final Base subject = create();
         final Base other = create();

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.Duration;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `HttpFactory`, generated from the specs.
@@ -13,12 +14,14 @@ class HttpFactoryTest {
 
     @Test
     @DisplayName("createHttpClient(configuration) can be called and returns a value")
+    @Tag("testId:http/createHttpClient/call")
     void shouldCallCreateHttpClient() {
         assertNotNull(HttpFactory.createHttpClient(configurationValue()));
     }
 
     @Test
     @DisplayName("createHttpClient rejects null for configuration")
+    @Tag("testId:http/createHttpClient/configuration/rejects-null")
     void shouldRejectNullConfigurationInCreateHttpClient() {
         assertThrows(NullPointerException.class, () -> HttpFactory.createHttpClient((HttpConfiguration) null));
     }

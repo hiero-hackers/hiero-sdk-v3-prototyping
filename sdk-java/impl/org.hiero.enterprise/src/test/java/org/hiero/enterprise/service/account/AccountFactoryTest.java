@@ -31,6 +31,7 @@ import org.hiero.mirrornode.MirrornodeFactory;
 import org.hiero.mirrornode.network.NetworkFactory;
 import org.hiero.mirrornode.transaction.TransactionFactory;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `AccountFactory`, generated from the specs.
@@ -39,12 +40,14 @@ class AccountFactoryTest {
 
     @Test
     @DisplayName("createService(session) can be called and returns a value")
+    @Tag("testId:enterprise.service.account/createService/call")
     void shouldCallCreateService() {
         assertNotNull(AccountFactory.createService(sessionValue()));
     }
 
     @Test
     @DisplayName("createService rejects null for session")
+    @Tag("testId:enterprise.service.account/createService/session/rejects-null")
     void shouldRejectNullSessionInCreateService() {
         assertThrows(NullPointerException.class, () -> AccountFactory.createService((Session) null));
     }

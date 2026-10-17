@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.hiero.ledger.AccountId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `StakingRewardTransfer`, generated from the specs.
@@ -13,6 +14,7 @@ class StakingRewardTransferTest {
 
     @Test
     @DisplayName("creates a StakingRewardTransfer and returns the values")
+    @Tag("testId:mirrornode.common.StakingRewardTransfer/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId account = accountValue();
         final long amount = amountValue();
@@ -23,12 +25,14 @@ class StakingRewardTransferTest {
 
     @Test
     @DisplayName("rejects null for account")
+    @Tag("testId:mirrornode.common.StakingRewardTransfer/account/rejects-null")
     void shouldRejectNullAccount() {
         assertThrows(NullPointerException.class, () -> new StakingRewardTransfer((AccountId) null, amountValue()));
     }
 
     @Test
     @DisplayName("amount: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.common.StakingRewardTransfer/amount/accepts-at-minimum")
     void shouldAcceptAmountAtMinimum() {
         final long value = -9223372036854775808L;
         final StakingRewardTransfer subject = new StakingRewardTransfer(accountValue(), value);
@@ -37,6 +41,7 @@ class StakingRewardTransferTest {
 
     @Test
     @DisplayName("amount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.common.StakingRewardTransfer/amount/accepts-at-maximum")
     void shouldAcceptAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final StakingRewardTransfer subject = new StakingRewardTransfer(accountValue(), value);
@@ -45,6 +50,7 @@ class StakingRewardTransferTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.common.StakingRewardTransfer/value-semantics")
     void shouldCompareByValue() {
         final StakingRewardTransfer subject = create();
         final StakingRewardTransfer other = create();

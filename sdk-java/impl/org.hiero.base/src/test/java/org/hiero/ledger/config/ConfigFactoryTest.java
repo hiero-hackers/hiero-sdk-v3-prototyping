@@ -11,6 +11,7 @@ import org.hiero.ledger.IpAddress;
 import org.hiero.ledger.MirrorNode;
 import org.hiero.ledger.Network;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `ConfigFactory`, generated from the specs.
@@ -19,24 +20,28 @@ class ConfigFactoryTest {
 
     @Test
     @DisplayName("registerNetworkSetting(identifier, setting) can be called")
+    @Tag("testId:ledger.config/registerNetworkSetting/call")
     void shouldCallRegisterNetworkSetting() {
         ConfigFactory.registerNetworkSetting(identifierValue(), settingValue());
     }
 
     @Test
     @DisplayName("registerNetworkSetting rejects null for identifier")
+    @Tag("testId:ledger.config/registerNetworkSetting/identifier/rejects-null")
     void shouldRejectNullIdentifierInRegisterNetworkSetting() {
         assertThrows(NullPointerException.class, () -> ConfigFactory.registerNetworkSetting((String) null, settingValue()));
     }
 
     @Test
     @DisplayName("registerNetworkSetting rejects null for setting")
+    @Tag("testId:ledger.config/registerNetworkSetting/setting/rejects-null")
     void shouldRejectNullSettingInRegisterNetworkSetting() {
         assertThrows(NullPointerException.class, () -> ConfigFactory.registerNetworkSetting(identifierValue(), (NetworkSetting) null));
     }
 
     @Test
     @DisplayName("getNetworkSetting(identifier) can be called and returns a value (only NoSuchElementException may occur)")
+    @Tag("testId:ledger.config/getNetworkSetting/call")
     void shouldCallGetNetworkSetting() throws Exception {
         try {
             assertNotNull(ConfigFactory.getNetworkSetting(identifierValue()));
@@ -49,6 +54,7 @@ class ConfigFactoryTest {
 
     @Test
     @DisplayName("getNetworkSetting rejects null for identifier")
+    @Tag("testId:ledger.config/getNetworkSetting/identifier/rejects-null")
     void shouldRejectNullIdentifierInGetNetworkSetting() {
         assertThrows(NullPointerException.class, () -> ConfigFactory.getNetworkSetting((String) null));
     }

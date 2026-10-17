@@ -7,6 +7,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import org.hiero.ledger.ContractId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `mirror-node-contract`, generated from the `tests` blocks of its `## Testing` section.
@@ -21,6 +22,7 @@ class MirrorNodeContractSpecTest {
     /// of the timestamp range, which this spec requires, so the expiration time stands in for it.
     @Test
     @DisplayName("a contract keeps its auto-renew period and its lifecycle timestamps")
+    @Tag("testId:mirrornode.contract/a-contract-keeps-its-auto-renew-period-and-its-lifecycle-timestamps")
     void aContractKeepsItsAutoRenewPeriodAndItsLifecycleTimestamps() {
         // given
         final ZonedDateTime created = toZonedDateTime("2026-08-03T10:33:43.568Z");
@@ -46,6 +48,7 @@ class MirrorNodeContractSpecTest {
     /// Source: this spec (the optional values of a contract are nullable).
     @Test
     @DisplayName("a contract without optional values has no admin authority, expiration, EVM address and bytecode")
+    @Tag("testId:mirrornode.contract/a-contract-without-optional-values-has-no-admin-authority-expiration-evm-address-and-bytecode")
     void aContractWithoutOptionalValuesHasNoAdminAuthorityExpirationEVMAddressAndBytecode() {
         // given
         final ZonedDateTime time = ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);

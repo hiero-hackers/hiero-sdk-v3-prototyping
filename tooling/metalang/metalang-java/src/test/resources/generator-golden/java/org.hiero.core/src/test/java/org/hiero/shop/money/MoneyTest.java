@@ -10,6 +10,7 @@ import java.time.Duration;
 import javax.annotation.processing.Generated;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Money`, generated from the specs.
@@ -19,6 +20,7 @@ class MoneyTest {
 
     @Test
     @DisplayName("creates a Money and returns the values")
+    @Tag("testId:shop.money.Money/create")
     void shouldCreateAndReturnTheValues() {
         final BigInteger cents = centsValue();
         final @Nullable Duration timeout = timeoutValue();
@@ -29,12 +31,14 @@ class MoneyTest {
 
     @Test
     @DisplayName("rejects null for cents")
+    @Tag("testId:shop.money.Money/cents/rejects-null")
     void shouldRejectNullCents() {
         assertThrows(NullPointerException.class, () -> new Money((BigInteger) null, timeoutValue()));
     }
 
     @Test
     @DisplayName("cents: accepts the minimum (-1000000000000000000)")
+    @Tag("testId:shop.money.Money/cents/accepts-at-minimum")
     void shouldAcceptCentsAtMinimum() {
         final BigInteger value = new BigInteger("-1000000000000000000");
         final Money subject = new Money(value, timeoutValue());
@@ -43,6 +47,7 @@ class MoneyTest {
 
     @Test
     @DisplayName("cents: accepts the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819967)")
+    @Tag("testId:shop.money.Money/cents/accepts-at-maximum")
     void shouldAcceptCentsAtMaximum() {
         final BigInteger value = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");
         final Money subject = new Money(value, timeoutValue());
@@ -51,18 +56,21 @@ class MoneyTest {
 
     @Test
     @DisplayName("cents: rejects a value below the minimum (-1000000000000000001)")
+    @Tag("testId:shop.money.Money/cents/rejects-below-minimum")
     void shouldRejectCentsBelowMinimum() {
         assertThrows(IllegalArgumentException.class, () -> new Money(new BigInteger("-1000000000000000001"), timeoutValue()));
     }
 
     @Test
     @DisplayName("cents: rejects a value above the maximum (57896044618658097711785492504343953926634992332820282019728792003956564819968)")
+    @Tag("testId:shop.money.Money/cents/rejects-above-maximum")
     void shouldRejectCentsAboveMaximum() {
         assertThrows(IllegalArgumentException.class, () -> new Money(new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819968"), timeoutValue()));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:shop.money.Money/value-semantics")
     void shouldCompareByValue() {
         final Money subject = create();
         final Money other = create();

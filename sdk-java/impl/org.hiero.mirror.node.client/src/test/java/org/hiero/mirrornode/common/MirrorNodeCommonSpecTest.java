@@ -6,6 +6,7 @@ import java.util.List;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `mirror-node-common`, generated from the `tests` blocks of its `## Testing` section.
@@ -18,6 +19,7 @@ class MirrorNodeCommonSpecTest {
     /// a positive one credited).
     @Test
     @DisplayName("an HBAR transfer keeps its account, its signed amount and its approval flag")
+    @Tag("testId:mirrornode.common/an-hbar-transfer-keeps-its-account-its-signed-amount-and-its-approval-flag")
     void anHBARTransferKeepsItsAccountItsSignedAmountAndItsApprovalFlag() {
         // given
         final AccountId account = defaultAccountId();
@@ -40,6 +42,7 @@ class MirrorNodeCommonSpecTest {
     /// Source: the Python SDK (token_transfer_test: test_token_transfer_constructor).
     @Test
     @DisplayName("a token transfer keeps its token, account, amount and approval flag")
+    @Tag("testId:mirrornode.common/a-token-transfer-keeps-its-token-account-amount-and-approval-flag")
     void aTokenTransferKeepsItsTokenAccountAmountAndApprovalFlag() {
         // given
         final Address token = Address.fromString("0.0.5005");
@@ -61,6 +64,7 @@ class MirrorNodeCommonSpecTest {
     /// Source: the Python SDK (token_nft_transfer_test: test_token_nft_transfer_constructor, approved and not approved).
     @Test
     @DisplayName("an NFT transfer keeps its sender, receiver, token, serial number and approval flag")
+    @Tag("testId:mirrornode.common/an-nft-transfer-keeps-its-sender-receiver-token-serial-number-and-approval-flag")
     void anNFTTransferKeepsItsSenderReceiverTokenSerialNumberAndApprovalFlag() {
         // given
         final NftTransferParties parties = new NftTransferParties(AccountId.fromString("0.0.1001"), AccountId.fromString("0.0.1002"), Address.fromString("0.0.5005"));
@@ -80,6 +84,7 @@ class MirrorNodeCommonSpecTest {
     /// Source: this spec (`parties` is @@nullable).
     @Test
     @DisplayName("an NFT transfer can be created without its parties")
+    @Tag("testId:mirrornode.common/an-nft-transfer-can-be-created-without-its-parties")
     void anNFTTransferCanBeCreatedWithoutItsParties() {
         // when
         final NftTransfer transfer = new NftTransfer(false, null, 1L);
@@ -94,6 +99,7 @@ class MirrorNodeCommonSpecTest {
     /// denominating token is absent if the fee is charged in HBAR).
     @Test
     @DisplayName("a fixed fee in HBAR has no denominating token and a fixed fee in a token has one")
+    @Tag("testId:mirrornode.common/a-fixed-fee-in-hbar-has-no-denominating-token-and-a-fixed-fee-in-a-token-has-one")
     void aFixedFeeInHBARHasNoDenominatingTokenAndAFixedFeeInATokenHasOne() {
         // given
         final AccountId collector = AccountId.fromString("1.2.3");

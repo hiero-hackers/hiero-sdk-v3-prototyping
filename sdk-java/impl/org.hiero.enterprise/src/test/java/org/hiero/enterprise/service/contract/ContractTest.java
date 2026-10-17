@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.hiero.ledger.ContractId;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `Contract`, generated from the specs.
@@ -13,6 +14,7 @@ class ContractTest {
 
     @Test
     @DisplayName("creates a Contract and returns the values")
+    @Tag("testId:enterprise.service.contract.Contract/create")
     void shouldCreateAndReturnTheValues() {
         final ContractId contractId = contractIdValue();
         final Contract subject = new Contract(contractId);
@@ -21,12 +23,14 @@ class ContractTest {
 
     @Test
     @DisplayName("rejects null for contractId")
+    @Tag("testId:enterprise.service.contract.Contract/contractId/rejects-null")
     void shouldRejectNullContractId() {
         assertThrows(NullPointerException.class, () -> new Contract((ContractId) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:enterprise.service.contract.Contract/value-semantics")
     void shouldCompareByValue() {
         final Contract subject = create();
         final Contract other = create();

@@ -7,6 +7,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `FixedFee`, generated from the specs.
@@ -15,6 +16,7 @@ class FixedFeeTest {
 
     @Test
     @DisplayName("creates a FixedFee and returns the values")
+    @Tag("testId:mirrornode.common.FixedFee/create")
     void shouldCreateAndReturnTheValues() {
         final long amount = amountValue();
         final @Nullable AccountId collectorAccountId = collectorAccountIdValue();
@@ -27,6 +29,7 @@ class FixedFeeTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.common.FixedFee/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final long amount = amountValue();
         final @Nullable AccountId collectorAccountId = collectorAccountIdValue();
@@ -43,6 +46,7 @@ class FixedFeeTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.common.FixedFee/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final FixedFee subject = FixedFee.builder()
                 .amount(amountValue())
@@ -53,12 +57,14 @@ class FixedFeeTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.common.FixedFee/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> FixedFee.builder().build());
     }
 
     @Test
     @DisplayName("amount: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.common.FixedFee/amount/accepts-at-minimum")
     void shouldAcceptAmountAtMinimum() {
         final long value = -9223372036854775808L;
         final FixedFee subject = new FixedFee(value, collectorAccountIdValue(), denominatingTokenIdValue());
@@ -67,6 +73,7 @@ class FixedFeeTest {
 
     @Test
     @DisplayName("amount: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.common.FixedFee/amount/accepts-at-maximum")
     void shouldAcceptAmountAtMaximum() {
         final long value = 9223372036854775807L;
         final FixedFee subject = new FixedFee(value, collectorAccountIdValue(), denominatingTokenIdValue());
@@ -75,6 +82,7 @@ class FixedFeeTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:mirrornode.common.FixedFee/value-semantics")
     void shouldCompareByValue() {
         final FixedFee subject = create();
         final FixedFee other = create();

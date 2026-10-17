@@ -15,6 +15,7 @@ import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.token.TokenSupplyType;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of the spec `service-nft`, generated from the `tests` blocks of its `## Testing` section.
@@ -26,6 +27,7 @@ class ServiceNftSpecTest {
     /// Source: this spec (@@default and @@nullable of NftTypeCreateParams).
     @Test
     @DisplayName("NFT type parameters with only name and symbol have the defaults of the spec")
+    @Tag("testId:enterprise.service.nft/nft-type-parameters-with-only-name-and-symbol-have-the-defaults-of-the-spec")
     void nFTTypeParametersWithOnlyNameAndSymbolHaveTheDefaultsOfTheSpec() {
         // when
         final NftTypeCreateParams params = defaultNftTypeCreateParams();
@@ -62,6 +64,7 @@ class ServiceNftSpecTest {
     /// 2019-04-01T22:42:22Z and 36000 seconds).
     @Test
     @DisplayName("NFT type parameters keep the values they are created with")
+    @Tag("testId:enterprise.service.nft/nft-type-parameters-keep-the-values-they-are-created-with")
     void nFTTypeParametersKeepTheValuesTheyAreCreatedWith() {
         // given
         final Authority authority = defaultAuthority();
@@ -101,6 +104,7 @@ class ServiceNftSpecTest {
     /// of 100 characters is.
     @Test
     @DisplayName("an NFT type accepts a name, a symbol and a memo of 100 characters")
+    @Tag("testId:enterprise.service.nft/an-nft-type-accepts-a-name-a-symbol-and-a-memo-of-100-characters")
     void anNFTTypeAcceptsANameASymbolAndAMemoOf100Characters() {
         // given
         final String text = repeat("a", 100L);
@@ -119,6 +123,7 @@ class ServiceNftSpecTest {
     /// Source: this spec (@@min(1) of maxSupply, which applies to a FINITE supply type).
     @Test
     @DisplayName("a finite NFT type accepts a max supply of 1")
+    @Tag("testId:enterprise.service.nft/a-finite-nft-type-accepts-a-max-supply-of-1")
     void aFiniteNFTTypeAcceptsAMaxSupplyOf1() {
         // when
         final NftTypeCreateParams params = new NftTypeCreateParams("Nft Tokens", "NT", null, TokenSupplyType.FINITE, 1L, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null);
@@ -133,6 +138,7 @@ class ServiceNftSpecTest {
     /// Source: this spec (@@maxBytes(100) of name); HAPI limits a token name to 100 bytes.
     @Test
     @DisplayName("NFT type parameters reject a name of 101 characters")
+    @Tag("testId:enterprise.service.nft/nft-type-parameters-reject-a-name-of-101-characters")
     void nFTTypeParametersRejectANameOf101Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams(repeat("a", 101L), "NT", null, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
@@ -143,6 +149,7 @@ class ServiceNftSpecTest {
     /// Source: this spec (@@maxBytes(100) of symbol); HAPI limits a token symbol to 100 bytes.
     @Test
     @DisplayName("NFT type parameters reject a symbol of 101 characters")
+    @Tag("testId:enterprise.service.nft/nft-type-parameters-reject-a-symbol-of-101-characters")
     void nFTTypeParametersRejectASymbolOf101Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams("Nft Tokens", repeat("a", 101L), null, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
@@ -153,6 +160,7 @@ class ServiceNftSpecTest {
     /// Source: this spec (@@maxBytes(100) of tokenMemo); HAPI limits a memo to 100 bytes.
     @Test
     @DisplayName("NFT type parameters reject a memo of 101 characters")
+    @Tag("testId:enterprise.service.nft/nft-type-parameters-reject-a-memo-of-101-characters")
     void nFTTypeParametersRejectAMemoOf101Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams("Nft Tokens", "NT", null, TokenSupplyType.INFINITE, null, false, repeat("a", 101L), new byte[0], null, null, null, null, null, null, null, null, null, null, null));
@@ -163,6 +171,7 @@ class ServiceNftSpecTest {
     /// Source: this spec (@@min(1) of maxSupply).
     @Test
     @DisplayName("a finite NFT type rejects a max supply of 0")
+    @Tag("testId:enterprise.service.nft/a-finite-nft-type-rejects-a-max-supply-of-0")
     void aFiniteNFTTypeRejectsAMaxSupplyOf0() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams("Nft Tokens", "NT", null, TokenSupplyType.FINITE, 0L, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
@@ -173,6 +182,7 @@ class ServiceNftSpecTest {
     /// Source: this spec (@@maxSize(100) of metadata); HIP-646 and the consensus node (tokens.maxMetadataBytes = 100).
     @Test
     @DisplayName("NFT type parameters reject metadata longer than 100 bytes")
+    @Tag("testId:enterprise.service.nft/nft-type-parameters-reject-metadata-longer-than-100-bytes")
     void nFTTypeParametersRejectMetadataLongerThan100Bytes() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams("Nft Tokens", "NT", null, TokenSupplyType.INFINITE, null, false, null, repeat(hex("78"), 101L), null, null, null, null, null, null, null, null, null, null, null));

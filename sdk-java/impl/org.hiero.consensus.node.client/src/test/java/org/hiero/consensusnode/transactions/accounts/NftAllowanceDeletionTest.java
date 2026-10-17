@@ -9,6 +9,7 @@ import java.util.Objects;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /// Tests of `NftAllowanceDeletion`, generated from the specs.
@@ -17,6 +18,7 @@ class NftAllowanceDeletionTest {
 
     @Test
     @DisplayName("creates a NftAllowanceDeletion and returns the values")
+    @Tag("testId:consensusnode.transactions.accounts.NftAllowanceDeletion/create")
     void shouldCreateAndReturnTheValues() {
         final Address tokenId = tokenIdValue();
         final AccountId ownerAccountId = ownerAccountIdValue();
@@ -29,24 +31,28 @@ class NftAllowanceDeletionTest {
 
     @Test
     @DisplayName("rejects null for tokenId")
+    @Tag("testId:consensusnode.transactions.accounts.NftAllowanceDeletion/tokenId/rejects-null")
     void shouldRejectNullTokenId() {
         assertThrows(NullPointerException.class, () -> new NftAllowanceDeletion((Address) null, ownerAccountIdValue(), serialsValue()));
     }
 
     @Test
     @DisplayName("rejects null for ownerAccountId")
+    @Tag("testId:consensusnode.transactions.accounts.NftAllowanceDeletion/ownerAccountId/rejects-null")
     void shouldRejectNullOwnerAccountId() {
         assertThrows(NullPointerException.class, () -> new NftAllowanceDeletion(tokenIdValue(), (AccountId) null, serialsValue()));
     }
 
     @Test
     @DisplayName("rejects null for serials")
+    @Tag("testId:consensusnode.transactions.accounts.NftAllowanceDeletion/serials/rejects-null")
     void shouldRejectNullSerials() {
         assertThrows(NullPointerException.class, () -> new NftAllowanceDeletion(tokenIdValue(), ownerAccountIdValue(), (List<Long>) null));
     }
 
     @Test
     @DisplayName("the constructor copies serials; the accessor returns an unmodifiable collection")
+    @Tag("testId:consensusnode.transactions.accounts.NftAllowanceDeletion/serials/copies-in")
     void shouldCopySerialsIn() {
         final List<Long> value = new ArrayList<>(serialsValue());
         final List<Long> expected = List.copyOf(value);
@@ -58,6 +64,7 @@ class NftAllowanceDeletionTest {
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
+    @Tag("testId:consensusnode.transactions.accounts.NftAllowanceDeletion/value-semantics")
     void shouldCompareByValue() {
         final NftAllowanceDeletion subject = create();
         final NftAllowanceDeletion other = create();
