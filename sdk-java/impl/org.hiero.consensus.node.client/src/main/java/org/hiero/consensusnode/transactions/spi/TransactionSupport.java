@@ -3,10 +3,7 @@ package org.hiero.consensusnode.transactions.spi;
 import com.hederahashgraph.api.proto.java.TransactionBody;
 import com.hederahashgraph.api.proto.java.TransactionReceipt;
 import com.hederahashgraph.api.proto.java.TransactionRecord;
-import com.hederahashgraph.api.proto.java.TransactionResponse;
 import org.hiero.consensusnode.transactions.Receipt;
-import org.hiero.consensusnode.transactions.Record;
-import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
 import org.hiero.grpc.MethodDescriptor;
 
@@ -26,12 +23,11 @@ public interface TransactionSupport<ReceiptT extends Receipt, TransactionT exten
     /// creates a Transaction from a proto TransactionBody
     TransactionT create(final TransactionBody protoBody);
 
-    /// creates a Response from a proto TransactionResponse
-    Response<ReceiptT> create(final TransactionResponse protoResponse);
+    /// Creates the typed receipt of a receipt query: the values of the header plus the fields of this transaction
+    /// type in the receipt message.
+    ReceiptT createReceipt(final ReceiptHeader header, final TransactionReceipt protoReceipt);
 
-    /// creates a Receipt from a proto TransactionReceipt
-    ReceiptT create(final TransactionReceipt protoReceipt);
-
-    /// creates a Record from a proto TransactionRecord
-    Record<ReceiptT> create(final TransactionRecord protoRecord);
+    /// Creates the typed receipt of a record: the values of the header plus the fields of this transaction type in
+    /// the record, which can hold more than its embedded receipt.
+    ReceiptT createReceipt(final ReceiptHeader header, final TransactionRecord protoRecord);
 }

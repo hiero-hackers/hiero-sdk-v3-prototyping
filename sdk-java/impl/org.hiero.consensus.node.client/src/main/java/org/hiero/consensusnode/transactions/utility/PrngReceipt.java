@@ -8,8 +8,9 @@ import org.hiero.ledger.TransactionId;
 import org.hiero.nativeToken.ExchangeRate;
 import org.jspecify.annotations.Nullable;
 
-/// Carries the generated pseudorandom value. Exactly one field is set, matching the input mode of
-/// the PrngTransaction that produced it.
+/// Carries the generated pseudorandom value. In the receipt of the record (Response.queryRecord) exactly one field
+/// is set, matching the input mode of the PrngTransaction that produced it; the receipt of Response.queryReceipt has
+/// neither, as the network returns the value only in the record.
 public final class PrngReceipt extends Receipt {
 
     private final @Nullable Integer prngNumber;
@@ -28,8 +29,8 @@ public final class PrngReceipt extends Receipt {
         super(transactionId, status, exchangeRate, nextExchangeRate);
         this.prngNumber = prngNumber;
         this.prngBytes = prngBytes == null ? null : prngBytes.clone();
-        if ((prngNumber != null ? 1 : 0) + (prngBytes != null ? 1 : 0) != 1) {
-            throw new IllegalArgumentException("exactly one of prngNumber, prngBytes must be set");
+        if ((prngNumber != null ? 1 : 0) + (prngBytes != null ? 1 : 0) > 1) {
+            throw new IllegalArgumentException("at most one of prngNumber, prngBytes may be set");
         }
     }
 

@@ -160,7 +160,8 @@ public final class ClientRuntime {
                 (transactionId, header) -> Query.newBuilder().setTransactionGetRecord(TransactionGetRecordQuery
                         .newBuilder().setHeader(header).setTransactionID(Protobuf.toProto(transactionId))).build(),
                 response -> response.getTransactionGetRecord().getHeader(),
-                (transactionId, response) -> support.create(response.getTransactionGetRecord().getTransactionRecord()));
+                (transactionId, response) -> Records.record(support,
+                        response.getTransactionGetRecord().getTransactionRecord()));
     }
 
     private Receipt awaitReceipt(final TransactionId id, final Pending pending) {

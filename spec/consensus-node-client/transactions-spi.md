@@ -10,10 +10,13 @@ transaction types. To make such a transaction type usable with the SDK, implemen
 `TransactionSupport` for it.
 
 A `TransactionSupport` describes one concrete transaction type (e.g. `AccountCreateTransaction`):
-it names the transaction type and the gRPC method used to submit it, and converts between the
-transaction, response, receipt and record types and their protobuf representations. The SDK looks
-up the matching `TransactionSupport` via `getTransactionSupport(...)`, and `getAllTransactionSupports()`
-returns all registered implementations.
+it names the transaction type and the gRPC method used to submit it, writes the fields of the
+transaction into the protobuf `TransactionBody`, and reads its typed receipt from the protobuf
+`TransactionReceipt` or `TransactionRecord`. Everything that is the same for all transaction types
+is done by the SDK and not by a `TransactionSupport`: it builds the `Response` of a submitted
+transaction, reads the values every receipt has (`ReceiptHeader`) and builds the `Record` around
+the typed receipt. The SDK looks up the matching `TransactionSupport` via `getTransactionSupport(...)`,
+and `getAllTransactionSupports()` returns all registered implementations.
 
 ## Design Notes
 
@@ -26,14 +29,41 @@ returns all registered implementations.
   the SPI converts between protobuf types and that subtype. (An earlier version of this text referred
   to a `TransactionBuilder`/`Transaction` model in which the builder, e.g.
   `AccountCreateTransactionBuilder`, was the domain-specific type and `Transaction` was universal.)
+- **Only the type-specific part is converted by a `TransactionSupport`.** The HAPI messages that are
+  the same for every transaction type are handled by the SDK:
+  - `TransactionResponse` holds only the precheck code and an approximate fee (only set on
+    `INSUFFICIENT_TX_FEE`), and every gRPC method that takes a `Transaction` answers with it. The
+    current SDKs (Java, JavaScript, Go, Rust) build their response for every transaction type the
+    same way, from the transaction id they sent, the target node and the hash of the sent bytes,
+    without reading the message. So there is no `create(TransactionResponse)`: `Response` holds
+    only the `TransactionId`, which the SDK knows.
+  - A `TransactionReceipt` carries no transaction id - the client fetches it by that id - but every
+    receipt holds one. The SDK reads the transaction id, the status and the exchange rates into a
+    `ReceiptHeader` and passes it with the protobuf message, so a `TransactionSupport` only reads the
+    fields of its own type (as the current SDKs pass the transaction id into
+    `TransactionReceipt.fromProtobuf`).
+  - A `TransactionRecord` carries its transaction id and consensus timestamp; the SDK builds the
+    `Record` from them and asks the `TransactionSupport` only for the typed receipt. That receipt is
+    read from the record and not from its embedded receipt, because a record holds values the receipt
+    does not (the random number or bytes of a `PrngTransaction`, for example).
 
 ## API Schema
 
 ```
 namespace consensusnode.transactions.spi
-requires {Receipt, Response, Transaction, Record} from consensusnode.transactions
+requires {Receipt, Transaction, TransactionStatus} from consensusnode.transactions
+requires {TransactionId} from ledger
+requires {ExchangeRate} from nativeToken
 requires {MethodDescriptor} from grpc
-requires {TransactionBody, TransactionResponse, TransactionReceipt, TransactionRecord} from consensusnode.proto
+requires {TransactionBody, TransactionReceipt, TransactionRecord} from consensusnode.proto
+
+// The values every receipt holds, read by the SDK: the receipt message itself carries no transaction id.
+ReceiptHeader {
+    @@immutable transactionId: TransactionId     // the id of the transaction the receipt belongs to
+    @@immutable status: TransactionStatus        // the status of the transaction
+    @@immutable exchangeRate: ExchangeRate       // the exchange rate at the time of the transaction
+    @@immutable nextExchangeRate: ExchangeRate   // the next exchange rate
+}
 
 // Adds support for one concrete transaction type: converts between the transaction and its result
 // types and their protobuf representations.
@@ -47,11 +77,13 @@ abstraction TransactionSupport<$$Receipt extends Receipt, $$Transaction extends 
 
     $$Transaction create(protoBody:TransactionBody) // creates a Transaction from a proto TransactionBody
 
-    Response<$$Receipt> create(protoResponse:TransactionResponse) // creates a Response from a proto TransactionResponse
+    // Creates the typed receipt of a receipt query: the values of the header plus the fields of this transaction
+    // type in the receipt message.
+    $$Receipt createReceipt(header:ReceiptHeader, protoReceipt:TransactionReceipt)
 
-    $$Receipt create(protoReceipt:TransactionReceipt) // creates a Receipt from a proto TransactionReceipt
-
-    Record<$$Receipt> create(protoRecord:TransactionRecord) // creates a Record from a proto TransactionRecord
+    // Creates the typed receipt of a record: the values of the header plus the fields of this transaction type in
+    // the record, which can hold more than its embedded receipt.
+    $$Receipt createReceipt(header:ReceiptHeader, protoRecord:TransactionRecord)
 }
 
 // factory methods that need to be implemented
@@ -59,6 +91,14 @@ abstraction TransactionSupport<$$Receipt extends Receipt, $$Transaction extends 
 @@throws(not-found-error) @@static TransactionSupport<ANY, ANY> getTransactionSupport(transactionType:type) // returns the TransactionSupport for the given transaction type; throws if none is registered
 
 @@static set<TransactionSupport<ANY, ANY>> getAllTransactionSupports() // returns all TransactionSupport instances
+```
+
+## Default Instances for Testing
+
+```
+// The header of a receipt of the default transaction id.
+instance ReceiptHeader = ReceiptHeader{transactionId: DEFAULT, status: DEFAULT, exchangeRate: DEFAULT,
+        nextExchangeRate: DEFAULT}
 ```
 
 ## Testing
@@ -97,14 +137,10 @@ test "a type without a registered transaction support is rejected" {
   finds. The spec does not say so; if it did, a test could check that the support of each built-in type names that
   type.
 
-- **Three of the four `TransactionSupport.create(...)` methods cannot be implemented.** `create(TransactionResponse)`
-  has to build a `Response` and `create(TransactionReceipt)` a receipt, and both need a `TransactionId` — but neither
-  HAPI message carries one (`TransactionResponse` holds only the precheck code and the cost, `TransactionReceipt` has
-  no transaction id). `create(TransactionBody)` would read a transaction back from its body, which needs a mapping from
-  body to transaction per type that the spec does not define. The Java implementation throws for these three; only
-  `create(TransactionRecord)` works, because the record carries the `transactionID`. Should the methods take the
-  `TransactionId` as an additional parameter, be removed, or should the spec define the body-to-transaction mapping
-  (which `ScheduleInfo.scheduledTransaction` needs as well)?
+- **`create(TransactionBody)` cannot be implemented yet.** It would read a transaction back from its body, which needs
+  a mapping from body to transaction per type that the spec does not define (`ScheduleInfo.scheduledTransaction` needs
+  it as well). The Java implementation throws. Should the mapping be defined per transaction type, or the method be
+  removed? — open
 
 - **There is no public concrete receipt for transactions of unknown type.** A record whose transaction type the SDK
   cannot map to a typed receipt — e.g. an entry of `AccountRecords.records`, which mixes all transaction types — still

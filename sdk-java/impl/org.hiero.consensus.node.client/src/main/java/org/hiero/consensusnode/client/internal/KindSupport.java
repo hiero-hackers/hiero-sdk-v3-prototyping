@@ -3,21 +3,18 @@ package org.hiero.consensusnode.client.internal;
 import com.hederahashgraph.api.proto.java.TransactionBody;
 import com.hederahashgraph.api.proto.java.TransactionReceipt;
 import com.hederahashgraph.api.proto.java.TransactionRecord;
-import com.hederahashgraph.api.proto.java.TransactionResponse;
 import org.hiero.consensusnode.transactions.Receipt;
-import org.hiero.consensusnode.transactions.Record;
-import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
+import org.hiero.consensusnode.transactions.spi.ReceiptHeader;
 import org.hiero.consensusnode.transactions.spi.TransactionSupport;
 import org.hiero.grpc.MethodDescriptor;
-import org.hiero.ledger.TransactionId;
 
 /// The `TransactionSupport` of a transaction type the implementation knows. The administration client registers its
 /// types with subclasses of it (a provider of the `ServiceLoader` needs a public constructor without parameters).
 ///
-/// The SPI cannot be implemented completely: a `TransactionResponse` and a `TransactionReceipt` carry no transaction
-/// id, but `Response` and every receipt need one (see the `## Questions & Comments` of `transactions-spi.md`), and a
-/// transaction cannot be read back from its body yet.
+/// The SDK reads the values every receipt holds (`ReceiptHeader`) and builds `Record` and `Response` itself; a support
+/// only adds the fields of its type. A transaction cannot be read back from its body yet (see the
+/// `## Questions & Comments` of `transactions-spi.md`).
 ///
 /// @param <R> the receipt type
 /// @param <T> the transaction type
@@ -63,27 +60,16 @@ public class KindSupport<R extends Receipt, T extends Transaction<R, T>> impleme
     }
 
     @Override
-    public Response<R> create(final TransactionResponse protoResponse) {
-        throw new UnsupportedOperationException("A TransactionResponse carries no transaction id, which a Response"
-                + " needs");
+    public R createReceipt(final ReceiptHeader header, final TransactionReceipt protoReceipt) {
+        return kind.receipts().create(header.transactionId(), header.status(), header.exchangeRate(),
+                header.nextExchangeRate(), protoReceipt);
     }
 
     @Override
-    public R create(final TransactionReceipt protoReceipt) {
-        throw new UnsupportedOperationException("A TransactionReceipt carries no transaction id, which a "
-                + kind.type().getSimpleName() + " receipt needs; use create(TransactionRecord)");
-    }
-
-    @Override
-    public Record<R> create(final TransactionRecord protoRecord) {
-        final TransactionReceipt receipt = protoRecord.getReceipt();
-        final TransactionId id = Protobuf.fromProto(protoRecord.getTransactionID());
-        final R typed = kind.receipts().create(id, HapiTransactionStatus.ofCode(receipt.getStatusValue()),
-                Protobuf.currentRate(receipt.getExchangeRate()), Protobuf.nextRate(receipt.getExchangeRate()),
-                receipt);
-        return new Record<>(id, Protobuf.fromProto(protoRecord.getConsensusTimestamp()), typed,
-                protoRecord.hasParentConsensusTimestamp()
-                        ? Protobuf.fromProto(protoRecord.getParentConsensusTimestamp()) : null);
+    public R createReceipt(final ReceiptHeader header, final TransactionRecord protoRecord) {
+        final TransactionKind.RecordReceiptFactory<R> recordReceipts = kind.recordReceipts();
+        return recordReceipts != null ? recordReceipts.create(header, protoRecord)
+                : createReceipt(header, protoRecord.getReceipt());
     }
 
     /// The gRPC method of a transaction type.

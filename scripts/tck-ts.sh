@@ -28,6 +28,9 @@ done
 # checked here and not only in run-tck.sh, so that a missing clone does not surface after the build
 [[ -n "${TCK_DIR:-}" && -f "$TCK_DIR/package.json" ]] \
   || fail "TCK_DIR must point to a clone of hiero-sdk-tck (with 'npm install' done)"
+# absolute: the build below changes the working directory before run-tck.sh reads TCK_DIR
+TCK_DIR="$(cd "$TCK_DIR" && pwd)"
+export TCK_DIR
 
 if (( ! skip_build )); then
   "$(dirname "${BASH_SOURCE[0]}")/generate-ts.sh" $generate_options

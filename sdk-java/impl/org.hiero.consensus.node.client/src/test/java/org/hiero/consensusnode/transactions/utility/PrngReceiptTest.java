@@ -143,15 +143,9 @@ class PrngReceiptTest {
     }
 
     @Test
-    @DisplayName("rejects prngNumber and prngBytes together (@@oneOf)")
+    @DisplayName("rejects prngNumber and prngBytes together (@@oneOrNoneOf)")
     void shouldRejectTwoOfPrngNumberOrPrngBytes() {
         assertThrows(IllegalArgumentException.class, () -> new PrngReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), prngNumberValue(), prngBytesValue()));
-    }
-
-    @Test
-    @DisplayName("rejects none of prngNumber, prngBytes (@@oneOf)")
-    void shouldRejectNoneOfPrngNumberOrPrngBytes() {
-        assertThrows(IllegalArgumentException.class, () -> new PrngReceipt(transactionIdValue(), statusValue(), exchangeRateValue(), nextExchangeRateValue(), (Integer) null, (byte[]) null));
     }
 
     private static TransactionId transactionIdValue() {

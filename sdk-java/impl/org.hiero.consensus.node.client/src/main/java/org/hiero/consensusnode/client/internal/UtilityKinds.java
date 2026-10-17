@@ -5,6 +5,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.sdk.proto.TransactionList;
 import com.hederahashgraph.api.proto.java.AtomicBatchTransactionBody;
 import com.hederahashgraph.api.proto.java.TransactionBody;
+import com.hederahashgraph.api.proto.java.TransactionRecord;
 import com.hederahashgraph.api.proto.java.UtilPrngTransactionBody;
 import java.util.List;
 import org.hiero.consensusnode.transactions.PackedTransaction;
@@ -27,7 +28,14 @@ public final class UtilityKinds {
                 }
                 body.setUtilPrng(prng);
             },
-            (id, status, rate, nextRate, receipt) -> new PrngReceipt(id, status, rate, nextRate, null, null));
+            // the network returns the random value only in the record (HIP-351), not in the receipt
+            (id, status, rate, nextRate, receipt) -> new PrngReceipt(id, status, rate, nextRate, null, null),
+            any -> true,
+            (header, record) -> new PrngReceipt(header.transactionId(), header.status(), header.exchangeRate(),
+                    header.nextExchangeRate(),
+                    record.getEntropyCase() == TransactionRecord.EntropyCase.PRNG_NUMBER ? record.getPrngNumber() : null,
+                    record.getEntropyCase() == TransactionRecord.EntropyCase.PRNG_BYTES
+                            ? record.getPrngBytes().toByteArray() : null));
 
     /// `BatchTransaction`: `UtilService.atomicBatch`.
     public static final TransactionKind<BatchReceipt, BatchTransaction> BATCH = new TransactionKind<>(

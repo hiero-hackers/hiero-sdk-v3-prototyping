@@ -57,6 +57,7 @@ Helpers live in non-exported `internal` packages of each module. The parts that 
 | `…/client/internal/AccountKinds.java`, `FileKinds`, `TopicKinds`, `ScheduleKinds`, `TokenKinds`, `UtilityKinds` | the kinds of all transaction types of the module, one class per area |
 | `…/client/internal/TransactionKinds.java` | the registry: the built-in kinds plus those other modules register as `TransactionSupport` with the `ServiceLoader` |
 | `…/client/internal/KindSupport.java` | the `TransactionSupport` (SPI) of a kind; `SpiFactory` returns these and the ones of other providers |
+| `…/client/internal/Records.java` | the part of receipts and records that is the same for every type: the `ReceiptHeader` and the `Record` around the typed receipt of a support |
 | `…/client/internal/Packing.java` | `pack`, the `sign` tiers and the batch forms, once for every transaction type |
 | `…/client/internal/DefaultPackedTransaction.java` | the only concrete `PackedTransaction`; bytes = `TransactionList` |
 | `…/client/internal/QueryKind.java`, `Querying.java` | per query type: gRPC method, request, answer; free and paid queries (cost query, payment transfer to the node signed by the operator, `maxQueryPayment`), retry while the node is busy |
@@ -94,9 +95,8 @@ exports its `internal` package to that module (trap 12). **Adding a query type:*
 `submit`/`getCost` delegating to `Querying.free`/`paid`/`cost`.
 
 **What is known not to work** (each recorded in the `## Questions & Comments` of its spec): chunked `FileAppend`
-(contents above 4096 bytes are rejected, as a `PackedTransaction` has one transaction id), the conversions of
-`TransactionSupport` that need a transaction id a HAPI message does not carry, typed transactions read back from a
-body (`ScheduleInfo.scheduledTransaction`), contract calls and topic messages of the enterprise services (no such
+(contents above 4096 bytes are rejected, as a `PackedTransaction` has one transaction id), typed transactions read
+back from a body (`TransactionSupport.create(TransactionBody)`, `ScheduleInfo.scheduledTransaction`), contract calls and topic messages of the enterprise services (no such
 transactions in the specs), and signing with other keys than the operator's in the enterprise services.
 
 ## 3. Build and verify

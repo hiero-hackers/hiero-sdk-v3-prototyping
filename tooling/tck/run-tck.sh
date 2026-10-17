@@ -30,6 +30,7 @@ if [[ -z "${TCK_DIR:-}" || ! -f "${TCK_DIR}/package.json" ]]; then
   echo "TCK_DIR must point to a clone of hiero-sdk-tck (with 'npm install' done)" >&2
   exit 2
 fi
+TCK_DIR="$(cd "$TCK_DIR" && pwd)"
 env_file="${TCK_ENV:-$repository/tooling/tck/solo.env}"
 
 # the configuration, also for the server (MIRROR_NODE_REST_URL)
