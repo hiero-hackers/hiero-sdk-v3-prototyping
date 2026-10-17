@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.admin.nodes;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -46,6 +47,9 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
         super();
         Objects.requireNonNull(accountId, "accountId must not be null");
         this.accountId = accountId;
+        if (description != null && description.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("description must be at most 100 bytes long in UTF-8");
+        }
         this.description = description;
         Objects.requireNonNull(gossipEndpoints, "gossipEndpoints must not be null");
         if (gossipEndpoints.size() < 1) {
@@ -91,7 +95,7 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
         return accountId;
     }
 
-    /// free-form description (at most 100 characters)
+    /// free-form description
     public @Nullable String description() {
         return description;
     }
@@ -235,7 +239,7 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
 
         /// Sets the `description`.
         ///
-        /// free-form description (at most 100 characters)
+        /// free-form description
         ///
         /// @param description the value
         /// @return this builder

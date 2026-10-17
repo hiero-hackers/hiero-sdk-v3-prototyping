@@ -1008,6 +1008,10 @@ public final class TestGenerator {
                         .ifPresent(s -> cases.add(new Case("AtMaximumLength", JavaLiterals.quote(s), true)));
                 cases.add(new Case("AboveMaximumLength", JavaLiterals.quote("a".repeat(length + 1)), false));
             }
+            Constraints.maxBytes(annotations).ifPresent(bytes -> {
+                bytes.accepted().ifPresent(s -> cases.add(new Case("AtMaximumBytes", JavaLiterals.quote(s), true)));
+                cases.add(new Case("AboveMaximumBytes", JavaLiterals.quote(bytes.rejected()), false));
+            });
             Constraints.stringArgument(annotations, "pattern").flatMap(RegexSamples::rejected)
                     .filter(s -> !Constraints.isValidString(s, annotations))
                     .ifPresent(s -> cases.add(new Case("NotMatchingThePattern", JavaLiterals.quote(s), false)));

@@ -31,7 +31,7 @@ AccountCreateParams {
     // Amount transferred from the payer to the new account. If absent, the account is created with a balance
     // of 0 in the native token of the network.
     @@immutable @@nullable initialBalance: NativeToken<ANY, ANY>
-    @@immutable @@nullable accountMemo: string
+    @@immutable @@nullable @@maxBytes(100) accountMemo: string
     @@immutable @@default(false) receiverSignatureRequired: bool
     @@immutable @@nullable maxAutomaticTokenAssociations: int32
     @@immutable @@nullable autoRenewPeriod: seconds

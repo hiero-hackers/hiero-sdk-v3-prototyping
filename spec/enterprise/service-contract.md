@@ -68,7 +68,7 @@ ContractCreateParams {
     @@immutable @@nullable initialBalance: NativeToken<ANY, ANY>
     // Allows to update and delete the contract; without it the contract cannot be changed.
     @@immutable @@nullable adminAuthority: Authority
-    @@immutable @@nullable @@maxLength(100) contractMemo: string
+    @@immutable @@nullable @@maxBytes(100) contractMemo: string
     // The renewal period applied when the expiration approaches; the network default if absent.
     @@immutable @@nullable autoRenewPeriod: seconds
     // The account that pays for the renewal.
@@ -140,7 +140,7 @@ instance Contract = Contract{contractId: DEFAULT}
 
 Tests of `ContractCreateParams`, `Contract` and the parameter factory functions. The methods of
 `SmartContractService` talk to the network and are not unit-tested here; a `ContractCallResult` can only be obtained
-from them. A violation of `@@oneOf`, `@@oneOrNoneOf`, `@@min` or `@@maxLength` is rejected with
+from them. A violation of `@@oneOf`, `@@oneOrNoneOf`, `@@min` or `@@maxBytes` is rejected with
 `invalid-argument-error`. The ABI encoding of a `Param` is not part of this API and is not tested.
 
 ```tests
@@ -211,7 +211,7 @@ test "contract parameters keep the values they are created with" {
     assertTrue(condition: params.declineStakingReward)
 }
 
-// Source: this spec (@@min(1) of gas and @@maxLength(100) of contractMemo); HAPI limits a memo to 100 bytes, which
+// Source: this spec (@@min(1) of gas and @@maxBytes(100) of contractMemo); HAPI limits a memo to 100 bytes, which
 // ASCII text of 100 characters is.
 test "contract parameters accept a gas of 1 and a memo of 100 characters" {
     // given
@@ -233,7 +233,7 @@ test "contract parameters reject a gas of 0" {
     ContractCreateParams{fileId: DEFAULT, gas: 0}
 }
 
-// Source: this spec (@@maxLength(100) of contractMemo); HAPI limits a memo to 100 bytes.
+// Source: this spec (@@maxBytes(100) of contractMemo); HAPI limits a memo to 100 bytes.
 test "contract parameters reject a memo of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)

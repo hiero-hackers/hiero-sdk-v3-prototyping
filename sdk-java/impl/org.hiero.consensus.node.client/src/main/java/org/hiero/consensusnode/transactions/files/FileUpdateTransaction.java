@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.transactions.files;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -31,6 +32,7 @@ public final class FileUpdateTransaction extends Transaction<FileUpdateReceipt, 
     /// Creates a new `FileUpdateTransaction`.
     ///
     /// @throws NullPointerException if a required value is `null`
+    /// @throws IllegalArgumentException if a value violates its constraints
     public FileUpdateTransaction(
             final Address fileId,
             final byte @Nullable [] contents,
@@ -43,6 +45,9 @@ public final class FileUpdateTransaction extends Transaction<FileUpdateReceipt, 
         this.contents = contents == null ? null : contents.clone();
         this.authority = authority;
         this.expirationTime = expirationTime;
+        if (fileMemo != null && fileMemo.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("fileMemo must be at most 100 bytes long in UTF-8");
+        }
         this.fileMemo = fileMemo;
     }
 
@@ -215,6 +220,7 @@ public final class FileUpdateTransaction extends Transaction<FileUpdateReceipt, 
         ///
         /// @return the new `FileUpdateTransaction`
         /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
         public FileUpdateTransaction build() {
             return new FileUpdateTransaction(
                     Objects.requireNonNull(fileId, "fileId must not be null"),

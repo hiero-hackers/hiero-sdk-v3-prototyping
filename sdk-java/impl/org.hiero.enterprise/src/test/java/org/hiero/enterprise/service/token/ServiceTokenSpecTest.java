@@ -102,7 +102,7 @@ class ServiceTokenSpecTest {
 
     /// `enterprise.service.token/a-name-a-symbol-and-a-memo-of-100-characters-are-accepted`
     ///
-    /// Source: this spec (@@maxLength(100) of name, symbol and tokenMemo); HAPI limits them to 100 bytes, which ASCII text
+    /// Source: this spec (@@maxBytes(100) of name, symbol and tokenMemo); HAPI limits them to 100 bytes, which ASCII text
     /// of 100 characters is.
     @Test
     @DisplayName("a name, a symbol and a memo of 100 characters are accepted")
@@ -135,7 +135,7 @@ class ServiceTokenSpecTest {
 
     /// `enterprise.service.token/token-parameters-reject-a-name-of-101-characters`
     ///
-    /// Source: this spec (@@maxLength(100) of name); HAPI limits a token name to 100 bytes.
+    /// Source: this spec (@@maxBytes(100) of name); HAPI limits a token name to 100 bytes.
     @Test
     @DisplayName("token parameters reject a name of 101 characters")
     void tokenParametersRejectANameOf101Characters() {
@@ -145,7 +145,7 @@ class ServiceTokenSpecTest {
 
     /// `enterprise.service.token/token-parameters-reject-a-symbol-of-101-characters`
     ///
-    /// Source: this spec (@@maxLength(100) of symbol); HAPI limits a token symbol to 100 bytes.
+    /// Source: this spec (@@maxBytes(100) of symbol); HAPI limits a token symbol to 100 bytes.
     @Test
     @DisplayName("token parameters reject a symbol of 101 characters")
     void tokenParametersRejectASymbolOf101Characters() {
@@ -155,7 +155,7 @@ class ServiceTokenSpecTest {
 
     /// `enterprise.service.token/token-parameters-reject-a-memo-of-101-characters`
     ///
-    /// Source: this spec (@@maxLength(100) of tokenMemo); HAPI limits a memo to 100 bytes.
+    /// Source: this spec (@@maxBytes(100) of tokenMemo); HAPI limits a memo to 100 bytes.
     @Test
     @DisplayName("token parameters reject a memo of 101 characters")
     void tokenParametersRejectAMemoOf101Characters() {
@@ -181,6 +181,24 @@ class ServiceTokenSpecTest {
     void tokenParametersRejectMetadataLongerThan100Bytes() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams("Token Name", "TKN", null, 0, 0L, TokenSupplyType.INFINITE, null, false, null, repeat(hex("78"), 101L), null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `enterprise.service.token/token-parameters-count-the-name-in-utf-8-bytes`
+    ///
+    /// Source: this spec (@@maxBytes(100) of name); the consensus node (tokens.maxTokenNameUtf8Bytes = 100): 50 characters
+    /// "ä" are 100 bytes of UTF-8, 51 are 102.
+    @Test
+    @DisplayName("token parameters count the name in UTF-8 bytes")
+    void tokenParametersCountTheNameInUTF8Bytes() {
+        // given
+        final String name = repeat("ä", 50L);
+
+        // when
+        final TokenCreateParams params = new TokenCreateParams(name, "TKN", null, 0, 0L, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null);
+
+        // then
+        assertEquals(name, params.name());
+        assertThrows(IllegalArgumentException.class, () -> new TokenCreateParams(repeat("ä", 51L), "TKN", null, 0, 0L, TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
     }
 
     private static TokenCreateParams defaultTokenCreateParams() {

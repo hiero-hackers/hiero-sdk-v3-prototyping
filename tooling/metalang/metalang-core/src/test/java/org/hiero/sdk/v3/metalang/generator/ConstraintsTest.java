@@ -72,6 +72,28 @@ class ConstraintsTest {
     }
 
     @Test
+    void shouldCountTheUtf8BytesOfMaxBytes() {
+        assertThat(Constraints.utf8Length("aä€😀")).isEqualTo(10);
+        assertThat(Constraints.isValidString("ää", List.of(number("maxBytes", "3")))).isFalse();
+        assertThat(Constraints.isValidString("äa", List.of(number("maxBytes", "3")))).isTrue();
+        // a value with a multi-byte pattern sample is shortened to the byte limit
+        assertThat(Constraints.string(List.of(number("maxBytes", "3")), 0)).contains("val");
+        // the boundary values: two-byte characters, so that counting characters would accept the rejected one
+        assertThat(Constraints.maxBytes(List.of())).isEmpty();
+        final Constraints.MaxBytesCases odd = Constraints.maxBytes(List.of(number("maxBytes", "5"))).orElseThrow();
+        assertThat(odd.accepted()).contains("ääa");
+        assertThat(odd.rejected()).isEqualTo("äää");
+        final Constraints.MaxBytesCases even = Constraints.maxBytes(List.of(number("maxBytes", "4"))).orElseThrow();
+        assertThat(even.accepted()).contains("ää");
+        assertThat(even.rejected()).isEqualTo("ääa");
+        // the other constraints rule out the two-byte characters: ASCII; or no accepted value at all
+        assertThat(Constraints.maxBytes(List.of(number("maxBytes", "4"), string("pattern", "^[a-z]*$")))
+                .orElseThrow().accepted()).contains("aaaa");
+        assertThat(Constraints.maxBytes(List.of(number("maxBytes", "4"), string("pattern", "^[0-9]*$")))
+                .orElseThrow().accepted()).isEmpty();
+    }
+
+    @Test
     void shouldCountElementsWithinTheSizeBounds() {
         assertThat(Constraints.elementCount(List.of(), 1)).isEqualTo(1);
         assertThat(Constraints.elementCount(List.of(number("minSize", "4")), 1)).isEqualTo(4);

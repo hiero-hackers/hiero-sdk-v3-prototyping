@@ -69,7 +69,7 @@ class ServiceTopicSpecTest {
 
     /// `enterprise.service.topic/a-topic-memo-of-100-characters-is-accepted`
     ///
-    /// Source: this spec (@@maxLength(100) of topicMemo); HAPI limits a memo to 100 bytes, which ASCII text of 100
+    /// Source: this spec (@@maxBytes(100) of topicMemo); HAPI limits a memo to 100 bytes, which ASCII text of 100
     /// characters is.
     @Test
     @DisplayName("a topic memo of 100 characters is accepted")
@@ -86,7 +86,7 @@ class ServiceTopicSpecTest {
 
     /// `enterprise.service.topic/a-topic-memo-of-101-characters-is-rejected`
     ///
-    /// Source: this spec (@@maxLength(100) of topicMemo); HAPI limits a memo to 100 bytes.
+    /// Source: this spec (@@maxBytes(100) of topicMemo); HAPI limits a memo to 100 bytes.
     @Test
     @DisplayName("a topic memo of 101 characters is rejected")
     void aTopicMemoOf101CharactersIsRejected() {

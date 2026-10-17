@@ -69,9 +69,10 @@ A complex type that is no abstraction is a `struct` with private fields:
 
 - `new(...)` takes all attributes in the order of the specs (inherited ones first). Nullable attributes are
   `Option`s, attributes with `@@default` are passed like all others (Rust has no default arguments).
-- If an attribute has a validation annotation (`@@min`, `@@max`, `@@minLength`, `@@maxLength`, `@@minSize`,
-  `@@maxSize`, `@@pattern`, `@@urlPattern`) or an integer type without exact Rust type, `new` returns
-  `Result<Self, InvalidArgumentError>`, otherwise `Self`.
+- If an attribute has a validation annotation (`@@min`, `@@max`, `@@minLength`, `@@maxLength`, `@@maxBytes`,
+  `@@minSize`, `@@maxSize`, `@@pattern`, `@@urlPattern`) or an integer type without exact Rust type, `new` returns
+  `Result<Self, InvalidArgumentError>`, otherwise `Self`. `@@maxLength` counts `chars()`, `@@maxBytes` compares
+  `len()`, which is the length of the UTF-8 encoding of a `str`.
 - Every attribute has a getter with the name of the attribute (`shard()`); values that are `Copy` are returned by
   value, strings, bytes and lists as slices, shared values (`Arc`) as clone, everything else by reference.
 - A mutable attribute has a setter `set_<name>` that returns `&mut Self` for chaining, or

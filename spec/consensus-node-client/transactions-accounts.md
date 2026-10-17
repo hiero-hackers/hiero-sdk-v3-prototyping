@@ -83,7 +83,7 @@ AccountCreateTransaction extends Transaction<AccountCreateReceipt, AccountCreate
     // Amount transferred from the payer to the new account. If absent, the account is created with a balance
     // of 0 in the native token of the network.
     @@immutable @@nullable initialBalance: NativeToken<ANY, ANY>
-    @@immutable @@nullable accountMemo: string
+    @@immutable @@nullable @@maxBytes(100) accountMemo: string
     @@immutable @@default(false) receiverSignatureRequired: bool
     @@immutable @@nullable maxAutomaticTokenAssociations: int32
     @@immutable @@nullable autoRenewPeriod: seconds
@@ -103,7 +103,7 @@ AccountCreateReceipt extends Receipt {
 AccountUpdateTransaction extends Transaction<AccountUpdateReceipt, AccountUpdateTransaction> {
     @@immutable accountId: AccountId                            // the account that is being updated
     @@immutable @@nullable authority: Authority                          // the new key (requires signatures with both old and new keys)
-    @@immutable @@nullable accountMemo: string
+    @@immutable @@nullable @@maxBytes(100) accountMemo: string
     @@immutable @@nullable receiverSignatureRequired: bool
     @@immutable @@nullable maxAutomaticTokenAssociations: int32
     @@immutable @@nullable autoRenewPeriod: seconds
@@ -752,6 +752,27 @@ test "an account update transaction rejects being staked to an account and to a 
     AccountUpdateTransaction{accountId: DEFAULT(AccountId), stakedAccountId: AccountId.fromString(value: "0.0.3"),
             stakedNodeId: 4}
 }
+
+// Source: this spec (@@maxBytes(100) of accountMemo); the consensus node (transaction.maxMemoUtf8Bytes = 100,
+// MEMO_TOO_LONG): 50 characters "ä" are 100 bytes of UTF-8.
+test "an account create transaction accepts a memo of 100 UTF-8 bytes" {
+    // given
+    let memo = repeat(value: "ä", count: 50)
+
+    // when
+    let transaction = AccountCreateTransaction{authority: DEFAULT(Authority), accountMemo: memo}
+
+    // then
+    assertEquals(expected: memo, actual: transaction.accountMemo)
+}
+
+// Source: this spec (@@maxBytes(100) of accountMemo); the consensus node (transaction.maxMemoUtf8Bytes = 100,
+// MEMO_TOO_LONG): 51 characters "ä" are 102 bytes of UTF-8, although far fewer than 100 characters.
+test "an account create transaction rejects a memo of more than 100 UTF-8 bytes" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    AccountCreateTransaction{authority: DEFAULT(Authority), accountMemo: repeat(value: "ä", count: 51)}
+}
 ```
 
 ## Questions & Comments
@@ -761,13 +782,6 @@ test "an account update transaction rejects being staked to an account and to a 
   (`clearStakedAccountId()` sends `0.0.0`, `clearStakedNodeId()` sends `-1`; documented in HAPI
   `crypto_update.proto`), which a V3 caller can only pass as a raw value today. Should the API model the removal
   explicitly? Note that `@@min(0)` on `stakedNodeId` would rule out the `-1` sentinel. — open
-
-- **Memos are limited in UTF-8 bytes, not in characters.** The network rejects a memo of more than 100 UTF-8 bytes
-  (`MEMO_TOO_LONG`, `transaction.maxMemoUtf8Bytes`) or with a zero byte (`INVALID_ZERO_BYTE_IN_STRING`). The current
-  SDKs only document the limit. `@@maxLength(100)` counts characters and lets up to 400 bytes through, which is why
-  `accountMemo`, `topicMemo`, `fileMemo`, `scheduleMemo` and the transaction memo carry no limit, while `tokenMemo`
-  and the memos of the enterprise services use `@@maxLength(100)`. Should the meta-language get a byte-length
-  annotation (e.g. `@@maxUtf8Bytes(100)`) for all of them? — open
 
 - **`AccountAllowanceDeleteTransaction` is NFT-only by design.** HAPI exposes only an NFT
   removal list, and HBAR / fungible-token allowances are deleted by approving zero. We

@@ -1,5 +1,6 @@
 package org.hiero.enterprise.service.account;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Objects;
@@ -31,6 +32,9 @@ public record AccountCreateParams(
     /// @throws IllegalArgumentException if a value violates its constraints
     public AccountCreateParams {
         Objects.requireNonNull(authority, "authority must not be null");
+        if (accountMemo != null && accountMemo.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("accountMemo must be at most 100 bytes long in UTF-8");
+        }
         alias = alias == null ? null : alias.clone();
         if ((stakedAccountId != null ? 1 : 0) + (stakedNodeId != null ? 1 : 0) > 1) {
             throw new IllegalArgumentException("at most one of stakedAccountId, stakedNodeId may be set");

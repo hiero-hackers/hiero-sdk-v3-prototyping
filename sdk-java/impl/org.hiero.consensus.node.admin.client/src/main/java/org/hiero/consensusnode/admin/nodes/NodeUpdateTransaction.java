@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.admin.nodes;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -49,6 +50,9 @@ public final class NodeUpdateTransaction extends Transaction<NodeUpdateReceipt, 
         super();
         this.nodeId = nodeId;
         this.accountId = accountId;
+        if (description != null && description.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("description must be at most 100 bytes long in UTF-8");
+        }
         this.description = description;
         Objects.requireNonNull(gossipEndpoints, "gossipEndpoints must not be null");
         if (gossipEndpoints.size() > 10) {

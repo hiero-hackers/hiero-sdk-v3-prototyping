@@ -187,17 +187,17 @@ class ContractCreateParamsTest {
     }
 
     @Test
-    @DisplayName("contractMemo: accepts a value with the maximum length")
-    void shouldAcceptContractMemoAtMaximumLength() {
-        final @Nullable String value = "valueaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    @DisplayName("contractMemo: accepts more elements than the maximum")
+    void shouldAcceptContractMemoAtMaximumBytes() {
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final ContractCreateParams subject = new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), value, autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
         assertValue(value, subject.contractMemo());
     }
 
     @Test
-    @DisplayName("contractMemo: rejects a value longer than the maximum length")
-    void shouldRejectContractMemoAboveMaximumLength() {
-        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
+    @DisplayName("contractMemo: rejects more elements than the maximum")
+    void shouldRejectContractMemoAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(fileIdValue(), (byte[]) null, constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
     }
 
     @Test

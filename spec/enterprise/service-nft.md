@@ -22,8 +22,8 @@ requires {TokenSupplyType} from token
 // required.
 @@finalType
 NftTypeCreateParams {
-    @@immutable @@maxLength(100) name: string
-    @@immutable @@maxLength(100) symbol: string
+    @@immutable @@maxBytes(100) name: string
+    @@immutable @@maxBytes(100) symbol: string
     // The account that receives the initial supply and every mint; the operator account if absent.
     @@immutable @@nullable treasuryAccountId: AccountId
     // INFINITE or FINITE; cannot be changed later.
@@ -32,7 +32,7 @@ NftTypeCreateParams {
     @@immutable @@nullable @@min(1) maxSupply: int64
     // When true, newly associated accounts start frozen; requires a freeze authority.
     @@immutable @@default(false) freezeDefault: bool
-    @@immutable @@nullable @@maxLength(100) tokenMemo: string
+    @@immutable @@nullable @@maxBytes(100) tokenMemo: string
     // Opaque metadata of the token (e.g. an IPFS CID, a URL or a JSON manifest).
     @@immutable @@default([]) @@maxSize(100) metadata: bytes
     // When the token expires; the network default if absent.
@@ -153,7 +153,7 @@ instance NftTypeCreateParams = NftTypeCreateParams{name: "Nft Tokens", symbol: "
 ## Testing
 
 Tests of `NftTypeCreateParams`. The methods of `NftService` talk to the network and are not unit-tested here. A
-value that violates a validation annotation (`@@maxLength`, `@@min`) is rejected with `invalid-argument-error`.
+value that violates a validation annotation (`@@maxBytes`, `@@min`) is rejected with `invalid-argument-error`.
 
 ```tests
 // Source: this spec (@@default and @@nullable of NftTypeCreateParams).
@@ -227,7 +227,7 @@ test "NFT type parameters keep the values they are created with" {
     assertEquals(expected: authority, actual: params.metadataAuthority)
 }
 
-// Source: this spec (@@maxLength(100) of name, symbol and tokenMemo); HAPI limits them to 100 bytes, which ASCII text
+// Source: this spec (@@maxBytes(100) of name, symbol and tokenMemo); HAPI limits them to 100 bytes, which ASCII text
 // of 100 characters is.
 test "an NFT type accepts a name, a symbol and a memo of 100 characters" {
     // given
@@ -253,21 +253,21 @@ test "a finite NFT type accepts a max supply of 1" {
     assertEquals(expected: 1, actual: params.maxSupply)
 }
 
-// Source: this spec (@@maxLength(100) of name); HAPI limits a token name to 100 bytes.
+// Source: this spec (@@maxBytes(100) of name); HAPI limits a token name to 100 bytes.
 test "NFT type parameters reject a name of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
     NftTypeCreateParams{name: repeat(value: "a", count: 101), symbol: "NT"}
 }
 
-// Source: this spec (@@maxLength(100) of symbol); HAPI limits a token symbol to 100 bytes.
+// Source: this spec (@@maxBytes(100) of symbol); HAPI limits a token symbol to 100 bytes.
 test "NFT type parameters reject a symbol of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
     NftTypeCreateParams{name: "Nft Tokens", symbol: repeat(value: "a", count: 101)}
 }
 
-// Source: this spec (@@maxLength(100) of tokenMemo); HAPI limits a memo to 100 bytes.
+// Source: this spec (@@maxBytes(100) of tokenMemo); HAPI limits a memo to 100 bytes.
 test "NFT type parameters reject a memo of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -296,10 +296,6 @@ test "NFT type parameters reject metadata longer than 100 bytes" {
   [ADR-0004](../../docs/adr/0004-authority-authorization-sum-type.md) and [`authority.md`](../base/authority.md).
 - Open option: simple single-key convenience overloads taking a `PublicKey` directly could be added later if the
   enterprise layer wants extra ergonomics for the common single-signer case.
-- **Limits in bytes, not in characters.** HAPI limits an NFT type name, a symbol and a memo to 100 bytes of UTF-8, but
-  `@@maxLength(100)` counts characters: a name of 100 non-ASCII characters passes the annotation and is rejected by the
-  network. The tests therefore check the limit only with ASCII text. Should the meta-language get a byte-length
-  annotation (e.g. `@@maxUtf8Bytes(100)`), or should the services check the byte length themselves?
 
 We should have immutable data objects as input params for the "create" methods.
 That would allow full flexibility and we only need 1 method with such data object + a hand full of convenience methods.

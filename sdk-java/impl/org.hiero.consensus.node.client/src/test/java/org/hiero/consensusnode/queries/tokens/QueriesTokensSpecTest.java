@@ -155,7 +155,7 @@ class QueriesTokensSpecTest {
 
     /// `consensusnode.queries.tokens/a-token-info-with-a-name-of-101-characters-is-rejected`
     ///
-    /// Source: this spec (@@maxLength(100) name).
+    /// Source: this spec (@@maxBytes(100) name).
     @Test
     @DisplayName("a token info with a name of 101 characters is rejected")
     void aTokenInfoWithANameOf101CharactersIsRejected() {
@@ -165,7 +165,7 @@ class QueriesTokensSpecTest {
 
     /// `consensusnode.queries.tokens/a-token-info-with-a-symbol-of-101-characters-is-rejected`
     ///
-    /// Source: this spec (@@maxLength(100) symbol).
+    /// Source: this spec (@@maxBytes(100) symbol).
     @Test
     @DisplayName("a token info with a symbol of 101 characters is rejected")
     void aTokenInfoWithASymbolOf101CharactersIsRejected() {

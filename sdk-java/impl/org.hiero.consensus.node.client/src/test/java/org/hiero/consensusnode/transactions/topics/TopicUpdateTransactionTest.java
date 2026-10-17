@@ -113,6 +113,20 @@ class TopicUpdateTransactionTest {
     }
 
     @Test
+    @DisplayName("topicMemo: accepts more elements than the maximum")
+    void shouldAcceptTopicMemoAtMaximumBytes() {
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
+        final TopicUpdateTransaction subject = new TopicUpdateTransaction(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), value, expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue());
+        assertValue(value, subject.topicMemo());
+    }
+
+    @Test
+    @DisplayName("topicMemo: rejects more elements than the maximum")
+    void shouldRejectTopicMemoAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new TopicUpdateTransaction(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue()));
+    }
+
+    @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
     void shouldSetMaxTransactionFee() {
         final TopicUpdateTransaction subject = create();
@@ -161,6 +175,23 @@ class TopicUpdateTransactionTest {
         final TopicUpdateTransaction subject = create();
         subject.setMemo((String) null);
         assertNull(subject.memo());
+    }
+
+    @Test
+    @DisplayName("setMemo accepts more elements than the maximum")
+    void shouldSetMemoAtMaximumBytes() {
+        final TopicUpdateTransaction subject = create();
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
+        subject.setMemo(value);
+        assertValue(value, subject.memo());
+    }
+
+    @Test
+    @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    void shouldNotSetMemoAboveMaximumBytes() {
+        final TopicUpdateTransaction subject = create();
+        assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
+        assertValue(null, subject.memo());
     }
 
     @Test

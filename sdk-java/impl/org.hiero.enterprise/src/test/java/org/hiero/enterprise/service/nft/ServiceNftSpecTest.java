@@ -97,7 +97,7 @@ class ServiceNftSpecTest {
 
     /// `enterprise.service.nft/an-nft-type-accepts-a-name-a-symbol-and-a-memo-of-100-characters`
     ///
-    /// Source: this spec (@@maxLength(100) of name, symbol and tokenMemo); HAPI limits them to 100 bytes, which ASCII text
+    /// Source: this spec (@@maxBytes(100) of name, symbol and tokenMemo); HAPI limits them to 100 bytes, which ASCII text
     /// of 100 characters is.
     @Test
     @DisplayName("an NFT type accepts a name, a symbol and a memo of 100 characters")
@@ -130,7 +130,7 @@ class ServiceNftSpecTest {
 
     /// `enterprise.service.nft/nft-type-parameters-reject-a-name-of-101-characters`
     ///
-    /// Source: this spec (@@maxLength(100) of name); HAPI limits a token name to 100 bytes.
+    /// Source: this spec (@@maxBytes(100) of name); HAPI limits a token name to 100 bytes.
     @Test
     @DisplayName("NFT type parameters reject a name of 101 characters")
     void nFTTypeParametersRejectANameOf101Characters() {
@@ -140,7 +140,7 @@ class ServiceNftSpecTest {
 
     /// `enterprise.service.nft/nft-type-parameters-reject-a-symbol-of-101-characters`
     ///
-    /// Source: this spec (@@maxLength(100) of symbol); HAPI limits a token symbol to 100 bytes.
+    /// Source: this spec (@@maxBytes(100) of symbol); HAPI limits a token symbol to 100 bytes.
     @Test
     @DisplayName("NFT type parameters reject a symbol of 101 characters")
     void nFTTypeParametersRejectASymbolOf101Characters() {
@@ -150,7 +150,7 @@ class ServiceNftSpecTest {
 
     /// `enterprise.service.nft/nft-type-parameters-reject-a-memo-of-101-characters`
     ///
-    /// Source: this spec (@@maxLength(100) of tokenMemo); HAPI limits a memo to 100 bytes.
+    /// Source: this spec (@@maxBytes(100) of tokenMemo); HAPI limits a memo to 100 bytes.
     @Test
     @DisplayName("NFT type parameters reject a memo of 101 characters")
     void nFTTypeParametersRejectAMemoOf101Characters() {

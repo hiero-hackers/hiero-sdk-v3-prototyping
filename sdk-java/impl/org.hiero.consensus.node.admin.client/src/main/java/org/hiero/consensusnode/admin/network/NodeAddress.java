@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 /// @param nodeId stable HIP-869 identifier; survives account / endpoint rotation
 /// @param accountId fee account that receives this node's per-transaction share
 /// @param serviceEndpoints public gRPC endpoints (clients submit transactions here)
-/// @param description free-form description of the node (at most 100 characters)
+/// @param description free-form description of the node (at most 100 UTF-8 bytes)
 /// @param gossipCaCertificate X.509 DER bytes of the certificate that terminates mutual TLS for gossip
 /// @param grpcCertificateHash SHA-384 of the certificate served on serviceEndpoints; clients pin against this
 /// @param rsaPublicKey legacy gossip RSA public key (DER); only for tooling that still reads the legacy address-book format — prefer gossipCaCertificate and grpcCertificateHash
@@ -159,7 +159,7 @@ public record NodeAddress(
 
         /// Sets the `description`.
         ///
-        /// free-form description of the node (at most 100 characters)
+        /// free-form description of the node (at most 100 UTF-8 bytes)
         ///
         /// @param description the value
         /// @return this builder

@@ -123,6 +123,20 @@ class AccountCreateParamsTest {
     }
 
     @Test
+    @DisplayName("accountMemo: accepts more elements than the maximum")
+    void shouldAcceptAccountMemoAtMaximumBytes() {
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
+        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), value, receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
+        assertValue(value, subject.accountMemo());
+    }
+
+    @Test
+    @DisplayName("accountMemo: rejects more elements than the maximum")
+    void shouldRejectAccountMemoAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new AccountCreateParams(authorityValue(), initialBalanceValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue()));
+    }
+
+    @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the minimum (-2147483648)")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;

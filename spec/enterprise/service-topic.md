@@ -33,7 +33,7 @@ TopicCreateParams {
     @@immutable @@nullable adminAuthority: Authority
     // Allows to submit messages; without it anybody can submit messages.
     @@immutable @@nullable submitAuthority: Authority
-    @@immutable @@nullable @@maxLength(100) topicMemo: string
+    @@immutable @@nullable @@maxBytes(100) topicMemo: string
     // The renewal period applied when the expiration approaches; the network default if absent.
     @@immutable @@nullable autoRenewPeriod: seconds
     // The account that pays for the renewal; it must sign the creation.
@@ -55,9 +55,9 @@ TopicService {
     // The same as createTopic with TopicCreateParams that have only these values.
     @@throws(service-error) Topic createTopic()
 
-    @@throws(service-error) Topic createTopic(memo: string)
+    @@throws(service-error) Topic createTopic(@@maxBytes(100) memo: string)
 
-    @@throws(service-error) Topic createTopic(adminAuthority: Authority, memo: string)
+    @@throws(service-error) Topic createTopic(adminAuthority: Authority, @@maxBytes(100) memo: string)
 
     // Create a topic with the given parameters: the general form of the methods above, for every option of a new
     // topic.
@@ -96,7 +96,7 @@ instance TopicCreateParams = TopicCreateParams{}
 ## Testing
 
 Tests of `TopicCreateParams`, `Topic` and `TopicMessage`. The methods of `TopicService` talk to the network and are
-not unit-tested here. A memo longer than its `@@maxLength` is rejected with `invalid-argument-error`. Points in time
+not unit-tested here. A memo of more UTF-8 bytes than its `@@maxBytes` is rejected with `invalid-argument-error`. Points in time
 have millisecond precision, the precision every target language can hold.
 
 ```tests
@@ -138,7 +138,7 @@ test "topic parameters keep the values they are created with" {
     assertEquals(expected: autoRenewAccount, actual: params.autoRenewAccount)
 }
 
-// Source: this spec (@@maxLength(100) of topicMemo); HAPI limits a memo to 100 bytes, which ASCII text of 100
+// Source: this spec (@@maxBytes(100) of topicMemo); HAPI limits a memo to 100 bytes, which ASCII text of 100
 // characters is.
 test "a topic memo of 100 characters is accepted" {
     // given
@@ -151,7 +151,7 @@ test "a topic memo of 100 characters is accepted" {
     assertEquals(expected: memo, actual: params.topicMemo)
 }
 
-// Source: this spec (@@maxLength(100) of topicMemo); HAPI limits a memo to 100 bytes.
+// Source: this spec (@@maxBytes(100) of topicMemo); HAPI limits a memo to 100 bytes.
 test "a topic memo of 101 characters is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)

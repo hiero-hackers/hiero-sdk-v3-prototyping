@@ -34,6 +34,7 @@ class RustTestGeneratorTest {
                 @@immutable @@min(0.5) @@max(2.5) ratio: double
                 @@immutable @@max(30) delay: duration
                 @@immutable @@minLength(2) @@maxLength(5) code: string
+                @@immutable @@maxBytes(5) memo: string
                 @@immutable @@pattern("^/[^\\s]*$") path: string
                 @@immutable @@urlPattern url: string
                 @@immutable @@minSize(1) @@maxSize(3) data: bytes
@@ -135,6 +136,7 @@ class RustTestGeneratorTest {
         files = mutate(files, "limits.rs", "if !(-8388608..=8388607).contains(&small) {", "if false {");
         files = mutate(files, "limits.rs", "if code.chars().count() > 5 {", "if false {");
         files = mutate(files, "limits.rs", "if quantity > 9 {", "if false {");
+        files = mutate(files, "limits.rs", "if memo.len() > 5 {", "if memo.chars().count() > 5 {");
 
         // WHEN
         final String build = GeneratedRust.build(files, temp);
@@ -142,7 +144,8 @@ class RustTestGeneratorTest {
 
         // THEN the mutations are found, all other tests pass or fail because of the stubs
         assertThat(build).isEmpty();
-        assertThat(run.failures()).hasSize(5)
+        assertThat(run.failures()).hasSize(6)
+                .anyMatch(f -> f.startsWith("a::limits::memo_rejects_a_value_of_more_than_the_maximum_number_of_utf"))
                 .anyMatch(f -> f.startsWith("a::limits::small_rejects_a_value_above_the_maximum_8388608 "))
                 .anyMatch(f -> f.startsWith("a::limits::small_rejects_a_value_below_the_minimum_8388609 "))
                 .anyMatch(f -> f.startsWith("a::limits::code_rejects_a_value_longer_than_the_maximum_length "))

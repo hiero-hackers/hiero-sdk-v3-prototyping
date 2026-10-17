@@ -117,7 +117,7 @@ type ServiceEndpoint {
 @@finalType
 NodeCreateTransaction extends Transaction<NodeCreateReceipt, NodeCreateTransaction> {
     @@immutable accountId: AccountId                                     // account that receives the node's staking rewards
-    @@immutable @@nullable description: string                           // free-form description (at most 100 characters)
+    @@immutable @@nullable @@maxBytes(100) description: string           // free-form description
     @@immutable @@minSize(1) @@maxSize(10) gossipEndpoints: list<ServiceEndpoint>   // inter-node hashgraph gossip endpoints
     @@immutable @@minSize(1) @@maxSize(8) serviceEndpoints: list<ServiceEndpoint>   // public gRPC endpoints for client transactions
     @@immutable gossipCaCertificate: bytes                               // X.509 DER bytes of the certificate that terminates mutual TLS for gossip
@@ -140,7 +140,7 @@ NodeCreateReceipt extends Receipt {
 NodeUpdateTransaction extends Transaction<NodeUpdateReceipt, NodeUpdateTransaction> {
     @@immutable nodeId: int64                                            // the node to update
     @@immutable @@nullable accountId: AccountId                          // when set, the new account's key must also sign
-    @@immutable @@nullable description: string                           // new free-form description
+    @@immutable @@nullable @@maxBytes(100) description: string           // new free-form description
     @@immutable @@default([]) @@maxSize(10) gossipEndpoints: list<ServiceEndpoint>   // when not empty, replaces the entire list; empty leaves it unchanged
     @@immutable @@default([]) @@maxSize(8) serviceEndpoints: list<ServiceEndpoint>   // when not empty, replaces the entire list; empty leaves it unchanged
     @@immutable @@nullable gossipCaCertificate: bytes                    // new gossip CA certificate (X.509 DER bytes)
@@ -481,6 +481,17 @@ test "a node update transaction with too many endpoints is rejected" {
     @@expectThrows(invalid-argument-error)
     NodeUpdateTransaction{nodeId: 7, serviceEndpoints: NINE_ENDPOINTS}
 }
+
+// Source: this spec (@@maxBytes(100) of description); the consensus node (nodes.nodeMaxDescriptionUtf8Bytes = 100,
+// INVALID_NODE_DESCRIPTION); the Java, Go and Python SDKs check the UTF-8 length: 34 characters "€" are 102 bytes.
+test "a node create transaction with a description of more than 100 UTF-8 bytes is rejected" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    NodeCreateTransaction{accountId: DEFAULT(AccountId), description: repeat(value: "€", count: 34),
+            gossipEndpoints: [DEFAULT(ServiceEndpoint)], serviceEndpoints: [NODE_DOMAIN_ENDPOINT],
+            gossipCaCertificate: GOSSIP_CA_CERTIFICATE, grpcCertificateHash: GRPC_CERTIFICATE_HASH,
+            adminAuthority: DEFAULT(Authority)}
+}
 ```
 
 ## Questions & Comments
@@ -525,10 +536,6 @@ test "a node update transaction with too many endpoints is rejected" {
 - **Further client-side limits of the current SDKs are not part of this API yet.** The endpoint lists carry the
   limits of the network (`@@maxSize(10)` and `@@maxSize(8)`, defaults of `nodes.maxGossipEndpoint` and
   `nodes.maxServiceEndpoint`, network settings that a network may change). Still open:
-  - The `description` is limited to 100 UTF-8 bytes (and must not contain a zero byte; `INVALID_NODE_DESCRIPTION`),
-    which the Java, Go and Python SDKs check; `@@maxLength(100)` counts characters and would let up to 400 bytes
-    through, and the comments say "100 characters". This needs a byte-length annotation (see the same question in
-    `transactions-accounts.md` for memos).
   - An empty `gossipCaCertificate` is rejected by the network (`INVALID_GOSSIP_CA_CERTIFICATE`) and by the Java, Go
     and Python SDKs: `@@minSize(1)` on both transactions?
   - A `nodeId` below 0 is rejected by the network (`INVALID_NODE_ID`) and by the Java SDK: `@@min(0)`?

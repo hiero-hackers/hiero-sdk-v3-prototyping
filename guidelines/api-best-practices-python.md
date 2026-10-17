@@ -307,7 +307,8 @@ order and the blank lines follow isort/ruff, and `pyproject.toml` sets ruff's li
 
 - **Constraints are not checked at runtime yet.** `@@min`, `@@max`, `@@pattern`, the integer range of an `int32`
   and the non-null requirement are visible to the type checker only as far as the type expresses them. A
-  `__post_init__` that checks them is the obvious place; it is not generated yet. — open
+  `__post_init__` that checks them is the obvious place; it is not generated yet (`@@maxBytes` would compare
+  `len(value.encode("utf-8"))`, `@@maxLength` `len(value)`). — open
 - **`Mapping` is a view, not a copy.** A caller keeps the dictionary it passed and can change it afterwards. A
   `types.MappingProxyType` over a copy would close that, at the cost of a less familiar runtime type. — open
 - **One distribution or one per spec folder?** One distribution mirrors Go; one per folder (`hiero-base`,

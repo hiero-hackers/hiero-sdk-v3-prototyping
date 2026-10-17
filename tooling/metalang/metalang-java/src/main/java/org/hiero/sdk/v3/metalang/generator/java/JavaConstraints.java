@@ -11,7 +11,7 @@ import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 
 /**
  * Renders the checks of the validation annotations of an attribute ({@code @@min}, {@code @@max},
- * {@code @@minLength}, {@code @@maxLength}, {@code @@minSize}, {@code @@maxSize}, {@code @@pattern},
+ * {@code @@minLength}, {@code @@maxLength}, {@code @@maxBytes}, {@code @@minSize}, {@code @@maxSize}, {@code @@pattern},
  * {@code @@urlPattern}) as Java statements that throw {@link IllegalArgumentException} (see "Implementation of
  * Attribute annotations" in {@code guidelines/api-best-practices-java.md}). Integer attributes whose Java type is
  * wider than their meta-language type are checked against the range of the type as well ({@link JavaIntegers});
@@ -74,6 +74,8 @@ final class JavaConstraints {
                 case "max" -> compare(field, name, annotation, ">", imports);
                 case "minLength" -> name + ".length() < " + number(annotation);
                 case "maxLength" -> name + ".length() > " + number(annotation);
+                case "maxBytes" -> name + ".getBytes(" + imports.use("java.nio.charset", "StandardCharsets")
+                        + ".UTF_8).length > " + number(annotation);
                 case "minSize" -> size(field, name) + " < " + number(annotation);
                 case "maxSize" -> size(field, name) + " > " + number(annotation);
                 case "pattern" -> {
@@ -175,6 +177,7 @@ final class JavaConstraints {
             case "max" -> field + " must be at most " + number(annotation);
             case "minLength" -> field + " must be at least " + number(annotation) + " characters long";
             case "maxLength" -> field + " must be at most " + number(annotation) + " characters long";
+            case "maxBytes" -> field + " must be at most " + number(annotation) + " bytes long in UTF-8";
             case "minSize" -> field + " must contain at least " + number(annotation) + " element(s)";
             case "maxSize" -> field + " must contain at most " + number(annotation) + " element(s)";
             default -> field + " must match the pattern " + string(annotation);

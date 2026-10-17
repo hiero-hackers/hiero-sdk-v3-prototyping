@@ -69,17 +69,17 @@ class TopicCreateParamsTest {
     }
 
     @Test
-    @DisplayName("topicMemo: accepts a value with the maximum length")
-    void shouldAcceptTopicMemoAtMaximumLength() {
-        final @Nullable String value = "valueaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    @DisplayName("topicMemo: accepts more elements than the maximum")
+    void shouldAcceptTopicMemoAtMaximumBytes() {
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TopicCreateParams subject = new TopicCreateParams(adminAuthorityValue(), submitAuthorityValue(), value, autoRenewPeriodValue(), autoRenewAccountValue());
         assertValue(value, subject.topicMemo());
     }
 
     @Test
-    @DisplayName("topicMemo: rejects a value longer than the maximum length")
-    void shouldRejectTopicMemoAboveMaximumLength() {
-        assertThrows(IllegalArgumentException.class, () -> new TopicCreateParams(adminAuthorityValue(), submitAuthorityValue(), "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", autoRenewPeriodValue(), autoRenewAccountValue()));
+    @DisplayName("topicMemo: rejects more elements than the maximum")
+    void shouldRejectTopicMemoAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new TopicCreateParams(adminAuthorityValue(), submitAuthorityValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", autoRenewPeriodValue(), autoRenewAccountValue()));
     }
 
     private static Authority adminAuthorityValue() {

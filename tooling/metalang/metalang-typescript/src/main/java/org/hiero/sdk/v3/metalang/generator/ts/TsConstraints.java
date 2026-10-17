@@ -14,7 +14,7 @@ import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
  * value of the wrong runtime type throw a {@code TypeError}; the range of an integer type (JavaScript numbers and
  * {@code bigint} accept any value, so every integer attribute is checked, a {@code number} also to be an integer)
  * and the validation annotations
- * ({@code @@min}, {@code @@max}, {@code @@minLength}, {@code @@maxLength}, {@code @@minSize}, {@code @@maxSize},
+ * ({@code @@min}, {@code @@max}, {@code @@minLength}, {@code @@maxLength}, {@code @@maxBytes}, {@code @@minSize}, {@code @@maxSize},
  * {@code @@pattern}, {@code @@urlPattern}) throw a {@code RangeError}. A {@code null} value of a nullable attribute is
  * not checked.
  */
@@ -64,6 +64,8 @@ final class TsConstraints {
                         field.name() + " must be at least " + number(annotation) + " characters long");
                 case "maxLength" -> check(checks, value + ".length > " + number(annotation),
                         field.name() + " must be at most " + number(annotation) + " characters long");
+                case "maxBytes" -> check(checks, "utf8Length(" + value + ") > " + number(annotation),
+                        field.name() + " must be at most " + number(annotation) + " bytes long in UTF-8");
                 case "minSize" -> check(checks, size(field.type(), value) + " < " + number(annotation),
                         field.name() + " must contain at least " + number(annotation) + " element(s)");
                 case "maxSize" -> check(checks, size(field.type(), value) + " > " + number(annotation),
@@ -91,6 +93,29 @@ final class TsConstraints {
     /** Whether the checks of the attributes need the {@code isAbsoluteUrl} helper of the file. */
     static boolean needsUrlCheck(final FieldDefinition field) {
         return field.hasAnnotation("urlPattern");
+    }
+
+    /** Whether the checks of the attributes need the {@code utf8Length} helper of the file. */
+    static boolean needsUtf8Length(final FieldDefinition field) {
+        return field.hasAnnotation("maxBytes");
+    }
+
+    /**
+     * The helper function that counts the bytes of the UTF-8 encoding of a string, added once to a file that needs
+     * it. It needs no {@code TextEncoder} (not part of every TypeScript library configuration); a lone surrogate counts
+     * 3 bytes, the size of the replacement character that {@code TextEncoder} writes for it.
+     */
+    static String utf8Helper() {
+        return """
+                function utf8Length(value: string): number {
+                    let bytes = 0;
+                    for (const char of value) {
+                        const code = char.codePointAt(0)!;
+                        bytes += code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4;
+                    }
+                    return bytes;
+                }
+                """;
     }
 
     /** The helper function that checks an absolute URL with a host, added once to a file that needs it. */

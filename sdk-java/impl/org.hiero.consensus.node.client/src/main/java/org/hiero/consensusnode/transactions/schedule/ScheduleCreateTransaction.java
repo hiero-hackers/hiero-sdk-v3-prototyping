@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.transactions.schedule;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -32,6 +33,7 @@ public final class ScheduleCreateTransaction extends Transaction<ScheduleCreateR
     /// Creates a new `ScheduleCreateTransaction`.
     ///
     /// @throws NullPointerException if a required value is `null`
+    /// @throws IllegalArgumentException if a value violates its constraints
     public ScheduleCreateTransaction(
             final Transaction<?, ?> scheduledTransaction,
             final @Nullable Authority adminKey,
@@ -44,6 +46,9 @@ public final class ScheduleCreateTransaction extends Transaction<ScheduleCreateR
         this.scheduledTransaction = scheduledTransaction;
         this.adminKey = adminKey;
         this.payerAccountId = payerAccountId;
+        if (scheduleMemo != null && scheduleMemo.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("scheduleMemo must be at most 100 bytes long in UTF-8");
+        }
         this.scheduleMemo = scheduleMemo;
         this.expirationTime = expirationTime;
         this.waitForExpiry = waitForExpiry;
@@ -247,6 +252,7 @@ public final class ScheduleCreateTransaction extends Transaction<ScheduleCreateR
         ///
         /// @return the new `ScheduleCreateTransaction`
         /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
         public ScheduleCreateTransaction build() {
             return new ScheduleCreateTransaction(
                     Objects.requireNonNull(scheduledTransaction, "scheduledTransaction must not be null"),

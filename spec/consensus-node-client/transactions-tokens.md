@@ -145,8 +145,8 @@ requires {Receipt, Transaction} from consensusnode.transactions
 // unset permanently fixes the token's supply at `initialSupply`.
 @@finalType
 TokenCreateTransaction extends Transaction<TokenCreateReceipt, TokenCreateTransaction> {
-    @@immutable @@maxLength(100) name: string                       // human-readable token name
-    @@immutable @@maxLength(100) symbol: string                     // short ticker / symbol
+    @@immutable @@maxBytes(100) name: string                       // human-readable token name
+    @@immutable @@maxBytes(100) symbol: string                     // short ticker / symbol
     @@immutable tokenType: TokenType                                // FUNGIBLE_COMMON | NON_FUNGIBLE_UNIQUE; cannot be changed later
     @@immutable @@default(0) decimals: int32                        // FUNGIBLE_COMMON only: precision of the smallest indivisible unit (e.g. 6 for USDC); MUST be 0 for NON_FUNGIBLE_UNIQUE
     @@immutable @@default(0) initialSupply: int64                   // FUNGIBLE_COMMON only: amount minted to the treasury at create (in smallest unit); MUST be 0 for NON_FUNGIBLE_UNIQUE
@@ -154,7 +154,7 @@ TokenCreateTransaction extends Transaction<TokenCreateReceipt, TokenCreateTransa
     @@immutable @@default(INFINITE) supplyType: TokenSupplyType     // INFINITE | FINITE; cannot be changed later
     @@immutable @@nullable @@min(1) maxSupply: int64                // FINITE only: protocol-enforced ceiling on totalSupply; unset (and only valid) when supplyType is INFINITE
     @@immutable @@default(false) freezeDefault: bool                // when true, newly associated accounts start in the FROZEN state (require an explicit TokenUnfreeze before they can move balances); requires freezeAuthority to be set
-    @@immutable @@nullable @@maxLength(100) tokenMemo: string       // short, human-readable label
+    @@immutable @@nullable @@maxBytes(100) tokenMemo: string       // short, human-readable label
     @@immutable @@default([]) @@maxSize(100) metadata: bytes        // opaque token-level metadata (e.g. IPFS CID, HTTPS URL, JSON manifest)
     @@immutable @@nullable expirationTime: zonedDateTime            // when the token expires; SDK default applies when unset
     @@immutable @@nullable autoRenewPeriod: seconds                 // renewal window applied when expiration approaches; protocol default applies when unset
@@ -189,10 +189,10 @@ TokenCreateReceipt extends Receipt {
 @@finalType
 TokenUpdateTransaction extends Transaction<TokenUpdateReceipt, TokenUpdateTransaction> {
     @@immutable tokenId: Address                                    // the token being updated
-    @@immutable @@nullable @@maxLength(100) name: string
-    @@immutable @@nullable @@maxLength(100) symbol: string
+    @@immutable @@nullable @@maxBytes(100) name: string
+    @@immutable @@nullable @@maxBytes(100) symbol: string
     @@immutable @@nullable treasuryAccountId: AccountId             // when set, replaces the treasury; both the OLD and the NEW treasury MUST sign
-    @@immutable @@nullable @@maxLength(100) tokenMemo: string
+    @@immutable @@nullable @@maxBytes(100) tokenMemo: string
     @@immutable @@nullable @@maxSize(100) metadata: bytes           // when set, replaces the token-level metadata
     @@immutable @@nullable expirationTime: zonedDateTime
     @@immutable @@nullable autoRenewPeriod: seconds
@@ -356,7 +356,7 @@ values JAVA_SDK_TOKEN_AUTHORITIES: list<Authority> = [
 // whole seconds.
 values SDK_TEST_EXPIRATION_TIME: zonedDateTime = toZonedDateTime(text: "2019-04-01T22:42:22Z")
 
-// One character beyond the @@maxLength(100) of the token name, symbol and memo.
+// One character beyond the @@maxBytes(100) of the token name, symbol and memo.
 values TEXT_OF_101_CHARACTERS: string = repeat(value: "a", count: 101)
 
 // One entry beyond the @@maxSize(10) of the NFT mint metadata (11 entries).
@@ -752,7 +752,7 @@ test "an NFT burn transaction keeps its serials in order" {
     assertEquals(expected: [420, 1, 2], actual: burn.serials)
 }
 
-// Source: this spec (@@maxLength(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
+// Source: this spec (@@maxBytes(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
 test "a token create transaction rejects a name longer than 100 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -760,7 +760,7 @@ test "a token create transaction rejects a name longer than 100 characters" {
             treasuryAccountId: AccountId.fromString(value: "7.7.7")}
 }
 
-// Source: this spec (@@maxLength(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
+// Source: this spec (@@maxBytes(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
 test "a token create transaction rejects a symbol longer than 100 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -768,7 +768,7 @@ test "a token create transaction rejects a symbol longer than 100 characters" {
             treasuryAccountId: AccountId.fromString(value: "7.7.7")}
 }
 
-// Source: this spec (@@maxLength(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
+// Source: this spec (@@maxBytes(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
 test "a token create transaction rejects a memo longer than 100 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -785,21 +785,21 @@ test "a token create transaction rejects a maximum supply of 0" {
             treasuryAccountId: AccountId.fromString(value: "7.7.7"), supplyType: TokenSupplyType.FINITE, maxSupply: 0}
 }
 
-// Source: this spec (@@maxLength(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
+// Source: this spec (@@maxBytes(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
 test "a token update transaction rejects a name longer than 100 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
     TokenUpdateTransaction{tokenId: Address.fromString(address: "4.2.0"), name: TEXT_OF_101_CHARACTERS}
 }
 
-// Source: this spec (@@maxLength(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
+// Source: this spec (@@maxBytes(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
 test "a token update transaction rejects a symbol longer than 100 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
     TokenUpdateTransaction{tokenId: Address.fromString(address: "4.2.0"), symbol: TEXT_OF_101_CHARACTERS}
 }
 
-// Source: this spec (@@maxLength(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
+// Source: this spec (@@maxBytes(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
 test "a token update transaction rejects a memo longer than 100 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -901,6 +901,15 @@ test "a token update transaction rejects metadata longer than 100 bytes" {
     @@expectThrows(invalid-argument-error)
     TokenUpdateTransaction{tokenId: Address.fromString(address: "4.2.0"),
             metadata: repeat(value: hex(text: "78"), count: 101)}
+}
+
+// Source: this spec (@@maxBytes(100) of name); the consensus node (tokens.maxTokenNameUtf8Bytes = 100,
+// TOKEN_NAME_TOO_LONG): 51 characters "ä" are 102 bytes of UTF-8.
+test "a token create transaction rejects a name of more than 100 UTF-8 bytes" {
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    TokenCreateTransaction{name: repeat(value: "ä", count: 51), symbol: "test symbol",
+            tokenType: TokenType.FUNGIBLE_COMMON, treasuryAccountId: AccountId.fromString(value: "7.7.7")}
 }
 ```
 

@@ -22,8 +22,8 @@ requires {TokenSupplyType} from token
 // required.
 @@finalType
 TokenCreateParams {
-    @@immutable @@maxLength(100) name: string
-    @@immutable @@maxLength(100) symbol: string
+    @@immutable @@maxBytes(100) name: string
+    @@immutable @@maxBytes(100) symbol: string
     // The account that receives the initial supply and every mint; the operator account if absent.
     @@immutable @@nullable treasuryAccountId: AccountId
     // The number of decimal places of the smallest unit (e.g. 6 for a currency like USDC).
@@ -36,7 +36,7 @@ TokenCreateParams {
     @@immutable @@nullable @@min(1) maxSupply: int64
     // When true, newly associated accounts start frozen; requires a freeze authority.
     @@immutable @@default(false) freezeDefault: bool
-    @@immutable @@nullable @@maxLength(100) tokenMemo: string
+    @@immutable @@nullable @@maxBytes(100) tokenMemo: string
     // Opaque metadata of the token (e.g. an IPFS CID, a URL or a JSON manifest).
     @@immutable @@default([]) @@maxSize(100) metadata: bytes
     // When the token expires; the network default if absent.
@@ -127,7 +127,7 @@ instance TokenCreateParams = TokenCreateParams{name: "Token Name", symbol: "TKN"
 ## Testing
 
 Tests of `TokenCreateParams`. The methods of `FungibleTokenService` talk to the network and are not unit-tested here.
-A value that violates a validation annotation (`@@maxLength`, `@@min`) is rejected with `invalid-argument-error`.
+A value that violates a validation annotation (`@@maxBytes`, `@@min`) is rejected with `invalid-argument-error`.
 
 ```tests
 // Source: this spec (@@default and @@nullable of TokenCreateParams); the Python SDK
@@ -207,7 +207,7 @@ test "token parameters keep the values they are created with" {
     assertEquals(expected: authority, actual: params.metadataAuthority)
 }
 
-// Source: this spec (@@maxLength(100) of name, symbol and tokenMemo); HAPI limits them to 100 bytes, which ASCII text
+// Source: this spec (@@maxBytes(100) of name, symbol and tokenMemo); HAPI limits them to 100 bytes, which ASCII text
 // of 100 characters is.
 test "a name, a symbol and a memo of 100 characters are accepted" {
     // given
@@ -233,21 +233,21 @@ test "a finite token accepts a max supply of 1" {
     assertEquals(expected: 1, actual: params.maxSupply)
 }
 
-// Source: this spec (@@maxLength(100) of name); HAPI limits a token name to 100 bytes.
+// Source: this spec (@@maxBytes(100) of name); HAPI limits a token name to 100 bytes.
 test "token parameters reject a name of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
     TokenCreateParams{name: repeat(value: "a", count: 101), symbol: "TKN"}
 }
 
-// Source: this spec (@@maxLength(100) of symbol); HAPI limits a token symbol to 100 bytes.
+// Source: this spec (@@maxBytes(100) of symbol); HAPI limits a token symbol to 100 bytes.
 test "token parameters reject a symbol of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
     TokenCreateParams{name: "Token Name", symbol: repeat(value: "a", count: 101)}
 }
 
-// Source: this spec (@@maxLength(100) of tokenMemo); HAPI limits a memo to 100 bytes.
+// Source: this spec (@@maxBytes(100) of tokenMemo); HAPI limits a memo to 100 bytes.
 test "token parameters reject a memo of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -267,6 +267,21 @@ test "token parameters reject metadata longer than 100 bytes" {
     @@expectThrows(invalid-argument-error)
     TokenCreateParams{name: "Token Name", symbol: "TKN", metadata: repeat(value: hex(text: "78"), count: 101)}
 }
+
+// Source: this spec (@@maxBytes(100) of name); the consensus node (tokens.maxTokenNameUtf8Bytes = 100): 50 characters
+// "ä" are 100 bytes of UTF-8, 51 are 102.
+test "token parameters count the name in UTF-8 bytes" {
+    // given
+    let name = repeat(value: "ä", count: 50)
+
+    // when
+    let params = TokenCreateParams{name: name, symbol: "TKN"}
+
+    // then
+    assertEquals(expected: name, actual: params.name)
+    @@expectThrows(invalid-argument-error)
+    TokenCreateParams{name: repeat(value: "ä", count: 51), symbol: "TKN"}
+}
 ```
 
 ## Questions & Comments
@@ -276,10 +291,6 @@ test "token parameters reject metadata longer than 100 bytes" {
   [ADR-0004](../../docs/adr/0004-authority-authorization-sum-type.md) and [`authority.md`](../base/authority.md).
 - Open option: simple single-key convenience overloads taking a `PublicKey` directly could be added later if the
   enterprise layer wants extra ergonomics for the common single-signer case.
-- **Limits in bytes, not in characters.** HAPI limits a token name, a symbol and a memo to 100 bytes of UTF-8, but
-  `@@maxLength(100)` counts characters: a name of 100 non-ASCII characters passes the annotation and is rejected by the
-  network. The tests therefore check the limit only with ASCII text. Should the meta-language get a byte-length
-  annotation (e.g. `@@maxUtf8Bytes(100)`), or should the services check the byte length themselves?
 
 We need better "annotation" support to define ranges of params. For example:
 

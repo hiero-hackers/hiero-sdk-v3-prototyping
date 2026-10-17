@@ -1,5 +1,6 @@
 package org.hiero.enterprise.service.contract;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
@@ -47,8 +48,8 @@ public record ContractCreateParams(
         if (gas != null && gas < 1L) {
             throw new IllegalArgumentException("gas must be at least 1");
         }
-        if (contractMemo != null && contractMemo.length() > 100) {
-            throw new IllegalArgumentException("contractMemo must be at most 100 characters long");
+        if (contractMemo != null && contractMemo.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("contractMemo must be at most 100 bytes long in UTF-8");
         }
         if ((fileId != null ? 1 : 0) + (bytecode != null ? 1 : 0) != 1) {
             throw new IllegalArgumentException("exactly one of fileId, bytecode must be set");

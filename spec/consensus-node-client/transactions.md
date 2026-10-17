@@ -167,7 +167,7 @@ abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$
   
   @@nullable maxTransactionFee: NativeToken<ANY, ANY>
   @@nullable validDuration: seconds
-  @@nullable memo: string
+  @@nullable @@maxBytes(100) memo: string
 
   PackedTransaction<$$Receipt, $$Self> pack(payer: Account, nodes: list<AccountId>)  
     

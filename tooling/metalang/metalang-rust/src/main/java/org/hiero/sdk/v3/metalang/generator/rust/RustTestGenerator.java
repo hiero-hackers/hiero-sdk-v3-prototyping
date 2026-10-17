@@ -746,6 +746,12 @@ public final class RustTestGenerator {
                         .ifPresent(s -> cases.add(new Case("a value with the maximum length", string(s), true)));
                 cases.add(new Case("a value longer than the maximum length", string("a".repeat(length + 1)), false));
             }
+            Constraints.maxBytes(annotations).ifPresent(bytes -> {
+                bytes.accepted().ifPresent(s -> cases.add(new Case("a value of the maximum number of UTF-8 bytes",
+                        string(s), true)));
+                cases.add(new Case("a value of more than the maximum number of UTF-8 bytes", string(bytes.rejected()),
+                        false));
+            });
             Constraints.stringArgument(annotations, "pattern").flatMap(RegexSamples::rejected)
                     .filter(s -> !Constraints.isValidString(s, annotations))
                     .ifPresent(s -> cases.add(new Case("a value that does not match the pattern", string(s), false)));

@@ -120,6 +120,7 @@ final class TsTypeGenerator {
                 .toList();
         final List<String> members = new ArrayList<>();
         boolean urlHelper = false;
+        boolean utf8Helper = false;
 
         // fields
         if (!stored.isEmpty()) {
@@ -148,6 +149,7 @@ final class TsTypeGenerator {
             nullChecks |= checks.contains("TypeError");
             rangeChecks |= checks.contains("RangeError");
             urlHelper |= TsConstraints.needsUrlCheck(field);
+            utf8Helper |= TsConstraints.needsUtf8Length(field);
             constructor.append(checks);
             if (own) {
                 constructor.append(INDENT).append(INDENT).append("this.#").append(field.name()).append(" = ")
@@ -185,6 +187,7 @@ final class TsTypeGenerator {
                 if (!field.hasAnnotation("immutable")) {
                     members.add(setter(field, imports, false));
                     urlHelper |= TsConstraints.needsUrlCheck(field);
+                    utf8Helper |= TsConstraints.needsUtf8Length(field);
                 }
             } else if (narrowed) {
                 final String declaration = TsTypes.declaration(field.type(), field.hasAnnotation("nullable"), imports);
@@ -222,6 +225,9 @@ final class TsTypeGenerator {
         ts.append(" {\n\n").append(String.join("\n", members)).append("}\n");
         if (urlHelper) {
             ts.append('\n').append(TsConstraints.urlHelper());
+        }
+        if (utf8Helper) {
+            ts.append('\n').append(TsConstraints.utf8Helper());
         }
         return ts.toString();
     }

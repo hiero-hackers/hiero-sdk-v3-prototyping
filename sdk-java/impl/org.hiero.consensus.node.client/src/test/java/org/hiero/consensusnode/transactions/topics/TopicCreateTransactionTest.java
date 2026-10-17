@@ -86,6 +86,20 @@ class TopicCreateTransactionTest {
     }
 
     @Test
+    @DisplayName("topicMemo: accepts more elements than the maximum")
+    void shouldAcceptTopicMemoAtMaximumBytes() {
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
+        final TopicCreateTransaction subject = new TopicCreateTransaction(adminAuthorityValue(), submitAuthorityValue(), value, autoRenewPeriodValue(), autoRenewAccountValue());
+        assertValue(value, subject.topicMemo());
+    }
+
+    @Test
+    @DisplayName("topicMemo: rejects more elements than the maximum")
+    void shouldRejectTopicMemoAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new TopicCreateTransaction(adminAuthorityValue(), submitAuthorityValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", autoRenewPeriodValue(), autoRenewAccountValue()));
+    }
+
+    @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
     void shouldSetMaxTransactionFee() {
         final TopicCreateTransaction subject = create();
@@ -134,6 +148,23 @@ class TopicCreateTransactionTest {
         final TopicCreateTransaction subject = create();
         subject.setMemo((String) null);
         assertNull(subject.memo());
+    }
+
+    @Test
+    @DisplayName("setMemo accepts more elements than the maximum")
+    void shouldSetMemoAtMaximumBytes() {
+        final TopicCreateTransaction subject = create();
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
+        subject.setMemo(value);
+        assertValue(value, subject.memo());
+    }
+
+    @Test
+    @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    void shouldNotSetMemoAboveMaximumBytes() {
+        final TopicCreateTransaction subject = create();
+        assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
+        assertValue(null, subject.memo());
     }
 
     @Test

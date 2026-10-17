@@ -80,7 +80,7 @@ ScheduleCreateTransaction extends Transaction<ScheduleCreateReceipt, ScheduleCre
     @@immutable scheduledTransaction: Transaction<ANY, ANY>     // the inner transaction to execute later; only its body is captured (never packed/signed)
     @@immutable @@nullable adminKey: Authority             // may delete the schedule before execution; unset → schedule is immutable and cannot be deleted
     @@immutable @@nullable payerAccountId: AccountId       // pays the fee of the inner transaction when it executes; null → the payer of this ScheduleCreate pays it
-    @@immutable @@nullable scheduleMemo: string            // free-form memo on the schedule entity
+    @@immutable @@nullable @@maxBytes(100) scheduleMemo: string   // free-form memo on the schedule entity
     @@immutable @@nullable expirationTime: zonedDateTime   // HIP-423 long-term: when the schedule expires
     @@immutable @@default(false) waitForExpiry: bool       // HIP-423 long-term: when true, execute only at expirationTime even if the required signatures are collected earlier
 }

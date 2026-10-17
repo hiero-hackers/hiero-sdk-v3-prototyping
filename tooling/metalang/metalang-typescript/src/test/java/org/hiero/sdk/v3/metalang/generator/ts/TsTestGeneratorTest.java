@@ -35,6 +35,7 @@ class TsTestGeneratorTest {
                 @@immutable @@min(0.5) @@max(2.5) ratio: double
                 @@immutable @@max(30) delay: duration
                 @@immutable @@minLength(2) @@maxLength(5) code: string
+                @@immutable @@maxBytes(5) memo: string
                 @@immutable @@pattern("^/[^\\s]*$") path: string
                 @@immutable @@urlPattern url: string
                 @@immutable @@minSize(1) @@maxSize(3) data: bytes
@@ -138,6 +139,7 @@ class TsTestGeneratorTest {
         files = mutate(files, "Limits.ts", "small < 0 || small > 255", "small < 0");
         files = mutate(files, "Limits.ts", "this.#tags = Object.freeze([...tags]);", "this.#tags = tags;");
         files = mutate(files, "Limits.ts", "this.#data = data.slice();", "this.#data = data;");
+        files = mutate(files, "Limits.ts", "utf8Length(memo) > 5", "utf8Length(memo) > 5 && memo.length > 5");
 
         // WHEN
         final String build = GeneratedTs.build(files, temp, "@hiero");
@@ -145,7 +147,8 @@ class TsTestGeneratorTest {
 
         // THEN the mutations are found, all other tests pass or fail because of the stubs
         assertThat(build).isEmpty();
-        assertThat(run.failures()).hasSize(3)
+        assertThat(run.failures()).hasSize(4)
+                .anyMatch(f -> f.startsWith("memo: rejects a value of more than the maximum number of UTF-8 bytes "))
                 .anyMatch(f -> f.startsWith("small: rejects a value above the maximum (256) "))
                 .anyMatch(f -> f.startsWith("the constructor copies tags; the property is frozen "))
                 .anyMatch(f -> f.startsWith("the constructor copies data; the property returns a copy "));

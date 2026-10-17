@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.transactions.accounts;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -48,6 +49,9 @@ public final class AccountUpdateTransaction extends Transaction<AccountUpdateRec
         Objects.requireNonNull(accountId, "accountId must not be null");
         this.accountId = accountId;
         this.authority = authority;
+        if (accountMemo != null && accountMemo.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("accountMemo must be at most 100 bytes long in UTF-8");
+        }
         this.accountMemo = accountMemo;
         this.receiverSignatureRequired = receiverSignatureRequired;
         this.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations;

@@ -225,6 +225,14 @@ final class AnnotationCheck implements Check {
                                 : ""), annotation.location());
                     }
                 }
+                case "maxBytes" -> {
+                    // the UTF-8 length of a string; a bytes value or a collection has @@maxSize
+                    if (varargs || builtin == null || builtin.category() != BuiltinType.Category.STRING) {
+                        out.report(Rule.ANNOTATION_VALUE_TYPE, "@@maxBytes requires a string type, not '"
+                                + describe(type, varargs) + "'" + (isSized(builtin, varargs) ? "; use @@maxSize" : ""),
+                                annotation.location());
+                    }
+                }
                 case "minSize", "maxSize" -> {
                     if (!isSized(builtin, varargs)) {
                         out.report(Rule.ANNOTATION_VALUE_TYPE, "@@" + annotation.name()

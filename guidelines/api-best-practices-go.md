@@ -102,7 +102,8 @@ func (a AccountID) Num() *uint64 { return a.num }
 ```
 
 - The constructor is `New<Type>` and returns `(T, error)` when the type has validation annotations
-  (`@@min`, `@@pattern`, a non-null requirement), otherwise plain `T`.
+  (`@@min`, `@@pattern`, a non-null requirement), otherwise plain `T`. `@@maxBytes` compares `len(s)`, which is the
+  length of the UTF-8 encoding of a Go string; `@@maxLength` counts `utf8.RuneCountInString(s)`.
 - Getters are value receivers with the attribute's name; there is no `Get` prefix in Go.
 - `bytes`, slices and maps are copied in the constructor and in the getter, so a caller cannot reach the
   state. All three are reference types in Go; without the copy an `@@immutable` attribute of such a type

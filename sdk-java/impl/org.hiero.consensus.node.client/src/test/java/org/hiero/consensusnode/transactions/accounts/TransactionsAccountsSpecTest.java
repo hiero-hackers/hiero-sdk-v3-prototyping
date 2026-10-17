@@ -410,6 +410,34 @@ class TransactionsAccountsSpecTest {
         assertThrows(IllegalArgumentException.class, () -> new AccountUpdateTransaction(defaultAccountId(), null, null, null, null, null, null, AccountId.fromString("0.0.3"), 4L, null));
     }
 
+    /// `consensusnode.transactions.accounts/an-account-create-transaction-accepts-a-memo-of-100-utf-8-bytes`
+    ///
+    /// Source: this spec (@@maxBytes(100) of accountMemo); the consensus node (transaction.maxMemoUtf8Bytes = 100,
+    /// MEMO_TOO_LONG): 50 characters "ä" are 100 bytes of UTF-8.
+    @Test
+    @DisplayName("an account create transaction accepts a memo of 100 UTF-8 bytes")
+    void anAccountCreateTransactionAcceptsAMemoOf100UTF8Bytes() {
+        // given
+        final String memo = repeat("ä", 50L);
+
+        // when
+        final AccountCreateTransaction transaction = new AccountCreateTransaction(defaultAuthority(), null, memo, false, null, null, null, null, false, null);
+
+        // then
+        assertEquals(memo, transaction.accountMemo());
+    }
+
+    /// `consensusnode.transactions.accounts/an-account-create-transaction-rejects-a-memo-of-more-than-100-utf-8-bytes`
+    ///
+    /// Source: this spec (@@maxBytes(100) of accountMemo); the consensus node (transaction.maxMemoUtf8Bytes = 100,
+    /// MEMO_TOO_LONG): 51 characters "ä" are 102 bytes of UTF-8, although far fewer than 100 characters.
+    @Test
+    @DisplayName("an account create transaction rejects a memo of more than 100 UTF-8 bytes")
+    void anAccountCreateTransactionRejectsAMemoOfMoreThan100UTF8Bytes() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new AccountCreateTransaction(defaultAuthority(), null, repeat("ä", 51L), false, null, null, null, null, false, null));
+    }
+
     private static Authority defaultAuthority() {
         return new PublicKeyAuthority(defaultPublicKey());
     }

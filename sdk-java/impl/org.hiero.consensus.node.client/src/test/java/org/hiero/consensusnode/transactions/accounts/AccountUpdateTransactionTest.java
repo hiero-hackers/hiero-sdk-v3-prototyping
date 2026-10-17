@@ -131,6 +131,20 @@ class AccountUpdateTransactionTest {
     }
 
     @Test
+    @DisplayName("accountMemo: accepts more elements than the maximum")
+    void shouldAcceptAccountMemoAtMaximumBytes() {
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
+        final AccountUpdateTransaction subject = new AccountUpdateTransaction(accountIdValue(), authorityValue(), value, receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), expirationTimeValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue());
+        assertValue(value, subject.accountMemo());
+    }
+
+    @Test
+    @DisplayName("accountMemo: rejects more elements than the maximum")
+    void shouldRejectAccountMemoAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new AccountUpdateTransaction(accountIdValue(), authorityValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), expirationTimeValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
+    }
+
+    @Test
     @DisplayName("maxAutomaticTokenAssociations: accepts the minimum (-2147483648)")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
@@ -217,6 +231,23 @@ class AccountUpdateTransactionTest {
         final AccountUpdateTransaction subject = create();
         subject.setMemo((String) null);
         assertNull(subject.memo());
+    }
+
+    @Test
+    @DisplayName("setMemo accepts more elements than the maximum")
+    void shouldSetMemoAtMaximumBytes() {
+        final AccountUpdateTransaction subject = create();
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
+        subject.setMemo(value);
+        assertValue(value, subject.memo());
+    }
+
+    @Test
+    @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    void shouldNotSetMemoAboveMaximumBytes() {
+        final AccountUpdateTransaction subject = create();
+        assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
+        assertValue(null, subject.memo());
     }
 
     @Test

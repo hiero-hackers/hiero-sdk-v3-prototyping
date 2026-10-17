@@ -1,5 +1,6 @@
 package org.hiero.enterprise.service.nft;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -55,19 +56,19 @@ public record NftTypeCreateParams(
     /// @throws IllegalArgumentException if a value violates its constraints
     public NftTypeCreateParams {
         Objects.requireNonNull(name, "name must not be null");
-        if (name.length() > 100) {
-            throw new IllegalArgumentException("name must be at most 100 characters long");
+        if (name.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("name must be at most 100 bytes long in UTF-8");
         }
         Objects.requireNonNull(symbol, "symbol must not be null");
-        if (symbol.length() > 100) {
-            throw new IllegalArgumentException("symbol must be at most 100 characters long");
+        if (symbol.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("symbol must be at most 100 bytes long in UTF-8");
         }
         Objects.requireNonNull(supplyType, "supplyType must not be null");
         if (maxSupply != null && maxSupply < 1L) {
             throw new IllegalArgumentException("maxSupply must be at least 1");
         }
-        if (tokenMemo != null && tokenMemo.length() > 100) {
-            throw new IllegalArgumentException("tokenMemo must be at most 100 characters long");
+        if (tokenMemo != null && tokenMemo.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("tokenMemo must be at most 100 bytes long in UTF-8");
         }
         Objects.requireNonNull(metadata, "metadata must not be null");
         metadata = metadata.clone();

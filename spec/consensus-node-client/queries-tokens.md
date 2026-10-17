@@ -55,8 +55,8 @@ requires {PaidQuery} from consensusnode.queries
 type TokenInfo {
     @@immutable tokenId: Address
     @@immutable type: TokenType                                 // FUNGIBLE_COMMON | NON_FUNGIBLE_UNIQUE
-    @@immutable @@maxLength(100) name: string
-    @@immutable @@maxLength(100) symbol: string
+    @@immutable @@maxBytes(100) name: string
+    @@immutable @@maxBytes(100) symbol: string
     @@immutable @@default(0) decimals: int32                    // smallest-unit precision; 0 for NON_FUNGIBLE_UNIQUE
     @@immutable totalSupply: int64                              // current total supply, in the smallest indivisible unit
     @@immutable treasuryAccountId: AccountId                    // account holding the supply pool
@@ -296,7 +296,7 @@ test "an NFT info keeps the time at which its serial was minted" {
     assertEquals(expected: toZonedDateTime(text: "2019-04-01T22:42:22Z"), actual: info.creationTime)
 }
 
-// Source: this spec (@@maxLength(100) name).
+// Source: this spec (@@maxBytes(100) name).
 test "a token info with a name of 101 characters is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)
@@ -304,7 +304,7 @@ test "a token info with a name of 101 characters is rejected" {
             totalSupply: 1000, treasuryAccountId: DEFAULT, supplyType: TokenSupplyType.INFINITE, expirationTime: DEFAULT}
 }
 
-// Source: this spec (@@maxLength(100) symbol).
+// Source: this spec (@@maxBytes(100) symbol).
 test "a token info with a symbol of 101 characters is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)

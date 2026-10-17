@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.transactions.tokens;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -76,13 +77,13 @@ public final class TokenCreateTransaction extends Transaction<TokenCreateReceipt
             final @Nullable Authority metadataAuthority) {
         super();
         Objects.requireNonNull(name, "name must not be null");
-        if (name.length() > 100) {
-            throw new IllegalArgumentException("name must be at most 100 characters long");
+        if (name.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("name must be at most 100 bytes long in UTF-8");
         }
         this.name = name;
         Objects.requireNonNull(symbol, "symbol must not be null");
-        if (symbol.length() > 100) {
-            throw new IllegalArgumentException("symbol must be at most 100 characters long");
+        if (symbol.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("symbol must be at most 100 bytes long in UTF-8");
         }
         this.symbol = symbol;
         Objects.requireNonNull(tokenType, "tokenType must not be null");
@@ -98,8 +99,8 @@ public final class TokenCreateTransaction extends Transaction<TokenCreateReceipt
         }
         this.maxSupply = maxSupply;
         this.freezeDefault = freezeDefault;
-        if (tokenMemo != null && tokenMemo.length() > 100) {
-            throw new IllegalArgumentException("tokenMemo must be at most 100 characters long");
+        if (tokenMemo != null && tokenMemo.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("tokenMemo must be at most 100 bytes long in UTF-8");
         }
         this.tokenMemo = tokenMemo;
         Objects.requireNonNull(metadata, "metadata must not be null");

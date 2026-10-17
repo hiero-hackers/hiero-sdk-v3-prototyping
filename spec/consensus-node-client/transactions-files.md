@@ -69,7 +69,7 @@ FileCreateTransaction extends Transaction<FileCreateReceipt, FileCreateTransacti
     @@immutable @@default([]) contents: bytes                  // initial content; further bytes via FileAppend
     @@immutable @@nullable authority: Authority                    // write-access authorization; an all-must-sign rule is an AuthorityList
     @@immutable @@nullable expirationTime: zonedDateTime       // when the file expires; SDK default if unset
-    @@immutable @@nullable fileMemo: string                    // short, human-readable label (max 100 chars)
+    @@immutable @@nullable @@maxBytes(100) fileMemo: string    // short, human-readable label
 }
 
 @@finalType
@@ -98,7 +98,7 @@ FileUpdateTransaction extends Transaction<FileUpdateReceipt, FileUpdateTransacti
     @@immutable @@nullable contents: bytes                     // when set, replaces the entire file contents
     @@immutable @@nullable authority: Authority                    // write-access authorization; an all-must-sign rule is an AuthorityList
     @@immutable @@nullable expirationTime: zonedDateTime       // when set, extends (or sets) the expiration time
-    @@immutable @@nullable fileMemo: string                    // when set, replaces the memo
+    @@immutable @@nullable @@maxBytes(100) fileMemo: string    // when set, replaces the memo
 }
 
 @@finalType

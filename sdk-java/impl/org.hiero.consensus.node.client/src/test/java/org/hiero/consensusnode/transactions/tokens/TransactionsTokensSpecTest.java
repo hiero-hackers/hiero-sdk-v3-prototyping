@@ -42,7 +42,7 @@ class TransactionsTokensSpecTest {
         return toZonedDateTime("2019-04-01T22:42:22Z");
     }
 
-    /// One character beyond the @@maxLength(100) of the token name, symbol and memo.
+    /// One character beyond the @@maxBytes(100) of the token name, symbol and memo.
     private static String TEXT_OF_101_CHARACTERS() {
         return repeat("a", 101L);
     }
@@ -289,7 +289,7 @@ class TransactionsTokensSpecTest {
 
     /// `consensusnode.transactions.tokens/a-token-create-transaction-rejects-a-name-longer-than-100-characters`
     ///
-    /// Source: this spec (@@maxLength(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
+    /// Source: this spec (@@maxBytes(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
     @Test
     @DisplayName("a token create transaction rejects a name longer than 100 characters")
     void aTokenCreateTransactionRejectsANameLongerThan100Characters() {
@@ -299,7 +299,7 @@ class TransactionsTokensSpecTest {
 
     /// `consensusnode.transactions.tokens/a-token-create-transaction-rejects-a-symbol-longer-than-100-characters`
     ///
-    /// Source: this spec (@@maxLength(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
+    /// Source: this spec (@@maxBytes(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
     @Test
     @DisplayName("a token create transaction rejects a symbol longer than 100 characters")
     void aTokenCreateTransactionRejectsASymbolLongerThan100Characters() {
@@ -309,7 +309,7 @@ class TransactionsTokensSpecTest {
 
     /// `consensusnode.transactions.tokens/a-token-create-transaction-rejects-a-memo-longer-than-100-characters`
     ///
-    /// Source: this spec (@@maxLength(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
+    /// Source: this spec (@@maxBytes(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
     @Test
     @DisplayName("a token create transaction rejects a memo longer than 100 characters")
     void aTokenCreateTransactionRejectsAMemoLongerThan100Characters() {
@@ -330,7 +330,7 @@ class TransactionsTokensSpecTest {
 
     /// `consensusnode.transactions.tokens/a-token-update-transaction-rejects-a-name-longer-than-100-characters`
     ///
-    /// Source: this spec (@@maxLength(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
+    /// Source: this spec (@@maxBytes(100)); the network limits a token name to 100 UTF-8 bytes (TOKEN_NAME_TOO_LONG).
     @Test
     @DisplayName("a token update transaction rejects a name longer than 100 characters")
     void aTokenUpdateTransactionRejectsANameLongerThan100Characters() {
@@ -340,7 +340,7 @@ class TransactionsTokensSpecTest {
 
     /// `consensusnode.transactions.tokens/a-token-update-transaction-rejects-a-symbol-longer-than-100-characters`
     ///
-    /// Source: this spec (@@maxLength(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
+    /// Source: this spec (@@maxBytes(100)); the network limits a token symbol to 100 UTF-8 bytes (TOKEN_SYMBOL_TOO_LONG).
     @Test
     @DisplayName("a token update transaction rejects a symbol longer than 100 characters")
     void aTokenUpdateTransactionRejectsASymbolLongerThan100Characters() {
@@ -350,7 +350,7 @@ class TransactionsTokensSpecTest {
 
     /// `consensusnode.transactions.tokens/a-token-update-transaction-rejects-a-memo-longer-than-100-characters`
     ///
-    /// Source: this spec (@@maxLength(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
+    /// Source: this spec (@@maxBytes(100)); the network limits a memo to 100 UTF-8 bytes (MEMO_TOO_LONG).
     @Test
     @DisplayName("a token update transaction rejects a memo longer than 100 characters")
     void aTokenUpdateTransactionRejectsAMemoLongerThan100Characters() {
@@ -466,6 +466,17 @@ class TransactionsTokensSpecTest {
     void aTokenUpdateTransactionRejectsMetadataLongerThan100Bytes() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new TokenUpdateTransaction(Address.fromString("4.2.0"), null, null, null, null, repeat(hex("78"), 101L), null, null, null, null, null, null, null, null, null, null, null));
+    }
+
+    /// `consensusnode.transactions.tokens/a-token-create-transaction-rejects-a-name-of-more-than-100-utf-8-bytes`
+    ///
+    /// Source: this spec (@@maxBytes(100) of name); the consensus node (tokens.maxTokenNameUtf8Bytes = 100,
+    /// TOKEN_NAME_TOO_LONG): 51 characters "ä" are 102 bytes of UTF-8.
+    @Test
+    @DisplayName("a token create transaction rejects a name of more than 100 UTF-8 bytes")
+    void aTokenCreateTransactionRejectsANameOfMoreThan100UTF8Bytes() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new TokenCreateTransaction(repeat("ä", 51L), "test symbol", TokenType.FUNGIBLE_COMMON, 0, 0L, AccountId.fromString("7.7.7"), TokenSupplyType.INFINITE, null, false, null, new byte[0], null, null, null, null, null, null, null, null, null, null, null));
     }
 
     private static Account defaultAccount() {

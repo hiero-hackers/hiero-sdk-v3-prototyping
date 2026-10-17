@@ -539,6 +539,32 @@ class ValidatorTest {
         }
 
         @Test
+        void shouldAllowMaxBytesOnStringsOnlyAndCountUtf8Bytes() {
+            // GIVEN ℏ is one character of 3 UTF-8 bytes
+            final String schema = """
+                    namespace a
+                    X {
+                        @@immutable @@maxLength(2) @@maxBytes(100) a: string
+                        @@immutable @@maxBytes(4) @@default("tℏ") ok: string
+                        @@immutable @@maxBytes(3) @@default("tℏ") tooLong: string
+                        @@immutable @@maxBytes(4) b: bytes
+                        @@immutable @@maxBytes(4) c: int32
+                        void m(@@maxBytes(10) name: string, @@maxBytes(2) values: string...)
+                    }
+                    """;
+
+            // WHEN
+            final List<Diagnostic> diagnostics = diagnostics(schema);
+
+            // THEN
+            assertThat(diagnostics).extracting(Diagnostic::message).containsExactlyInAnyOrder(
+                    "@@default of 'tooLong': Value \"tℏ\" violates @@maxBytes(3)",
+                    "@@maxBytes requires a string type, not 'bytes'; use @@maxSize",
+                    "@@maxBytes requires a string type, not 'int32'",
+                    "@@maxBytes requires a string type, not 'string...'; use @@maxSize");
+        }
+
+        @Test
         void shouldAllowThreadSafeOnTypes() {
             // GIVEN
             final String schema = """

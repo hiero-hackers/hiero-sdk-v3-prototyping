@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.transactions.topics;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -33,6 +34,7 @@ public final class TopicUpdateTransaction extends Transaction<TopicUpdateReceipt
     /// Creates a new `TopicUpdateTransaction`.
     ///
     /// @throws NullPointerException if a required value is `null`
+    /// @throws IllegalArgumentException if a value violates its constraints
     public TopicUpdateTransaction(
             final Address topicId,
             final @Nullable Authority adminAuthority,
@@ -46,6 +48,9 @@ public final class TopicUpdateTransaction extends Transaction<TopicUpdateReceipt
         this.topicId = topicId;
         this.adminAuthority = adminAuthority;
         this.submitAuthority = submitAuthority;
+        if (topicMemo != null && topicMemo.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("topicMemo must be at most 100 bytes long in UTF-8");
+        }
         this.topicMemo = topicMemo;
         this.expirationTime = expirationTime;
         this.autoRenewPeriod = autoRenewPeriod;
@@ -249,6 +254,7 @@ public final class TopicUpdateTransaction extends Transaction<TopicUpdateReceipt
         ///
         /// @return the new `TopicUpdateTransaction`
         /// @throws NullPointerException if a required value is not set
+        /// @throws IllegalArgumentException if a value violates its constraints
         public TopicUpdateTransaction build() {
             return new TopicUpdateTransaction(
                     Objects.requireNonNull(topicId, "topicId must not be null"),

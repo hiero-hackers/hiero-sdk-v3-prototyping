@@ -233,17 +233,17 @@ class TokenInfoTest {
     }
 
     @Test
-    @DisplayName("name: accepts a value with the maximum length")
-    void shouldAcceptNameAtMaximumLength() {
-        final String value = "valueaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    @DisplayName("name: accepts more elements than the maximum")
+    void shouldAcceptNameAtMaximumBytes() {
+        final String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), value, symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
         assertValue(value, subject.name());
     }
 
     @Test
-    @DisplayName("name: rejects a value longer than the maximum length")
-    void shouldRejectNameAboveMaximumLength() {
-        assertThrows(IllegalArgumentException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
+    @DisplayName("name: rejects more elements than the maximum")
+    void shouldRejectNameAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
     }
 
     @Test
@@ -253,17 +253,17 @@ class TokenInfoTest {
     }
 
     @Test
-    @DisplayName("symbol: accepts a value with the maximum length")
-    void shouldAcceptSymbolAtMaximumLength() {
-        final String value = "valueaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    @DisplayName("symbol: accepts more elements than the maximum")
+    void shouldAcceptSymbolAtMaximumBytes() {
+        final String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), value, decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
         assertValue(value, subject.symbol());
     }
 
     @Test
-    @DisplayName("symbol: rejects a value longer than the maximum length")
-    void shouldRejectSymbolAboveMaximumLength() {
-        assertThrows(IllegalArgumentException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
+    @DisplayName("symbol: rejects more elements than the maximum")
+    void shouldRejectSymbolAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
     }
 
     @Test

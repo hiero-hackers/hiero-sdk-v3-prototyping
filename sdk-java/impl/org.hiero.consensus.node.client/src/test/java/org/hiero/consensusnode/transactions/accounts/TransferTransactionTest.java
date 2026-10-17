@@ -188,6 +188,23 @@ class TransferTransactionTest {
     }
 
     @Test
+    @DisplayName("setMemo accepts more elements than the maximum")
+    void shouldSetMemoAtMaximumBytes() {
+        final TransferTransaction subject = create();
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
+        subject.setMemo(value);
+        assertValue(value, subject.memo());
+    }
+
+    @Test
+    @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    void shouldNotSetMemoAboveMaximumBytes() {
+        final TransferTransaction subject = create();
+        assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
+        assertValue(null, subject.memo());
+    }
+
+    @Test
     @DisplayName("pack(payer, nodes) can be called and returns a value")
     void shouldCallPack() {
         assertNotNull(create().pack(payerValue(), nodesValue()));

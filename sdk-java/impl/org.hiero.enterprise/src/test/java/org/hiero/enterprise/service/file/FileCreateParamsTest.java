@@ -90,17 +90,17 @@ class FileCreateParamsTest {
     }
 
     @Test
-    @DisplayName("fileMemo: accepts a value with the maximum length")
-    void shouldAcceptFileMemoAtMaximumLength() {
-        final @Nullable String value = "valueaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    @DisplayName("fileMemo: accepts more elements than the maximum")
+    void shouldAcceptFileMemoAtMaximumBytes() {
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final FileCreateParams subject = new FileCreateParams(contentsValue(), authorityValue(), expirationTimeValue(), value);
         assertValue(value, subject.fileMemo());
     }
 
     @Test
-    @DisplayName("fileMemo: rejects a value longer than the maximum length")
-    void shouldRejectFileMemoAboveMaximumLength() {
-        assertThrows(IllegalArgumentException.class, () -> new FileCreateParams(contentsValue(), authorityValue(), expirationTimeValue(), "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+    @DisplayName("fileMemo: rejects more elements than the maximum")
+    void shouldRejectFileMemoAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new FileCreateParams(contentsValue(), authorityValue(), expirationTimeValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
     }
 
     private static byte[] contentsValue() {

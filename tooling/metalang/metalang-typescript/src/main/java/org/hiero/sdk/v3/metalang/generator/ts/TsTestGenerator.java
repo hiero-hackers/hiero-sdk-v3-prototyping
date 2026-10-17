@@ -703,6 +703,12 @@ public final class TsTestGenerator {
                 cases.add(new Case("a value longer than the maximum length", TsLiterals.quote("a".repeat(length + 1)),
                         false));
             }
+            Constraints.maxBytes(annotations).ifPresent(bytes -> {
+                bytes.accepted().ifPresent(s -> cases.add(new Case("a value of the maximum number of UTF-8 bytes",
+                        TsLiterals.quote(s), true)));
+                cases.add(new Case("a value of more than the maximum number of UTF-8 bytes",
+                        TsLiterals.quote(bytes.rejected()), false));
+            });
             Constraints.stringArgument(annotations, "pattern").flatMap(RegexSamples::rejected)
                     .filter(s -> !Constraints.isValidString(s, annotations))
                     .ifPresent(s -> cases.add(new Case("a value that does not match the pattern", TsLiterals.quote(s),

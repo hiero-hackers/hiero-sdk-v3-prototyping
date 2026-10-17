@@ -177,17 +177,17 @@ class NftTypeCreateParamsTest {
     }
 
     @Test
-    @DisplayName("name: accepts a value with the maximum length")
-    void shouldAcceptNameAtMaximumLength() {
-        final String value = "valueaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    @DisplayName("name: accepts more elements than the maximum")
+    void shouldAcceptNameAtMaximumBytes() {
+        final String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final NftTypeCreateParams subject = new NftTypeCreateParams(value, symbolValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
         assertValue(value, subject.name());
     }
 
     @Test
-    @DisplayName("name: rejects a value longer than the maximum length")
-    void shouldRejectNameAboveMaximumLength() {
-        assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", symbolValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
+    @DisplayName("name: rejects more elements than the maximum")
+    void shouldRejectNameAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams("ääääääääääääääääääääääääääääääääääääääääääääääääääa", symbolValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
@@ -197,17 +197,17 @@ class NftTypeCreateParamsTest {
     }
 
     @Test
-    @DisplayName("symbol: accepts a value with the maximum length")
-    void shouldAcceptSymbolAtMaximumLength() {
-        final String value = "valueaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    @DisplayName("symbol: accepts more elements than the maximum")
+    void shouldAcceptSymbolAtMaximumBytes() {
+        final String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final NftTypeCreateParams subject = new NftTypeCreateParams(nameValue(), value, treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
         assertValue(value, subject.symbol());
     }
 
     @Test
-    @DisplayName("symbol: rejects a value longer than the maximum length")
-    void shouldRejectSymbolAboveMaximumLength() {
-        assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams(nameValue(), "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
+    @DisplayName("symbol: rejects more elements than the maximum")
+    void shouldRejectSymbolAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams(nameValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test
@@ -239,17 +239,17 @@ class NftTypeCreateParamsTest {
     }
 
     @Test
-    @DisplayName("tokenMemo: accepts a value with the maximum length")
-    void shouldAcceptTokenMemoAtMaximumLength() {
-        final @Nullable String value = "valueaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    @DisplayName("tokenMemo: accepts more elements than the maximum")
+    void shouldAcceptTokenMemoAtMaximumBytes() {
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
         final NftTypeCreateParams subject = new NftTypeCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), value, metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue());
         assertValue(value, subject.tokenMemo());
     }
 
     @Test
-    @DisplayName("tokenMemo: rejects a value longer than the maximum length")
-    void shouldRejectTokenMemoAboveMaximumLength() {
-        assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
+    @DisplayName("tokenMemo: rejects more elements than the maximum")
+    void shouldRejectTokenMemoAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new NftTypeCreateParams(nameValue(), symbolValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), freezeDefaultValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue()));
     }
 
     @Test

@@ -131,6 +131,20 @@ class NodeCreateTransactionTest {
     }
 
     @Test
+    @DisplayName("description: accepts more elements than the maximum")
+    void shouldAcceptDescriptionAtMaximumBytes() {
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
+        final NodeCreateTransaction subject = new NodeCreateTransaction(accountIdValue(), value, gossipEndpointsValue(), serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue());
+        assertValue(value, subject.description());
+    }
+
+    @Test
+    @DisplayName("description: rejects more elements than the maximum")
+    void shouldRejectDescriptionAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(accountIdValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", gossipEndpointsValue(), serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
+    }
+
+    @Test
     @DisplayName("rejects null for gossipEndpoints")
     void shouldRejectNullGossipEndpoints() {
         assertThrows(NullPointerException.class, () -> new NodeCreateTransaction(accountIdValue(), descriptionValue(), (List<ServiceEndpoint>) null, serviceEndpointsValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
@@ -315,6 +329,23 @@ class NodeCreateTransactionTest {
         final NodeCreateTransaction subject = create();
         subject.setMemo((String) null);
         assertNull(subject.memo());
+    }
+
+    @Test
+    @DisplayName("setMemo accepts more elements than the maximum")
+    void shouldSetMemoAtMaximumBytes() {
+        final NodeCreateTransaction subject = create();
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
+        subject.setMemo(value);
+        assertValue(value, subject.memo());
+    }
+
+    @Test
+    @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    void shouldNotSetMemoAboveMaximumBytes() {
+        final NodeCreateTransaction subject = create();
+        assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
+        assertValue(null, subject.memo());
     }
 
     @Test

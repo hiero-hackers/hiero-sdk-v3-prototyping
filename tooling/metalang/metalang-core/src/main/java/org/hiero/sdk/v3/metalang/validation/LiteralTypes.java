@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -150,7 +151,7 @@ final class LiteralTypes {
 
     /**
      * Checks a value against the validation annotations of the element it is assigned to ({@code @@min},
-     * {@code @@max}, {@code @@minLength}, {@code @@maxLength}, {@code @@minSize}, {@code @@maxSize},
+     * {@code @@max}, {@code @@minLength}, {@code @@maxLength}, {@code @@maxBytes}, {@code @@minSize}, {@code @@maxSize},
      * {@code @@pattern}, {@code @@urlPattern}). Values the check cannot interpret are accepted.
      *
      * @param literal the value
@@ -175,6 +176,9 @@ final class LiteralTypes {
             case "min", "max" -> literal instanceof Literal.NumberLiteral n ? Optional.of(n.value()) : Optional.empty();
             case "minLength", "maxLength" -> literal instanceof Literal.StringLiteral s
                     ? Optional.of(BigDecimal.valueOf(s.value().codePointCount(0, s.value().length())))
+                    : Optional.empty();
+            case "maxBytes" -> literal instanceof Literal.StringLiteral s
+                    ? Optional.of(BigDecimal.valueOf(s.value().getBytes(StandardCharsets.UTF_8).length))
                     : Optional.empty();
             case "minSize", "maxSize" -> literal instanceof Literal.ListLiteral l
                     ? Optional.of(BigDecimal.valueOf(l.items().size())) : Optional.empty();

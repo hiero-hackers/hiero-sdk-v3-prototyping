@@ -1,5 +1,6 @@
 package org.hiero.enterprise.service.file;
 
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Objects;
@@ -24,8 +25,8 @@ public record FileCreateParams(
     public FileCreateParams {
         Objects.requireNonNull(contents, "contents must not be null");
         contents = contents.clone();
-        if (fileMemo != null && fileMemo.length() > 100) {
-            throw new IllegalArgumentException("fileMemo must be at most 100 characters long");
+        if (fileMemo != null && fileMemo.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("fileMemo must be at most 100 bytes long in UTF-8");
         }
     }
 

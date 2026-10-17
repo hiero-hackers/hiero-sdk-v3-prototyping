@@ -83,6 +83,7 @@ class TestGeneratorTest {
                     @@immutable @@min(0) amount: decimal
                     @@immutable @@max(30) delay: duration
                     @@immutable @@minLength(2) @@maxLength(5) code: string
+                    @@immutable @@maxBytes(5) memo: string
                     @@immutable @@pattern("^/[^\\s]*$") path: string
                     @@immutable @@urlPattern url: string
                     @@immutable @@minSize(1) @@maxSize(3) data: bytes
@@ -123,6 +124,9 @@ class TestGeneratorTest {
                     .contains("new BigDecimal(\"-0.001\")")
                     .contains("Duration.ofMillis(30L).plusNanos(1)")
                     .contains("void shouldAcceptCodeAtMinimumLength()", "\"va\"", "\"a\"", "\"aaaaaa\"")
+                    // two-byte characters: counting characters instead of bytes accepts the rejected value
+                    .contains("void shouldAcceptMemoAtMaximumBytes()", "\"ääa\"")
+                    .contains("void shouldRejectMemoAboveMaximumBytes()", "\"äää\"")
                     .contains("void shouldRejectPathNotMatchingThePattern()")
                     .contains("void shouldRejectUrlThatIsNoUrl()", "\"not a url\"")
                     .contains("void shouldRejectDataBelowMinimumSize()", "new byte[0]")
@@ -150,6 +154,7 @@ class TestGeneratorTest {
             files = mutate(files, "Limits", "small < (short) 0 || small > (short) 255", "false");
             files = mutate(files, "Limits", "tags = List.copyOf(tags);", "");
             files = mutate(files, "Limits", "data = data.clone();", "");
+            files = mutate(files, "Limits", "memo.getBytes(StandardCharsets.UTF_8).length > 5", "memo.length() > 5");
 
             // WHEN
             final GeneratedJava.TestRun run = run(files);
@@ -157,7 +162,7 @@ class TestGeneratorTest {
             // THEN
             assertThat(run.failures()).containsOnlyKeys("LimitsTest.shouldRejectSmallBelowMinimum",
                     "LimitsTest.shouldRejectSmallAboveMaximum", "LimitsTest.shouldCopyTagsIn",
-                    "LimitsTest.shouldCopyDataIn");
+                    "LimitsTest.shouldCopyDataIn", "LimitsTest.shouldRejectMemoAboveMaximumBytes");
         }
     }
 

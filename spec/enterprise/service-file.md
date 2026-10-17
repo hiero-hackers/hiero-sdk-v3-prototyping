@@ -23,7 +23,7 @@ FileCreateParams {
     @@immutable @@nullable authority: Authority
     // When the file expires; the network default if absent.
     @@immutable @@nullable expirationTime: zonedDateTime
-    @@immutable @@nullable @@maxLength(100) fileMemo: string
+    @@immutable @@nullable @@maxBytes(100) fileMemo: string
 }
 
 FileService {
@@ -76,7 +76,7 @@ instance FileCreateParams = FileCreateParams{}
 ## Testing
 
 Tests of `FileCreateParams`. The methods of `FileService` talk to the network and are not unit-tested here (among them
-the splitting of large contents into chunks). A memo longer than its `@@maxLength` is rejected with
+the splitting of large contents into chunks). A memo of more UTF-8 bytes than its `@@maxBytes` is rejected with
 `invalid-argument-error`.
 
 ```tests
@@ -133,7 +133,7 @@ test "file parameters keep an expiration time given without other values" {
     assertNull(actual: params.fileMemo)
 }
 
-// Source: this spec (@@maxLength(100) of fileMemo); HAPI limits a memo to 100 bytes, which ASCII text of 100
+// Source: this spec (@@maxBytes(100) of fileMemo); HAPI limits a memo to 100 bytes, which ASCII text of 100
 // characters is.
 test "a file memo of 100 characters is accepted" {
     // given
@@ -146,7 +146,7 @@ test "a file memo of 100 characters is accepted" {
     assertEquals(expected: memo, actual: params.fileMemo)
 }
 
-// Source: this spec (@@maxLength(100) of fileMemo); HAPI limits a memo to 100 bytes.
+// Source: this spec (@@maxBytes(100) of fileMemo); HAPI limits a memo to 100 bytes.
 test "a file memo of 101 characters is rejected" {
     // when / then
     @@expectThrows(invalid-argument-error)

@@ -422,6 +422,7 @@ must keep the identical reference type (`Long`) and only the nullability annotat
 | `@@default(v)` | the property becomes optional; `init.x === undefined ? v : init.x` | — |
 | `@@min(n)` / `@@max(n)` | `value < n` / `value > n` | `RangeError` |
 | `@@minLength(n)` / `@@maxLength(n)` | `value.length < n` / `> n` (strings) | `RangeError` |
+| `@@maxBytes(n)` | `utf8Length(value) > n`: the length of the UTF-8 encoding, counted by a helper added to the file (no `TextEncoder`, which not every TypeScript library configuration declares) | `RangeError` |
 | `@@minSize(n)` / `@@maxSize(n)` | the size of a list, set, map or `Uint8Array` | `RangeError` |
 | `@@pattern(re)` | `!new RegExp(re).test(value)` | `RangeError` |
 | `@@urlPattern` | `!isAbsoluteUrl(value)` | `RangeError` |
@@ -828,7 +829,7 @@ Where a type is a class — the behavioural ones — add a `toString()`:
 > **Generator gap — nothing prints.** Only enums get a `toString()`; every other generated class shows as
 > `ConsensusNode {}`. The "never print sensitive data" rule additionally cannot be generated today: the
 > meta-definition has no annotation marking an attribute as sensitive (the known ones are `async`, `default`,
-> `deprecated`, `finalMethod`, `finalType`, `immutable`, `max`, `maxLength`, `maxSize`, `min`, `minLength`,
+> `deprecated`, `finalMethod`, `finalType`, `immutable`, `max`, `maxBytes`, `maxLength`, `maxSize`, `min`, `minLength`,
 > `minSize`, `nullable`, `oneOf`, `oneOrNoneOf`, `override`, `pattern`, `sealed`, `static`, `streaming`,
 > `threadSafe`, `throws`, `urlPattern`). Either a `@@sensitive` annotation is added, or the conservative rule
 > applies: a `bytes` attribute is always printed as its length only.

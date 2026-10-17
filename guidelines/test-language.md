@@ -345,7 +345,7 @@ Java, JavaScript and TypeScript) or does not compare contents (Go slices and map
   declared by at least one call in the statement (`@@throws`) — otherwise the validator reports
   `test.undeclared-error`.
 - **Violated validation annotations.** A value that violates a validation annotation (`@@min`, `@@max`,
-  `@@minLength`, `@@maxLength`, `@@minSize`, `@@maxSize`, `@@pattern`, `@@urlPattern`) or a `@@oneOf` /
+  `@@minLength`, `@@maxLength`, `@@maxBytes`, `@@minSize`, `@@maxSize`, `@@pattern`, `@@urlPattern`) or a `@@oneOf` /
   `@@oneOrNoneOf` group of immutable attributes is rejected with `invalid-argument-error` (see "Validation annotations"
   in `api-guideline.md`). So `@@expectThrows(invalid-argument-error)` is declared by every construction of a type
   with such an annotation or group, and by every call with an annotated parameter:

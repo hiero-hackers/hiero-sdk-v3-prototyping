@@ -1,5 +1,6 @@
 package org.hiero.enterprise.service.topic;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import org.hiero.authority.Authority;
 import org.hiero.ledger.AccountId;
@@ -23,8 +24,8 @@ public record TopicCreateParams(
     ///
     /// @throws IllegalArgumentException if a value violates its constraints
     public TopicCreateParams {
-        if (topicMemo != null && topicMemo.length() > 100) {
-            throw new IllegalArgumentException("topicMemo must be at most 100 characters long");
+        if (topicMemo != null && topicMemo.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("topicMemo must be at most 100 bytes long in UTF-8");
         }
     }
 

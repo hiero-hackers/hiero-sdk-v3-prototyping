@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.transactions.topics;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -26,6 +27,8 @@ public final class TopicCreateTransaction extends Transaction<TopicCreateReceipt
     private final @Nullable AccountId autoRenewAccount;
 
     /// Creates a new `TopicCreateTransaction`.
+    ///
+    /// @throws IllegalArgumentException if a value violates its constraints
     public TopicCreateTransaction(
             final @Nullable Authority adminAuthority,
             final @Nullable Authority submitAuthority,
@@ -35,6 +38,9 @@ public final class TopicCreateTransaction extends Transaction<TopicCreateReceipt
         super();
         this.adminAuthority = adminAuthority;
         this.submitAuthority = submitAuthority;
+        if (topicMemo != null && topicMemo.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("topicMemo must be at most 100 bytes long in UTF-8");
+        }
         this.topicMemo = topicMemo;
         this.autoRenewPeriod = autoRenewPeriod;
         this.autoRenewAccount = autoRenewAccount;
@@ -50,7 +56,7 @@ public final class TopicCreateTransaction extends Transaction<TopicCreateReceipt
         return submitAuthority;
     }
 
-    /// short human-readable label (max 100 chars)
+    /// short human-readable label
     public @Nullable String topicMemo() {
         return topicMemo;
     }
@@ -176,7 +182,7 @@ public final class TopicCreateTransaction extends Transaction<TopicCreateReceipt
 
         /// Sets the `topicMemo`.
         ///
-        /// short human-readable label (max 100 chars)
+        /// short human-readable label
         ///
         /// @param topicMemo the value
         /// @return this builder
@@ -210,6 +216,7 @@ public final class TopicCreateTransaction extends Transaction<TopicCreateReceipt
         /// Creates the `TopicCreateTransaction` of the values set.
         ///
         /// @return the new `TopicCreateTransaction`
+        /// @throws IllegalArgumentException if a value violates its constraints
         public TopicCreateTransaction build() {
             return new TopicCreateTransaction(
                     adminAuthority,

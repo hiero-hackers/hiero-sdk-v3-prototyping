@@ -523,7 +523,13 @@ The following annotations should be used:
 - `@@minLength(value)`: Indicates the minimum length for string fields. Should be included if the value must be enforced
   at the SDK level. Only allowed on `string`; use `@@minSize` for collections and `bytes`.
 - `@@maxLength(value)`: Indicates the maximum length for string fields. Should be included if the value must be enforced
-  at the SDK level. Only allowed on `string`; use `@@maxSize` for collections and `bytes`.
+  at the SDK level. Only allowed on `string`; use `@@maxSize` for collections and `bytes`. The length is the number of
+  characters (Unicode code points); for a limit in bytes use `@@maxBytes`.
+- `@@maxBytes(value)`: Indicates the maximum number of bytes of a string field. The byte length of a `string` is always
+  the length of its **UTF-8** encoding — the encoding of a string on the wire (protobuf, JSON) and therefore what a
+  network counts when it limits a memo or a name to "100 bytes". `ä` counts 2 bytes, `€` 3 and `😀` 4, so
+  `@@maxLength(100)` would let up to 400 bytes through. `value` is a non-negative integer. Only allowed on `string`; use
+  `@@maxSize` for `bytes`. Should be included if the value must be enforced at the SDK level.
 - `@@minSize(value)`: Indicates the minimum number of elements of a `list`, `set` or `map` (number of entries) or the
   minimum number of bytes of a `bytes` value. `value` is a non-negative integer. Should be included if the value must
   be enforced at the SDK level.
@@ -540,8 +546,8 @@ The following annotations should be used:
   annotation by delegating to its native parser rather than by matching a pattern. Should be included if the value must
   be enforced at the SDK level.
 
-A value that violates one of these validation annotations (`@@min`, `@@max`, `@@minLength`, `@@maxLength`, `@@minSize`,
-`@@maxSize`, `@@pattern`, `@@urlPattern`) is rejected with the standard error `invalid-argument-error`, without a
+A value that violates one of these validation annotations (`@@min`, `@@max`, `@@minLength`, `@@maxLength`, `@@maxBytes`,
+`@@minSize`, `@@maxSize`, `@@pattern`, `@@urlPattern`) is rejected with the standard error `invalid-argument-error`, without a
 `@@throws` for it: when a value of the type is created, and when a parameter with such an annotation is passed. The
 same holds for a `@@oneOf` or `@@oneOrNoneOf` group of immutable attributes. Each language maps the error once (Java
 `IllegalArgumentException`, TypeScript `RangeError`, Rust `InvalidArgumentError`), so a test can expect it
@@ -701,7 +707,8 @@ Rules:
 #### Method Parameter annotations
 
 The following attribute annotations can be used on method parameters: `@@nullable`, `@@min(value)`, `@@max(value)`,
-`@@minLength(value)`, `@@maxLength(value)`, `@@minSize(value)`, `@@maxSize(value)`, `@@pattern(regex)`, `@@urlPattern`
+`@@minLength(value)`, `@@maxLength(value)`, `@@maxBytes(value)`, `@@minSize(value)`, `@@maxSize(value)`,
+`@@pattern(regex)`, `@@urlPattern`
 
 On a [varargs](#variable-arguments-varargs) parameter, `@@minSize(value)` and `@@maxSize(value)` constrain the number
 of passed arguments (e.g. `addSigners(@@minSize(1) signers: Key...)` requires at least one signer).

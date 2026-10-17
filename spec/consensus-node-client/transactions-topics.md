@@ -81,7 +81,7 @@ requires {Receipt, Transaction} from consensusnode.transactions
 TopicCreateTransaction extends Transaction<TopicCreateReceipt, TopicCreateTransaction> {
     @@immutable @@nullable adminAuthority: Authority          // controls update / delete; unset → immutable topic; must sign the create transaction when set (anti-spoofing)
     @@immutable @@nullable submitAuthority: Authority         // controls message submission; unset → public topic; does NOT need to sign creation
-    @@immutable @@nullable topicMemo: string            // short human-readable label (max 100 chars)
+    @@immutable @@nullable @@maxBytes(100) topicMemo: string   // short human-readable label
     @@immutable @@nullable autoRenewPeriod: seconds     // protocol default applies when unset
     @@immutable @@nullable autoRenewAccount: AccountId  // pays auto-renewal; must sign the create transaction if set
 }
@@ -99,7 +99,7 @@ TopicUpdateTransaction extends Transaction<TopicUpdateReceipt, TopicUpdateTransa
     @@immutable topicId: Address
     @@immutable @@nullable adminAuthority: Authority          // when set, replaces the admin key; the new key must also sign
     @@immutable @@nullable submitAuthority: Authority         // when set, replaces the submit key
-    @@immutable @@nullable topicMemo: string
+    @@immutable @@nullable @@maxBytes(100) topicMemo: string
     @@immutable @@nullable expirationTime: zonedDateTime
     @@immutable @@nullable autoRenewPeriod: seconds
     @@immutable @@nullable autoRenewAccount: AccountId  // when set, the new account must also sign

@@ -301,6 +301,17 @@ class TransactionsNodesSpecTest {
         assertThrows(IllegalArgumentException.class, () -> new NodeUpdateTransaction(7L, null, null, List.of(), NINE_ENDPOINTS(), null, null, null, null, null));
     }
 
+    /// `consensusnode.admin.nodes/a-node-create-transaction-with-a-description-of-more-than-100-utf-8-bytes-is-rejected`
+    ///
+    /// Source: this spec (@@maxBytes(100) of description); the consensus node (nodes.nodeMaxDescriptionUtf8Bytes = 100,
+    /// INVALID_NODE_DESCRIPTION); the Java, Go and Python SDKs check the UTF-8 length: 34 characters "€" are 102 bytes.
+    @Test
+    @DisplayName("a node create transaction with a description of more than 100 UTF-8 bytes is rejected")
+    void aNodeCreateTransactionWithADescriptionOfMoreThan100UTF8BytesIsRejected() {
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(defaultAccountId(), repeat("€", 34L), List.of(defaultServiceEndpoint()), List.of(NODE_DOMAIN_ENDPOINT()), GOSSIP_CA_CERTIFICATE(), GRPC_CERTIFICATE_HASH(), defaultAuthority(), false, null));
+    }
+
     private static ServiceEndpoint defaultServiceEndpoint() {
         return new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211);
     }

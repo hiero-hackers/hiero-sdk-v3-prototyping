@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.queries.tokens;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -72,12 +73,12 @@ public record TokenInfo(
         Objects.requireNonNull(tokenId, "tokenId must not be null");
         Objects.requireNonNull(type, "type must not be null");
         Objects.requireNonNull(name, "name must not be null");
-        if (name.length() > 100) {
-            throw new IllegalArgumentException("name must be at most 100 characters long");
+        if (name.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("name must be at most 100 bytes long in UTF-8");
         }
         Objects.requireNonNull(symbol, "symbol must not be null");
-        if (symbol.length() > 100) {
-            throw new IllegalArgumentException("symbol must be at most 100 characters long");
+        if (symbol.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("symbol must be at most 100 bytes long in UTF-8");
         }
         Objects.requireNonNull(treasuryAccountId, "treasuryAccountId must not be null");
         Objects.requireNonNull(supplyType, "supplyType must not be null");

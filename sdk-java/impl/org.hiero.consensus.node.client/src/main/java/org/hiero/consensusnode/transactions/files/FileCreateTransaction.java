@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.transactions.files;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -26,6 +27,7 @@ public final class FileCreateTransaction extends Transaction<FileCreateReceipt, 
     /// Creates a new `FileCreateTransaction`.
     ///
     /// @throws NullPointerException if a required value is `null`
+    /// @throws IllegalArgumentException if a value violates its constraints
     public FileCreateTransaction(
             final byte[] contents,
             final @Nullable Authority authority,
@@ -36,6 +38,9 @@ public final class FileCreateTransaction extends Transaction<FileCreateReceipt, 
         this.contents = contents.clone();
         this.authority = authority;
         this.expirationTime = expirationTime;
+        if (fileMemo != null && fileMemo.getBytes(StandardCharsets.UTF_8).length > 100) {
+            throw new IllegalArgumentException("fileMemo must be at most 100 bytes long in UTF-8");
+        }
         this.fileMemo = fileMemo;
     }
 
@@ -62,7 +67,7 @@ public final class FileCreateTransaction extends Transaction<FileCreateReceipt, 
         return expirationTime;
     }
 
-    /// short, human-readable label (max 100 chars)
+    /// short, human-readable label
     public @Nullable String fileMemo() {
         return fileMemo;
     }
@@ -188,7 +193,7 @@ public final class FileCreateTransaction extends Transaction<FileCreateReceipt, 
 
         /// Sets the `fileMemo`.
         ///
-        /// short, human-readable label (max 100 chars)
+        /// short, human-readable label
         ///
         /// @param fileMemo the value
         /// @return this builder
@@ -200,6 +205,7 @@ public final class FileCreateTransaction extends Transaction<FileCreateReceipt, 
         /// Creates the `FileCreateTransaction` of the values set.
         ///
         /// @return the new `FileCreateTransaction`
+        /// @throws IllegalArgumentException if a value violates its constraints
         public FileCreateTransaction build() {
             return new FileCreateTransaction(contents, authority, expirationTime, fileMemo);
         }

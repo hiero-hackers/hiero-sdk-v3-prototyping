@@ -109,6 +109,20 @@ class FileCreateTransactionTest {
     }
 
     @Test
+    @DisplayName("fileMemo: accepts more elements than the maximum")
+    void shouldAcceptFileMemoAtMaximumBytes() {
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
+        final FileCreateTransaction subject = new FileCreateTransaction(contentsValue(), authorityValue(), expirationTimeValue(), value);
+        assertValue(value, subject.fileMemo());
+    }
+
+    @Test
+    @DisplayName("fileMemo: rejects more elements than the maximum")
+    void shouldRejectFileMemoAboveMaximumBytes() {
+        assertThrows(IllegalArgumentException.class, () -> new FileCreateTransaction(contentsValue(), authorityValue(), expirationTimeValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
+    }
+
+    @Test
     @DisplayName("setMaxTransactionFee changes maxTransactionFee and returns the object")
     void shouldSetMaxTransactionFee() {
         final FileCreateTransaction subject = create();
@@ -157,6 +171,23 @@ class FileCreateTransactionTest {
         final FileCreateTransaction subject = create();
         subject.setMemo((String) null);
         assertNull(subject.memo());
+    }
+
+    @Test
+    @DisplayName("setMemo accepts more elements than the maximum")
+    void shouldSetMemoAtMaximumBytes() {
+        final FileCreateTransaction subject = create();
+        final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
+        subject.setMemo(value);
+        assertValue(value, subject.memo());
+    }
+
+    @Test
+    @DisplayName("setMemo rejects more elements than the maximum and keeps the value")
+    void shouldNotSetMemoAboveMaximumBytes() {
+        final FileCreateTransaction subject = create();
+        assertThrows(IllegalArgumentException.class, () -> subject.setMemo("ääääääääääääääääääääääääääääääääääääääääääääääääääa"));
+        assertValue(null, subject.memo());
     }
 
     @Test

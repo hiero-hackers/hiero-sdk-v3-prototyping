@@ -39,7 +39,7 @@ final class TestResolver {
     static final String INVALID_ARGUMENT = "invalid-argument-error";
 
     /** The annotations whose violation is an {@value #INVALID_ARGUMENT}. */
-    private static final Set<String> VALIDATION = Set.of("min", "max", "minLength", "maxLength", "minSize", "maxSize",
+    private static final Set<String> VALIDATION = Set.of("min", "max", "minLength", "maxLength", "maxBytes", "minSize", "maxSize",
             "pattern", "urlPattern");
 
     private final SpecModel spec;

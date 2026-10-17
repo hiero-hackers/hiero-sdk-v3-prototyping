@@ -16,7 +16,7 @@ import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 final class RustConstraints {
 
     /** The annotations that a constructor or setter checks. */
-    static final Set<String> VALIDATIONS = Set.of("min", "max", "minLength", "maxLength", "minSize", "maxSize",
+    static final Set<String> VALIDATIONS = Set.of("min", "max", "minLength", "maxLength", "maxBytes", "minSize", "maxSize",
             "pattern", "urlPattern");
 
     private RustConstraints() {
@@ -66,6 +66,9 @@ final class RustConstraints {
                         field.name() + " must be at least " + number(annotation) + " characters long", error);
                 case "maxLength" -> check(checks, name + ".chars().count() > " + number(annotation),
                         field.name() + " must be at most " + number(annotation) + " characters long", error);
+                // the length of a str is the length of its UTF-8 encoding
+                case "maxBytes" -> check(checks, name + ".len() > " + number(annotation),
+                        field.name() + " must be at most " + number(annotation) + " bytes long in UTF-8", error);
                 case "minSize" -> check(checks, number(annotation).equals("1") ? name + ".is_empty()"
                                 : name + ".len() < " + number(annotation),
                         field.name() + " must contain at least " + number(annotation) + " element(s)", error);

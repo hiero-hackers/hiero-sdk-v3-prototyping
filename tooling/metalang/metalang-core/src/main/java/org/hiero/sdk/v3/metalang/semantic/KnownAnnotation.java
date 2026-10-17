@@ -23,6 +23,7 @@ public enum KnownAnnotation {
     MAX("max", Arguments.ONE_NUMBER, ElementKind.FIELD, ElementKind.PARAMETER),
     MIN_LENGTH("minLength", Arguments.ONE_NON_NEGATIVE_INTEGER, ElementKind.FIELD, ElementKind.PARAMETER),
     MAX_LENGTH("maxLength", Arguments.ONE_NON_NEGATIVE_INTEGER, ElementKind.FIELD, ElementKind.PARAMETER),
+    MAX_BYTES("maxBytes", Arguments.ONE_NON_NEGATIVE_INTEGER, ElementKind.FIELD, ElementKind.PARAMETER),
     MIN_SIZE("minSize", Arguments.ONE_NON_NEGATIVE_INTEGER, ElementKind.FIELD, ElementKind.PARAMETER),
     MAX_SIZE("maxSize", Arguments.ONE_NON_NEGATIVE_INTEGER, ElementKind.FIELD, ElementKind.PARAMETER),
     PATTERN("pattern", Arguments.ONE_STRING, ElementKind.FIELD, ElementKind.PARAMETER),

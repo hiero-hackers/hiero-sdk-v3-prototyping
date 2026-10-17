@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -94,7 +95,7 @@ public final class Constraints {
 
     /**
      * Returns a string that fulfils the string constraints ({@code @@pattern}, {@code @@urlPattern},
-     * {@code @@minLength}, {@code @@maxLength}), verified like the generated checks.
+     * {@code @@minLength}, {@code @@maxLength}, {@code @@maxBytes}), verified like the generated checks.
      *
      * @param annotations the annotations
      * @param variant     the variant
@@ -128,7 +129,52 @@ public final class Constraints {
         if (result.length() > max) {
             result = result.substring(0, max);
         }
+        final int maxBytes = size(annotations, "maxBytes").orElse(Integer.MAX_VALUE);
+        while (utf8Length(result) > maxBytes) {
+            result = result.substring(0, result.offsetByCodePoints(result.length(), -1));
+        }
         return result;
+    }
+
+    /**
+     * The length of the UTF-8 encoding of a string, which {@code @@maxBytes} limits.
+     *
+     * @param value the string
+     * @return the number of bytes
+     */
+    public static int utf8Length(final String value) {
+        return value.getBytes(StandardCharsets.UTF_8).length;
+    }
+
+    /**
+     * The boundary values of {@code @@maxBytes(n)}: a string of exactly {@code n} UTF-8 bytes made of two-byte
+     * characters ({@code ä}) as far as possible, so that a check that counts characters instead of bytes accepts the
+     * rejected value, and the string of {@code n + 1} bytes built the same way.
+     *
+     * @param annotations the annotations of the attribute or parameter
+     * @return the accepted value (empty if no string of n bytes fulfils the other constraints) and the rejected one;
+     *         empty if there is no {@code @@maxBytes}
+     */
+    public static Optional<MaxBytesCases> maxBytes(final List<Annotation> annotations) {
+        return size(annotations, "maxBytes").map(n -> {
+            final List<String> candidates = List.of(twoByteString(n), "a".repeat(n));
+            final Optional<String> accepted = candidates.stream().filter(c -> isValidString(c, annotations))
+                    .findFirst();
+            return new MaxBytesCases(accepted, twoByteString(n + 1));
+        });
+    }
+
+    /**
+     * The boundary values of {@code @@maxBytes}.
+     *
+     * @param accepted a string of exactly the maximum number of bytes, if one fulfils the other constraints
+     * @param rejected a string of one byte more
+     */
+    public record MaxBytesCases(Optional<String> accepted, String rejected) {
+    }
+
+    private static String twoByteString(final int bytes) {
+        return "\u00e4".repeat(bytes / 2) + (bytes % 2 == 1 ? "a" : "");
     }
 
     /**
@@ -140,7 +186,8 @@ public final class Constraints {
      */
     public static boolean isValidString(final String value, final List<Annotation> annotations) {
         if (size(annotations, "minLength").filter(min -> value.length() < min).isPresent()
-                || size(annotations, "maxLength").filter(max -> value.length() > max).isPresent()) {
+                || size(annotations, "maxLength").filter(max -> value.length() > max).isPresent()
+                || size(annotations, "maxBytes").filter(max -> utf8Length(value) > max).isPresent()) {
             return false;
         }
         final Optional<String> pattern = stringArgument(annotations, "pattern");

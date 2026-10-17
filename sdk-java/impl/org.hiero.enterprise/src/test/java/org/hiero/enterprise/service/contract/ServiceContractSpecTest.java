@@ -103,7 +103,7 @@ class ServiceContractSpecTest {
 
     /// `enterprise.service.contract/contract-parameters-accept-a-gas-of-1-and-a-memo-of-100-characters`
     ///
-    /// Source: this spec (@@min(1) of gas and @@maxLength(100) of contractMemo); HAPI limits a memo to 100 bytes, which
+    /// Source: this spec (@@min(1) of gas and @@maxBytes(100) of contractMemo); HAPI limits a memo to 100 bytes, which
     /// ASCII text of 100 characters is.
     @Test
     @DisplayName("contract parameters accept a gas of 1 and a memo of 100 characters")
@@ -132,7 +132,7 @@ class ServiceContractSpecTest {
 
     /// `enterprise.service.contract/contract-parameters-reject-a-memo-of-101-characters`
     ///
-    /// Source: this spec (@@maxLength(100) of contractMemo); HAPI limits a memo to 100 bytes.
+    /// Source: this spec (@@maxBytes(100) of contractMemo); HAPI limits a memo to 100 bytes.
     @Test
     @DisplayName("contract parameters reject a memo of 101 characters")
     void contractParametersRejectAMemoOf101Characters() {

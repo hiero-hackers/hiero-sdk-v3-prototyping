@@ -84,7 +84,7 @@ class ServiceFileSpecTest {
 
     /// `enterprise.service.file/a-file-memo-of-100-characters-is-accepted`
     ///
-    /// Source: this spec (@@maxLength(100) of fileMemo); HAPI limits a memo to 100 bytes, which ASCII text of 100
+    /// Source: this spec (@@maxBytes(100) of fileMemo); HAPI limits a memo to 100 bytes, which ASCII text of 100
     /// characters is.
     @Test
     @DisplayName("a file memo of 100 characters is accepted")
@@ -101,7 +101,7 @@ class ServiceFileSpecTest {
 
     /// `enterprise.service.file/a-file-memo-of-101-characters-is-rejected`
     ///
-    /// Source: this spec (@@maxLength(100) of fileMemo); HAPI limits a memo to 100 bytes.
+    /// Source: this spec (@@maxBytes(100) of fileMemo); HAPI limits a memo to 100 bytes.
     @Test
     @DisplayName("a file memo of 101 characters is rejected")
     void aFileMemoOf101CharactersIsRejected() {
