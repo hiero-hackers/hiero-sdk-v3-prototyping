@@ -145,7 +145,7 @@ Response<TopicCreateReceipt> response = new TopicCreateTransaction()
     .topicMemo("audit-log")
     .signWithOperatorAndSubmit(client);
 
-Address topicId = response.queryReceipt().topicId;
+Address topicId = response.queryReceipt(client).topicId;
 ```
 
 ### Create a private, mutable topic (operator controls both keys)

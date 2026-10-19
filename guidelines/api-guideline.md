@@ -388,11 +388,13 @@ ReturnType methodName<$$T, $$U extends Bound>(param: $$T, other: list<$$U>)
 Example:
 
 ```
-namespace consensusnode.transactions
+namespace consensusnode.queries.receipts
 
-// The caller chooses $$Receipt by passing a transaction type; the returned Response is typed accordingly.
-@@static Response<$$Receipt> getResponse<$$Receipt extends Receipt>(transactionId: TransactionId,
-        transactionType: type<Transaction<$$Receipt, ANY>>, client: HieroClient<ANY>)
+@@finalType
+UntypedReceipt extends Receipt {
+    // The caller chooses $$R by passing a transaction type; the returned receipt is typed accordingly.
+    @@finalMethod $$R typed<$$R extends Receipt>(transactionType: type<Transaction<$$R, ANY>>)
+}
 ```
 
 Rules:
@@ -635,8 +637,8 @@ The following annotations should be used:
 - `@@finalMethod`: Indicates that the method is implemented by the declaring type and must not be overridden by
   subtypes. The behavior of the method must therefore be fully specified by the declaring type — typically in terms of
   its other members. A subtype must not re-declare a `@@finalMethod` method. Mandatory for
-  [generic instance methods](#generic-methods); allowed on every other instance method. It is redundant on `@@static`
-  methods and on methods of a `@@finalType`. Because the declaring type must carry the implementation, an abstraction
+  [generic instance methods](#generic-methods), also in a `@@finalType`; allowed on every other instance method. It is
+  redundant on `@@static` methods and on the non-generic methods of a `@@finalType`. Because the declaring type must carry the implementation, an abstraction
   that declares a `@@finalMethod` maps to an abstract class (not an interface) in languages that distinguish the two
   (e.g. Java, Kotlin, C#). Consequently, a type must not inherit `@@finalMethod` methods from two different
   abstractions via different direct supertypes (single class inheritance); inheriting them along one chain

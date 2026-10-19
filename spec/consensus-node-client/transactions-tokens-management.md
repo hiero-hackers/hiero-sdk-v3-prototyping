@@ -208,7 +208,7 @@ PackedTransaction<...> packed = new TokenWipeNftTransaction()
     .signWithOperator(client)        // payer
     .sign(wipeKeySigner);            // wipeAuthority
 
-int64 newTotalSupply = packed.submit(client).queryReceipt().totalSupply;
+int64 newTotalSupply = packed.submit(client).queryReceipt(client).totalSupply;
 ```
 
 ### Update NFT metadata (HIP-657)

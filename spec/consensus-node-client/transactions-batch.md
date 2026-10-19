@@ -66,9 +66,8 @@ produces its own record whose `Record.parentConsensusTimestamp` equals the batch
 `consensusTimestamp`, and the receipts of the inner transactions must be queried individually.
 `BatchReceipt` therefore carries only the batch transaction's own status (the base `Receipt`
 fields). To read an inner transaction's typed receipt, take its `TransactionId` (the
-`transactionId` field of the inner `PackedTransaction`) and resolve it through
-`Transaction.getResponse(transactionId, transactionType, client)` — the same mechanism used for the
-executed inner transaction of a schedule. See the example below.
+`transactionId` field of the inner `PackedTransaction`) and create a `Response` from it and the inner
+transaction's type — the same mechanism used for the executed inner transaction of a schedule. See the example below.
 
 ### Restrictions
 
@@ -132,8 +131,8 @@ BatchTransaction extends Transaction<BatchReceipt, BatchTransaction> {
 }
 
 // The batch transaction's own receipt. Carries only the base Receipt fields (status, exchange
-// rates); each inner transaction's typed receipt is read separately via
-// Transaction.getResponse(innerTransactionId, innerType, client).
+// rates); each inner transaction's typed receipt is read separately through a Response created from its
+// transaction id and type.
 @@finalType
 BatchReceipt extends Receipt {
 }
@@ -174,7 +173,7 @@ Response<BatchReceipt> response = new BatchTransaction()
     .sign(bobAccount)              // batchKey signature for innerB
     .submit(client);
 
-response.queryReceipt();           // batch status; both transfers ran, or neither did
+response.queryReceipt(client);           // batch status; both transfers ran, or neither did
 ```
 
 > `signForBatch(payer, batchKey)` mirrors the non-batch `sign(payer, nodes)` tier (without `nodes`).
@@ -212,10 +211,9 @@ a typed `Response` for it — exactly as for the inner transaction of a schedule
 ```
 TransactionId innerAId = innerA.transactionId;
 
-Response<TransferReceipt> innerResponse =
-    Transaction.getResponse(innerAId, TransferTransaction, client);
+Response<TransferReceipt> innerResponse = new Response<>(innerAId, TransferTransaction);
 
-TransferReceipt innerReceipt = innerResponse.queryReceipt();
+TransferReceipt innerReceipt = innerResponse.queryReceipt(client);
 ```
 
 ## Testing

@@ -884,7 +884,7 @@ final class InstanceResolver {
     }
 
     /** Binds the type variables of a parameter type to the parts of the argument type at the same position. */
-    private static void bind(final Type parameter, final Type argument, final Map<Type.TypeVariable, Type> bindings) {
+    private void bind(final Type parameter, final Type argument, final Map<Type.TypeVariable, Type> bindings) {
         switch (parameter) {
             case Type.TypeVariable variable -> bindings.putIfAbsent(variable, argument);
             case Type.BasicType basic when argument instanceof Type.BasicType actual
@@ -894,11 +894,15 @@ final class InstanceResolver {
                     bind(basic.arguments().get(i), actual.arguments().get(i), bindings);
                 }
             }
-            case Type.DeclaredType declared when argument instanceof Type.DeclaredType actual
-                    && actual.name().equals(declared.name())
-                    && actual.arguments().size() == declared.arguments().size() -> {
-                for (int i = 0; i < declared.arguments().size(); i++) {
-                    bind(declared.arguments().get(i), actual.arguments().get(i), bindings);
+            case Type.DeclaredType declared when argument instanceof Type.DeclaredType given -> {
+                // a subtype binds through the supertype it extends: AccountCreateTransaction as
+                // Transaction<AccountCreateReceipt, AccountCreateTransaction> binds Transaction<$$R, ANY>
+                final Type.DeclaredType actual = linked.asSupertype(given, declared.name()).orElse(given);
+                if (actual.name().equals(declared.name())
+                        && actual.arguments().size() == declared.arguments().size()) {
+                    for (int i = 0; i < declared.arguments().size(); i++) {
+                        bind(declared.arguments().get(i), actual.arguments().get(i), bindings);
+                    }
                 }
             }
             default -> {

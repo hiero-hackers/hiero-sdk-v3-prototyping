@@ -28,7 +28,7 @@ query failure.
 
 `scheduledTransaction` is a read-only reconstruction of the stored transaction, of the same type you pass when
 creating a schedule. It is never packed or signed. To read the *outcome* of an executed schedule, pass
-`scheduledTransactionId` to `Transaction.getResponse(...)`.
+`scheduledTransactionId` and the type of the transaction to a `Response` and query its receipt.
 
 ### Signers and admin key
 
@@ -47,8 +47,8 @@ state is modelled as data on the snapshot rather than as a query failure.
 
 The captured inner transaction is exposed as a `Transaction<ANY, ANY>` — the same builder type `ScheduleCreate`
 accepts (see [`transactions-schedule.md`](transactions-schedule.md)). To read the outcome of an executed schedule,
-use `scheduledTransactionId` with the `Transaction.getResponse(...)` factory in [`transactions.md`](transactions.md),
-exactly as shown in the schedule examples.
+create a `Response` from `scheduledTransactionId` and the inner transaction's type (see
+[`transactions.md`](transactions.md)), exactly as shown in the schedule examples.
 
 `signers` is `list<PublicKey>` (concrete keys that have signed), not `list<Authority>` — a signer is a single key
 that produced a signature, whereas an `Authority` is an authorization *requirement* (see
@@ -123,9 +123,8 @@ ScheduleInfo info = new ScheduleInfoQuery()
 
 if (info.executionTime != null) {
     // executed — read the inner transaction's outcome with its type token
-    Response<TransferReceipt> innerResponse =
-        Transaction.getResponse(info.scheduledTransactionId, TransferTransaction, client);
-    TransferReceipt innerReceipt = innerResponse.queryReceipt();
+    Response<TransferReceipt> innerResponse = new Response<>(info.scheduledTransactionId, TransferTransaction);
+    TransferReceipt innerReceipt = innerResponse.queryReceipt(client);
 } else if (info.deletionTime != null) {
     // deleted before execution
 } else {
@@ -231,9 +230,8 @@ test "a schedule info with both an execution and a deletion time is rejected" {
 
 - **The inner transaction is `Transaction<ANY, ANY>`.** Same modelling choice as
   `ScheduleCreateTransaction.scheduledTransaction`: the captured body has no compile-time receipt
-  type. Reading its execution outcome therefore re-supplies the inner transaction's type token to
-  `Transaction.getResponse(...)` (see [`transactions.md`](transactions.md) and the schedule
-  examples). The snapshot exposes the *captured body*; it is never packed or signed.
+  type. Reading its execution outcome therefore re-supplies the inner transaction's type token to a
+  `Response` (see [`transactions.md`](transactions.md) and the schedule examples). The snapshot exposes the *captured body*; it is never packed or signed.
   `ScheduleInfo.scheduledTransaction` cannot be rebuilt as a typed transaction, though: HAPI returns a
   `SchedulableTransactionBody`, and the spec defines no mapping from a body back to a transaction type (the same gap as
   `TransactionSupport.create(TransactionBody)` in [`transactions-spi.md`](transactions-spi.md)). The Java implementation

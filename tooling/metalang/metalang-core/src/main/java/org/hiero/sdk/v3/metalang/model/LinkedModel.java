@@ -233,6 +233,39 @@ public final class LinkedModel {
         return Linker.substitute(type, variables);
     }
 
+    /**
+     * Returns a type as one of its supertypes, with the type arguments the supertype gets from it:
+     * {@code AccountCreateTransaction} as {@code Transaction} is
+     * {@code Transaction<AccountCreateReceipt, AccountCreateTransaction>}.
+     *
+     * @param type      the type
+     * @param supertype the name of the supertype
+     * @return the supertype with its type arguments, empty if {@code type} does not extend it
+     */
+    public Optional<Type.DeclaredType> asSupertype(final Type.DeclaredType type, final QualifiedName supertype) {
+        return asSupertype(type, supertype, new java.util.HashSet<>());
+    }
+
+    private Optional<Type.DeclaredType> asSupertype(final Type.DeclaredType type, final QualifiedName supertype,
+                                                    final java.util.Set<QualifiedName> visited) {
+        if (type.name().equals(supertype)) {
+            return Optional.of(type);
+        }
+        if (!visited.add(type.name()) || type(type.name()).isEmpty()) {
+            return Optional.empty();
+        }
+        final java.util.Map<Type.TypeVariable, Type> arguments = substitution(type);
+        for (final Type extended : definition(type).supertypes()) {
+            if (Linker.substitute(extended, arguments) instanceof Type.DeclaredType declared) {
+                final Optional<Type.DeclaredType> found = asSupertype(declared, supertype, visited);
+                if (found.isPresent()) {
+                    return found;
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     private java.util.Map<Type.TypeVariable, Type> substitution(final Type.DeclaredType supertype) {
         final List<TypeParameterDefinition> parameters = definition(supertype).typeParameters();
         final java.util.Map<Type.TypeVariable, Type> map = new java.util.HashMap<>();

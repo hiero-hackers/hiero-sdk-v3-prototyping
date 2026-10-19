@@ -389,7 +389,7 @@ Response<TokenCreateReceipt> response = new TokenCreateTransaction()
     .supplyAuthority(Authority.of(client.operatorPublicKey))
     .signWithOperatorAndSubmit(client);
 
-Address tokenId = response.queryReceipt().tokenId;
+Address tokenId = response.queryReceipt(client).tokenId;
 ```
 
 ### Create a finite-supply NFT collection
@@ -456,7 +456,7 @@ Response<TokenMintReceipt> response = new TokenMintFungibleTransaction()
     .amount(500_000_000L)                      // 500.000000 additional EUSD
     .signWithOperatorAndSubmit(client);
 
-int64 newTotalSupply = response.queryReceipt().totalSupply;
+int64 newTotalSupply = response.queryReceipt(client).totalSupply;
 ```
 
 ### Mint NFT serials in a single batch
@@ -474,7 +474,7 @@ Response<TokenMintNftReceipt> response = new TokenMintNftTransaction()
     ])
     .signWithOperatorAndSubmit(client);
 
-list<int64> newSerials = response.queryReceipt().serials;   // e.g. [1, 2, 3]
+list<int64> newSerials = response.queryReceipt(client).serials;   // e.g. [1, 2, 3]
                                                             // only TokenMintNftReceipt has them
 ```
 

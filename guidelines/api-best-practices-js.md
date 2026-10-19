@@ -288,7 +288,7 @@ An asynchronous operation returns a `Promise`, and failures reject it:
 
 ```javascript
 const response = await transaction.signWithOperatorAndSubmit(client);
-const receipt = await response.queryReceipt();
+const receipt = await response.queryReceipt(client);
 ```
 
 - There is **no synchronous variant**. JavaScript cannot block, so every asynchronous operation stays

@@ -221,7 +221,7 @@ PackedTransaction<...> packed = new NodeCreateTransaction()
     .sign(nodeOperator)              // accountId binding
     .sign(adminSigner);              // adminAuthority binding (anti-spoofing)
 
-int64 nodeId = packed.submit(client).queryReceipt().nodeId;
+int64 nodeId = packed.submit(client).queryReceipt(client).nodeId;
 ```
 
 ### Update a node's service endpoints

@@ -628,14 +628,12 @@ A [generic method](api-guideline.md#generic-methods) maps to a Java generic meth
 of the return type and lose the `$$` prefix:
 
 ```
-// Meta-language
-@@static Response<$$Receipt> getResponse<$$Receipt extends Receipt>(transactionId: TransactionId,
-        transactionType: type<Transaction<$$Receipt, ANY>>, client: HieroClient<ANY>)
+// Meta-language (a method of the @@finalType UntypedReceipt)
+@@finalMethod $$R typed<$$R extends Receipt>(transactionType: type<Transaction<$$R, ANY>>)
 ```
 
 ```java
-static <Receipt extends org.hiero.Receipt> Response<Receipt> getResponse(TransactionId transactionId,
-        Class<? extends Transaction<Receipt, ?>> transactionType, HieroClient<?> client)
+public <R extends Receipt> R typed(final Class<? extends Transaction<R, ?>> transactionType)
 ```
 
 `@@finalMethod` maps to a `final` method. Because the declaring type must provide the implementation and Java

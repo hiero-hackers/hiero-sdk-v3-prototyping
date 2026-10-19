@@ -39,9 +39,23 @@ signatures collected so far.
 - **submit** — hand the packed transaction to one of the target consensus nodes and obtain a
   `Response`. The SDK chooses the node; the caller does not steer it. Actual ledger execution
   happens on the network asynchronously — the `Response` is the submission acknowledgment, not the
-  execution result. Use `Response.queryReceipt()` / `Response.queryRecord()` to read the outcome
-  once consensus is reached. `submit(client)` and the retry-tuning fields are inherited from
+  execution result. Use `Response.queryReceipt(client)` / `Response.queryRecord(client)` to read the
+  outcome once consensus is reached. `submit(client)` and the retry-tuning fields are inherited from
   `Submittable`.
+
+### Reading the outcome
+
+A `Response` is a plain value: the id of the transaction, its type, and the consensus node it was sent to. It can be
+stored and used in another process. `queryReceipt(client)` asks the node the transaction was sent to for the receipt
+and waits until the network has reached consensus on it (a receipt is available for about three minutes after
+consensus); `queryRecord(client)` reads the record, which the client's operator pays for. Both return the receipt
+typed for the transaction, e.g. an `AccountCreateReceipt` for an `AccountCreateTransaction`.
+
+For a transaction you did not submit yourself — the execution of a schedule, the inner transaction of a batch, a
+transaction whose id you stored — create the `Response` from its id and type: `Response{transactionId,
+transactionType}`. Without a node, the receipt is read from any node of the client. When the type is not known
+either, or to read the receipts of duplicate and child transactions, use the `TransactionReceiptQuery`, which
+returns untyped receipts that can be turned into typed ones.
 
 A `PackedTransaction` may be serialized via `toBytes()` at any point, shipped to another process or
 machine, re-loaded via the static `fromBytes(...)` factory, and have further signatures appended on
@@ -114,9 +128,16 @@ The `TransactionId` cannot be set by the caller.
   and not every child has an independent id — node-synthesized children share the parent's payer +
   validStart and are disambiguated only by a nonce. Batch inner transactions are specified in
   `consensusnode.transactions.batch`.
-- **`getResponse(...)` resolution.** The SDK resolves the matching `TransactionSupport`
-  (`consensusnode.transactions.spi`) for the given transaction type to parse the proto receipt/record
-  into the typed `$$Receipt`.
+- **Typed outcome without a registry.** `Response` carries the transaction type, so the SDK resolves the
+  matching `TransactionSupport` (`consensusnode.transactions.spi`) to parse the proto receipt/record into the typed
+  `$$Receipt`, and the client to send the query with is a parameter, as for `submit(client)`. `Response` holds no
+  client and is therefore a serializable value; it replaces the former `Transaction.getResponse(transactionId,
+  transactionType, client)` factory, which only existed to bind a client. `queryReceipt(client)` is the
+  `TransactionReceiptQuery` of `consensusnode.queries.receipts` sent to `nodeAccountId`, followed by
+  `UntypedReceipt.typed(transactionType)`. See ADR-0013.
+- **The receipt query is pinned to the node the transaction was sent to.** All current Hiero SDKs do so by
+  default (Java, JavaScript, Go and C++ offer an opt-in failover to other nodes); neither HAPI nor the SDKs document
+  why. `nodeAccountId` is nullable for transactions that were not sent by the caller.
 - **`packForBatch(...)` and `batchKey`.** `batchKey` is a `TransactionBody` field that must be fixed
   before signing, so it is taken as a required parameter of the batch-pack entry points rather than a
   free-standing build-phase field: this makes "an inner transaction always has a batchKey" and "a
@@ -251,11 +272,19 @@ abstraction PackedTransaction<$$Receipt extends Receipt, $$Transaction extends T
   @@throws(illegal-format) @@static PackedTransaction<ANY, ANY> fromBytes(bytes: bytes)
 }
 
+// The acknowledgment of a submitted transaction: what is needed to read its outcome. A plain value that can be stored
+// and used in another process. Create one yourself from a transaction id and the transaction's type to read the
+// outcome of a transaction you did not submit, e.g. the execution of a schedule.
 Response<$$Receipt extends Receipt> {
-  @@immutable transactionId: TransactionId // the id of the transaction
+  @@immutable transactionId: TransactionId                          // the id of the transaction
+  @@immutable transactionType: type<Transaction<$$Receipt, ANY>>    // the type of the transaction; types the receipt
+  @@immutable @@nullable @@default(null) nodeAccountId: AccountId   // the node the transaction was sent to; null: any node
 
-  @@async $$Receipt queryReceipt()          // query for the receipt of the transaction
-  @@async Record<$$Receipt> queryRecord()   // query for the record of the transaction
+  // Waits for the receipt of the transaction and returns it. The receipt is read from `nodeAccountId`, or from any
+  // node of the client when it is null; it is available for about three minutes after consensus.
+  @@async $$Receipt queryReceipt(client: HieroClient<ANY>)
+  // Reads the record of the transaction, once it has reached consensus. The client's operator pays for the query.
+  @@async Record<$$Receipt> queryRecord(client: HieroClient<ANY>)
 }
 
 abstraction Receipt {
@@ -275,17 +304,6 @@ Record<$$Receipt extends Receipt> {
   // ordinary top-level transaction. This is the link from a child record back to its parent.
   @@immutable @@nullable parentConsensusTimestamp: zonedDateTime
 }
-
-// Reconstructs a client-bound Response for a transaction that was submitted elsewhere — e.g. the
-// inner transaction of a schedule (identified by ScheduleCreateReceipt.scheduledTransactionId),
-// which executes on the network without the caller ever holding a Response for it.
-//
-// `transactionType` is the concrete transaction type (e.g. TransferTransaction); it determines the
-// receipt type, so the returned Response is typed. This call makes no network request — querying
-// happens lazily through the returned Response's queryReceipt() / queryRecord(), exactly as for a
-// Response from submit().
-@@static Response<$$Receipt> getResponse<$$Receipt extends Receipt>(transactionId: TransactionId,
-        transactionType: type<Transaction<$$Receipt, ANY>>, client: HieroClient<ANY>)
 ```
 
 ## Examples
@@ -307,7 +325,7 @@ Response<AccountCreateReceipt> response = new AccountCreateTransaction()
     .authority(...)
     .signWithOperatorAndSubmit(client);
 
-AccountCreateReceipt receipt = response.queryReceipt();
+AccountCreateReceipt receipt = response.queryReceipt(client);
 AccountId newAccountId = receipt.accountId;
 ```
 
@@ -602,16 +620,6 @@ test "the basic transaction statuses have the codes of the protocol" {
 
 ## Questions & Comments
 
-- **`Response` cannot query anything.** `Response<$$Receipt>` holds nothing but a `TransactionId`, yet
-  `queryReceipt()` and `queryRecord()` have to reach the consensus node. The type carries neither the
-  client it was created from nor the node the transaction went to, so an implementation cannot answer
-  these calls from the object alone.
-
-  Found while implementing `createAccount` against the TCK; the spike works around it with a
-  process-wide registry from `TransactionId` to the submitting client, which also means a `Response`
-  cannot be deserialized in another process. Options: give `Response` a reference to its client, or move
-  the queries to the client (`client.queryReceipt(transactionId)`).
-
 - **`TransactionId.generateTransactionId(payer: Address)` takes the wrong type.** A `TransactionId`
   holds an `AccountId` and the payer of a transaction is an account, but the factory takes an `Address`.
   `Address` is the numeric-only form, so an account addressed by EVM address or key alias cannot be a
@@ -674,11 +682,11 @@ test "the basic transaction statuses have the codes of the protocol" {
   Should they be added to the schema?
 
 - **How does a caller learn the status of a rejected transaction?** Neither `submit(client)` (the node
-  rejects the transaction in precheck) nor `Response.queryReceipt()` (the transaction reached consensus
+  rejects the transaction in precheck) nor `Response.queryReceipt(client)` (the transaction reached consensus
   but failed) declares a `@@throws` with an error that carries the `TransactionStatus`. V2 throws
   `PrecheckStatusException` / `ReceiptStatusException` with the status, and callers need it to tell e.g.
   `INSUFFICIENT_PAYER_BALANCE` from `INVALID_SIGNATURE`; the TCK server
   ([`tck-binding.md`](../../docs/tck-binding.md)) must answer such requests with the status name. Does
-  `queryReceipt()` return the receipt of a failed transaction (status other than `SUCCESS`) and only
+  `queryReceipt(client)` return the receipt of a failed transaction (status other than `SUCCESS`) and only
   `submit` throw, or do both throw an error with a `status` attribute? Until `BasicTransactionStatus`
   lists `SUCCESS`, the TCK server compares the receipt status with the HAPI code 22.

@@ -137,7 +137,7 @@ Response<FileCreateReceipt> response = new FileCreateTransaction()
     .fileMemo("greeting")
     .signWithOperatorAndSubmit(client);
 
-Address fileId = response.queryReceipt().fileId;
+Address fileId = response.queryReceipt(client).fileId;
 ```
 
 ### Append (transparently chunked when needed)

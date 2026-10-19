@@ -329,6 +329,57 @@ class TestResolverTest {
     }
 
     @Test
+    void aTypeTokenShouldBindATypeParameterThroughTheSupertypeOfItsType() {
+        // GIVEN a generic method whose type parameter appears in a type argument of the supertype of the given type
+        final String spec = """
+                # Jobs
+
+                ## Description
+
+                Text.
+
+                ## API Schema
+
+                ```
+                namespace jobs
+
+                abstraction Outcome {}
+                Built extends Outcome { @@immutable artifacts: int32 }
+                abstraction Job<$$O extends Outcome> {}
+                Build extends Job<Built> {}
+                Untyped {
+                    @@finalMethod $$O typed<$$O extends Outcome>(job: type<Job<$$O>>)
+                }
+                ```
+
+                ## Default Instances for Testing
+
+                ```
+                instance Untyped = Untyped{}
+                ```
+
+                ## Testing
+
+                ```tests
+                test "typed" {
+                    let outcome = DEFAULT(Untyped).typed(job: Build)
+                    assertEquals(expected: 1, actual: outcome.artifacts)
+                }
+                ```
+
+                ## Questions & Comments
+                """;
+
+        // WHEN
+        final ValidationReport report = new MetaLang().validate(Map.of("jobs.md", spec));
+
+        // THEN Build as Job is Job<Built>, so the call returns a Built
+        assertThat(report.diagnostics()).filteredOn(d -> d.ruleId().startsWith("test.")).isEmpty();
+        final TestDefinition test = LinkedModel.of(report.model()).tests().getFirst();
+        assertThat(assertion(test, 1).arguments().get("actual").type().text()).isEqualTo("int32");
+    }
+
+    @Test
     void variablesShouldResolveWithTheirAttributesAndMethods() {
         final TestDefinition test = tests("""
                 test "variables" {

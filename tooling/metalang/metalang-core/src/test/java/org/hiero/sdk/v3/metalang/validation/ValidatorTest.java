@@ -1028,6 +1028,20 @@ class ValidatorTest {
         }
 
         @Test
+        void shouldRequireFinalMethodOnAGenericMethodAlsoInAFinalType() {
+            // GIVEN a generic instance method of a @@finalType: @@finalMethod is mandatory, not redundant
+            final String schema = """
+                    namespace a
+                    abstraction R {}
+                    @@finalType F { @@finalMethod $$T m<$$T extends R>(t: type<$$T>) }
+                    @@finalType G { $$T m<$$T extends R>(t: type<$$T>) }
+                    """;
+
+            // THEN
+            assertThat(rules(schema)).containsExactly("generic.method-not-final");
+        }
+
+        @Test
         void shouldNotAllowFinalMethodOnFunctionsOrFields() {
             assertThat(rules("namespace a\n@@static @@finalMethod int8 f()\nX { @@finalMethod @@immutable a: int8 }"))
                     .containsExactly("annotation.target", "annotation.target");

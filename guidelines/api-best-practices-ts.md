@@ -172,9 +172,8 @@ value and can be passed around:
 ```ts
 import type { AbstractConstructor } from "@hiero/support";
 
-export function getResponse<ReceiptT extends Receipt>(transactionId: TransactionId,
-    transactionType: AbstractConstructor<Transaction<ReceiptT, any>>,
-    client: HieroClient<NativeTokenUnit>): Response<ReceiptT>;
+// a method of UntypedReceipt
+typed<R extends Receipt>(transactionType: AbstractConstructor<Transaction<R, any>>): R;
 ```
 
 For the primitive types the constructor of the wrapper object is used (`type<string>` → `String`), because that is

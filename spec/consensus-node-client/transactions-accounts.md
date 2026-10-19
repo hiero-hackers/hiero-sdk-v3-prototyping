@@ -281,7 +281,7 @@ Response<TransferReceipt> response = new TransferTransaction()
     ])
     .signWithOperatorAndSubmit(client);
 
-response.queryReceipt();
+response.queryReceipt(client);
 ```
 
 ### Sender is *not* the operator (multi-signature)

@@ -107,30 +107,26 @@ surface (`signableBodies()`, `sign(list<NodeSignature>)`). Still missing:
 | `setRegenerateTransactionId(boolean)` | :x: will NOT land in V3 — see note below (and [`transactions.md`](../spec/consensus-node-client/transactions.md) *Questions & Comments*) |
 | `batchify(Client, Key)` | :white_check_mark: draft — decomposed into `packForBatch(payer, batchKey)` / `signForBatchWithOperator(client, batchKey)` (batchKey a required parameter); see [`transactions-batch.md`](../spec/consensus-node-client/transactions-batch.md) and §1.7 |
 | Jumbo-tx size (HIP-1300): `bodySize`, `bodySizeAllChunks` | :x: |
-| `Response<$$Receipt> getResponse(transactionId, transactionType, client)` (query-by-id for a typed receipt) | :white_check_mark: see note below |
+| `TransactionReceiptQuery` (receipt by id, with duplicates and children) / `TransactionResponse.getReceiptQuery()` | :white_check_mark: `TransactionReceiptQuery` with untyped receipts and `Response{transactionId, transactionType}` for a typed one — see note below |
 | `TransactionRecordQuery.setIncludeChildren(...)` / `setIncludeDuplicates(...)` (child- and duplicate-record retrieval) | :x: not specified — see note below |
 
 Notes on the annotated rows:
 
-- **`Response<$$Receipt> getResponse(transactionId, transactionType, client)` — query a typed
-  receipt by id.** Specified in
-  [`transactions.md`](../spec/consensus-node-client/transactions.md) as a `@@static` factory next to
-  `fromBytes`. Previously typed receipts were only reachable through the `Response<$$Receipt>`
-  returned by `submit()`, with no way to obtain one for an arbitrary `TransactionId`. The schedule
-  service surfaced the gap: a `ScheduleCreate` captures a `Transaction<ANY>` inner transaction, and
-  `scheduledTransactionId` is a plain `TransactionId` with no link to the inner receipt type. The
-  factory takes the **transaction** type token (not the receipt type) so `$$Receipt` is bound and
-  the existing SPI `getTransactionSupport(transactionType)` lookup resolves the parser without a new
-  reverse index; it is placed as a `@@static` in `consensusnode.transactions` (carrying `client` as
-  a parameter) rather than on `HieroClient` to avoid a circular `client` ⇄ `transactions` namespace
-  dependency. It makes no network call — querying is lazy via the returned Response. Benefits every
-  transaction, not just schedules.
+- **Receipt by transaction id.** Specified in
+  [`queries-receipts.md`](../spec/consensus-node-client/queries-receipts.md) and
+  [`transactions.md`](../spec/consensus-node-client/transactions.md) ([ADR-0013](adr/0013-untyped-receipts-for-the-receipt-query-by-id.md)).
+  `TransactionReceiptQuery` reads the receipt by id alone, optionally with the receipts of duplicates
+  and children, and returns `UntypedReceipt`s (every attribute optional, the shape of v2's
+  `TransactionReceipt`); `typed(transactionType)` turns one into the typed receipt. For a known
+  transaction type, `Response` is a plain value created from the id and the type
+  (`new Response<>(scheduledTransactionId, TransferTransaction)`); `queryReceipt(client)` and
+  `queryRecord(client)` take the client. This replaces the former `Transaction.getResponse(transactionId,
+  transactionType, client)` factory, which only existed to bind a client to a `Response`.
 
 - **Child-record / duplicate-record retrieval (`include_child_records`, `includeDuplicates`).**
   HAPI's `TransactionGetRecordQuery` can return, alongside the queried record, (a) the records of
   **child transactions** spawned while handling it and (b) the records of **duplicate** submissions
-  of the same `TransactionId`. V3's record-query surface (`Response.queryRecord()` and
-  `getResponse(...).queryRecord()` in
+  of the same `TransactionId`. V3's record-query surface (`Response.queryRecord(client)` in
   [`transactions.md`](../spec/consensus-node-client/transactions.md)) exposes only the single record —
   there is no opt-in for either. Not yet specified; the gap is one of scope, not a deliberate
   omission. Three points for when it lands:
@@ -199,10 +195,10 @@ Queries:
 | `ContractGetRecords` | Deprecated. |
 | `TokenGetAccountNftInfos` / `TokenGetNftInfos` | Deprecated (bulk NFT queries); use `TokenNftInfoQuery` or the mirror node. |
 | `NetworkGetExecutionTime` | Deprecated. |
-| `TransactionGetFastRecord` | Not deprecated but superfluous in V3 — the normal record path (`Response.queryRecord()` / `getResponse(...)`, §1.9) covers it. |
+| `TransactionGetFastRecord` | Not deprecated but superfluous in V3 — the normal record path (`Response.queryRecord(client)`, §1.9) covers it. |
 
-Note: `TransactionGetReceipt` and `TransactionGetRecord` are covered (via `Response.queryReceipt()` /
-`queryRecord()` and the `getResponse(...)` factory); the only open record-query gap is
+Note: `TransactionGetReceipt` and `TransactionGetRecord` are covered (via `TransactionReceiptQuery`,
+`Response.queryReceipt(client)` and `queryRecord(client)`); the only open record-query gap is
 `include_child_records` / `includeDuplicates`, tracked in §1.9. Two further live-but-unspecified
 queries (`GetBySolidityID`, `GetAccountDetails`) are *not* omissions — each is an open design
 question tracked in §1.8.

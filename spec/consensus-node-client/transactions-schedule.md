@@ -48,7 +48,7 @@ The `scheduled` flag of the inner transaction's `TransactionId` is set by the co
 it materializes the inner transaction; it is never set by the SDK.
 
 To read the outcome of the executed inner transaction, pass the `scheduledTransactionId` from the
-receipt together with the inner transaction's type to `Transaction.getResponse(...)`.
+receipt together with the inner transaction's type to a `Response` and query its receipt.
 
 ## Design Notes
 
@@ -151,7 +151,7 @@ Response<ScheduleCreateReceipt> response = new ScheduleCreateTransaction()
     .adminKey(operatorAuthority)        // optional: lets the operator delete it later
     .signWithOperatorAndSubmit(client);
 
-ScheduleCreateReceipt receipt = response.queryReceipt();
+ScheduleCreateReceipt receipt = response.queryReceipt(client);
 Address scheduleId = receipt.scheduleId;
 TransactionId scheduledTransactionId = receipt.scheduledTransactionId;
 ```
@@ -174,23 +174,21 @@ PackedTransaction<...> packed = new ScheduleSignTransaction()
     .sign(alice);               // Alice's signature is credited to the schedule
 
 Response<ScheduleSignReceipt> response = packed.submit(client);
-TransactionId executed = response.queryReceipt().scheduledTransactionId;
+TransactionId executed = response.queryReceipt(client).scheduledTransactionId;
 ```
 
 ### Read the executed inner transaction's receipt
 
 Once the schedule has executed, the caller only holds `scheduledTransactionId` — never a
-`Response` for the inner transaction. `Transaction.getResponse(...)` reconstructs a typed,
-client-bound `Response` from that id plus the inner transaction's type token, so the inner
-receipt comes back typed (here `TransferReceipt`).
+`Response` for the inner transaction. Create one from that id plus the inner transaction's type
+token, so the inner receipt comes back typed (here `TransferReceipt`).
 
 ```
 TransactionId scheduledTransactionId = ...;   // from ScheduleCreateReceipt / ScheduleSignReceipt
 
-Response<TransferReceipt> innerResponse =
-    Transaction.getResponse(scheduledTransactionId, TransferTransaction, client);
+Response<TransferReceipt> innerResponse = new Response<>(scheduledTransactionId, TransferTransaction);
 
-TransferReceipt innerReceipt = innerResponse.queryReceipt();
+TransferReceipt innerReceipt = innerResponse.queryReceipt(client);
 ```
 
 ### Delete a schedule before it executes
@@ -354,14 +352,13 @@ test "a schedule delete transaction keeps its schedule and survives toBytes and 
   [`transactions-tokens-management.md`](transactions-tokens-management.md)). It will be added once
   the write-side `CustomFee` hierarchy exists.
 
-- **Reading the scheduled execution's outcome** uses the general
-  `Transaction.getResponse(transactionId, transactionType, client)` factory in
-  [`transactions.md`](transactions.md). Because the inner transaction is captured as
-  `Transaction<ANY, ANY>`, `scheduledTransactionId` carries no compile-time link to the inner receipt
-  type; the caller re-supplies the inner transaction's type token to `getResponse(...)` and gets a
-  typed `Response<$$Receipt>` back (the SDK resolves the matching `TransactionSupport`). See the
+- **Reading the scheduled execution's outcome** creates a `Response` from `scheduledTransactionId` and
+  the inner transaction's type (see [`transactions.md`](transactions.md)). Because the inner transaction
+  is captured as `Transaction<ANY, ANY>`, `scheduledTransactionId` carries no compile-time link to the
+  inner receipt type; the caller re-supplies the inner transaction's type token and gets a typed
+  `Response<$$Receipt>` (the SDK resolves the matching `TransactionSupport`). See the
   *Read the executed inner transaction's receipt* example above. This does not work today: `TransactionId` has no
-  `scheduled` flag, so `scheduledTransactionId` equals the id of the schedule transaction and `getResponse(...)` finds
+  `scheduled` flag, so `scheduledTransactionId` equals the id of the schedule transaction and the query finds
   the receipt of the `ScheduleCreate` instead of the inner transaction — see the open item in
   [`ledger.md`](../base/ledger.md).
 

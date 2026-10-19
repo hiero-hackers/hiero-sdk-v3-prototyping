@@ -133,8 +133,8 @@ test "a type without a registered transaction support is rejected" {
 
 ## Questions & Comments
 
-- **Are the built-in transaction types registered as `TransactionSupport`?** `PackedTransaction.fromBytes(...)` and
-  `getResponse(...)` resolve the concrete transaction type at runtime, which suggests that every built-in type
+- **Are the built-in transaction types registered as `TransactionSupport`?** `PackedTransaction.fromBytes(...)`,
+  `Response.queryReceipt(client)` and `UntypedReceipt.typed(...)` resolve the concrete transaction type at runtime, which suggests that every built-in type
   (`AccountCreateTransaction`, `PrngTransaction`, ...) has a `TransactionSupport` that `getTransactionSupport(...)`
   finds. The spec does not say so; if it did, a test could check that the support of each built-in type names that
   type.

@@ -53,7 +53,8 @@ final class GenericMethodCheck implements Check {
             if (isFinal && isStatic) {
                 out.report(Rule.FINAL_METHOD_REDUNDANT, "'" + method.name()
                         + "' is @@static and therefore cannot be overridden anyway", method.location());
-            } else if (isFinal && finalType) {
+            } else if (isFinal && finalType && !method.isGeneric()) {
+                // a generic instance method needs @@finalMethod also in a @@finalType (generic.method-not-final)
                 out.report(Rule.FINAL_METHOD_REDUNDANT, "'" + type.name() + "' cannot be extended, so @@finalMethod on '"
                         + method.name() + "' has no effect", method.location());
             }
