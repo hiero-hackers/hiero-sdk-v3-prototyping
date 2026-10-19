@@ -402,6 +402,10 @@ first one reached is `AccountId.fromString`), and the TCK skips the methods with
 shows `Internal error` for those, so the server logs the exception behind each distinct failure itself and a summary
 of all of them when it stops; `TCK_SERVER_LOG=debug` adds the stack traces (see the README).
 
+The TCK tests that fail because the SDK rejects a value itself (a missing required attribute, a validation
+annotation, a value out of the range of the API type) instead of sending it to the network are listed in
+[`tck-local-checks.md`](tck-local-checks.md), together with the open decision on how to treat them.
+
 A first run against a local Solo network confirms the wiring: the TCK's preflight reaches consensus node and mirror
 node, the server answers, and `setup` fails on the stub.
 
