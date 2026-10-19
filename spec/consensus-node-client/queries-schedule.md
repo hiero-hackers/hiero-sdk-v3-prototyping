@@ -75,7 +75,7 @@ type ScheduleInfo {
     @@immutable scheduledTransactionId: TransactionId      // the id the inner transaction carries when it executes (scheduled flag set)
     @@immutable @@default([]) signers: list<PublicKey>     // public keys whose signatures have been credited so far
     @@immutable @@nullable adminKey: Authority             // may delete the schedule; absent if the schedule is immutable
-    @@immutable @@nullable scheduleMemo: string            // free-form memo on the schedule entity
+    @@immutable @@default("") scheduleMemo: string        // free-form memo on the schedule entity; empty if none
     @@immutable expirationTime: zonedDateTime              // when the schedule expires (the requested long-term expiry, or the default expiry)
     @@immutable @@default(false) waitForExpiry: bool       // if true, execute only at expirationTime even if all signatures are collected earlier (long-term schedule, HIP-423)
     @@immutable @@nullable executionTime: zonedDateTime    // set once the inner transaction has executed
@@ -165,7 +165,7 @@ test "a pending schedule info has these defaults" {
     assertEquals(expected: 0, actual: length(value: info.signers))
     assertFalse(condition: info.waitForExpiry)
     assertNull(actual: info.adminKey)
-    assertNull(actual: info.scheduleMemo)
+    assertEquals(expected: "", actual: info.scheduleMemo)
     assertNull(actual: info.executionTime)
     assertNull(actual: info.deletionTime)
 }

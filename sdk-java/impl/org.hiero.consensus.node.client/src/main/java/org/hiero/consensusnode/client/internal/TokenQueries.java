@@ -99,7 +99,7 @@ public final class TokenQueries {
                 Protobuf.fromProto(info.getTreasury()),
                 supplyType,
                 supplyType == TokenSupplyType.FINITE ? info.getMaxSupply() : null,
-                info.getMemo().isEmpty() ? null : info.getMemo(),
+                info.getMemo(),
                 info.getMetadata().toByteArray(),
                 Protobuf.fromProto(info.getExpiry()),
                 info.hasAutoRenewPeriod() ? Protobuf.fromProto(info.getAutoRenewPeriod()) : null,

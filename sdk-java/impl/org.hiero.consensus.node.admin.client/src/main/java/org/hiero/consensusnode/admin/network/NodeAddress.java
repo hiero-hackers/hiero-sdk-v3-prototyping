@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 /// @param nodeId stable HIP-869 identifier; survives account / endpoint rotation
 /// @param accountId fee account that receives this node's per-transaction share
 /// @param serviceEndpoints public gRPC endpoints (clients submit transactions here)
-/// @param description free-form description of the node (at most 100 UTF-8 bytes)
+/// @param description free-form description of the node (at most 100 UTF-8 bytes); empty if none
 /// @param gossipCaCertificate X.509 DER bytes of the certificate that terminates mutual TLS for gossip
 /// @param grpcCertificateHash SHA-384 of the certificate served on serviceEndpoints; clients pin against this
 /// @param rsaPublicKey legacy gossip RSA public key (DER); only for tooling that still reads the legacy address-book format — prefer gossipCaCertificate and grpcCertificateHash
@@ -21,7 +21,7 @@ public record NodeAddress(
         long nodeId,
         AccountId accountId,
         List<ServiceEndpoint> serviceEndpoints,
-        @Nullable String description,
+        String description,
         byte[] gossipCaCertificate,
         byte[] grpcCertificateHash,
         byte[] rsaPublicKey) {
@@ -33,6 +33,7 @@ public record NodeAddress(
         Objects.requireNonNull(accountId, "accountId must not be null");
         Objects.requireNonNull(serviceEndpoints, "serviceEndpoints must not be null");
         serviceEndpoints = List.copyOf(serviceEndpoints);
+        Objects.requireNonNull(description, "description must not be null");
         Objects.requireNonNull(gossipCaCertificate, "gossipCaCertificate must not be null");
         gossipCaCertificate = gossipCaCertificate.clone();
         Objects.requireNonNull(grpcCertificateHash, "grpcCertificateHash must not be null");
@@ -41,15 +42,14 @@ public record NodeAddress(
         rsaPublicKey = rsaPublicKey.clone();
     }
 
-    /// Creates a new `NodeAddress` with the default value of `serviceEndpoints`.
+    /// Creates a new `NodeAddress` with the default value of `serviceEndpoints`, `description`.
     public NodeAddress(
             final long nodeId,
             final AccountId accountId,
-            final @Nullable String description,
             final byte[] gossipCaCertificate,
             final byte[] grpcCertificateHash,
             final byte[] rsaPublicKey) {
-        this(nodeId, accountId, List.of(), description, gossipCaCertificate, grpcCertificateHash, rsaPublicKey);
+        this(nodeId, accountId, List.of(), "", gossipCaCertificate, grpcCertificateHash, rsaPublicKey);
     }
 
     /// X.509 DER bytes of the certificate that terminates mutual TLS for gossip
@@ -115,7 +115,7 @@ public record NodeAddress(
         private @Nullable Long nodeId;
         private @Nullable AccountId accountId;
         private List<ServiceEndpoint> serviceEndpoints = List.of();
-        private @Nullable String description;
+        private String description = "";
         private byte @Nullable [] gossipCaCertificate;
         private byte @Nullable [] grpcCertificateHash;
         private byte @Nullable [] rsaPublicKey;
@@ -159,11 +159,11 @@ public record NodeAddress(
 
         /// Sets the `description`.
         ///
-        /// free-form description of the node (at most 100 UTF-8 bytes)
+        /// free-form description of the node (at most 100 UTF-8 bytes); empty if none
         ///
         /// @param description the value
         /// @return this builder
-        public Builder description(final @Nullable String description) {
+        public Builder description(final String description) {
             this.description = description;
             return this;
         }

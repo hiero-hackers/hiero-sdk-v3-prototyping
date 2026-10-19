@@ -11,7 +11,7 @@ import org.jspecify.annotations.Nullable;
 
 /// Full topic metadata snapshot. Returned by `TopicInfoQuery`.
 ///
-/// @param topicMemo short human-readable label
+/// @param topicMemo short human-readable label; empty if none
 /// @param runningHash SHA-384 over all submitted messages so far
 /// @param sequenceNumber number of messages submitted so far
 /// @param adminAuthority absent → topic is immutable (no update / delete)
@@ -19,7 +19,7 @@ import org.jspecify.annotations.Nullable;
 /// @param autoRenewAccount pays auto-renewal; if absent, the topic itself pays
 public record TopicInfo(
         Address topicId,
-        @Nullable String topicMemo,
+        String topicMemo,
         byte[] runningHash,
         long sequenceNumber,
         ZonedDateTime expirationTime,
@@ -33,9 +33,23 @@ public record TopicInfo(
     /// @throws NullPointerException if a required value is `null`
     public TopicInfo {
         Objects.requireNonNull(topicId, "topicId must not be null");
+        Objects.requireNonNull(topicMemo, "topicMemo must not be null");
         Objects.requireNonNull(runningHash, "runningHash must not be null");
         runningHash = runningHash.clone();
         Objects.requireNonNull(expirationTime, "expirationTime must not be null");
+    }
+
+    /// Creates a new `TopicInfo` with the default value of `topicMemo`.
+    public TopicInfo(
+            final Address topicId,
+            final byte[] runningHash,
+            final long sequenceNumber,
+            final ZonedDateTime expirationTime,
+            final @Nullable Authority adminAuthority,
+            final @Nullable Authority submitAuthority,
+            final @Nullable Duration autoRenewPeriod,
+            final @Nullable AccountId autoRenewAccount) {
+        this(topicId, "", runningHash, sequenceNumber, expirationTime, adminAuthority, submitAuthority, autoRenewPeriod, autoRenewAccount);
     }
 
     /// SHA-384 over all submitted messages so far
@@ -85,7 +99,7 @@ public record TopicInfo(
     public static final class Builder {
 
         private @Nullable Address topicId;
-        private @Nullable String topicMemo;
+        private String topicMemo = "";
         private byte @Nullable [] runningHash;
         private @Nullable Long sequenceNumber;
         private @Nullable ZonedDateTime expirationTime;
@@ -109,11 +123,11 @@ public record TopicInfo(
 
         /// Sets the `topicMemo`.
         ///
-        /// short human-readable label
+        /// short human-readable label; empty if none
         ///
         /// @param topicMemo the value
         /// @return this builder
-        public Builder topicMemo(final @Nullable String topicMemo) {
+        public Builder topicMemo(final String topicMemo) {
             this.topicMemo = topicMemo;
             return this;
         }

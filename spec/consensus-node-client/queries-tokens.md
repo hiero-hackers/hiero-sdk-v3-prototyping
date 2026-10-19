@@ -62,7 +62,7 @@ type TokenInfo {
     @@immutable treasuryAccountId: AccountId                    // account holding the supply pool
     @@immutable supplyType: TokenSupplyType                     // INFINITE | FINITE
     @@immutable @@nullable maxSupply: int64                     // maximum supply enforced by the network; absent when supplyType is INFINITE
-    @@immutable @@nullable tokenMemo: string                    // short human-readable label
+    @@immutable @@default("") tokenMemo: string                // short human-readable label; empty if none
     @@immutable @@default([]) metadata: bytes                   // opaque token-level metadata (e.g. IPFS CID, HTTPS URL, JSON manifest)
     @@immutable expirationTime: zonedDateTime
     @@immutable @@nullable autoRenewPeriod: seconds
@@ -233,7 +233,7 @@ test "a token info has these defaults" {
     assertEquals(expected: 0, actual: length(value: info.metadata))
     assertFalse(condition: info.deleted)
     assertNull(actual: info.maxSupply)
-    assertNull(actual: info.tokenMemo)
+    assertEquals(expected: "", actual: info.tokenMemo)
     assertNull(actual: info.autoRenewPeriod)
     assertNull(actual: info.autoRenewAccount)
     assertNull(actual: info.adminAuthority)

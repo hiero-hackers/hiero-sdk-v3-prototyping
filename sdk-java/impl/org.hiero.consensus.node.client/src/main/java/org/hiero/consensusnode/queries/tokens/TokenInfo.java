@@ -22,7 +22,7 @@ import org.jspecify.annotations.Nullable;
 /// @param treasuryAccountId account holding the supply pool
 /// @param supplyType INFINITE | FINITE
 /// @param maxSupply maximum supply enforced by the network; absent when supplyType is INFINITE
-/// @param tokenMemo short human-readable label
+/// @param tokenMemo short human-readable label; empty if none
 /// @param metadata opaque token-level metadata (e.g. IPFS CID, HTTPS URL, JSON manifest)
 /// @param autoRenewAccount account paying for auto-renewal; if absent, the token itself pays
 /// @param deleted true if the token has been deleted (other fields reflect its last state)
@@ -47,7 +47,7 @@ public record TokenInfo(
         AccountId treasuryAccountId,
         TokenSupplyType supplyType,
         @Nullable Long maxSupply,
-        @Nullable String tokenMemo,
+        String tokenMemo,
         byte[] metadata,
         ZonedDateTime expirationTime,
         @Nullable Duration autoRenewPeriod,
@@ -82,12 +82,13 @@ public record TokenInfo(
         }
         Objects.requireNonNull(treasuryAccountId, "treasuryAccountId must not be null");
         Objects.requireNonNull(supplyType, "supplyType must not be null");
+        Objects.requireNonNull(tokenMemo, "tokenMemo must not be null");
         Objects.requireNonNull(metadata, "metadata must not be null");
         metadata = metadata.clone();
         Objects.requireNonNull(expirationTime, "expirationTime must not be null");
     }
 
-    /// Creates a new `TokenInfo` with the default value of `decimals`, `metadata`, `deleted`.
+    /// Creates a new `TokenInfo` with the default value of `decimals`, `tokenMemo`, `metadata`, `deleted`.
     public TokenInfo(
             final Address tokenId,
             final TokenType type,
@@ -97,7 +98,6 @@ public record TokenInfo(
             final AccountId treasuryAccountId,
             final TokenSupplyType supplyType,
             final @Nullable Long maxSupply,
-            final @Nullable String tokenMemo,
             final ZonedDateTime expirationTime,
             final @Nullable Duration autoRenewPeriod,
             final @Nullable AccountId autoRenewAccount,
@@ -112,7 +112,7 @@ public record TokenInfo(
             final @Nullable Boolean defaultFreezeStatus,
             final @Nullable Boolean defaultKycStatus,
             final @Nullable Boolean paused) {
-        this(tokenId, type, name, symbol, 0, totalSupply, treasuryAccountId, supplyType, maxSupply, tokenMemo, new byte[0], expirationTime, autoRenewPeriod, autoRenewAccount, false, adminAuthority, supplyAuthority, kycAuthority, freezeAuthority, wipeAuthority, pauseAuthority, feeScheduleAuthority, metadataAuthority, defaultFreezeStatus, defaultKycStatus, paused);
+        this(tokenId, type, name, symbol, 0, totalSupply, treasuryAccountId, supplyType, maxSupply, "", new byte[0], expirationTime, autoRenewPeriod, autoRenewAccount, false, adminAuthority, supplyAuthority, kycAuthority, freezeAuthority, wipeAuthority, pauseAuthority, feeScheduleAuthority, metadataAuthority, defaultFreezeStatus, defaultKycStatus, paused);
     }
 
     /// opaque token-level metadata (e.g. IPFS CID, HTTPS URL, JSON manifest)
@@ -187,7 +187,7 @@ public record TokenInfo(
         private @Nullable AccountId treasuryAccountId;
         private @Nullable TokenSupplyType supplyType;
         private @Nullable Long maxSupply;
-        private @Nullable String tokenMemo;
+        private String tokenMemo = "";
         private byte[] metadata = new byte[0];
         private @Nullable ZonedDateTime expirationTime;
         private @Nullable Duration autoRenewPeriod;
@@ -304,11 +304,11 @@ public record TokenInfo(
 
         /// Sets the `tokenMemo`.
         ///
-        /// short human-readable label
+        /// short human-readable label; empty if none
         ///
         /// @param tokenMemo the value
         /// @return this builder
-        public Builder tokenMemo(final @Nullable String tokenMemo) {
+        public Builder tokenMemo(final String tokenMemo) {
             this.tokenMemo = tokenMemo;
             return this;
         }

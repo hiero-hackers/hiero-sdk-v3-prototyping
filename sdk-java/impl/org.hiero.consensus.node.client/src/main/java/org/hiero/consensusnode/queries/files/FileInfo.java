@@ -12,13 +12,14 @@ import org.jspecify.annotations.Nullable;
 /// @param expirationTime when the file expires
 /// @param deleted true if the file has been deleted
 /// @param authority write-access authorization; absent if the file is immutable
+/// @param fileMemo empty if the file has no memo
 public record FileInfo(
         Address fileId,
         long size,
         ZonedDateTime expirationTime,
         boolean deleted,
         @Nullable Authority authority,
-        @Nullable String fileMemo) {
+        String fileMemo) {
 
     /// Creates a new `FileInfo`.
     ///
@@ -26,6 +27,17 @@ public record FileInfo(
     public FileInfo {
         Objects.requireNonNull(fileId, "fileId must not be null");
         Objects.requireNonNull(expirationTime, "expirationTime must not be null");
+        Objects.requireNonNull(fileMemo, "fileMemo must not be null");
+    }
+
+    /// Creates a new `FileInfo` with the default value of `fileMemo`.
+    public FileInfo(
+            final Address fileId,
+            final long size,
+            final ZonedDateTime expirationTime,
+            final boolean deleted,
+            final @Nullable Authority authority) {
+        this(fileId, size, expirationTime, deleted, authority, "");
     }
 
     /// Returns a builder for a new `FileInfo`.
@@ -47,7 +59,7 @@ public record FileInfo(
         private @Nullable ZonedDateTime expirationTime;
         private @Nullable Boolean deleted;
         private @Nullable Authority authority;
-        private @Nullable String fileMemo;
+        private String fileMemo = "";
 
         private Builder() {
             // created by FileInfo.builder()
@@ -108,9 +120,11 @@ public record FileInfo(
 
         /// Sets the `fileMemo`.
         ///
+        /// empty if the file has no memo
+        ///
         /// @param fileMemo the value
         /// @return this builder
-        public Builder fileMemo(final @Nullable String fileMemo) {
+        public Builder fileMemo(final String fileMemo) {
             this.fileMemo = fileMemo;
             return this;
         }

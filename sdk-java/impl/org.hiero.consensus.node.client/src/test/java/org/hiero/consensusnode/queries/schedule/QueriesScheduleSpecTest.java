@@ -51,13 +51,13 @@ class QueriesScheduleSpecTest {
     @Tag("testId:consensusnode.queries.schedule/a-pending-schedule-info-has-these-defaults")
     void aPendingScheduleInfoHasTheseDefaults() {
         // when
-        final ScheduleInfo info = new ScheduleInfo(defaultAddress(), defaultAccountId(), defaultAccountId(), new PrngTransaction(null), defaultTransactionId(), List.of(), null, null, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), false, null, null);
+        final ScheduleInfo info = new ScheduleInfo(defaultAddress(), defaultAccountId(), defaultAccountId(), new PrngTransaction(null), defaultTransactionId(), List.of(), null, "", ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), false, null, null);
 
         // then
         assertEquals(0L, length(info.signers()));
         assertFalse(info.waitForExpiry());
         assertNull(info.adminKey());
-        assertNull(info.scheduleMemo());
+        assertEquals("", info.scheduleMemo());
         assertNull(info.executionTime());
         assertNull(info.deletionTime());
     }
@@ -72,7 +72,7 @@ class QueriesScheduleSpecTest {
     @Tag("testId:consensusnode.queries.schedule/an-executed-schedule-info-keeps-its-execution-time-and-has-no-deletion-time")
     void anExecutedScheduleInfoKeepsItsExecutionTimeAndHasNoDeletionTime() {
         // when
-        final ScheduleInfo info = new ScheduleInfo(defaultAddress(), defaultAccountId(), defaultAccountId(), new PrngTransaction(null), defaultTransactionId(), List.of(), null, null, SCHEDULE_TEST_TIME(), true, SCHEDULE_TEST_TIME(), null);
+        final ScheduleInfo info = new ScheduleInfo(defaultAddress(), defaultAccountId(), defaultAccountId(), new PrngTransaction(null), defaultTransactionId(), List.of(), null, "", SCHEDULE_TEST_TIME(), true, SCHEDULE_TEST_TIME(), null);
 
         // then
         assertEquals(toZonedDateTime("2019-04-01T22:42:22Z"), info.expirationTime());
@@ -91,7 +91,7 @@ class QueriesScheduleSpecTest {
     @Tag("testId:consensusnode.queries.schedule/a-deleted-schedule-info-keeps-its-deletion-time-and-has-no-execution-time")
     void aDeletedScheduleInfoKeepsItsDeletionTimeAndHasNoExecutionTime() {
         // when
-        final ScheduleInfo info = new ScheduleInfo(defaultAddress(), defaultAccountId(), defaultAccountId(), new PrngTransaction(null), defaultTransactionId(), List.of(), null, null, SCHEDULE_TEST_TIME(), false, null, SCHEDULE_TEST_TIME());
+        final ScheduleInfo info = new ScheduleInfo(defaultAddress(), defaultAccountId(), defaultAccountId(), new PrngTransaction(null), defaultTransactionId(), List.of(), null, "", SCHEDULE_TEST_TIME(), false, null, SCHEDULE_TEST_TIME());
 
         // then
         assertEquals(toZonedDateTime("2019-04-01T22:42:22Z"), info.expirationTime());
@@ -108,7 +108,7 @@ class QueriesScheduleSpecTest {
     @Tag("testId:consensusnode.queries.schedule/a-schedule-info-with-both-an-execution-and-a-deletion-time-is-rejected")
     void aScheduleInfoWithBothAnExecutionAndADeletionTimeIsRejected() {
         // when / then
-        assertThrows(IllegalArgumentException.class, () -> new ScheduleInfo(defaultAddress(), defaultAccountId(), defaultAccountId(), new PrngTransaction(null), defaultTransactionId(), List.of(), null, null, SCHEDULE_TEST_TIME(), false, SCHEDULE_TEST_TIME(), SCHEDULE_TEST_TIME()));
+        assertThrows(IllegalArgumentException.class, () -> new ScheduleInfo(defaultAddress(), defaultAccountId(), defaultAccountId(), new PrngTransaction(null), defaultTransactionId(), List.of(), null, "", SCHEDULE_TEST_TIME(), false, SCHEDULE_TEST_TIME(), SCHEDULE_TEST_TIME()));
     }
 
     private static Address defaultAddress() {

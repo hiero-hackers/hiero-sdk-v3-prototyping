@@ -19,7 +19,6 @@ import org.hiero.consensusnode.admin.network.SemanticVersion;
 import org.hiero.consensusnode.client.internal.Protobuf;
 import org.hiero.consensusnode.client.internal.QueryKind;
 import org.hiero.ledger.AccountId;
-import org.jspecify.annotations.Nullable;
 
 /// The query types of the administration of the network.
 public final class AdminQueries {
@@ -58,14 +57,10 @@ public final class AdminQueries {
                 .setFileNum(ADDRESS_BOOK_FILE).build();
     }
 
-    /// Maps a semantic version message; an empty label is an absent one.
+    /// Maps a semantic version message.
     private static SemanticVersion version(final com.hederahashgraph.api.proto.java.SemanticVersion version) {
         return new SemanticVersion(version.getMajor(), version.getMinor(), version.getPatch(),
-                emptyToNull(version.getPre()), emptyToNull(version.getBuild()));
-    }
-
-    private static @Nullable String emptyToNull(final String value) {
-        return value.isEmpty() ? null : value;
+                version.getPre(), version.getBuild());
     }
 
     /// Parses the content of the address-book file, a `NodeAddressBook` message.
@@ -88,7 +83,7 @@ public final class AdminQueries {
     private static NodeAddress nodeAddress(final com.hederahashgraph.api.proto.java.NodeAddress node) {
         return new NodeAddress(node.getNodeId(), Protobuf.fromProto(node.getNodeAccountId()),
                 node.getServiceEndpointList().stream().map(Endpoints::fromProto).filter(Objects::nonNull).toList(),
-                emptyToNull(node.getDescription()), new byte[0],
+                node.getDescription(), new byte[0],
                 hexOrRaw(node.getNodeCertHash().toString(StandardCharsets.UTF_8), node.getNodeCertHash().toByteArray()),
                 hexOrRaw(node.getRSAPubKey(), node.getRSAPubKey().getBytes(StandardCharsets.UTF_8)));
     }

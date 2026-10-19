@@ -51,7 +51,7 @@ type FileInfo {
     @@immutable expirationTime: zonedDateTime          // when the file expires
     @@immutable deleted: bool                          // true if the file has been deleted
     @@immutable @@nullable authority: Authority            // write-access authorization; absent if the file is immutable
-    @@immutable @@nullable fileMemo: string
+    @@immutable @@default("") fileMemo: string           // empty if the file has no memo
 }
 
 // Paid query for the metadata of a file. Does not return the file's byte content — use
@@ -137,14 +137,14 @@ test "the file queries keep the id of their file" {
 test "a file info of an immutable file without memo has no authority and no memo" {
     // when
     let info = FileInfo{fileId: DEFAULT, size: 0, expirationTime: DEFAULT, deleted: false, authority: null,
-            fileMemo: null}
+            fileMemo: ""}
 
     // then
     assertEquals(expected: DEFAULT(Address), actual: info.fileId)
     assertEquals(expected: 0, actual: info.size)
     assertFalse(condition: info.deleted)
     assertNull(actual: info.authority)
-    assertNull(actual: info.fileMemo)
+    assertEquals(expected: "", actual: info.fileMemo)
 }
 
 // Source: the Java SDK (FileInfoTest, the file info of its fixture): expiration time Instant.ofEpochMilli(3), i.e.
@@ -156,7 +156,7 @@ test "a file info keeps its expiration time" {
 
     // when
     let info = FileInfo{fileId: DEFAULT, size: 0, expirationTime: expirationTime, deleted: false, authority: null,
-            fileMemo: null}
+            fileMemo: ""}
 
     // then
     assertEquals(expected: toZonedDateTime(text: "1970-01-01T00:00:00.003Z"), actual: info.expirationTime)

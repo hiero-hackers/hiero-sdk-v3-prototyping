@@ -18,7 +18,7 @@ class QueriesNetworkSpecTest {
     /// (SemanticVersionUnitTests) SDKs, the example of `SemanticVersion.toString()` in this spec, and examples of
     /// semver.org (items 9 and 10 of the specification).
     private static Map<String, SemanticVersion> SEMANTIC_VERSION_TEXTS() {
-        return Map.of("1.2.3", new SemanticVersion(1, 2, 3, null, null), "3.1.4-15.92", new SemanticVersion(3, 1, 4, "15.92", null), "1.41.1+6535asd", new SemanticVersion(1, 41, 1, null, "6535asd"), "0.1.4-0.9a2+sha.25531c", new SemanticVersion(0, 1, 4, "0.9a2", "sha.25531c"), "0.49.1-rc.1+exp.sha.5114f85", new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85"), "1.0.0-x.7.z.92", new SemanticVersion(1, 0, 0, "x.7.z.92", null), "1.0.0+20130313144700", new SemanticVersion(1, 0, 0, null, "20130313144700"), "1.0.0-beta+exp.sha.5114f85", new SemanticVersion(1, 0, 0, "beta", "exp.sha.5114f85"));
+        return Map.of("1.2.3", new SemanticVersion(1, 2, 3, "", ""), "3.1.4-15.92", new SemanticVersion(3, 1, 4, "15.92", ""), "1.41.1+6535asd", new SemanticVersion(1, 41, 1, "", "6535asd"), "0.1.4-0.9a2+sha.25531c", new SemanticVersion(0, 1, 4, "0.9a2", "sha.25531c"), "0.49.1-rc.1+exp.sha.5114f85", new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85"), "1.0.0-x.7.z.92", new SemanticVersion(1, 0, 0, "x.7.z.92", ""), "1.0.0+20130313144700", new SemanticVersion(1, 0, 0, "", "20130313144700"), "1.0.0-beta+exp.sha.5114f85", new SemanticVersion(1, 0, 0, "beta", "exp.sha.5114f85"));
     }
 
     /// `consensusnode.admin.network/a-semantic-version-is-written-in-its-canonical-semver-form`
@@ -60,17 +60,17 @@ class QueriesNetworkSpecTest {
     /// `consensusnode.admin.network/a-release-version-has-no-labels-and-is-written-as-major-minor-patch`
     ///
     /// Source: the Swift SemanticVersion unit tests (test_ParseMajorMinorPatch, test_ParseZeroMinorPatch: a release has no
-    /// labels); the API schema of this spec (both labels are absent for a release version).
+    /// labels); the API schema of this spec (both labels are empty for a release version).
     @Test
     @DisplayName("a release version has no labels and is written as major.minor.patch")
     @Tag("testId:consensusnode.admin.network/a-release-version-has-no-labels-and-is-written-as-major-minor-patch")
     void aReleaseVersionHasNoLabelsAndIsWrittenAsMajorMinorPatch() {
         // when
-        final SemanticVersion version = new SemanticVersion(0, 2, 0, null, null);
+        final SemanticVersion version = new SemanticVersion(0, 2, 0, "", "");
 
         // then
-        assertNull(version.preReleaseLabel());
-        assertNull(version.buildMetadata());
+        assertEquals("", version.preReleaseLabel());
+        assertEquals("", version.buildMetadata());
         assertEquals("0.2.0", version.toString());
     }
 
@@ -83,7 +83,7 @@ class QueriesNetworkSpecTest {
     @Tag("testId:consensusnode.admin.network/versions-and-version-infos-are-equal-when-all-their-parts-are-equal")
     void versionsAndVersionInfosAreEqualWhenAllTheirPartsAreEqual() {
         // given
-        final SemanticVersion release = new SemanticVersion(0, 49, 1, null, null);
+        final SemanticVersion release = new SemanticVersion(0, 49, 1, "", "");
         final NetworkVersionInfo info = defaultNetworkVersionInfo();
 
         // when
@@ -107,8 +107,8 @@ class QueriesNetworkSpecTest {
     @Tag("testId:consensusnode.admin.network/a-network-version-info-keeps-the-hapi-and-the-services-version")
     void aNetworkVersionInfoKeepsTheHAPIAndTheServicesVersion() {
         // given
-        final SemanticVersion hapi = new SemanticVersion(0, 50, 0, null, null);
-        final SemanticVersion services = new SemanticVersion(0, 50, 3, null, null);
+        final SemanticVersion hapi = new SemanticVersion(0, 50, 0, "", "");
+        final SemanticVersion services = new SemanticVersion(0, 50, 3, "", "");
 
         // when
         final NetworkVersionInfo info = new NetworkVersionInfo(hapi, services);
@@ -149,17 +149,17 @@ class QueriesNetworkSpecTest {
     /// `consensusnode.admin.network/a-node-address-has-no-endpoints-and-no-description-by-default`
     ///
     /// Source: the Python NodeAddress unit test (test_empty_addresses); `@@default([])` of serviceEndpoints and
-    /// `@@nullable` of description.
+    /// `@@default("")` of description.
     @Test
     @DisplayName("a node address has no endpoints and no description by default")
     @Tag("testId:consensusnode.admin.network/a-node-address-has-no-endpoints-and-no-description-by-default")
     void aNodeAddressHasNoEndpointsAndNoDescriptionByDefault() {
         // when
-        final NodeAddress address = new NodeAddress(0L, new AccountId(0L, 0L, "", 3L, null, null), List.of(), null, utf8("gossip CA certificate"), repeat(hex("cd"), 48L), utf8("RSA public key"));
+        final NodeAddress address = new NodeAddress(0L, new AccountId(0L, 0L, "", 3L, null, null), List.of(), "", utf8("gossip CA certificate"), repeat(hex("cd"), 48L), utf8("RSA public key"));
 
         // then
         assertEquals(0L, length(address.serviceEndpoints()));
-        assertNull(address.description());
+        assertEquals("", address.description());
     }
 
     /// `consensusnode.admin.network/an-address-book-keeps-its-nodes-in-order`
@@ -172,7 +172,7 @@ class QueriesNetworkSpecTest {
     void anAddressBookKeepsItsNodesInOrder() {
         // given
         final NodeAddress node0 = defaultNodeAddress();
-        final NodeAddress node1 = new NodeAddress(1L, new AccountId(0L, 0L, "", 4L, null, null), List.of(), null, utf8("gossip CA certificate"), repeat(hex("cd"), 48L), utf8("RSA public key"));
+        final NodeAddress node1 = new NodeAddress(1L, new AccountId(0L, 0L, "", 4L, null, null), List.of(), "", utf8("gossip CA certificate"), repeat(hex("cd"), 48L), utf8("RSA public key"));
 
         // when
         final NodeAddressBook book = new NodeAddressBook(List.of(node0, node1));
@@ -184,7 +184,7 @@ class QueriesNetworkSpecTest {
     }
 
     private static NetworkVersionInfo defaultNetworkVersionInfo() {
-        return new NetworkVersionInfo(defaultSemanticVersion(), new SemanticVersion(0, 49, 1, null, null));
+        return new NetworkVersionInfo(defaultSemanticVersion(), new SemanticVersion(0, 49, 1, "", ""));
     }
 
     private static SemanticVersion defaultSemanticVersion() {

@@ -9,23 +9,31 @@ import org.jspecify.annotations.Nullable;
 /// @param major major version
 /// @param minor minor version
 /// @param patch patch version
-/// @param preReleaseLabel pre-release label such as "rc.1"; absent for a release version
-/// @param buildMetadata build metadata such as "exp.sha.5114f85"; absent if none
-public record SemanticVersion(
-        int major,
-        int minor,
-        int patch,
-        @Nullable String preReleaseLabel,
-        @Nullable String buildMetadata) {
+/// @param preReleaseLabel pre-release label such as "rc.1"; empty for a release version
+/// @param buildMetadata build metadata such as "exp.sha.5114f85"; empty if none
+public record SemanticVersion(int major, int minor, int patch, String preReleaseLabel, String buildMetadata) {
+
+    /// Creates a new `SemanticVersion`.
+    ///
+    /// @throws NullPointerException if a required value is `null`
+    public SemanticVersion {
+        Objects.requireNonNull(preReleaseLabel, "preReleaseLabel must not be null");
+        Objects.requireNonNull(buildMetadata, "buildMetadata must not be null");
+    }
+
+    /// Creates a new `SemanticVersion` with the default value of `preReleaseLabel`, `buildMetadata`.
+    public SemanticVersion(final int major, final int minor, final int patch) {
+        this(major, minor, patch, "", "");
+    }
 
     /// Canonical semver string, e.g. "0.49.1-rc.1+exp.sha.5114f85"
     @Override
     public String toString() {
         final StringBuilder text = new StringBuilder().append(major).append('.').append(minor).append('.').append(patch);
-        if (preReleaseLabel != null && !preReleaseLabel.isEmpty()) {
+        if (!preReleaseLabel.isEmpty()) {
             text.append('-').append(preReleaseLabel);
         }
-        if (buildMetadata != null && !buildMetadata.isEmpty()) {
+        if (!buildMetadata.isEmpty()) {
             text.append('+').append(buildMetadata);
         }
         return text.toString();
@@ -48,8 +56,8 @@ public record SemanticVersion(
         private @Nullable Integer major;
         private @Nullable Integer minor;
         private @Nullable Integer patch;
-        private @Nullable String preReleaseLabel;
-        private @Nullable String buildMetadata;
+        private String preReleaseLabel = "";
+        private String buildMetadata = "";
 
         private Builder() {
             // created by SemanticVersion.builder()
@@ -90,22 +98,22 @@ public record SemanticVersion(
 
         /// Sets the `preReleaseLabel`.
         ///
-        /// pre-release label such as "rc.1"; absent for a release version
+        /// pre-release label such as "rc.1"; empty for a release version
         ///
         /// @param preReleaseLabel the value
         /// @return this builder
-        public Builder preReleaseLabel(final @Nullable String preReleaseLabel) {
+        public Builder preReleaseLabel(final String preReleaseLabel) {
             this.preReleaseLabel = preReleaseLabel;
             return this;
         }
 
         /// Sets the `buildMetadata`.
         ///
-        /// build metadata such as "exp.sha.5114f85"; absent if none
+        /// build metadata such as "exp.sha.5114f85"; empty if none
         ///
         /// @param buildMetadata the value
         /// @return this builder
-        public Builder buildMetadata(final @Nullable String buildMetadata) {
+        public Builder buildMetadata(final String buildMetadata) {
             this.buildMetadata = buildMetadata;
             return this;
         }

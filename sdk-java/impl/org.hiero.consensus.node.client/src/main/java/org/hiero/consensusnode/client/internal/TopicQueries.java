@@ -27,7 +27,7 @@ public final class TopicQueries {
     private static TopicInfo topicInfo(final TopicInfoQuery query, final ConsensusGetTopicInfoResponse response) {
         final ConsensusTopicInfo info = response.getTopicInfo();
         return new TopicInfo(response.hasTopicID() ? Protobuf.fromProto(response.getTopicID()) : query.topicId(),
-                info.getMemo().isEmpty() ? null : info.getMemo(),
+                info.getMemo(),
                 info.getRunningHash().toByteArray(),
                 info.getSequenceNumber(),
                 Protobuf.fromProto(info.getExpirationTime()),

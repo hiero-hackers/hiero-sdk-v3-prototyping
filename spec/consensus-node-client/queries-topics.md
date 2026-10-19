@@ -37,7 +37,7 @@ requires {PaidQuery} from consensusnode.queries
 // Full topic metadata snapshot. Returned by `TopicInfoQuery`.
 type TopicInfo {
     @@immutable topicId: Address
-    @@immutable @@nullable topicMemo: string                  // short human-readable label
+    @@immutable @@default("") topicMemo: string              // short human-readable label; empty if none
     @@immutable runningHash: bytes                            // SHA-384 over all submitted messages so far
     @@immutable sequenceNumber: int64                         // number of messages submitted so far
     @@immutable expirationTime: zonedDateTime
@@ -135,7 +135,7 @@ test "a topic info of a public immutable topic has no authorities" {
     // then
     assertEquals(expected: runningHash, actual: info.runningHash)
     assertEquals(expected: 0, actual: info.sequenceNumber)
-    assertNull(actual: info.topicMemo)
+    assertEquals(expected: "", actual: info.topicMemo)
     assertNull(actual: info.adminAuthority)
     assertNull(actual: info.submitAuthority)
     assertNull(actual: info.autoRenewPeriod)

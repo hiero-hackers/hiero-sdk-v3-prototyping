@@ -59,7 +59,7 @@ type AccountInfo {
     @@immutable @@nullable evmAddress: EvmAddress                     // 20-byte EVM-address alias if assigned
     @@immutable balance: NativeToken<ANY, ANY>
     @@immutable @@nullable authority: Authority
-    @@immutable @@nullable accountMemo: string
+    @@immutable @@default("") accountMemo: string                   // empty if the account has no memo
     @@immutable expirationTime: zonedDateTime
     @@immutable @@nullable autoRenewPeriod: seconds
     @@immutable @@default(0) maxAutomaticTokenAssociations: int32
@@ -245,7 +245,7 @@ test "an account info has these defaults" {
     assertFalse(condition: info.declineStakingReward)
     assertNull(actual: info.evmAddress)
     assertNull(actual: info.authority)
-    assertNull(actual: info.accountMemo)
+    assertEquals(expected: "", actual: info.accountMemo)
     assertNull(actual: info.autoRenewPeriod)
     assertNull(actual: info.stakedAccountId)
     assertNull(actual: info.stakedNodeId)
@@ -356,13 +356,6 @@ test "an account info rejects being staked to an account and to a node" {
   ledger ID, the hbar / token / NFT allowances and the Ethereum nonce. The TCK's `getAccountInfo`
   returns them (see [`tck-binding.md`](../../docs/tck-binding.md)). Are they left out on purpose (e.g. token
   relationships and allowances are read from the mirror node), or should `AccountInfo` add them?
-
-- **An empty memo cannot be told from an absent one.** `AccountInfo.accountMemo` is `@@nullable`, but HAPI returns
-  the memo as a protobuf `string`, which is `""` both when no memo was set and when an empty one was. The Java
-  implementation returns `""` for `AccountInfo` but `null` for the memos of `TokenInfo`, `TopicInfo` and `FileInfo`
-  ([`queries-tokens.md`](queries-tokens.md), [`queries-topics.md`](queries-topics.md),
-  [`queries-files.md`](queries-files.md)) — which is inconsistent. Should the memo fields of the consensus-node infos
-  be non-nullable (empty string when absent), or should `""` always be read as `null`?
 
 - **`AccountBalance.tokenBalances` is always empty.** HAPI deprecated the `tokenBalances` field of
   `CryptoGetAccountBalance` and current networks no longer fill it, so the Java implementation always returns an

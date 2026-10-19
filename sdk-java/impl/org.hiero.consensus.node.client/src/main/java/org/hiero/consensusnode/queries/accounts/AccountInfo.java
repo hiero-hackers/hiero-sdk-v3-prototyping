@@ -12,6 +12,7 @@ import org.jspecify.annotations.Nullable;
 /// Full account state snapshot. Returned by `AccountInfoQuery`.
 ///
 /// @param evmAddress 20-byte EVM-address alias if assigned
+/// @param accountMemo empty if the account has no memo
 /// @param stakedAccountId mutually exclusive with stakedNodeId
 /// @param stakedNodeId mutually exclusive with stakedAccountId
 public record AccountInfo(
@@ -19,7 +20,7 @@ public record AccountInfo(
         @Nullable EvmAddress evmAddress,
         NativeToken<?, ?> balance,
         @Nullable Authority authority,
-        @Nullable String accountMemo,
+        String accountMemo,
         ZonedDateTime expirationTime,
         @Nullable Duration autoRenewPeriod,
         int maxAutomaticTokenAssociations,
@@ -37,24 +38,24 @@ public record AccountInfo(
     public AccountInfo {
         Objects.requireNonNull(accountId, "accountId must not be null");
         Objects.requireNonNull(balance, "balance must not be null");
+        Objects.requireNonNull(accountMemo, "accountMemo must not be null");
         Objects.requireNonNull(expirationTime, "expirationTime must not be null");
         if ((stakedAccountId != null ? 1 : 0) + (stakedNodeId != null ? 1 : 0) > 1) {
             throw new IllegalArgumentException("at most one of stakedAccountId, stakedNodeId may be set");
         }
     }
 
-    /// Creates a new `AccountInfo` with the default value of `maxAutomaticTokenAssociations`, `receiverSignatureRequired`, `ownedNfts`, `deleted`, `declineStakingReward`.
+    /// Creates a new `AccountInfo` with the default value of `accountMemo`, `maxAutomaticTokenAssociations`, `receiverSignatureRequired`, `ownedNfts`, `deleted`, `declineStakingReward`.
     public AccountInfo(
             final AccountId accountId,
             final @Nullable EvmAddress evmAddress,
             final NativeToken<?, ?> balance,
             final @Nullable Authority authority,
-            final @Nullable String accountMemo,
             final ZonedDateTime expirationTime,
             final @Nullable Duration autoRenewPeriod,
             final @Nullable AccountId stakedAccountId,
             final @Nullable Long stakedNodeId) {
-        this(accountId, evmAddress, balance, authority, accountMemo, expirationTime, autoRenewPeriod, 0, false, 0L, false, stakedAccountId, stakedNodeId, false);
+        this(accountId, evmAddress, balance, authority, "", expirationTime, autoRenewPeriod, 0, false, 0L, false, stakedAccountId, stakedNodeId, false);
     }
 
     /// Returns a builder for a new `AccountInfo`.
@@ -75,7 +76,7 @@ public record AccountInfo(
         private @Nullable EvmAddress evmAddress;
         private @Nullable NativeToken<?, ?> balance;
         private @Nullable Authority authority;
-        private @Nullable String accountMemo;
+        private String accountMemo = "";
         private @Nullable ZonedDateTime expirationTime;
         private @Nullable Duration autoRenewPeriod;
         private int maxAutomaticTokenAssociations = 0;
@@ -130,9 +131,11 @@ public record AccountInfo(
 
         /// Sets the `accountMemo`.
         ///
+        /// empty if the account has no memo
+        ///
         /// @param accountMemo the value
         /// @return this builder
-        public Builder accountMemo(final @Nullable String accountMemo) {
+        public Builder accountMemo(final String accountMemo) {
             this.accountMemo = accountMemo;
             return this;
         }

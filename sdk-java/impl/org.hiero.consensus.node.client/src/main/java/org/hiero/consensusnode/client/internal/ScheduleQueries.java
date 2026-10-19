@@ -34,7 +34,7 @@ public final class ScheduleQueries {
                 Protobuf.fromProto(info.getScheduledTransactionID()),
                 signers,
                 info.hasAdminKey() ? Protobuf.fromProto(info.getAdminKey()) : null,
-                info.getMemo().isEmpty() ? null : info.getMemo(),
+                info.getMemo(),
                 Protobuf.fromProto(info.getExpirationTime()),
                 info.getWaitForExpiry(),
                 info.hasExecutionTime() ? Protobuf.fromProto(info.getExecutionTime()) : null,

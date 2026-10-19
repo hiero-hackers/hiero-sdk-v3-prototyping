@@ -29,7 +29,7 @@ class FileInfoTest {
         final ZonedDateTime expirationTime = expirationTimeValue();
         final boolean deleted = deletedValue();
         final @Nullable Authority authority = authorityValue();
-        final @Nullable String fileMemo = fileMemoValue();
+        final String fileMemo = fileMemoValue();
         final FileInfo subject = new FileInfo(fileId, size, expirationTime, deleted, authority, fileMemo);
         assertValue(fileId, subject.fileId());
         assertValue(size, subject.size());
@@ -37,6 +37,14 @@ class FileInfoTest {
         assertValue(deleted, subject.deleted());
         assertValue(authority, subject.authority());
         assertValue(fileMemo, subject.fileMemo());
+    }
+
+    @Test
+    @DisplayName("creates a FileInfo with the default values")
+    @Tag("testId:consensusnode.queries.files.FileInfo/create-with-defaults")
+    void shouldCreateWithTheDefaultValues() {
+        final FileInfo subject = new FileInfo(fileIdValue(), sizeValue(), expirationTimeValue(), deletedValue(), authorityValue());
+        assertValue("", subject.fileMemo());
     }
 
     @Test
@@ -48,7 +56,7 @@ class FileInfoTest {
         final ZonedDateTime expirationTime = expirationTimeValue();
         final boolean deleted = deletedValue();
         final @Nullable Authority authority = authorityValue();
-        final @Nullable String fileMemo = fileMemoValue();
+        final String fileMemo = fileMemoValue();
         final FileInfo subject = FileInfo.builder()
                 .fileId(fileId)
                 .size(size)
@@ -76,7 +84,7 @@ class FileInfoTest {
                 .deleted(deletedValue())
                 .build();
         assertNull(subject.authority());
-        assertNull(subject.fileMemo());
+        assertValue("", subject.fileMemo());
     }
 
     @Test
@@ -116,6 +124,13 @@ class FileInfoTest {
     @Tag("testId:consensusnode.queries.files.FileInfo/expirationTime/rejects-null")
     void shouldRejectNullExpirationTime() {
         assertThrows(NullPointerException.class, () -> new FileInfo(fileIdValue(), sizeValue(), (ZonedDateTime) null, deletedValue(), authorityValue(), fileMemoValue()));
+    }
+
+    @Test
+    @DisplayName("rejects null for fileMemo")
+    @Tag("testId:consensusnode.queries.files.FileInfo/fileMemo/rejects-null")
+    void shouldRejectNullFileMemo() {
+        assertThrows(NullPointerException.class, () -> new FileInfo(fileIdValue(), sizeValue(), expirationTimeValue(), deletedValue(), authorityValue(), (String) null));
     }
 
     private static Address fileIdValue() {

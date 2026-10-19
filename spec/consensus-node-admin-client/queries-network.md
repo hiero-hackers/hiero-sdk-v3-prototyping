@@ -62,8 +62,8 @@ type SemanticVersion {
     @@immutable major: int32                         // major version
     @@immutable minor: int32                         // minor version
     @@immutable patch: int32                         // patch version
-    @@immutable @@nullable preReleaseLabel: string   // pre-release label such as "rc.1"; absent for a release version
-    @@immutable @@nullable buildMetadata: string     // build metadata such as "exp.sha.5114f85"; absent if none
+    @@immutable @@default("") preReleaseLabel: string // pre-release label such as "rc.1"; empty for a release version
+    @@immutable @@default("") buildMetadata: string   // build metadata such as "exp.sha.5114f85"; empty if none
 
     // Canonical semver string, e.g. "0.49.1-rc.1+exp.sha.5114f85"
     string toString()
@@ -88,7 +88,7 @@ type NodeAddress {
     @@immutable nodeId: int64                                // stable HIP-869 identifier; survives account / endpoint rotation
     @@immutable accountId: AccountId                         // fee account that receives this node's per-transaction share
     @@immutable @@default([]) serviceEndpoints: list<ServiceEndpoint>   // public gRPC endpoints (clients submit transactions here)
-    @@immutable @@nullable description: string               // free-form description of the node (at most 100 UTF-8 bytes)
+    @@immutable @@default("") description: string           // free-form description of the node (at most 100 UTF-8 bytes); empty if none
     @@immutable gossipCaCertificate: bytes                   // X.509 DER bytes of the certificate that terminates mutual TLS for gossip
     @@immutable grpcCertificateHash: bytes                   // SHA-384 of the certificate served on serviceEndpoints; clients pin against this
     @@immutable rsaPublicKey: bytes                          // legacy gossip RSA public key (DER); only for tooling that still reads the legacy address-book format — prefer gossipCaCertificate and grpcCertificateHash
@@ -116,7 +116,7 @@ instance SemanticVersion = SemanticVersion{major: 0, minor: 49, patch: 1, preRel
 
 // A network that speaks the protocol revision of the default version and runs a release build of it.
 instance NetworkVersionInfo = NetworkVersionInfo{hapiVersion: DEFAULT,
-        servicesVersion: SemanticVersion{major: 0, minor: 49, patch: 1, preReleaseLabel: null, buildMetadata: null}}
+        servicesVersion: SemanticVersion{major: 0, minor: 49, patch: 1, preReleaseLabel: "", buildMetadata: ""}}
 
 // The consensus node 0.0.3 of a local Solo network, reachable by domain name; the certificate, hash and key bytes are
 // stand-ins, their content does not matter to the type.
@@ -128,15 +128,15 @@ instance NodeAddress = NodeAddress{nodeId: 0, accountId: AccountId{shard: 0, rea
 // (SemanticVersionUnitTests) SDKs, the example of `SemanticVersion.toString()` in this spec, and examples of
 // semver.org (items 9 and 10 of the specification).
 values SEMANTIC_VERSION_TEXTS: map<string, SemanticVersion> = {
-    "1.2.3": SemanticVersion{major: 1, minor: 2, patch: 3, preReleaseLabel: null, buildMetadata: null},
-    "3.1.4-15.92": SemanticVersion{major: 3, minor: 1, patch: 4, preReleaseLabel: "15.92", buildMetadata: null},
-    "1.41.1+6535asd": SemanticVersion{major: 1, minor: 41, patch: 1, preReleaseLabel: null, buildMetadata: "6535asd"},
+    "1.2.3": SemanticVersion{major: 1, minor: 2, patch: 3, preReleaseLabel: "", buildMetadata: ""},
+    "3.1.4-15.92": SemanticVersion{major: 3, minor: 1, patch: 4, preReleaseLabel: "15.92", buildMetadata: ""},
+    "1.41.1+6535asd": SemanticVersion{major: 1, minor: 41, patch: 1, preReleaseLabel: "", buildMetadata: "6535asd"},
     "0.1.4-0.9a2+sha.25531c": SemanticVersion{major: 0, minor: 1, patch: 4, preReleaseLabel: "0.9a2",
             buildMetadata: "sha.25531c"},
     "0.49.1-rc.1+exp.sha.5114f85": SemanticVersion{major: 0, minor: 49, patch: 1, preReleaseLabel: "rc.1",
             buildMetadata: "exp.sha.5114f85"},
-    "1.0.0-x.7.z.92": SemanticVersion{major: 1, minor: 0, patch: 0, preReleaseLabel: "x.7.z.92", buildMetadata: null},
-    "1.0.0+20130313144700": SemanticVersion{major: 1, minor: 0, patch: 0, preReleaseLabel: null,
+    "1.0.0-x.7.z.92": SemanticVersion{major: 1, minor: 0, patch: 0, preReleaseLabel: "x.7.z.92", buildMetadata: ""},
+    "1.0.0+20130313144700": SemanticVersion{major: 1, minor: 0, patch: 0, preReleaseLabel: "",
             buildMetadata: "20130313144700"},
     "1.0.0-beta+exp.sha.5114f85": SemanticVersion{major: 1, minor: 0, patch: 0, preReleaseLabel: "beta",
             buildMetadata: "exp.sha.5114f85"}
@@ -229,15 +229,15 @@ test "a semantic version keeps its numbers and labels" {
 }
 
 // Source: the Swift SemanticVersion unit tests (test_ParseMajorMinorPatch, test_ParseZeroMinorPatch: a release has no
-// labels); the API schema of this spec (both labels are absent for a release version).
+// labels); the API schema of this spec (both labels are empty for a release version).
 @@testId("a-release-version-has-no-labels-and-is-written-as-major-minor-patch")
 test "a release version has no labels and is written as major.minor.patch" {
     // when
-    let version = SemanticVersion{major: 0, minor: 2, patch: 0, preReleaseLabel: null, buildMetadata: null}
+    let version = SemanticVersion{major: 0, minor: 2, patch: 0, preReleaseLabel: "", buildMetadata: ""}
 
     // then
-    assertNull(actual: version.preReleaseLabel)
-    assertNull(actual: version.buildMetadata)
+    assertEquals(expected: "", actual: version.preReleaseLabel)
+    assertEquals(expected: "", actual: version.buildMetadata)
     assertEquals(expected: "0.2.0", actual: version.toString())
 }
 
@@ -246,7 +246,7 @@ test "a release version has no labels and is written as major.minor.patch" {
 @@testId("versions-and-version-infos-are-equal-when-all-their-parts-are-equal")
 test "versions and version infos are equal when all their parts are equal" {
     // given
-    let release = SemanticVersion{major: 0, minor: 49, patch: 1, preReleaseLabel: null, buildMetadata: null}
+    let release = SemanticVersion{major: 0, minor: 49, patch: 1, preReleaseLabel: "", buildMetadata: ""}
     let info = DEFAULT(NetworkVersionInfo)
 
     // when
@@ -266,8 +266,8 @@ test "versions and version infos are equal when all their parts are equal" {
 @@testId("a-network-version-info-keeps-the-hapi-and-the-services-version")
 test "a network version info keeps the HAPI and the services version" {
     // given
-    let hapi = SemanticVersion{major: 0, minor: 50, patch: 0, preReleaseLabel: null, buildMetadata: null}
-    let services = SemanticVersion{major: 0, minor: 50, patch: 3, preReleaseLabel: null, buildMetadata: null}
+    let hapi = SemanticVersion{major: 0, minor: 50, patch: 0, preReleaseLabel: "", buildMetadata: ""}
+    let services = SemanticVersion{major: 0, minor: 50, patch: 3, preReleaseLabel: "", buildMetadata: ""}
 
     // when
     let info = NetworkVersionInfo{hapiVersion: hapi, servicesVersion: services}
@@ -303,7 +303,7 @@ test "a node address keeps all its attributes" {
 }
 
 // Source: the Python NodeAddress unit test (test_empty_addresses); `@@default([])` of serviceEndpoints and
-// `@@nullable` of description.
+// `@@default("")` of description.
 @@testId("a-node-address-has-no-endpoints-and-no-description-by-default")
 test "a node address has no endpoints and no description by default" {
     // when
@@ -313,7 +313,7 @@ test "a node address has no endpoints and no description by default" {
 
     // then
     assertEquals(expected: 0, actual: length(value: address.serviceEndpoints))
-    assertNull(actual: address.description)
+    assertEquals(expected: "", actual: address.description)
 }
 
 // Source: the Java AddressBookResponse test of the TCK and the C++ AddressBookQuery unit tests (an address book is a
@@ -383,8 +383,3 @@ test "an address book keeps its nodes in order" {
   version (free)* says there is no cost discovery. The network bills `getVersionInfo`, though, and the V2 Java
   SDK treats it as a paid query. The Java implementation pays for it without a cost limit and hides the cost
   from the caller. Should it be a `PaidQuery` (and the description and example be corrected)?
-
-- **Absent label: `null` or empty string?** The current SDKs (Rust, Swift, C++, Python) model an absent pre-release
-  label or build metadata as `""`, as the protobuf `SemanticVersion` does. Here they are `@@nullable`, so `""` would be
-  a second way to say "absent" — and semver.org forbids empty identifiers. Whether `@@minLength(1)` should exclude it,
-  and how an SDK maps a `""` read from the network, is open.

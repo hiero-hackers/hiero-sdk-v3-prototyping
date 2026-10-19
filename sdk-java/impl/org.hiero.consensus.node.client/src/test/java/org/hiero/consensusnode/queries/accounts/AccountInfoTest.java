@@ -33,7 +33,7 @@ class AccountInfoTest {
         final @Nullable EvmAddress evmAddress = evmAddressValue();
         final NativeToken<?, ?> balance = balanceValue();
         final @Nullable Authority authority = authorityValue();
-        final @Nullable String accountMemo = accountMemoValue();
+        final String accountMemo = accountMemoValue();
         final ZonedDateTime expirationTime = expirationTimeValue();
         final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
         final int maxAutomaticTokenAssociations = maxAutomaticTokenAssociationsValue();
@@ -64,7 +64,8 @@ class AccountInfoTest {
     @DisplayName("creates an AccountInfo with the default values")
     @Tag("testId:consensusnode.queries.accounts.AccountInfo/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
-        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null);
+        final AccountInfo subject = new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), expirationTimeValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null);
+        assertValue("", subject.accountMemo());
         assertValue(0, subject.maxAutomaticTokenAssociations());
         assertValue(false, subject.receiverSignatureRequired());
         assertValue(0L, subject.ownedNfts());
@@ -80,7 +81,7 @@ class AccountInfoTest {
         final @Nullable EvmAddress evmAddress = evmAddressValue();
         final NativeToken<?, ?> balance = balanceValue();
         final @Nullable Authority authority = authorityValue();
-        final @Nullable String accountMemo = accountMemoValue();
+        final String accountMemo = accountMemoValue();
         final ZonedDateTime expirationTime = expirationTimeValue();
         final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
         final int maxAutomaticTokenAssociations = maxAutomaticTokenAssociationsValue();
@@ -134,7 +135,7 @@ class AccountInfoTest {
                 .build();
         assertNull(subject.evmAddress());
         assertNull(subject.authority());
-        assertNull(subject.accountMemo());
+        assertValue("", subject.accountMemo());
         assertNull(subject.autoRenewPeriod());
         assertValue(0, subject.maxAutomaticTokenAssociations());
         assertValue(false, subject.receiverSignatureRequired());
@@ -164,6 +165,13 @@ class AccountInfoTest {
     @Tag("testId:consensusnode.queries.accounts.AccountInfo/balance/rejects-null")
     void shouldRejectNullBalance() {
         assertThrows(NullPointerException.class, () -> new AccountInfo(accountIdValue(), evmAddressValue(), (NativeToken<?, ?>) null, authorityValue(), accountMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
+    }
+
+    @Test
+    @DisplayName("rejects null for accountMemo")
+    @Tag("testId:consensusnode.queries.accounts.AccountInfo/accountMemo/rejects-null")
+    void shouldRejectNullAccountMemo() {
+        assertThrows(NullPointerException.class, () -> new AccountInfo(accountIdValue(), evmAddressValue(), balanceValue(), authorityValue(), (String) null, expirationTimeValue(), autoRenewPeriodValue(), maxAutomaticTokenAssociationsValue(), receiverSignatureRequiredValue(), ownedNftsValue(), deletedValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue()));
     }
 
     @Test

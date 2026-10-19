@@ -43,12 +43,12 @@ class QueriesTopicsSpecTest {
         final byte[] runningHash = repeat(hex("00"), 48L);
 
         // when
-        final TopicInfo info = new TopicInfo(defaultAddress(), null, runningHash, 0L, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, null, null);
+        final TopicInfo info = new TopicInfo(defaultAddress(), "", runningHash, 0L, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, null, null);
 
         // then
         assertEquals(runningHash, info.runningHash());
         assertEquals(0L, info.sequenceNumber());
-        assertNull(info.topicMemo());
+        assertEquals("", info.topicMemo());
         assertNull(info.adminAuthority());
         assertNull(info.submitAuthority());
         assertNull(info.autoRenewPeriod());
@@ -68,7 +68,7 @@ class QueriesTopicsSpecTest {
         final byte[] runningHash = repeat(hex("00"), 48L);
 
         // when
-        final TopicInfo info = new TopicInfo(defaultAddress(), null, runningHash, 0L, expirationTime, null, null, toSeconds(432000L), null);
+        final TopicInfo info = new TopicInfo(defaultAddress(), "", runningHash, 0L, expirationTime, null, null, toSeconds(432000L), null);
 
         // then
         assertEquals(expirationTime, info.expirationTime());

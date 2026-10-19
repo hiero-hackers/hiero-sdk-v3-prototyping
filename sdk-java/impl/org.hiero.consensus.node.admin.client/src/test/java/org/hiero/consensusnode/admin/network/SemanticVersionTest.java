@@ -3,7 +3,6 @@ package org.hiero.consensusnode.admin.network;
 import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -19,8 +18,8 @@ class SemanticVersionTest {
         final int major = majorValue();
         final int minor = minorValue();
         final int patch = patchValue();
-        final @Nullable String preReleaseLabel = preReleaseLabelValue();
-        final @Nullable String buildMetadata = buildMetadataValue();
+        final String preReleaseLabel = preReleaseLabelValue();
+        final String buildMetadata = buildMetadataValue();
         final SemanticVersion subject = new SemanticVersion(major, minor, patch, preReleaseLabel, buildMetadata);
         assertValue(major, subject.major());
         assertValue(minor, subject.minor());
@@ -30,14 +29,23 @@ class SemanticVersionTest {
     }
 
     @Test
+    @DisplayName("creates a SemanticVersion with the default values")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/create-with-defaults")
+    void shouldCreateWithTheDefaultValues() {
+        final SemanticVersion subject = new SemanticVersion(majorValue(), minorValue(), patchValue());
+        assertValue("", subject.preReleaseLabel());
+        assertValue("", subject.buildMetadata());
+    }
+
+    @Test
     @DisplayName("the builder builds the values of the constructor")
     @Tag("testId:consensusnode.admin.network.SemanticVersion/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final int major = majorValue();
         final int minor = minorValue();
         final int patch = patchValue();
-        final @Nullable String preReleaseLabel = preReleaseLabelValue();
-        final @Nullable String buildMetadata = buildMetadataValue();
+        final String preReleaseLabel = preReleaseLabelValue();
+        final String buildMetadata = buildMetadataValue();
         final SemanticVersion subject = SemanticVersion.builder()
                 .major(major)
                 .minor(minor)
@@ -61,8 +69,8 @@ class SemanticVersionTest {
                 .minor(minorValue())
                 .patch(patchValue())
                 .build();
-        assertNull(subject.preReleaseLabel());
-        assertNull(subject.buildMetadata());
+        assertValue("", subject.preReleaseLabel());
+        assertValue("", subject.buildMetadata());
     }
 
     @Test
@@ -124,6 +132,20 @@ class SemanticVersionTest {
         final int value = 2147483647;
         final SemanticVersion subject = new SemanticVersion(majorValue(), minorValue(), value, preReleaseLabelValue(), buildMetadataValue());
         assertValue(value, subject.patch());
+    }
+
+    @Test
+    @DisplayName("rejects null for preReleaseLabel")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/preReleaseLabel/rejects-null")
+    void shouldRejectNullPreReleaseLabel() {
+        assertThrows(NullPointerException.class, () -> new SemanticVersion(majorValue(), minorValue(), patchValue(), (String) null, buildMetadataValue()));
+    }
+
+    @Test
+    @DisplayName("rejects null for buildMetadata")
+    @Tag("testId:consensusnode.admin.network.SemanticVersion/buildMetadata/rejects-null")
+    void shouldRejectNullBuildMetadata() {
+        assertThrows(NullPointerException.class, () -> new SemanticVersion(majorValue(), minorValue(), patchValue(), preReleaseLabelValue(), (String) null));
     }
 
     @Test

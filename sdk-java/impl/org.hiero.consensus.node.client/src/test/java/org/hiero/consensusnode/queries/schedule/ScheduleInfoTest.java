@@ -45,7 +45,7 @@ class ScheduleInfoTest {
         final TransactionId scheduledTransactionId = scheduledTransactionIdValue();
         final List<PublicKey> signers = signersValue();
         final @Nullable Authority adminKey = adminKeyValue();
-        final @Nullable String scheduleMemo = scheduleMemoValue();
+        final String scheduleMemo = scheduleMemoValue();
         final ZonedDateTime expirationTime = expirationTimeValue();
         final boolean waitForExpiry = waitForExpiryValue();
         final @Nullable ZonedDateTime executionTime = executionTimeValue();
@@ -69,8 +69,9 @@ class ScheduleInfoTest {
     @DisplayName("creates a ScheduleInfo with the default values")
     @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
-        final ScheduleInfo subject = new ScheduleInfo(scheduleIdValue(), creatorAccountIdValue(), payerAccountIdValue(), scheduledTransactionValue(), scheduledTransactionIdValue(), adminKeyValue(), scheduleMemoValue(), expirationTimeValue(), executionTimeValue(), (ZonedDateTime) null);
+        final ScheduleInfo subject = new ScheduleInfo(scheduleIdValue(), creatorAccountIdValue(), payerAccountIdValue(), scheduledTransactionValue(), scheduledTransactionIdValue(), adminKeyValue(), expirationTimeValue(), executionTimeValue(), (ZonedDateTime) null);
         assertValue(List.of(), subject.signers());
+        assertValue("", subject.scheduleMemo());
         assertValue(false, subject.waitForExpiry());
     }
 
@@ -85,7 +86,7 @@ class ScheduleInfoTest {
         final TransactionId scheduledTransactionId = scheduledTransactionIdValue();
         final List<PublicKey> signers = signersValue();
         final @Nullable Authority adminKey = adminKeyValue();
-        final @Nullable String scheduleMemo = scheduleMemoValue();
+        final String scheduleMemo = scheduleMemoValue();
         final ZonedDateTime expirationTime = expirationTimeValue();
         final boolean waitForExpiry = waitForExpiryValue();
         final @Nullable ZonedDateTime executionTime = executionTimeValue();
@@ -133,7 +134,7 @@ class ScheduleInfoTest {
                 .build();
         assertValue(List.of(), subject.signers());
         assertNull(subject.adminKey());
-        assertNull(subject.scheduleMemo());
+        assertValue("", subject.scheduleMemo());
         assertValue(false, subject.waitForExpiry());
         assertValue(executionTimeValue(), subject.executionTime());
         assertNull(subject.deletionTime());
@@ -198,6 +199,13 @@ class ScheduleInfoTest {
         value.clear();
         assertValue(expected, subject.signers());
         assertThrows(UnsupportedOperationException.class, () -> Objects.requireNonNull(subject.signers()).clear());
+    }
+
+    @Test
+    @DisplayName("rejects null for scheduleMemo")
+    @Tag("testId:consensusnode.queries.schedule.ScheduleInfo/scheduleMemo/rejects-null")
+    void shouldRejectNullScheduleMemo() {
+        assertThrows(NullPointerException.class, () -> new ScheduleInfo(scheduleIdValue(), creatorAccountIdValue(), payerAccountIdValue(), scheduledTransactionValue(), scheduledTransactionIdValue(), signersValue(), adminKeyValue(), (String) null, expirationTimeValue(), waitForExpiryValue(), executionTimeValue(), (ZonedDateTime) null));
     }
 
     @Test

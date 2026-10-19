@@ -37,7 +37,7 @@ class TokenInfoTest {
         final AccountId treasuryAccountId = treasuryAccountIdValue();
         final TokenSupplyType supplyType = supplyTypeValue();
         final @Nullable Long maxSupply = maxSupplyValue();
-        final @Nullable String tokenMemo = tokenMemoValue();
+        final String tokenMemo = tokenMemoValue();
         final byte[] metadata = metadataValue();
         final ZonedDateTime expirationTime = expirationTimeValue();
         final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
@@ -87,8 +87,9 @@ class TokenInfoTest {
     @DisplayName("creates a TokenInfo with the default values")
     @Tag("testId:consensusnode.queries.tokens.TokenInfo/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
-        final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), tokenMemoValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
+        final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
         assertValue(0, subject.decimals());
+        assertValue("", subject.tokenMemo());
         assertValue(new byte[0], subject.metadata());
         assertValue(false, subject.deleted());
     }
@@ -106,7 +107,7 @@ class TokenInfoTest {
         final AccountId treasuryAccountId = treasuryAccountIdValue();
         final TokenSupplyType supplyType = supplyTypeValue();
         final @Nullable Long maxSupply = maxSupplyValue();
-        final @Nullable String tokenMemo = tokenMemoValue();
+        final String tokenMemo = tokenMemoValue();
         final byte[] metadata = metadataValue();
         final ZonedDateTime expirationTime = expirationTimeValue();
         final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
@@ -195,7 +196,7 @@ class TokenInfoTest {
                 .build();
         assertValue(0, subject.decimals());
         assertNull(subject.maxSupply());
-        assertNull(subject.tokenMemo());
+        assertValue("", subject.tokenMemo());
         assertValue(new byte[0], subject.metadata());
         assertNull(subject.autoRenewPeriod());
         assertNull(subject.autoRenewAccount());
@@ -346,6 +347,13 @@ class TokenInfoTest {
         final @Nullable Long value = 9223372036854775807L;
         final TokenInfo subject = new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), value, tokenMemoValue(), metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue());
         assertValue(value, subject.maxSupply());
+    }
+
+    @Test
+    @DisplayName("rejects null for tokenMemo")
+    @Tag("testId:consensusnode.queries.tokens.TokenInfo/tokenMemo/rejects-null")
+    void shouldRejectNullTokenMemo() {
+        assertThrows(NullPointerException.class, () -> new TokenInfo(tokenIdValue(), typeValue(), nameValue(), symbolValue(), decimalsValue(), totalSupplyValue(), treasuryAccountIdValue(), supplyTypeValue(), maxSupplyValue(), (String) null, metadataValue(), expirationTimeValue(), autoRenewPeriodValue(), autoRenewAccountValue(), deletedValue(), adminAuthorityValue(), supplyAuthorityValue(), kycAuthorityValue(), freezeAuthorityValue(), wipeAuthorityValue(), pauseAuthorityValue(), feeScheduleAuthorityValue(), metadataAuthorityValue(), defaultFreezeStatusValue(), defaultKycStatusValue(), pausedValue()));
     }
 
     @Test

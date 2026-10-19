@@ -27,7 +27,7 @@ class TopicInfoTest {
     @Tag("testId:consensusnode.queries.topics.TopicInfo/create")
     void shouldCreateAndReturnTheValues() {
         final Address topicId = topicIdValue();
-        final @Nullable String topicMemo = topicMemoValue();
+        final String topicMemo = topicMemoValue();
         final byte[] runningHash = runningHashValue();
         final long sequenceNumber = sequenceNumberValue();
         final ZonedDateTime expirationTime = expirationTimeValue();
@@ -48,11 +48,19 @@ class TopicInfoTest {
     }
 
     @Test
+    @DisplayName("creates a TopicInfo with the default values")
+    @Tag("testId:consensusnode.queries.topics.TopicInfo/create-with-defaults")
+    void shouldCreateWithTheDefaultValues() {
+        final TopicInfo subject = new TopicInfo(topicIdValue(), runningHashValue(), sequenceNumberValue(), expirationTimeValue(), adminAuthorityValue(), submitAuthorityValue(), autoRenewPeriodValue(), autoRenewAccountValue());
+        assertValue("", subject.topicMemo());
+    }
+
+    @Test
     @DisplayName("the builder builds the values of the constructor")
     @Tag("testId:consensusnode.queries.topics.TopicInfo/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final Address topicId = topicIdValue();
-        final @Nullable String topicMemo = topicMemoValue();
+        final String topicMemo = topicMemoValue();
         final byte[] runningHash = runningHashValue();
         final long sequenceNumber = sequenceNumberValue();
         final ZonedDateTime expirationTime = expirationTimeValue();
@@ -92,7 +100,7 @@ class TopicInfoTest {
                 .sequenceNumber(sequenceNumberValue())
                 .expirationTime(expirationTimeValue())
                 .build();
-        assertNull(subject.topicMemo());
+        assertValue("", subject.topicMemo());
         assertNull(subject.adminAuthority());
         assertNull(subject.submitAuthority());
         assertNull(subject.autoRenewPeriod());
@@ -111,6 +119,13 @@ class TopicInfoTest {
     @Tag("testId:consensusnode.queries.topics.TopicInfo/topicId/rejects-null")
     void shouldRejectNullTopicId() {
         assertThrows(NullPointerException.class, () -> new TopicInfo((Address) null, topicMemoValue(), runningHashValue(), sequenceNumberValue(), expirationTimeValue(), adminAuthorityValue(), submitAuthorityValue(), autoRenewPeriodValue(), autoRenewAccountValue()));
+    }
+
+    @Test
+    @DisplayName("rejects null for topicMemo")
+    @Tag("testId:consensusnode.queries.topics.TopicInfo/topicMemo/rejects-null")
+    void shouldRejectNullTopicMemo() {
+        assertThrows(NullPointerException.class, () -> new TopicInfo(topicIdValue(), (String) null, runningHashValue(), sequenceNumberValue(), expirationTimeValue(), adminAuthorityValue(), submitAuthorityValue(), autoRenewPeriodValue(), autoRenewAccountValue()));
     }
 
     @Test

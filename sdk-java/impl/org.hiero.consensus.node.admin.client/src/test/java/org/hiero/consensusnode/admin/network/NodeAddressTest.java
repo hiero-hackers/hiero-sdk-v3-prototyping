@@ -9,7 +9,6 @@ import java.util.Objects;
 import org.hiero.consensusnode.admin.nodes.ServiceEndpoint;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.IpAddress;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -25,7 +24,7 @@ class NodeAddressTest {
         final long nodeId = nodeIdValue();
         final AccountId accountId = accountIdValue();
         final List<ServiceEndpoint> serviceEndpoints = serviceEndpointsValue();
-        final @Nullable String description = descriptionValue();
+        final String description = descriptionValue();
         final byte[] gossipCaCertificate = gossipCaCertificateValue();
         final byte[] grpcCertificateHash = grpcCertificateHashValue();
         final byte[] rsaPublicKey = rsaPublicKeyValue();
@@ -43,8 +42,9 @@ class NodeAddressTest {
     @DisplayName("creates a NodeAddress with the default values")
     @Tag("testId:consensusnode.admin.network.NodeAddress/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
-        final NodeAddress subject = new NodeAddress(nodeIdValue(), accountIdValue(), descriptionValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), rsaPublicKeyValue());
+        final NodeAddress subject = new NodeAddress(nodeIdValue(), accountIdValue(), gossipCaCertificateValue(), grpcCertificateHashValue(), rsaPublicKeyValue());
         assertValue(List.of(), subject.serviceEndpoints());
+        assertValue("", subject.description());
     }
 
     @Test
@@ -54,7 +54,7 @@ class NodeAddressTest {
         final long nodeId = nodeIdValue();
         final AccountId accountId = accountIdValue();
         final List<ServiceEndpoint> serviceEndpoints = serviceEndpointsValue();
-        final @Nullable String description = descriptionValue();
+        final String description = descriptionValue();
         final byte[] gossipCaCertificate = gossipCaCertificateValue();
         final byte[] grpcCertificateHash = grpcCertificateHashValue();
         final byte[] rsaPublicKey = rsaPublicKeyValue();
@@ -88,7 +88,7 @@ class NodeAddressTest {
                 .rsaPublicKey(rsaPublicKeyValue())
                 .build();
         assertValue(List.of(), subject.serviceEndpoints());
-        assertNull(subject.description());
+        assertValue("", subject.description());
     }
 
     @Test
@@ -140,6 +140,13 @@ class NodeAddressTest {
         value.clear();
         assertValue(expected, subject.serviceEndpoints());
         assertThrows(UnsupportedOperationException.class, () -> Objects.requireNonNull(subject.serviceEndpoints()).clear());
+    }
+
+    @Test
+    @DisplayName("rejects null for description")
+    @Tag("testId:consensusnode.admin.network.NodeAddress/description/rejects-null")
+    void shouldRejectNullDescription() {
+        assertThrows(NullPointerException.class, () -> new NodeAddress(nodeIdValue(), accountIdValue(), serviceEndpointsValue(), (String) null, gossipCaCertificateValue(), grpcCertificateHashValue(), rsaPublicKeyValue()));
     }
 
     @Test

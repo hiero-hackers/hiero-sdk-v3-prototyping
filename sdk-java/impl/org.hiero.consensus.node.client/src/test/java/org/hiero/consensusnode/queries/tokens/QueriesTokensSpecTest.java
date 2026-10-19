@@ -71,14 +71,14 @@ class QueriesTokensSpecTest {
     @Tag("testId:consensusnode.queries.tokens/a-token-info-has-these-defaults")
     void aTokenInfoHasTheseDefaults() {
         // when
-        final TokenInfo info = new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, "ffff", "F", 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, null, new byte[0], ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, false, null, null, null, null, null, null, null, null, null, null, null);
+        final TokenInfo info = new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, "ffff", "F", 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, "", new byte[0], ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, false, null, null, null, null, null, null, null, null, null, null, null);
 
         // then
         assertEquals(0, info.decimals());
         assertEquals(0L, length(info.metadata()));
         assertFalse(info.deleted());
         assertNull(info.maxSupply());
-        assertNull(info.tokenMemo());
+        assertEquals("", info.tokenMemo());
         assertNull(info.autoRenewPeriod());
         assertNull(info.autoRenewAccount());
         assertNull(info.adminAuthority());
@@ -105,7 +105,7 @@ class QueriesTokensSpecTest {
         final String longest = repeat("a", 100L);
 
         // when
-        final TokenInfo info = new TokenInfo(defaultAddress(), TokenType.NON_FUNGIBLE_UNIQUE, longest, longest, 0, 0L, defaultAccountId(), TokenSupplyType.INFINITE, null, null, new byte[0], ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, false, null, null, null, null, null, null, null, null, null, null, null);
+        final TokenInfo info = new TokenInfo(defaultAddress(), TokenType.NON_FUNGIBLE_UNIQUE, longest, longest, 0, 0L, defaultAccountId(), TokenSupplyType.INFINITE, null, "", new byte[0], ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, false, null, null, null, null, null, null, null, null, null, null, null);
 
         // then
         assertEquals(longest, info.name());
@@ -138,7 +138,7 @@ class QueriesTokensSpecTest {
     @Tag("testId:consensusnode.queries.tokens/a-token-info-keeps-its-expiration-time-and-auto-renew-period")
     void aTokenInfoKeepsItsExpirationTimeAndAutoRenewPeriod() {
         // when
-        final TokenInfo info = new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, "ffff", "F", 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, null, new byte[0], TOKEN_TEST_TIME(), toSeconds(36000L), defaultAccountId(), false, null, null, null, null, null, null, null, null, null, null, null);
+        final TokenInfo info = new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, "ffff", "F", 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, "", new byte[0], TOKEN_TEST_TIME(), toSeconds(36000L), defaultAccountId(), false, null, null, null, null, null, null, null, null, null, null, null);
 
         // then
         assertEquals(toZonedDateTime("2019-04-01T22:42:22Z"), info.expirationTime());
@@ -169,7 +169,7 @@ class QueriesTokensSpecTest {
     @Tag("testId:consensusnode.queries.tokens/a-token-info-with-a-name-of-101-characters-is-rejected")
     void aTokenInfoWithANameOf101CharactersIsRejected() {
         // when / then
-        assertThrows(IllegalArgumentException.class, () -> new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, repeat("a", 101L), "F", 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, null, new byte[0], ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, false, null, null, null, null, null, null, null, null, null, null, null));
+        assertThrows(IllegalArgumentException.class, () -> new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, repeat("a", 101L), "F", 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, "", new byte[0], ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, false, null, null, null, null, null, null, null, null, null, null, null));
     }
 
     /// `consensusnode.queries.tokens/a-token-info-with-a-symbol-of-101-characters-is-rejected`
@@ -180,7 +180,7 @@ class QueriesTokensSpecTest {
     @Tag("testId:consensusnode.queries.tokens/a-token-info-with-a-symbol-of-101-characters-is-rejected")
     void aTokenInfoWithASymbolOf101CharactersIsRejected() {
         // when / then
-        assertThrows(IllegalArgumentException.class, () -> new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, "ffff", repeat("a", 101L), 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, null, new byte[0], ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, false, null, null, null, null, null, null, null, null, null, null, null));
+        assertThrows(IllegalArgumentException.class, () -> new TokenInfo(defaultAddress(), TokenType.FUNGIBLE_COMMON, "ffff", repeat("a", 101L), 0, 1000L, defaultAccountId(), TokenSupplyType.INFINITE, null, "", new byte[0], ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, null, false, null, null, null, null, null, null, null, null, null, null, null));
     }
 
     /// `consensusnode.queries.tokens/an-nft-info-query-rejects-serial-0`

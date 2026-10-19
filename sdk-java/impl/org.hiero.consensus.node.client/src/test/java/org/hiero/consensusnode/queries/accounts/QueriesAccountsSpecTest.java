@@ -87,7 +87,7 @@ class QueriesAccountsSpecTest {
     @Tag("testId:consensusnode.queries.accounts/an-account-info-has-these-defaults")
     void anAccountInfoHasTheseDefaults() {
         // when
-        final AccountInfo info = new AccountInfo(defaultAccountId(), null, defaultHbar(), null, null, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, 0, false, 0L, false, null, null, false);
+        final AccountInfo info = new AccountInfo(defaultAccountId(), null, defaultHbar(), null, "", ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, 0, false, 0L, false, null, null, false);
 
         // then
         assertEquals(0, info.maxAutomaticTokenAssociations());
@@ -97,7 +97,7 @@ class QueriesAccountsSpecTest {
         assertFalse(info.declineStakingReward());
         assertNull(info.evmAddress());
         assertNull(info.authority());
-        assertNull(info.accountMemo());
+        assertEquals("", info.accountMemo());
         assertNull(info.autoRenewPeriod());
         assertNull(info.stakedAccountId());
         assertNull(info.stakedNodeId());
@@ -116,7 +116,7 @@ class QueriesAccountsSpecTest {
         final Duration autoRenewPeriod = toSeconds(604800L);
 
         // when
-        final AccountInfo info = new AccountInfo(defaultAccountId(), null, defaultHbar(), null, null, expirationTime, autoRenewPeriod, 0, false, 0L, false, null, null, false);
+        final AccountInfo info = new AccountInfo(defaultAccountId(), null, defaultHbar(), null, "", expirationTime, autoRenewPeriod, 0, false, 0L, false, null, null, false);
 
         // then
         assertEquals(expirationTime, info.expirationTime());
@@ -172,7 +172,7 @@ class QueriesAccountsSpecTest {
     @Tag("testId:consensusnode.queries.accounts/an-account-info-rejects-being-staked-to-an-account-and-to-a-node")
     void anAccountInfoRejectsBeingStakedToAnAccountAndToANode() {
         // when / then
-        assertThrows(IllegalArgumentException.class, () -> new AccountInfo(defaultAccountId(), null, defaultHbar(), null, null, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, 0, false, 0L, false, AccountId.fromString("0.0.3"), 4L, false));
+        assertThrows(IllegalArgumentException.class, () -> new AccountInfo(defaultAccountId(), null, defaultHbar(), null, "", ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null, 0, false, 0L, false, AccountId.fromString("0.0.3"), 4L, false));
     }
 
     private static AccountId defaultAccountId() {

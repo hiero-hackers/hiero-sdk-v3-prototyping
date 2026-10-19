@@ -41,6 +41,6 @@ public final class FileQueries {
         return new FileInfo(Protobuf.fromProto(info.getFileID()), info.getSize(),
                 Protobuf.fromProto(info.getExpirationTime()), info.getDeleted(),
                 info.hasKeys() ? FileKinds.fromKeyList(info.getKeys()) : null,
-                info.getMemo().isEmpty() ? null : info.getMemo());
+                info.getMemo());
     }
 }

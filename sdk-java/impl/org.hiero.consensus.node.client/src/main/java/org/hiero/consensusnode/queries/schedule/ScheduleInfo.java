@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
 /// @param scheduledTransactionId the id the inner transaction carries when it executes (scheduled flag set)
 /// @param signers public keys whose signatures have been credited so far
 /// @param adminKey may delete the schedule; absent if the schedule is immutable
-/// @param scheduleMemo free-form memo on the schedule entity
+/// @param scheduleMemo free-form memo on the schedule entity; empty if none
 /// @param expirationTime when the schedule expires (the requested long-term expiry, or the default expiry)
 /// @param waitForExpiry if true, execute only at expirationTime even if all signatures are collected earlier (long-term schedule, HIP-423)
 /// @param executionTime set once the inner transaction has executed
@@ -34,7 +34,7 @@ public record ScheduleInfo(
         TransactionId scheduledTransactionId,
         List<PublicKey> signers,
         @Nullable Authority adminKey,
-        @Nullable String scheduleMemo,
+        String scheduleMemo,
         ZonedDateTime expirationTime,
         boolean waitForExpiry,
         @Nullable ZonedDateTime executionTime,
@@ -52,13 +52,14 @@ public record ScheduleInfo(
         Objects.requireNonNull(scheduledTransactionId, "scheduledTransactionId must not be null");
         Objects.requireNonNull(signers, "signers must not be null");
         signers = List.copyOf(signers);
+        Objects.requireNonNull(scheduleMemo, "scheduleMemo must not be null");
         Objects.requireNonNull(expirationTime, "expirationTime must not be null");
         if ((executionTime != null ? 1 : 0) + (deletionTime != null ? 1 : 0) > 1) {
             throw new IllegalArgumentException("at most one of executionTime, deletionTime may be set");
         }
     }
 
-    /// Creates a new `ScheduleInfo` with the default value of `signers`, `waitForExpiry`.
+    /// Creates a new `ScheduleInfo` with the default value of `signers`, `scheduleMemo`, `waitForExpiry`.
     public ScheduleInfo(
             final Address scheduleId,
             final AccountId creatorAccountId,
@@ -66,11 +67,10 @@ public record ScheduleInfo(
             final Transaction<?, ?> scheduledTransaction,
             final TransactionId scheduledTransactionId,
             final @Nullable Authority adminKey,
-            final @Nullable String scheduleMemo,
             final ZonedDateTime expirationTime,
             final @Nullable ZonedDateTime executionTime,
             final @Nullable ZonedDateTime deletionTime) {
-        this(scheduleId, creatorAccountId, payerAccountId, scheduledTransaction, scheduledTransactionId, List.of(), adminKey, scheduleMemo, expirationTime, false, executionTime, deletionTime);
+        this(scheduleId, creatorAccountId, payerAccountId, scheduledTransaction, scheduledTransactionId, List.of(), adminKey, "", expirationTime, false, executionTime, deletionTime);
     }
 
     /// Returns a builder for a new `ScheduleInfo`.
@@ -94,7 +94,7 @@ public record ScheduleInfo(
         private @Nullable TransactionId scheduledTransactionId;
         private List<PublicKey> signers = List.of();
         private @Nullable Authority adminKey;
-        private @Nullable String scheduleMemo;
+        private String scheduleMemo = "";
         private @Nullable ZonedDateTime expirationTime;
         private boolean waitForExpiry = false;
         private @Nullable ZonedDateTime executionTime;
@@ -183,11 +183,11 @@ public record ScheduleInfo(
 
         /// Sets the `scheduleMemo`.
         ///
-        /// free-form memo on the schedule entity
+        /// free-form memo on the schedule entity; empty if none
         ///
         /// @param scheduleMemo the value
         /// @return this builder
-        public Builder scheduleMemo(final @Nullable String scheduleMemo) {
+        public Builder scheduleMemo(final String scheduleMemo) {
             this.scheduleMemo = scheduleMemo;
             return this;
         }

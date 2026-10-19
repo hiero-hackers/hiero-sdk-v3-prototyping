@@ -42,14 +42,14 @@ class QueriesFilesSpecTest {
     @Tag("testId:consensusnode.queries.files/a-file-info-of-an-immutable-file-without-memo-has-no-authority-and-no-memo")
     void aFileInfoOfAnImmutableFileWithoutMemoHasNoAuthorityAndNoMemo() {
         // when
-        final FileInfo info = new FileInfo(defaultAddress(), 0L, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), false, null, null);
+        final FileInfo info = new FileInfo(defaultAddress(), 0L, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), false, null, "");
 
         // then
         assertEquals(defaultAddress(), info.fileId());
         assertEquals(0L, info.size());
         assertFalse(info.deleted());
         assertNull(info.authority());
-        assertNull(info.fileMemo());
+        assertEquals("", info.fileMemo());
     }
 
     /// `consensusnode.queries.files/a-file-info-keeps-its-expiration-time`
@@ -64,7 +64,7 @@ class QueriesFilesSpecTest {
         final ZonedDateTime expirationTime = toZonedDateTime("1970-01-01T00:00:00.003Z");
 
         // when
-        final FileInfo info = new FileInfo(defaultAddress(), 0L, expirationTime, false, null, null);
+        final FileInfo info = new FileInfo(defaultAddress(), 0L, expirationTime, false, null, "");
 
         // then
         assertEquals(toZonedDateTime("1970-01-01T00:00:00.003Z"), info.expirationTime());
