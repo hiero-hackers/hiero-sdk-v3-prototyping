@@ -133,8 +133,8 @@ The `TransactionId` cannot be set by the caller.
   `$$Receipt`, and the client to send the query with is a parameter, as for `submit(client)`. `Response` holds no
   client and is therefore a serializable value; it replaces the former `Transaction.getResponse(transactionId,
   transactionType, client)` factory, which only existed to bind a client. `queryReceipt(client)` is the
-  `TransactionReceiptQuery` of `consensusnode.queries.receipts` sent to `nodeAccountId`, followed by
-  `UntypedReceipt.typed(transactionType)`. See ADR-0013.
+  `TransactionReceiptQuery` of `consensusnode.queries.receipts` sent to `nodeAccountId`, whose receipt the
+  `TransactionSupport` of `transactionType` turns into the typed one. See ADR-0013.
 - **The receipt query is pinned to the node the transaction was sent to.** All current Hiero SDKs do so by
   default (Java, JavaScript, Go and C++ offer an opt-in failover to other nodes); neither HAPI nor the SDKs document
   why. `nodeAccountId` is nullable for transactions that were not sent by the caller.
@@ -619,6 +619,13 @@ test "the basic transaction statuses have the codes of the protocol" {
 ```
 
 ## Questions & Comments
+
+- **What is the typed receipt of a failed transaction?** A typed receipt declares the attributes a successful
+  transaction yields as required, e.g. `AccountCreateReceipt.accountId`; a failed creation has no account. The Java
+  implementation lets `queryReceipt(client)` return such a receipt with a placeholder (account `0.0.0`) so that the
+  status can be read, while `UntypedReceipt.typed(...)` fails for the same receipt. Together with the question below on
+  how a caller learns the status of a rejected transaction: either the typed attributes become nullable, or
+  `queryReceipt(client)` fails for a failed transaction and the untyped receipt carries its status.
 
 - **`TransactionId.generateTransactionId(payer: Address)` takes the wrong type.** A `TransactionId`
   holds an `AccountId` and the payer of a transaction is an account, but the factory takes an `Address`.

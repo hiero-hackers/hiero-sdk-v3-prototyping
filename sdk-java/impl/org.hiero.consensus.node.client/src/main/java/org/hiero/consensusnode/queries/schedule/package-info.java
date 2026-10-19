@@ -20,7 +20,7 @@
 ///
 /// `scheduledTransaction` is a read-only reconstruction of the stored transaction, of the same type you pass when
 /// creating a schedule. It is never packed or signed. To read the *outcome* of an executed schedule, pass
-/// `scheduledTransactionId` to `Transaction.getResponse(...)`.
+/// `scheduledTransactionId` and the type of the transaction to a `Response` and query its receipt.
 ///
 /// ### Signers and admin key
 ///

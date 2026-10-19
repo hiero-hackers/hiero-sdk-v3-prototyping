@@ -35,6 +35,7 @@ module org.hiero.consensus.node.client {
     exports org.hiero.consensusnode.queries;
     exports org.hiero.consensusnode.queries.accounts;
     exports org.hiero.consensusnode.queries.files;
+    exports org.hiero.consensusnode.queries.receipts;
     exports org.hiero.consensusnode.queries.schedule;
     exports org.hiero.consensusnode.queries.tokens;
     exports org.hiero.consensusnode.queries.topics;

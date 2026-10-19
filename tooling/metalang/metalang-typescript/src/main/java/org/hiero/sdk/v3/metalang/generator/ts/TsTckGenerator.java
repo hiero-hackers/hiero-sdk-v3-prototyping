@@ -515,9 +515,18 @@ public final class TsTckGenerator {
         for (final TckBindings.Member member : members) {
             if (member instanceof TckBindings.Unsupported(final Binding.Unsupported unsupported)
                     && !unsupported.result()) {
-                body.append(indent).append("this.#runtime.unsupported(").append(json).append(", ")
-                        .append(TsLiterals.quote(unsupported.name())).append(", ")
-                        .append(TsLiterals.quote(unsupported.reason())).append(");\n");
+                final String call = "this.#runtime.unsupported(" + json + ", " + TsLiterals.quote(unsupported.name())
+                        + ", " + TsLiterals.quote(unsupported.reason()) + ");\n";
+                if (unsupported.unless() == null) {
+                    body.append(indent).append(call);
+                } else {
+                    // the value the API behaves like is accepted
+                    final String accepted = unsupported.unless() instanceof Boolean flag ? flag.toString()
+                            : TsLiterals.quote((String) unsupported.unless());
+                    body.append(indent).append("if (").append(json).append("[")
+                            .append(TsLiterals.quote(unsupported.name())).append("] !== ").append(accepted)
+                            .append(") {\n").append(indent).append(INDENT).append(call).append(indent).append("}\n");
+                }
             }
         }
     }

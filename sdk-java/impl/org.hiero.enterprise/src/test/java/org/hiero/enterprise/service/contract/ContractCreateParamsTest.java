@@ -12,7 +12,6 @@ import org.hiero.authority.Authority;
 import org.hiero.authority.AuthorityFactory;
 import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.consensusnode.client.ClientFactory;
-import org.hiero.consensusnode.transactions.TransactionsFactory;
 import org.hiero.consensusnode.transactions.spi.SpiFactory;
 import org.hiero.enterprise.service.ServiceFactory;
 import org.hiero.enterprise.service.account.AccountFactory;

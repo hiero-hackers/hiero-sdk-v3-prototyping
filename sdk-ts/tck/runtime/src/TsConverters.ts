@@ -1,9 +1,10 @@
 import { AuthorityList, of as authorityOf, PublicKeyAuthority, type Authority } from "@hiero/base/authority";
 import { Hbar, HbarUnit } from "@hiero/base/hedera";
 import { createPrivateKey, createPublicKey, KeyFormat, type PrivateKey, type PublicKey } from "@hiero/base/keys";
-import { AccountId, Address, EvmAddress, IpAddress, type TransactionId } from "@hiero/base/ledger";
-import type { NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
+import { AccountId, Address, type ContractId, EvmAddress, IpAddress, TransactionId } from "@hiero/base/ledger";
+import type { ExchangeRate, NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
 import { TokenSupplyType, TokenType } from "@hiero/base/token";
+import type { UntypedReceipt } from "@hiero/consensus-node-client/consensusnode/queries/receipts";
 import type { TokenNftInfo } from "@hiero/consensus-node-client/consensusnode/queries/tokens";
 import type { TransactionStatus } from "@hiero/consensus-node-client/consensusnode/transactions";
 import { Duration } from "@hiero/support";
@@ -244,6 +245,47 @@ export class TsConverters implements Converters {
 
     transactionIdJson(value: TransactionId): unknown {
         return value.toString();
+    }
+
+    transactionId(json: unknown): TransactionId {
+        return TransactionId.fromString(this.string(json));
+    }
+
+    contractIdJson(value: ContractId): unknown {
+        return value.toString();
+    }
+
+    /**
+     * An exchange rate as the TCK writes it: `hbars` and `cents`. The API keeps the price of one hbar in US cents, not
+     * the pair of the protocol, so `hbars` is 1.
+     */
+    exchangeRateJson(value: ExchangeRate): unknown {
+        return { hbars: 1, cents: value.exchangeRateInUsdCents, expirationTime: value.expirationTime.toISOString() };
+    }
+
+    /** An untyped receipt with the attributes of the result of `getTransactionReceipt`; absent ones omitted. */
+    receiptJson(value: UntypedReceipt): unknown {
+        const json: Record<string, unknown> = {};
+        const put = <T>(name: string, field: T | null, convert: (v: T) => unknown): void => {
+            if (field !== null) {
+                json[name] = convert(field);
+            }
+        };
+        put("status", value.status, v => this.statusJson(v));
+        put("accountId", value.accountId, v => this.accountIdJson(v));
+        put("fileId", value.fileId, v => this.addressJson(v));
+        put("contractId", value.contractId, v => this.contractIdJson(v));
+        put("topicId", value.topicId, v => this.addressJson(v));
+        put("tokenId", value.tokenId, v => this.addressJson(v));
+        put("scheduleId", value.scheduleId, v => this.addressJson(v));
+        put("exchangeRate", value.exchangeRate, v => this.exchangeRateJson(v));
+        put("topicSequenceNumber", value.topicSequenceNumber, v => this.int64Json(v));
+        put("topicRunningHash", value.topicRunningHash, v => this.hexJson(v));
+        put("totalSupply", value.totalSupply, v => this.int64Json(v));
+        put("scheduledTransactionId", value.scheduledTransactionId, v => this.transactionIdJson(v));
+        json["serials"] = value.serials.map(v => this.int64Json(v));
+        put("nodeId", value.nodeId, v => this.int64Json(v));
+        return json;
     }
 
     // --- used by the runtime itself --------------------------------------------------------------

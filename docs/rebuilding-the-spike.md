@@ -6,7 +6,7 @@ executed by an agent.
 - **Java:** `sdk-java/impl` is a **copy of the generated Java project** that is maintained by hand. It implements the
   whole API of the specs: all 386 tests of the specs and all 2,787 contract tests pass against it, no method is a stub
   any more, and `metalang check` reports that it provides the API. What the specs cannot express is recorded in their
-  `## Questions & Comments` (and implemented as a documented workaround where one exists). The TCK binds 47 of its
+  `## Questions & Comments` (and implemented as a documented workaround where one exists). The TCK binds 48 of its
   65 methods (section 3); the implementation has not been run against Solo yet.
 - **TypeScript:** only the first spike, which was written into the generated code in place and exists in git
   history only (section 6).
@@ -152,7 +152,7 @@ files. `verify` is enough:
 ./mvnw -f impl verify -Ptck
 ```
 
-The bindings cover 47 of the 65 TCK methods (`metalang tck check`, see `docs/tck-binding.md`); the TCK skips the
+The bindings cover 48 of the 65 TCK methods (`metalang tck check`, see `docs/tck-binding.md`); the TCK skips the
 others (`-32601`). The implementation has not been measured against Solo yet. Offline, the server can be checked with
 calls that need no network (`setup` succeeds, a transaction fails only at the connection):
 
@@ -202,8 +202,10 @@ are new.
 4. **`HieroClient` cannot reach its network.** It is a record of operator, `Network` and signer, and
    `Network` carries no `ConsensusNode`. The `NetworkSetting` arrives at `ClientFactory` and ends
    there. Bridge: a registry in `ClientRuntime` keyed by the client instance.
-5. **`Response` cannot query anything.** It is a record holding only a `TransactionId`. Bridge: a
-   second registry `TransactionId → ClientRuntime`, filled on submit.
+5. **`Response` cannot query anything.** It was a record holding only a `TransactionId`; the bridge was a
+   second registry `TransactionId → ClientRuntime`, filled on submit. Resolved by ADR-0013: `Response` holds the
+   transaction type and the node, `queryReceipt(client)` / `queryRecord(client)` take the client, and the registry is
+   gone (`ClientRuntime.queryReceipt`, `Receipts`).
 6. **`TransactionId.generateTransactionId` takes an `Address`**, but `TransactionId` holds an
    `AccountId` — convert shard/realm/num.
 7. **Back-date the valid start by ~10 s** and keep it strictly increasing per process, otherwise the

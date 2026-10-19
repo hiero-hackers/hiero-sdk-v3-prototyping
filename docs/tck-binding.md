@@ -307,17 +307,21 @@ Further forms, added when the other services were bound:
 | `scheduledTransaction = request scheduledTransaction` | a transaction built by the binding of a nested TCK request (`method`, `params`) without sending it | `createSchedule` |
 | `result nftId = response : nftId` | the whole receipt or response as value of a result | `getTokenNftInfo` |
 | `maxQueryPayment = maxQueryPayment : tinybar` on a mutable attribute | set with a setter after the request was created (only on the type of the binding) | the paid queries |
+| `unsupported validateStatus "reason" unless false` | a parameter the API cannot provide, except for the one value it behaves like: that value is accepted, every other value is answered with an error | `getTransactionReceipt` (the V3 receipt query never fails on the status) |
+| `undocumented result transactionId = receipt.transactionId : transactionId` | a result the TCK tests read although the test specification of the method does not name it; the coverage check does not report it | `createAccount` (read by `test-transaction-receipt-query.ts`) |
 
 The converter catalogue grew by `number` (an `int32` as JSON number), `utf8`, `keyList` (a JSON list of keys that
 must all sign), `publicKey`, `tokenType`, `tokenSupplyType`, `nftIdToken` / `nftIdSerial` / `nftId` (the NFT ID
-`0.0.1234/1`), `transactionId` and `ipAddress`; `int32` also converts `uint16`. Each is implemented in both runtimes
+`0.0.1234/1`), `transactionId` (both directions), `contractId`, `exchangeRate` (`hbars` is 1, `cents` the price of
+one hbar: the API keeps the price, not the pair of the protocol), `receipt` (an `UntypedReceipt` as JSON object) and
+`ipAddress`; `int32` also converts `uint16`. Each is implemented in both runtimes
 (`JavaConverters`, `TsConverters`).
 
 The generated server has one builder per binding (and variant) besides the handler; the builders of the transactions
 are registered by method name (`Requests`), which is what `request` uses. `BindingSupport` holds the helpers of the
 generated code (lists, sets, bound names); both are generated, so the runtimes are unchanged by these forms.
 
-The coverage check compares the variants of a method together, ignores the names bound by `each name in list` and
+A heading `Output Parameters - <Name>` of a test specification describes the fields of a nested result, not results of the method; the coverage check ignores its table. The coverage check compares the variants of a method together, ignores the names bound by `each name in list` and
 the parameters of nested objects with a path, and of the alternative sources of an attribute requires only one to
 exist in the TCK: the TCK's specification of `deleteFile` names the parameter `fileID` while its tests send `fileId`,
 and the binding accepts both.
@@ -327,7 +331,7 @@ and the binding accepts both.
 - **Coverage:** all bindings resolve against the specs without findings. Against the TCK test specifications
   (`docs/test-specifications`, 64 methods) the check first reported 8 bound methods (the five crypto bindings of the
   spike and the three runtime methods); with the token, file, topic, schedule, node and allowance bindings it reports
-  47 bound methods, 17 unbound methods and no finding: every parameter and result of the bound methods is either bound
+  48 bound methods, 16 unbound methods and no finding: every parameter and result of the bound methods is either bound
   or declared `unsupported` with its reason. The unbound methods have no counterpart in the V3 specs (contract
   service, `createEthereumTransaction`, `submitTopicMessage`, `updateTokenFeeSchedule`, `getTransactionReceipt`,
   `ping`, `pingAll`), read the Mirror Node (`getMirrorNodeAccountBalance`, `getMirrorNodeTokenBalance`), check V2

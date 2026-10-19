@@ -118,10 +118,11 @@ public final class JavaTckRuntime implements TckRuntime {
             }
         }
         final Response<R> response = join(packed.submit(runtime.client()));
-        final R receipt = join(response.queryReceipt());
+        final R receipt = join(response.queryReceipt(runtime.client()));
         if (receipt.status().code() != SUCCESS) {
-            throw new RpcError(RpcError.HIERO_ERROR, "Hiero error",
-                    Map.of("status", converters.statusJson(receipt.status())));
+            // the transaction id, so that the receipt of a failed transaction can be read (getTransactionReceipt)
+            throw new RpcError(RpcError.HIERO_ERROR, "Hiero error", Map.of("status",
+                    converters.statusJson(receipt.status()), "transactionId", receipt.transactionId().toString()));
         }
         return receipt;
     }

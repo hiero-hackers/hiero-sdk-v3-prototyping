@@ -7,7 +7,6 @@ import com.hederahashgraph.api.proto.java.ResponseType;
 import com.hederahashgraph.api.proto.java.Transaction;
 import com.hederahashgraph.api.proto.java.TransactionGetReceiptQuery;
 import com.hederahashgraph.api.proto.java.TransactionGetReceiptResponse;
-import com.hederahashgraph.api.proto.java.TransactionGetRecordQuery;
 import com.hederahashgraph.api.proto.java.TransactionResponse;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -22,20 +21,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.queries.QueryResponse;
-import org.hiero.consensusnode.transactions.Receipt;
-import org.hiero.consensusnode.transactions.Record;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.ConsensusNode;
 import org.hiero.ledger.TransactionId;
 import org.hiero.ledger.config.NetworkSetting;
+import org.jspecify.annotations.Nullable;
 
 /// The network side of a `HieroClient`: the consensus nodes, a gRPC channel per node, submission and receipt
 /// polling.
 ///
-/// Two process-wide registries bridge gaps of the specs (see the `## Questions & Comments` of `client.md` and
-/// `transactions.md`): `HieroClient` is a record without its consensus nodes, so the runtime of a client is looked up
-/// by the client; `Response` holds only a `TransactionId`, so the runtime that can query its receipt is looked up by
-/// that id. A workaround, not a design.
+/// A process-wide registry bridges a gap of the specs (see the `## Questions & Comments` of `client.md`):
+/// `HieroClient` is a record without its consensus nodes, so the runtime of a client is looked up by the client. A
+/// workaround, not a design.
 public final class ClientRuntime {
 
     private static final Duration RECEIPT_TIMEOUT = Duration.ofSeconds(30);
@@ -43,7 +40,6 @@ public final class ClientRuntime {
     private static final String CRYPTO_SERVICE = "proto.CryptoService";
 
     private static final Map<HieroClient<?>, ClientRuntime> BY_CLIENT = new ConcurrentHashMap<>();
-    private static final Map<TransactionId, Pending> BY_TRANSACTION = new ConcurrentHashMap<>();
 
     private final HieroClient<?> client;
     private final List<ConsensusNode> nodes;
@@ -104,84 +100,53 @@ public final class ClientRuntime {
     /// @return completes when the node accepted the transaction
     public CompletableFuture<Void> submit(final ConsensusNode node, final TransactionKind<?, ?> kind,
                                           final Transaction transaction, final TransactionId id) {
-        BY_TRANSACTION.put(id, new Pending(this, node, kind));
         return Grpc.call(channel(node), kind.grpcMethod(), transaction).thenAccept(response -> {
             final HapiTransactionStatus precheck = HapiTransactionStatus.ofCode(
                     response.getNodeTransactionPrecheckCodeValue());
             if (precheck != HapiTransactionStatus.OK) {
-                BY_TRANSACTION.remove(id);
                 throw new PrecheckException(precheck);
             }
         });
     }
 
-    /// Makes a transaction that was submitted elsewhere queryable through this runtime.
+    /// Polls the receipt of a transaction until it is final (`TransactionReceiptQuery`). Waits while the node
+    /// answers `BUSY`, `UNKNOWN`, `RECEIPT_NOT_FOUND` or `PLATFORM_NOT_ACTIVE`, and while the receipt's status is
+    /// `UNKNOWN` or `OK`.
     ///
-    /// @param id   the id of the transaction
-    /// @param kind the transaction type
-    public void track(final TransactionId id, final TransactionKind<?, ?> kind) {
-        BY_TRANSACTION.putIfAbsent(id, new Pending(this, selectNode(), kind));
+    /// @param node              the account of the node to ask; `null` for any node of the client
+    /// @param id                the id of the transaction
+    /// @param includeDuplicates whether to ask for the receipts of duplicates
+    /// @param includeChildren   whether to ask for the receipts of children
+    /// @return the answer of the node and the node that gave it
+    public CompletableFuture<QueryResponse<TransactionGetReceiptResponse>> queryReceipt(final @Nullable AccountId node,
+            final TransactionId id, final boolean includeDuplicates, final boolean includeChildren) {
+        return CompletableFuture.supplyAsync(() -> {
+            final ConsensusNode target = node == null ? selectNode() : node(node).orElseThrow(
+                    () -> new IllegalArgumentException("The network of the client has no consensus node " + node));
+            return new QueryResponse<>(awaitReceipt(target, id, includeDuplicates, includeChildren),
+                    target.account());
+        }, executor);
     }
 
-    /// Polls the receipt of a submitted transaction until it is final.
-    ///
-    /// @param id the id of the transaction
-    /// @return the receipt
-    public static CompletableFuture<Receipt> queryReceipt(final TransactionId id) {
-        final Pending pending = BY_TRANSACTION.get(id);
-        if (pending == null) {
-            return CompletableFuture.failedFuture(new IllegalStateException("The transaction " + id
-                    + " was not submitted through a client of this SDK"));
-        }
-        return CompletableFuture.supplyAsync(() -> pending.runtime().awaitReceipt(id, pending),
-                pending.runtime().executor);
-    }
-
-    /// Queries the record of a submitted transaction, once it has reached consensus. The operator of the client that
-    /// submitted it pays for the query.
-    ///
-    /// @param id the id of the transaction
-    /// @return the record
-    public static CompletableFuture<Record<Receipt>> queryRecord(final TransactionId id) {
-        final Pending pending = BY_TRANSACTION.get(id);
-        if (pending == null) {
-            return CompletableFuture.failedFuture(new IllegalStateException("The transaction " + id
-                    + " was not submitted through a client of this SDK"));
-        }
-        // the record exists once the receipt is final
-        return queryReceipt(id).thenCompose(receipt -> Querying.paid(id, null, recordQuery(pending.kind()),
-                pending.runtime().client).toCompletableFuture()).thenApply(QueryResponse::value);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static QueryKind<TransactionId, Record<Receipt>> recordQuery(final TransactionKind<?, ?> kind) {
-        final KindSupport<Receipt, ?> support = new KindSupport<>((TransactionKind<Receipt, ?>) (TransactionKind<?, ?>) kind);
-        return new QueryKind<>(CRYPTO_SERVICE, "getTxRecordByTxID",
-                (transactionId, header) -> Query.newBuilder().setTransactionGetRecord(TransactionGetRecordQuery
-                        .newBuilder().setHeader(header).setTransactionID(Protobuf.toProto(transactionId))).build(),
-                response -> response.getTransactionGetRecord().getHeader(),
-                (transactionId, response) -> Records.record(support,
-                        response.getTransactionGetRecord().getTransactionRecord()));
-    }
-
-    private Receipt awaitReceipt(final TransactionId id, final Pending pending) {
+    private TransactionGetReceiptResponse awaitReceipt(final ConsensusNode node, final TransactionId id,
+                                                       final boolean includeDuplicates,
+                                                       final boolean includeChildren) {
         final Query query = Query.newBuilder().setTransactionGetReceipt(TransactionGetReceiptQuery.newBuilder()
                 .setHeader(QueryHeader.newBuilder().setResponseType(ResponseType.ANSWER_ONLY))
-                .setTransactionID(Protobuf.toProto(id))).build();
+                .setTransactionID(Protobuf.toProto(id)).setIncludeDuplicates(includeDuplicates)
+                .setIncludeChildReceipts(includeChildren)).build();
         final long deadline = System.nanoTime() + RECEIPT_TIMEOUT.toNanos();
         HapiTransactionStatus last = HapiTransactionStatus.UNKNOWN;
         while (System.nanoTime() < deadline) {
-            final Response response = Grpc.call(channel(pending.node()), Grpc.unary(CRYPTO_SERVICE,
+            final Response response = Grpc.call(channel(node), Grpc.unary(CRYPTO_SERVICE,
                     "getTransactionReceipts", Query.getDefaultInstance(), Response.getDefaultInstance()), query).join();
             final TransactionGetReceiptResponse answer = response.getTransactionGetReceipt();
             final HapiTransactionStatus precheck = HapiTransactionStatus.ofCode(
                     answer.getHeader().getNodeTransactionPrecheckCodeValue());
             if (precheck == HapiTransactionStatus.OK) {
                 last = HapiTransactionStatus.ofCode(answer.getReceipt().getStatusValue());
-                if (!isPending(last)) {
-                    return pending.kind().receipts().create(id, last,
-                            Protobuf.currentRate(answer.getReceipt().getExchangeRate()),
-                            Protobuf.nextRate(answer.getReceipt().getExchangeRate()), answer.getReceipt());
+                if (last != HapiTransactionStatus.UNKNOWN && last != HapiTransactionStatus.OK) {
+                    return answer;
                 }
             } else if (!isPending(precheck)) {
                 throw new IllegalStateException("The receipt query was rejected: " + precheck);
@@ -229,8 +194,5 @@ public final class ClientRuntime {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted while waiting for a receipt", interrupted);
         }
-    }
-
-    private record Pending(ClientRuntime runtime, ConsensusNode node, TransactionKind<?, ?> kind) {
     }
 }

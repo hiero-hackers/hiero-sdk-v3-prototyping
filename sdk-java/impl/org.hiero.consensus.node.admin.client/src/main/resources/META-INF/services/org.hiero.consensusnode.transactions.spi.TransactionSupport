@@ -1,0 +1,8 @@
+# The transaction types of the administration client, for the class path (on the module path, module-info.java
+# provides them): the SDK finds the TransactionSupport of a type by it, e.g. to read the receipt of a Response.
+org.hiero.consensusnode.admin.internal.AdminSupports$Freeze
+org.hiero.consensusnode.admin.internal.AdminSupports$NodeCreate
+org.hiero.consensusnode.admin.internal.AdminSupports$NodeUpdate
+org.hiero.consensusnode.admin.internal.AdminSupports$NodeDelete
+org.hiero.consensusnode.admin.internal.AdminSupports$SystemDelete
+org.hiero.consensusnode.admin.internal.AdminSupports$SystemUndelete

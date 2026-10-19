@@ -8,8 +8,8 @@ import org.hiero.nativeToken.ExchangeRate;
 import org.jspecify.annotations.Nullable;
 
 /// The batch transaction's own receipt. Carries only the base Receipt fields (status, exchange
-/// rates); each inner transaction's typed receipt is read separately via
-/// Transaction.getResponse(innerTransactionId, innerType, client).
+/// rates); each inner transaction's typed receipt is read separately through a Response created from its
+/// transaction id and type.
 public final class BatchReceipt extends Receipt {
 
     /// Creates a new `BatchReceipt`.

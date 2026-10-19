@@ -316,7 +316,11 @@ class JavaTckGeneratorTest {
                     .contains("request.setMaxQueryPayment(maxQueryPayment);")
                     .contains("runtime.put(result, \"nftId\", response, convert::nftIdJson);");
             assertThat(content("CryptoServiceBindings.java"))
-                    .contains("!= null ? new NftSerialGrant(");
+                    .contains("!= null ? new NftSerialGrant(")
+                    // unsupported ... unless false: the value the API behaves like is accepted
+                    .contains("if (!Boolean.FALSE.equals(params.get(\"validateStatus\"))) {\n")
+                    .contains("runtime.put(result, \"duplicates\", response.duplicates(), "
+                            + "values -> BindingSupport.json(values, convert::receiptJson));");
             assertThat(content("NodeServiceBindings.java"))
                     .contains("grpcWebProxyEndpointJson1 == null ? null : new ServiceEndpoint(");
             assertThat(content("ScheduleServiceBindings.java"))

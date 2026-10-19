@@ -162,7 +162,7 @@ public final class DefaultSession implements Session {
         Objects.requireNonNull(transaction, "transaction must not be null");
         try {
             final Response<R> response = await(transaction.signWithOperatorAndSubmit(client));
-            final R receipt = await(response.queryReceipt());
+            final R receipt = await(response.queryReceipt(client));
             final TransactionId transactionId = response.transactionId();
             // a transaction with a receipt reached consensus, successful or not: the Mirror Node will know it
             pending.add(transactionId);
@@ -173,7 +173,7 @@ public final class DefaultSession implements Session {
             if (!withRecord) {
                 return new Executed<>(receipt, null);
             }
-            return new Executed<>(receipt, await(response.queryRecord()));
+            return new Executed<>(receipt, await(response.queryRecord(client)));
         } catch (final ServiceException e) {
             throw e;
         } catch (final RuntimeException e) {

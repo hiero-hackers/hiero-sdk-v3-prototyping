@@ -187,3 +187,9 @@ test "an untyped receipt without an account id is not the receipt of an account 
 - **Can any node answer a receipt query?** Every current SDK pins the query to the node the transaction was sent to,
   but neither HAPI nor the SDKs say why. If any node answers reliably, `Response.nodeAccountId` could be dropped.
   — open, to be measured against a network with more than one node
+- **The numbers of the protocol's receipt have no presence.** `topicSequenceNumber`, `totalSupply`, `nodeId` and the
+  other numbers are proto3 scalars, so an absent number and `0` look the same; the Java implementation reads `0` as
+  absent, so the total supply after burning a token down to zero, or node `0`, read as absent. Should they be
+  non-nullable with `0` as default instead? — open
+- **The tests of this spec cannot be generated yet**: an `UntypedReceipt` needs an `ExchangeRate`, which has no default
+  instance (see the Questions & Comments of `native-token.md`). The Java implementation tests `typed(...)` by hand.

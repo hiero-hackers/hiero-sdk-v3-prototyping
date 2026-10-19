@@ -17,8 +17,8 @@ import org.hiero.sdk.v3.metalang.source.MarkdownSchemaExtractor;
  * construction := '-&gt;' QNAME body
  *               | ('when' path '-&gt;' QNAME body)+ ('else' '-&gt;' QNAME body)?
  * body         := '{' member* '}'
- * member       := 'result' path '=' path ':' NAME
- *               | 'unsupported' 'result'? NAME STRING
+ * member       := 'undocumented'? 'result' path '=' path ':' NAME
+ *               | 'unsupported' 'result'? NAME STRING ('unless' ('true' | 'false' | STRING))?
  *               | NAME '=' 'each' generator (',' generator)* '-&gt;' QNAME body
  *               | NAME '=' 'request' path
  *               | NAME '=' path? construction
@@ -184,13 +184,18 @@ public final class BindingParser {
 
     private Binding.Member member() {
         final Token start = peek();
-        if (start.text().equals("result") && peekAt(1).kind() == Kind.NAME) {
+        final boolean undocumented = start.text().equals("undocumented") && peekAt(1).text().equals("result")
+                && peekAt(2).kind() == Kind.NAME;
+        if (undocumented || start.text().equals("result") && peekAt(1).kind() == Kind.NAME) {
+            if (undocumented) {
+                next();
+            }
             next();
             final Binding.Path name = path();
             expect("=");
             final Binding.Path value = path();
             expect(":");
-            return new Binding.Result(name, value, name(), location(start));
+            return new Binding.Result(name, value, name(), undocumented, location(start));
         }
         if (start.text().equals("unsupported") && peekAt(1).kind() == Kind.NAME) {
             next();
@@ -200,7 +205,20 @@ public final class BindingParser {
             if (reason.kind() != Kind.STRING) {
                 throw new SyntaxError("expected the reason as string, found '" + reason.text() + "'", reason);
             }
-            return new Binding.Unsupported(result, name, reason.text(), location(start));
+            Object unless = null;
+            if (!result && peek().text().equals("unless") && peek().kind() == Kind.NAME) {
+                next();
+                final Token value = next();
+                if (value.kind() == Kind.STRING) {
+                    unless = value.text();
+                } else if (value.text().equals("true") || value.text().equals("false")) {
+                    unless = Boolean.valueOf(value.text());
+                } else {
+                    throw new SyntaxError("expected true, false or a string after 'unless', found '" + value.text()
+                            + "'", value);
+                }
+            }
+            return new Binding.Unsupported(result, name, reason.text(), unless, location(start));
         }
         final String attribute = name();
         expect("=");

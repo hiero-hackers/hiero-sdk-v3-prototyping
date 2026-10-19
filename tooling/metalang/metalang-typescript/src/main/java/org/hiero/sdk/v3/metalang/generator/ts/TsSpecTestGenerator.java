@@ -584,8 +584,25 @@ final class TsSpecTestGenerator {
             code.append("describe(").append(TsLiterals.quote(specName)).append(", () => {\n");
             code.append(String.join("\n", all));
             code.append("});\n");
-            for (final String helper : helpers.values()) {
-                code.append('\n').append(helper);
+            // only the default instances that a generated test uses, directly or through another default instance (an
+            // unused function is a compiler error, e.g. when no test of the spec could be generated)
+            final StringBuilder used = new StringBuilder(String.join("", all));
+            final java.util.Set<String> included = new java.util.LinkedHashSet<>();
+            boolean grown = true;
+            while (grown) {
+                grown = false;
+                for (final Map.Entry<String, String> helper : helpers.entrySet()) {
+                    if (!included.contains(helper.getKey()) && used.indexOf(helper.getKey() + "()") >= 0) {
+                        included.add(helper.getKey());
+                        used.append(helper.getValue());
+                        grown = true;
+                    }
+                }
+            }
+            for (final Map.Entry<String, String> helper : helpers.entrySet()) {
+                if (included.contains(helper.getKey())) {
+                    code.append('\n').append(helper.getValue());
+                }
             }
             final StringBuilder ts = new StringBuilder(TsGenerator.HEADER);
             ts.append("//\n// Tests of the spec `").append(specName).append("`, generated from the `tests` blocks of")

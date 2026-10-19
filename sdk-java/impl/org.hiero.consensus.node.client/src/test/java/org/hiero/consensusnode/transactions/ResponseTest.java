@@ -1,53 +1,21 @@
 package org.hiero.consensusnode.transactions;
 
-import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.TransactionId;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 
 /// Tests of `Response`, generated from the specs.
+///
+/// Not generated:
+/// - no valid value for `transactionType` of Response: constructor, attribute and method tests
 @DisplayName("Response")
 class ResponseTest {
 
-    @Test
-    @DisplayName("creates a Response and returns the values")
-    @Tag("testId:consensusnode.transactions.Response/create")
-    void shouldCreateAndReturnTheValues() {
-        final TransactionId transactionId = transactionIdValue();
-        final Response<Receipt> subject = new Response<>(transactionId);
-        assertValue(transactionId, subject.transactionId());
-    }
-
-    @Test
-    @DisplayName("rejects null for transactionId")
-    @Tag("testId:consensusnode.transactions.Response/transactionId/rejects-null")
-    void shouldRejectNullTransactionId() {
-        assertThrows(NullPointerException.class, () -> new Response<>((TransactionId) null));
-    }
-
-    @Test
-    @DisplayName("queryReceipt() can be called and returns a value")
-    @Tag("testId:consensusnode.transactions.Response/queryReceipt/call")
-    void shouldCallQueryReceipt() {
-        assertNotNull(create().queryReceipt());
-    }
-
-    @Test
-    @DisplayName("queryRecord() can be called and returns a value")
-    @Tag("testId:consensusnode.transactions.Response/queryRecord/call")
-    void shouldCallQueryRecord() {
-        assertNotNull(create().queryRecord());
-    }
-
     private static TransactionId transactionIdValue() {
         return TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L));
-    }
-
-    private static Response<Receipt> create() {
-        return new Response<>(transactionIdValue());
     }
 }

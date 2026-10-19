@@ -130,7 +130,9 @@ class TsTckGeneratorTest {
                 .contains("const scope1 = withName(params, \"serial\", value1);")
                 .contains("maxQueryPayment: this.#runtime.value(params, [{ path: \"maxQueryPayment\"")
                 .contains("this.#runtime.put(result, \"nftId\", response, (value) => this.#convert.nftIdJson(value));");
-        assertThat(content("server/src/CryptoServiceBindings.ts")).contains("!== null ? new NftSerialGrant({");
+        assertThat(content("server/src/CryptoServiceBindings.ts")).contains("!== null ? new NftSerialGrant({")
+                // unsupported ... unless false: the value the API behaves like is accepted
+                .contains("if (params[\"validateStatus\"] !== false) {\n");
         assertThat(content("server/src/NodeServiceBindings.ts"))
                 .contains("(grpcWebProxyEndpointJson1 === null ? null : new ServiceEndpoint({");
         assertThat(content("server/src/ScheduleServiceBindings.ts"))

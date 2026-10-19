@@ -5,14 +5,17 @@ package org.hiero.tck.contract;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import org.hiero.authority.Authority;
+import org.hiero.consensusnode.queries.receipts.UntypedReceipt;
 import org.hiero.consensusnode.queries.tokens.TokenNftInfo;
 import org.hiero.consensusnode.transactions.TransactionStatus;
 import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
+import org.hiero.ledger.ContractId;
 import org.hiero.ledger.EvmAddress;
 import org.hiero.ledger.IpAddress;
 import org.hiero.ledger.TransactionId;
+import org.hiero.nativeToken.ExchangeRate;
 import org.hiero.nativeToken.NativeToken;
 import org.hiero.token.TokenSupplyType;
 import org.hiero.token.TokenType;
@@ -250,11 +253,35 @@ public interface Converters {
     /// @return the JSON value
     Object nftIdJson(TokenNftInfo value);
 
+    /// `transactionId`: A transaction ID (`"0.0.1234@1700000000.000000000"`). JSON to value.
+    ///
+    /// @param json the JSON value (string, number or boolean)
+    /// @return the value
+    TransactionId transactionId(Object json);
+
     /// `transactionId`: A transaction ID (`"0.0.1234@1700000000.000000000"`). Value to JSON.
     ///
     /// @param value the value
     /// @return the JSON value
     Object transactionIdJson(TransactionId value);
+
+    /// `contractId`: A contract ID (`"0.0.1234"`). Value to JSON.
+    ///
+    /// @param value the value
+    /// @return the JSON value
+    Object contractIdJson(ContractId value);
+
+    /// `exchangeRate`: An exchange rate as JSON object: `hbars` and `cents` as JSON numbers (one hbar and its price in US cents), `expirationTime` as ISO-8601 string. Value to JSON.
+    ///
+    /// @param value the value
+    /// @return the JSON value
+    Object exchangeRateJson(ExchangeRate value);
+
+    /// `receipt`: An untyped receipt as JSON object with the attributes of the result of `getTransactionReceipt` (without duplicates and children). Value to JSON.
+    ///
+    /// @param value the value
+    /// @return the JSON value
+    Object receiptJson(UntypedReceipt value);
 
     /// `ipAddress`: An IP address as hex string of its bytes (`"7f000001"`). JSON to value.
     ///

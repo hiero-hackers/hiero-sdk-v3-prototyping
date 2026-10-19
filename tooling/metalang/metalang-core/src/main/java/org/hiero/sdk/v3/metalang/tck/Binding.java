@@ -241,18 +241,34 @@ public record Binding(boolean common, String name, String type, @Nullable Path w
      *
      * @param name      the result field
      * @param value     the path to the value, starting with {@code receipt} or {@code response}
-     * @param converter the converter from the API value to JSON
-     * @param location  the location
+     * @param converter    the converter from the API value to JSON
+     * @param undocumented whether the TCK tests read the result although the test specification of the method does
+     *                     not name it ({@code undocumented result ...})
+     * @param location     the location
      */
-    public record Result(Path name, Path value, String converter, SourceLocation location) implements Member {
+    public record Result(Path name, Path value, String converter, boolean undocumented, SourceLocation location)
+            implements Member {
 
         /**
-         * Creates a result.
+         * Creates a result the test specification names.
          *
          * @param name      the result field
          * @param value     the value path
          * @param converter the converter
          * @param location  the location
+         */
+        public Result(final Path name, final Path value, final String converter, final SourceLocation location) {
+            this(name, value, converter, false, location);
+        }
+
+        /**
+         * Creates a result.
+         *
+         * @param name         the result field
+         * @param value        the value path
+         * @param converter    the converter
+         * @param undocumented whether the test specification does not name it
+         * @param location     the location
          */
         public Result {
             Objects.requireNonNull(name, "name must not be null");
@@ -264,15 +280,32 @@ public record Binding(boolean common, String name, String type, @Nullable Path w
 
     /**
      * A TCK parameter or result field that the API cannot provide: {@code unsupported name "reason"} or
-     * {@code unsupported result name "reason"}. Requests that use it are answered with an error.
+     * {@code unsupported result name "reason"}. Requests that use it are answered with an error - except a parameter
+     * with the value of {@code unless} ({@code unsupported name "reason" unless false}): the API behaves that way
+     * anyway.
      *
      * @param result    whether it is a result field
      * @param name      the parameter or result field
      * @param reason    why the API cannot provide it
+     * @param unless    the JSON value of the parameter that is accepted (a {@code Boolean} or a {@code String}),
+     *                  {@code null} if none is
      * @param location  the location
      */
-    public record Unsupported(boolean result, String name, String reason, SourceLocation location)
-            implements Member {
+    public record Unsupported(boolean result, String name, String reason, @Nullable Object unless,
+                              SourceLocation location) implements Member {
+
+        /**
+         * Creates an unsupported parameter or result without accepted value.
+         *
+         * @param result   whether it is a result field
+         * @param name     the name
+         * @param reason   the reason
+         * @param location the location
+         */
+        public Unsupported(final boolean result, final String name, final String reason,
+                           final SourceLocation location) {
+            this(result, name, reason, null, location);
+        }
 
         /**
          * Creates an unsupported parameter.
@@ -280,6 +313,7 @@ public record Binding(boolean common, String name, String type, @Nullable Path w
          * @param result   whether it is a result field
          * @param name     the name
          * @param reason   the reason
+         * @param unless   the accepted JSON value, or {@code null}
          * @param location the location
          */
         public Unsupported {

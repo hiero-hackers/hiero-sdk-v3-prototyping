@@ -78,9 +78,13 @@ export class TsTckRuntime implements TckRuntime {
             }
         }
         const response = await packed.submit(client);
-        const receipt = await response.queryReceipt();
+        const receipt = await response.queryReceipt(client);
         if (receipt.status.code !== SUCCESS) {
-            throw new RpcError(RpcError.HIERO_ERROR, "Hiero error", { status: this.converters.statusJson(receipt.status) });
+            // the transaction id, so that the receipt of a failed transaction can be read (getTransactionReceipt)
+            throw new RpcError(RpcError.HIERO_ERROR, "Hiero error", {
+                status: this.converters.statusJson(receipt.status),
+                transactionId: receipt.transactionId.toString(),
+            });
         }
         return receipt;
     }

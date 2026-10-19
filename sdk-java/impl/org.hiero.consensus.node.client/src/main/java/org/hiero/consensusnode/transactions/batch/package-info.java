@@ -58,9 +58,8 @@
 /// `consensusTimestamp`, and the receipts of the inner transactions must be queried individually.
 /// `BatchReceipt` therefore carries only the batch transaction's own status (the base `Receipt`
 /// fields). To read an inner transaction's typed receipt, take its `TransactionId` (the
-/// `transactionId` field of the inner `PackedTransaction`) and resolve it through
-/// `Transaction.getResponse(transactionId, transactionType, client)` — the same mechanism used for the
-/// executed inner transaction of a schedule. See the example below.
+/// `transactionId` field of the inner `PackedTransaction`) and create a `Response` from it and the inner
+/// transaction's type — the same mechanism used for the executed inner transaction of a schedule. See the example below.
 ///
 /// ### Restrictions
 ///

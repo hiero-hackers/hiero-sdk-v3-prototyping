@@ -349,9 +349,18 @@ public final class JavaTckGenerator {
         for (final TckBindings.Member member : members) {
             if (member instanceof TckBindings.Unsupported(final Binding.Unsupported unsupported)
                     && !unsupported.result()) {
-                body.append(indent).append("runtime.unsupported(").append(json).append(", ")
-                        .append(JavaLiterals.quote(unsupported.name())).append(", ")
-                        .append(JavaLiterals.quote(unsupported.reason())).append(");\n");
+                final String call = "runtime.unsupported(" + json + ", " + JavaLiterals.quote(unsupported.name())
+                        + ", " + JavaLiterals.quote(unsupported.reason()) + ");\n";
+                if (unsupported.unless() == null) {
+                    body.append(indent).append(call);
+                } else {
+                    // the value the API behaves like is accepted
+                    final String accepted = unsupported.unless() instanceof Boolean flag
+                            ? (flag ? "Boolean.TRUE" : "Boolean.FALSE") : JavaLiterals.quote((String) unsupported.unless());
+                    body.append(indent).append("if (!").append(accepted).append(".equals(").append(json)
+                            .append(".get(").append(JavaLiterals.quote(unsupported.name())).append("))) {\n")
+                            .append(indent).append(INDENT).append(call).append(indent).append("}\n");
+                }
             }
         }
     }

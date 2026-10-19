@@ -43,5 +43,5 @@
 /// it materializes the inner transaction; it is never set by the SDK.
 ///
 /// To read the outcome of the executed inner transaction, pass the `scheduledTransactionId` from the
-/// receipt together with the inner transaction's type to `Transaction.getResponse(...)`.
+/// receipt together with the inner transaction's type to a `Response` and query its receipt.
 package org.hiero.consensusnode.transactions.schedule;

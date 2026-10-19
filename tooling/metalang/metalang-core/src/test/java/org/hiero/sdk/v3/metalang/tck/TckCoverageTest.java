@@ -90,6 +90,33 @@ class TckCoverageTest {
     }
 
     @Test
+    void theFieldsOfANestedResultShouldNotBeResultsOfTheMethod() {
+        // WHEN "Output Parameters - Rate" describes the fields of the nested result `rate`
+        final List<TckSpecifications.Method> methods = TckSpecifications.parse("crypto/Order.md", """
+                ### Method Name
+
+                `getOrder`
+
+                ### Output Parameters
+
+                | Parameter Name | Type | Description/Notes |
+                |----------------|------|-------------------|
+                | id             | string | The id.         |
+                | rate           | [Rate](#output-parameters---rate) | The rate. |
+
+                ### Output Parameters - Rate
+
+                | Parameter Name | Type   | Description/Notes |
+                |----------------|--------|-------------------|
+                | cents          | number | The cents.        |
+                """);
+
+        // THEN
+        assertThat(methods).singleElement().extracting(TckSpecifications.Method::outputs)
+                .isEqualTo(List.of("id", "rate"));
+    }
+
+    @Test
     void theCoverageShouldCompareParametersAndResults() {
         // GIVEN
         final TckBindings.Bindings bindings = TckFixtures.resolve("""
@@ -102,6 +129,7 @@ class TckCoverageTest {
                     unsupported result total "no totals"
                     result orderId = receipt.orderId : string
                     result extra = receipt.count : int64
+                    undocumented result read = receipt.count : int64
                 }
                 binding notInTck -> OrderQuery { id = id : string }
                 common c -> OrderTransaction {

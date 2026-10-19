@@ -124,7 +124,7 @@ public final class DefaultPackedTransaction<R extends Receipt, T extends Transac
             final ConsensusNode node = runtime.node(body.node()).orElse(null);
             if (node != null) {
                 return runtime.submit(node, kind, transaction(body), transactionId())
-                        .thenApply(accepted -> new Response<>(transactionId()));
+                        .thenApply(accepted -> new Response<>(transactionId(), kind.type(), node.account()));
             }
         }
         return CompletableFuture.failedFuture(new IllegalStateException(

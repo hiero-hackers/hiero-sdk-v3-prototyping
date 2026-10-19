@@ -73,7 +73,7 @@ class TckCommandTest {
         // THEN
         assertThat(err()).isEmpty();
         assertThat(exit).isZero();
-        assertThat(out()).contains("file(s) of the TCK contract and server generated in").endsWith("for 47 method(s)\n");
+        assertThat(out()).contains("file(s) of the TCK contract and server generated in").endsWith("for 48 method(s)\n");
         assertThat(temp.resolve("server/server/src/main/java/org/hiero/tck/server/CryptoServiceBindings.java")).exists();
         assertThat(temp.resolve("server/contract/src/main/java/org/hiero/tck/contract/Converters.java")).exists();
         assertThat(temp.resolve("server/server/pom.xml")).exists();

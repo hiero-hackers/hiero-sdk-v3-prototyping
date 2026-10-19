@@ -104,6 +104,8 @@ public final class TckCoverage {
         private final Set<String> outputs = new HashSet<>();
         private final Set<String> unsupportedInputs = new HashSet<>();
         private final Set<String> unsupportedOutputs = new HashSet<>();
+        /** Results the TCK tests read although the test specification does not name them. */
+        private final Set<String> undocumentedOutputs = new HashSet<>();
 
         void input(final Set<String> names) {
             if (!names.isEmpty()) {
@@ -158,7 +160,12 @@ public final class TckCoverage {
                     }
                     case Binding.Request request ->
                             parameter(request.path(), top, names).ifPresent(p -> input(Set.of(p)));
-                    case Binding.Result result -> outputs.add(result.name().first());
+                    case Binding.Result result -> {
+                        outputs.add(result.name().first());
+                        if (result.undocumented()) {
+                            undocumentedOutputs.add(result.name().first());
+                        }
+                    }
                     case Binding.Unsupported unsupported -> {
                         if (unsupported.result()) {
                             unsupportedOutputs.add(unsupported.name());
@@ -211,7 +218,7 @@ public final class TckCoverage {
         unknown.forEach(input -> findings.add("Parameter " + input + " of " + name + " does not exist in the TCK"));
         final Set<String> knownOutputs = new HashSet<>(method.outputs());
         for (final String output : union(usage.outputs, usage.unsupportedOutputs)) {
-            if (!knownOutputs.contains(output)) {
+            if (!knownOutputs.contains(output) && !usage.undocumentedOutputs.contains(output)) {
                 findings.add("Result " + output + " of " + name + " does not exist in the TCK");
             }
         }

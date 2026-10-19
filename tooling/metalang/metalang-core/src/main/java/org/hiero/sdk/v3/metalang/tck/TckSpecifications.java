@@ -102,7 +102,9 @@ public final class TckSpecifications {
             } else if (line.startsWith("#") && (line.contains("Input Parameters")
                     || common && line.contains("Parameter Object Definition"))) {
                 inputs.addAll(table(lines, i + 1));
-            } else if (line.startsWith("#") && line.contains("Output Parameters")) {
+            } else if (line.startsWith("#") && line.contains("Output Parameters")
+                    && !line.matches("^#+\\s*Output Parameters\\s*-.*")) {
+                // "Output Parameters - ExchangeRate" lists the fields of a nested result, not results of the method
                 outputs.addAll(table(lines, i + 1));
             }
         }

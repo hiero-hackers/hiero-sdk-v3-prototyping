@@ -32,9 +32,23 @@
 /// - **submit** — hand the packed transaction to one of the target consensus nodes and obtain a
 ///   `Response`. The SDK chooses the node; the caller does not steer it. Actual ledger execution
 ///   happens on the network asynchronously — the `Response` is the submission acknowledgment, not the
-///   execution result. Use `Response.queryReceipt()` / `Response.queryRecord()` to read the outcome
-///   once consensus is reached. `submit(client)` and the retry-tuning fields are inherited from
+///   execution result. Use `Response.queryReceipt(client)` / `Response.queryRecord(client)` to read the
+///   outcome once consensus is reached. `submit(client)` and the retry-tuning fields are inherited from
 ///   `Submittable`.
+///
+/// ### Reading the outcome
+///
+/// A `Response` is a plain value: the id of the transaction, its type, and the consensus node it was sent to. It can be
+/// stored and used in another process. `queryReceipt(client)` asks the node the transaction was sent to for the receipt
+/// and waits until the network has reached consensus on it (a receipt is available for about three minutes after
+/// consensus); `queryRecord(client)` reads the record, which the client's operator pays for. Both return the receipt
+/// typed for the transaction, e.g. an `AccountCreateReceipt` for an `AccountCreateTransaction`.
+///
+/// For a transaction you did not submit yourself — the execution of a schedule, the inner transaction of a batch, a
+/// transaction whose id you stored — create the `Response` from its id and type: `Response{transactionId,
+/// transactionType}`. Without a node, the receipt is read from any node of the client. When the type is not known
+/// either, or to read the receipts of duplicate and child transactions, use the `TransactionReceiptQuery`, which
+/// returns untyped receipts that can be turned into typed ones.
 ///
 /// A `PackedTransaction` may be serialized via `toBytes()` at any point, shipped to another process or
 /// machine, re-loaded via the static `fromBytes(...)` factory, and have further signatures appended on

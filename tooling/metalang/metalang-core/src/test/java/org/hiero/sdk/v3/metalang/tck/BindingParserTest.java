@@ -134,6 +134,31 @@ class BindingParserTest {
     }
 
     @Test
+    void undocumentedResultsAndAcceptedValuesShouldBeParsed() {
+        // WHEN
+        final BindingParser.Result result = BindingParser.parse("shop.md", """
+                ```bindings
+                binding createOrder -> shop.OrderTransaction {
+                    undocumented result transactionId = receipt.transactionId : transactionId
+                    result orderId = receipt.orderId : string
+                    unsupported validate "no validation" unless false
+                    unsupported currency "no currency" unless "EUR"
+                    unsupported memo "no memo"
+                }
+                ```
+                """);
+
+        // THEN
+        assertThat(result.diagnostics()).isEmpty();
+        final List<Binding.Member> members = result.bindings().getFirst().members();
+        assertThat(((Binding.Result) members.get(0)).undocumented()).isTrue();
+        assertThat(((Binding.Result) members.get(1)).undocumented()).isFalse();
+        assertThat(((Binding.Unsupported) members.get(2)).unless()).isEqualTo(Boolean.FALSE);
+        assertThat(((Binding.Unsupported) members.get(3)).unless()).isEqualTo("EUR");
+        assertThat(((Binding.Unsupported) members.get(4)).unless()).isNull();
+    }
+
+    @Test
     void sourcesAreEitherPathsOrConstants() {
         assertThatThrownBy(() -> new Binding.Source(null, null, "string"))
                 .isInstanceOf(IllegalArgumentException.class);

@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.hiero.consensusnode.queries.accounts.AccountInfoQuery;
+import org.hiero.consensusnode.queries.receipts.TransactionReceiptQuery;
 import org.hiero.consensusnode.transactions.accounts.AccountAllowanceApproveTransaction;
 import org.hiero.consensusnode.transactions.accounts.AccountAllowanceDeleteTransaction;
 import org.hiero.consensusnode.transactions.accounts.AccountCreateTransaction;
@@ -66,6 +67,7 @@ final class CryptoServiceBindings {
         methods.put("deleteAllowance", this::deleteAllowance);
         requests.put("deleteAllowance", this::buildDeleteAllowance);
         methods.put("getAccountInfo", this::getAccountInfo);
+        methods.put("getTransactionReceipt", this::getTransactionReceipt);
     }
 
     /// Creates an account (AccountCreateTransaction.md).
@@ -77,6 +79,7 @@ final class CryptoServiceBindings {
         final Map<String, Object> result = new LinkedHashMap<>();
         runtime.put(result, "accountId", receipt.accountId(), convert::accountIdJson);
         runtime.put(result, "status", receipt.status(), convert::statusJson);
+        runtime.put(result, "transactionId", receipt.transactionId(), convert::transactionIdJson);
         return result;
     }
 
@@ -320,6 +323,44 @@ final class CryptoServiceBindings {
     /// Builds the request of `getAccountInfo` without sending it.
     AccountInfoQuery buildGetAccountInfo(final Map<String, Object> params) {
         final AccountInfoQuery request = new AccountInfoQuery(runtime.required(runtime.value(params, List.of(new Source<>("accountId", convert::accountId))), "accountId"));
+        return request;
+    }
+
+    /// Reads the receipt of a transaction by its id (TransactionReceiptQuery.md), untyped: the TCK does not name the
+    /// transaction type. The query returns the receipt also for a failed transaction; the V3 API has no validateStatus.
+    Object getTransactionReceipt(final Map<String, Object> params, final Session session) {
+        final var query = buildGetTransactionReceipt(params);
+        final var response = runtime.query(session, query);
+        final Map<String, Object> result = new LinkedHashMap<>();
+        runtime.put(result, "status", response.receipt().status(), convert::statusJson);
+        runtime.put(result, "accountId", response.receipt().accountId(), convert::accountIdJson);
+        runtime.put(result, "fileId", response.receipt().fileId(), convert::addressJson);
+        runtime.put(result, "contractId", response.receipt().contractId(), convert::contractIdJson);
+        runtime.put(result, "topicId", response.receipt().topicId(), convert::addressJson);
+        runtime.put(result, "tokenId", response.receipt().tokenId(), convert::addressJson);
+        runtime.put(result, "scheduleId", response.receipt().scheduleId(), convert::addressJson);
+        runtime.put(result, "exchangeRate", response.receipt().exchangeRate(), convert::exchangeRateJson);
+        runtime.put(result, "topicSequenceNumber", response.receipt().topicSequenceNumber(), convert::int64Json);
+        runtime.put(result, "topicRunningHash", response.receipt().topicRunningHash(), convert::hexJson);
+        runtime.put(result, "totalSupply", response.receipt().totalSupply(), convert::int64Json);
+        runtime.put(result, "scheduledTransactionId", response.receipt().scheduledTransactionId(), convert::transactionIdJson);
+        runtime.put(result, "serials", response.receipt().serials(), values -> BindingSupport.json(values, convert::int64Json));
+        runtime.put(result, "nodeId", response.receipt().nodeId(), convert::int64Json);
+        runtime.put(result, "duplicates", response.duplicates(), values -> BindingSupport.json(values, convert::receiptJson));
+        runtime.put(result, "children", response.children(), values -> BindingSupport.json(values, convert::receiptJson));
+        return result;
+    }
+
+    /// Builds the request of `getTransactionReceipt` without sending it.
+    TransactionReceiptQuery buildGetTransactionReceipt(final Map<String, Object> params) {
+        if (!Boolean.FALSE.equals(params.get("validateStatus"))) {
+            runtime.unsupported(params, "validateStatus", "the V3 receipt query does not fail on the status of a failed transaction; the status is a value, not an error");
+        }
+        final TransactionReceiptQuery request = new TransactionReceiptQuery(
+                runtime.required(runtime.value(params, List.of(new Source<>("transactionId", convert::transactionId))), "transactionId"),
+                runtime.or(runtime.value(params, List.of(new Source<>("includeDuplicates", convert::bool))), false),
+                runtime.or(runtime.value(params, List.of(new Source<>("includeChildren", convert::bool))), false),
+                null);
         return request;
     }
 }

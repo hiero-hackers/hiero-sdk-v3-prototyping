@@ -294,7 +294,7 @@ utilities and the enterprise services. The specs have 386 spec tests (45 spec fi
 value is rejected); **all 386 and all 2,787 contract tests pass** against `impl`, and `metalang check` reports that it
 provides the API. What the specs cannot express is recorded in their `## Questions & Comments`. It has the same
 Maven coordinates as `generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The
-TCK binds 47 of its 65 methods (`tooling/tck/bindings`); `./mvnw -f impl verify -Ptck` (in `sdk-java`) builds the TCK server in the same reactor and runs it after
+TCK binds 48 of its 65 methods (`tooling/tck/bindings`); `./mvnw -f impl verify -Ptck` (in `sdk-java`) builds the TCK server in the same reactor and runs it after
 the build against a local Solo network. The last module of every build of `impl`, `impl/test-report`, renders the
 results of all tests (with the profile also the TCK) as `sdk-java/impl/target/test-report/index.html`. [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is the
 runbook: how the copy was made, file inventory, filled stubs, build and verify, the TCK, and the traps.
@@ -304,11 +304,13 @@ Comments` of the respective spec files and are its real output:
 
 1. `HieroClient` is a record and `Network` carries no consensus nodes, so a client cannot reach its
    network - the `NetworkSetting` passed to `ClientFactory` is dropped.
-2. `Response` is a record holding only a `TransactionId`, yet `queryReceipt()` has to reach the network.
+2. ~~`Response` is a record holding only a `TransactionId`, yet `queryReceipt()` has to reach the network.~~ Resolved
+   by [ADR-0013](docs/adr/0013-untyped-receipts-for-the-receipt-query-by-id.md): `Response` holds the transaction
+   type and the node, `queryReceipt(client)` takes the client, and `TransactionReceiptQuery` reads a receipt by id.
 3. `TransactionId.generateTransactionId` takes an `Address`, but `TransactionId` holds an `AccountId`.
 4. `BasicTransactionStatus` has no `SUCCESS`; the protocol value is 22.
 
-`ClientRuntime` (in `impl`) bridges (1) and (2) with process-wide registries - a workaround, not a design.
+`ClientRuntime` (in `impl`) bridges (1) with a process-wide registry - a workaround, not a design.
 
 ## How to make changes
 

@@ -7,8 +7,6 @@ seconds and integers as decimal strings.
 
 ## Methods without binding
 
-- `getTransactionReceipt`: the V3 API reads a receipt only through the `Response` of a submitted transaction
-  (`Response.queryReceipt`); there is no receipt query for a given transaction ID, nor duplicate or child receipts.
 - `executeDeprecatedAccountBalanceQuery`: the TCK checks the deprecation warning and error texts of the V2 SDKs; the
   result (`constructionWarning`, `executionError`) is no value of the API. `AccountBalanceQuery` itself exists.
 - `ping`, `pingAll`: the V3 client has no ping of a consensus node.
@@ -21,6 +19,7 @@ requires {AccountAllowanceApproveTransaction, AccountAllowanceDeleteTransaction}
 requires {HbarAllowance, TokenAllowance, NftAllowance, NftSerialGrant, NftCollectionGrant} from consensusnode.transactions.accounts
 requires {NftAllowanceDeletion} from consensusnode.transactions.accounts
 requires {AccountInfoQuery} from consensusnode.queries.accounts
+requires {TransactionReceiptQuery} from consensusnode.queries.receipts
 
 // Creates an account (AccountCreateTransaction.md).
 binding createAccount -> AccountCreateTransaction {
@@ -36,6 +35,8 @@ binding createAccount -> AccountCreateTransaction {
     alias                         = alias : hex
     result accountId = receipt.accountId : accountId
     result status    = receipt.status : status
+    // not in AccountCreateTransaction.md, but test-transaction-receipt-query.ts reads it
+    undocumented result transactionId = receipt.transactionId : transactionId
 }
 
 // Updates an account (AccountUpdateTransaction.md).
@@ -154,5 +155,31 @@ binding getAccountInfo -> AccountInfoQuery {
     unsupported result tokenAllowances "AccountInfo has no allowances"
     unsupported result nftAllowances "AccountInfo has no allowances"
     unsupported result ethereumNonce "AccountInfo has no Ethereum nonce (the Mirror Node account has one)"
+}
+
+// Reads the receipt of a transaction by its id (TransactionReceiptQuery.md), untyped: the TCK does not name the
+// transaction type. The query returns the receipt also for a failed transaction; the V3 API has no validateStatus.
+binding getTransactionReceipt -> TransactionReceiptQuery {
+    transactionId     = transactionId : transactionId
+    includeDuplicates = includeDuplicates : bool
+    includeChildren   = includeChildren : bool
+    // validateStatus false is what the V3 query does: it returns the receipt of a failed transaction too
+    unsupported validateStatus "the V3 receipt query does not fail on the status of a failed transaction; the status is a value, not an error" unless false
+    result status                 = response.receipt.status : status
+    result accountId              = response.receipt.accountId : accountId
+    result fileId                 = response.receipt.fileId : address
+    result contractId             = response.receipt.contractId : contractId
+    result topicId                = response.receipt.topicId : address
+    result tokenId                = response.receipt.tokenId : address
+    result scheduleId             = response.receipt.scheduleId : address
+    result exchangeRate           = response.receipt.exchangeRate : exchangeRate
+    result topicSequenceNumber    = response.receipt.topicSequenceNumber : int64
+    result topicRunningHash       = response.receipt.topicRunningHash : hex
+    result totalSupply            = response.receipt.totalSupply : int64
+    result scheduledTransactionId = response.receipt.scheduledTransactionId : transactionId
+    result serials                = response.receipt.serials : int64
+    result nodeId                 = response.receipt.nodeId : int64
+    result duplicates             = response.duplicates : receipt
+    result children               = response.children : receipt
 }
 ```
