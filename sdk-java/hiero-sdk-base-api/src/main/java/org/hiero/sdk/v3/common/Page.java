@@ -3,9 +3,14 @@ package org.hiero.sdk.v3.common;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
+import org.jspecify.annotations.NonNull;
 
 /**
  * An immutable page of asynchronously navigable Mirror Node data.
+ *
+ * <p>The list structure is an immutable snapshot; elements are not deep-copied. Providers supply
+ * position and navigation behavior. This contract performs no network requests and does not infer
+ * numeric constraints or a relationship between the declared size and the number of data elements.
  *
  * @param <T> the type of each value in the page
  */
@@ -22,8 +27,8 @@ public abstract class Page<T> {
      * @param pageIndex the zero-based page index
      * @throws NullPointerException if {@code data} or one of its elements is {@code null}
      */
-    protected Page(final List<T> data, final int size, final int pageIndex) {
-        this.data = List.copyOf(Objects.requireNonNull(data, "data"));
+    protected Page(@NonNull final List<T> data, final int size, final int pageIndex) {
+        this.data = List.copyOf(Objects.requireNonNull(data, "data must not be null"));
         this.size = size;
         this.pageIndex = pageIndex;
     }
@@ -33,7 +38,7 @@ public abstract class Page<T> {
      *
      * @return the immutable page data
      */
-    public final List<T> data() {
+    public final @NonNull List<T> data() {
         return data;
     }
 
@@ -75,7 +80,7 @@ public abstract class Page<T> {
      * @return a stage that completes with the next page, or exceptionally with
      *         {@link MirrorNodeException} when the Mirror Node request fails
      */
-    public abstract CompletionStage<Page<T>> next();
+    public abstract @NonNull CompletionStage<Page<T>> next();
 
     /**
      * Retrieves the first page associated with the same paginated operation asynchronously.
@@ -83,5 +88,5 @@ public abstract class Page<T> {
      * @return a stage that completes with the first page, or exceptionally with
      *         {@link MirrorNodeException} when the Mirror Node request fails
      */
-    public abstract CompletionStage<Page<T>> first();
+    public abstract @NonNull CompletionStage<Page<T>> first();
 }
