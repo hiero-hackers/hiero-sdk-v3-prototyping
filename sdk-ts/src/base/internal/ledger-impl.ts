@@ -44,3 +44,48 @@ export class NetworkImpl<Unit extends NativeTokenUnit> implements Network<Unit> 
         return this.#nativeTokenUnit;
     }
 }
+
+const P3 = 26 * 26 * 26; // 17576
+const P5 = 26 * 26 * 26 * 26 * 26; // 11881376
+const M = 1000003n;
+const W = 31n;
+
+/**
+ * Calculates the canonical 5-character HIP-15 checksum for an entity ID (e.g. "0.0.123") on a given ledger ID.
+ */
+export function calculateHip15Checksum(entity: string, ledgerId: Uint8Array): string {
+    const digits: bigint[] = [];
+    for (let i = 0; i < entity.length; i++) {
+        digits.push(entity[i] === '.' ? 10n : BigInt(entity[i]!));
+    }
+    const ledger = new Uint8Array(ledgerId.length + 6);
+    ledger.set(ledgerId, 0);
+
+    let sd0 = 0n;
+    let sd1 = 0n;
+    let sd = 0n;
+    for (let i = 0; i < digits.length; i++) {
+        sd = (W * sd + digits[i]!) % BigInt(P3);
+        if (i % 2 === 0) {
+            sd0 = (sd0 + digits[i]!) % 11n;
+        } else {
+            sd1 = (sd1 + digits[i]!) % 11n;
+        }
+    }
+
+    let sh = 0n;
+    for (let i = 0; i < ledger.length; i++) {
+        sh = (W * sh + BigInt(ledger[i]!)) % BigInt(P5);
+    }
+
+    const lenMod5 = BigInt(digits.length % 5);
+    const c = (((lenMod5 * 11n + sd0) * 11n + sd1) * BigInt(P3) + sd + sh) % BigInt(P5);
+    let cp = (c * M) % BigInt(P5);
+
+    const chars: string[] = [];
+    for (let i = 0; i < 5; i++) {
+        chars.push(String.fromCharCode(97 + Number(cp % 26n)));
+        cp = cp / 26n;
+    }
+    return chars.reverse().join('');
+}
