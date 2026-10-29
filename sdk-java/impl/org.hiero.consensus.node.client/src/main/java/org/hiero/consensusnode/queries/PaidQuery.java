@@ -1,7 +1,9 @@
 package org.hiero.consensusnode.queries;
 
+import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.client.RetryPolicy;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 
@@ -36,33 +38,13 @@ public abstract class PaidQuery<Result> extends Query<Result, PaidQueryResponse<
         return this;
     }
 
-    /// Sets the `maxAttempts`.
+    /// Sets the `retryPolicy`.
     ///
-    /// @param maxAttempts the new value
+    /// @param retryPolicy the new value
     /// @return this object
     @Override
-    public PaidQuery<Result> setMaxAttempts(final @Nullable Integer maxAttempts) {
-        super.setMaxAttempts(maxAttempts);
-        return this;
-    }
-
-    /// Sets the `maxBackoff`.
-    ///
-    /// @param maxBackoff the new value
-    /// @return this object
-    @Override
-    public PaidQuery<Result> setMaxBackoff(final @Nullable Long maxBackoff) {
-        super.setMaxBackoff(maxBackoff);
-        return this;
-    }
-
-    /// Sets the `minBackoff`.
-    ///
-    /// @param minBackoff the new value
-    /// @return this object
-    @Override
-    public PaidQuery<Result> setMinBackoff(final @Nullable Long minBackoff) {
-        super.setMinBackoff(minBackoff);
+    public PaidQuery<Result> setRetryPolicy(final @Nullable RetryPolicy retryPolicy) {
+        super.setRetryPolicy(retryPolicy);
         return this;
     }
 
@@ -71,7 +53,7 @@ public abstract class PaidQuery<Result> extends Query<Result, PaidQueryResponse<
     /// @param attemptTimeout the new value
     /// @return this object
     @Override
-    public PaidQuery<Result> setAttemptTimeout(final @Nullable Long attemptTimeout) {
+    public PaidQuery<Result> setAttemptTimeout(final @Nullable Duration attemptTimeout) {
         super.setAttemptTimeout(attemptTimeout);
         return this;
     }

@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.queries.files;
 
+import java.time.Duration;
+import org.hiero.consensusnode.client.RetryPolicy;
 import org.hiero.consensusnode.client.internal.FileQueries;
 import org.hiero.consensusnode.client.internal.Querying;
 import java.util.Objects;
@@ -31,33 +33,13 @@ public final class FileInfoQuery extends PaidQuery<FileInfo> {
         return fileId;
     }
 
-    /// Sets the `maxAttempts`.
+    /// Sets the `retryPolicy`.
     ///
-    /// @param maxAttempts the new value
+    /// @param retryPolicy the new value
     /// @return this object
     @Override
-    public FileInfoQuery setMaxAttempts(final @Nullable Integer maxAttempts) {
-        super.setMaxAttempts(maxAttempts);
-        return this;
-    }
-
-    /// Sets the `maxBackoff`.
-    ///
-    /// @param maxBackoff the new value
-    /// @return this object
-    @Override
-    public FileInfoQuery setMaxBackoff(final @Nullable Long maxBackoff) {
-        super.setMaxBackoff(maxBackoff);
-        return this;
-    }
-
-    /// Sets the `minBackoff`.
-    ///
-    /// @param minBackoff the new value
-    /// @return this object
-    @Override
-    public FileInfoQuery setMinBackoff(final @Nullable Long minBackoff) {
-        super.setMinBackoff(minBackoff);
+    public FileInfoQuery setRetryPolicy(final @Nullable RetryPolicy retryPolicy) {
+        super.setRetryPolicy(retryPolicy);
         return this;
     }
 
@@ -66,7 +48,7 @@ public final class FileInfoQuery extends PaidQuery<FileInfo> {
     /// @param attemptTimeout the new value
     /// @return this object
     @Override
-    public FileInfoQuery setAttemptTimeout(final @Nullable Long attemptTimeout) {
+    public FileInfoQuery setAttemptTimeout(final @Nullable Duration attemptTimeout) {
         super.setAttemptTimeout(attemptTimeout);
         return this;
     }
@@ -83,10 +65,12 @@ public final class FileInfoQuery extends PaidQuery<FileInfo> {
 
     /// Sends this request to the network and returns the typed result asynchronously. Node selection, retries
     /// and operation-specific protocol details (for example cost discovery and payment for a `PaidQuery`) are
-    /// handled transparently.
+    /// handled transparently. Fails with `attempts-exhausted-error` when the retry policy gives up.
+    ///
+    /// The returned stage completes exceptionally with `AttemptsExhaustedException` if the operation fails.
     @Override
     public CompletionStage<PaidQueryResponse<FileInfo>> submit(final HieroClient<?> client) {
-        return Querying.paid(this, maxQueryPayment(), FileQueries.FILE_INFO, client);
+        return Querying.paid(this, this, maxQueryPayment(), FileQueries.FILE_INFO, client);
     }
 
     /// Asks the network for the current price of this query without executing it. The returned value is a
@@ -94,14 +78,12 @@ public final class FileInfoQuery extends PaidQuery<FileInfo> {
     /// Throws if `maxQueryPayment` is set and the quoted price exceeds it.
     @Override
     public CompletionStage<NativeToken<?, ?>> getCost(final HieroClient<?> client) {
-        return Querying.cost(this, FileQueries.FILE_INFO, client);
+        return Querying.cost(this, this, FileQueries.FILE_INFO, client);
     }
 
     @Override
     public String toString() {
-        return "FileInfoQuery[maxAttempts=" + maxAttempts()
-                + ", maxBackoff=" + maxBackoff()
-                + ", minBackoff=" + minBackoff()
+        return "FileInfoQuery[retryPolicy=" + retryPolicy()
                 + ", attemptTimeout=" + attemptTimeout()
                 + ", maxQueryPayment=" + maxQueryPayment()
                 + ", fileId=" + fileId()

@@ -1,8 +1,10 @@
 package org.hiero.consensusnode.admin.network;
 
+import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import org.hiero.consensusnode.admin.internal.AdminQueries;
 import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.client.RetryPolicy;
 import org.hiero.consensusnode.client.internal.Querying;
 import org.hiero.consensusnode.queries.PaidQuery;
 import org.hiero.consensusnode.queries.PaidQueryResponse;
@@ -19,33 +21,13 @@ public final class NodeAddressBookQuery extends PaidQuery<NodeAddressBook> {
         super();
     }
 
-    /// Sets the `maxAttempts`.
+    /// Sets the `retryPolicy`.
     ///
-    /// @param maxAttempts the new value
+    /// @param retryPolicy the new value
     /// @return this object
     @Override
-    public NodeAddressBookQuery setMaxAttempts(final @Nullable Integer maxAttempts) {
-        super.setMaxAttempts(maxAttempts);
-        return this;
-    }
-
-    /// Sets the `maxBackoff`.
-    ///
-    /// @param maxBackoff the new value
-    /// @return this object
-    @Override
-    public NodeAddressBookQuery setMaxBackoff(final @Nullable Long maxBackoff) {
-        super.setMaxBackoff(maxBackoff);
-        return this;
-    }
-
-    /// Sets the `minBackoff`.
-    ///
-    /// @param minBackoff the new value
-    /// @return this object
-    @Override
-    public NodeAddressBookQuery setMinBackoff(final @Nullable Long minBackoff) {
-        super.setMinBackoff(minBackoff);
+    public NodeAddressBookQuery setRetryPolicy(final @Nullable RetryPolicy retryPolicy) {
+        super.setRetryPolicy(retryPolicy);
         return this;
     }
 
@@ -54,7 +36,7 @@ public final class NodeAddressBookQuery extends PaidQuery<NodeAddressBook> {
     /// @param attemptTimeout the new value
     /// @return this object
     @Override
-    public NodeAddressBookQuery setAttemptTimeout(final @Nullable Long attemptTimeout) {
+    public NodeAddressBookQuery setAttemptTimeout(final @Nullable Duration attemptTimeout) {
         super.setAttemptTimeout(attemptTimeout);
         return this;
     }
@@ -71,10 +53,12 @@ public final class NodeAddressBookQuery extends PaidQuery<NodeAddressBook> {
 
     /// Sends this request to the network and returns the typed result asynchronously. Node selection, retries
     /// and operation-specific protocol details (for example cost discovery and payment for a `PaidQuery`) are
-    /// handled transparently.
+    /// handled transparently. Fails with `attempts-exhausted-error` when the retry policy gives up.
+    ///
+    /// The returned stage completes exceptionally with `AttemptsExhaustedException` if the operation fails.
     @Override
     public CompletionStage<PaidQueryResponse<NodeAddressBook>> submit(final HieroClient<?> client) {
-        return Querying.paid(AdminQueries.addressBookFile(client.operatorAccount().accountId()), maxQueryPayment(),
+        return Querying.paid(this, AdminQueries.addressBookFile(client.operatorAccount().accountId()), maxQueryPayment(),
                 AdminQueries.NODE_ADDRESS_BOOK, client);
     }
 
@@ -84,7 +68,7 @@ public final class NodeAddressBookQuery extends PaidQuery<NodeAddressBook> {
     @Override
     public CompletionStage<NativeToken<?, ?>> getCost(final HieroClient<?> client) {
         final NativeToken<?, ?> maxQueryPayment = maxQueryPayment();
-        return Querying.cost(AdminQueries.addressBookFile(client.operatorAccount().accountId()),
+        return Querying.cost(this, AdminQueries.addressBookFile(client.operatorAccount().accountId()),
                 AdminQueries.NODE_ADDRESS_BOOK, client).thenApply(cost -> {
                     if (maxQueryPayment != null && cost.toBaseUnits() > maxQueryPayment.toBaseUnits()) {
                         throw new IllegalStateException("The query costs " + cost + ", more than its maxQueryPayment "
@@ -96,9 +80,7 @@ public final class NodeAddressBookQuery extends PaidQuery<NodeAddressBook> {
 
     @Override
     public String toString() {
-        return "NodeAddressBookQuery[maxAttempts=" + maxAttempts()
-                + ", maxBackoff=" + maxBackoff()
-                + ", minBackoff=" + minBackoff()
+        return "NodeAddressBookQuery[retryPolicy=" + retryPolicy()
                 + ", attemptTimeout=" + attemptTimeout()
                 + ", maxQueryPayment=" + maxQueryPayment()
                 + "]";

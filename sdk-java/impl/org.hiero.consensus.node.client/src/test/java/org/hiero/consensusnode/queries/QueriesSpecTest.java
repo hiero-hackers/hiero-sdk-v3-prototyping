@@ -2,6 +2,9 @@ package org.hiero.consensusnode.queries;
 
 import static org.hiero.sdk.testing.Testing.*;
 
+import java.time.Duration;
+import org.hiero.consensusnode.client.ExecutionSettings;
+import org.hiero.consensusnode.client.RetryPolicy;
 import org.hiero.consensusnode.queries.accounts.AccountBalanceQuery;
 import org.hiero.consensusnode.queries.accounts.AccountInfoQuery;
 import org.hiero.hedera.Hbar;
@@ -19,7 +22,7 @@ class QueriesSpecTest {
     /// `consensusnode.queries/a-new-query-has-no-payment-limit-and-no-retry-settings`
     ///
     /// Source: the Python SDK (query_test.py, test_set_max_query_payment_valid_param: no limit before one is set) and
-    /// this spec (if a retry setting is absent, the SDK default is used).
+    /// this spec (if a setting of a request is absent, the one of the client's `ExecutionSettings` is used).
     @Test
     @DisplayName("a new query has no payment limit and no retry settings")
     @Tag("testId:consensusnode.queries/a-new-query-has-no-payment-limit-and-no-retry-settings")
@@ -30,13 +33,9 @@ class QueriesSpecTest {
 
         // then
         assertNull(paid.maxQueryPayment());
-        assertNull(paid.maxAttempts());
-        assertNull(paid.minBackoff());
-        assertNull(paid.maxBackoff());
+        assertNull(paid.retryPolicy());
         assertNull(paid.attemptTimeout());
-        assertNull(free.maxAttempts());
-        assertNull(free.minBackoff());
-        assertNull(free.maxBackoff());
+        assertNull(free.retryPolicy());
         assertNull(free.attemptTimeout());
     }
 
@@ -58,23 +57,23 @@ class QueriesSpecTest {
         assertEquals(limit, query.maxQueryPayment());
     }
 
-    /// `consensusnode.queries/a-query-keeps-its-retry-settings`
+    /// `consensusnode.queries/a-query-keeps-its-execution-settings`
     ///
-    /// Source: the Python SDK (client_test.py, test_set_max_attempts_with_valid_param, test_set_min_backoff_with_valid_param,
-    /// test_set_max_backoff_with_valid_param) and the Java SDK (ClientTest.setMaxAttempts, setMinBackoffValid,
-    /// setMaxBackoffValid): retry settings that are set are kept.
+    /// Source: this spec (Submittable: a request keeps the execution settings set on it).
     @Test
-    @DisplayName("a query keeps its retry settings")
-    @Tag("testId:consensusnode.queries/a-query-keeps-its-retry-settings")
-    void aQueryKeepsItsRetrySettings() {
+    @DisplayName("a query keeps its execution settings")
+    @Tag("testId:consensusnode.queries/a-query-keeps-its-execution-settings")
+    void aQueryKeepsItsExecutionSettings() {
+        // given
+        final RetryPolicy policy = defaultRetryPolicy();
+        final Duration timeout = toDuration("PT5S");
+
         // when
-        final AccountInfoQuery query = new AccountInfoQuery(defaultAccountId()).setMaxAttempts(5).setMaxBackoff(8000L).setMinBackoff(250L).setAttemptTimeout(10000L);
+        final AccountInfoQuery query = new AccountInfoQuery(defaultAccountId()).setRetryPolicy(policy).setAttemptTimeout(timeout);
 
         // then
-        assertEquals(5, query.maxAttempts());
-        assertEquals(250L, query.minBackoff());
-        assertEquals(8000L, query.maxBackoff());
-        assertEquals(10000L, query.attemptTimeout());
+        assertEquals(policy, query.retryPolicy());
+        assertEquals(timeout, query.attemptTimeout());
     }
 
     private static AccountId defaultAccountId() {
@@ -83,5 +82,13 @@ class QueriesSpecTest {
 
     private static Hbar defaultHbar() {
         return new Hbar(1L, HbarUnit.HBAR);
+    }
+
+    private static RetryPolicy defaultRetryPolicy() {
+        return defaultExecutionSettings().retryPolicy();
+    }
+
+    private static ExecutionSettings defaultExecutionSettings() {
+        return ExecutionSettings.createDefault();
     }
 }

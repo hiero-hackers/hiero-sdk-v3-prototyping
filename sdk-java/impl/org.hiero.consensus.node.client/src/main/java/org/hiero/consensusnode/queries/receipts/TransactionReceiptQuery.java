@@ -1,6 +1,8 @@
 package org.hiero.consensusnode.queries.receipts;
 
+import java.time.Duration;
 import java.util.Objects;
+import org.hiero.consensusnode.client.RetryPolicy;
 import org.hiero.consensusnode.client.internal.ClientRuntime;
 import org.hiero.consensusnode.client.internal.Receipts;
 import java.util.concurrent.CompletionStage;
@@ -61,33 +63,13 @@ public final class TransactionReceiptQuery extends FreeQuery<TransactionReceipts
         return nodeAccountId;
     }
 
-    /// Sets the `maxAttempts`.
+    /// Sets the `retryPolicy`.
     ///
-    /// @param maxAttempts the new value
+    /// @param retryPolicy the new value
     /// @return this object
     @Override
-    public TransactionReceiptQuery setMaxAttempts(final @Nullable Integer maxAttempts) {
-        super.setMaxAttempts(maxAttempts);
-        return this;
-    }
-
-    /// Sets the `maxBackoff`.
-    ///
-    /// @param maxBackoff the new value
-    /// @return this object
-    @Override
-    public TransactionReceiptQuery setMaxBackoff(final @Nullable Long maxBackoff) {
-        super.setMaxBackoff(maxBackoff);
-        return this;
-    }
-
-    /// Sets the `minBackoff`.
-    ///
-    /// @param minBackoff the new value
-    /// @return this object
-    @Override
-    public TransactionReceiptQuery setMinBackoff(final @Nullable Long minBackoff) {
-        super.setMinBackoff(minBackoff);
+    public TransactionReceiptQuery setRetryPolicy(final @Nullable RetryPolicy retryPolicy) {
+        super.setRetryPolicy(retryPolicy);
         return this;
     }
 
@@ -96,18 +78,21 @@ public final class TransactionReceiptQuery extends FreeQuery<TransactionReceipts
     /// @param attemptTimeout the new value
     /// @return this object
     @Override
-    public TransactionReceiptQuery setAttemptTimeout(final @Nullable Long attemptTimeout) {
+    public TransactionReceiptQuery setAttemptTimeout(final @Nullable Duration attemptTimeout) {
         super.setAttemptTimeout(attemptTimeout);
         return this;
     }
 
     /// Sends this request to the network and returns the typed result asynchronously. Node selection, retries
     /// and operation-specific protocol details (for example cost discovery and payment for a `PaidQuery`) are
-    /// handled transparently.
+    /// handled transparently. Fails with `attempts-exhausted-error` when the retry policy gives up.
+    ///
+    /// The returned stage completes exceptionally with `AttemptsExhaustedException` if the operation fails.
     @Override
     public CompletionStage<QueryResponse<TransactionReceipts>> submit(final HieroClient<?> client) {
         Objects.requireNonNull(client, "client must not be null");
-        return ClientRuntime.of(client).queryReceipt(nodeAccountId, transactionId, includeDuplicates, includeChildren)
+        return ClientRuntime.of(client).queryReceipt(this, nodeAccountId, transactionId, includeDuplicates,
+                        includeChildren)
                 .thenApply(answer -> new QueryResponse<>(Receipts.receipts(transactionId, answer.value()),
                         answer.answeredBy()));
     }
@@ -194,9 +179,7 @@ public final class TransactionReceiptQuery extends FreeQuery<TransactionReceipts
 
     @Override
     public String toString() {
-        return "TransactionReceiptQuery[maxAttempts=" + maxAttempts()
-                + ", maxBackoff=" + maxBackoff()
-                + ", minBackoff=" + minBackoff()
+        return "TransactionReceiptQuery[retryPolicy=" + retryPolicy()
                 + ", attemptTimeout=" + attemptTimeout()
                 + ", transactionId=" + transactionId()
                 + ", includeDuplicates=" + includeDuplicates()

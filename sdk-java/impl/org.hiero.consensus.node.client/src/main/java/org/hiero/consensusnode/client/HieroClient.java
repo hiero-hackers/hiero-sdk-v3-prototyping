@@ -9,10 +9,12 @@ import org.hiero.nativeToken.NativeTokenUnit;
 /// @param operatorAccount the account that pays for and signs requests
 /// @param network the network to connect to
 /// @param transactionSigner signs transactions; by default the operator account's private key is used
+/// @param executionSettings how requests are executed; by default `ExecutionSettings.createDefault()`
 public record HieroClient<Unit extends NativeTokenUnit>(
         Account operatorAccount,
         Network<Unit> network,
-        TransactionSigner transactionSigner) {
+        TransactionSigner transactionSigner,
+        ExecutionSettings executionSettings) {
 
     /// Creates a new `HieroClient`.
     ///
@@ -21,5 +23,6 @@ public record HieroClient<Unit extends NativeTokenUnit>(
         Objects.requireNonNull(operatorAccount, "operatorAccount must not be null");
         Objects.requireNonNull(network, "network must not be null");
         Objects.requireNonNull(transactionSigner, "transactionSigner must not be null");
+        Objects.requireNonNull(executionSettings, "executionSettings must not be null");
     }
 }

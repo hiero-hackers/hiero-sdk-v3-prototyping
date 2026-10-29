@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.queries.accounts;
 
+import java.time.Duration;
+import org.hiero.consensusnode.client.RetryPolicy;
 import org.hiero.consensusnode.client.internal.AccountQueries;
 import org.hiero.consensusnode.client.internal.Querying;
 import java.util.concurrent.CompletionStage;
@@ -39,33 +41,13 @@ public final class AccountBalanceQuery extends FreeQuery<AccountBalance> {
         return contractId;
     }
 
-    /// Sets the `maxAttempts`.
+    /// Sets the `retryPolicy`.
     ///
-    /// @param maxAttempts the new value
+    /// @param retryPolicy the new value
     /// @return this object
     @Override
-    public AccountBalanceQuery setMaxAttempts(final @Nullable Integer maxAttempts) {
-        super.setMaxAttempts(maxAttempts);
-        return this;
-    }
-
-    /// Sets the `maxBackoff`.
-    ///
-    /// @param maxBackoff the new value
-    /// @return this object
-    @Override
-    public AccountBalanceQuery setMaxBackoff(final @Nullable Long maxBackoff) {
-        super.setMaxBackoff(maxBackoff);
-        return this;
-    }
-
-    /// Sets the `minBackoff`.
-    ///
-    /// @param minBackoff the new value
-    /// @return this object
-    @Override
-    public AccountBalanceQuery setMinBackoff(final @Nullable Long minBackoff) {
-        super.setMinBackoff(minBackoff);
+    public AccountBalanceQuery setRetryPolicy(final @Nullable RetryPolicy retryPolicy) {
+        super.setRetryPolicy(retryPolicy);
         return this;
     }
 
@@ -74,17 +56,19 @@ public final class AccountBalanceQuery extends FreeQuery<AccountBalance> {
     /// @param attemptTimeout the new value
     /// @return this object
     @Override
-    public AccountBalanceQuery setAttemptTimeout(final @Nullable Long attemptTimeout) {
+    public AccountBalanceQuery setAttemptTimeout(final @Nullable Duration attemptTimeout) {
         super.setAttemptTimeout(attemptTimeout);
         return this;
     }
 
     /// Sends this request to the network and returns the typed result asynchronously. Node selection, retries
     /// and operation-specific protocol details (for example cost discovery and payment for a `PaidQuery`) are
-    /// handled transparently.
+    /// handled transparently. Fails with `attempts-exhausted-error` when the retry policy gives up.
+    ///
+    /// The returned stage completes exceptionally with `AttemptsExhaustedException` if the operation fails.
     @Override
     public CompletionStage<QueryResponse<AccountBalance>> submit(final HieroClient<?> client) {
-        return Querying.free(this, AccountQueries.ACCOUNT_BALANCE, client);
+        return Querying.free(this, this, AccountQueries.ACCOUNT_BALANCE, client);
     }
 
     /// Returns a builder for a new `AccountBalanceQuery`.
@@ -137,9 +121,7 @@ public final class AccountBalanceQuery extends FreeQuery<AccountBalance> {
 
     @Override
     public String toString() {
-        return "AccountBalanceQuery[maxAttempts=" + maxAttempts()
-                + ", maxBackoff=" + maxBackoff()
-                + ", minBackoff=" + minBackoff()
+        return "AccountBalanceQuery[retryPolicy=" + retryPolicy()
                 + ", attemptTimeout=" + attemptTimeout()
                 + ", accountId=" + accountId()
                 + ", contractId=" + contractId()

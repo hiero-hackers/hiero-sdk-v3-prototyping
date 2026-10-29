@@ -53,7 +53,7 @@ public final class TokenQueries {
                                                                                      final QueryKind<Q, T> kind,
                                                                                      final HieroClient<?> client) {
         final NativeToken<?, ?> maxQueryPayment = query.maxQueryPayment();
-        return Querying.cost(query, kind, client).thenApply(cost -> {
+        return Querying.cost(query, query, kind, client).thenApply(cost -> {
             if (maxQueryPayment != null && cost.toBaseUnits() > maxQueryPayment.toBaseUnits()) {
                 throw new IllegalStateException("The query costs " + cost + ", more than its maxQueryPayment "
                         + maxQueryPayment);

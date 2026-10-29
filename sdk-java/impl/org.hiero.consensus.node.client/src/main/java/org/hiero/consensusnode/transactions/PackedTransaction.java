@@ -1,9 +1,11 @@
 package org.hiero.consensusnode.transactions;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.NodeSignature;
+import org.hiero.consensusnode.client.RetryPolicy;
 import org.hiero.consensusnode.client.Submittable;
 import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.consensusnode.client.internal.DefaultPackedTransaction;
@@ -40,33 +42,13 @@ public abstract class PackedTransaction<ReceiptT extends Receipt, TransactionT e
         return nodeSignatures;
     }
 
-    /// Sets the `maxAttempts`.
+    /// Sets the `retryPolicy`.
     ///
-    /// @param maxAttempts the new value
+    /// @param retryPolicy the new value
     /// @return this object
     @Override
-    public PackedTransaction<ReceiptT, TransactionT> setMaxAttempts(final @Nullable Integer maxAttempts) {
-        super.setMaxAttempts(maxAttempts);
-        return this;
-    }
-
-    /// Sets the `maxBackoff`.
-    ///
-    /// @param maxBackoff the new value
-    /// @return this object
-    @Override
-    public PackedTransaction<ReceiptT, TransactionT> setMaxBackoff(final @Nullable Long maxBackoff) {
-        super.setMaxBackoff(maxBackoff);
-        return this;
-    }
-
-    /// Sets the `minBackoff`.
-    ///
-    /// @param minBackoff the new value
-    /// @return this object
-    @Override
-    public PackedTransaction<ReceiptT, TransactionT> setMinBackoff(final @Nullable Long minBackoff) {
-        super.setMinBackoff(minBackoff);
+    public PackedTransaction<ReceiptT, TransactionT> setRetryPolicy(final @Nullable RetryPolicy retryPolicy) {
+        super.setRetryPolicy(retryPolicy);
         return this;
     }
 
@@ -75,7 +57,7 @@ public abstract class PackedTransaction<ReceiptT extends Receipt, TransactionT e
     /// @param attemptTimeout the new value
     /// @return this object
     @Override
-    public PackedTransaction<ReceiptT, TransactionT> setAttemptTimeout(final @Nullable Long attemptTimeout) {
+    public PackedTransaction<ReceiptT, TransactionT> setAttemptTimeout(final @Nullable Duration attemptTimeout) {
         super.setAttemptTimeout(attemptTimeout);
         return this;
     }

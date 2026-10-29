@@ -1,67 +1,37 @@
 package org.hiero.consensusnode.client;
 
+import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import org.jspecify.annotations.Nullable;
 
 /// Common base for anything that is sent to the consensus node network and produces a typed result — both
-/// queries (`Query`) and packed transactions (`PackedTransaction`). It carries the retry settings (maximum
-/// attempts, backoff window, per-attempt timeout) and the `submit()` entry point. The SDK applies these settings
-/// when selecting a consensus node, retrying transient gRPC failures and bounding the total wait.
+/// queries (`Query`) and packed transactions (`PackedTransaction`). It is sent in attempts as the `ExecutionSettings`
+/// of the client define; the retry policy and the attempt timeout can be overridden for this request.
 public abstract class Submittable<Result> {
 
-    private @Nullable Integer maxAttempts;
-    private @Nullable Long maxBackoff;
-    private @Nullable Long minBackoff;
-    private @Nullable Long attemptTimeout;
+    private @Nullable RetryPolicy retryPolicy;
+    private @Nullable Duration attemptTimeout;
 
     /// Creates a new `Submittable`.
     protected Submittable() {
     }
 
-    /// maximum number of attempts; if absent, the SDK default is used
-    public @Nullable Integer maxAttempts() {
-        return maxAttempts;
+    /// the retry policy for this request; if absent, the one of the client is used
+    public @Nullable RetryPolicy retryPolicy() {
+        return retryPolicy;
     }
 
-    /// Sets the `maxAttempts`.
+    /// Sets the `retryPolicy`.
     ///
-    /// @param maxAttempts the new value
+    /// @param retryPolicy the new value
     /// @return this object
-    public Submittable<Result> setMaxAttempts(final @Nullable Integer maxAttempts) {
-        this.maxAttempts = maxAttempts;
+    public Submittable<Result> setRetryPolicy(final @Nullable RetryPolicy retryPolicy) {
+        this.retryPolicy = retryPolicy;
         return this;
     }
 
-    /// upper bound of the backoff between attempts; if absent, the SDK default is used
-    public @Nullable Long maxBackoff() {
-        return maxBackoff;
-    }
-
-    /// Sets the `maxBackoff`.
-    ///
-    /// @param maxBackoff the new value
-    /// @return this object
-    public Submittable<Result> setMaxBackoff(final @Nullable Long maxBackoff) {
-        this.maxBackoff = maxBackoff;
-        return this;
-    }
-
-    /// lower bound of the backoff between attempts; if absent, the SDK default is used
-    public @Nullable Long minBackoff() {
-        return minBackoff;
-    }
-
-    /// Sets the `minBackoff`.
-    ///
-    /// @param minBackoff the new value
-    /// @return this object
-    public Submittable<Result> setMinBackoff(final @Nullable Long minBackoff) {
-        this.minBackoff = minBackoff;
-        return this;
-    }
-
-    /// timeout for a single attempt; if absent, the SDK default is used
-    public @Nullable Long attemptTimeout() {
+    /// the time one attempt may take; if absent, the one of the client is used
+    public @Nullable Duration attemptTimeout() {
         return attemptTimeout;
     }
 
@@ -69,13 +39,15 @@ public abstract class Submittable<Result> {
     ///
     /// @param attemptTimeout the new value
     /// @return this object
-    public Submittable<Result> setAttemptTimeout(final @Nullable Long attemptTimeout) {
+    public Submittable<Result> setAttemptTimeout(final @Nullable Duration attemptTimeout) {
         this.attemptTimeout = attemptTimeout;
         return this;
     }
 
     /// Sends this request to the network and returns the typed result asynchronously. Node selection, retries
     /// and operation-specific protocol details (for example cost discovery and payment for a `PaidQuery`) are
-    /// handled transparently.
+    /// handled transparently. Fails with `attempts-exhausted-error` when the retry policy gives up.
+    ///
+    /// The returned stage completes exceptionally with `AttemptsExhaustedException` if the operation fails.
     public abstract CompletionStage<Result> submit(final HieroClient<?> client);
 }

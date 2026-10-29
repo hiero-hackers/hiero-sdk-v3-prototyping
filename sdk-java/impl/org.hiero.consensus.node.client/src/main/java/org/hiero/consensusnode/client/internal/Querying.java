@@ -5,7 +5,6 @@ import com.hederahashgraph.api.proto.java.AccountAmount;
 import com.hederahashgraph.api.proto.java.CryptoTransferTransactionBody;
 import com.hederahashgraph.api.proto.java.QueryHeader;
 import com.hederahashgraph.api.proto.java.Response;
-import com.hederahashgraph.api.proto.java.ResponseHeader;
 import com.hederahashgraph.api.proto.java.ResponseType;
 import com.hederahashgraph.api.proto.java.SignatureMap;
 import com.hederahashgraph.api.proto.java.SignedTransaction;
@@ -17,10 +16,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.NodeSignature;
+import org.hiero.consensusnode.client.Submittable;
 import org.hiero.consensusnode.queries.PaidQueryResponse;
 import org.hiero.consensusnode.queries.QueryResponse;
 import org.hiero.ledger.AccountId;
-import org.hiero.ledger.ConsensusNode;
 import org.hiero.ledger.TransactionId;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
@@ -34,49 +33,50 @@ public final class Querying {
 
     private static final Duration PAYMENT_VALID_DURATION = Duration.ofSeconds(120);
 
-    private static final int MAX_ATTEMPTS = 5;
-
-    private static final Duration BUSY_BACKOFF = Duration.ofMillis(500);
-
     private Querying() {
     }
 
     /// Sends a free query.
     ///
-    /// @param query  the query
-    /// @param kind   the query type
-    /// @param client the client
+    /// @param request the request whose execution settings apply
+    /// @param query   the query
+    /// @param kind    the query type
+    /// @param client  the client
     /// @param <Q> the query type
     /// @param <T> the type of the value
     /// @return the answer
-    public static <Q, T> CompletionStage<QueryResponse<T>> free(final Q query, final QueryKind<Q, T> kind,
+    public static <Q, T> CompletionStage<QueryResponse<T>> free(final Submittable<?> request, final Q query,
+                                                               final QueryKind<Q, T> kind,
                                                                final HieroClient<?> client) {
         final ClientRuntime runtime = ClientRuntime.of(client);
-        return CompletableFuture.supplyAsync(() -> {
-            final ConsensusNode node = runtime.selectNode();
-            final Response response = call(runtime, node, kind, query, QueryHeader.newBuilder()
-                    .setResponseType(ResponseType.ANSWER_ONLY).build());
-            return new QueryResponse<>(kind.answer().apply(query, response), node.account());
-        }, runtime.executor());
+        final QueryHeader header = QueryHeader.newBuilder().setResponseType(ResponseType.ANSWER_ONLY).build();
+        return runtime.execute(request, runtime.nodes(), (node, timeout) -> {
+            final Response response = runtime.call(node, kind.grpcMethod(), kind.request().apply(query, header),
+                    timeout);
+            return Execution.Answer.precheck(precheck(kind, response), kind.mayBePending(),
+                    () -> new QueryResponse<>(kind.answer().apply(query, response), node.account()));
+        });
     }
 
-    /// Asks a node what a query costs.
+    /// Asks a node what a query costs, in a request of its own (rule 15 of "The default execution").
     ///
-    /// @param query  the query
-    /// @param kind   the query type
-    /// @param client the client
+    /// @param request the request whose execution settings apply
+    /// @param query   the query
+    /// @param kind    the query type
+    /// @param client  the client
     /// @param <Q> the query type
     /// @param <T> the type of the value
     /// @return the cost
-    public static <Q, T> CompletionStage<NativeToken<?, ?>> cost(final Q query, final QueryKind<Q, T> kind,
+    public static <Q, T> CompletionStage<NativeToken<?, ?>> cost(final Submittable<?> request, final Q query,
+                                                               final QueryKind<Q, T> kind,
                                                                final HieroClient<?> client) {
-        final ClientRuntime runtime = ClientRuntime.of(client);
-        return CompletableFuture.supplyAsync(() -> Protobuf.hbar(cost(runtime, runtime.selectNode(), query, kind,
-                client)), runtime.executor());
+        return tinybars(request, query, kind, client).thenApply(Protobuf::hbar);
     }
 
-    /// Sends a paid query: asks for the cost, then sends the query with a payment of that cost.
+    /// Sends a paid query: asks for the cost, then sends the query with a payment of that cost to the node of each
+    /// attempt (rules 15 and 16 of "The default execution").
     ///
+    /// @param request         the request whose execution settings apply
     /// @param query           the query
     /// @param maxQueryPayment the most the query may cost, `null` for no limit
     /// @param kind            the query type
@@ -84,50 +84,65 @@ public final class Querying {
     /// @param <Q> the query type
     /// @param <T> the type of the value
     /// @return the answer and its cost
-    public static <Q, T> CompletionStage<PaidQueryResponse<T>> paid(final Q query,
+    public static <Q, T> CompletionStage<PaidQueryResponse<T>> paid(final Submittable<?> request, final Q query,
                                                                    final @Nullable NativeToken<?, ?> maxQueryPayment,
                                                                    final QueryKind<Q, T> kind,
                                                                    final HieroClient<?> client) {
         final ClientRuntime runtime = ClientRuntime.of(client);
-        return CompletableFuture.supplyAsync(() -> {
-            final ConsensusNode node = runtime.selectNode();
-            final long cost = cost(runtime, node, query, kind, client);
+        return tinybars(request, query, kind, client).thenCompose(cost -> {
             if (maxQueryPayment != null && cost > maxQueryPayment.toBaseUnits()) {
                 throw new IllegalStateException("The query costs " + cost + " tinybar, more than its maxQueryPayment "
                         + maxQueryPayment);
             }
-            final Response response = call(runtime, node, kind, query, QueryHeader.newBuilder()
-                    .setResponseType(ResponseType.ANSWER_ONLY).setPayment(payment(client, node.account(), cost))
-                    .build());
-            return new PaidQueryResponse<>(kind.answer().apply(query, response), node.account(),
-                    Protobuf.hbar(cost));
-        }, runtime.executor());
+            final Payments payments = new Payments(client, cost);
+            return runtime.execute(request, runtime.nodes(), (node, timeout) -> {
+                final Response response = runtime.call(node, kind.grpcMethod(), kind.request().apply(query,
+                        QueryHeader.newBuilder().setResponseType(ResponseType.ANSWER_ONLY)
+                                .setPayment(payments.to(node.account())).build()), timeout);
+                return Execution.Answer.precheck(precheck(kind, response), kind.mayBePending(),
+                        () -> new PaidQueryResponse<>(kind.answer().apply(query, response), node.account(),
+                                Protobuf.hbar(cost)));
+            });
+        });
     }
 
-    private static <Q, T> long cost(final ClientRuntime runtime, final ConsensusNode node, final Q query,
-                                    final QueryKind<Q, T> kind, final HieroClient<?> client) {
-        final Response response = call(runtime, node, kind, query, QueryHeader.newBuilder()
-                .setResponseType(ResponseType.COST_ANSWER).setPayment(payment(client, node.account(), 0)).build());
-        return kind.header().apply(response).getCost();
+    private static <Q, T> CompletableFuture<Long> tinybars(final Submittable<?> request, final Q query,
+                                                         final QueryKind<Q, T> kind, final HieroClient<?> client) {
+        final ClientRuntime runtime = ClientRuntime.of(client);
+        return runtime.execute(request, runtime.nodes(), (node, timeout) -> {
+            final Response response = runtime.call(node, kind.grpcMethod(), kind.request().apply(query,
+                    QueryHeader.newBuilder().setResponseType(ResponseType.COST_ANSWER)
+                            .setPayment(payment(client, node.account(), 0)).build()), timeout);
+            return Execution.Answer.precheck(precheck(kind, response), false,
+                    () -> kind.header().apply(response).getCost());
+        });
     }
 
-    /// Sends the query and checks the precheck status; retries while the node is busy.
-    private static <Q, T> Response call(final ClientRuntime runtime, final ConsensusNode node,
-                                        final QueryKind<Q, T> kind, final Q query, final QueryHeader header) {
-        for (int attempt = 1; ; attempt++) {
-            final Response response = Grpc.call(runtime.channel(node), kind.grpcMethod(),
-                    kind.request().apply(query, header)).join();
-            final ResponseHeader answer = kind.header().apply(response);
-            final HapiTransactionStatus precheck = HapiTransactionStatus.ofCode(
-                    answer.getNodeTransactionPrecheckCodeValue());
-            if (precheck == HapiTransactionStatus.OK) {
-                return response;
+    private static <Q, T> HapiTransactionStatus precheck(final QueryKind<Q, T> kind, final Response response) {
+        return HapiTransactionStatus.ofCode(kind.header().apply(response).getNodeTransactionPrecheckCodeValue());
+    }
+
+    /// The payments of the attempts of one paid query. An attempt on the same node as the attempt before it sends
+    /// the same payment again; an attempt on another node gets a new payment to that node (rule 16).
+    private static final class Payments {
+
+        private final HieroClient<?> client;
+        private final long tinybars;
+        private @Nullable AccountId node;
+        private @Nullable Transaction payment;
+
+        Payments(final HieroClient<?> client, final long tinybars) {
+            this.client = client;
+            this.tinybars = tinybars;
+        }
+
+        /// The payment of an attempt; the attempts of a request run one after the other.
+        Transaction to(final AccountId target) {
+            if (payment == null || !target.equals(node)) {
+                node = target;
+                payment = payment(client, target, tinybars);
             }
-            if (attempt >= MAX_ATTEMPTS || (precheck != HapiTransactionStatus.BUSY
-                    && precheck != HapiTransactionStatus.PLATFORM_NOT_ACTIVE)) {
-                throw new PrecheckException(precheck);
-            }
-            ClientRuntime.sleep(BUSY_BACKOFF);
+            return payment;
         }
     }
 

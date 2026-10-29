@@ -81,9 +81,11 @@ final class JsonRpcServer implements TckServer {
                 cause = cause.getCause();
             }
             // a node rejected the request before consensus: the SDK reports the status in a fixed message form,
-            // as the specs have no error type with a status yet (see the Questions & Comments of transactions.md)
-            if (cause.getMessage() != null && cause.getMessage().startsWith(PRECHECK_PREFIX)) {
-                final String status = cause.getMessage().substring(PRECHECK_PREFIX.length());
+            // as the specs have no error type with a status yet (see the Questions & Comments of transactions.md);
+            // the error the request fails with when its retry policy gives up carries it as its cause
+            final Throwable precheck = precheck(cause);
+            if (precheck != null) {
+                final String status = precheck.getMessage().substring(PRECHECK_PREFIX.length());
                 log.failed(name, RpcError.HIERO_ERROR, status, cause);
                 return new Answer(error(id, RpcError.HIERO_ERROR, "Hiero error", Map.of("status", status)),
                         cause);
@@ -151,5 +153,15 @@ final class JsonRpcServer implements TckServer {
         try (OutputStream out = exchange.getResponseBody()) {
             out.write(response);
         }
+    }
+
+    /// The error in the chain of causes that reports a rejected precheck, if any.
+    private static @Nullable Throwable precheck(final Throwable error) {
+        for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+            if (cause.getMessage() != null && cause.getMessage().startsWith(PRECHECK_PREFIX)) {
+                return cause;
+            }
+        }
+        return null;
     }
 }

@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
 import org.hiero.authority.Authority;
 import org.hiero.consensusnode.queries.receipts.UntypedReceipt;
 import org.hiero.consensusnode.queries.tokens.TokenNftInfo;
-import org.hiero.consensusnode.transactions.TransactionStatus;
+import org.hiero.consensusnode.status.TransactionStatus;
 import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;

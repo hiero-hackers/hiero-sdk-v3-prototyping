@@ -7,9 +7,11 @@ import com.hederahashgraph.api.proto.java.SignatureMap;
 import com.hederahashgraph.api.proto.java.SignaturePair;
 import com.hederahashgraph.api.proto.java.SignedTransaction;
 import com.hederahashgraph.api.proto.java.TransactionBody;
+import com.hederahashgraph.api.proto.java.TransactionResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -119,16 +121,26 @@ public final class DefaultPackedTransaction<R extends Receipt, T extends Transac
             return CompletableFuture.failedFuture(new IllegalStateException(
                     "The transaction has a body no registered transaction support knows; it cannot be submitted"));
         }
+        final TransactionKind<R, T> type = kind;
         final ClientRuntime runtime = ClientRuntime.of(client);
-        for (final NodeBody body : bodies) {
-            final ConsensusNode node = runtime.node(body.node()).orElse(null);
-            if (node != null) {
-                return runtime.submit(node, kind, transaction(body), transactionId())
-                        .thenApply(accepted -> new Response<>(transactionId(), kind.type(), node.account()));
-            }
+        // rule 1 of "The default execution": a packed transaction goes only to the nodes it was packed for
+        final List<ConsensusNode> candidates = bodies.stream().map(body -> runtime.node(body.node()))
+                .flatMap(Optional::stream).toList();
+        if (candidates.isEmpty()) {
+            return CompletableFuture.failedFuture(new IllegalStateException(
+                    "The network of the client has none of the target nodes of the transaction"));
         }
-        return CompletableFuture.failedFuture(new IllegalStateException(
-                "The network of the client has none of the target nodes of the transaction"));
+        return runtime.execute(this, candidates, (node, timeout) -> {
+            final TransactionResponse response = runtime.call(node, type.grpcMethod(), transaction(body(node)),
+                    timeout);
+            return Execution.Answer.precheck(HapiTransactionStatus.ofCode(
+                    response.getNodeTransactionPrecheckCodeValue()), false,
+                    () -> new Response<>(transactionId(), type.type(), node.account()));
+        });
+    }
+
+    private NodeBody body(final ConsensusNode node) {
+        return bodies.stream().filter(body -> body.node().equals(node.account())).findFirst().orElseThrow();
     }
 
     /// Reads a packed transaction from its byte form.

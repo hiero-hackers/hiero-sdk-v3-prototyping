@@ -54,13 +54,19 @@ client [10]:
 3. **Configuration.** `ExecutionSettings` (retry policy, node selector, attempt timeout, listeners) belong to the
    `HieroClient`; a request (`Submittable`) can override `retryPolicy` and `attemptTimeout`. All times are
    `duration`. When the policy gives up, `submit` fails with `attempts-exhausted-error`.
-4. **The default is documentation, not API.** Only `ExecutionSettings.createDefault()` and
-   `ExecutionSettings.createDefault(maxAttempts, attemptTimeout)` exist; their documentation describes the default
-   behaviour. `RetryPolicy` and `NodeSelector` have no factories of their own.
-5. **Execution means of a language.** `ExecutionSettings` invites a language that has its own means of running
+4. **The default is specified, not API.** Only `ExecutionSettings.createDefault()` and
+   `ExecutionSettings.createDefault(maxAttempts, attemptTimeout)` exist; `RetryPolicy` and `NodeSelector` have no
+   factories of their own. The behaviour of the default is specified as numbered rules in the section *The default
+   execution* of `client.md` [10], which every SDK implements exactly. The rules live in the spec and not in this ADR,
+   because they are normative for every implementation, belong to the API documentation of the callers, and will
+   change (e.g. the values after measurements) without the decision changing.
+5. **The default is deterministic.** The waits between attempts follow a fixed formula without a random share
+   (no jitter): the same answers lead to the same decisions and waits, so the rules can be checked. Only the choice
+   among equally suitable nodes stays random, so that the requests of many clients spread over the nodes.
+6. **Execution means of a language.** `ExecutionSettings` invites a language that has its own means of running
    asynchronous work to add an attribute for it with a default (in Java an `Executor` [11]); the meta-language gets
    no type for it.
-6. **`TransactionStatus` and `BasicTransactionStatus` move to the new bottom namespace `consensusnode.status`** [12].
+7. **`TransactionStatus` and `BasicTransactionStatus` move to the new bottom namespace `consensusnode.status`** [12].
 
 Rejected:
 
@@ -73,6 +79,9 @@ Rejected:
   applies depends on the failure; in the current SDKs the 2 minutes cut off a request that times out on every
   attempt (about 140 s) and never matter for one that fails fast. The default is bounded by `maxAttempts` times
   `attemptTimeout` plus the waits; a policy that needs a total time uses `RetryContext.elapsed`.
+- **A random share in the waits (jitter)**, as in the Rust and Swift SDKs [4]: spreads retries of many clients, but
+  makes the waits unpredictable and the rules unverifiable; the random choice of the node already spreads the load.
+- **A deterministic node choice** (e.g. round robin): would send the first attempts of all clients to the same node.
 - **Configurable factories per part** (`RetryPolicy.createDefault(maxAttempts)`, `NodeSelector.createDefault()`):
   more API for the same behaviour; one documented entry point is enough.
 - **An execution type in the meta-language:** JavaScript, Go and Python have nothing to configure there, and Rust's
@@ -105,8 +114,8 @@ Rejected:
 
 ### Follow-ups
 
-- Decide the open default questions in `client.md`: jitter, retrying `THROTTLED`, and whether `DUPLICATE_TRANSACTION`
-  after a timed-out attempt of the same request counts as `SUCCESS`.
+- Decide the open questions of the default in `client.md`: retrying `THROTTLED`, and whether `DUPLICATE_TRANSACTION`
+  after a timed-out attempt of the same request (transaction or payment of a paid query) counts as `SUCCESS`.
 - Name the statuses the classification uses (`BUSY`, `THROTTLED`, `RECEIPT_NOT_FOUND`, ...) in
   `BasicTransactionStatus`.
 - Implement the API in `sdk-java/impl`, then rerun the TCK.
@@ -137,8 +146,9 @@ Rejected:
    directly or indirectly" — https://go.dev/ref/spec#Import_declarations
 9. `spec/consensus-node-client/transactions.md` before this change: `requires ... from consensusnode.client` and
    `abstraction TransactionStatus` (`:160`).
-10. `spec/consensus-node-client/client.md`: *How a request is executed* (`:14`), Design Notes (`:41`), schema from
-    `Submittable` (`:116`) to `ExecutionSettings` (`:232-257`), Questions & Comments (`:412-430`).
+10. `spec/consensus-node-client/client.md`: the sections *How a request is executed*, *The outcome of an attempt* and
+    *The default execution* (Description), Design Notes, the schema from `Submittable` to `ExecutionSettings`,
+    Questions & Comments.
 11. `guidelines/api-best-practices-java.md`, *Where the asynchronous work runs*; `sdk-java/impl/org.hiero.consensus.node.client/src/main/java/org/hiero/consensusnode/client/internal/ClientRuntime.java:47`
     (today's executor of `impl`).
 12. `spec/consensus-node-client/status.md` (new); `spec/consensus-node-client/transactions.md`,

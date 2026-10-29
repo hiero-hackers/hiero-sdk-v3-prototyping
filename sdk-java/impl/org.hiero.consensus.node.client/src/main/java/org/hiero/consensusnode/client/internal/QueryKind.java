@@ -26,4 +26,12 @@ public record QueryKind<Q, T>(String service, String method, BiFunction<Q, Query
     io.grpc.MethodDescriptor<Query, Response> grpcMethod() {
         return Grpc.unary(service, method, Query.getDefaultInstance(), Response.getDefaultInstance());
     }
+
+    /// Whether the answer may not be available yet: a query for a receipt or a record, which exist only after
+    /// consensus (the outcome `PENDING`).
+    ///
+    /// @return whether the answer may be pending
+    boolean mayBePending() {
+        return method.equals("getTxRecordByTxID") || method.equals("getTransactionReceipts");
+    }
 }

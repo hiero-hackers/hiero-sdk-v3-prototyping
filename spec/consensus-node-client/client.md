@@ -47,7 +47,7 @@ Every SDK classifies the answer of a node in the same way:
 | `NODE_BUSY` | precheck `BUSY`, `PLATFORM_TRANSACTION_NOT_CREATED`, `PLATFORM_NOT_ACTIVE` |
 | `THROTTLED` | precheck `THROTTLED` |
 | `WRONG_NODE` | precheck `INVALID_NODE_ACCOUNT` |
-| `PENDING` | a receipt or record that is not available yet: precheck `UNKNOWN` or `RECEIPT_NOT_FOUND`, receipt status `UNKNOWN` or `OK` |
+| `PENDING` | a receipt or record that is not available yet: precheck `UNKNOWN`, `RECEIPT_NOT_FOUND` or `RECORD_NOT_FOUND`, receipt status `UNKNOWN` or `OK` |
 | `REJECTED` | every other status, and the transport failure `PROTOCOL` |
 
 `DUPLICATE_TRANSACTION`, for example, is `REJECTED`. The result of a transport failure is classified by its kind, which

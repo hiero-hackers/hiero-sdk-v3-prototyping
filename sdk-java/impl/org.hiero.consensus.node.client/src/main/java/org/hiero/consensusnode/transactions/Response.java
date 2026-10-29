@@ -7,6 +7,7 @@ import org.hiero.consensusnode.client.internal.ClientRuntime;
 import org.hiero.consensusnode.client.internal.Querying;
 import org.hiero.consensusnode.client.internal.Receipts;
 import org.hiero.consensusnode.queries.QueryResponse;
+import org.hiero.consensusnode.queries.receipts.TransactionReceiptQuery;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.TransactionId;
 import org.jspecify.annotations.Nullable;
@@ -42,7 +43,8 @@ public record Response<ReceiptT extends Receipt>(
     /// node of the client when it is null; it is available for about three minutes after consensus.
     public CompletionStage<ReceiptT> queryReceipt(final HieroClient<?> client) {
         Objects.requireNonNull(client, "client must not be null");
-        return ClientRuntime.of(client).queryReceipt(nodeAccountId, transactionId, false, false)
+        return ClientRuntime.of(client).queryReceipt(new TransactionReceiptQuery(transactionId, nodeAccountId),
+                        nodeAccountId, transactionId, false, false)
                 .thenApply(answer -> Receipts.create(transactionType, transactionId, answer.value().getReceipt()));
     }
 
@@ -50,7 +52,8 @@ public record Response<ReceiptT extends Receipt>(
     public CompletionStage<Record<ReceiptT>> queryRecord(final HieroClient<?> client) {
         Objects.requireNonNull(client, "client must not be null");
         // the record exists once the receipt is final
-        return queryReceipt(client).thenCompose(receipt -> Querying.paid(transactionId, null,
+        return queryReceipt(client).thenCompose(receipt -> Querying.paid(Receipts.recordRequest(transactionId),
+                transactionId, null,
                 Receipts.recordQuery(transactionType), client)).thenApply(QueryResponse::value);
     }
 }

@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.queries;
 
+import java.time.Duration;
+import org.hiero.consensusnode.client.RetryPolicy;
 import org.hiero.consensusnode.client.Submittable;
 import org.jspecify.annotations.Nullable;
 
@@ -16,33 +18,13 @@ public abstract class Query<Result, ResponseT extends QueryResponse<Result>> ext
         super();
     }
 
-    /// Sets the `maxAttempts`.
+    /// Sets the `retryPolicy`.
     ///
-    /// @param maxAttempts the new value
+    /// @param retryPolicy the new value
     /// @return this object
     @Override
-    public Query<Result, ResponseT> setMaxAttempts(final @Nullable Integer maxAttempts) {
-        super.setMaxAttempts(maxAttempts);
-        return this;
-    }
-
-    /// Sets the `maxBackoff`.
-    ///
-    /// @param maxBackoff the new value
-    /// @return this object
-    @Override
-    public Query<Result, ResponseT> setMaxBackoff(final @Nullable Long maxBackoff) {
-        super.setMaxBackoff(maxBackoff);
-        return this;
-    }
-
-    /// Sets the `minBackoff`.
-    ///
-    /// @param minBackoff the new value
-    /// @return this object
-    @Override
-    public Query<Result, ResponseT> setMinBackoff(final @Nullable Long minBackoff) {
-        super.setMinBackoff(minBackoff);
+    public Query<Result, ResponseT> setRetryPolicy(final @Nullable RetryPolicy retryPolicy) {
+        super.setRetryPolicy(retryPolicy);
         return this;
     }
 
@@ -51,7 +33,7 @@ public abstract class Query<Result, ResponseT extends QueryResponse<Result>> ext
     /// @param attemptTimeout the new value
     /// @return this object
     @Override
-    public Query<Result, ResponseT> setAttemptTimeout(final @Nullable Long attemptTimeout) {
+    public Query<Result, ResponseT> setAttemptTimeout(final @Nullable Duration attemptTimeout) {
         super.setAttemptTimeout(attemptTimeout);
         return this;
     }

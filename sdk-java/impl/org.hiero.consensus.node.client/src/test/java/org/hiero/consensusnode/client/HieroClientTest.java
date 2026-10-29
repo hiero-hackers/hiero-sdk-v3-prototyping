@@ -34,31 +34,40 @@ class HieroClientTest {
         final Account operatorAccount = operatorAccountValue();
         final Network<NativeTokenUnit> network = networkValue();
         final TransactionSigner transactionSigner = transactionSignerValue();
-        final HieroClient<NativeTokenUnit> subject = new HieroClient<>(operatorAccount, network, transactionSigner);
+        final ExecutionSettings executionSettings = executionSettingsValue();
+        final HieroClient<NativeTokenUnit> subject = new HieroClient<>(operatorAccount, network, transactionSigner, executionSettings);
         assertValue(operatorAccount, subject.operatorAccount());
         assertValue(network, subject.network());
         assertValue(transactionSigner, subject.transactionSigner());
+        assertValue(executionSettings, subject.executionSettings());
     }
 
     @Test
     @DisplayName("rejects null for operatorAccount")
     @Tag("testId:consensusnode.client.HieroClient/operatorAccount/rejects-null")
     void shouldRejectNullOperatorAccount() {
-        assertThrows(NullPointerException.class, () -> new HieroClient<>((Account) null, networkValue(), transactionSignerValue()));
+        assertThrows(NullPointerException.class, () -> new HieroClient<>((Account) null, networkValue(), transactionSignerValue(), executionSettingsValue()));
     }
 
     @Test
     @DisplayName("rejects null for network")
     @Tag("testId:consensusnode.client.HieroClient/network/rejects-null")
     void shouldRejectNullNetwork() {
-        assertThrows(NullPointerException.class, () -> new HieroClient<>(operatorAccountValue(), (Network<NativeTokenUnit>) null, transactionSignerValue()));
+        assertThrows(NullPointerException.class, () -> new HieroClient<>(operatorAccountValue(), (Network<NativeTokenUnit>) null, transactionSignerValue(), executionSettingsValue()));
     }
 
     @Test
     @DisplayName("rejects null for transactionSigner")
     @Tag("testId:consensusnode.client.HieroClient/transactionSigner/rejects-null")
     void shouldRejectNullTransactionSigner() {
-        assertThrows(NullPointerException.class, () -> new HieroClient<>(operatorAccountValue(), networkValue(), (TransactionSigner) null));
+        assertThrows(NullPointerException.class, () -> new HieroClient<>(operatorAccountValue(), networkValue(), (TransactionSigner) null, executionSettingsValue()));
+    }
+
+    @Test
+    @DisplayName("rejects null for executionSettings")
+    @Tag("testId:consensusnode.client.HieroClient/executionSettings/rejects-null")
+    void shouldRejectNullExecutionSettings() {
+        assertThrows(NullPointerException.class, () -> new HieroClient<>(operatorAccountValue(), networkValue(), transactionSignerValue(), (ExecutionSettings) null));
     }
 
     private static Account operatorAccountValue() {
@@ -73,7 +82,11 @@ class HieroClientTest {
         return ClientFactory.createClient(new NetworkSetting(new Network<>(new byte[] {(byte) 3}, "local", HbarUnit.HBAR), Set.of(new ConsensusNode(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), 35211, new AccountId(0L, 0L, "", 3L, null, null))), Set.of(new MirrorNode("http://127.0.0.1:38081"))), new Account(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"))).transactionSigner();
     }
 
+    private static ExecutionSettings executionSettingsValue() {
+        return ExecutionSettings.createDefault();
+    }
+
     private static HieroClient<NativeTokenUnit> create() {
-        return new HieroClient<>(operatorAccountValue(), networkValue(), transactionSignerValue());
+        return new HieroClient<>(operatorAccountValue(), networkValue(), transactionSignerValue(), executionSettingsValue());
     }
 }

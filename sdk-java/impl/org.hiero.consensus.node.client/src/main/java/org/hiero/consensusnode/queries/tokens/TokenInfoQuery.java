@@ -1,8 +1,10 @@
 package org.hiero.consensusnode.queries.tokens;
 
+import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.client.RetryPolicy;
 import org.hiero.consensusnode.client.internal.Querying;
 import org.hiero.consensusnode.client.internal.TokenQueries;
 import org.hiero.consensusnode.queries.PaidQuery;
@@ -31,33 +33,13 @@ public final class TokenInfoQuery extends PaidQuery<TokenInfo> {
         return tokenId;
     }
 
-    /// Sets the `maxAttempts`.
+    /// Sets the `retryPolicy`.
     ///
-    /// @param maxAttempts the new value
+    /// @param retryPolicy the new value
     /// @return this object
     @Override
-    public TokenInfoQuery setMaxAttempts(final @Nullable Integer maxAttempts) {
-        super.setMaxAttempts(maxAttempts);
-        return this;
-    }
-
-    /// Sets the `maxBackoff`.
-    ///
-    /// @param maxBackoff the new value
-    /// @return this object
-    @Override
-    public TokenInfoQuery setMaxBackoff(final @Nullable Long maxBackoff) {
-        super.setMaxBackoff(maxBackoff);
-        return this;
-    }
-
-    /// Sets the `minBackoff`.
-    ///
-    /// @param minBackoff the new value
-    /// @return this object
-    @Override
-    public TokenInfoQuery setMinBackoff(final @Nullable Long minBackoff) {
-        super.setMinBackoff(minBackoff);
+    public TokenInfoQuery setRetryPolicy(final @Nullable RetryPolicy retryPolicy) {
+        super.setRetryPolicy(retryPolicy);
         return this;
     }
 
@@ -66,7 +48,7 @@ public final class TokenInfoQuery extends PaidQuery<TokenInfo> {
     /// @param attemptTimeout the new value
     /// @return this object
     @Override
-    public TokenInfoQuery setAttemptTimeout(final @Nullable Long attemptTimeout) {
+    public TokenInfoQuery setAttemptTimeout(final @Nullable Duration attemptTimeout) {
         super.setAttemptTimeout(attemptTimeout);
         return this;
     }
@@ -83,10 +65,12 @@ public final class TokenInfoQuery extends PaidQuery<TokenInfo> {
 
     /// Sends this request to the network and returns the typed result asynchronously. Node selection, retries
     /// and operation-specific protocol details (for example cost discovery and payment for a `PaidQuery`) are
-    /// handled transparently.
+    /// handled transparently. Fails with `attempts-exhausted-error` when the retry policy gives up.
+    ///
+    /// The returned stage completes exceptionally with `AttemptsExhaustedException` if the operation fails.
     @Override
     public CompletionStage<PaidQueryResponse<TokenInfo>> submit(final HieroClient<?> client) {
-        return Querying.paid(this, maxQueryPayment(), TokenQueries.TOKEN_INFO, client);
+        return Querying.paid(this, this, maxQueryPayment(), TokenQueries.TOKEN_INFO, client);
     }
 
     /// Asks the network for the current price of this query without executing it. The returned value is a
@@ -99,9 +83,7 @@ public final class TokenInfoQuery extends PaidQuery<TokenInfo> {
 
     @Override
     public String toString() {
-        return "TokenInfoQuery[maxAttempts=" + maxAttempts()
-                + ", maxBackoff=" + maxBackoff()
-                + ", minBackoff=" + minBackoff()
+        return "TokenInfoQuery[retryPolicy=" + retryPolicy()
                 + ", attemptTimeout=" + attemptTimeout()
                 + ", maxQueryPayment=" + maxQueryPayment()
                 + ", tokenId=" + tokenId()

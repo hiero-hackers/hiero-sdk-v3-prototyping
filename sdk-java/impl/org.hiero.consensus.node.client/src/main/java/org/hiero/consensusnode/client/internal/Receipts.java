@@ -9,6 +9,9 @@ import com.hederahashgraph.api.proto.java.TransactionReceipt;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
+import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.client.Submittable;
 import org.hiero.consensusnode.queries.receipts.TransactionReceipts;
 import org.hiero.consensusnode.queries.receipts.UntypedReceipt;
 import org.hiero.consensusnode.transactions.Receipt;
@@ -180,6 +183,25 @@ public final class Receipts {
                 response -> response.getTransactionGetRecord().getHeader(),
                 (transactionId, response) -> Records.record(support,
                         response.getTransactionGetRecord().getTransactionRecord()));
+    }
+
+    /// The request a record query is executed as. The specs have no type for the record query of a transaction, so a
+    /// `RetryPolicy` sees this request, which cannot be submitted on its own.
+    ///
+    /// @param transactionId the id of the transaction whose record is read
+    /// @return the request
+    public static Submittable<Record<?>> recordRequest(final TransactionId transactionId) {
+        return new Submittable<>() {
+            @Override
+            public CompletionStage<Record<?>> submit(final HieroClient<?> client) {
+                throw new UnsupportedOperationException("Read a record with Response.queryRecord(client)");
+            }
+
+            @Override
+            public String toString() {
+                return "the record query of " + transactionId;
+            }
+        };
     }
 
     @SuppressWarnings("unchecked")

@@ -1,5 +1,7 @@
 package org.hiero.consensusnode.queries;
 
+import java.time.Duration;
+import org.hiero.consensusnode.client.RetryPolicy;
 import org.jspecify.annotations.Nullable;
 
 /// A query that the network answers without charging the caller, for example an account balance or a transaction
@@ -11,33 +13,13 @@ public abstract class FreeQuery<Result> extends Query<Result, QueryResponse<Resu
         super();
     }
 
-    /// Sets the `maxAttempts`.
+    /// Sets the `retryPolicy`.
     ///
-    /// @param maxAttempts the new value
+    /// @param retryPolicy the new value
     /// @return this object
     @Override
-    public FreeQuery<Result> setMaxAttempts(final @Nullable Integer maxAttempts) {
-        super.setMaxAttempts(maxAttempts);
-        return this;
-    }
-
-    /// Sets the `maxBackoff`.
-    ///
-    /// @param maxBackoff the new value
-    /// @return this object
-    @Override
-    public FreeQuery<Result> setMaxBackoff(final @Nullable Long maxBackoff) {
-        super.setMaxBackoff(maxBackoff);
-        return this;
-    }
-
-    /// Sets the `minBackoff`.
-    ///
-    /// @param minBackoff the new value
-    /// @return this object
-    @Override
-    public FreeQuery<Result> setMinBackoff(final @Nullable Long minBackoff) {
-        super.setMinBackoff(minBackoff);
+    public FreeQuery<Result> setRetryPolicy(final @Nullable RetryPolicy retryPolicy) {
+        super.setRetryPolicy(retryPolicy);
         return this;
     }
 
@@ -46,7 +28,7 @@ public abstract class FreeQuery<Result> extends Query<Result, QueryResponse<Resu
     /// @param attemptTimeout the new value
     /// @return this object
     @Override
-    public FreeQuery<Result> setAttemptTimeout(final @Nullable Long attemptTimeout) {
+    public FreeQuery<Result> setAttemptTimeout(final @Nullable Duration attemptTimeout) {
         super.setAttemptTimeout(attemptTimeout);
         return this;
     }
