@@ -40,7 +40,7 @@ public record DefaultRetryPolicy(int maxAttempts) implements RetryPolicy {
         return switch (last.outcome()) {
             case NODE_UNAVAILABLE, NODE_TIMEOUT, NODE_BUSY, WRONG_NODE -> new RetryOnOtherNode(delay);
             case PENDING -> new RetryOnSameNode(delay);
-            case THROTTLED, REJECTED, SUCCESS -> new GiveUp();
+            case REJECTED, SUCCESS -> new GiveUp();
         };
     }
 

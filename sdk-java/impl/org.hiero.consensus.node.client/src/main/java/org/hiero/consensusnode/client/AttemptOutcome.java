@@ -10,10 +10,8 @@ public enum AttemptOutcome {
     NODE_UNAVAILABLE,
     /// the node did not answer within the attempt timeout
     NODE_TIMEOUT,
-    /// the node answered that it is busy or not ready to handle the request
+    /// the node answered that it is busy, throttles the request, or is not ready to handle it
     NODE_BUSY,
-    /// the node answered that the request exceeds the throttle limits of the network
-    THROTTLED,
     /// the node answered that the request is meant for another node
     WRONG_NODE,
     /// the requested receipt or record is not available yet

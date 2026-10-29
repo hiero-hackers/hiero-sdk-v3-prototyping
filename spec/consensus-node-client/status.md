@@ -60,6 +60,6 @@ test "the basic transaction statuses have the codes of the protocol" {
   transaction succeeded has to compare against a hard-coded 22 — the TCK runtime does exactly that.
   `TransactionStatus` is deliberately open (an `int32` code, for custom services), so the question is
   which statuses the spec itself should name. The classification of attempts in `client.md` names further statuses
-  (`BUSY`, `THROTTLED`, `RECEIPT_NOT_FOUND`, ...) that are missing here as well.
+  (`BUSY`, `RECEIPT_NOT_FOUND`, `INVALID_NODE_ACCOUNT`, ...) that are missing here as well.
 - **The name.** The same codes are the status of a query, so `TransactionStatus` names only half of what it is used
   for. The protocol calls them response codes. — open

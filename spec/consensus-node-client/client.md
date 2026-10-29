@@ -14,7 +14,7 @@ Everything you send to the network — queries as well as packed transactions �
 ### How a request is executed
 
 A request is sent in one or more **attempts**. Each attempt goes to one consensus node and ends in an
-`AttemptOutcome`: the node accepted the request, it was not reachable or did not answer in time, it was busy, it
+`AttemptOutcome`: the node accepted the request, it was not reachable or did not answer in time, it was busy or
 throttled the request, it was the wrong node, the answer is not ready yet (a receipt before consensus), or it rejected
 the request. Which outcome an answer of the network has is fixed and the same in every SDK.
 
@@ -45,7 +45,6 @@ Every SDK classifies the answer of a node in the same way:
 | `NODE_UNAVAILABLE` | transport failure `CONNECTION`, `OVERLOADED` or `INTERRUPTED` |
 | `NODE_TIMEOUT` | transport failure `TIMEOUT` |
 | `NODE_BUSY` | precheck `BUSY`, `PLATFORM_TRANSACTION_NOT_CREATED`, `PLATFORM_NOT_ACTIVE` |
-| `THROTTLED` | precheck `THROTTLED` |
 | `WRONG_NODE` | precheck `INVALID_NODE_ACCOUNT` |
 | `PENDING` | a receipt or record that is not available yet: precheck `UNKNOWN`, `RECEIPT_NOT_FOUND` or `RECORD_NOT_FOUND`, receipt status `UNKNOWN` or `OK` |
 | `REJECTED` | every other status, and the transport failure `PROTOCOL` |
@@ -90,7 +89,7 @@ deterministic: the same answers of the network lead to the same decisions and th
    |---|---|
    | `NODE_UNAVAILABLE`, `NODE_TIMEOUT`, `NODE_BUSY`, `WRONG_NODE` | try again on another node (`RetryOnOtherNode`) |
    | `PENDING` | try again on the same node (`RetryOnSameNode`) |
-   | `THROTTLED`, `REJECTED` | give up (`GiveUp`) |
+   | `REJECTED` | give up (`GiveUp`) |
 
 8. When the last attempt is attempt number `maxAttempts`, the policy gives up, whatever the outcome.
 9. Before attempt n + 1 the SDK waits min(250 ms × 2^(n − 1), 8 s): 250 ms before the second attempt, then 500 ms,
@@ -137,6 +136,10 @@ HSM or a remote signing service), pass your own `TransactionSigner` when creatin
   raw `AttemptResult` (the status of the node, or the kind of the transport failure). The current Hiero SDKs differ in
   exactly this point: the same answer (`BUSY`, a gRPC deadline, `PLATFORM_TRANSACTION_NOT_CREATED`) is retried on the
   same node, on another node or not at all depending on the SDK, and none of them lets a caller replace the strategy.
+- **Throttling is `NODE_BUSY`.** The protocol has no precheck status for throttling of its own: a node that throttles
+  a request answers `BUSY` ("If API is throttled out", `response_code.proto`), so a throttled request is retried on
+  another node like a busy one. `THROTTLED_AT_CONSENSUS` is a final status of a receipt: the transaction was executed
+  and failed, and whether to send a new one is up to the caller.
 - **Transport failures are transport neutral.** `TransportFailureKind` does not name gRPC codes, so that another
   transport only needs its own mapping. For gRPC:
 
@@ -208,8 +211,7 @@ enum AttemptOutcome {
     SUCCESS,           // the node accepted the request, or the requested receipt or record is final
     NODE_UNAVAILABLE,  // the node could not be reached, refused further requests or broke off the answer
     NODE_TIMEOUT,      // the node did not answer within the attempt timeout
-    NODE_BUSY,         // the node answered that it is busy or not ready to handle the request
-    THROTTLED,         // the node answered that the request exceeds the throttle limits of the network
+    NODE_BUSY,         // the node answered that it is busy, throttles the request, or is not ready to handle it
     WRONG_NODE,        // the node answered that the request is meant for another node
     PENDING,           // the requested receipt or record is not available yet
     REJECTED           // the node rejected the request, or its answer could not be read
@@ -321,8 +323,8 @@ ExecutionSettings {
 
     // The execution settings of the SDK with the given number of attempts and attempt timeout, and no listeners. They
     // execute a request as the section "The default execution" of this API describes: on another node after a node
-    // failure, on the same node while a receipt is pending, giving up after `THROTTLED`, a rejection or the last
-    // attempt; waiting 250 ms before the second attempt, doubled up to 8 s; avoiding a failed node for 8 s, doubled
+    // failure, on the same node while a receipt is pending, giving up after a rejection or the last attempt;
+    // waiting 250 ms before the second attempt, doubled up to 8 s; avoiding a failed node for 8 s, doubled
     // up to 1 hour. A request takes at most `maxAttempts` times `attemptTimeout` plus the waits between the attempts.
     @@static ExecutionSettings createDefault(@@min(1) maxAttempts: int32, @@min(1) attemptTimeout: duration)
 }
@@ -491,9 +493,6 @@ test "a client created with a signer signs with that signer" {
   a wait from 250 ms to 8 s, 10 s per attempt, nodes avoided from 8 s to 1 h. None of these values is derived from
   measured answer times of the nodes; the current SDKs took them over from the Java SDK without a documented reason.
   Changing a value is not a change of the API, but of the specified behavior. — open, to be measured
-- **Retrying `THROTTLED`.** The default gives up, as every current SDK does. A precheck `THROTTLED` costs no fee and
-  is temporary, so waiting and trying again on another node would be possible; HIP-1383 proposes a retry hint of the
-  network for exactly this. — open
 - **A payment sent again.** Rule 16 sends the payment of a paid query again when the query is retried on the same
   node. If the earlier attempt timed out after the node had accepted the payment, the node answers
   `DUPLICATE_TRANSACTION` (the same question as for transactions above). — open

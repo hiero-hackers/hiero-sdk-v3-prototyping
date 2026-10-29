@@ -49,8 +49,8 @@ public record ExecutionSettings(
 
     /// The execution settings of the SDK with the given number of attempts and attempt timeout, and no listeners. They
     /// execute a request as the section "The default execution" of this API describes: on another node after a node
-    /// failure, on the same node while a receipt is pending, giving up after `THROTTLED`, a rejection or the last
-    /// attempt; waiting 250 ms before the second attempt, doubled up to 8 s; avoiding a failed node for 8 s, doubled
+    /// failure, on the same node while a receipt is pending, giving up after a rejection or the last attempt;
+    /// waiting 250 ms before the second attempt, doubled up to 8 s; avoiding a failed node for 8 s, doubled
     /// up to 1 hour. A request takes at most `maxAttempts` times `attemptTimeout` plus the waits between the attempts.
     public static ExecutionSettings createDefault(final int maxAttempts, final Duration attemptTimeout) {
         Objects.requireNonNull(attemptTimeout, "attemptTimeout must not be null");

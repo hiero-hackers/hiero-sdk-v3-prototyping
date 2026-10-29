@@ -22,7 +22,7 @@ network [4]:
 - `BUSY`: the same node again in Java and Go, the next node in JavaScript, Rust, Swift, C++ and Python.
 - gRPC `DEADLINE_EXCEEDED`: aborts the request in Java, is retried in JavaScript, Go, Python and Swift, is permanent
   in Rust, and makes a C++ transaction submit look successful (read from the code, not observed).
-- `PLATFORM_TRANSACTION_NOT_CREATED` is not retried in Rust and Swift; `THROTTLED` is retried by none.
+- `PLATFORM_TRANSACTION_NOT_CREATED` is not retried in Rust and Swift.
 - Queries never fail over in Go.
 
 Several settings have no effect: the client backoff in Go, the client `maxBackoff` in JavaScript, `set_min_backoff`
@@ -43,8 +43,9 @@ We make the execution of a request a specified, exchangeable part of the public 
 client [10]:
 
 1. **A normative classification.** Every attempt ends in an `AttemptOutcome` (`SUCCESS`, `NODE_UNAVAILABLE`,
-   `NODE_TIMEOUT`, `NODE_BUSY`, `THROTTLED`, `WRONG_NODE`, `PENDING`, `REJECTED`). Which answer has which outcome is
-   specified as a table and is the same in every SDK. The raw answer is an `AttemptResult`: a `NodeAnswer` with the
+   `NODE_TIMEOUT`, `NODE_BUSY`, `WRONG_NODE`, `PENDING`, `REJECTED`). Which answer has which outcome is
+   specified as a table and is the same in every SDK. Throttling has no outcome of its own: the protocol signals it
+   with the precheck status `BUSY` [13], so it is `NODE_BUSY`. The raw answer is an `AttemptResult`: a `NodeAnswer` with the
    status, or a `TransportFailure` with a transport-neutral `TransportFailureKind` (`CONNECTION`, `TIMEOUT`,
    `OVERLOADED`, `INTERRUPTED`, `PROTOCOL`); the mapping of gRPC codes is specified, but no gRPC code is API.
 2. **Exchangeable decisions.** A `RetryPolicy` decides after every failed attempt (`RetryOnSameNode`,
@@ -114,9 +115,9 @@ Rejected:
 
 ### Follow-ups
 
-- Decide the open questions of the default in `client.md`: retrying `THROTTLED`, and whether `DUPLICATE_TRANSACTION`
+- Decide the open question of the default in `client.md`: whether `DUPLICATE_TRANSACTION`
   after a timed-out attempt of the same request (transaction or payment of a paid query) counts as `SUCCESS`.
-- Name the statuses the classification uses (`BUSY`, `THROTTLED`, `RECEIPT_NOT_FOUND`, ...) in
+- Name the statuses the classification uses (`BUSY`, `RECEIPT_NOT_FOUND`, `INVALID_NODE_ACCOUNT`, ...) in
   `BasicTransactionStatus`.
 - Implement the API in `sdk-java/impl`, then rerun the TCK.
 - Measure the answer times of consensus nodes (Solo, testnet) and revisit the default values.
@@ -154,3 +155,5 @@ Rejected:
 12. `spec/consensus-node-client/status.md` (new); `spec/consensus-node-client/transactions.md`,
     `transactions-spi.md`; `tooling/metalang/metalang-core/src/main/java/org/hiero/sdk/v3/metalang/tck/Converter.java`;
     `sdk-java/impl/.../consensusnode/status/`.
+13. `tooling/protobuf/consensus-node/services/response_code.proto:90-93` (`BUSY`: "If API is throttled out"); the
+    enum has no `THROTTLED`, only `THROTTLED_AT_CONSENSUS` (a status of the receipt).

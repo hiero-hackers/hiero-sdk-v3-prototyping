@@ -90,7 +90,6 @@ class DefaultExecutionTest {
             assertEquals(new RetryOnOtherNode(Duration.ofMillis(250)), policy.decide(after(1, outcome)), outcome::name);
         }
         assertEquals(new RetryOnSameNode(Duration.ofMillis(250)), policy.decide(after(1, AttemptOutcome.PENDING)));
-        assertInstanceOf(GiveUp.class, policy.decide(after(1, AttemptOutcome.THROTTLED)));
         assertInstanceOf(GiveUp.class, policy.decide(after(1, AttemptOutcome.REJECTED)));
     }
 
