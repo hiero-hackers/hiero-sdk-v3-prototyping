@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.hiero.consensusnode.transactions.TransactionStatus;
+import org.hiero.consensusnode.status.TransactionStatus;
 
 /// The status codes of HAPI, one constant per value of `ResponseCodeEnum` in
 /// `tooling/protobuf/consensus-node/services/response_code.proto` (389 values). Derived mechanically from

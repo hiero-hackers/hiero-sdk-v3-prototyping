@@ -1,4 +1,4 @@
-package org.hiero.consensusnode.transactions;
+package org.hiero.consensusnode.status;
 
 
 /// The status codes used by the built-in services of the consensus node. The codes are the HAPI

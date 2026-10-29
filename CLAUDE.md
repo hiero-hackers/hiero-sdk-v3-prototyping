@@ -137,7 +137,9 @@ spec/                           # The actual V3 public-API specifications, writt
     token.md (token)            #   HTS token classifier enums (TokenType, TokenSupplyType)
     grpc.md, http.md, proto.md  #   (grpc, http, proto)
   consensus-node-client/        # Talking to the consensus node (namespaces consensusnode.*)
-    client.md                   #   HieroClient, Account, TransactionSigner
+    client.md                   #   HieroClient, Account, TransactionSigner; how requests are executed:
+                                #   ExecutionSettings, RetryPolicy, NodeSelector, AttemptOutcome (retry, node failover)
+    status.md (consensusnode.status)  # TransactionStatus, BasicTransactionStatus: the status codes of the protocol
     transactions.md, queries.md #   Transaction<$$Receipt, $$Self>, Response, Receipt, Record; FreeQuery, PaidQuery
     transactions-*.md, queries-*.md  # accounts, files, schedules, tokens, topics, batch, utility
     transactions-spi.md         #   SPI for custom services/transaction types

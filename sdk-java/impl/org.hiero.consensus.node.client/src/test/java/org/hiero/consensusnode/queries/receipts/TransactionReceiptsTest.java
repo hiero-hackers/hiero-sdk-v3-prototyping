@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import org.hiero.authority.AuthorityFactory;
 import org.hiero.consensusnode.client.ClientFactory;
-import org.hiero.consensusnode.transactions.BasicTransactionStatus;
+import org.hiero.consensusnode.status.BasicTransactionStatus;
 import org.hiero.consensusnode.transactions.spi.SpiFactory;
 import org.hiero.http.HttpFactory;
 import org.hiero.keys.KeysFactory;

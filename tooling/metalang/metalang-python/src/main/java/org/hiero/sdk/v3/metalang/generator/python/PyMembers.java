@@ -124,7 +124,8 @@ final class PyMembers {
         final List<String> results = overloads.stream().map(overload -> result(overload, imports)).distinct()
                 .toList();
         py.append(definition(overloads.getFirst(), kind, owner, indent, imports,
-                (kind == Kind.FUNCTION ? "" : "self, ") + "*args: " + any + ", **kwargs: " + any,
+                (kind == Kind.FUNCTION || overloads.getFirst().isStatic() ? "" : "self, ") + "*args: " + any
+                        + ", **kwargs: " + any,
                 results.size() == 1 ? null : String.join(" | ", results)));
         return py.toString();
     }

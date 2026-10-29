@@ -387,6 +387,25 @@ class PythonGeneratorTest {
         }
 
         @Test
+        void staticOverloadsShouldHaveNoSelf() {
+            final List<GeneratedFile> files = new PythonGenerator().generate(model("""
+                    namespace a
+                    // Keys.
+                    Keys {
+                        @@immutable id: string
+                        // Creates the default.
+                        @@static Keys create()
+                        // Creates one with the id.
+                        @@static Keys create(id: string)
+                    }
+                    """));
+            // a static method has no instance, neither in the overloads nor in the implementation
+            assertThat(module(files, "/_keys.py"))
+                    .contains("    @overload\n    @staticmethod\n    def create() -> Keys: ...\n")
+                    .contains("    @staticmethod\n    def create(*args: Any, **kwargs: Any) -> Keys:");
+        }
+
+        @Test
         void aMemberNamedLikeABuiltinShouldQualifyTheBuiltinInAnnotations() {
             final List<GeneratedFile> files = new PythonGenerator().generate(model("""
                     namespace a

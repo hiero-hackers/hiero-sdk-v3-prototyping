@@ -16,7 +16,7 @@ are two kinds of queries:
   ask for the current price and `maxQueryPayment` to cap what you are willing to pay. Paid queries are always paid
   by the client's operator account.
 
-Both are `Submittable`, so they share the retry settings (`maxAttempts`, `minBackoff`, `maxBackoff`,
+Both are `Submittable`, so they share the execution settings a request can override (`retryPolicy`,
 `attemptTimeout`) and are sent with `submit(client)`. Concrete query types (such as `AccountBalanceQuery` or
 `TokenInfoQuery`) only add their own inputs and result type.
 
@@ -112,7 +112,7 @@ type PaidQueryResponse<$$T> extends QueryResponse<$$T> {
 // A read-only request to a consensus node. Free queries are `FreeQuery` subtypes, queries that require payment are
 // `PaidQuery` subtypes; use `Query` where both kinds are accepted.
 //
-// Use the inherited retry settings to tune how the request is sent and `submit(client)` to send it. The result
+// Use the inherited execution settings to tune how the request is sent and `submit(client)` to send it. The result
 // is returned wrapped in the response envelope `$$Response`: a `QueryResponse` for free queries, a
 // `PaidQueryResponse` for paid ones.
 abstraction Query<$$Result, $$Response extends QueryResponse<$$Result>> extends Submittable<$$Response> {
@@ -229,7 +229,7 @@ Offline tests of the settings that every query carries, written as given / when 
 
 ```tests
 // Source: the Python SDK (query_test.py, test_set_max_query_payment_valid_param: no limit before one is set) and
-// this spec (if a retry setting is absent, the SDK default is used).
+// this spec (if a setting of a request is absent, the one of the client's `ExecutionSettings` is used).
 @@testId("a-new-query-has-no-payment-limit-and-no-retry-settings")
 test "a new query has no payment limit and no retry settings" {
     // when
@@ -238,13 +238,9 @@ test "a new query has no payment limit and no retry settings" {
 
     // then
     assertNull(actual: paid.maxQueryPayment)
-    assertNull(actual: paid.maxAttempts)
-    assertNull(actual: paid.minBackoff)
-    assertNull(actual: paid.maxBackoff)
+    assertNull(actual: paid.retryPolicy)
     assertNull(actual: paid.attemptTimeout)
-    assertNull(actual: free.maxAttempts)
-    assertNull(actual: free.minBackoff)
-    assertNull(actual: free.maxBackoff)
+    assertNull(actual: free.retryPolicy)
     assertNull(actual: free.attemptTimeout)
 }
 
@@ -262,20 +258,20 @@ test "a paid query keeps its payment limit" {
     assertEquals(expected: limit, actual: query.maxQueryPayment)
 }
 
-// Source: the Python SDK (client_test.py, test_set_max_attempts_with_valid_param, test_set_min_backoff_with_valid_param,
-// test_set_max_backoff_with_valid_param) and the Java SDK (ClientTest.setMaxAttempts, setMinBackoffValid,
-// setMaxBackoffValid): retry settings that are set are kept.
-@@testId("a-query-keeps-its-retry-settings")
-test "a query keeps its retry settings" {
+// Source: this spec (Submittable: a request keeps the execution settings set on it).
+@@testId("a-query-keeps-its-execution-settings")
+test "a query keeps its execution settings" {
+    // given
+    let policy = DEFAULT(consensusnode.client.RetryPolicy)
+    let timeout = toDuration(text: "PT5S")
+
     // when
-    let query = consensusnode.queries.accounts.AccountInfoQuery{accountId: DEFAULT, maxAttempts: 5, minBackoff: 250,
-            maxBackoff: 8000, attemptTimeout: 10000}
+    let query = consensusnode.queries.accounts.AccountInfoQuery{accountId: DEFAULT, retryPolicy: policy,
+            attemptTimeout: timeout}
 
     // then
-    assertEquals(expected: 5, actual: query.maxAttempts)
-    assertEquals(expected: 250, actual: query.minBackoff)
-    assertEquals(expected: 8000, actual: query.maxBackoff)
-    assertEquals(expected: 10000, actual: query.attemptTimeout)
+    assertEquals(expected: policy, actual: query.retryPolicy)
+    assertEquals(expected: timeout, actual: query.attemptTimeout)
 }
 ```
 

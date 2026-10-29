@@ -24,3 +24,4 @@ deleted — superseded ADRs link forward to the decision that replaces them.
 | [0011](0011-model-a-choice-as-a-sealed-type.md) | Model a choice between variants as a sealed type | Proposed |
 | [0012](0012-open-test-reporting-as-common-test-result-format.md) | Open Test Reporting is the common format of all test results | Accepted |
 | [0013](0013-untyped-receipts-for-the-receipt-query-by-id.md) | Untyped receipts for the receipt query by id; `Response` is a value | Accepted |
+| [0014](0014-specified-and-exchangeable-retry-and-node-selection.md) | Retry and node selection are specified and exchangeable public API | Accepted |

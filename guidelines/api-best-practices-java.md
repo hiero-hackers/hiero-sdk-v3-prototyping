@@ -2083,6 +2083,23 @@ The sample uses `long timeout, TimeUnit unit` as parameters for the synchronous 
 That is the best practice in Java to ensure that the synchronous method can be called from multiple threads.
 Instead of just defining a `long timeoutInMs` the usage of `TimeUnit` is recommended.
 
+### Where the asynchronous work runs
+
+A type of the API may invite a language to add its own means of running asynchronous work, with a default (the
+`ExecutionSettings` of the consensus node client do). In Java that is an `java.util.concurrent.Executor`:
+
+- add the component `Executor executor` to the record; its default — when it is not given — is an executor that starts
+  a virtual thread per task (`Executors.newVirtualThreadPerTaskExecutor()`, or `Thread.ofVirtual()::start`);
+- run every asynchronous step of the SDK on it (`CompletableFuture.supplyAsync(..., executor)`), and wait between
+  steps with `CompletableFuture.delayedExecutor(delay, TimeUnit.MILLISECONDS, executor)` instead of blocking a thread
+  with `Thread.sleep`;
+- an `Executor` is enough: the SDK does not shut it down, so an `ExecutorService` would only suggest a lifecycle the
+  SDK does not own.
+
+Nothing in the specification declares the component, so the generator does not produce it. `metalang check` compares
+the components of a record exactly and therefore reports the additional one; until the check accepts additional
+components, that difference is expected.
+
 ## Exception Handling (`@@throws`)
 
 The meta-language `@@throws(error-type-a, error-type-b)` annotation declares which errors a method can produce.

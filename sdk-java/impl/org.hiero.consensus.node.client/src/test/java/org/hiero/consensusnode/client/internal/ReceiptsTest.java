@@ -10,7 +10,7 @@ import com.hederahashgraph.api.proto.java.TransactionReceipt;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.hiero.consensusnode.queries.receipts.UntypedReceipt;
-import org.hiero.consensusnode.transactions.TransactionStatus;
+import org.hiero.consensusnode.status.TransactionStatus;
 import org.hiero.consensusnode.transactions.accounts.AccountCreateReceipt;
 import org.hiero.consensusnode.transactions.accounts.AccountCreateTransaction;
 import org.hiero.consensusnode.transactions.accounts.TransferReceipt;

@@ -154,23 +154,7 @@ requires {AccountId, TransactionId} from ledger
 requires {NativeToken, ExchangeRate} from nativeToken
 requires {Authority} from authority
 requires {Account, HieroClient, NodeSignature, Submittable, TransactionSigner} from consensusnode.client
-
-// The status of a transaction, identified by a numeric code. The set of statuses is open: custom
-// services on the consensus node can define their own transaction types and status codes.
-abstraction TransactionStatus {
-  @@immutable code:int32 // the numeric status code reported by the consensus node
-}
-
-// The status codes used by the built-in services of the consensus node. The codes are the HAPI
-// ResponseCodeEnum values.
-enum BasicTransactionStatus(code: int32) extends TransactionStatus {
-    OK(0)
-    INVALID_TRANSACTION(1)
-    PAYER_ACCOUNT_NOT_FOUND(2)
-    // not complete yet: further status codes are still to be added here
-
-    GRPC_WEB_PROXY_NOT_SUPPORTED(399)
-}
+requires {TransactionStatus} from consensusnode.status
 
 // A serialized TransactionBody for one target consensus node — the exact bytes an external signer
 // must sign. Bytes differ per node because each body carries the target node's nodeAccountID.
@@ -235,8 +219,8 @@ abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$
 
 // A packed, wire-ready transaction bound to a payer, a set of target nodes and a TransactionId. Its
 // content cannot change anymore; signatures can be added. Submitting it yields a Response.
-// Retry-tuning fields (maxAttempts, maxBackoff, minBackoff, attemptTimeout) and the
-// submit(client) method are inherited from Submittable.
+// The execution settings it can override (retryPolicy, attemptTimeout) and the submit(client) method are
+// inherited from Submittable.
 abstraction PackedTransaction<$$Receipt extends Receipt, $$Transaction extends Transaction<$$Receipt, $$Transaction>>
         extends Submittable<Response<$$Receipt>> {
 
@@ -607,15 +591,6 @@ test "a transaction of another SDK is read with a valid start in 2125" {
     assertEquals(expected: AccountId.fromString(value: "0.0.3"), actual: transaction.signableBodies()[0].node)
     assertEquals(expected: 1, actual: length(value: transaction.nodeSignatures))
 }
-
-// Source: ResponseCodeEnum of the HAPI (response_code.proto).
-@@testId("the-basic-transaction-statuses-have-the-codes-of-the-protocol")
-test "the basic transaction statuses have the codes of the protocol" {
-    assertEquals(expected: 0, actual: BasicTransactionStatus.OK.code)
-    assertEquals(expected: 1, actual: BasicTransactionStatus.INVALID_TRANSACTION.code)
-    assertEquals(expected: 2, actual: BasicTransactionStatus.PAYER_ACCOUNT_NOT_FOUND.code)
-    assertEquals(expected: 399, actual: BasicTransactionStatus.GRPC_WEB_PROXY_NOT_SUPPORTED.code)
-}
 ```
 
 ## Questions & Comments
@@ -632,12 +607,6 @@ test "the basic transaction statuses have the codes of the protocol" {
   `Address` is the numeric-only form, so an account addressed by EVM address or key alias cannot be a
   payer through this method, and an implementation has to convert.
 
-- **`BasicTransactionStatus` has no `SUCCESS`.** The enum defines `OK(0)`, `INVALID_TRANSACTION(1)`,
-  `PAYER_ACCOUNT_NOT_FOUND(2)` and `GRPC_WEB_PROXY_NOT_SUPPORTED(399)`, but the status a successful
-  transaction reports in HAPI is `SUCCESS` with code 22. Every caller that wants to know whether a
-  transaction succeeded has to compare against a hard-coded 22 — the TCK runtime does exactly that.
-  `TransactionStatus` is deliberately open (an `int32` code, for custom services), so the question is
-  which statuses the spec itself should name.
 - **`setRegenerateTransactionId(boolean)` is intentionally NOT part of V3.** In v2 the SDK
   silently regenerates a `TransactionId` (and retries) when the network rejects a transaction
   with `TRANSACTION_EXPIRED` or `INVALID_TRANSACTION_DURATION`. This is **incompatible with the

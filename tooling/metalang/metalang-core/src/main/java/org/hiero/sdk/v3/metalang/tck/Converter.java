@@ -37,7 +37,7 @@ public enum Converter {
             + "`Key` of a key list or threshold key.", "authority.Authority"),
     HEX("hex", true, true, "Bytes as hex string.", "bytes"),
     STATUS("status", false, true, "The name of a transaction status (`\"SUCCESS\"`).",
-            "consensusnode.transactions.TransactionStatus"),
+            "consensusnode.status.TransactionStatus"),
     NUMBER("number", false, true, "A 32-bit integer as JSON number (where the TCK expects a number, not a string).",
             "int32", "uint16"),
     UTF8("utf8", true, true, "Bytes as UTF-8 text.", "bytes"),

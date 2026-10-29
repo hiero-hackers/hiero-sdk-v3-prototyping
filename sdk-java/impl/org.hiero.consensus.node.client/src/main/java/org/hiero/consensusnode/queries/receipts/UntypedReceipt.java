@@ -6,7 +6,7 @@ import java.util.Objects;
 import org.hiero.consensusnode.client.internal.Receipts;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Transaction;
-import org.hiero.consensusnode.transactions.TransactionStatus;
+import org.hiero.consensusnode.status.TransactionStatus;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;

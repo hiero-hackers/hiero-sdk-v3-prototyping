@@ -20,7 +20,7 @@ import org.hiero.consensusnode.queries.accounts.AccountRecords;
 import org.hiero.consensusnode.queries.accounts.AccountRecordsQuery;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Record;
-import org.hiero.consensusnode.transactions.TransactionStatus;
+import org.hiero.consensusnode.status.TransactionStatus;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.ContractId;
 import org.hiero.ledger.EvmAddress;

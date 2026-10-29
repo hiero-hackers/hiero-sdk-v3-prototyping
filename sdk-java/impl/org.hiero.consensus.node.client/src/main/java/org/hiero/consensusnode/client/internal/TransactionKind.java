@@ -8,7 +8,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Transaction;
-import org.hiero.consensusnode.transactions.TransactionStatus;
+import org.hiero.consensusnode.status.TransactionStatus;
 import org.hiero.consensusnode.transactions.spi.ReceiptHeader;
 import org.hiero.ledger.TransactionId;
 import org.hiero.nativeToken.ExchangeRate;

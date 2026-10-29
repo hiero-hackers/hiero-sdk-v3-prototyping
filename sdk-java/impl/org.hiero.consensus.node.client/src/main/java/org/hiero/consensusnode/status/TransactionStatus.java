@@ -1,4 +1,4 @@
-package org.hiero.consensusnode.transactions;
+package org.hiero.consensusnode.status;
 
 
 /// The status of a transaction, identified by a numeric code. The set of statuses is open: custom

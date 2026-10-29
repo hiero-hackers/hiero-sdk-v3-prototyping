@@ -51,7 +51,8 @@ and `getAllTransactionSupports()` returns all registered implementations.
 
 ```
 namespace consensusnode.transactions.spi
-requires {Receipt, Transaction, TransactionStatus} from consensusnode.transactions
+requires {Receipt, Transaction} from consensusnode.transactions
+requires {TransactionStatus} from consensusnode.status
 requires {TransactionId} from ledger
 requires {ExchangeRate} from nativeToken
 requires {MethodDescriptor} from grpc

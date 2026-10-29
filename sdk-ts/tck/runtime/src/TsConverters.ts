@@ -6,7 +6,7 @@ import type { ExchangeRate, NativeToken, NativeTokenUnit } from "@hiero/base/nat
 import { TokenSupplyType, TokenType } from "@hiero/base/token";
 import type { UntypedReceipt } from "@hiero/consensus-node-client/consensusnode/queries/receipts";
 import type { TokenNftInfo } from "@hiero/consensus-node-client/consensusnode/queries/tokens";
-import type { TransactionStatus } from "@hiero/consensus-node-client/consensusnode/transactions";
+import type { TransactionStatus } from "@hiero/consensus-node-client/consensusnode/status";
 import { Duration } from "@hiero/support";
 import type { Converters } from "@hiero/tck-contract";
 import { RpcError } from "./RpcError.js";

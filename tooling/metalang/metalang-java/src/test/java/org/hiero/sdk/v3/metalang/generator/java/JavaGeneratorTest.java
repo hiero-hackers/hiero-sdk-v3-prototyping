@@ -361,7 +361,7 @@ class JavaGeneratorTest {
             assertThat(files).filteredOn(f -> f.path().endsWith("/module-info.java"))
                     .allMatch(f -> f.content().contains("@NullMarked\nmodule "));
             assertThat(files).noneMatch(f -> f.content().contains("@NonNull"));
-            assertThat(enums).isEqualTo(16);
+            assertThat(enums).isEqualTo(18);
         }
 
         @Test

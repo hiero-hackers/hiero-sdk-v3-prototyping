@@ -19,7 +19,7 @@ import org.hiero.authority.AuthorityList;
 import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.consensusnode.queries.receipts.UntypedReceipt;
 import org.hiero.consensusnode.queries.tokens.TokenNftInfo;
-import org.hiero.consensusnode.transactions.TransactionStatus;
+import org.hiero.consensusnode.status.TransactionStatus;
 import org.hiero.hedera.Hbar;
 import org.hiero.hedera.HbarUnit;
 import org.hiero.keys.KeyFormat;

@@ -15,7 +15,7 @@ received `protocolName`, so no information is lost and the value can be used as 
 
 ## Design Notes
 
-Transaction types are modelled like `consensusnode.transactions.TransactionStatus`: `TransactionType` is an
+Transaction types are modelled like `consensusnode.status.TransactionStatus`: `TransactionType` is an
 abstraction that carries the Mirror Node REST wire value (`protocolName`), and `BasicTransactionType` enumerates the
 types known to the SDK. There is no `UNKNOWN` value.
 

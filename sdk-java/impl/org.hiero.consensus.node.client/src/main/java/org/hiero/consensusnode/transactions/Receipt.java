@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.transactions;
 
+import org.hiero.consensusnode.status.TransactionStatus;
 import java.util.Objects;
 import org.hiero.ledger.TransactionId;
 import org.hiero.nativeToken.ExchangeRate;

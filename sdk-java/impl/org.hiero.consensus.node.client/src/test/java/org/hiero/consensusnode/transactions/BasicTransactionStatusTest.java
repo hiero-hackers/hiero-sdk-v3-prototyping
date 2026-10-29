@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.transactions;
 
+import org.hiero.consensusnode.status.BasicTransactionStatus;
 import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
