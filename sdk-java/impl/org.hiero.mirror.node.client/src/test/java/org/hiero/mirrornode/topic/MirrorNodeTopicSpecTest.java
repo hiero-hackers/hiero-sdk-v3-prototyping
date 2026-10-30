@@ -2,12 +2,12 @@ package org.hiero.mirrornode.topic;
 
 import static org.hiero.sdk.testing.Testing.*;
 
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.TransactionId;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -41,8 +41,8 @@ class MirrorNodeTopicSpecTest {
     ///
     /// Source: the Hiero Enterprise Java test fixture topic.json (topic 0.0.1926, auto-renew period 7776000 seconds, created
     /// "1706816673.106110015", timestamp range from the creation, memo "1706816668096 Mirror node created test topic", no
-    /// custom fees, no fee-exempt keys); millisecond precision. The fixture has no end of the timestamp range, which this
-    /// spec requires, so the test uses some valid time for it.
+    /// custom fees, no fee-exempt keys); millisecond precision. The fixture has no end of the timestamp range: the state is
+    /// the current one.
     @Test
     @DisplayName("a topic keeps its auto-renew period and its creation time")
     @Tag("testId:mirrornode.topic/a-topic-keeps-its-auto-renew-period-and-its-creation-time")
@@ -51,13 +51,14 @@ class MirrorNodeTopicSpecTest {
         final ZonedDateTime created = toZonedDateTime("2024-02-01T19:44:33.106Z");
 
         // when
-        final Topic topic = new Topic(Address.fromString("0.0.1926"), null, null, null, null, toSeconds(7776000L), created, false, "1706816668096 Mirror node created test topic", List.of(), List.of(), created, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC));
+        final Topic topic = new Topic(Address.fromString("0.0.1926"), null, null, null, null, toSeconds(7776000L), created, null, false, "1706816668096 Mirror node created test topic", List.of(), List.of(), new TimestampRange(created, null));
 
         // then
         assertEquals(Address.fromString("0.0.1926"), topic.topicId());
         assertEquals(toSeconds(7776000L), topic.autoRenewPeriod());
         assertEquals(toZonedDateTime("2024-02-01T19:44:33.106Z"), topic.createdTimestamp());
-        assertEquals(created, topic.fromTimestamp());
+        assertEquals(created, topic.timestamp().from());
+        assertNull(topic.timestamp().to());
         assertEquals("1706816668096 Mirror node created test topic", topic.memo());
         assertEquals(0L, length(topic.fixedFees()));
         assertEquals(0L, length(topic.feeExemptAuthorities()));

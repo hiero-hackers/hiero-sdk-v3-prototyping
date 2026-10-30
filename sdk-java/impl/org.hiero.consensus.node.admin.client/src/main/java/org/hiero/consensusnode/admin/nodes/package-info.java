@@ -10,8 +10,8 @@
 ///   to submit transactions.
 /// - A **gossip CA certificate** (`gossipCaCertificate`) — the X.509 certificate (DER bytes)
 ///   used to terminate mutual TLS on the gossip channel.
-/// - A **gRPC certificate hash** (`grpcCertificateHash`) — SHA-384 of the certificate served
-///   on the public gRPC endpoints; clients pin against this hash.
+/// - An optional **gRPC certificate hash** (`grpcCertificateHash`) — SHA-384 of the certificate
+///   served on the public gRPC endpoints; clients can pin against this hash.
 /// - An **`adminAuthority`** — required to update or delete the node entry. There is no system-key
 ///   override here; rotating the admin key requires both the old and new keys.
 /// - A **`declineReward`** flag — when `true`, the node opts out of receiving staking rewards.

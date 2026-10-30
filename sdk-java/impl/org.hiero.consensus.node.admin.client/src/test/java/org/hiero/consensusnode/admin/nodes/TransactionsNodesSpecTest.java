@@ -173,6 +173,20 @@ class TransactionsNodesSpecTest {
         assertNull(transaction.grpcWebProxyEndpoint());
     }
 
+    /// `consensusnode.admin.nodes/a-node-create-transaction-needs-no-grpc-certificate-hash`
+    ///
+    /// Source: HAPI node_create.proto (grpc_certificate_hash: "This field is OPTIONAL"); `@@nullable` of this spec.
+    @Test
+    @DisplayName("a node create transaction needs no gRPC certificate hash")
+    @Tag("testId:consensusnode.admin.nodes/a-node-create-transaction-needs-no-grpc-certificate-hash")
+    void aNodeCreateTransactionNeedsNoGRPCCertificateHash() {
+        // when
+        final NodeCreateTransaction transaction = new NodeCreateTransaction(defaultAccountId(), null, List.of(defaultServiceEndpoint()), List.of(NODE_DOMAIN_ENDPOINT()), GOSSIP_CA_CERTIFICATE(), null, defaultAuthority(), false, null);
+
+        // then
+        assertNull(transaction.grpcCertificateHash());
+    }
+
     /// `consensusnode.admin.nodes/a-node-create-transaction-without-gossip-endpoints-is-rejected`
     ///
     /// Source: HAPI node_create.proto (gossip_endpoint: "This list MUST NOT be empty"); `@@minSize(1)` of this spec.

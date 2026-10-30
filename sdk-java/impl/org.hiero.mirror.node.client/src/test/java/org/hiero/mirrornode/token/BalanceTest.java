@@ -4,6 +4,7 @@ import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.hiero.ledger.AccountId;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -16,19 +17,19 @@ class BalanceTest {
     @DisplayName("creates a Balance and returns the values")
     @Tag("testId:mirrornode.token.Balance/create")
     void shouldCreateAndReturnTheValues() {
-        final AccountId accountId = accountIdValue();
+        final AccountId account = accountValue();
         final long balance = balanceValue();
-        final long decimals = decimalsValue();
-        final Balance subject = new Balance(accountId, balance, decimals);
-        assertValue(accountId, subject.accountId());
+        final @Nullable Long decimals = decimalsValue();
+        final Balance subject = new Balance(account, balance, decimals);
+        assertValue(account, subject.account());
         assertValue(balance, subject.balance());
         assertValue(decimals, subject.decimals());
     }
 
     @Test
-    @DisplayName("rejects null for accountId")
-    @Tag("testId:mirrornode.token.Balance/accountId/rejects-null")
-    void shouldRejectNullAccountId() {
+    @DisplayName("rejects null for account")
+    @Tag("testId:mirrornode.token.Balance/account/rejects-null")
+    void shouldRejectNullAccount() {
         assertThrows(NullPointerException.class, () -> new Balance((AccountId) null, balanceValue(), decimalsValue()));
     }
 
@@ -37,7 +38,7 @@ class BalanceTest {
     @Tag("testId:mirrornode.token.Balance/balance/accepts-at-minimum")
     void shouldAcceptBalanceAtMinimum() {
         final long value = -9223372036854775808L;
-        final Balance subject = new Balance(accountIdValue(), value, decimalsValue());
+        final Balance subject = new Balance(accountValue(), value, decimalsValue());
         assertValue(value, subject.balance());
     }
 
@@ -46,7 +47,7 @@ class BalanceTest {
     @Tag("testId:mirrornode.token.Balance/balance/accepts-at-maximum")
     void shouldAcceptBalanceAtMaximum() {
         final long value = 9223372036854775807L;
-        final Balance subject = new Balance(accountIdValue(), value, decimalsValue());
+        final Balance subject = new Balance(accountValue(), value, decimalsValue());
         assertValue(value, subject.balance());
     }
 
@@ -54,8 +55,8 @@ class BalanceTest {
     @DisplayName("decimals: accepts the minimum (-9223372036854775808)")
     @Tag("testId:mirrornode.token.Balance/decimals/accepts-at-minimum")
     void shouldAcceptDecimalsAtMinimum() {
-        final long value = -9223372036854775808L;
-        final Balance subject = new Balance(accountIdValue(), balanceValue(), value);
+        final @Nullable Long value = -9223372036854775808L;
+        final Balance subject = new Balance(accountValue(), balanceValue(), value);
         assertValue(value, subject.decimals());
     }
 
@@ -63,8 +64,8 @@ class BalanceTest {
     @DisplayName("decimals: accepts the maximum (9223372036854775807)")
     @Tag("testId:mirrornode.token.Balance/decimals/accepts-at-maximum")
     void shouldAcceptDecimalsAtMaximum() {
-        final long value = 9223372036854775807L;
-        final Balance subject = new Balance(accountIdValue(), balanceValue(), value);
+        final @Nullable Long value = 9223372036854775807L;
+        final Balance subject = new Balance(accountValue(), balanceValue(), value);
         assertValue(value, subject.decimals());
     }
 
@@ -78,7 +79,7 @@ class BalanceTest {
         assertEquals(subject.hashCode(), other.hashCode());
     }
 
-    private static AccountId accountIdValue() {
+    private static AccountId accountValue() {
         return new AccountId(0L, 0L, "", 1001L, null, null);
     }
 
@@ -91,6 +92,6 @@ class BalanceTest {
     }
 
     private static Balance create() {
-        return new Balance(accountIdValue(), balanceValue(), decimalsValue());
+        return new Balance(accountValue(), balanceValue(), decimalsValue());
     }
 }

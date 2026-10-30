@@ -12,8 +12,10 @@ import org.hiero.keys.ByteImportEncoding;
 import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.AccountId;
+import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;
 import org.hiero.ledger.EvmAddress;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -30,23 +32,22 @@ class ContractTest {
         final ContractId contractId = contractIdValue();
         final @Nullable Authority adminAuthority = adminAuthorityValue();
         final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
-        final Duration autoRenewPeriod = autoRenewPeriodValue();
-        final ZonedDateTime createdTimestamp = createdTimestampValue();
+        final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
+        final @Nullable ZonedDateTime createdTimestamp = createdTimestampValue();
         final boolean deleted = deletedValue();
         final @Nullable ZonedDateTime expirationTimestamp = expirationTimestampValue();
-        final @Nullable String fileId = fileIdValue();
+        final @Nullable Address fileId = fileIdValue();
         final @Nullable EvmAddress evmAddress = evmAddressValue();
         final @Nullable String memo = memoValue();
         final @Nullable Integer maxAutomaticTokenAssociations = maxAutomaticTokenAssociationsValue();
         final @Nullable Long nonce = nonceValue();
-        final @Nullable String obtainerId = obtainerIdValue();
-        final boolean permanentRemoval = permanentRemovalValue();
-        final @Nullable String proxyAccountId = proxyAccountIdValue();
-        final ZonedDateTime fromTimestamp = fromTimestampValue();
-        final ZonedDateTime toTimestamp = toTimestampValue();
+        final @Nullable Address obtainerId = obtainerIdValue();
+        final @Nullable Boolean permanentRemoval = permanentRemovalValue();
+        final @Nullable AccountId proxyAccountId = proxyAccountIdValue();
+        final TimestampRange timestamp = timestampValue();
         final @Nullable String bytecode = bytecodeValue();
         final @Nullable String runtimeBytecode = runtimeBytecodeValue();
-        final Contract subject = new Contract(contractId, adminAuthority, autoRenewAccount, autoRenewPeriod, createdTimestamp, deleted, expirationTimestamp, fileId, evmAddress, memo, maxAutomaticTokenAssociations, nonce, obtainerId, permanentRemoval, proxyAccountId, fromTimestamp, toTimestamp, bytecode, runtimeBytecode);
+        final Contract subject = new Contract(contractId, adminAuthority, autoRenewAccount, autoRenewPeriod, createdTimestamp, deleted, expirationTimestamp, fileId, evmAddress, memo, maxAutomaticTokenAssociations, nonce, obtainerId, permanentRemoval, proxyAccountId, timestamp, bytecode, runtimeBytecode);
         assertValue(contractId, subject.contractId());
         assertValue(adminAuthority, subject.adminAuthority());
         assertValue(autoRenewAccount, subject.autoRenewAccount());
@@ -62,8 +63,7 @@ class ContractTest {
         assertValue(obtainerId, subject.obtainerId());
         assertValue(permanentRemoval, subject.permanentRemoval());
         assertValue(proxyAccountId, subject.proxyAccountId());
-        assertValue(fromTimestamp, subject.fromTimestamp());
-        assertValue(toTimestamp, subject.toTimestamp());
+        assertValue(timestamp, subject.timestamp());
         assertValue(bytecode, subject.bytecode());
         assertValue(runtimeBytecode, subject.runtimeBytecode());
     }
@@ -75,20 +75,19 @@ class ContractTest {
         final ContractId contractId = contractIdValue();
         final @Nullable Authority adminAuthority = adminAuthorityValue();
         final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
-        final Duration autoRenewPeriod = autoRenewPeriodValue();
-        final ZonedDateTime createdTimestamp = createdTimestampValue();
+        final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
+        final @Nullable ZonedDateTime createdTimestamp = createdTimestampValue();
         final boolean deleted = deletedValue();
         final @Nullable ZonedDateTime expirationTimestamp = expirationTimestampValue();
-        final @Nullable String fileId = fileIdValue();
+        final @Nullable Address fileId = fileIdValue();
         final @Nullable EvmAddress evmAddress = evmAddressValue();
         final @Nullable String memo = memoValue();
         final @Nullable Integer maxAutomaticTokenAssociations = maxAutomaticTokenAssociationsValue();
         final @Nullable Long nonce = nonceValue();
-        final @Nullable String obtainerId = obtainerIdValue();
-        final boolean permanentRemoval = permanentRemovalValue();
-        final @Nullable String proxyAccountId = proxyAccountIdValue();
-        final ZonedDateTime fromTimestamp = fromTimestampValue();
-        final ZonedDateTime toTimestamp = toTimestampValue();
+        final @Nullable Address obtainerId = obtainerIdValue();
+        final @Nullable Boolean permanentRemoval = permanentRemovalValue();
+        final @Nullable AccountId proxyAccountId = proxyAccountIdValue();
+        final TimestampRange timestamp = timestampValue();
         final @Nullable String bytecode = bytecodeValue();
         final @Nullable String runtimeBytecode = runtimeBytecodeValue();
         final Contract subject = Contract.builder()
@@ -107,8 +106,7 @@ class ContractTest {
                 .obtainerId(obtainerId)
                 .permanentRemoval(permanentRemoval)
                 .proxyAccountId(proxyAccountId)
-                .fromTimestamp(fromTimestamp)
-                .toTimestamp(toTimestamp)
+                .timestamp(timestamp)
                 .bytecode(bytecode)
                 .runtimeBytecode(runtimeBytecode)
                 .build();
@@ -127,8 +125,7 @@ class ContractTest {
         assertValue(obtainerId, subject.obtainerId());
         assertValue(permanentRemoval, subject.permanentRemoval());
         assertValue(proxyAccountId, subject.proxyAccountId());
-        assertValue(fromTimestamp, subject.fromTimestamp());
-        assertValue(toTimestamp, subject.toTimestamp());
+        assertValue(timestamp, subject.timestamp());
         assertValue(bytecode, subject.bytecode());
         assertValue(runtimeBytecode, subject.runtimeBytecode());
     }
@@ -139,15 +136,13 @@ class ContractTest {
     void shouldBuildWithoutTheOptionalValues() {
         final Contract subject = Contract.builder()
                 .contractId(contractIdValue())
-                .autoRenewPeriod(autoRenewPeriodValue())
-                .createdTimestamp(createdTimestampValue())
                 .deleted(deletedValue())
-                .permanentRemoval(permanentRemovalValue())
-                .fromTimestamp(fromTimestampValue())
-                .toTimestamp(toTimestampValue())
+                .timestamp(timestampValue())
                 .build();
         assertNull(subject.adminAuthority());
         assertNull(subject.autoRenewAccount());
+        assertNull(subject.autoRenewPeriod());
+        assertNull(subject.createdTimestamp());
         assertNull(subject.expirationTimestamp());
         assertNull(subject.fileId());
         assertNull(subject.evmAddress());
@@ -155,6 +150,7 @@ class ContractTest {
         assertNull(subject.maxAutomaticTokenAssociations());
         assertNull(subject.nonce());
         assertNull(subject.obtainerId());
+        assertNull(subject.permanentRemoval());
         assertNull(subject.proxyAccountId());
         assertNull(subject.bytecode());
         assertNull(subject.runtimeBytecode());
@@ -171,21 +167,7 @@ class ContractTest {
     @DisplayName("rejects null for contractId")
     @Tag("testId:mirrornode.contract.Contract/contractId/rejects-null")
     void shouldRejectNullContractId() {
-        assertThrows(NullPointerException.class, () -> new Contract((ContractId) null, adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue()));
-    }
-
-    @Test
-    @DisplayName("rejects null for autoRenewPeriod")
-    @Tag("testId:mirrornode.contract.Contract/autoRenewPeriod/rejects-null")
-    void shouldRejectNullAutoRenewPeriod() {
-        assertThrows(NullPointerException.class, () -> new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), (Duration) null, createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue()));
-    }
-
-    @Test
-    @DisplayName("rejects null for createdTimestamp")
-    @Tag("testId:mirrornode.contract.Contract/createdTimestamp/rejects-null")
-    void shouldRejectNullCreatedTimestamp() {
-        assertThrows(NullPointerException.class, () -> new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), (ZonedDateTime) null, deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue()));
+        assertThrows(NullPointerException.class, () -> new Contract((ContractId) null, adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), timestampValue(), bytecodeValue(), runtimeBytecodeValue()));
     }
 
     @Test
@@ -193,7 +175,7 @@ class ContractTest {
     @Tag("testId:mirrornode.contract.Contract/maxAutomaticTokenAssociations/accepts-at-minimum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
-        final Contract subject = new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), value, nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue());
+        final Contract subject = new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), value, nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), timestampValue(), bytecodeValue(), runtimeBytecodeValue());
         assertValue(value, subject.maxAutomaticTokenAssociations());
     }
 
@@ -202,7 +184,7 @@ class ContractTest {
     @Tag("testId:mirrornode.contract.Contract/maxAutomaticTokenAssociations/accepts-at-maximum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMaximum() {
         final @Nullable Integer value = 2147483647;
-        final Contract subject = new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), value, nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue());
+        final Contract subject = new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), value, nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), timestampValue(), bytecodeValue(), runtimeBytecodeValue());
         assertValue(value, subject.maxAutomaticTokenAssociations());
     }
 
@@ -211,7 +193,7 @@ class ContractTest {
     @Tag("testId:mirrornode.contract.Contract/nonce/accepts-at-minimum")
     void shouldAcceptNonceAtMinimum() {
         final @Nullable Long value = -9223372036854775808L;
-        final Contract subject = new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), value, obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue());
+        final Contract subject = new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), value, obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), timestampValue(), bytecodeValue(), runtimeBytecodeValue());
         assertValue(value, subject.nonce());
     }
 
@@ -220,22 +202,15 @@ class ContractTest {
     @Tag("testId:mirrornode.contract.Contract/nonce/accepts-at-maximum")
     void shouldAcceptNonceAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
-        final Contract subject = new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), value, obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue());
+        final Contract subject = new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), value, obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), timestampValue(), bytecodeValue(), runtimeBytecodeValue());
         assertValue(value, subject.nonce());
     }
 
     @Test
-    @DisplayName("rejects null for fromTimestamp")
-    @Tag("testId:mirrornode.contract.Contract/fromTimestamp/rejects-null")
-    void shouldRejectNullFromTimestamp() {
-        assertThrows(NullPointerException.class, () -> new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), (ZonedDateTime) null, toTimestampValue(), bytecodeValue(), runtimeBytecodeValue()));
-    }
-
-    @Test
-    @DisplayName("rejects null for toTimestamp")
-    @Tag("testId:mirrornode.contract.Contract/toTimestamp/rejects-null")
-    void shouldRejectNullToTimestamp() {
-        assertThrows(NullPointerException.class, () -> new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), (ZonedDateTime) null, bytecodeValue(), runtimeBytecodeValue()));
+    @DisplayName("rejects null for timestamp")
+    @Tag("testId:mirrornode.contract.Contract/timestamp/rejects-null")
+    void shouldRejectNullTimestamp() {
+        assertThrows(NullPointerException.class, () -> new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), (TimestampRange) null, bytecodeValue(), runtimeBytecodeValue()));
     }
 
     private static ContractId contractIdValue() {
@@ -266,8 +241,8 @@ class ContractTest {
         return ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
     }
 
-    private static String fileIdValue() {
-        return "value";
+    private static Address fileIdValue() {
+        return new Address(0L, 0L, "", 1001L);
     }
 
     private static EvmAddress evmAddressValue() {
@@ -286,24 +261,20 @@ class ContractTest {
         return 1L;
     }
 
-    private static String obtainerIdValue() {
-        return "value";
+    private static Address obtainerIdValue() {
+        return new Address(0L, 0L, "", 1001L);
     }
 
     private static boolean permanentRemovalValue() {
         return true;
     }
 
-    private static String proxyAccountIdValue() {
-        return "value";
+    private static AccountId proxyAccountIdValue() {
+        return new AccountId(0L, 0L, "", 1001L, null, null);
     }
 
-    private static ZonedDateTime fromTimestampValue() {
-        return ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
-    }
-
-    private static ZonedDateTime toTimestampValue() {
-        return ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+    private static TimestampRange timestampValue() {
+        return new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null);
     }
 
     private static String bytecodeValue() {
@@ -315,6 +286,6 @@ class ContractTest {
     }
 
     private static Contract create() {
-        return new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), fromTimestampValue(), toTimestampValue(), bytecodeValue(), runtimeBytecodeValue());
+        return new Contract(contractIdValue(), adminAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), expirationTimestampValue(), fileIdValue(), evmAddressValue(), memoValue(), maxAutomaticTokenAssociationsValue(), nonceValue(), obtainerIdValue(), permanentRemovalValue(), proxyAccountIdValue(), timestampValue(), bytecodeValue(), runtimeBytecodeValue());
     }
 }

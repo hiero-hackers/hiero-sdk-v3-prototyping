@@ -112,19 +112,23 @@ public final class AdminKinds {
         };
     }
 
-    /// Fills the node create body. The gRPC-web proxy endpoint (HIP-1046) is sent only when it is set.
+    /// Fills the node create body. The description, the gRPC certificate hash and the gRPC-web proxy endpoint (HIP-1046)
+    /// are sent only when they are set.
     private static void nodeCreate(final NodeCreateTransaction transaction, final TransactionBody.Builder body) {
         final NodeCreateTransactionBody.Builder create = NodeCreateTransactionBody.newBuilder()
                 .setAccountId(Protobuf.toProto(transaction.accountId()))
                 .addAllGossipEndpoint(Endpoints.toProto(transaction.gossipEndpoints()))
                 .addAllServiceEndpoint(Endpoints.toProto(transaction.serviceEndpoints()))
                 .setGossipCaCertificate(ByteString.copyFrom(transaction.gossipCaCertificate()))
-                .setGrpcCertificateHash(ByteString.copyFrom(transaction.grpcCertificateHash()))
                 .setAdminKey(Protobuf.toProto(transaction.adminAuthority()))
                 .setDeclineReward(transaction.declineReward());
         final String description = transaction.description();
         if (description != null) {
             create.setDescription(description);
+        }
+        final byte[] grpcCertificateHash = transaction.grpcCertificateHash();
+        if (grpcCertificateHash != null) {
+            create.setGrpcCertificateHash(ByteString.copyFrom(grpcCertificateHash));
         }
         final ServiceEndpoint grpcWebProxyEndpoint = transaction.grpcWebProxyEndpoint();
         if (grpcWebProxyEndpoint != null) {

@@ -18,8 +18,9 @@ import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 
-/// Registers a new consensus node in the address book. All endpoint, certificate, and key
-/// fields are required; the network has no defaults for any of them.
+/// Registers a new consensus node in the address book. The endpoints, the gossip CA certificate
+/// and the keys are required; the network has no defaults for any of them. The gRPC certificate
+/// hash is optional.
 public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, NodeCreateTransaction> {
 
     private final AccountId accountId;
@@ -27,7 +28,7 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
     private final List<ServiceEndpoint> gossipEndpoints;
     private final List<ServiceEndpoint> serviceEndpoints;
     private final byte[] gossipCaCertificate;
-    private final byte[] grpcCertificateHash;
+    private final byte @Nullable [] grpcCertificateHash;
     private final Authority adminAuthority;
     private final boolean declineReward;
     private final @Nullable ServiceEndpoint grpcWebProxyEndpoint;
@@ -42,7 +43,7 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
             final List<ServiceEndpoint> gossipEndpoints,
             final List<ServiceEndpoint> serviceEndpoints,
             final byte[] gossipCaCertificate,
-            final byte[] grpcCertificateHash,
+            final byte @Nullable [] grpcCertificateHash,
             final Authority adminAuthority,
             final boolean declineReward,
             final @Nullable ServiceEndpoint grpcWebProxyEndpoint) {
@@ -71,8 +72,7 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
         this.serviceEndpoints = List.copyOf(serviceEndpoints);
         Objects.requireNonNull(gossipCaCertificate, "gossipCaCertificate must not be null");
         this.gossipCaCertificate = gossipCaCertificate.clone();
-        Objects.requireNonNull(grpcCertificateHash, "grpcCertificateHash must not be null");
-        this.grpcCertificateHash = grpcCertificateHash.clone();
+        this.grpcCertificateHash = grpcCertificateHash == null ? null : grpcCertificateHash.clone();
         Objects.requireNonNull(adminAuthority, "adminAuthority must not be null");
         this.adminAuthority = adminAuthority;
         this.declineReward = declineReward;
@@ -86,7 +86,7 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
             final List<ServiceEndpoint> gossipEndpoints,
             final List<ServiceEndpoint> serviceEndpoints,
             final byte[] gossipCaCertificate,
-            final byte[] grpcCertificateHash,
+            final byte @Nullable [] grpcCertificateHash,
             final Authority adminAuthority,
             final @Nullable ServiceEndpoint grpcWebProxyEndpoint) {
         this(accountId, description, gossipEndpoints, serviceEndpoints, gossipCaCertificate, grpcCertificateHash, adminAuthority, false, grpcWebProxyEndpoint);
@@ -117,9 +117,9 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
         return gossipCaCertificate.clone();
     }
 
-    /// SHA-384 of the certificate served on serviceEndpoints; clients pin against this
-    public byte[] grpcCertificateHash() {
-        return grpcCertificateHash.clone();
+    /// SHA-384 of the certificate served on serviceEndpoints; clients can pin against this
+    public byte @Nullable [] grpcCertificateHash() {
+        return grpcCertificateHash == null ? null : grpcCertificateHash.clone();
     }
 
     /// required to update / delete the node; must co-sign this create
@@ -285,11 +285,11 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
 
         /// Sets the `grpcCertificateHash`.
         ///
-        /// SHA-384 of the certificate served on serviceEndpoints; clients pin against this
+        /// SHA-384 of the certificate served on serviceEndpoints; clients can pin against this
         ///
         /// @param grpcCertificateHash the value
         /// @return this builder
-        public Builder grpcCertificateHash(final byte[] grpcCertificateHash) {
+        public Builder grpcCertificateHash(final byte @Nullable [] grpcCertificateHash) {
             this.grpcCertificateHash = grpcCertificateHash;
             return this;
         }
@@ -339,7 +339,7 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
                     Objects.requireNonNull(gossipEndpoints, "gossipEndpoints must not be null"),
                     Objects.requireNonNull(serviceEndpoints, "serviceEndpoints must not be null"),
                     Objects.requireNonNull(gossipCaCertificate, "gossipCaCertificate must not be null"),
-                    Objects.requireNonNull(grpcCertificateHash, "grpcCertificateHash must not be null"),
+                    grpcCertificateHash,
                     Objects.requireNonNull(adminAuthority, "adminAuthority must not be null"),
                     declineReward,
                     grpcWebProxyEndpoint);
@@ -356,7 +356,7 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
                 + ", gossipEndpoints=" + gossipEndpoints()
                 + ", serviceEndpoints=" + serviceEndpoints()
                 + ", gossipCaCertificate=" + "byte[" + gossipCaCertificate().length + "]"
-                + ", grpcCertificateHash=" + "byte[" + grpcCertificateHash().length + "]"
+                + ", grpcCertificateHash=" + (grpcCertificateHash() == null ? "null" : "byte[" + grpcCertificateHash().length + "]")
                 + ", adminAuthority=" + adminAuthority()
                 + ", declineReward=" + declineReward()
                 + ", grpcWebProxyEndpoint=" + grpcWebProxyEndpoint()

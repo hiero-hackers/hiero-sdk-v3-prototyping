@@ -90,7 +90,7 @@ type NodeAddress {
     @@immutable @@default([]) serviceEndpoints: list<ServiceEndpoint>   // public gRPC endpoints (clients submit transactions here)
     @@immutable @@default("") description: string           // free-form description of the node (at most 100 UTF-8 bytes); empty if none
     @@immutable gossipCaCertificate: bytes                   // X.509 DER bytes of the certificate that terminates mutual TLS for gossip
-    @@immutable grpcCertificateHash: bytes                   // SHA-384 of the certificate served on serviceEndpoints; clients pin against this
+    @@immutable grpcCertificateHash: bytes                   // SHA-384 of the certificate served on serviceEndpoints; clients can pin against this; empty if the node has none
     @@immutable rsaPublicKey: bytes                          // legacy gossip RSA public key (DER); only for tooling that still reads the legacy address-book format — prefer gossipCaCertificate and grpcCertificateHash
 }
 

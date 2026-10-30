@@ -6,6 +6,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.hiero.ledger.AccountId;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -46,14 +47,14 @@ class MirrorNodeNetworkSpecTest {
         final AccountId account = AccountId.fromString("0.0.3");
 
         // when
-        final NetworkNode node = new NetworkNode(0L, account, null, null, null, List.of(), null, 0L, null);
+        final NetworkNode node = new NetworkNode(0L, account, null, List.of(), null, null, null, null, null, null, null, null, null, null, List.of(), null, null, null, null, new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null));
 
         // then
         assertEquals(0L, node.nodeId());
         assertEquals(account, node.accountId());
         assertEquals(0L, length(node.serviceEndpoints()));
         assertNull(node.adminKey());
-        assertNull(node.timestamp());
+        assertNull(node.stake());
     }
 
     /// `mirrornode.network/a-network-node-keeps-its-service-endpoints-in-order`
@@ -67,7 +68,7 @@ class MirrorNodeNetworkSpecTest {
         final List<ServiceEndpoint> endpoints = List.of(new ServiceEndpoint("1.2.3.4", 443, null), new ServiceEndpoint(null, 443, "test.mirror.com"));
 
         // when
-        final NetworkNode node = new NetworkNode(0L, AccountId.fromString("0.0.3"), null, null, null, endpoints, null, 0L, null);
+        final NetworkNode node = new NetworkNode(0L, AccountId.fromString("0.0.3"), null, List.of(), null, null, null, null, null, null, null, null, null, null, endpoints, null, null, null, null, new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null));
 
         // then
         assertEquals(endpoints, node.serviceEndpoints());
@@ -75,19 +76,20 @@ class MirrorNodeNetworkSpecTest {
 
     /// `mirrornode.network/a-network-node-keeps-the-consensus-time-of-its-address-book-entry`
     ///
-    /// Source: this spec (`timestamp` is the consensus time of the address-book entry).
+    /// Source: this spec (`timestamp` is the period the address-book entry is valid for).
     @Test
     @DisplayName("a network node keeps the consensus time of its address-book entry")
     @Tag("testId:mirrornode.network/a-network-node-keeps-the-consensus-time-of-its-address-book-entry")
     void aNetworkNodeKeepsTheConsensusTimeOfItsAddressBookEntry() {
         // given
-        final ZonedDateTime time = ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+        final TimestampRange period = new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null);
 
         // when
-        final NetworkNode node = new NetworkNode(0L, AccountId.fromString("0.0.3"), null, null, null, List.of(), null, 0L, time);
+        final NetworkNode node = new NetworkNode(0L, AccountId.fromString("0.0.3"), null, List.of(), null, null, null, null, null, null, null, null, null, null, List.of(), 0L, null, null, null, period);
 
         // then
-        assertEquals(time, node.timestamp());
+        assertEquals(period, node.timestamp());
+        assertEquals(0L, node.stake());
     }
 
     /// `mirrornode.network/exchange-rates-keep-the-current-and-the-next-rate-with-their-expiration-times`
@@ -103,7 +105,7 @@ class MirrorNodeNetworkSpecTest {
         final ExchangeRate next = new ExchangeRate(211949, 30000, toZonedDateTime("2026-08-04T15:00:00Z"));
 
         // when
-        final ExchangeRates rates = new ExchangeRates(current, next);
+        final ExchangeRates rates = new ExchangeRates(current, next, null);
 
         // then
         assertEquals(current, rates.currentRate());
@@ -134,20 +136,23 @@ class MirrorNodeNetworkSpecTest {
     /// `mirrornode.network/network-stake-keeps-its-staking-parameters-and-its-staking-period`
     ///
     /// Source: the Hiero Enterprise Java test fixture network-stake.json (its values; `staking_period_duration` 1440
-    /// minutes, i.e. one day, is the staking period of 86400 seconds).
+    /// minutes, i.e. one day, is the staking period duration of 86400 seconds); the example of the mirror node OpenAPI
+    /// definition (staking period from 1655164800 to 1655251200).
     @Test
     @DisplayName("network stake keeps its staking parameters and its staking period")
     @Tag("testId:mirrornode.network/network-stake-keeps-its-staking-parameters-and-its-staking-period")
     void networkStakeKeepsItsStakingParametersAndItsStakingPeriod() {
         // when
-        final NetworkStake stake = new NetworkStake(650000000000000000L, 5287L, 44512288670430L, 0.1, 2781375493493491L, 8500000000000000L, 1465970599400000000L, toSeconds(86400L), 365L, 0.1, 44512288670430L, 25000000000000000L, 14652305964403937L);
+        final TimestampRange period = new TimestampRange(toZonedDateTime("2022-06-14T00:00:00Z"), toZonedDateTime("2022-06-15T00:00:00Z"));
+        final NetworkStake stake = new NetworkStake(650000000000000000L, 5287L, 44512288670430L, 0.1, 2781375493493491L, 8500000000000000L, 1465970599400000000L, period, toSeconds(86400L), 365L, 0.1, 44512288670430L, 25000000000000000L, 14652305964403937L);
 
         // then
-        assertEquals(toSeconds(86400L), stake.stakingPeriod());
+        assertEquals(period, stake.stakingPeriod());
+        assertEquals(toSeconds(86400L), stake.stakingPeriodDuration());
         assertEquals(365L, stake.stakingPeriodsStored());
         assertEquals(1465970599400000000L, stake.stakeTotal());
-        assertEquals(650000000000000000L, stake.maxStakeReward());
-        assertEquals(5287L, stake.maxStakeRewardPerHbar());
+        assertEquals(650000000000000000L, stake.maxStakeRewarded());
+        assertEquals(5287L, stake.maxStakingRewardRatePerHbar());
         assertEquals(0.1, stake.nodeRewardFeeFraction());
         assertEquals(0.1, stake.stakingRewardFeeFraction());
         assertEquals(14652305964403937L, stake.unreservedStakingRewardBalance());

@@ -5,11 +5,13 @@ import org.jspecify.annotations.NullMarked;
 /// Packages:
 /// - `org.hiero.mirrornode`
 /// - `org.hiero.mirrornode.account`
+/// - `org.hiero.mirrornode.block`
 /// - `org.hiero.mirrornode.common`
 /// - `org.hiero.mirrornode.contract`
 /// - `org.hiero.mirrornode.http`
 /// - `org.hiero.mirrornode.network`
 /// - `org.hiero.mirrornode.nft`
+/// - `org.hiero.mirrornode.schedule`
 /// - `org.hiero.mirrornode.token`
 /// - `org.hiero.mirrornode.topic`
 /// - `org.hiero.mirrornode.transaction`
@@ -20,11 +22,13 @@ module org.hiero.mirror.node.client {
 
     exports org.hiero.mirrornode;
     exports org.hiero.mirrornode.account;
+    exports org.hiero.mirrornode.block;
     exports org.hiero.mirrornode.common;
     exports org.hiero.mirrornode.contract;
     exports org.hiero.mirrornode.http;
     exports org.hiero.mirrornode.network;
     exports org.hiero.mirrornode.nft;
+    exports org.hiero.mirrornode.schedule;
     exports org.hiero.mirrornode.token;
     exports org.hiero.mirrornode.topic;
     exports org.hiero.mirrornode.transaction;

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -17,8 +18,8 @@ class NftTransferPartiesTest {
     @DisplayName("creates a NftTransferParties and returns the values")
     @Tag("testId:mirrornode.common.NftTransferParties/create")
     void shouldCreateAndReturnTheValues() {
-        final AccountId senderAccountId = senderAccountIdValue();
-        final AccountId receiverAccountId = receiverAccountIdValue();
+        final @Nullable AccountId senderAccountId = senderAccountIdValue();
+        final @Nullable AccountId receiverAccountId = receiverAccountIdValue();
         final Address tokenId = tokenIdValue();
         final NftTransferParties subject = new NftTransferParties(senderAccountId, receiverAccountId, tokenId);
         assertValue(senderAccountId, subject.senderAccountId());
@@ -27,17 +28,38 @@ class NftTransferPartiesTest {
     }
 
     @Test
-    @DisplayName("rejects null for senderAccountId")
-    @Tag("testId:mirrornode.common.NftTransferParties/senderAccountId/rejects-null")
-    void shouldRejectNullSenderAccountId() {
-        assertThrows(NullPointerException.class, () -> new NftTransferParties((AccountId) null, receiverAccountIdValue(), tokenIdValue()));
+    @DisplayName("the builder builds the values of the constructor")
+    @Tag("testId:mirrornode.common.NftTransferParties/builder/builds")
+    void shouldBuildTheValuesOfTheConstructor() {
+        final @Nullable AccountId senderAccountId = senderAccountIdValue();
+        final @Nullable AccountId receiverAccountId = receiverAccountIdValue();
+        final Address tokenId = tokenIdValue();
+        final NftTransferParties subject = NftTransferParties.builder()
+                .senderAccountId(senderAccountId)
+                .receiverAccountId(receiverAccountId)
+                .tokenId(tokenId)
+                .build();
+        assertValue(senderAccountId, subject.senderAccountId());
+        assertValue(receiverAccountId, subject.receiverAccountId());
+        assertValue(tokenId, subject.tokenId());
     }
 
     @Test
-    @DisplayName("rejects null for receiverAccountId")
-    @Tag("testId:mirrornode.common.NftTransferParties/receiverAccountId/rejects-null")
-    void shouldRejectNullReceiverAccountId() {
-        assertThrows(NullPointerException.class, () -> new NftTransferParties(senderAccountIdValue(), (AccountId) null, tokenIdValue()));
+    @DisplayName("a value that is not set is null or its default value")
+    @Tag("testId:mirrornode.common.NftTransferParties/builder/optional-values")
+    void shouldBuildWithoutTheOptionalValues() {
+        final NftTransferParties subject = NftTransferParties.builder()
+                .tokenId(tokenIdValue())
+                .build();
+        assertNull(subject.senderAccountId());
+        assertNull(subject.receiverAccountId());
+    }
+
+    @Test
+    @DisplayName("the builder rejects a missing required value")
+    @Tag("testId:mirrornode.common.NftTransferParties/builder/rejects-missing-value")
+    void shouldRejectAMissingRequiredValue() {
+        assertThrows(NullPointerException.class, () -> NftTransferParties.builder().build());
     }
 
     @Test

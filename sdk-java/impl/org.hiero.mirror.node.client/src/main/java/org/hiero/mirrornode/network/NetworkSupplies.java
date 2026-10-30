@@ -1,9 +1,15 @@
 package org.hiero.mirrornode.network;
 
 import java.math.BigInteger;
+import java.time.ZonedDateTime;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
-public record NetworkSupplies(BigInteger releasedSupply, BigInteger totalSupply) {
+/// @param timestamp consensus time at which the released supply was valid
+public record NetworkSupplies(
+        BigInteger releasedSupply,
+        BigInteger totalSupply,
+        @Nullable ZonedDateTime timestamp) {
 
     private static final BigInteger RELEASED_SUPPLY_MIN = new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968");
     private static final BigInteger RELEASED_SUPPLY_MAX = new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967");

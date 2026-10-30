@@ -5,12 +5,19 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.jspecify.annotations.Nullable;
 
+/// A fee that charges a fraction of the NFT exchange value, with an optional fixed fallback fee if no value is
+/// exchanged.
+///
+/// @param fallbackFeeAmount the amount of the fallback fee; null without one
+/// @param denominatingTokenId the token of the fallback fee; null if it is charged in HBAR or there is none
+/// @param allCollectorsAreExempt whether all fee collectors are exempt from the fee
 public record RoyaltyFee(
         long numeratorAmount,
         long denominatorAmount,
-        long fallbackFeeAmount,
+        @Nullable Long fallbackFeeAmount,
         @Nullable AccountId collectorAccountId,
-        @Nullable Address denominatingTokenId) {
+        @Nullable Address denominatingTokenId,
+        boolean allCollectorsAreExempt) {
 
     /// Returns a builder for a new `RoyaltyFee`.
     ///
@@ -31,6 +38,7 @@ public record RoyaltyFee(
         private @Nullable Long fallbackFeeAmount;
         private @Nullable AccountId collectorAccountId;
         private @Nullable Address denominatingTokenId;
+        private @Nullable Boolean allCollectorsAreExempt;
 
         private Builder() {
             // created by RoyaltyFee.builder()
@@ -56,9 +64,11 @@ public record RoyaltyFee(
 
         /// Sets the `fallbackFeeAmount`.
         ///
+        /// the amount of the fallback fee; null without one
+        ///
         /// @param fallbackFeeAmount the value
         /// @return this builder
-        public Builder fallbackFeeAmount(final long fallbackFeeAmount) {
+        public Builder fallbackFeeAmount(final @Nullable Long fallbackFeeAmount) {
             this.fallbackFeeAmount = fallbackFeeAmount;
             return this;
         }
@@ -74,10 +84,23 @@ public record RoyaltyFee(
 
         /// Sets the `denominatingTokenId`.
         ///
+        /// the token of the fallback fee; null if it is charged in HBAR or there is none
+        ///
         /// @param denominatingTokenId the value
         /// @return this builder
         public Builder denominatingTokenId(final @Nullable Address denominatingTokenId) {
             this.denominatingTokenId = denominatingTokenId;
+            return this;
+        }
+
+        /// Sets the `allCollectorsAreExempt`.
+        ///
+        /// whether all fee collectors are exempt from the fee
+        ///
+        /// @param allCollectorsAreExempt the value
+        /// @return this builder
+        public Builder allCollectorsAreExempt(final boolean allCollectorsAreExempt) {
+            this.allCollectorsAreExempt = allCollectorsAreExempt;
             return this;
         }
 
@@ -89,9 +112,10 @@ public record RoyaltyFee(
             return new RoyaltyFee(
                     Objects.requireNonNull(numeratorAmount, "numeratorAmount must not be null"),
                     Objects.requireNonNull(denominatorAmount, "denominatorAmount must not be null"),
-                    Objects.requireNonNull(fallbackFeeAmount, "fallbackFeeAmount must not be null"),
+                    fallbackFeeAmount,
                     collectorAccountId,
-                    denominatingTokenId);
+                    denominatingTokenId,
+                    Objects.requireNonNull(allCollectorsAreExempt, "allCollectorsAreExempt must not be null"));
         }
     }
 }

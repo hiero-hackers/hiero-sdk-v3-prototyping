@@ -5,11 +5,21 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.jspecify.annotations.Nullable;
 
+/// A fee that charges a fraction of the transferred units of a fungible token.
+///
+/// @param allCollectorsAreExempt whether all fee collectors are exempt from the fee
+/// @param maximum the maximum fee; null if there is none
+/// @param minimum the minimum fee
+/// @param netOfTransfers whether the fee is charged to the receiver instead of the sender
 public record FractionalFee(
         long numeratorAmount,
         long denominatorAmount,
         @Nullable AccountId collectorAccountId,
-        @Nullable Address denominatingTokenId) {
+        @Nullable Address denominatingTokenId,
+        boolean allCollectorsAreExempt,
+        @Nullable Long maximum,
+        long minimum,
+        boolean netOfTransfers) {
 
     /// Returns a builder for a new `FractionalFee`.
     ///
@@ -29,6 +39,10 @@ public record FractionalFee(
         private @Nullable Long denominatorAmount;
         private @Nullable AccountId collectorAccountId;
         private @Nullable Address denominatingTokenId;
+        private @Nullable Boolean allCollectorsAreExempt;
+        private @Nullable Long maximum;
+        private @Nullable Long minimum;
+        private @Nullable Boolean netOfTransfers;
 
         private Builder() {
             // created by FractionalFee.builder()
@@ -70,6 +84,50 @@ public record FractionalFee(
             return this;
         }
 
+        /// Sets the `allCollectorsAreExempt`.
+        ///
+        /// whether all fee collectors are exempt from the fee
+        ///
+        /// @param allCollectorsAreExempt the value
+        /// @return this builder
+        public Builder allCollectorsAreExempt(final boolean allCollectorsAreExempt) {
+            this.allCollectorsAreExempt = allCollectorsAreExempt;
+            return this;
+        }
+
+        /// Sets the `maximum`.
+        ///
+        /// the maximum fee; null if there is none
+        ///
+        /// @param maximum the value
+        /// @return this builder
+        public Builder maximum(final @Nullable Long maximum) {
+            this.maximum = maximum;
+            return this;
+        }
+
+        /// Sets the `minimum`.
+        ///
+        /// the minimum fee
+        ///
+        /// @param minimum the value
+        /// @return this builder
+        public Builder minimum(final long minimum) {
+            this.minimum = minimum;
+            return this;
+        }
+
+        /// Sets the `netOfTransfers`.
+        ///
+        /// whether the fee is charged to the receiver instead of the sender
+        ///
+        /// @param netOfTransfers the value
+        /// @return this builder
+        public Builder netOfTransfers(final boolean netOfTransfers) {
+            this.netOfTransfers = netOfTransfers;
+            return this;
+        }
+
         /// Creates the `FractionalFee` of the values set.
         ///
         /// @return the new `FractionalFee`
@@ -79,7 +137,11 @@ public record FractionalFee(
                     Objects.requireNonNull(numeratorAmount, "numeratorAmount must not be null"),
                     Objects.requireNonNull(denominatorAmount, "denominatorAmount must not be null"),
                     collectorAccountId,
-                    denominatingTokenId);
+                    denominatingTokenId,
+                    Objects.requireNonNull(allCollectorsAreExempt, "allCollectorsAreExempt must not be null"),
+                    maximum,
+                    Objects.requireNonNull(minimum, "minimum must not be null"),
+                    Objects.requireNonNull(netOfTransfers, "netOfTransfers must not be null"));
         }
     }
 }

@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
+import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.TransactionId;
 import org.junit.jupiter.api.DisplayName;
@@ -68,7 +69,7 @@ class MirrorNodeTransactionSpecTest {
         final ZonedDateTime validStart = toZonedDateTime("2026-08-04T12:59:38.760Z");
 
         // when
-        final TransactionInfo info = new TransactionInfo(defaultTransactionId(), new byte[0], 140686L, consensus, null, 1000000L, new byte[0], BasicTransactionType.CRYPTO_TRANSFER, 0, "0.0.13", null, TransactionResult.SUCCESS, false, toSeconds(120L), validStart, List.of(), List.of(), List.of(), List.of());
+        final TransactionInfo info = new TransactionInfo(defaultTransactionId(), new byte[0], null, null, 140686L, consensus, null, null, null, List.of(), 1000000L, new byte[0], BasicTransactionType.CRYPTO_TRANSFER, 0, AccountId.fromString("0.0.13"), null, "SUCCESS", false, toSeconds(120L), validStart, List.of(), List.of(), List.of(), List.of(), List.of());
 
         // then
         assertEquals(toZonedDateTime("2026-08-04T12:59:49.057Z"), info.consensusTimestamp());
@@ -78,9 +79,10 @@ class MirrorNodeTransactionSpecTest {
         assertNull(info.entityId());
         assertEquals(140686L, info.chargedTxFee());
         assertEquals(1000000L, info.maxFee());
-        assertEquals("0.0.13", info.node());
+        assertEquals(AccountId.fromString("0.0.13"), info.node());
         assertEquals("CRYPTOTRANSFER", info.name().protocolName());
-        assertEquals(TransactionResult.SUCCESS, info.result());
+        assertEquals("SUCCESS", info.result());
+        assertEquals(0L, length(info.assessedCustomFees()));
     }
 
     /// `mirrornode.transaction/a-child-transaction-info-keeps-the-consensus-timestamp-of-its-parent`
@@ -96,7 +98,7 @@ class MirrorNodeTransactionSpecTest {
         final ZonedDateTime child = toZonedDateTime("2026-08-04T12:59:49.058Z");
 
         // when
-        final TransactionInfo info = new TransactionInfo(defaultTransactionId(), new byte[0], 0L, child, null, 0L, new byte[0], BasicTransactionType.CRYPTO_TRANSFER, 1, null, parent, TransactionResult.SUCCESS, false, Duration.ofSeconds(1L), ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), List.of(), List.of(), List.of(), List.of());
+        final TransactionInfo info = new TransactionInfo(defaultTransactionId(), new byte[0], null, null, 0L, child, null, null, null, List.of(), 0L, new byte[0], BasicTransactionType.CRYPTO_TRANSFER, 1, null, parent, "SUCCESS", false, Duration.ofSeconds(1L), ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), List.of(), List.of(), List.of(), List.of(), List.of());
 
         // then
         assertEquals(parent, info.parentConsensusTimestamp());

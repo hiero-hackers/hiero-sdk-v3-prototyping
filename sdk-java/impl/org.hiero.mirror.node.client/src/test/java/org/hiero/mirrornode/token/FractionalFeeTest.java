@@ -22,11 +22,19 @@ class FractionalFeeTest {
         final long denominatorAmount = denominatorAmountValue();
         final @Nullable AccountId collectorAccountId = collectorAccountIdValue();
         final @Nullable Address denominatingTokenId = denominatingTokenIdValue();
-        final FractionalFee subject = new FractionalFee(numeratorAmount, denominatorAmount, collectorAccountId, denominatingTokenId);
+        final boolean allCollectorsAreExempt = allCollectorsAreExemptValue();
+        final @Nullable Long maximum = maximumValue();
+        final long minimum = minimumValue();
+        final boolean netOfTransfers = netOfTransfersValue();
+        final FractionalFee subject = new FractionalFee(numeratorAmount, denominatorAmount, collectorAccountId, denominatingTokenId, allCollectorsAreExempt, maximum, minimum, netOfTransfers);
         assertValue(numeratorAmount, subject.numeratorAmount());
         assertValue(denominatorAmount, subject.denominatorAmount());
         assertValue(collectorAccountId, subject.collectorAccountId());
         assertValue(denominatingTokenId, subject.denominatingTokenId());
+        assertValue(allCollectorsAreExempt, subject.allCollectorsAreExempt());
+        assertValue(maximum, subject.maximum());
+        assertValue(minimum, subject.minimum());
+        assertValue(netOfTransfers, subject.netOfTransfers());
     }
 
     @Test
@@ -37,16 +45,28 @@ class FractionalFeeTest {
         final long denominatorAmount = denominatorAmountValue();
         final @Nullable AccountId collectorAccountId = collectorAccountIdValue();
         final @Nullable Address denominatingTokenId = denominatingTokenIdValue();
+        final boolean allCollectorsAreExempt = allCollectorsAreExemptValue();
+        final @Nullable Long maximum = maximumValue();
+        final long minimum = minimumValue();
+        final boolean netOfTransfers = netOfTransfersValue();
         final FractionalFee subject = FractionalFee.builder()
                 .numeratorAmount(numeratorAmount)
                 .denominatorAmount(denominatorAmount)
                 .collectorAccountId(collectorAccountId)
                 .denominatingTokenId(denominatingTokenId)
+                .allCollectorsAreExempt(allCollectorsAreExempt)
+                .maximum(maximum)
+                .minimum(minimum)
+                .netOfTransfers(netOfTransfers)
                 .build();
         assertValue(numeratorAmount, subject.numeratorAmount());
         assertValue(denominatorAmount, subject.denominatorAmount());
         assertValue(collectorAccountId, subject.collectorAccountId());
         assertValue(denominatingTokenId, subject.denominatingTokenId());
+        assertValue(allCollectorsAreExempt, subject.allCollectorsAreExempt());
+        assertValue(maximum, subject.maximum());
+        assertValue(minimum, subject.minimum());
+        assertValue(netOfTransfers, subject.netOfTransfers());
     }
 
     @Test
@@ -56,9 +76,13 @@ class FractionalFeeTest {
         final FractionalFee subject = FractionalFee.builder()
                 .numeratorAmount(numeratorAmountValue())
                 .denominatorAmount(denominatorAmountValue())
+                .allCollectorsAreExempt(allCollectorsAreExemptValue())
+                .minimum(minimumValue())
+                .netOfTransfers(netOfTransfersValue())
                 .build();
         assertNull(subject.collectorAccountId());
         assertNull(subject.denominatingTokenId());
+        assertNull(subject.maximum());
     }
 
     @Test
@@ -73,7 +97,7 @@ class FractionalFeeTest {
     @Tag("testId:mirrornode.token.FractionalFee/numeratorAmount/accepts-at-minimum")
     void shouldAcceptNumeratorAmountAtMinimum() {
         final long value = -9223372036854775808L;
-        final FractionalFee subject = new FractionalFee(value, denominatorAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
+        final FractionalFee subject = new FractionalFee(value, denominatorAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue(), maximumValue(), minimumValue(), netOfTransfersValue());
         assertValue(value, subject.numeratorAmount());
     }
 
@@ -82,7 +106,7 @@ class FractionalFeeTest {
     @Tag("testId:mirrornode.token.FractionalFee/numeratorAmount/accepts-at-maximum")
     void shouldAcceptNumeratorAmountAtMaximum() {
         final long value = 9223372036854775807L;
-        final FractionalFee subject = new FractionalFee(value, denominatorAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
+        final FractionalFee subject = new FractionalFee(value, denominatorAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue(), maximumValue(), minimumValue(), netOfTransfersValue());
         assertValue(value, subject.numeratorAmount());
     }
 
@@ -91,7 +115,7 @@ class FractionalFeeTest {
     @Tag("testId:mirrornode.token.FractionalFee/denominatorAmount/accepts-at-minimum")
     void shouldAcceptDenominatorAmountAtMinimum() {
         final long value = -9223372036854775808L;
-        final FractionalFee subject = new FractionalFee(numeratorAmountValue(), value, collectorAccountIdValue(), denominatingTokenIdValue());
+        final FractionalFee subject = new FractionalFee(numeratorAmountValue(), value, collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue(), maximumValue(), minimumValue(), netOfTransfersValue());
         assertValue(value, subject.denominatorAmount());
     }
 
@@ -100,8 +124,44 @@ class FractionalFeeTest {
     @Tag("testId:mirrornode.token.FractionalFee/denominatorAmount/accepts-at-maximum")
     void shouldAcceptDenominatorAmountAtMaximum() {
         final long value = 9223372036854775807L;
-        final FractionalFee subject = new FractionalFee(numeratorAmountValue(), value, collectorAccountIdValue(), denominatingTokenIdValue());
+        final FractionalFee subject = new FractionalFee(numeratorAmountValue(), value, collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue(), maximumValue(), minimumValue(), netOfTransfersValue());
         assertValue(value, subject.denominatorAmount());
+    }
+
+    @Test
+    @DisplayName("maximum: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.token.FractionalFee/maximum/accepts-at-minimum")
+    void shouldAcceptMaximumAtMinimum() {
+        final @Nullable Long value = -9223372036854775808L;
+        final FractionalFee subject = new FractionalFee(numeratorAmountValue(), denominatorAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue(), value, minimumValue(), netOfTransfersValue());
+        assertValue(value, subject.maximum());
+    }
+
+    @Test
+    @DisplayName("maximum: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.token.FractionalFee/maximum/accepts-at-maximum")
+    void shouldAcceptMaximumAtMaximum() {
+        final @Nullable Long value = 9223372036854775807L;
+        final FractionalFee subject = new FractionalFee(numeratorAmountValue(), denominatorAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue(), value, minimumValue(), netOfTransfersValue());
+        assertValue(value, subject.maximum());
+    }
+
+    @Test
+    @DisplayName("minimum: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.token.FractionalFee/minimum/accepts-at-minimum")
+    void shouldAcceptMinimumAtMinimum() {
+        final long value = -9223372036854775808L;
+        final FractionalFee subject = new FractionalFee(numeratorAmountValue(), denominatorAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue(), maximumValue(), value, netOfTransfersValue());
+        assertValue(value, subject.minimum());
+    }
+
+    @Test
+    @DisplayName("minimum: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.token.FractionalFee/minimum/accepts-at-maximum")
+    void shouldAcceptMinimumAtMaximum() {
+        final long value = 9223372036854775807L;
+        final FractionalFee subject = new FractionalFee(numeratorAmountValue(), denominatorAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue(), maximumValue(), value, netOfTransfersValue());
+        assertValue(value, subject.minimum());
     }
 
     @Test
@@ -130,7 +190,23 @@ class FractionalFeeTest {
         return new Address(0L, 0L, "", 1001L);
     }
 
+    private static boolean allCollectorsAreExemptValue() {
+        return true;
+    }
+
+    private static long maximumValue() {
+        return 1L;
+    }
+
+    private static long minimumValue() {
+        return 1L;
+    }
+
+    private static boolean netOfTransfersValue() {
+        return true;
+    }
+
     private static FractionalFee create() {
-        return new FractionalFee(numeratorAmountValue(), denominatorAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
+        return new FractionalFee(numeratorAmountValue(), denominatorAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue(), maximumValue(), minimumValue(), netOfTransfersValue());
     }
 }

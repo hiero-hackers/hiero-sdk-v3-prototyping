@@ -20,15 +20,17 @@ class RoyaltyFeeTest {
     void shouldCreateAndReturnTheValues() {
         final long numeratorAmount = numeratorAmountValue();
         final long denominatorAmount = denominatorAmountValue();
-        final long fallbackFeeAmount = fallbackFeeAmountValue();
+        final @Nullable Long fallbackFeeAmount = fallbackFeeAmountValue();
         final @Nullable AccountId collectorAccountId = collectorAccountIdValue();
         final @Nullable Address denominatingTokenId = denominatingTokenIdValue();
-        final RoyaltyFee subject = new RoyaltyFee(numeratorAmount, denominatorAmount, fallbackFeeAmount, collectorAccountId, denominatingTokenId);
+        final boolean allCollectorsAreExempt = allCollectorsAreExemptValue();
+        final RoyaltyFee subject = new RoyaltyFee(numeratorAmount, denominatorAmount, fallbackFeeAmount, collectorAccountId, denominatingTokenId, allCollectorsAreExempt);
         assertValue(numeratorAmount, subject.numeratorAmount());
         assertValue(denominatorAmount, subject.denominatorAmount());
         assertValue(fallbackFeeAmount, subject.fallbackFeeAmount());
         assertValue(collectorAccountId, subject.collectorAccountId());
         assertValue(denominatingTokenId, subject.denominatingTokenId());
+        assertValue(allCollectorsAreExempt, subject.allCollectorsAreExempt());
     }
 
     @Test
@@ -37,21 +39,24 @@ class RoyaltyFeeTest {
     void shouldBuildTheValuesOfTheConstructor() {
         final long numeratorAmount = numeratorAmountValue();
         final long denominatorAmount = denominatorAmountValue();
-        final long fallbackFeeAmount = fallbackFeeAmountValue();
+        final @Nullable Long fallbackFeeAmount = fallbackFeeAmountValue();
         final @Nullable AccountId collectorAccountId = collectorAccountIdValue();
         final @Nullable Address denominatingTokenId = denominatingTokenIdValue();
+        final boolean allCollectorsAreExempt = allCollectorsAreExemptValue();
         final RoyaltyFee subject = RoyaltyFee.builder()
                 .numeratorAmount(numeratorAmount)
                 .denominatorAmount(denominatorAmount)
                 .fallbackFeeAmount(fallbackFeeAmount)
                 .collectorAccountId(collectorAccountId)
                 .denominatingTokenId(denominatingTokenId)
+                .allCollectorsAreExempt(allCollectorsAreExempt)
                 .build();
         assertValue(numeratorAmount, subject.numeratorAmount());
         assertValue(denominatorAmount, subject.denominatorAmount());
         assertValue(fallbackFeeAmount, subject.fallbackFeeAmount());
         assertValue(collectorAccountId, subject.collectorAccountId());
         assertValue(denominatingTokenId, subject.denominatingTokenId());
+        assertValue(allCollectorsAreExempt, subject.allCollectorsAreExempt());
     }
 
     @Test
@@ -61,8 +66,9 @@ class RoyaltyFeeTest {
         final RoyaltyFee subject = RoyaltyFee.builder()
                 .numeratorAmount(numeratorAmountValue())
                 .denominatorAmount(denominatorAmountValue())
-                .fallbackFeeAmount(fallbackFeeAmountValue())
+                .allCollectorsAreExempt(allCollectorsAreExemptValue())
                 .build();
+        assertNull(subject.fallbackFeeAmount());
         assertNull(subject.collectorAccountId());
         assertNull(subject.denominatingTokenId());
     }
@@ -79,7 +85,7 @@ class RoyaltyFeeTest {
     @Tag("testId:mirrornode.token.RoyaltyFee/numeratorAmount/accepts-at-minimum")
     void shouldAcceptNumeratorAmountAtMinimum() {
         final long value = -9223372036854775808L;
-        final RoyaltyFee subject = new RoyaltyFee(value, denominatorAmountValue(), fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
+        final RoyaltyFee subject = new RoyaltyFee(value, denominatorAmountValue(), fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue());
         assertValue(value, subject.numeratorAmount());
     }
 
@@ -88,7 +94,7 @@ class RoyaltyFeeTest {
     @Tag("testId:mirrornode.token.RoyaltyFee/numeratorAmount/accepts-at-maximum")
     void shouldAcceptNumeratorAmountAtMaximum() {
         final long value = 9223372036854775807L;
-        final RoyaltyFee subject = new RoyaltyFee(value, denominatorAmountValue(), fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
+        final RoyaltyFee subject = new RoyaltyFee(value, denominatorAmountValue(), fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue());
         assertValue(value, subject.numeratorAmount());
     }
 
@@ -97,7 +103,7 @@ class RoyaltyFeeTest {
     @Tag("testId:mirrornode.token.RoyaltyFee/denominatorAmount/accepts-at-minimum")
     void shouldAcceptDenominatorAmountAtMinimum() {
         final long value = -9223372036854775808L;
-        final RoyaltyFee subject = new RoyaltyFee(numeratorAmountValue(), value, fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
+        final RoyaltyFee subject = new RoyaltyFee(numeratorAmountValue(), value, fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue());
         assertValue(value, subject.denominatorAmount());
     }
 
@@ -106,7 +112,7 @@ class RoyaltyFeeTest {
     @Tag("testId:mirrornode.token.RoyaltyFee/denominatorAmount/accepts-at-maximum")
     void shouldAcceptDenominatorAmountAtMaximum() {
         final long value = 9223372036854775807L;
-        final RoyaltyFee subject = new RoyaltyFee(numeratorAmountValue(), value, fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
+        final RoyaltyFee subject = new RoyaltyFee(numeratorAmountValue(), value, fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue());
         assertValue(value, subject.denominatorAmount());
     }
 
@@ -114,8 +120,8 @@ class RoyaltyFeeTest {
     @DisplayName("fallbackFeeAmount: accepts the minimum (-9223372036854775808)")
     @Tag("testId:mirrornode.token.RoyaltyFee/fallbackFeeAmount/accepts-at-minimum")
     void shouldAcceptFallbackFeeAmountAtMinimum() {
-        final long value = -9223372036854775808L;
-        final RoyaltyFee subject = new RoyaltyFee(numeratorAmountValue(), denominatorAmountValue(), value, collectorAccountIdValue(), denominatingTokenIdValue());
+        final @Nullable Long value = -9223372036854775808L;
+        final RoyaltyFee subject = new RoyaltyFee(numeratorAmountValue(), denominatorAmountValue(), value, collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue());
         assertValue(value, subject.fallbackFeeAmount());
     }
 
@@ -123,8 +129,8 @@ class RoyaltyFeeTest {
     @DisplayName("fallbackFeeAmount: accepts the maximum (9223372036854775807)")
     @Tag("testId:mirrornode.token.RoyaltyFee/fallbackFeeAmount/accepts-at-maximum")
     void shouldAcceptFallbackFeeAmountAtMaximum() {
-        final long value = 9223372036854775807L;
-        final RoyaltyFee subject = new RoyaltyFee(numeratorAmountValue(), denominatorAmountValue(), value, collectorAccountIdValue(), denominatingTokenIdValue());
+        final @Nullable Long value = 9223372036854775807L;
+        final RoyaltyFee subject = new RoyaltyFee(numeratorAmountValue(), denominatorAmountValue(), value, collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue());
         assertValue(value, subject.fallbackFeeAmount());
     }
 
@@ -158,7 +164,11 @@ class RoyaltyFeeTest {
         return new Address(0L, 0L, "", 1001L);
     }
 
+    private static boolean allCollectorsAreExemptValue() {
+        return true;
+    }
+
     private static RoyaltyFee create() {
-        return new RoyaltyFee(numeratorAmountValue(), denominatorAmountValue(), fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
+        return new RoyaltyFee(numeratorAmountValue(), denominatorAmountValue(), fallbackFeeAmountValue(), collectorAccountIdValue(), denominatingTokenIdValue(), allCollectorsAreExemptValue());
     }
 }

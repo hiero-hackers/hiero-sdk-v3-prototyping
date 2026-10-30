@@ -3,6 +3,11 @@ package org.hiero.mirrornode.token;
 import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.hiero.authority.Authority;
+import org.hiero.authority.PublicKeyAuthority;
+import org.hiero.keys.ByteImportEncoding;
+import org.hiero.keys.KeyAlgorithm;
+import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.Address;
 import org.hiero.token.TokenType;
 import org.jspecify.annotations.Nullable;
@@ -23,14 +28,16 @@ class TokenTest {
         final String symbol = symbolValue();
         final TokenType type = typeValue();
         final long decimals = decimalsValue();
-        final byte[] metadata = metadataValue();
-        final Token subject = new Token(tokenId, name, symbol, type, decimals, metadata);
+        final byte @Nullable [] metadata = metadataValue();
+        final @Nullable Authority adminKey = adminKeyValue();
+        final Token subject = new Token(tokenId, name, symbol, type, decimals, metadata, adminKey);
         assertValue(tokenId, subject.tokenId());
         assertValue(name, subject.name());
         assertValue(symbol, subject.symbol());
         assertValue(type, subject.type());
         assertValue(decimals, subject.decimals());
         assertValue(metadata, subject.metadata());
+        assertValue(adminKey, subject.adminKey());
     }
 
     @Test
@@ -42,7 +49,8 @@ class TokenTest {
         final String symbol = symbolValue();
         final TokenType type = typeValue();
         final long decimals = decimalsValue();
-        final byte[] metadata = metadataValue();
+        final byte @Nullable [] metadata = metadataValue();
+        final @Nullable Authority adminKey = adminKeyValue();
         final Token subject = Token.builder()
                 .tokenId(tokenId)
                 .name(name)
@@ -50,6 +58,7 @@ class TokenTest {
                 .type(type)
                 .decimals(decimals)
                 .metadata(metadata)
+                .adminKey(adminKey)
                 .build();
         assertValue(tokenId, subject.tokenId());
         assertValue(name, subject.name());
@@ -57,6 +66,7 @@ class TokenTest {
         assertValue(type, subject.type());
         assertValue(decimals, subject.decimals());
         assertValue(metadata, subject.metadata());
+        assertValue(adminKey, subject.adminKey());
     }
 
     @Test
@@ -68,9 +78,10 @@ class TokenTest {
                 .symbol(symbolValue())
                 .type(typeValue())
                 .decimals(decimalsValue())
-                .metadata(metadataValue())
                 .build();
         assertNull(subject.tokenId());
+        assertNull(subject.metadata());
+        assertNull(subject.adminKey());
     }
 
     @Test
@@ -84,21 +95,21 @@ class TokenTest {
     @DisplayName("rejects null for name")
     @Tag("testId:mirrornode.token.Token/name/rejects-null")
     void shouldRejectNullName() {
-        assertThrows(NullPointerException.class, () -> new Token(tokenIdValue(), (String) null, symbolValue(), typeValue(), decimalsValue(), metadataValue()));
+        assertThrows(NullPointerException.class, () -> new Token(tokenIdValue(), (String) null, symbolValue(), typeValue(), decimalsValue(), metadataValue(), adminKeyValue()));
     }
 
     @Test
     @DisplayName("rejects null for symbol")
     @Tag("testId:mirrornode.token.Token/symbol/rejects-null")
     void shouldRejectNullSymbol() {
-        assertThrows(NullPointerException.class, () -> new Token(tokenIdValue(), nameValue(), (String) null, typeValue(), decimalsValue(), metadataValue()));
+        assertThrows(NullPointerException.class, () -> new Token(tokenIdValue(), nameValue(), (String) null, typeValue(), decimalsValue(), metadataValue(), adminKeyValue()));
     }
 
     @Test
     @DisplayName("rejects null for type")
     @Tag("testId:mirrornode.token.Token/type/rejects-null")
     void shouldRejectNullType() {
-        assertThrows(NullPointerException.class, () -> new Token(tokenIdValue(), nameValue(), symbolValue(), (TokenType) null, decimalsValue(), metadataValue()));
+        assertThrows(NullPointerException.class, () -> new Token(tokenIdValue(), nameValue(), symbolValue(), (TokenType) null, decimalsValue(), metadataValue(), adminKeyValue()));
     }
 
     @Test
@@ -106,7 +117,7 @@ class TokenTest {
     @Tag("testId:mirrornode.token.Token/decimals/accepts-at-minimum")
     void shouldAcceptDecimalsAtMinimum() {
         final long value = -9223372036854775808L;
-        final Token subject = new Token(tokenIdValue(), nameValue(), symbolValue(), typeValue(), value, metadataValue());
+        final Token subject = new Token(tokenIdValue(), nameValue(), symbolValue(), typeValue(), value, metadataValue(), adminKeyValue());
         assertValue(value, subject.decimals());
     }
 
@@ -115,15 +126,8 @@ class TokenTest {
     @Tag("testId:mirrornode.token.Token/decimals/accepts-at-maximum")
     void shouldAcceptDecimalsAtMaximum() {
         final long value = 9223372036854775807L;
-        final Token subject = new Token(tokenIdValue(), nameValue(), symbolValue(), typeValue(), value, metadataValue());
+        final Token subject = new Token(tokenIdValue(), nameValue(), symbolValue(), typeValue(), value, metadataValue(), adminKeyValue());
         assertValue(value, subject.decimals());
-    }
-
-    @Test
-    @DisplayName("rejects null for metadata")
-    @Tag("testId:mirrornode.token.Token/metadata/rejects-null")
-    void shouldRejectNullMetadata() {
-        assertThrows(NullPointerException.class, () -> new Token(tokenIdValue(), nameValue(), symbolValue(), typeValue(), decimalsValue(), (byte[]) null));
     }
 
     @Test
@@ -132,23 +136,13 @@ class TokenTest {
     void shouldCopyMetadataIn() {
         final byte[] value = metadataValue();
         final byte[] expected = value.clone();
-        final Token subject = new Token(tokenIdValue(), nameValue(), symbolValue(), typeValue(), decimalsValue(), value);
+        final Token subject = new Token(tokenIdValue(), nameValue(), symbolValue(), typeValue(), decimalsValue(), value, adminKeyValue());
         value[0] = (byte) (value[0] + 1);
         assertValue(expected, subject.metadata());
         final byte[] returned = subject.metadata();
         assertNotNull(returned);
         returned[0] = (byte) (returned[0] + 1);
         assertValue(expected, subject.metadata());
-    }
-
-    @Test
-    @DisplayName("equal values give equal objects and hash codes")
-    @Tag("testId:mirrornode.token.Token/value-semantics")
-    void shouldCompareByValue() {
-        final Token subject = create();
-        final Token other = create();
-        assertEquals(subject, other);
-        assertEquals(subject.hashCode(), other.hashCode());
     }
 
     private static Address tokenIdValue() {
@@ -175,7 +169,11 @@ class TokenTest {
         return new byte[] {1, 2, 3};
     }
 
+    private static Authority adminKeyValue() {
+        return new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c").createPublicKey());
+    }
+
     private static Token create() {
-        return new Token(tokenIdValue(), nameValue(), symbolValue(), typeValue(), decimalsValue(), metadataValue());
+        return new Token(tokenIdValue(), nameValue(), symbolValue(), typeValue(), decimalsValue(), metadataValue(), adminKeyValue());
     }
 }

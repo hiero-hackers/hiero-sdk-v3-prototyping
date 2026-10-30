@@ -2,10 +2,12 @@ package org.hiero.mirrornode;
 
 import java.util.Objects;
 import org.hiero.mirrornode.account.AccountRepository;
+import org.hiero.mirrornode.block.BlockRepository;
 import org.hiero.mirrornode.contract.ContractRepository;
 import org.hiero.mirrornode.http.MirrorNodeHttpClient;
 import org.hiero.mirrornode.network.NetworkRepository;
 import org.hiero.mirrornode.nft.NftRepository;
+import org.hiero.mirrornode.schedule.ScheduleRepository;
 import org.hiero.mirrornode.token.TokenRepository;
 import org.hiero.mirrornode.topic.TopicRepository;
 import org.hiero.mirrornode.transaction.TransactionRepository;
@@ -13,9 +15,11 @@ import org.jspecify.annotations.Nullable;
 
 public record MirrorNodeClient(
         AccountRepository accounts,
+        BlockRepository blocks,
         ContractRepository contracts,
         NetworkRepository network,
         NftRepository nft,
+        ScheduleRepository schedules,
         TokenRepository token,
         TopicRepository topic,
         TransactionRepository transaction,
@@ -26,9 +30,11 @@ public record MirrorNodeClient(
     /// @throws NullPointerException if a required value is `null`
     public MirrorNodeClient {
         Objects.requireNonNull(accounts, "accounts must not be null");
+        Objects.requireNonNull(blocks, "blocks must not be null");
         Objects.requireNonNull(contracts, "contracts must not be null");
         Objects.requireNonNull(network, "network must not be null");
         Objects.requireNonNull(nft, "nft must not be null");
+        Objects.requireNonNull(schedules, "schedules must not be null");
         Objects.requireNonNull(token, "token must not be null");
         Objects.requireNonNull(topic, "topic must not be null");
         Objects.requireNonNull(transaction, "transaction must not be null");
@@ -50,9 +56,11 @@ public record MirrorNodeClient(
     public static final class Builder {
 
         private @Nullable AccountRepository accounts;
+        private @Nullable BlockRepository blocks;
         private @Nullable ContractRepository contracts;
         private @Nullable NetworkRepository network;
         private @Nullable NftRepository nft;
+        private @Nullable ScheduleRepository schedules;
         private @Nullable TokenRepository token;
         private @Nullable TopicRepository topic;
         private @Nullable TransactionRepository transaction;
@@ -68,6 +76,15 @@ public record MirrorNodeClient(
         /// @return this builder
         public Builder accounts(final AccountRepository accounts) {
             this.accounts = accounts;
+            return this;
+        }
+
+        /// Sets the `blocks`.
+        ///
+        /// @param blocks the value
+        /// @return this builder
+        public Builder blocks(final BlockRepository blocks) {
+            this.blocks = blocks;
             return this;
         }
 
@@ -95,6 +112,15 @@ public record MirrorNodeClient(
         /// @return this builder
         public Builder nft(final NftRepository nft) {
             this.nft = nft;
+            return this;
+        }
+
+        /// Sets the `schedules`.
+        ///
+        /// @param schedules the value
+        /// @return this builder
+        public Builder schedules(final ScheduleRepository schedules) {
+            this.schedules = schedules;
             return this;
         }
 
@@ -141,9 +167,11 @@ public record MirrorNodeClient(
         public MirrorNodeClient build() {
             return new MirrorNodeClient(
                     Objects.requireNonNull(accounts, "accounts must not be null"),
+                    Objects.requireNonNull(blocks, "blocks must not be null"),
                     Objects.requireNonNull(contracts, "contracts must not be null"),
                     Objects.requireNonNull(network, "network must not be null"),
                     Objects.requireNonNull(nft, "nft must not be null"),
+                    Objects.requireNonNull(schedules, "schedules must not be null"),
                     Objects.requireNonNull(token, "token must not be null"),
                     Objects.requireNonNull(topic, "topic must not be null"),
                     Objects.requireNonNull(transaction, "transaction must not be null"),

@@ -164,6 +164,12 @@ tooling/protobuf/               # THE source of the protobuf definitions of all 
                                 #   sources.json pins versions + commits, verify.sh compiles every root with
                                 #   protoc as the language-neutral proof that the tree resolves.
 
+tooling/openapi/                # The OpenAPI definitions of the REST APIs, pinned like tooling/protobuf: today the
+                                #   mirror node (mirror-node/openapi.yml, same release as its protobuf). The specs in
+                                #   spec/mirror-node-client cover it completely (every endpoint, query parameter and
+                                #   response field; deviations in their Design Notes). update.sh re-fetches,
+                                #   sources.json pins; an automatic coverage check is still open (README.md).
+
 tooling/tck/                    # The language-NEUTRAL parts of the TCK spike (see docs/tck-binding.md); everything
                                 #   language-specific lives in sdk-<lang>/tck/
   bindings/                     #   bindings of TCK methods to the API (`bindings` code blocks in Markdown)

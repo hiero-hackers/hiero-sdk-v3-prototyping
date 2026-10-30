@@ -1,20 +1,21 @@
 package org.hiero.mirrornode.account;
 
-import java.time.ZonedDateTime;
 import java.util.Objects;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.jspecify.annotations.Nullable;
 
-/// An NFT approved-for-all allowance the account granted. GET /accounts/{id}/allowances/nfts.
+/// An NFT approved-for-all allowance the account granted or received. GET /accounts/{id}/allowances/nfts.
 ///
 /// @param approvedForAll true → spender may transfer every serial of the collection
+/// @param timestamp the period this version of the allowance is valid for
 public record NftAllowance(
         AccountId owner,
         AccountId spender,
         Address tokenId,
         boolean approvedForAll,
-        ZonedDateTime timestamp) {
+        TimestampRange timestamp) {
 
     /// Creates a new `NftAllowance`.
     ///
@@ -44,7 +45,7 @@ public record NftAllowance(
         private @Nullable AccountId spender;
         private @Nullable Address tokenId;
         private @Nullable Boolean approvedForAll;
-        private @Nullable ZonedDateTime timestamp;
+        private @Nullable TimestampRange timestamp;
 
         private Builder() {
             // created by NftAllowance.builder()
@@ -90,9 +91,11 @@ public record NftAllowance(
 
         /// Sets the `timestamp`.
         ///
+        /// the period this version of the allowance is valid for
+        ///
         /// @param timestamp the value
         /// @return this builder
-        public Builder timestamp(final ZonedDateTime timestamp) {
+        public Builder timestamp(final TimestampRange timestamp) {
             this.timestamp = timestamp;
             return this;
         }

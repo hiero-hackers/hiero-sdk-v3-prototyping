@@ -9,13 +9,15 @@ public final class Topics {
     private Topics() {
     }
 
-    /// Converts a topic of the Mirror Node.
+    /// Converts a topic of the Mirror Node. A topic without a creation time is taken as created at the start of its
+    /// current state.
     ///
     /// @param topic the topic of the Mirror Node
     /// @return the topic
     public static Topic toTopic(final org.hiero.mirrornode.topic.Topic topic) {
-        return new Topic(topic.topicId(), topic.adminAuthority(), topic.submitAuthority(), topic.createdTimestamp(),
-                topic.memo());
+        final var created = topic.createdTimestamp();
+        return new Topic(topic.topicId(), topic.adminAuthority(), topic.submitAuthority(),
+                created != null ? created : topic.timestamp().from(), topic.memo());
     }
 
     /// Converts a topic message of the Mirror Node.

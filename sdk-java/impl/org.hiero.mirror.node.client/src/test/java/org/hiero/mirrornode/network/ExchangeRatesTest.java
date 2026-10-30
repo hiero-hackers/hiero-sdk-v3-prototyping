@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -19,23 +20,25 @@ class ExchangeRatesTest {
     void shouldCreateAndReturnTheValues() {
         final ExchangeRate currentRate = currentRateValue();
         final ExchangeRate nextRate = nextRateValue();
-        final ExchangeRates subject = new ExchangeRates(currentRate, nextRate);
+        final @Nullable ZonedDateTime timestamp = timestampValue();
+        final ExchangeRates subject = new ExchangeRates(currentRate, nextRate, timestamp);
         assertValue(currentRate, subject.currentRate());
         assertValue(nextRate, subject.nextRate());
+        assertValue(timestamp, subject.timestamp());
     }
 
     @Test
     @DisplayName("rejects null for currentRate")
     @Tag("testId:mirrornode.network.ExchangeRates/currentRate/rejects-null")
     void shouldRejectNullCurrentRate() {
-        assertThrows(NullPointerException.class, () -> new ExchangeRates((ExchangeRate) null, nextRateValue()));
+        assertThrows(NullPointerException.class, () -> new ExchangeRates((ExchangeRate) null, nextRateValue(), timestampValue()));
     }
 
     @Test
     @DisplayName("rejects null for nextRate")
     @Tag("testId:mirrornode.network.ExchangeRates/nextRate/rejects-null")
     void shouldRejectNullNextRate() {
-        assertThrows(NullPointerException.class, () -> new ExchangeRates(currentRateValue(), (ExchangeRate) null));
+        assertThrows(NullPointerException.class, () -> new ExchangeRates(currentRateValue(), (ExchangeRate) null, timestampValue()));
     }
 
     @Test
@@ -56,7 +59,11 @@ class ExchangeRatesTest {
         return new ExchangeRate(1, 1, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC));
     }
 
+    private static ZonedDateTime timestampValue() {
+        return ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+    }
+
     private static ExchangeRates create() {
-        return new ExchangeRates(currentRateValue(), nextRateValue());
+        return new ExchangeRates(currentRateValue(), nextRateValue(), timestampValue());
     }
 }

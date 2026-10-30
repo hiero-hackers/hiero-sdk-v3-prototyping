@@ -3,6 +3,7 @@ package org.hiero.mirrornode.account;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import org.hiero.authority.Authority;
 import org.hiero.ledger.AccountId;
@@ -11,15 +12,18 @@ import org.jspecify.annotations.Nullable;
 
 /// @param balance hbar balance in tinybars
 /// @param balanceTimestamp timestamp of the reported balance
+/// @param tokenBalances the token balances at balanceTimestamp
 /// @param pendingReward tinybars receivable in the next staking payout
 /// @param alias HIP-32 public-key alias (serialised protobuf Key bytes)
 /// @param stakedAccountId mutually exclusive with stakedNodeId
 /// @param stakedNodeId mutually exclusive with stakedAccountId
+/// @param delegationAddress the EVM address the account delegates its code to
 public record AccountInfo(
         AccountId accountId,
         @Nullable EvmAddress evmAddress,
         long balance,
         @Nullable ZonedDateTime balanceTimestamp,
+        List<TokenBalance> tokenBalances,
         long ethereumNonce,
         long pendingReward,
         byte @Nullable [] alias,
@@ -34,17 +38,20 @@ public record AccountInfo(
         boolean deleted,
         @Nullable AccountId stakedAccountId,
         @Nullable Long stakedNodeId,
-        @Nullable ZonedDateTime stakePeriodStart) {
+        @Nullable ZonedDateTime stakePeriodStart,
+        @Nullable EvmAddress delegationAddress) {
 
     /// Creates a new `AccountInfo`.
     ///
     /// @throws NullPointerException if a required value is `null`
     public AccountInfo {
         Objects.requireNonNull(accountId, "accountId must not be null");
+        Objects.requireNonNull(tokenBalances, "tokenBalances must not be null");
+        tokenBalances = List.copyOf(tokenBalances);
         alias = alias == null ? null : alias.clone();
     }
 
-    /// Creates a new `AccountInfo` with the default value of `declineReward`, `deleted`.
+    /// Creates a new `AccountInfo` with the default value of `tokenBalances`, `declineReward`, `deleted`.
     public AccountInfo(
             final AccountId accountId,
             final @Nullable EvmAddress evmAddress,
@@ -62,8 +69,9 @@ public record AccountInfo(
             final @Nullable Boolean receiverSignatureRequired,
             final @Nullable AccountId stakedAccountId,
             final @Nullable Long stakedNodeId,
-            final @Nullable ZonedDateTime stakePeriodStart) {
-        this(accountId, evmAddress, balance, balanceTimestamp, ethereumNonce, pendingReward, alias, authority, accountMemo, createdTimestamp, expiryTimestamp, autoRenewPeriod, maxAutomaticTokenAssociations, receiverSignatureRequired, false, false, stakedAccountId, stakedNodeId, stakePeriodStart);
+            final @Nullable ZonedDateTime stakePeriodStart,
+            final @Nullable EvmAddress delegationAddress) {
+        this(accountId, evmAddress, balance, balanceTimestamp, List.of(), ethereumNonce, pendingReward, alias, authority, accountMemo, createdTimestamp, expiryTimestamp, autoRenewPeriod, maxAutomaticTokenAssociations, receiverSignatureRequired, false, false, stakedAccountId, stakedNodeId, stakePeriodStart, delegationAddress);
     }
 
     /// HIP-32 public-key alias (serialised protobuf Key bytes)
@@ -81,6 +89,7 @@ public record AccountInfo(
             && Objects.equals(evmAddress, other.evmAddress)
             && balance == other.balance
             && Objects.equals(balanceTimestamp, other.balanceTimestamp)
+            && Objects.equals(tokenBalances, other.tokenBalances)
             && ethereumNonce == other.ethereumNonce
             && pendingReward == other.pendingReward
             && Arrays.equals(alias, other.alias)
@@ -95,17 +104,18 @@ public record AccountInfo(
             && deleted == other.deleted
             && Objects.equals(stakedAccountId, other.stakedAccountId)
             && Objects.equals(stakedNodeId, other.stakedNodeId)
-            && Objects.equals(stakePeriodStart, other.stakePeriodStart);
+            && Objects.equals(stakePeriodStart, other.stakePeriodStart)
+            && Objects.equals(delegationAddress, other.delegationAddress);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(accountId, evmAddress, balance, balanceTimestamp, ethereumNonce, pendingReward, Arrays.hashCode(alias), authority, accountMemo, createdTimestamp, expiryTimestamp, autoRenewPeriod, maxAutomaticTokenAssociations, receiverSignatureRequired, declineReward, deleted, stakedAccountId, stakedNodeId, stakePeriodStart);
+        return Objects.hash(accountId, evmAddress, balance, balanceTimestamp, tokenBalances, ethereumNonce, pendingReward, Arrays.hashCode(alias), authority, accountMemo, createdTimestamp, expiryTimestamp, autoRenewPeriod, maxAutomaticTokenAssociations, receiverSignatureRequired, declineReward, deleted, stakedAccountId, stakedNodeId, stakePeriodStart, delegationAddress);
     }
 
     @Override
     public String toString() {
-        return "AccountInfo[accountId=" + accountId + ", evmAddress=" + evmAddress + ", balance=" + balance + ", balanceTimestamp=" + balanceTimestamp + ", ethereumNonce=" + ethereumNonce + ", pendingReward=" + pendingReward + ", alias=" + (alias == null ? "null" : "byte[" + alias.length + "]") + ", authority=" + authority + ", accountMemo=" + accountMemo + ", createdTimestamp=" + createdTimestamp + ", expiryTimestamp=" + expiryTimestamp + ", autoRenewPeriod=" + autoRenewPeriod + ", maxAutomaticTokenAssociations=" + maxAutomaticTokenAssociations + ", receiverSignatureRequired=" + receiverSignatureRequired + ", declineReward=" + declineReward + ", deleted=" + deleted + ", stakedAccountId=" + stakedAccountId + ", stakedNodeId=" + stakedNodeId + ", stakePeriodStart=" + stakePeriodStart + "]";
+        return "AccountInfo[accountId=" + accountId + ", evmAddress=" + evmAddress + ", balance=" + balance + ", balanceTimestamp=" + balanceTimestamp + ", tokenBalances=" + tokenBalances + ", ethereumNonce=" + ethereumNonce + ", pendingReward=" + pendingReward + ", alias=" + (alias == null ? "null" : "byte[" + alias.length + "]") + ", authority=" + authority + ", accountMemo=" + accountMemo + ", createdTimestamp=" + createdTimestamp + ", expiryTimestamp=" + expiryTimestamp + ", autoRenewPeriod=" + autoRenewPeriod + ", maxAutomaticTokenAssociations=" + maxAutomaticTokenAssociations + ", receiverSignatureRequired=" + receiverSignatureRequired + ", declineReward=" + declineReward + ", deleted=" + deleted + ", stakedAccountId=" + stakedAccountId + ", stakedNodeId=" + stakedNodeId + ", stakePeriodStart=" + stakePeriodStart + ", delegationAddress=" + delegationAddress + "]";
     }
 
     /// Returns a builder for a new `AccountInfo`.
@@ -126,6 +136,7 @@ public record AccountInfo(
         private @Nullable EvmAddress evmAddress;
         private @Nullable Long balance;
         private @Nullable ZonedDateTime balanceTimestamp;
+        private List<TokenBalance> tokenBalances = List.of();
         private @Nullable Long ethereumNonce;
         private @Nullable Long pendingReward;
         private byte @Nullable [] alias;
@@ -141,6 +152,7 @@ public record AccountInfo(
         private @Nullable AccountId stakedAccountId;
         private @Nullable Long stakedNodeId;
         private @Nullable ZonedDateTime stakePeriodStart;
+        private @Nullable EvmAddress delegationAddress;
 
         private Builder() {
             // created by AccountInfo.builder()
@@ -183,6 +195,17 @@ public record AccountInfo(
         /// @return this builder
         public Builder balanceTimestamp(final @Nullable ZonedDateTime balanceTimestamp) {
             this.balanceTimestamp = balanceTimestamp;
+            return this;
+        }
+
+        /// Sets the `tokenBalances`.
+        ///
+        /// the token balances at balanceTimestamp
+        ///
+        /// @param tokenBalances the value
+        /// @return this builder
+        public Builder tokenBalances(final List<TokenBalance> tokenBalances) {
+            this.tokenBalances = tokenBalances;
             return this;
         }
 
@@ -329,6 +352,17 @@ public record AccountInfo(
             return this;
         }
 
+        /// Sets the `delegationAddress`.
+        ///
+        /// the EVM address the account delegates its code to
+        ///
+        /// @param delegationAddress the value
+        /// @return this builder
+        public Builder delegationAddress(final @Nullable EvmAddress delegationAddress) {
+            this.delegationAddress = delegationAddress;
+            return this;
+        }
+
         /// Creates the `AccountInfo` of the values set.
         ///
         /// @return the new `AccountInfo`
@@ -339,6 +373,7 @@ public record AccountInfo(
                     evmAddress,
                     Objects.requireNonNull(balance, "balance must not be null"),
                     balanceTimestamp,
+                    tokenBalances,
                     Objects.requireNonNull(ethereumNonce, "ethereumNonce must not be null"),
                     Objects.requireNonNull(pendingReward, "pendingReward must not be null"),
                     alias,
@@ -353,7 +388,8 @@ public record AccountInfo(
                     deleted,
                     stakedAccountId,
                     stakedNodeId,
-                    stakePeriodStart);
+                    stakePeriodStart,
+                    delegationAddress);
         }
     }
 }

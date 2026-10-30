@@ -3,12 +3,48 @@
 ## Description
 
 Query accounts from the Mirror Node. Use the `AccountRepository` (available as `MirrorNodeClient.accounts`) to look
-up an account (`findById`, `findAll`) and to read data related to it: the staking rewards it received, the HBAR,
-fungible-token and NFT allowances it has granted, and its pending airdrops (HIP-904) — both the ones it sent that are
-not yet claimed (outstanding) and the ones it can still claim (pending). `getBalances` returns a snapshot of account
-balances across the whole network.
+up an account (`findById`, `findAll`) and to read data related to it: the staking rewards it received, its token
+relationships, its hooks and their storage, the HBAR, fungible-token and NFT allowances it has granted, and its pending
+airdrops (HIP-904) — both the ones it sent that are not yet claimed (outstanding) and the ones it can still claim
+(pending). `getBalances` returns a snapshot of account balances across the whole network.
+
+`findById` with all its options also returns the most recent transactions of the account.
 
 HBAR amounts are given in tinybars, token amounts in the token's smallest unit.
+
+## Design Notes
+
+Deviations from the mirror node REST API (see the Design Notes of [`mirror-node.md`](mirror-node.md)):
+
+- **Accounts are passed as `AccountId`.** The path parameter `idOrAliasOrEvmAddress` also accepts an alias or an EVM
+  address; the repository methods take an `AccountId` only. The same holds for `account.id` of `getBalances`.
+- **Renamed fields of `AccountInfo`.** `account` is `accountId`, `key` is `authority` (an `Authority`, ADR-0004),
+  `memo` is `accountMemo`, `receiver_sig_required` is `receiverSignatureRequired`.
+- **The `balance` object of an account is flattened.** `balance.balance` is `AccountInfo.balance`,
+  `balance.timestamp` is `balanceTimestamp`, `balance.tokens` is `tokenBalances`. A missing balance is `0`.
+- **Defaults instead of `null` in `AccountInfo`.** The REST API declares `ethereum_nonce` and `deleted` nullable and
+  `pending_reward` optional; a missing `ethereumNonce` / `pendingReward` is `0`, a missing `deleted` is `false`.
+- **`alias` is bytes.** The REST API returns the alias as RFC 4648 Base32 text; `AccountInfo.alias` holds the decoded
+  bytes.
+- **`AccountBalanceTransactions` wraps the account.** `GET /accounts/{id}` returns the fields of `AccountInfo` and the
+  `transactions` of the account in one object; here the account is the attribute `account`. Its transactions are
+  `TransactionInfo` of `mirrornode.transaction`. The `links` of the response (the next page of the transactions) are
+  left out: further transactions of the account are read with the `TransactionRepository`.
+- **`findById(accountId)` and `findAll()` send `transactions=false`** and return the account without transactions.
+- **The type of a transaction is a `TransactionType`.** The query parameter `transactiontype` is sent as its
+  `protocolName`.
+- **Allowances and airdrops keep their `timestamp` as `TimestampRange`.**
+- **`TokenAirdrop.amount` is `null` for an NFT airdrop.** The REST API always returns an `amount`; exactly one of
+  `amount` (fungible) and `serialNumber` (NFT) is set here.
+- **The response-level fields of a hook storage list are left out.** `hook_id` and `owner_id` of
+  `GET /accounts/{id}/hooks/{hookId}/storage` repeat the path parameters; `getHookStorage` returns the storage slots.
+- **The `timestamp` of `GET /balances` is left out.** It belongs to the whole response, not to one `AccountBalance`,
+  and a `Page` has no place for it.
+- **Hook storage keys and values are bytes.** The REST API returns them as `0x`-prefixed hex text.
+- **`getNftAllowances` names its path parameter `account`.** The query parameter `account.id` of the endpoint is
+  `accountId`, so the account of the path is `account` in the overload with all options.
+- **`links` is the `Page`.** The pagination links of a list response are not an attribute; `Page.next()` follows
+  them.
 
 ## API Schema
 
@@ -17,6 +53,15 @@ namespace mirrornode.account
 requires {Address, AccountId, EvmAddress, MirrorNode} from ledger
 requires {Authority} from authority
 requires {Page} from common
+requires {Order, TimestampRange} from mirrornode.common
+requires {TransactionInfo, TransactionType} from mirrornode.transaction
+
+// One token balance line of an account.
+@@finalType
+TokenBalance {
+    @@immutable tokenId: Address
+    @@immutable balance: int64                        // balance in the token's smallest unit
+}
 
 @@finalType
 AccountInfo {
@@ -24,6 +69,7 @@ AccountInfo {
     @@immutable @@nullable evmAddress: EvmAddress
     @@immutable balance: int64                                       // hbar balance in tinybars
     @@immutable @@nullable balanceTimestamp: zonedDateTime           // timestamp of the reported balance
+    @@immutable @@default([]) tokenBalances: list<TokenBalance>      // the token balances at balanceTimestamp
     @@immutable ethereumNonce: int64
     @@immutable pendingReward: int64                                 // tinybars receivable in the next staking payout
     @@immutable @@nullable alias: bytes                              // HIP-32 public-key alias (serialised protobuf Key bytes)
@@ -39,6 +85,46 @@ AccountInfo {
     @@immutable @@nullable stakedAccountId: AccountId                // mutually exclusive with stakedNodeId
     @@immutable @@nullable stakedNodeId: int64                       // mutually exclusive with stakedAccountId
     @@immutable @@nullable stakePeriodStart: zonedDateTime
+    @@immutable @@nullable delegationAddress: EvmAddress             // the EVM address the account delegates its code to
+}
+
+// An account together with its most recent transactions. GET /accounts/{id}.
+@@finalType
+AccountBalanceTransactions {
+    @@immutable account: AccountInfo
+    @@immutable @@default([]) transactions: list<TransactionInfo>    // the most recent transactions of the account
+}
+
+// The point of a transaction at which a hook is called.
+enum HookExtensionPoint {
+    ACCOUNT_ALLOWANCE_HOOK    // called to approve a transfer from the account in place of an allowance
+}
+
+// The kind of program a hook runs.
+enum HookType {
+    EVM    // an EVM smart contract
+}
+
+// A hook of an account. GET /accounts/{id}/hooks.
+@@finalType
+Hook {
+    @@immutable @@nullable adminKey: Authority                 // the authority that may change the hook
+    @@immutable contractId: Address                            // the contract that implements the hook
+    @@immutable @@nullable createdTimestamp: zonedDateTime
+    @@immutable deleted: bool
+    @@immutable extensionPoint: HookExtensionPoint
+    @@immutable hookId: int64
+    @@immutable ownerId: Address                               // the entity that owns the hook
+    @@immutable @@nullable timestampRange: TimestampRange      // the period this version of the hook is valid for
+    @@immutable type: HookType
+}
+
+// A storage slot of a hook. GET /accounts/{id}/hooks/{hookId}/storage.
+@@finalType
+HookStorage {
+    @@immutable key: bytes                                     // the 32-byte storage key
+    @@immutable @@nullable value: bytes                        // the stored value; null if the slot was cleared
+    @@immutable timestamp: zonedDateTime                       // consensus time of the last change
 }
 
 // A staking-reward payout received by the account. GET /accounts/{id}/rewards.
@@ -49,6 +135,32 @@ StakingReward {
     @@immutable timestamp: zonedDateTime              // consensus time of the payout
 }
 
+// Whether an account's balance of a token is frozen.
+enum TokenFreezeStatus {
+    NOT_APPLICABLE    // the token has no freeze key
+    FROZEN
+    UNFROZEN
+}
+
+// Whether KYC of an account is granted for a token.
+enum TokenKycStatus {
+    NOT_APPLICABLE    // the token has no KYC key
+    GRANTED
+    REVOKED
+}
+
+// The relationship of an account with a token it is associated with. GET /accounts/{id}/tokens.
+@@finalType
+TokenRelationship {
+    @@immutable @@nullable automaticAssociation: bool          // true if the token was associated automatically
+    @@immutable balance: int64                                 // balance in the token's smallest unit
+    @@immutable @@nullable createdTimestamp: zonedDateTime     // when the association was created
+    @@immutable @@nullable decimals: int64                     // the decimals of the token
+    @@immutable @@nullable freezeStatus: TokenFreezeStatus
+    @@immutable kycStatus: TokenKycStatus
+    @@immutable tokenId: Address
+}
+
 // An HBAR spending allowance the account granted. GET /accounts/{id}/allowances/crypto.
 @@finalType
 CryptoAllowance {
@@ -56,7 +168,7 @@ CryptoAllowance {
     @@immutable spender: AccountId
     @@immutable amount: int64                         // remaining approved tinybars
     @@immutable amountGranted: int64                  // originally approved tinybars
-    @@immutable timestamp: zonedDateTime              // when the allowance was granted / last modified
+    @@immutable timestamp: TimestampRange             // the period this version of the allowance is valid for
 }
 
 // A fungible-token spending allowance the account granted. GET /accounts/{id}/allowances/tokens.
@@ -67,17 +179,17 @@ TokenAllowance {
     @@immutable tokenId: Address
     @@immutable amount: int64                         // remaining approved amount (smallest unit)
     @@immutable amountGranted: int64                  // originally approved amount
-    @@immutable timestamp: zonedDateTime
+    @@immutable timestamp: TimestampRange             // the period this version of the allowance is valid for
 }
 
-// An NFT approved-for-all allowance the account granted. GET /accounts/{id}/allowances/nfts.
+// An NFT approved-for-all allowance the account granted or received. GET /accounts/{id}/allowances/nfts.
 @@finalType
 NftAllowance {
     @@immutable owner: AccountId
     @@immutable spender: AccountId
     @@immutable tokenId: Address
     @@immutable approvedForAll: bool                  // true → spender may transfer every serial of the collection
-    @@immutable timestamp: zonedDateTime
+    @@immutable timestamp: TimestampRange             // the period this version of the allowance is valid for
 }
 
 // A pending airdrop (HIP-904) the account sent (outstanding) or is to receive (pending).
@@ -89,14 +201,7 @@ TokenAirdrop {
     @@immutable tokenId: Address
     @@immutable @@nullable amount: int64              // fungible amount (smallest unit); null for an NFT airdrop
     @@immutable @@nullable serialNumber: int64        // NFT serial; null for a fungible airdrop
-    @@immutable timestamp: zonedDateTime
-}
-
-// One token balance line inside an AccountBalance.
-@@finalType
-TokenBalance {
-    @@immutable tokenId: Address
-    @@immutable balance: int64                        // balance in the token's smallest unit
+    @@immutable timestamp: TimestampRange             // the period this version of the airdrop is valid for
 }
 
 // An account's balance snapshot from the top-level balances endpoint. GET /balances.
@@ -108,48 +213,146 @@ AccountBalance {
 }
 
 abstraction AccountRepository {
+    // The account, without its transactions.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}.
     @@async @@throws(mirror-node-error)
     @@nullable AccountInfo findById(accountId: AccountId)
+
+    // The account with its most recent transactions, filtered by consensus time and transaction type;
+    // `transactions` false leaves the transactions out.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}.
+    @@async @@throws(mirror-node-error)
+    @@nullable AccountBalanceTransactions findById(accountId: AccountId, @@nullable @@min(1) @@max(100) limit: int32,
+            @@nullable order: Order, timestamp: list<string>, @@nullable transactionType: TransactionType,
+            @@nullable transactions: bool)
 
     // Lists account entities known to the mirror node.
     // Maps to GET /api/v1/accounts.
     @@async @@throws(mirror-node-error)
     Page<AccountInfo> findAll()
 
+    // Lists account entities known to the mirror node, filtered by balance, id and public key; `balance` false
+    // leaves the balances out.
+    // Maps to GET /api/v1/accounts.
+    @@async @@throws(mirror-node-error)
+    Page<AccountInfo> findAll(accountBalance: list<string>, accountId: list<string>,
+            @@nullable accountPublicKey: string, @@nullable balance: bool, @@nullable @@min(1) @@max(100) limit: int32,
+            @@nullable order: Order)
+
+    // The hooks of the account.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/hooks.
+    @@async @@throws(mirror-node-error)
+    Page<Hook> getHooks(accountId: AccountId)
+
+    // The hooks of the account, filtered by hook id.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/hooks.
+    @@async @@throws(mirror-node-error)
+    Page<Hook> getHooks(accountId: AccountId, @@nullable @@min(1) hookId: int64,
+            @@nullable @@min(1) @@max(100) limit: int32, @@nullable order: Order)
+
+    // The storage slots of a hook of the account.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/hooks/{hookId}/storage.
+    @@async @@throws(mirror-node-error)
+    Page<HookStorage> getHookStorage(accountId: AccountId, @@min(0) hookId: int64)
+
+    // The storage slots of a hook of the account, filtered by key and consensus time.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/hooks/{hookId}/storage.
+    @@async @@throws(mirror-node-error)
+    Page<HookStorage> getHookStorage(accountId: AccountId, @@min(0) hookId: int64, key: list<string>,
+            @@nullable @@min(1) @@max(100) limit: int32, @@nullable order: Order, timestamp: list<string>)
+
     // Staking-reward payouts received by the account.
-    // Maps to GET /api/v1/accounts/{id}/rewards.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/rewards.
     @@async @@throws(mirror-node-error)
     Page<StakingReward> getRewards(accountId: AccountId)
 
-    // HBAR allowances the account has granted to spenders.
-    // Maps to GET /api/v1/accounts/{id}/allowances/crypto.
+    // Staking-reward payouts received by the account, filtered by consensus time.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/rewards.
     @@async @@throws(mirror-node-error)
-    Page<CryptoAllowance> getCryptoAllowances(accountId: AccountId)
+    Page<StakingReward> getRewards(accountId: AccountId, @@nullable @@min(1) @@max(100) limit: int32,
+            @@nullable order: Order, timestamp: list<string>)
 
-    // Fungible-token allowances the account has granted.
-    // Maps to GET /api/v1/accounts/{id}/allowances/tokens.
+    // The tokens the account is associated with.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/tokens.
     @@async @@throws(mirror-node-error)
-    Page<TokenAllowance> getTokenAllowances(accountId: AccountId)
+    Page<TokenRelationship> getTokenRelationships(accountId: AccountId)
 
-    // NFT approved-for-all allowances the account has granted.
-    // Maps to GET /api/v1/accounts/{id}/allowances/nfts.
+    // The tokens the account is associated with, filtered by token id.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/tokens.
     @@async @@throws(mirror-node-error)
-    Page<NftAllowance> getNftAllowances(accountId: AccountId)
+    Page<TokenRelationship> getTokenRelationships(accountId: AccountId, @@nullable @@min(1) @@max(100) limit: int32,
+            @@nullable order: Order, tokenId: list<string>)
 
     // Pending airdrops the account has SENT that are not yet claimed (HIP-904).
-    // Maps to GET /api/v1/accounts/{id}/airdrops/outstanding.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/airdrops/outstanding.
     @@async @@throws(mirror-node-error)
     Page<TokenAirdrop> getOutstandingAirdrops(accountId: AccountId)
 
+    // Pending airdrops the account has SENT that are not yet claimed (HIP-904), filtered by receiver, serial number
+    // and token.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/airdrops/outstanding.
+    @@async @@throws(mirror-node-error)
+    Page<TokenAirdrop> getOutstandingAirdrops(accountId: AccountId, @@nullable @@min(1) @@max(100) limit: int32,
+            @@nullable order: Order, receiverId: list<string>, serialNumber: list<string>, tokenId: list<string>)
+
     // Pending airdrops the account is to RECEIVE but has not yet claimed (HIP-904).
-    // Maps to GET /api/v1/accounts/{id}/airdrops/pending.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/airdrops/pending.
     @@async @@throws(mirror-node-error)
     Page<TokenAirdrop> getPendingAirdrops(accountId: AccountId)
 
-    // Account balances across the network (latest, or at a queried timestamp).
+    // Pending airdrops the account is to RECEIVE but has not yet claimed (HIP-904), filtered by sender, serial number
+    // and token.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/airdrops/pending.
+    @@async @@throws(mirror-node-error)
+    Page<TokenAirdrop> getPendingAirdrops(accountId: AccountId, @@nullable @@min(1) @@max(100) limit: int32,
+            @@nullable order: Order, senderId: list<string>, serialNumber: list<string>, tokenId: list<string>)
+
+    // HBAR allowances the account has granted to spenders.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/allowances/crypto.
+    @@async @@throws(mirror-node-error)
+    Page<CryptoAllowance> getCryptoAllowances(accountId: AccountId)
+
+    // HBAR allowances the account has granted, filtered by spender.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/allowances/crypto.
+    @@async @@throws(mirror-node-error)
+    Page<CryptoAllowance> getCryptoAllowances(accountId: AccountId, @@nullable @@min(1) @@max(100) limit: int32,
+            @@nullable order: Order, spenderId: list<string>)
+
+    // Fungible-token allowances the account has granted.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/allowances/tokens.
+    @@async @@throws(mirror-node-error)
+    Page<TokenAllowance> getTokenAllowances(accountId: AccountId)
+
+    // Fungible-token allowances the account has granted, filtered by spender and token.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/allowances/tokens.
+    @@async @@throws(mirror-node-error)
+    Page<TokenAllowance> getTokenAllowances(accountId: AccountId, @@nullable @@min(1) @@max(100) limit: int32,
+            @@nullable order: Order, spenderId: list<string>, tokenId: list<string>)
+
+    // NFT approved-for-all allowances the account has granted.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/allowances/nfts.
+    @@async @@throws(mirror-node-error)
+    Page<NftAllowance> getNftAllowances(accountId: AccountId)
+
+    // NFT approved-for-all allowances, filtered by the other account and the token. With `owner` true or null the
+    // account is the owner and `accountId` filters the spenders; with `owner` false the account is the spender and
+    // `accountId` filters the owners.
+    // Maps to GET /api/v1/accounts/{idOrAliasOrEvmAddress}/allowances/nfts.
+    @@async @@throws(mirror-node-error)
+    Page<NftAllowance> getNftAllowances(account: AccountId, @@nullable @@min(1) @@max(100) limit: int32,
+            @@nullable order: Order, accountId: list<string>, tokenId: list<string>, @@nullable owner: bool)
+
+    // Account balances across the network (latest).
     // Maps to the top-level GET /api/v1/balances — NOT /accounts/{id}/balances.
     @@async @@throws(mirror-node-error)
     Page<AccountBalance> getBalances()
+
+    // Account balances across the network, filtered by account, balance and public key, at the given consensus time.
+    // Maps to the top-level GET /api/v1/balances — NOT /accounts/{id}/balances.
+    @@async @@throws(mirror-node-error)
+    Page<AccountBalance> getBalances(@@nullable accountId: AccountId, accountBalance: list<string>,
+            @@nullable accountPublicKey: string, @@nullable @@min(1) @@max(100) limit: int32, @@nullable order: Order,
+            timestamp: list<string>)
 }
 
 @@static AccountRepository createRepository(mirrorNode: MirrorNode)
@@ -244,7 +447,7 @@ test "a crypto allowance keeps its owner, spender, remaining and granted amounts
     // given
     let owner = AccountId.fromString(value: "0.0.1001")
     let spender = AccountId.fromString(value: "0.0.1002")
-    let time = DEFAULT(zonedDateTime)
+    let time = TimestampRange{from: DEFAULT(zonedDateTime)}
 
     // when
     let allowance = CryptoAllowance{owner: owner, spender: spender, amount: 25, amountGranted: 100, timestamp: time}
@@ -263,7 +466,7 @@ test "a crypto allowance keeps its owner, spender, remaining and granted amounts
 test "a token allowance keeps its token, remaining and granted amounts and its time" {
     // given
     let token = Address.fromString(address: "0.0.5005")
-    let time = DEFAULT(zonedDateTime)
+    let time = TimestampRange{from: DEFAULT(zonedDateTime)}
 
     // when
     let allowance = TokenAllowance{owner: AccountId.fromString(value: "0.0.1001"),
@@ -282,7 +485,7 @@ test "a token allowance keeps its token, remaining and granted amounts and its t
 test "an NFT allowance keeps whether it is approved for the whole collection" {
     // given
     let token = Address.fromString(address: "0.0.5005")
-    let time = DEFAULT(zonedDateTime)
+    let time = TimestampRange{from: DEFAULT(zonedDateTime)}
 
     for approved in [false, true] {
         // when
@@ -302,7 +505,7 @@ test "an NFT allowance keeps whether it is approved for the whole collection" {
 @@testId("a-fungible-airdrop-has-an-amount-and-no-serial-number")
 test "a fungible airdrop has an amount and no serial number" {
     // given
-    let time = DEFAULT(zonedDateTime)
+    let time = TimestampRange{from: DEFAULT(zonedDateTime)}
 
     // when
     let airdrop = TokenAirdrop{senderId: AccountId.fromString(value: "0.0.1001"),
@@ -325,7 +528,7 @@ test "an NFT airdrop has a serial number and no amount" {
 
     // when
     let airdrop = TokenAirdrop{senderId: sender, receiverId: receiver, tokenId: Address.fromString(address: "0.0.5005"),
-            serialNumber: 1, timestamp: DEFAULT(zonedDateTime)}
+            serialNumber: 1, timestamp: TimestampRange{from: DEFAULT(zonedDateTime)}}
 
     // then
     assertEquals(expected: sender, actual: airdrop.senderId)
@@ -358,20 +561,100 @@ test "an account balance keeps its token balances" {
     // then
     assertEquals(expected: tokens, actual: balance.tokens)
 }
+
+// Source: the example of the `TokenRelationship` schema of the mirror node OpenAPI definition (automatic association,
+// balance 5, created "123456789.000000001", 3 decimals, UNFROZEN, GRANTED, token 0.0.27335); millisecond precision.
+@@testId("a-token-relationship-keeps-its-balance-decimals-and-statuses")
+test "a token relationship keeps its balance, decimals and statuses" {
+    // given
+    let token = Address.fromString(address: "0.0.27335")
+
+    // when
+    let relationship = TokenRelationship{automaticAssociation: true, balance: 5,
+            createdTimestamp: toZonedDateTime(text: "1973-11-29T21:33:09Z"), decimals: 3,
+            freezeStatus: TokenFreezeStatus.UNFROZEN, kycStatus: TokenKycStatus.GRANTED, tokenId: token}
+
+    // then
+    assertEquals(expected: token, actual: relationship.tokenId)
+    assertEquals(expected: 5, actual: relationship.balance)
+    assertEquals(expected: 3, actual: relationship.decimals)
+    assertEquals(expected: TokenFreezeStatus.UNFROZEN, actual: relationship.freezeStatus)
+    assertEquals(expected: TokenKycStatus.GRANTED, actual: relationship.kycStatus)
+    assertEquals(expected: toZonedDateTime(text: "1973-11-29T21:33:09Z"), actual: relationship.createdTimestamp)
+}
+
+// Source: this spec (`automaticAssociation`, `createdTimestamp`, `decimals` and `freezeStatus` are nullable).
+@@testId("a-token-relationship-without-optional-values-has-no-decimals-and-no-freeze-status")
+test "a token relationship without optional values has no decimals and no freeze status" {
+    // when
+    let relationship = TokenRelationship{balance: 0, kycStatus: TokenKycStatus.NOT_APPLICABLE,
+            tokenId: Address.fromString(address: "0.0.27335")}
+
+    // then
+    assertNull(actual: relationship.automaticAssociation)
+    assertNull(actual: relationship.createdTimestamp)
+    assertNull(actual: relationship.decimals)
+    assertNull(actual: relationship.freezeStatus)
+}
+
+// Source: this spec (`adminKey`, `createdTimestamp` and `timestampRange` of a hook are nullable).
+@@testId("a-hook-without-optional-values-has-no-admin-key-and-no-timestamps")
+test "a hook without optional values has no admin key and no timestamps" {
+    // given
+    let owner = Address.fromString(address: "0.0.1001")
+
+    // when
+    let hook = Hook{contractId: Address.fromString(address: "0.0.5005"), deleted: false,
+            extensionPoint: HookExtensionPoint.ACCOUNT_ALLOWANCE_HOOK, hookId: 1, ownerId: owner, type: HookType.EVM}
+
+    // then
+    assertEquals(expected: owner, actual: hook.ownerId)
+    assertEquals(expected: 1, actual: hook.hookId)
+    assertEquals(expected: HookType.EVM, actual: hook.type)
+    assertNull(actual: hook.adminKey)
+    assertNull(actual: hook.createdTimestamp)
+    assertNull(actual: hook.timestampRange)
+}
+
+// Source: this spec (the value of a cleared hook storage slot is null).
+@@testId("a-cleared-hook-storage-slot-has-no-value")
+test "a cleared hook storage slot has no value" {
+    // when
+    let slot = HookStorage{key: [1], timestamp: DEFAULT(zonedDateTime)}
+
+    // then
+    assertEquals(expected: [1], actual: slot.key)
+    assertNull(actual: slot.value)
+}
+
+// Source: this spec (`transactions` defaults to an empty list).
+@@testId("an-account-with-transactions-without-transactions-has-an-empty-transaction-list")
+test "an account with transactions without transactions has an empty transaction list" {
+    // given
+    let info = AccountInfo{accountId: DEFAULT(AccountId), balance: 100, ethereumNonce: 0, pendingReward: 0}
+
+    // when
+    let account = AccountBalanceTransactions{account: info}
+
+    // then
+    assertEquals(expected: info, actual: account.account)
+    assertEquals(expected: 0, actual: length(value: account.transactions))
+    assertEquals(expected: 0, actual: length(value: info.tokenBalances))
+}
 ```
 
 ## Questions & Comments
 
-- **Allowance `timestamp` is a single value, not a range.** The Mirror Node REST returns a
-  `timestamp` *range* (from/to) on allowances; V3 surfaces the grant / last-modified instant as a
-  single `zonedDateTime`, consistent with the other mirror-node types. A typed `TimestampRange`
-  (for the generic range-filter model) is tracked in [`missing-features.md`](../../docs/missing-features.md) §4.3.
-- **`getNftAllowances` returns approved-for-all grants only.** `GET /allowances/nfts` exposes
-  collection-wide (`approvedForAll`) NFT allowances; per-serial NFT approvals are read via the NFT
-  endpoints, not here.
-- **`TokenAirdrop` is one shape for both directions.** *Outstanding* = sent by this account and not
-  yet claimed; *pending* = receivable by this account. `amount` (fungible) and `serialNumber` (NFT)
-  are mutually exclusive.
-- **`getBalances()` maps to the top-level `/balances`**, not a per-account path — it returns
-  balances across accounts. It is placed on `AccountRepository` because the result is
-  account-balance-shaped, and is distinct from `mirrornode.token.Balance` (which is token-centric).
+- **`getBalances()` is placed on `AccountRepository`.** It maps to the top-level `/balances`, not a per-account path,
+  and returns balances across accounts; it is here because the result is account-balance-shaped. It is distinct from
+  `mirrornode.token.Balance` (which is token-centric). Should it move to a repository of its own?
+- **Response-level values of a list are lost.** The `timestamp` of `GET /balances` (the time of the balance snapshot)
+  belongs to the whole response, and a `Page` has no place for it. Should `Page` (or a subtype) carry such values?
+- **The transactions of `findById` cannot be paged.** `GET /accounts/{id}` returns a page of the account's
+  transactions with a `links.next`; `AccountBalanceTransactions` holds the first page only. Should `transactions` be
+  a `Page<TransactionInfo>`?
+- **`HookType` and `HookExtensionPoint` are closed enums.** A value that a newer mirror node adds cannot be read, and
+  the query fails. Should they be open like `TransactionType`?
+- **Entity ids are nullable in the OpenAPI definition.** The `EntityId` schema is `[string, "null"]`; ids that are
+  always present (`StakingReward.accountId`, the owner and spender of an allowance, `Hook.contractId`, ...) are not
+  `@@nullable` here.

@@ -1,22 +1,23 @@
 package org.hiero.mirrornode.account;
 
-import java.time.ZonedDateTime;
 import java.util.Objects;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.jspecify.annotations.Nullable;
 
 /// A fungible-token spending allowance the account granted. GET /accounts/{id}/allowances/tokens.
 ///
 /// @param amount remaining approved amount (smallest unit)
 /// @param amountGranted originally approved amount
+/// @param timestamp the period this version of the allowance is valid for
 public record TokenAllowance(
         AccountId owner,
         AccountId spender,
         Address tokenId,
         long amount,
         long amountGranted,
-        ZonedDateTime timestamp) {
+        TimestampRange timestamp) {
 
     /// Creates a new `TokenAllowance`.
     ///
@@ -47,7 +48,7 @@ public record TokenAllowance(
         private @Nullable Address tokenId;
         private @Nullable Long amount;
         private @Nullable Long amountGranted;
-        private @Nullable ZonedDateTime timestamp;
+        private @Nullable TimestampRange timestamp;
 
         private Builder() {
             // created by TokenAllowance.builder()
@@ -104,9 +105,11 @@ public record TokenAllowance(
 
         /// Sets the `timestamp`.
         ///
+        /// the period this version of the allowance is valid for
+        ///
         /// @param timestamp the value
         /// @return this builder
-        public Builder timestamp(final ZonedDateTime timestamp) {
+        public Builder timestamp(final TimestampRange timestamp) {
             this.timestamp = timestamp;
             return this;
         }

@@ -7,6 +7,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ class TokenAllowanceTest {
         final Address tokenId = tokenIdValue();
         final long amount = amountValue();
         final long amountGranted = amountGrantedValue();
-        final ZonedDateTime timestamp = timestampValue();
+        final TimestampRange timestamp = timestampValue();
         final TokenAllowance subject = new TokenAllowance(owner, spender, tokenId, amount, amountGranted, timestamp);
         assertValue(owner, subject.owner());
         assertValue(spender, subject.spender());
@@ -43,7 +44,7 @@ class TokenAllowanceTest {
         final Address tokenId = tokenIdValue();
         final long amount = amountValue();
         final long amountGranted = amountGrantedValue();
-        final ZonedDateTime timestamp = timestampValue();
+        final TimestampRange timestamp = timestampValue();
         final TokenAllowance subject = TokenAllowance.builder()
                 .owner(owner)
                 .spender(spender)
@@ -142,7 +143,7 @@ class TokenAllowanceTest {
     @DisplayName("rejects null for timestamp")
     @Tag("testId:mirrornode.account.TokenAllowance/timestamp/rejects-null")
     void shouldRejectNullTimestamp() {
-        assertThrows(NullPointerException.class, () -> new TokenAllowance(ownerValue(), spenderValue(), tokenIdValue(), amountValue(), amountGrantedValue(), (ZonedDateTime) null));
+        assertThrows(NullPointerException.class, () -> new TokenAllowance(ownerValue(), spenderValue(), tokenIdValue(), amountValue(), amountGrantedValue(), (TimestampRange) null));
     }
 
     @Test
@@ -175,8 +176,8 @@ class TokenAllowanceTest {
         return 1L;
     }
 
-    private static ZonedDateTime timestampValue() {
-        return ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+    private static TimestampRange timestampValue() {
+        return new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null);
     }
 
     private static TokenAllowance create() {

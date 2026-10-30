@@ -86,7 +86,7 @@ final class NodeServiceBindings {
                 gossipEndpoints,
                 serviceEndpoints,
                 runtime.required(runtime.value(params, List.of(new Source<>("gossipCaCertificate", convert::hex))), "gossipCaCertificate"),
-                runtime.required(runtime.value(params, List.of(new Source<>("grpcCertificateHash", convert::hex))), "grpcCertificateHash"),
+                runtime.value(params, List.of(new Source<>("grpcCertificateHash", convert::hex))),
                 runtime.required(runtime.value(params, List.of(new Source<>("adminKey", convert::key))), "adminKey"),
                 runtime.or(runtime.value(params, List.of(new Source<>("declineReward", convert::bool))), false),
                 grpcWebProxyEndpointJson1 == null ? null : new ServiceEndpoint(

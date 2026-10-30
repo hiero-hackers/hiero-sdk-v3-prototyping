@@ -44,7 +44,7 @@ class NodeCreateTransactionTest {
         final List<ServiceEndpoint> gossipEndpoints = gossipEndpointsValue();
         final List<ServiceEndpoint> serviceEndpoints = serviceEndpointsValue();
         final byte[] gossipCaCertificate = gossipCaCertificateValue();
-        final byte[] grpcCertificateHash = grpcCertificateHashValue();
+        final byte @Nullable [] grpcCertificateHash = grpcCertificateHashValue();
         final Authority adminAuthority = adminAuthorityValue();
         final boolean declineReward = declineRewardValue();
         final @Nullable ServiceEndpoint grpcWebProxyEndpoint = grpcWebProxyEndpointValue();
@@ -80,7 +80,7 @@ class NodeCreateTransactionTest {
         final List<ServiceEndpoint> gossipEndpoints = gossipEndpointsValue();
         final List<ServiceEndpoint> serviceEndpoints = serviceEndpointsValue();
         final byte[] gossipCaCertificate = gossipCaCertificateValue();
-        final byte[] grpcCertificateHash = grpcCertificateHashValue();
+        final byte @Nullable [] grpcCertificateHash = grpcCertificateHashValue();
         final Authority adminAuthority = adminAuthorityValue();
         final boolean declineReward = declineRewardValue();
         final @Nullable ServiceEndpoint grpcWebProxyEndpoint = grpcWebProxyEndpointValue();
@@ -115,10 +115,10 @@ class NodeCreateTransactionTest {
                 .gossipEndpoints(gossipEndpointsValue())
                 .serviceEndpoints(serviceEndpointsValue())
                 .gossipCaCertificate(gossipCaCertificateValue())
-                .grpcCertificateHash(grpcCertificateHashValue())
                 .adminAuthority(adminAuthorityValue())
                 .build();
         assertNull(subject.description());
+        assertNull(subject.grpcCertificateHash());
         assertValue(false, subject.declineReward());
         assertNull(subject.grpcWebProxyEndpoint());
     }
@@ -275,13 +275,6 @@ class NodeCreateTransactionTest {
         assertNotNull(returned);
         returned[0] = (byte) (returned[0] + 1);
         assertValue(expected, subject.gossipCaCertificate());
-    }
-
-    @Test
-    @DisplayName("rejects null for grpcCertificateHash")
-    @Tag("testId:consensusnode.admin.nodes.NodeCreateTransaction/grpcCertificateHash/rejects-null")
-    void shouldRejectNullGrpcCertificateHash() {
-        assertThrows(NullPointerException.class, () -> new NodeCreateTransaction(accountIdValue(), descriptionValue(), gossipEndpointsValue(), serviceEndpointsValue(), gossipCaCertificateValue(), (byte[]) null, adminAuthorityValue(), declineRewardValue(), grpcWebProxyEndpointValue()));
     }
 
     @Test

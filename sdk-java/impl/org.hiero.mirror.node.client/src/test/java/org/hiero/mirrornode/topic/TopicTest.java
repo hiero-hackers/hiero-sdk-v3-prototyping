@@ -17,6 +17,7 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.mirrornode.common.FixedFee;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -35,15 +36,15 @@ class TopicTest {
         final @Nullable Authority submitAuthority = submitAuthorityValue();
         final @Nullable Authority feeScheduleAuthority = feeScheduleAuthorityValue();
         final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
-        final Duration autoRenewPeriod = autoRenewPeriodValue();
-        final ZonedDateTime createdTimestamp = createdTimestampValue();
-        final boolean deleted = deletedValue();
+        final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
+        final @Nullable ZonedDateTime createdTimestamp = createdTimestampValue();
+        final @Nullable ZonedDateTime customFeesCreatedTimestamp = customFeesCreatedTimestampValue();
+        final @Nullable Boolean deleted = deletedValue();
         final String memo = memoValue();
         final List<FixedFee> fixedFees = fixedFeesValue();
         final List<Authority> feeExemptAuthorities = feeExemptAuthoritiesValue();
-        final ZonedDateTime fromTimestamp = fromTimestampValue();
-        final ZonedDateTime toTimestamp = toTimestampValue();
-        final Topic subject = new Topic(topicId, adminAuthority, submitAuthority, feeScheduleAuthority, autoRenewAccount, autoRenewPeriod, createdTimestamp, deleted, memo, fixedFees, feeExemptAuthorities, fromTimestamp, toTimestamp);
+        final TimestampRange timestamp = timestampValue();
+        final Topic subject = new Topic(topicId, adminAuthority, submitAuthority, feeScheduleAuthority, autoRenewAccount, autoRenewPeriod, createdTimestamp, customFeesCreatedTimestamp, deleted, memo, fixedFees, feeExemptAuthorities, timestamp);
         assertValue(topicId, subject.topicId());
         assertValue(adminAuthority, subject.adminAuthority());
         assertValue(submitAuthority, subject.submitAuthority());
@@ -51,12 +52,21 @@ class TopicTest {
         assertValue(autoRenewAccount, subject.autoRenewAccount());
         assertValue(autoRenewPeriod, subject.autoRenewPeriod());
         assertValue(createdTimestamp, subject.createdTimestamp());
+        assertValue(customFeesCreatedTimestamp, subject.customFeesCreatedTimestamp());
         assertValue(deleted, subject.deleted());
         assertValue(memo, subject.memo());
         assertValue(fixedFees, subject.fixedFees());
         assertValue(feeExemptAuthorities, subject.feeExemptAuthorities());
-        assertValue(fromTimestamp, subject.fromTimestamp());
-        assertValue(toTimestamp, subject.toTimestamp());
+        assertValue(timestamp, subject.timestamp());
+    }
+
+    @Test
+    @DisplayName("creates a Topic with the default values")
+    @Tag("testId:mirrornode.topic.Topic/create-with-defaults")
+    void shouldCreateWithTheDefaultValues() {
+        final Topic subject = new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), customFeesCreatedTimestampValue(), deletedValue(), memoValue(), timestampValue());
+        assertValue(List.of(), subject.fixedFees());
+        assertValue(List.of(), subject.feeExemptAuthorities());
     }
 
     @Test
@@ -68,14 +78,14 @@ class TopicTest {
         final @Nullable Authority submitAuthority = submitAuthorityValue();
         final @Nullable Authority feeScheduleAuthority = feeScheduleAuthorityValue();
         final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
-        final Duration autoRenewPeriod = autoRenewPeriodValue();
-        final ZonedDateTime createdTimestamp = createdTimestampValue();
-        final boolean deleted = deletedValue();
+        final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
+        final @Nullable ZonedDateTime createdTimestamp = createdTimestampValue();
+        final @Nullable ZonedDateTime customFeesCreatedTimestamp = customFeesCreatedTimestampValue();
+        final @Nullable Boolean deleted = deletedValue();
         final String memo = memoValue();
         final List<FixedFee> fixedFees = fixedFeesValue();
         final List<Authority> feeExemptAuthorities = feeExemptAuthoritiesValue();
-        final ZonedDateTime fromTimestamp = fromTimestampValue();
-        final ZonedDateTime toTimestamp = toTimestampValue();
+        final TimestampRange timestamp = timestampValue();
         final Topic subject = Topic.builder()
                 .topicId(topicId)
                 .adminAuthority(adminAuthority)
@@ -84,12 +94,12 @@ class TopicTest {
                 .autoRenewAccount(autoRenewAccount)
                 .autoRenewPeriod(autoRenewPeriod)
                 .createdTimestamp(createdTimestamp)
+                .customFeesCreatedTimestamp(customFeesCreatedTimestamp)
                 .deleted(deleted)
                 .memo(memo)
                 .fixedFees(fixedFees)
                 .feeExemptAuthorities(feeExemptAuthorities)
-                .fromTimestamp(fromTimestamp)
-                .toTimestamp(toTimestamp)
+                .timestamp(timestamp)
                 .build();
         assertValue(topicId, subject.topicId());
         assertValue(adminAuthority, subject.adminAuthority());
@@ -98,12 +108,12 @@ class TopicTest {
         assertValue(autoRenewAccount, subject.autoRenewAccount());
         assertValue(autoRenewPeriod, subject.autoRenewPeriod());
         assertValue(createdTimestamp, subject.createdTimestamp());
+        assertValue(customFeesCreatedTimestamp, subject.customFeesCreatedTimestamp());
         assertValue(deleted, subject.deleted());
         assertValue(memo, subject.memo());
         assertValue(fixedFees, subject.fixedFees());
         assertValue(feeExemptAuthorities, subject.feeExemptAuthorities());
-        assertValue(fromTimestamp, subject.fromTimestamp());
-        assertValue(toTimestamp, subject.toTimestamp());
+        assertValue(timestamp, subject.timestamp());
     }
 
     @Test
@@ -112,19 +122,19 @@ class TopicTest {
     void shouldBuildWithoutTheOptionalValues() {
         final Topic subject = Topic.builder()
                 .topicId(topicIdValue())
-                .autoRenewPeriod(autoRenewPeriodValue())
-                .createdTimestamp(createdTimestampValue())
-                .deleted(deletedValue())
                 .memo(memoValue())
-                .fixedFees(fixedFeesValue())
-                .feeExemptAuthorities(feeExemptAuthoritiesValue())
-                .fromTimestamp(fromTimestampValue())
-                .toTimestamp(toTimestampValue())
+                .timestamp(timestampValue())
                 .build();
         assertNull(subject.adminAuthority());
         assertNull(subject.submitAuthority());
         assertNull(subject.feeScheduleAuthority());
         assertNull(subject.autoRenewAccount());
+        assertNull(subject.autoRenewPeriod());
+        assertNull(subject.createdTimestamp());
+        assertNull(subject.customFeesCreatedTimestamp());
+        assertNull(subject.deleted());
+        assertValue(List.of(), subject.fixedFees());
+        assertValue(List.of(), subject.feeExemptAuthorities());
     }
 
     @Test
@@ -138,35 +148,21 @@ class TopicTest {
     @DisplayName("rejects null for topicId")
     @Tag("testId:mirrornode.topic.Topic/topicId/rejects-null")
     void shouldRejectNullTopicId() {
-        assertThrows(NullPointerException.class, () -> new Topic((Address) null, adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue()));
-    }
-
-    @Test
-    @DisplayName("rejects null for autoRenewPeriod")
-    @Tag("testId:mirrornode.topic.Topic/autoRenewPeriod/rejects-null")
-    void shouldRejectNullAutoRenewPeriod() {
-        assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), (Duration) null, createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue()));
-    }
-
-    @Test
-    @DisplayName("rejects null for createdTimestamp")
-    @Tag("testId:mirrornode.topic.Topic/createdTimestamp/rejects-null")
-    void shouldRejectNullCreatedTimestamp() {
-        assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), (ZonedDateTime) null, deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue()));
+        assertThrows(NullPointerException.class, () -> new Topic((Address) null, adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), customFeesCreatedTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), timestampValue()));
     }
 
     @Test
     @DisplayName("rejects null for memo")
     @Tag("testId:mirrornode.topic.Topic/memo/rejects-null")
     void shouldRejectNullMemo() {
-        assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), (String) null, fixedFeesValue(), feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue()));
+        assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), customFeesCreatedTimestampValue(), deletedValue(), (String) null, fixedFeesValue(), feeExemptAuthoritiesValue(), timestampValue()));
     }
 
     @Test
     @DisplayName("rejects null for fixedFees")
     @Tag("testId:mirrornode.topic.Topic/fixedFees/rejects-null")
     void shouldRejectNullFixedFees() {
-        assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), (List<FixedFee>) null, feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue()));
+        assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), customFeesCreatedTimestampValue(), deletedValue(), memoValue(), (List<FixedFee>) null, feeExemptAuthoritiesValue(), timestampValue()));
     }
 
     @Test
@@ -175,7 +171,7 @@ class TopicTest {
     void shouldCopyFixedFeesIn() {
         final List<FixedFee> value = new ArrayList<>(fixedFeesValue());
         final List<FixedFee> expected = List.copyOf(value);
-        final Topic subject = new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), value, feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue());
+        final Topic subject = new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), customFeesCreatedTimestampValue(), deletedValue(), memoValue(), value, feeExemptAuthoritiesValue(), timestampValue());
         value.clear();
         assertValue(expected, subject.fixedFees());
         assertThrows(UnsupportedOperationException.class, () -> Objects.requireNonNull(subject.fixedFees()).clear());
@@ -185,7 +181,7 @@ class TopicTest {
     @DisplayName("rejects null for feeExemptAuthorities")
     @Tag("testId:mirrornode.topic.Topic/feeExemptAuthorities/rejects-null")
     void shouldRejectNullFeeExemptAuthorities() {
-        assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), (List<Authority>) null, fromTimestampValue(), toTimestampValue()));
+        assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), customFeesCreatedTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), (List<Authority>) null, timestampValue()));
     }
 
     @Test
@@ -194,24 +190,17 @@ class TopicTest {
     void shouldCopyFeeExemptAuthoritiesIn() {
         final List<Authority> value = new ArrayList<>(feeExemptAuthoritiesValue());
         final List<Authority> expected = List.copyOf(value);
-        final Topic subject = new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), value, fromTimestampValue(), toTimestampValue());
+        final Topic subject = new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), customFeesCreatedTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), value, timestampValue());
         value.clear();
         assertValue(expected, subject.feeExemptAuthorities());
         assertThrows(UnsupportedOperationException.class, () -> Objects.requireNonNull(subject.feeExemptAuthorities()).clear());
     }
 
     @Test
-    @DisplayName("rejects null for fromTimestamp")
-    @Tag("testId:mirrornode.topic.Topic/fromTimestamp/rejects-null")
-    void shouldRejectNullFromTimestamp() {
-        assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), (ZonedDateTime) null, toTimestampValue()));
-    }
-
-    @Test
-    @DisplayName("rejects null for toTimestamp")
-    @Tag("testId:mirrornode.topic.Topic/toTimestamp/rejects-null")
-    void shouldRejectNullToTimestamp() {
-        assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), fromTimestampValue(), (ZonedDateTime) null));
+    @DisplayName("rejects null for timestamp")
+    @Tag("testId:mirrornode.topic.Topic/timestamp/rejects-null")
+    void shouldRejectNullTimestamp() {
+        assertThrows(NullPointerException.class, () -> new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), customFeesCreatedTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), (TimestampRange) null));
     }
 
     private static Address topicIdValue() {
@@ -242,6 +231,10 @@ class TopicTest {
         return ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
     }
 
+    private static ZonedDateTime customFeesCreatedTimestampValue() {
+        return ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+    }
+
     private static boolean deletedValue() {
         return true;
     }
@@ -251,22 +244,18 @@ class TopicTest {
     }
 
     private static List<FixedFee> fixedFeesValue() {
-        return List.of(new FixedFee(1L, null, null));
+        return List.of(new FixedFee(true, 1L, null, null));
     }
 
     private static List<Authority> feeExemptAuthoritiesValue() {
         return List.of(new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c").createPublicKey()));
     }
 
-    private static ZonedDateTime fromTimestampValue() {
-        return ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
-    }
-
-    private static ZonedDateTime toTimestampValue() {
-        return ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+    private static TimestampRange timestampValue() {
+        return new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null);
     }
 
     private static Topic create() {
-        return new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), fromTimestampValue(), toTimestampValue());
+        return new Topic(topicIdValue(), adminAuthorityValue(), submitAuthorityValue(), feeScheduleAuthorityValue(), autoRenewAccountValue(), autoRenewPeriodValue(), createdTimestampValue(), customFeesCreatedTimestampValue(), deletedValue(), memoValue(), fixedFeesValue(), feeExemptAuthoritiesValue(), timestampValue());
     }
 }

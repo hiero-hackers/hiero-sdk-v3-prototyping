@@ -4,6 +4,9 @@ import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Duration;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -16,28 +19,30 @@ class NetworkStakeTest {
     @DisplayName("creates a NetworkStake and returns the values")
     @Tag("testId:mirrornode.network.NetworkStake/create")
     void shouldCreateAndReturnTheValues() {
-        final long maxStakeReward = maxStakeRewardValue();
-        final long maxStakeRewardPerHbar = maxStakeRewardPerHbarValue();
+        final long maxStakeRewarded = maxStakeRewardedValue();
+        final long maxStakingRewardRatePerHbar = maxStakingRewardRatePerHbarValue();
         final long maxTotalReward = maxTotalRewardValue();
         final double nodeRewardFeeFraction = nodeRewardFeeFractionValue();
         final long reservedStakingRewards = reservedStakingRewardsValue();
         final long rewardBalanceThreshold = rewardBalanceThresholdValue();
         final long stakeTotal = stakeTotalValue();
-        final Duration stakingPeriod = stakingPeriodValue();
+        final TimestampRange stakingPeriod = stakingPeriodValue();
+        final Duration stakingPeriodDuration = stakingPeriodDurationValue();
         final long stakingPeriodsStored = stakingPeriodsStoredValue();
         final double stakingRewardFeeFraction = stakingRewardFeeFractionValue();
         final long stakingRewardRate = stakingRewardRateValue();
         final long stakingStartThreshold = stakingStartThresholdValue();
         final long unreservedStakingRewardBalance = unreservedStakingRewardBalanceValue();
-        final NetworkStake subject = new NetworkStake(maxStakeReward, maxStakeRewardPerHbar, maxTotalReward, nodeRewardFeeFraction, reservedStakingRewards, rewardBalanceThreshold, stakeTotal, stakingPeriod, stakingPeriodsStored, stakingRewardFeeFraction, stakingRewardRate, stakingStartThreshold, unreservedStakingRewardBalance);
-        assertValue(maxStakeReward, subject.maxStakeReward());
-        assertValue(maxStakeRewardPerHbar, subject.maxStakeRewardPerHbar());
+        final NetworkStake subject = new NetworkStake(maxStakeRewarded, maxStakingRewardRatePerHbar, maxTotalReward, nodeRewardFeeFraction, reservedStakingRewards, rewardBalanceThreshold, stakeTotal, stakingPeriod, stakingPeriodDuration, stakingPeriodsStored, stakingRewardFeeFraction, stakingRewardRate, stakingStartThreshold, unreservedStakingRewardBalance);
+        assertValue(maxStakeRewarded, subject.maxStakeRewarded());
+        assertValue(maxStakingRewardRatePerHbar, subject.maxStakingRewardRatePerHbar());
         assertValue(maxTotalReward, subject.maxTotalReward());
         assertValue(nodeRewardFeeFraction, subject.nodeRewardFeeFraction());
         assertValue(reservedStakingRewards, subject.reservedStakingRewards());
         assertValue(rewardBalanceThreshold, subject.rewardBalanceThreshold());
         assertValue(stakeTotal, subject.stakeTotal());
         assertValue(stakingPeriod, subject.stakingPeriod());
+        assertValue(stakingPeriodDuration, subject.stakingPeriodDuration());
         assertValue(stakingPeriodsStored, subject.stakingPeriodsStored());
         assertValue(stakingRewardFeeFraction, subject.stakingRewardFeeFraction());
         assertValue(stakingRewardRate, subject.stakingRewardRate());
@@ -49,42 +54,45 @@ class NetworkStakeTest {
     @DisplayName("the builder builds the values of the constructor")
     @Tag("testId:mirrornode.network.NetworkStake/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
-        final long maxStakeReward = maxStakeRewardValue();
-        final long maxStakeRewardPerHbar = maxStakeRewardPerHbarValue();
+        final long maxStakeRewarded = maxStakeRewardedValue();
+        final long maxStakingRewardRatePerHbar = maxStakingRewardRatePerHbarValue();
         final long maxTotalReward = maxTotalRewardValue();
         final double nodeRewardFeeFraction = nodeRewardFeeFractionValue();
         final long reservedStakingRewards = reservedStakingRewardsValue();
         final long rewardBalanceThreshold = rewardBalanceThresholdValue();
         final long stakeTotal = stakeTotalValue();
-        final Duration stakingPeriod = stakingPeriodValue();
+        final TimestampRange stakingPeriod = stakingPeriodValue();
+        final Duration stakingPeriodDuration = stakingPeriodDurationValue();
         final long stakingPeriodsStored = stakingPeriodsStoredValue();
         final double stakingRewardFeeFraction = stakingRewardFeeFractionValue();
         final long stakingRewardRate = stakingRewardRateValue();
         final long stakingStartThreshold = stakingStartThresholdValue();
         final long unreservedStakingRewardBalance = unreservedStakingRewardBalanceValue();
         final NetworkStake subject = NetworkStake.builder()
-                .maxStakeReward(maxStakeReward)
-                .maxStakeRewardPerHbar(maxStakeRewardPerHbar)
+                .maxStakeRewarded(maxStakeRewarded)
+                .maxStakingRewardRatePerHbar(maxStakingRewardRatePerHbar)
                 .maxTotalReward(maxTotalReward)
                 .nodeRewardFeeFraction(nodeRewardFeeFraction)
                 .reservedStakingRewards(reservedStakingRewards)
                 .rewardBalanceThreshold(rewardBalanceThreshold)
                 .stakeTotal(stakeTotal)
                 .stakingPeriod(stakingPeriod)
+                .stakingPeriodDuration(stakingPeriodDuration)
                 .stakingPeriodsStored(stakingPeriodsStored)
                 .stakingRewardFeeFraction(stakingRewardFeeFraction)
                 .stakingRewardRate(stakingRewardRate)
                 .stakingStartThreshold(stakingStartThreshold)
                 .unreservedStakingRewardBalance(unreservedStakingRewardBalance)
                 .build();
-        assertValue(maxStakeReward, subject.maxStakeReward());
-        assertValue(maxStakeRewardPerHbar, subject.maxStakeRewardPerHbar());
+        assertValue(maxStakeRewarded, subject.maxStakeRewarded());
+        assertValue(maxStakingRewardRatePerHbar, subject.maxStakingRewardRatePerHbar());
         assertValue(maxTotalReward, subject.maxTotalReward());
         assertValue(nodeRewardFeeFraction, subject.nodeRewardFeeFraction());
         assertValue(reservedStakingRewards, subject.reservedStakingRewards());
         assertValue(rewardBalanceThreshold, subject.rewardBalanceThreshold());
         assertValue(stakeTotal, subject.stakeTotal());
         assertValue(stakingPeriod, subject.stakingPeriod());
+        assertValue(stakingPeriodDuration, subject.stakingPeriodDuration());
         assertValue(stakingPeriodsStored, subject.stakingPeriodsStored());
         assertValue(stakingRewardFeeFraction, subject.stakingRewardFeeFraction());
         assertValue(stakingRewardRate, subject.stakingRewardRate());
@@ -97,14 +105,15 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final NetworkStake subject = NetworkStake.builder()
-                .maxStakeReward(maxStakeRewardValue())
-                .maxStakeRewardPerHbar(maxStakeRewardPerHbarValue())
+                .maxStakeRewarded(maxStakeRewardedValue())
+                .maxStakingRewardRatePerHbar(maxStakingRewardRatePerHbarValue())
                 .maxTotalReward(maxTotalRewardValue())
                 .nodeRewardFeeFraction(nodeRewardFeeFractionValue())
                 .reservedStakingRewards(reservedStakingRewardsValue())
                 .rewardBalanceThreshold(rewardBalanceThresholdValue())
                 .stakeTotal(stakeTotalValue())
                 .stakingPeriod(stakingPeriodValue())
+                .stakingPeriodDuration(stakingPeriodDurationValue())
                 .stakingPeriodsStored(stakingPeriodsStoredValue())
                 .stakingRewardFeeFraction(stakingRewardFeeFractionValue())
                 .stakingRewardRate(stakingRewardRateValue())
@@ -121,39 +130,39 @@ class NetworkStakeTest {
     }
 
     @Test
-    @DisplayName("maxStakeReward: accepts the minimum (-9223372036854775808)")
-    @Tag("testId:mirrornode.network.NetworkStake/maxStakeReward/accepts-at-minimum")
-    void shouldAcceptMaxStakeRewardAtMinimum() {
+    @DisplayName("maxStakeRewarded: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.network.NetworkStake/maxStakeRewarded/accepts-at-minimum")
+    void shouldAcceptMaxStakeRewardedAtMinimum() {
         final long value = -9223372036854775808L;
-        final NetworkStake subject = new NetworkStake(value, maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
-        assertValue(value, subject.maxStakeReward());
+        final NetworkStake subject = new NetworkStake(value, maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        assertValue(value, subject.maxStakeRewarded());
     }
 
     @Test
-    @DisplayName("maxStakeReward: accepts the maximum (9223372036854775807)")
-    @Tag("testId:mirrornode.network.NetworkStake/maxStakeReward/accepts-at-maximum")
-    void shouldAcceptMaxStakeRewardAtMaximum() {
+    @DisplayName("maxStakeRewarded: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.network.NetworkStake/maxStakeRewarded/accepts-at-maximum")
+    void shouldAcceptMaxStakeRewardedAtMaximum() {
         final long value = 9223372036854775807L;
-        final NetworkStake subject = new NetworkStake(value, maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
-        assertValue(value, subject.maxStakeReward());
+        final NetworkStake subject = new NetworkStake(value, maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        assertValue(value, subject.maxStakeRewarded());
     }
 
     @Test
-    @DisplayName("maxStakeRewardPerHbar: accepts the minimum (-9223372036854775808)")
-    @Tag("testId:mirrornode.network.NetworkStake/maxStakeRewardPerHbar/accepts-at-minimum")
-    void shouldAcceptMaxStakeRewardPerHbarAtMinimum() {
+    @DisplayName("maxStakingRewardRatePerHbar: accepts the minimum (-9223372036854775808)")
+    @Tag("testId:mirrornode.network.NetworkStake/maxStakingRewardRatePerHbar/accepts-at-minimum")
+    void shouldAcceptMaxStakingRewardRatePerHbarAtMinimum() {
         final long value = -9223372036854775808L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), value, maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
-        assertValue(value, subject.maxStakeRewardPerHbar());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), value, maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        assertValue(value, subject.maxStakingRewardRatePerHbar());
     }
 
     @Test
-    @DisplayName("maxStakeRewardPerHbar: accepts the maximum (9223372036854775807)")
-    @Tag("testId:mirrornode.network.NetworkStake/maxStakeRewardPerHbar/accepts-at-maximum")
-    void shouldAcceptMaxStakeRewardPerHbarAtMaximum() {
+    @DisplayName("maxStakingRewardRatePerHbar: accepts the maximum (9223372036854775807)")
+    @Tag("testId:mirrornode.network.NetworkStake/maxStakingRewardRatePerHbar/accepts-at-maximum")
+    void shouldAcceptMaxStakingRewardRatePerHbarAtMaximum() {
         final long value = 9223372036854775807L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), value, maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
-        assertValue(value, subject.maxStakeRewardPerHbar());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), value, maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        assertValue(value, subject.maxStakingRewardRatePerHbar());
     }
 
     @Test
@@ -161,7 +170,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/maxTotalReward/accepts-at-minimum")
     void shouldAcceptMaxTotalRewardAtMinimum() {
         final long value = -9223372036854775808L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), value, nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), value, nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
         assertValue(value, subject.maxTotalReward());
     }
 
@@ -170,7 +179,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/maxTotalReward/accepts-at-maximum")
     void shouldAcceptMaxTotalRewardAtMaximum() {
         final long value = 9223372036854775807L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), value, nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), value, nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
         assertValue(value, subject.maxTotalReward());
     }
 
@@ -179,7 +188,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/reservedStakingRewards/accepts-at-minimum")
     void shouldAcceptReservedStakingRewardsAtMinimum() {
         final long value = -9223372036854775808L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), value, rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), value, rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
         assertValue(value, subject.reservedStakingRewards());
     }
 
@@ -188,7 +197,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/reservedStakingRewards/accepts-at-maximum")
     void shouldAcceptReservedStakingRewardsAtMaximum() {
         final long value = 9223372036854775807L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), value, rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), value, rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
         assertValue(value, subject.reservedStakingRewards());
     }
 
@@ -197,7 +206,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/rewardBalanceThreshold/accepts-at-minimum")
     void shouldAcceptRewardBalanceThresholdAtMinimum() {
         final long value = -9223372036854775808L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), value, stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), value, stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
         assertValue(value, subject.rewardBalanceThreshold());
     }
 
@@ -206,7 +215,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/rewardBalanceThreshold/accepts-at-maximum")
     void shouldAcceptRewardBalanceThresholdAtMaximum() {
         final long value = 9223372036854775807L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), value, stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), value, stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
         assertValue(value, subject.rewardBalanceThreshold());
     }
 
@@ -215,7 +224,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/stakeTotal/accepts-at-minimum")
     void shouldAcceptStakeTotalAtMinimum() {
         final long value = -9223372036854775808L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), value, stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), value, stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
         assertValue(value, subject.stakeTotal());
     }
 
@@ -224,7 +233,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/stakeTotal/accepts-at-maximum")
     void shouldAcceptStakeTotalAtMaximum() {
         final long value = 9223372036854775807L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), value, stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), value, stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
         assertValue(value, subject.stakeTotal());
     }
 
@@ -232,7 +241,14 @@ class NetworkStakeTest {
     @DisplayName("rejects null for stakingPeriod")
     @Tag("testId:mirrornode.network.NetworkStake/stakingPeriod/rejects-null")
     void shouldRejectNullStakingPeriod() {
-        assertThrows(NullPointerException.class, () -> new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), (Duration) null, stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue()));
+        assertThrows(NullPointerException.class, () -> new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), (TimestampRange) null, stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue()));
+    }
+
+    @Test
+    @DisplayName("rejects null for stakingPeriodDuration")
+    @Tag("testId:mirrornode.network.NetworkStake/stakingPeriodDuration/rejects-null")
+    void shouldRejectNullStakingPeriodDuration() {
+        assertThrows(NullPointerException.class, () -> new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), (Duration) null, stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue()));
     }
 
     @Test
@@ -240,7 +256,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/stakingPeriodsStored/accepts-at-minimum")
     void shouldAcceptStakingPeriodsStoredAtMinimum() {
         final long value = -9223372036854775808L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), value, stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), value, stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
         assertValue(value, subject.stakingPeriodsStored());
     }
 
@@ -249,7 +265,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/stakingPeriodsStored/accepts-at-maximum")
     void shouldAcceptStakingPeriodsStoredAtMaximum() {
         final long value = 9223372036854775807L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), value, stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), value, stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
         assertValue(value, subject.stakingPeriodsStored());
     }
 
@@ -258,7 +274,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/stakingRewardRate/accepts-at-minimum")
     void shouldAcceptStakingRewardRateAtMinimum() {
         final long value = -9223372036854775808L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), value, stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), value, stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
         assertValue(value, subject.stakingRewardRate());
     }
 
@@ -267,7 +283,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/stakingRewardRate/accepts-at-maximum")
     void shouldAcceptStakingRewardRateAtMaximum() {
         final long value = 9223372036854775807L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), value, stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), value, stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
         assertValue(value, subject.stakingRewardRate());
     }
 
@@ -276,7 +292,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/stakingStartThreshold/accepts-at-minimum")
     void shouldAcceptStakingStartThresholdAtMinimum() {
         final long value = -9223372036854775808L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), value, unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), value, unreservedStakingRewardBalanceValue());
         assertValue(value, subject.stakingStartThreshold());
     }
 
@@ -285,7 +301,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/stakingStartThreshold/accepts-at-maximum")
     void shouldAcceptStakingStartThresholdAtMaximum() {
         final long value = 9223372036854775807L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), value, unreservedStakingRewardBalanceValue());
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), value, unreservedStakingRewardBalanceValue());
         assertValue(value, subject.stakingStartThreshold());
     }
 
@@ -294,7 +310,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/unreservedStakingRewardBalance/accepts-at-minimum")
     void shouldAcceptUnreservedStakingRewardBalanceAtMinimum() {
         final long value = -9223372036854775808L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), value);
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), value);
         assertValue(value, subject.unreservedStakingRewardBalance());
     }
 
@@ -303,7 +319,7 @@ class NetworkStakeTest {
     @Tag("testId:mirrornode.network.NetworkStake/unreservedStakingRewardBalance/accepts-at-maximum")
     void shouldAcceptUnreservedStakingRewardBalanceAtMaximum() {
         final long value = 9223372036854775807L;
-        final NetworkStake subject = new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), value);
+        final NetworkStake subject = new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), value);
         assertValue(value, subject.unreservedStakingRewardBalance());
     }
 
@@ -317,11 +333,11 @@ class NetworkStakeTest {
         assertEquals(subject.hashCode(), other.hashCode());
     }
 
-    private static long maxStakeRewardValue() {
+    private static long maxStakeRewardedValue() {
         return 1L;
     }
 
-    private static long maxStakeRewardPerHbarValue() {
+    private static long maxStakingRewardRatePerHbarValue() {
         return 1L;
     }
 
@@ -345,7 +361,11 @@ class NetworkStakeTest {
         return 1L;
     }
 
-    private static Duration stakingPeriodValue() {
+    private static TimestampRange stakingPeriodValue() {
+        return new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null);
+    }
+
+    private static Duration stakingPeriodDurationValue() {
         return Duration.ofSeconds(1L);
     }
 
@@ -370,6 +390,6 @@ class NetworkStakeTest {
     }
 
     private static NetworkStake create() {
-        return new NetworkStake(maxStakeRewardValue(), maxStakeRewardPerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
+        return new NetworkStake(maxStakeRewardedValue(), maxStakingRewardRatePerHbarValue(), maxTotalRewardValue(), nodeRewardFeeFractionValue(), reservedStakingRewardsValue(), rewardBalanceThresholdValue(), stakeTotalValue(), stakingPeriodValue(), stakingPeriodDurationValue(), stakingPeriodsStoredValue(), stakingRewardFeeFractionValue(), stakingRewardRateValue(), stakingStartThresholdValue(), unreservedStakingRewardBalanceValue());
     }
 }

@@ -1,8 +1,16 @@
 package org.hiero.mirrornode.network;
 
+import java.time.ZonedDateTime;
 import java.util.Objects;
+import org.jspecify.annotations.Nullable;
 
-public record ExchangeRates(ExchangeRate currentRate, ExchangeRate nextRate) {
+/// The current and the next exchange rate between HBAR and US cents.
+///
+/// @param timestamp consensus time at which the rates were valid
+public record ExchangeRates(
+        ExchangeRate currentRate,
+        ExchangeRate nextRate,
+        @Nullable ZonedDateTime timestamp) {
 
     /// Creates a new `ExchangeRates`.
     ///

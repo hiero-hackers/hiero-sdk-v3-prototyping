@@ -74,8 +74,14 @@ final class PyMembers {
         shadowed = Set.copyOf(names);
     }
 
-    /** An annotation with every shadowed builtin qualified, so that it names the type and not the member. */
-    private String annotation(final String rendered, final PyImports imports) {
+    /**
+     * An annotation with every shadowed builtin qualified, so that it names the type and not the member.
+     *
+     * @param rendered the rendered annotation
+     * @param imports the imports of the module
+     * @return the annotation
+     */
+    String annotation(final String rendered, final PyImports imports) {
         String text = rendered;
         for (final String builtin : shadowed) {
             if (text.matches(".*\\b" + builtin + "\\b.*")) {

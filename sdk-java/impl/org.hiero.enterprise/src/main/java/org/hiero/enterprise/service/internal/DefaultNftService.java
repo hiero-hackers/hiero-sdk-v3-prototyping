@@ -112,7 +112,7 @@ public final class DefaultNftService extends NftService {
         final AccountId treasury = session.query(new TokenInfoQuery(tokenId)).treasuryAccountId();
         final List<Nft> nfts = new ArrayList<>(serials.size());
         for (int i = 0; i < serials.size(); i++) {
-            nfts.add(new Nft(tokenId, serials.get(i), treasury, values.get(i)));
+            nfts.add(new Nft(tokenId, serials.get(i), treasury, values.get(i), null, null, null, null, false));
         }
         return List.copyOf(nfts);
     }
@@ -126,7 +126,7 @@ public final class DefaultNftService extends NftService {
     @Override
     public void burnNft(final Nft nft) {
         Objects.requireNonNull(nft, "nft must not be null");
-        burnNft(nft.tokenId(), nft.serial());
+        burnNft(nft.tokenId(), nft.serialNumber());
     }
 
     @Override
@@ -140,7 +140,7 @@ public final class DefaultNftService extends NftService {
     public void burnNfts(final Set<Nft> nfts) {
         Objects.requireNonNull(nfts, "nfts must not be null");
         final Map<Address, List<Long>> byType = new LinkedHashMap<>();
-        nfts.forEach(nft -> byType.computeIfAbsent(nft.tokenId(), type -> new ArrayList<>()).add(nft.serial()));
+        nfts.forEach(nft -> byType.computeIfAbsent(nft.tokenId(), type -> new ArrayList<>()).add(nft.serialNumber()));
         byType.forEach((tokenId, serials) -> session.execute(
                 new TokenBurnNftTransaction(tokenId, serials.stream().sorted().toList())));
     }
@@ -154,7 +154,7 @@ public final class DefaultNftService extends NftService {
     @Override
     public void transferNfts(final Nft nft, final AccountId fromAccountId, final AccountId toAccountId) {
         Objects.requireNonNull(nft, "nft must not be null");
-        transferNfts(nft.tokenId(), List.of(nft.serial()), fromAccountId, toAccountId);
+        transferNfts(nft.tokenId(), List.of(nft.serialNumber()), fromAccountId, toAccountId);
     }
 
     @Override
@@ -173,7 +173,7 @@ public final class DefaultNftService extends NftService {
         Objects.requireNonNull(nfts, "nfts must not be null");
         Objects.requireNonNull(fromAccountId, "fromAccountId must not be null");
         Objects.requireNonNull(toAccountId, "toAccountId must not be null");
-        transfer(nfts.stream().map(nft -> new NftTransfer(nft.tokenId(), nft.serial(), fromAccountId, toAccountId))
+        transfer(nfts.stream().map(nft -> new NftTransfer(nft.tokenId(), nft.serialNumber(), fromAccountId, toAccountId))
                 .toList());
     }
 
@@ -228,6 +228,6 @@ public final class DefaultNftService extends NftService {
             final long serialNumber) {
         Objects.requireNonNull(ownerId, "ownerId must not be null");
         final Nft nft = findByTypeAndSerial(tokenId, serialNumber);
-        return nft != null && ownerId.equals(nft.owner()) ? nft : null;
+        return nft != null && ownerId.equals(nft.accountId()) ? nft : null;
     }
 }

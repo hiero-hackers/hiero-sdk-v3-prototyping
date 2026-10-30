@@ -14,8 +14,8 @@ static JSON files baked into a release. Each consensus node is identified by a n
   to submit transactions.
 - A **gossip CA certificate** (`gossipCaCertificate`) — the X.509 certificate (DER bytes)
   used to terminate mutual TLS on the gossip channel.
-- A **gRPC certificate hash** (`grpcCertificateHash`) — SHA-384 of the certificate served
-  on the public gRPC endpoints; clients pin against this hash.
+- An optional **gRPC certificate hash** (`grpcCertificateHash`) — SHA-384 of the certificate
+  served on the public gRPC endpoints; clients can pin against this hash.
 - An **`adminAuthority`** — required to update or delete the node entry. There is no system-key
   override here; rotating the admin key requires both the old and new keys.
 - A **`declineReward`** flag — when `true`, the node opts out of receiving staking rewards.
@@ -112,8 +112,9 @@ type ServiceEndpoint {
     @@immutable port: uint16                      // listening port (0 is invalid)
 }
 
-// Registers a new consensus node in the address book. All endpoint, certificate, and key
-// fields are required; the network has no defaults for any of them.
+// Registers a new consensus node in the address book. The endpoints, the gossip CA certificate
+// and the keys are required; the network has no defaults for any of them. The gRPC certificate
+// hash is optional.
 @@finalType
 NodeCreateTransaction extends Transaction<NodeCreateReceipt, NodeCreateTransaction> {
     @@immutable accountId: AccountId                                     // account that receives the node's staking rewards
@@ -121,7 +122,7 @@ NodeCreateTransaction extends Transaction<NodeCreateReceipt, NodeCreateTransacti
     @@immutable @@minSize(1) @@maxSize(10) gossipEndpoints: list<ServiceEndpoint>   // inter-node hashgraph gossip endpoints
     @@immutable @@minSize(1) @@maxSize(8) serviceEndpoints: list<ServiceEndpoint>   // public gRPC endpoints for client transactions
     @@immutable gossipCaCertificate: bytes                               // X.509 DER bytes of the certificate that terminates mutual TLS for gossip
-    @@immutable grpcCertificateHash: bytes                               // SHA-384 of the certificate served on serviceEndpoints; clients pin against this
+    @@immutable @@nullable grpcCertificateHash: bytes                    // SHA-384 of the certificate served on serviceEndpoints; clients can pin against this
     @@immutable adminAuthority: Authority                                    // required to update / delete the node; must co-sign this create
     @@immutable @@default(false) declineReward: bool                     // true → node opts out of staking rewards
     @@immutable @@nullable grpcWebProxyEndpoint: ServiceEndpoint         // optional gRPC-web proxy endpoint (HIP-1046)
@@ -372,6 +373,18 @@ test "a node create transaction takes the reward and has no description and no p
     assertNull(actual: transaction.grpcWebProxyEndpoint)
 }
 
+// Source: HAPI node_create.proto (grpc_certificate_hash: "This field is OPTIONAL"); `@@nullable` of this spec.
+@@testId("a-node-create-transaction-needs-no-grpc-certificate-hash")
+test "a node create transaction needs no gRPC certificate hash" {
+    // when
+    let transaction = NodeCreateTransaction{accountId: DEFAULT(AccountId), gossipEndpoints: [DEFAULT(ServiceEndpoint)],
+            serviceEndpoints: [NODE_DOMAIN_ENDPOINT], gossipCaCertificate: GOSSIP_CA_CERTIFICATE,
+            adminAuthority: DEFAULT(Authority)}
+
+    // then
+    assertNull(actual: transaction.grpcCertificateHash)
+}
+
 // Source: HAPI node_create.proto (gossip_endpoint: "This list MUST NOT be empty"); `@@minSize(1)` of this spec.
 @@testId("a-node-create-transaction-without-gossip-endpoints-is-rejected")
 test "a node create transaction without gossip endpoints is rejected" {
@@ -556,8 +569,8 @@ test "a node create transaction with a description of more than 100 UTF-8 bytes 
   - An empty `gossipCaCertificate` is rejected by the network (`INVALID_GOSSIP_CA_CERTIFICATE`) and by the Java, Go
     and Python SDKs: `@@minSize(1)` on both transactions?
   - A `nodeId` below 0 is rejected by the network (`INVALID_NODE_ID`) and by the Java SDK: `@@min(0)`?
-  - `grpcCertificateHash` is optional in HAPI `NodeCreateTransactionBody`, but required here; the network does not
-    check its length (48 bytes for SHA-384), only that an update does not set it empty.
+  - The network does not check the length of `grpcCertificateHash` (48 bytes for SHA-384), only that an update does
+    not set it empty: `@@minSize(1)` on both transactions?
   - The comment "0 is invalid" of `ServiceEndpoint.port` holds only for gossip and service endpoints: the network does
     not check the port of `grpcWebProxyEndpoint` (an all-default endpoint unsets it on update), and address books
     read from the network contain port 0 (the Go and Rust SDKs map it to 50211). So `@@min(1)` cannot go on the

@@ -1,7 +1,6 @@
 package org.hiero.mirrornode.internal;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -21,16 +20,13 @@ import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;
 import org.hiero.ledger.EvmAddress;
 import org.hiero.ledger.TransactionId;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.hiero.mirrornode.internal.Json.JsonObject;
 import org.jspecify.annotations.Nullable;
 
 /// The conversions of the value formats of the Mirror Node REST API: entity ids, timestamps, transaction ids, Base64,
 /// Base32 and keys.
 public final class Values {
-
-    /// Stands in for the open end of a timestamp range (`to: null`, the current state) where the API type requires an
-    /// end: the latest representable time.
-    public static final ZonedDateTime OPEN_END = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC);
 
     private static final Pattern TIMESTAMP = Pattern.compile("(\\d+)(?:\\.(\\d{1,9}))?");
     private static final Pattern MIRROR_TRANSACTION_ID = Pattern.compile("(\\d+\\.\\d+\\.\\d+)-(\\d+)-(\\d+)");
@@ -70,23 +66,31 @@ public final class Values {
         return time;
     }
 
-    /// Returns the start of the timestamp range member `name` ({from, to}) of `json`.
+    /// Returns the required timestamp range member `name` ({from, to}) of `json`.
     ///
     /// @param json the object
     /// @param name the member name of the range
-    /// @return the start of the range
-    public static ZonedDateTime rangeFrom(final JsonObject json, final String name) {
-        return requiredTimestamp(json.object(name), "from");
+    /// @return the range; its end is `null` while the range is open
+    public static TimestampRange range(final JsonObject json, final String name) {
+        final TimestampRange range = optRange(json, name);
+        if (range == null) {
+            throw new IllegalArgumentException("member '" + name + "' is missing");
+        }
+        return range;
     }
 
-    /// Returns the end of the timestamp range member `name` of `json`, or `OPEN_END` if the range is open.
+    /// Returns the timestamp range member `name` ({from, to}) of `json`, or `null` if it is absent or has no start.
     ///
     /// @param json the object
     /// @param name the member name of the range
-    /// @return the end of the range
-    public static ZonedDateTime rangeTo(final JsonObject json, final String name) {
-        final ZonedDateTime to = timestamp(json.object(name).optString("to"));
-        return to == null ? OPEN_END : to;
+    /// @return the range, or `null`
+    public static @Nullable TimestampRange optRange(final JsonObject json, final String name) {
+        final JsonObject range = json.optObject(name);
+        if (range == null) {
+            return null;
+        }
+        final ZonedDateTime from = timestamp(range.optString("from"));
+        return from == null ? null : new TimestampRange(from, timestamp(range.optString("to")));
     }
 
     /// Returns a time given as integer seconds since the epoch.

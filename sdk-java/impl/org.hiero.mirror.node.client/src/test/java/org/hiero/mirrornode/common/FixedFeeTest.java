@@ -18,27 +18,40 @@ class FixedFeeTest {
     @DisplayName("creates a FixedFee and returns the values")
     @Tag("testId:mirrornode.common.FixedFee/create")
     void shouldCreateAndReturnTheValues() {
+        final boolean allCollectorsAreExempt = allCollectorsAreExemptValue();
         final long amount = amountValue();
         final @Nullable AccountId collectorAccountId = collectorAccountIdValue();
         final @Nullable Address denominatingTokenId = denominatingTokenIdValue();
-        final FixedFee subject = new FixedFee(amount, collectorAccountId, denominatingTokenId);
+        final FixedFee subject = new FixedFee(allCollectorsAreExempt, amount, collectorAccountId, denominatingTokenId);
+        assertValue(allCollectorsAreExempt, subject.allCollectorsAreExempt());
         assertValue(amount, subject.amount());
         assertValue(collectorAccountId, subject.collectorAccountId());
         assertValue(denominatingTokenId, subject.denominatingTokenId());
     }
 
     @Test
+    @DisplayName("creates a FixedFee with the default values")
+    @Tag("testId:mirrornode.common.FixedFee/create-with-defaults")
+    void shouldCreateWithTheDefaultValues() {
+        final FixedFee subject = new FixedFee(amountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
+        assertValue(false, subject.allCollectorsAreExempt());
+    }
+
+    @Test
     @DisplayName("the builder builds the values of the constructor")
     @Tag("testId:mirrornode.common.FixedFee/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
+        final boolean allCollectorsAreExempt = allCollectorsAreExemptValue();
         final long amount = amountValue();
         final @Nullable AccountId collectorAccountId = collectorAccountIdValue();
         final @Nullable Address denominatingTokenId = denominatingTokenIdValue();
         final FixedFee subject = FixedFee.builder()
+                .allCollectorsAreExempt(allCollectorsAreExempt)
                 .amount(amount)
                 .collectorAccountId(collectorAccountId)
                 .denominatingTokenId(denominatingTokenId)
                 .build();
+        assertValue(allCollectorsAreExempt, subject.allCollectorsAreExempt());
         assertValue(amount, subject.amount());
         assertValue(collectorAccountId, subject.collectorAccountId());
         assertValue(denominatingTokenId, subject.denominatingTokenId());
@@ -51,6 +64,7 @@ class FixedFeeTest {
         final FixedFee subject = FixedFee.builder()
                 .amount(amountValue())
                 .build();
+        assertValue(false, subject.allCollectorsAreExempt());
         assertNull(subject.collectorAccountId());
         assertNull(subject.denominatingTokenId());
     }
@@ -67,7 +81,7 @@ class FixedFeeTest {
     @Tag("testId:mirrornode.common.FixedFee/amount/accepts-at-minimum")
     void shouldAcceptAmountAtMinimum() {
         final long value = -9223372036854775808L;
-        final FixedFee subject = new FixedFee(value, collectorAccountIdValue(), denominatingTokenIdValue());
+        final FixedFee subject = new FixedFee(allCollectorsAreExemptValue(), value, collectorAccountIdValue(), denominatingTokenIdValue());
         assertValue(value, subject.amount());
     }
 
@@ -76,7 +90,7 @@ class FixedFeeTest {
     @Tag("testId:mirrornode.common.FixedFee/amount/accepts-at-maximum")
     void shouldAcceptAmountAtMaximum() {
         final long value = 9223372036854775807L;
-        final FixedFee subject = new FixedFee(value, collectorAccountIdValue(), denominatingTokenIdValue());
+        final FixedFee subject = new FixedFee(allCollectorsAreExemptValue(), value, collectorAccountIdValue(), denominatingTokenIdValue());
         assertValue(value, subject.amount());
     }
 
@@ -88,6 +102,10 @@ class FixedFeeTest {
         final FixedFee other = create();
         assertEquals(subject, other);
         assertEquals(subject.hashCode(), other.hashCode());
+    }
+
+    private static boolean allCollectorsAreExemptValue() {
+        return true;
     }
 
     private static long amountValue() {
@@ -103,6 +121,6 @@ class FixedFeeTest {
     }
 
     private static FixedFee create() {
-        return new FixedFee(amountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
+        return new FixedFee(allCollectorsAreExemptValue(), amountValue(), collectorAccountIdValue(), denominatingTokenIdValue());
     }
 }

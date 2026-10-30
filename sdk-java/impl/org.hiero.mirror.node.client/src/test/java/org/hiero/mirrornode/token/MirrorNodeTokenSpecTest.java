@@ -29,12 +29,12 @@ class MirrorNodeTokenSpecTest {
     void customFeesKeepTheirFixedFractionalAndRoyaltyFees() {
         // given
         final AccountId collector = AccountId.fromString("1.2.3");
-        final FixedFee fixed = new FixedFee(4L, collector, null);
-        final FractionalFee fractional = new FractionalFee(4L, 5L, collector, null);
-        final RoyaltyFee royalty = new RoyaltyFee(4L, 5L, 6L, collector, null);
+        final FixedFee fixed = new FixedFee(false, 4L, collector, null);
+        final FractionalFee fractional = new FractionalFee(4L, 5L, collector, null, false, null, 0L, false);
+        final RoyaltyFee royalty = new RoyaltyFee(4L, 5L, 6L, collector, null, false);
 
         // when
-        final CustomFee fees = new CustomFee(List.of(fixed), List.of(fractional), List.of(royalty));
+        final CustomFee fees = new CustomFee(List.of(fixed), List.of(fractional), List.of(royalty), null);
 
         // then
         assertEquals(List.of(fixed), fees.fixedFees());
@@ -54,7 +54,7 @@ class MirrorNodeTokenSpecTest {
     @Tag("testId:mirrornode.token/custom-fees-without-fees-have-three-empty-lists")
     void customFeesWithoutFeesHaveThreeEmptyLists() {
         // when
-        final CustomFee fees = new CustomFee(List.of(), List.of(), List.of());
+        final CustomFee fees = new CustomFee(List.of(), List.of(), List.of(), null);
 
         // then
         assertEquals(0L, length(fees.fixedFees()));
@@ -75,10 +75,10 @@ class MirrorNodeTokenSpecTest {
         final ZonedDateTime created = toZonedDateTime("2024-02-01T19:36:26.275Z");
         final ZonedDateTime modified = toZonedDateTime("2024-02-01T19:40:44.138Z");
         final ZonedDateTime expiry = toZonedDateTime("2024-04-22T20:03:05.275Z");
-        final CustomFee fees = new CustomFee(List.of(), List.of(), List.of());
+        final CustomFee fees = new CustomFee(List.of(), List.of(), List.of(), null);
 
         // when
-        final TokenInfo info = new TokenInfo(Address.fromString("0.0.1267"), TokenType.FUNGIBLE_COMMON, "fungible_name", "fungible", null, 10L, new byte[0], created, modified, expiry, TokenSupplyType.INFINITE, new BigInteger("1000000"), new BigInteger("0"), new BigInteger("0"), AccountId.fromString("0.0.1245"), true, fees);
+        final TokenInfo info = new TokenInfo(Address.fromString("0.0.1267"), TokenType.FUNGIBLE_COMMON, "fungible_name", "fungible", null, 10L, new byte[0], created, modified, expiry, TokenSupplyType.INFINITE, new BigInteger("1000000"), new BigInteger("0"), new BigInteger("0"), AccountId.fromString("0.0.1245"), true, fees, null, null, null, null, false, null, null, null, null, TokenPauseStatus.NOT_APPLICABLE, null, null);
 
         // then
         assertEquals(toZonedDateTime("2024-02-01T19:36:26.275Z"), info.createdTimestamp());
@@ -88,7 +88,7 @@ class MirrorNodeTokenSpecTest {
         assertEquals(TokenSupplyType.INFINITE, info.supplyType());
         assertEquals(new BigInteger("1000000"), info.initialSupply());
         assertEquals(AccountId.fromString("0.0.1245"), info.treasuryAccountId());
-        assertTrue(info.deleted());
+        assertEquals(true, info.deleted());
         assertEquals(fees, info.customFees());
     }
 
@@ -103,7 +103,7 @@ class MirrorNodeTokenSpecTest {
         final ZonedDateTime time = ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 
         // when
-        final TokenInfo info = new TokenInfo(Address.fromString("0.0.1267"), TokenType.NON_FUNGIBLE_UNIQUE, "nft_name", "nft", null, 0L, new byte[0], time, time, null, TokenSupplyType.FINITE, new BigInteger("0"), new BigInteger("0"), new BigInteger("100"), defaultAccountId(), false, new CustomFee(List.of(), List.of(), List.of()));
+        final TokenInfo info = new TokenInfo(Address.fromString("0.0.1267"), TokenType.NON_FUNGIBLE_UNIQUE, "nft_name", "nft", null, 0L, new byte[0], time, time, null, TokenSupplyType.FINITE, new BigInteger("0"), new BigInteger("0"), new BigInteger("100"), defaultAccountId(), false, new CustomFee(List.of(), List.of(), List.of(), null), null, null, null, null, false, null, null, null, null, TokenPauseStatus.NOT_APPLICABLE, null, null);
 
         // then
         assertNull(info.expiryTimestamp());

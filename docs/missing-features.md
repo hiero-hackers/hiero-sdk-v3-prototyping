@@ -374,42 +374,29 @@ codes should ship in the standard mapping. Also missing: `TokenKeyValidation`
 
 ---
 
-## 4. `mirror-node-client` — missing endpoints
+## 4. `mirror-node-client` — coverage of the REST API
 
-### 4.1 Entirely missing domains
+The specs cover the pinned OpenAPI definition of the mirror node (`tooling/openapi/mirror-node/openapi.yml`,
+v0.164.0) completely: all 48 operations, every query parameter and every response field. Deliberate deviations are
+listed in the `## Design Notes` of each `spec/mirror-node-client/*.md`; the conventions are in
+[`mirror-node.md`](../spec/mirror-node-client/mirror-node.md).
 
-| Domain | V3 spec |
-| --- | --- |
-| **Blocks** (HIP-415): `GET /blocks`, `GET /blocks/{hashOrNumber}` | :x: |
-| **Schedules**: `GET /schedules`, `GET /schedules/{id}` (filters: `executed`, `account.id`, `schedule.id`) | :x: |
+Still open:
 
-### 4.2 Missing endpoints per existing domain
-
-**Contracts** — missing:
-
-- `GET /contracts/{id}/results`, `/results/{txIdOrHash}`,
-  `/results/{timestamp}`, `/results/{txIdOrHash}/actions`
-- `GET /contracts/{id}/state`
-- `GET /contracts/{id}/results/logs`, `/results/opcodes`
-- `GET /contracts/logs` (filter `topic0`..`topic3`)
-- `POST /contracts/call` (HIP-584 / HIP-1027, `eth_call` equivalent)
-
-**Tokens** — missing:
-
-- `GET /tokens/{id}/nfts/{serial}/transactions` (NFT history)
-
-**Transactions** — missing:
-
-- `GET /transactions/{txId}/stateproof`
-
-### 4.3 Query parameter / filter concepts
-
-- **Range / operator filters** on `timestamp`, `balance`, `sequencenumber`
-  (`eq:`, `gt:`, `gte:`, `lt:`, `lte:`, `ne:` plus double-parameter ranges) —
-  no generic model in the spec
-- **Cursor-based pagination** via `links.next` — `Page<$$T>` exists, but no
-  token / cursor concept is documented
-- `order` (ASC / DESC), `limit` (max 100) — missing throughout
+- **An automatic coverage check** that compares the pinned OpenAPI definition with the specs and reports every
+  element that neither has a counterpart nor is listed as a deviation (see `tooling/openapi/README.md`). Until then
+  coverage is reviewed by hand.
+- **Typed conditions.** A query parameter that accepts the operators `eq`/`ne`/`gt`/`gte`/`lt`/`lte` is a
+  `list<string>` in REST syntax (first step: coverage over type safety). A typed condition model (value type +
+  operator) is the next step.
+- **Long parameter lists.** The full overload of an endpoint has up to nine parameters; in Java and Go every omitted
+  one is a `null` or an empty list. An options object / builder per language is open.
+- **`@@pattern` on list elements.** The patterns of the OpenAPI definition for the condition strings are not checked
+  by the SDK; the meta-language has no annotation for the elements of a `list<string>`.
+- **Response-level values of list endpoints** (e.g. the `timestamp` of `/balances` and `/tokens/{id}/balances`) have
+  no place in `Page<$$T>`.
+- **Cursor-based pagination** via `links.next` — `Page<$$T>` exists (`pageIndex` is counted by the SDK, `first()`
+  repeats the original request), but no token / cursor concept is documented.
 
 ---
 

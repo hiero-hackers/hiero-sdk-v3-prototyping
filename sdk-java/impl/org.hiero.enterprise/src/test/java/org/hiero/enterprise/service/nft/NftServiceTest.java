@@ -386,7 +386,7 @@ class NftServiceTest {
     }
 
     private static Nft nftValue() {
-        return new Nft(new Address(0L, 0L, "", 1001L), 1L, new AccountId(0L, 0L, "", 1001L, null, null), new byte[] {1, 2, 3});
+        return new Nft(new Address(0L, 0L, "", 1001L), 1L, new AccountId(0L, 0L, "", 1001L, null, null), new byte[] {1, 2, 3}, null, null, null, null, false);
     }
 
     private static Set<Long> serialNumbersValue() {
@@ -394,7 +394,7 @@ class NftServiceTest {
     }
 
     private static Set<Nft> nftsValue() {
-        return Set.of(new Nft(new Address(0L, 0L, "", 1001L), 1L, new AccountId(0L, 0L, "", 1001L, null, null), new byte[] {1, 2, 3}));
+        return Set.of(new Nft(new Address(0L, 0L, "", 1001L), 1L, new AccountId(0L, 0L, "", 1001L, null, null), new byte[] {1, 2, 3}, null, null, null, null, false));
     }
 
     private static AccountId fromAccountIdValue() {

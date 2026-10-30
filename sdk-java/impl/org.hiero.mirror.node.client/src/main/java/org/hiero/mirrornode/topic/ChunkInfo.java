@@ -4,6 +4,13 @@ import java.util.Objects;
 import org.hiero.ledger.TransactionId;
 import org.jspecify.annotations.Nullable;
 
+/// The chunk of a message that was submitted in several chunks.
+///
+/// @param initialTransactionId the transaction of the first chunk
+/// @param nonce the nonce of the initial transaction
+/// @param number the number of this chunk, starting at 1
+/// @param total the number of chunks of the message
+/// @param scheduled whether the initial transaction was scheduled
 public record ChunkInfo(
         TransactionId initialTransactionId,
         int nonce,
@@ -44,6 +51,8 @@ public record ChunkInfo(
 
         /// Sets the `initialTransactionId`.
         ///
+        /// the transaction of the first chunk
+        ///
         /// @param initialTransactionId the value
         /// @return this builder
         public Builder initialTransactionId(final TransactionId initialTransactionId) {
@@ -52,6 +61,8 @@ public record ChunkInfo(
         }
 
         /// Sets the `nonce`.
+        ///
+        /// the nonce of the initial transaction
         ///
         /// @param nonce the value
         /// @return this builder
@@ -62,6 +73,8 @@ public record ChunkInfo(
 
         /// Sets the `number`.
         ///
+        /// the number of this chunk, starting at 1
+        ///
         /// @param number the value
         /// @return this builder
         public Builder number(final int number) {
@@ -71,6 +84,8 @@ public record ChunkInfo(
 
         /// Sets the `total`.
         ///
+        /// the number of chunks of the message
+        ///
         /// @param total the value
         /// @return this builder
         public Builder total(final int total) {
@@ -79,6 +94,8 @@ public record ChunkInfo(
         }
 
         /// Sets the `scheduled`.
+        ///
+        /// whether the initial transaction was scheduled
         ///
         /// @param scheduled the value
         /// @return this builder

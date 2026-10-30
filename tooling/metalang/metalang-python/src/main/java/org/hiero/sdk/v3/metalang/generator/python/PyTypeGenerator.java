@@ -86,6 +86,7 @@ final class PyTypeGenerator {
         if (!doc.isEmpty()) {
             declarations.add(doc);
         }
+        members.owner(definition);
         for (final FieldDefinition field : fields) {
             declarations.add(INDENT + PyNames.identifier(field.name()) + ": " + fieldType(field, imports)
                     + defaultValue(field, imports) + "\n" + PyDoc.of(INDENT, field.documentation(), field));
@@ -138,6 +139,7 @@ final class PyTypeGenerator {
         if (!doc.isEmpty()) {
             declarations.add(doc);
         }
+        members.owner(definition);
         for (final FieldDefinition field : definition.declaredFields()) {
             final String name = PyNames.identifier(field.name());
             final String type = fieldType(field, imports);
@@ -274,7 +276,8 @@ final class PyTypeGenerator {
 
     /** The annotation of an attribute: {@code T | None} when it is nullable. */
     private String fieldType(final FieldDefinition field, final PyImports imports) {
-        final String type = context.type(field.type(), imports);
+        // an attribute named like a builtin (`bytes`) shadows it for the annotations after it in the class body
+        final String type = members.annotation(context.type(field.type(), imports), imports);
         return field.hasAnnotation("nullable") && !"object".equals(type) ? type + " | None" : type;
     }
 

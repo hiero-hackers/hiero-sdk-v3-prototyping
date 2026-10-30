@@ -80,8 +80,9 @@ built, and the transaction succeeds. The TCK expects `TOKEN_ID_REPEATED_IN_TOKEN
 
 ## Not counted here
 
-- **`grpcCertificateHash`** (41 tests, `createNode`) is a gap of the spec, not a check of an invalid input: the
-  attribute is optional in the protocol but required in V3, so valid `createNode` requests fail as well.
+- **`grpcCertificateHash`** (41 tests, `createNode`) was a gap of the spec, not a check of an invalid input: the
+  attribute is optional in the protocol but was required in V3, so valid `createNode` requests failed as well. Fixed:
+  it is optional in `NodeCreateTransaction` now; these tests still have to be run again.
 - **Empty key list** to remove a key (8 tests, token and topic update) is a gap of the spec: "remove a key" is a
   separate, not yet specified operation (ADR-0004), an empty `AuthorityList` is not allowed.
 

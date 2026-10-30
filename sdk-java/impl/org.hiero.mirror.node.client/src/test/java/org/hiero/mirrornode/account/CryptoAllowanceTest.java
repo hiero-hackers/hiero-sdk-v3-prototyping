@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import org.hiero.ledger.AccountId;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ class CryptoAllowanceTest {
         final AccountId spender = spenderValue();
         final long amount = amountValue();
         final long amountGranted = amountGrantedValue();
-        final ZonedDateTime timestamp = timestampValue();
+        final TimestampRange timestamp = timestampValue();
         final CryptoAllowance subject = new CryptoAllowance(owner, spender, amount, amountGranted, timestamp);
         assertValue(owner, subject.owner());
         assertValue(spender, subject.spender());
@@ -39,7 +40,7 @@ class CryptoAllowanceTest {
         final AccountId spender = spenderValue();
         final long amount = amountValue();
         final long amountGranted = amountGrantedValue();
-        final ZonedDateTime timestamp = timestampValue();
+        final TimestampRange timestamp = timestampValue();
         final CryptoAllowance subject = CryptoAllowance.builder()
                 .owner(owner)
                 .spender(spender)
@@ -128,7 +129,7 @@ class CryptoAllowanceTest {
     @DisplayName("rejects null for timestamp")
     @Tag("testId:mirrornode.account.CryptoAllowance/timestamp/rejects-null")
     void shouldRejectNullTimestamp() {
-        assertThrows(NullPointerException.class, () -> new CryptoAllowance(ownerValue(), spenderValue(), amountValue(), amountGrantedValue(), (ZonedDateTime) null));
+        assertThrows(NullPointerException.class, () -> new CryptoAllowance(ownerValue(), spenderValue(), amountValue(), amountGrantedValue(), (TimestampRange) null));
     }
 
     @Test
@@ -157,8 +158,8 @@ class CryptoAllowanceTest {
         return 1L;
     }
 
-    private static ZonedDateTime timestampValue() {
-        return ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+    private static TimestampRange timestampValue() {
+        return new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null);
     }
 
     private static CryptoAllowance create() {

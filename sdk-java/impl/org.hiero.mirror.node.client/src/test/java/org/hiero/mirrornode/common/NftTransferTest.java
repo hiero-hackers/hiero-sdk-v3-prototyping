@@ -3,9 +3,7 @@ package org.hiero.mirrornode.common;
 import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -19,12 +17,19 @@ class NftTransferTest {
     @Tag("testId:mirrornode.common.NftTransfer/create")
     void shouldCreateAndReturnTheValues() {
         final boolean isApproval = isApprovalValue();
-        final @Nullable NftTransferParties parties = partiesValue();
+        final NftTransferParties parties = partiesValue();
         final long serialNumber = serialNumberValue();
         final NftTransfer subject = new NftTransfer(isApproval, parties, serialNumber);
         assertValue(isApproval, subject.isApproval());
         assertValue(parties, subject.parties());
         assertValue(serialNumber, subject.serialNumber());
+    }
+
+    @Test
+    @DisplayName("rejects null for parties")
+    @Tag("testId:mirrornode.common.NftTransfer/parties/rejects-null")
+    void shouldRejectNullParties() {
+        assertThrows(NullPointerException.class, () -> new NftTransfer(isApprovalValue(), (NftTransferParties) null, serialNumberValue()));
     }
 
     @Test
@@ -60,7 +65,7 @@ class NftTransferTest {
     }
 
     private static NftTransferParties partiesValue() {
-        return new NftTransferParties(new AccountId(0L, 0L, "", 1001L, null, null), new AccountId(0L, 0L, "", 1001L, null, null), new Address(0L, 0L, "", 1001L));
+        return new NftTransferParties(null, null, new Address(0L, 0L, "", 1001L));
     }
 
     private static long serialNumberValue() {

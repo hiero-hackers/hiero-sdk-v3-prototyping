@@ -2,6 +2,7 @@ package org.hiero.mirrornode.common;
 
 import static org.hiero.sdk.testing.Testing.*;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
@@ -79,18 +80,28 @@ class MirrorNodeCommonSpecTest {
         }
     }
 
-    /// `mirrornode.common/an-nft-transfer-can-be-created-without-its-parties`
+    /// `mirrornode.common/the-nft-transfer-of-a-mint-has-no-sender-and-that-of-a-burn-has-no-receiver`
     ///
-    /// Source: this spec (`parties` is @@nullable).
+    /// Source: this spec (the NFT transfer of a mint has no sender, that of a burn has no receiver; the token is always set).
     @Test
-    @DisplayName("an NFT transfer can be created without its parties")
-    @Tag("testId:mirrornode.common/an-nft-transfer-can-be-created-without-its-parties")
-    void anNFTTransferCanBeCreatedWithoutItsParties() {
+    @DisplayName("the NFT transfer of a mint has no sender and that of a burn has no receiver")
+    @Tag("testId:mirrornode.common/the-nft-transfer-of-a-mint-has-no-sender-and-that-of-a-burn-has-no-receiver")
+    void theNFTTransferOfAMintHasNoSenderAndThatOfABurnHasNoReceiver() {
+        // given
+        final Address token = Address.fromString("0.0.5005");
+        final AccountId treasury = AccountId.fromString("0.0.1001");
+
         // when
-        final NftTransfer transfer = new NftTransfer(false, null, 1L);
+        final NftTransfer mint = new NftTransfer(false, new NftTransferParties(null, treasury, token), 1L);
+        final NftTransfer burn = new NftTransfer(false, new NftTransferParties(treasury, null, token), 1L);
 
         // then
-        assertNull(transfer.parties());
+        assertNull(mint.parties().senderAccountId());
+        assertEquals(treasury, mint.parties().receiverAccountId());
+        assertEquals(token, mint.parties().tokenId());
+        assertNull(burn.parties().receiverAccountId());
+        assertEquals(treasury, burn.parties().senderAccountId());
+        assertNotEquals(mint, burn);
     }
 
     /// `mirrornode.common/a-fixed-fee-in-hbar-has-no-denominating-token-and-a-fixed-fee-in-a-token-has-one`
@@ -106,14 +117,35 @@ class MirrorNodeCommonSpecTest {
         final Address token = Address.fromString("5.6.7");
 
         // when
-        final FixedFee inHbar = new FixedFee(4L, collector, null);
-        final FixedFee inToken = new FixedFee(4L, collector, token);
+        final FixedFee inHbar = new FixedFee(false, 4L, collector, null);
+        final FixedFee inToken = new FixedFee(false, 4L, collector, token);
 
         // then
         assertEquals(4L, inHbar.amount());
         assertEquals(collector, inHbar.collectorAccountId());
         assertNull(inHbar.denominatingTokenId());
         assertEquals(token, inToken.denominatingTokenId());
+    }
+
+    /// `mirrornode.common/a-timestamp-range-that-has-not-ended-has-no-end`
+    ///
+    /// Source: the mirror node REST API (TimestampRange: an inclusive `from` and an exclusive, nullable `to`).
+    @Test
+    @DisplayName("a timestamp range that has not ended has no end")
+    @Tag("testId:mirrornode.common/a-timestamp-range-that-has-not-ended-has-no-end")
+    void aTimestampRangeThatHasNotEndedHasNoEnd() {
+        // given
+        final ZonedDateTime start = toZonedDateTime("2026-08-04T14:00:00Z");
+
+        // when
+        final TimestampRange open = new TimestampRange(start, null);
+        final TimestampRange closed = new TimestampRange(start, toZonedDateTime("2026-08-04T15:00:00Z"));
+
+        // then
+        assertEquals(start, open.from());
+        assertNull(open.to());
+        assertEquals(toZonedDateTime("2026-08-04T15:00:00Z"), closed.to());
+        assertNotEquals(open, closed);
     }
 
     private static AccountId defaultAccountId() {

@@ -7,6 +7,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -25,7 +26,7 @@ class TokenAirdropTest {
         final Address tokenId = tokenIdValue();
         final @Nullable Long amount = amountValue();
         final @Nullable Long serialNumber = serialNumberValue();
-        final ZonedDateTime timestamp = timestampValue();
+        final TimestampRange timestamp = timestampValue();
         final TokenAirdrop subject = new TokenAirdrop(senderId, receiverId, tokenId, amount, serialNumber, timestamp);
         assertValue(senderId, subject.senderId());
         assertValue(receiverId, subject.receiverId());
@@ -44,7 +45,7 @@ class TokenAirdropTest {
         final Address tokenId = tokenIdValue();
         final @Nullable Long amount = amountValue();
         final @Nullable Long serialNumber = serialNumberValue();
-        final ZonedDateTime timestamp = timestampValue();
+        final TimestampRange timestamp = timestampValue();
         final TokenAirdrop subject = TokenAirdrop.builder()
                 .senderId(senderId)
                 .receiverId(receiverId)
@@ -143,7 +144,7 @@ class TokenAirdropTest {
     @DisplayName("rejects null for timestamp")
     @Tag("testId:mirrornode.account.TokenAirdrop/timestamp/rejects-null")
     void shouldRejectNullTimestamp() {
-        assertThrows(NullPointerException.class, () -> new TokenAirdrop(senderIdValue(), receiverIdValue(), tokenIdValue(), amountValue(), serialNumberValue(), (ZonedDateTime) null));
+        assertThrows(NullPointerException.class, () -> new TokenAirdrop(senderIdValue(), receiverIdValue(), tokenIdValue(), amountValue(), serialNumberValue(), (TimestampRange) null));
     }
 
     @Test
@@ -176,8 +177,8 @@ class TokenAirdropTest {
         return 1L;
     }
 
-    private static ZonedDateTime timestampValue() {
-        return ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+    private static TimestampRange timestampValue() {
+        return new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null);
     }
 
     private static TokenAirdrop create() {

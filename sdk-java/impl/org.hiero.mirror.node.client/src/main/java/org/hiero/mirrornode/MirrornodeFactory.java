@@ -4,9 +4,11 @@ import java.util.Objects;
 import org.hiero.ledger.MirrorNode;
 import org.hiero.mirrornode.http.MirrorNodeHttpClient;
 import org.hiero.mirrornode.internal.DefaultAccountRepository;
+import org.hiero.mirrornode.internal.DefaultBlockRepository;
 import org.hiero.mirrornode.internal.DefaultContractRepository;
 import org.hiero.mirrornode.internal.DefaultNetworkRepository;
 import org.hiero.mirrornode.internal.DefaultNftRepository;
+import org.hiero.mirrornode.internal.DefaultScheduleRepository;
 import org.hiero.mirrornode.internal.DefaultTokenRepository;
 import org.hiero.mirrornode.internal.DefaultTopicRepository;
 import org.hiero.mirrornode.internal.DefaultTransactionRepository;
@@ -21,9 +23,10 @@ public final class MirrornodeFactory {
         // one HttpClient (and connection pool) for all repositories of the client
         final MirrorNodeHttpClient httpClient = MirrorNodeRest.createHttpClient(mirrorNode);
         final MirrorNodeRest rest = new MirrorNodeRest(httpClient);
-        return new MirrorNodeClient(new DefaultAccountRepository(rest), new DefaultContractRepository(rest),
-                new DefaultNetworkRepository(rest), new DefaultNftRepository(rest), new DefaultTokenRepository(rest),
-                new DefaultTopicRepository(rest), new DefaultTransactionRepository(rest), httpClient);
+        return new MirrorNodeClient(new DefaultAccountRepository(rest), new DefaultBlockRepository(rest),
+                new DefaultContractRepository(rest), new DefaultNetworkRepository(rest), new DefaultNftRepository(rest),
+                new DefaultScheduleRepository(rest), new DefaultTokenRepository(rest), new DefaultTopicRepository(rest),
+                new DefaultTransactionRepository(rest), httpClient);
     }
 
     private MirrornodeFactory() {

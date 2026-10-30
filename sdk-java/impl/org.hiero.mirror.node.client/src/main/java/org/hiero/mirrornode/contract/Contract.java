@@ -5,31 +5,35 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 import org.hiero.authority.Authority;
 import org.hiero.ledger.AccountId;
+import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;
 import org.hiero.ledger.EvmAddress;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.jspecify.annotations.Nullable;
 
-/// @param fileId id of the file that holds the contract bytecode, if any
-/// @param obtainerId account that received the remaining balance when the contract was deleted
+/// @param fileId the file that holds the bytecode of the contract, if any
+/// @param obtainerId account or contract that received the remaining balance when the contract was deleted
 /// @param proxyAccountId proxy account of the contract, if any
+/// @param timestamp the period this state of the contract is valid for
+/// @param bytecode the bytecode in hex during deployment; only set by findById
+/// @param runtimeBytecode the bytecode in hex after deployment; only set by findById
 public record Contract(
         ContractId contractId,
         @Nullable Authority adminAuthority,
         @Nullable AccountId autoRenewAccount,
-        Duration autoRenewPeriod,
-        ZonedDateTime createdTimestamp,
+        @Nullable Duration autoRenewPeriod,
+        @Nullable ZonedDateTime createdTimestamp,
         boolean deleted,
         @Nullable ZonedDateTime expirationTimestamp,
-        @Nullable String fileId,
+        @Nullable Address fileId,
         @Nullable EvmAddress evmAddress,
         @Nullable String memo,
         @Nullable Integer maxAutomaticTokenAssociations,
         @Nullable Long nonce,
-        @Nullable String obtainerId,
-        boolean permanentRemoval,
-        @Nullable String proxyAccountId,
-        ZonedDateTime fromTimestamp,
-        ZonedDateTime toTimestamp,
+        @Nullable Address obtainerId,
+        @Nullable Boolean permanentRemoval,
+        @Nullable AccountId proxyAccountId,
+        TimestampRange timestamp,
         @Nullable String bytecode,
         @Nullable String runtimeBytecode) {
 
@@ -38,10 +42,7 @@ public record Contract(
     /// @throws NullPointerException if a required value is `null`
     public Contract {
         Objects.requireNonNull(contractId, "contractId must not be null");
-        Objects.requireNonNull(autoRenewPeriod, "autoRenewPeriod must not be null");
-        Objects.requireNonNull(createdTimestamp, "createdTimestamp must not be null");
-        Objects.requireNonNull(fromTimestamp, "fromTimestamp must not be null");
-        Objects.requireNonNull(toTimestamp, "toTimestamp must not be null");
+        Objects.requireNonNull(timestamp, "timestamp must not be null");
     }
 
     /// Returns a builder for a new `Contract`.
@@ -65,16 +66,15 @@ public record Contract(
         private @Nullable ZonedDateTime createdTimestamp;
         private @Nullable Boolean deleted;
         private @Nullable ZonedDateTime expirationTimestamp;
-        private @Nullable String fileId;
+        private @Nullable Address fileId;
         private @Nullable EvmAddress evmAddress;
         private @Nullable String memo;
         private @Nullable Integer maxAutomaticTokenAssociations;
         private @Nullable Long nonce;
-        private @Nullable String obtainerId;
+        private @Nullable Address obtainerId;
         private @Nullable Boolean permanentRemoval;
-        private @Nullable String proxyAccountId;
-        private @Nullable ZonedDateTime fromTimestamp;
-        private @Nullable ZonedDateTime toTimestamp;
+        private @Nullable AccountId proxyAccountId;
+        private @Nullable TimestampRange timestamp;
         private @Nullable String bytecode;
         private @Nullable String runtimeBytecode;
 
@@ -113,7 +113,7 @@ public record Contract(
         ///
         /// @param autoRenewPeriod the value
         /// @return this builder
-        public Builder autoRenewPeriod(final Duration autoRenewPeriod) {
+        public Builder autoRenewPeriod(final @Nullable Duration autoRenewPeriod) {
             this.autoRenewPeriod = autoRenewPeriod;
             return this;
         }
@@ -122,7 +122,7 @@ public record Contract(
         ///
         /// @param createdTimestamp the value
         /// @return this builder
-        public Builder createdTimestamp(final ZonedDateTime createdTimestamp) {
+        public Builder createdTimestamp(final @Nullable ZonedDateTime createdTimestamp) {
             this.createdTimestamp = createdTimestamp;
             return this;
         }
@@ -147,11 +147,11 @@ public record Contract(
 
         /// Sets the `fileId`.
         ///
-        /// id of the file that holds the contract bytecode, if any
+        /// the file that holds the bytecode of the contract, if any
         ///
         /// @param fileId the value
         /// @return this builder
-        public Builder fileId(final @Nullable String fileId) {
+        public Builder fileId(final @Nullable Address fileId) {
             this.fileId = fileId;
             return this;
         }
@@ -194,11 +194,11 @@ public record Contract(
 
         /// Sets the `obtainerId`.
         ///
-        /// account that received the remaining balance when the contract was deleted
+        /// account or contract that received the remaining balance when the contract was deleted
         ///
         /// @param obtainerId the value
         /// @return this builder
-        public Builder obtainerId(final @Nullable String obtainerId) {
+        public Builder obtainerId(final @Nullable Address obtainerId) {
             this.obtainerId = obtainerId;
             return this;
         }
@@ -207,7 +207,7 @@ public record Contract(
         ///
         /// @param permanentRemoval the value
         /// @return this builder
-        public Builder permanentRemoval(final boolean permanentRemoval) {
+        public Builder permanentRemoval(final @Nullable Boolean permanentRemoval) {
             this.permanentRemoval = permanentRemoval;
             return this;
         }
@@ -218,30 +218,25 @@ public record Contract(
         ///
         /// @param proxyAccountId the value
         /// @return this builder
-        public Builder proxyAccountId(final @Nullable String proxyAccountId) {
+        public Builder proxyAccountId(final @Nullable AccountId proxyAccountId) {
             this.proxyAccountId = proxyAccountId;
             return this;
         }
 
-        /// Sets the `fromTimestamp`.
+        /// Sets the `timestamp`.
         ///
-        /// @param fromTimestamp the value
-        /// @return this builder
-        public Builder fromTimestamp(final ZonedDateTime fromTimestamp) {
-            this.fromTimestamp = fromTimestamp;
-            return this;
-        }
-
-        /// Sets the `toTimestamp`.
+        /// the period this state of the contract is valid for
         ///
-        /// @param toTimestamp the value
+        /// @param timestamp the value
         /// @return this builder
-        public Builder toTimestamp(final ZonedDateTime toTimestamp) {
-            this.toTimestamp = toTimestamp;
+        public Builder timestamp(final TimestampRange timestamp) {
+            this.timestamp = timestamp;
             return this;
         }
 
         /// Sets the `bytecode`.
+        ///
+        /// the bytecode in hex during deployment; only set by findById
         ///
         /// @param bytecode the value
         /// @return this builder
@@ -251,6 +246,8 @@ public record Contract(
         }
 
         /// Sets the `runtimeBytecode`.
+        ///
+        /// the bytecode in hex after deployment; only set by findById
         ///
         /// @param runtimeBytecode the value
         /// @return this builder
@@ -268,8 +265,8 @@ public record Contract(
                     Objects.requireNonNull(contractId, "contractId must not be null"),
                     adminAuthority,
                     autoRenewAccount,
-                    Objects.requireNonNull(autoRenewPeriod, "autoRenewPeriod must not be null"),
-                    Objects.requireNonNull(createdTimestamp, "createdTimestamp must not be null"),
+                    autoRenewPeriod,
+                    createdTimestamp,
                     Objects.requireNonNull(deleted, "deleted must not be null"),
                     expirationTimestamp,
                     fileId,
@@ -278,10 +275,9 @@ public record Contract(
                     maxAutomaticTokenAssociations,
                     nonce,
                     obtainerId,
-                    Objects.requireNonNull(permanentRemoval, "permanentRemoval must not be null"),
+                    permanentRemoval,
                     proxyAccountId,
-                    Objects.requireNonNull(fromTimestamp, "fromTimestamp must not be null"),
-                    Objects.requireNonNull(toTimestamp, "toTimestamp must not be null"),
+                    Objects.requireNonNull(timestamp, "timestamp must not be null"),
                     bytecode,
                     runtimeBytecode);
         }

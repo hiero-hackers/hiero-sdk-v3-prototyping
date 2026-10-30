@@ -3,7 +3,7 @@ package org.hiero.mirrornode.account;
 import java.util.Objects;
 import org.hiero.ledger.Address;
 
-/// One token balance line inside an AccountBalance.
+/// One token balance line of an account.
 ///
 /// @param balance balance in the token's smallest unit
 public record TokenBalance(Address tokenId, long balance) {

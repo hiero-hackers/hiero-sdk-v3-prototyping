@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,7 @@ class MirrorNodeAccountSpecTest {
         final AccountId account = defaultAccountId();
 
         // when
-        final AccountInfo info = new AccountInfo(account, null, 100L, null, 0L, 0L, null, null, null, null, null, null, null, null, false, false, null, null, null);
+        final AccountInfo info = new AccountInfo(account, null, 100L, null, List.of(), 0L, 0L, null, null, null, null, null, null, null, null, false, false, null, null, null, null);
 
         // then
         assertEquals(account, info.accountId());
@@ -65,7 +66,7 @@ class MirrorNodeAccountSpecTest {
         final ZonedDateTime balanceTime = get(TIMES(), 2L);
 
         // when
-        final AccountInfo info = new AccountInfo(defaultAccountId(), null, 1663012637744658L, balanceTime, 0L, 0L, null, null, null, created, expiry, toSeconds(7000000L), null, null, false, false, null, null, null);
+        final AccountInfo info = new AccountInfo(defaultAccountId(), null, 1663012637744658L, balanceTime, List.of(), 0L, 0L, null, null, null, created, expiry, toSeconds(7000000L), null, null, false, false, null, null, null, null);
 
         // then
         assertEquals(toZonedDateTime("2020-11-18T21:01:00.898Z"), info.createdTimestamp());
@@ -109,7 +110,7 @@ class MirrorNodeAccountSpecTest {
         // given
         final AccountId owner = AccountId.fromString("0.0.1001");
         final AccountId spender = AccountId.fromString("0.0.1002");
-        final ZonedDateTime time = ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+        final TimestampRange time = new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null);
 
         // when
         final CryptoAllowance allowance = new CryptoAllowance(owner, spender, 25L, 100L, time);
@@ -132,7 +133,7 @@ class MirrorNodeAccountSpecTest {
     void aTokenAllowanceKeepsItsTokenRemainingAndGrantedAmountsAndItsTime() {
         // given
         final Address token = Address.fromString("0.0.5005");
-        final ZonedDateTime time = ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+        final TimestampRange time = new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null);
 
         // when
         final TokenAllowance allowance = new TokenAllowance(AccountId.fromString("0.0.1001"), AccountId.fromString("0.0.1002"), token, 0L, 10L, time);
@@ -153,7 +154,7 @@ class MirrorNodeAccountSpecTest {
     void anNFTAllowanceKeepsWhetherItIsApprovedForTheWholeCollection() {
         // given
         final Address token = Address.fromString("0.0.5005");
-        final ZonedDateTime time = ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+        final TimestampRange time = new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null);
         for (final boolean approved : List.of(false, true)) {
             // when
             final NftAllowance allowance = new NftAllowance(AccountId.fromString("0.0.1001"), AccountId.fromString("0.0.1002"), token, approved, time);
@@ -174,7 +175,7 @@ class MirrorNodeAccountSpecTest {
     @Tag("testId:mirrornode.account/a-fungible-airdrop-has-an-amount-and-no-serial-number")
     void aFungibleAirdropHasAnAmountAndNoSerialNumber() {
         // given
-        final ZonedDateTime time = ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+        final TimestampRange time = new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null);
 
         // when
         final TokenAirdrop airdrop = new TokenAirdrop(AccountId.fromString("0.0.1001"), AccountId.fromString("0.0.1002"), Address.fromString("0.0.5005"), 10L, null, time);
@@ -198,7 +199,7 @@ class MirrorNodeAccountSpecTest {
         final AccountId receiver = AccountId.fromString("0.0.1002");
 
         // when
-        final TokenAirdrop airdrop = new TokenAirdrop(sender, receiver, Address.fromString("0.0.5005"), null, 1L, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC));
+        final TokenAirdrop airdrop = new TokenAirdrop(sender, receiver, Address.fromString("0.0.5005"), null, 1L, new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null));
 
         // then
         assertEquals(sender, airdrop.senderId());
@@ -237,6 +238,102 @@ class MirrorNodeAccountSpecTest {
 
         // then
         assertEquals(tokens, balance.tokens());
+    }
+
+    /// `mirrornode.account/a-token-relationship-keeps-its-balance-decimals-and-statuses`
+    ///
+    /// Source: the example of the `TokenRelationship` schema of the mirror node OpenAPI definition (automatic association,
+    /// balance 5, created "123456789.000000001", 3 decimals, UNFROZEN, GRANTED, token 0.0.27335); millisecond precision.
+    @Test
+    @DisplayName("a token relationship keeps its balance, decimals and statuses")
+    @Tag("testId:mirrornode.account/a-token-relationship-keeps-its-balance-decimals-and-statuses")
+    void aTokenRelationshipKeepsItsBalanceDecimalsAndStatuses() {
+        // given
+        final Address token = Address.fromString("0.0.27335");
+
+        // when
+        final TokenRelationship relationship = new TokenRelationship(true, 5L, toZonedDateTime("1973-11-29T21:33:09Z"), 3L, TokenFreezeStatus.UNFROZEN, TokenKycStatus.GRANTED, token);
+
+        // then
+        assertEquals(token, relationship.tokenId());
+        assertEquals(5L, relationship.balance());
+        assertEquals(3L, relationship.decimals());
+        assertEquals(TokenFreezeStatus.UNFROZEN, relationship.freezeStatus());
+        assertEquals(TokenKycStatus.GRANTED, relationship.kycStatus());
+        assertEquals(toZonedDateTime("1973-11-29T21:33:09Z"), relationship.createdTimestamp());
+    }
+
+    /// `mirrornode.account/a-token-relationship-without-optional-values-has-no-decimals-and-no-freeze-status`
+    ///
+    /// Source: this spec (`automaticAssociation`, `createdTimestamp`, `decimals` and `freezeStatus` are nullable).
+    @Test
+    @DisplayName("a token relationship without optional values has no decimals and no freeze status")
+    @Tag("testId:mirrornode.account/a-token-relationship-without-optional-values-has-no-decimals-and-no-freeze-status")
+    void aTokenRelationshipWithoutOptionalValuesHasNoDecimalsAndNoFreezeStatus() {
+        // when
+        final TokenRelationship relationship = new TokenRelationship(null, 0L, null, null, null, TokenKycStatus.NOT_APPLICABLE, Address.fromString("0.0.27335"));
+
+        // then
+        assertNull(relationship.automaticAssociation());
+        assertNull(relationship.createdTimestamp());
+        assertNull(relationship.decimals());
+        assertNull(relationship.freezeStatus());
+    }
+
+    /// `mirrornode.account/a-hook-without-optional-values-has-no-admin-key-and-no-timestamps`
+    ///
+    /// Source: this spec (`adminKey`, `createdTimestamp` and `timestampRange` of a hook are nullable).
+    @Test
+    @DisplayName("a hook without optional values has no admin key and no timestamps")
+    @Tag("testId:mirrornode.account/a-hook-without-optional-values-has-no-admin-key-and-no-timestamps")
+    void aHookWithoutOptionalValuesHasNoAdminKeyAndNoTimestamps() {
+        // given
+        final Address owner = Address.fromString("0.0.1001");
+
+        // when
+        final Hook hook = new Hook(null, Address.fromString("0.0.5005"), null, false, HookExtensionPoint.ACCOUNT_ALLOWANCE_HOOK, 1L, owner, null, HookType.EVM);
+
+        // then
+        assertEquals(owner, hook.ownerId());
+        assertEquals(1L, hook.hookId());
+        assertEquals(HookType.EVM, hook.type());
+        assertNull(hook.adminKey());
+        assertNull(hook.createdTimestamp());
+        assertNull(hook.timestampRange());
+    }
+
+    /// `mirrornode.account/a-cleared-hook-storage-slot-has-no-value`
+    ///
+    /// Source: this spec (the value of a cleared hook storage slot is null).
+    @Test
+    @DisplayName("a cleared hook storage slot has no value")
+    @Tag("testId:mirrornode.account/a-cleared-hook-storage-slot-has-no-value")
+    void aClearedHookStorageSlotHasNoValue() {
+        // when
+        final HookStorage slot = new HookStorage(new byte[] {(byte) 1}, null, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC));
+
+        // then
+        assertEquals(new byte[] {(byte) 1}, slot.key());
+        assertNull(slot.value());
+    }
+
+    /// `mirrornode.account/an-account-with-transactions-without-transactions-has-an-empty-transaction-list`
+    ///
+    /// Source: this spec (`transactions` defaults to an empty list).
+    @Test
+    @DisplayName("an account with transactions without transactions has an empty transaction list")
+    @Tag("testId:mirrornode.account/an-account-with-transactions-without-transactions-has-an-empty-transaction-list")
+    void anAccountWithTransactionsWithoutTransactionsHasAnEmptyTransactionList() {
+        // given
+        final AccountInfo info = new AccountInfo(defaultAccountId(), null, 100L, null, List.of(), 0L, 0L, null, null, null, null, null, null, null, null, false, false, null, null, null, null);
+
+        // when
+        final AccountBalanceTransactions account = new AccountBalanceTransactions(info, List.of());
+
+        // then
+        assertEquals(info, account.account());
+        assertEquals(0L, length(account.transactions()));
+        assertEquals(0L, length(info.tokenBalances()));
     }
 
     private static AccountId defaultAccountId() {

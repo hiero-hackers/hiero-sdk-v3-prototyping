@@ -8,38 +8,56 @@ import org.hiero.authority.Authority;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.mirrornode.common.FixedFee;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.jspecify.annotations.Nullable;
 
+/// @param autoRenewPeriod how long the lifetime is extended after expiration
+/// @param customFeesCreatedTimestamp since when the custom fees apply
+/// @param fixedFees charged for each message submitted to the topic
 /// @param feeExemptAuthorities empty if no authority is exempt from the custom fees
+/// @param timestamp the period this state of the topic is valid for
 public record Topic(
         Address topicId,
         @Nullable Authority adminAuthority,
         @Nullable Authority submitAuthority,
         @Nullable Authority feeScheduleAuthority,
         @Nullable AccountId autoRenewAccount,
-        Duration autoRenewPeriod,
-        ZonedDateTime createdTimestamp,
-        boolean deleted,
+        @Nullable Duration autoRenewPeriod,
+        @Nullable ZonedDateTime createdTimestamp,
+        @Nullable ZonedDateTime customFeesCreatedTimestamp,
+        @Nullable Boolean deleted,
         String memo,
         List<FixedFee> fixedFees,
         List<Authority> feeExemptAuthorities,
-        ZonedDateTime fromTimestamp,
-        ZonedDateTime toTimestamp) {
+        TimestampRange timestamp) {
 
     /// Creates a new `Topic`.
     ///
     /// @throws NullPointerException if a required value is `null`
     public Topic {
         Objects.requireNonNull(topicId, "topicId must not be null");
-        Objects.requireNonNull(autoRenewPeriod, "autoRenewPeriod must not be null");
-        Objects.requireNonNull(createdTimestamp, "createdTimestamp must not be null");
         Objects.requireNonNull(memo, "memo must not be null");
         Objects.requireNonNull(fixedFees, "fixedFees must not be null");
         fixedFees = List.copyOf(fixedFees);
         Objects.requireNonNull(feeExemptAuthorities, "feeExemptAuthorities must not be null");
         feeExemptAuthorities = List.copyOf(feeExemptAuthorities);
-        Objects.requireNonNull(fromTimestamp, "fromTimestamp must not be null");
-        Objects.requireNonNull(toTimestamp, "toTimestamp must not be null");
+        Objects.requireNonNull(timestamp, "timestamp must not be null");
+    }
+
+    /// Creates a new `Topic` with the default value of `fixedFees`, `feeExemptAuthorities`.
+    public Topic(
+            final Address topicId,
+            final @Nullable Authority adminAuthority,
+            final @Nullable Authority submitAuthority,
+            final @Nullable Authority feeScheduleAuthority,
+            final @Nullable AccountId autoRenewAccount,
+            final @Nullable Duration autoRenewPeriod,
+            final @Nullable ZonedDateTime createdTimestamp,
+            final @Nullable ZonedDateTime customFeesCreatedTimestamp,
+            final @Nullable Boolean deleted,
+            final String memo,
+            final TimestampRange timestamp) {
+        this(topicId, adminAuthority, submitAuthority, feeScheduleAuthority, autoRenewAccount, autoRenewPeriod, createdTimestamp, customFeesCreatedTimestamp, deleted, memo, List.of(), List.of(), timestamp);
     }
 
     /// Returns a builder for a new `Topic`.
@@ -63,12 +81,12 @@ public record Topic(
         private @Nullable AccountId autoRenewAccount;
         private @Nullable Duration autoRenewPeriod;
         private @Nullable ZonedDateTime createdTimestamp;
+        private @Nullable ZonedDateTime customFeesCreatedTimestamp;
         private @Nullable Boolean deleted;
         private @Nullable String memo;
-        private @Nullable List<FixedFee> fixedFees;
-        private @Nullable List<Authority> feeExemptAuthorities;
-        private @Nullable ZonedDateTime fromTimestamp;
-        private @Nullable ZonedDateTime toTimestamp;
+        private List<FixedFee> fixedFees = List.of();
+        private List<Authority> feeExemptAuthorities = List.of();
+        private @Nullable TimestampRange timestamp;
 
         private Builder() {
             // created by Topic.builder()
@@ -121,9 +139,11 @@ public record Topic(
 
         /// Sets the `autoRenewPeriod`.
         ///
+        /// how long the lifetime is extended after expiration
+        ///
         /// @param autoRenewPeriod the value
         /// @return this builder
-        public Builder autoRenewPeriod(final Duration autoRenewPeriod) {
+        public Builder autoRenewPeriod(final @Nullable Duration autoRenewPeriod) {
             this.autoRenewPeriod = autoRenewPeriod;
             return this;
         }
@@ -132,8 +152,19 @@ public record Topic(
         ///
         /// @param createdTimestamp the value
         /// @return this builder
-        public Builder createdTimestamp(final ZonedDateTime createdTimestamp) {
+        public Builder createdTimestamp(final @Nullable ZonedDateTime createdTimestamp) {
             this.createdTimestamp = createdTimestamp;
+            return this;
+        }
+
+        /// Sets the `customFeesCreatedTimestamp`.
+        ///
+        /// since when the custom fees apply
+        ///
+        /// @param customFeesCreatedTimestamp the value
+        /// @return this builder
+        public Builder customFeesCreatedTimestamp(final @Nullable ZonedDateTime customFeesCreatedTimestamp) {
+            this.customFeesCreatedTimestamp = customFeesCreatedTimestamp;
             return this;
         }
 
@@ -141,7 +172,7 @@ public record Topic(
         ///
         /// @param deleted the value
         /// @return this builder
-        public Builder deleted(final boolean deleted) {
+        public Builder deleted(final @Nullable Boolean deleted) {
             this.deleted = deleted;
             return this;
         }
@@ -156,6 +187,8 @@ public record Topic(
         }
 
         /// Sets the `fixedFees`.
+        ///
+        /// charged for each message submitted to the topic
         ///
         /// @param fixedFees the value
         /// @return this builder
@@ -175,21 +208,14 @@ public record Topic(
             return this;
         }
 
-        /// Sets the `fromTimestamp`.
+        /// Sets the `timestamp`.
         ///
-        /// @param fromTimestamp the value
-        /// @return this builder
-        public Builder fromTimestamp(final ZonedDateTime fromTimestamp) {
-            this.fromTimestamp = fromTimestamp;
-            return this;
-        }
-
-        /// Sets the `toTimestamp`.
+        /// the period this state of the topic is valid for
         ///
-        /// @param toTimestamp the value
+        /// @param timestamp the value
         /// @return this builder
-        public Builder toTimestamp(final ZonedDateTime toTimestamp) {
-            this.toTimestamp = toTimestamp;
+        public Builder timestamp(final TimestampRange timestamp) {
+            this.timestamp = timestamp;
             return this;
         }
 
@@ -204,14 +230,14 @@ public record Topic(
                     submitAuthority,
                     feeScheduleAuthority,
                     autoRenewAccount,
-                    Objects.requireNonNull(autoRenewPeriod, "autoRenewPeriod must not be null"),
-                    Objects.requireNonNull(createdTimestamp, "createdTimestamp must not be null"),
-                    Objects.requireNonNull(deleted, "deleted must not be null"),
+                    autoRenewPeriod,
+                    createdTimestamp,
+                    customFeesCreatedTimestamp,
+                    deleted,
                     Objects.requireNonNull(memo, "memo must not be null"),
-                    Objects.requireNonNull(fixedFees, "fixedFees must not be null"),
-                    Objects.requireNonNull(feeExemptAuthorities, "feeExemptAuthorities must not be null"),
-                    Objects.requireNonNull(fromTimestamp, "fromTimestamp must not be null"),
-                    Objects.requireNonNull(toTimestamp, "toTimestamp must not be null"));
+                    fixedFees,
+                    feeExemptAuthorities,
+                    Objects.requireNonNull(timestamp, "timestamp must not be null"));
         }
     }
 }

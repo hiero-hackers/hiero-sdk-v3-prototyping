@@ -1,0 +1,14 @@
+{
+  "$comment": "Pinned upstream sources of the vendored OpenAPI definitions. 'commit' and 'updated' are written by openapi/update.sh; everything else is edited by hand.",
+  "license": "Apache-2.0",
+  "sources": {
+    "mirror-node": {
+      "repository": "https://github.com/hiero-ledger/hiero-mirror-node.git",
+      "tag": "v0.164.0",
+      "path": "rest/api/v1/openapi.yml",
+      "description": "The REST API of the mirror node (/api/v1). The same release as the mirror node's gRPC API in tooling/protobuf/mirror-node.",
+      "commit": "77e56d159f2e62050e1b510128daf9269af92624"
+    }
+  },
+  "updated": "2026-10-30T11:28:35Z"
+}

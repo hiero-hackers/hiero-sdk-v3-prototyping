@@ -422,6 +422,22 @@ class PythonGeneratorTest {
         }
 
         @Test
+        void anAttributeNamedLikeABuiltinShouldQualifyTheBuiltinInTheOtherAttributes() {
+            final List<GeneratedFile> files = new PythonGenerator().generate(model("""
+                    namespace a
+                    // A transaction.
+                    @@finalType
+                    Transaction {
+                        @@immutable @@nullable bytes: bytes
+                        @@immutable memo: bytes
+                    }
+                    """));
+            // the attribute `bytes` shadows the builtin for the attributes declared after it
+            assertThat(module(files, "/_transaction.py")).contains("    bytes: _builtins.bytes | None")
+                    .contains("    memo: _builtins.bytes");
+        }
+
+        @Test
         void aStaticMethodShouldBeAStaticmethod() {
             final List<GeneratedFile> files = new PythonGenerator().generate(model("""
                     namespace a

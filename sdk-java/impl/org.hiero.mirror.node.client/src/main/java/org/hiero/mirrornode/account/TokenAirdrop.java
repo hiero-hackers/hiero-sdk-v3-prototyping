@@ -1,9 +1,9 @@
 package org.hiero.mirrornode.account;
 
-import java.time.ZonedDateTime;
 import java.util.Objects;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.jspecify.annotations.Nullable;
 
 /// A pending airdrop (HIP-904) the account sent (outstanding) or is to receive (pending).
@@ -11,13 +11,14 @@ import org.jspecify.annotations.Nullable;
 ///
 /// @param amount fungible amount (smallest unit); null for an NFT airdrop
 /// @param serialNumber NFT serial; null for a fungible airdrop
+/// @param timestamp the period this version of the airdrop is valid for
 public record TokenAirdrop(
         AccountId senderId,
         AccountId receiverId,
         Address tokenId,
         @Nullable Long amount,
         @Nullable Long serialNumber,
-        ZonedDateTime timestamp) {
+        TimestampRange timestamp) {
 
     /// Creates a new `TokenAirdrop`.
     ///
@@ -48,7 +49,7 @@ public record TokenAirdrop(
         private @Nullable Address tokenId;
         private @Nullable Long amount;
         private @Nullable Long serialNumber;
-        private @Nullable ZonedDateTime timestamp;
+        private @Nullable TimestampRange timestamp;
 
         private Builder() {
             // created by TokenAirdrop.builder()
@@ -105,9 +106,11 @@ public record TokenAirdrop(
 
         /// Sets the `timestamp`.
         ///
+        /// the period this version of the airdrop is valid for
+        ///
         /// @param timestamp the value
         /// @return this builder
-        public Builder timestamp(final ZonedDateTime timestamp) {
+        public Builder timestamp(final TimestampRange timestamp) {
             this.timestamp = timestamp;
             return this;
         }

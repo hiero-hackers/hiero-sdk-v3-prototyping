@@ -7,6 +7,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
+import org.hiero.mirrornode.common.TimestampRange;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ class NftAllowanceTest {
         final AccountId spender = spenderValue();
         final Address tokenId = tokenIdValue();
         final boolean approvedForAll = approvedForAllValue();
-        final ZonedDateTime timestamp = timestampValue();
+        final TimestampRange timestamp = timestampValue();
         final NftAllowance subject = new NftAllowance(owner, spender, tokenId, approvedForAll, timestamp);
         assertValue(owner, subject.owner());
         assertValue(spender, subject.spender());
@@ -40,7 +41,7 @@ class NftAllowanceTest {
         final AccountId spender = spenderValue();
         final Address tokenId = tokenIdValue();
         final boolean approvedForAll = approvedForAllValue();
-        final ZonedDateTime timestamp = timestampValue();
+        final TimestampRange timestamp = timestampValue();
         final NftAllowance subject = NftAllowance.builder()
                 .owner(owner)
                 .spender(spender)
@@ -100,7 +101,7 @@ class NftAllowanceTest {
     @DisplayName("rejects null for timestamp")
     @Tag("testId:mirrornode.account.NftAllowance/timestamp/rejects-null")
     void shouldRejectNullTimestamp() {
-        assertThrows(NullPointerException.class, () -> new NftAllowance(ownerValue(), spenderValue(), tokenIdValue(), approvedForAllValue(), (ZonedDateTime) null));
+        assertThrows(NullPointerException.class, () -> new NftAllowance(ownerValue(), spenderValue(), tokenIdValue(), approvedForAllValue(), (TimestampRange) null));
     }
 
     @Test
@@ -129,8 +130,8 @@ class NftAllowanceTest {
         return true;
     }
 
-    private static ZonedDateTime timestampValue() {
-        return ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
+    private static TimestampRange timestampValue() {
+        return new TimestampRange(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), null);
     }
 
     private static NftAllowance create() {
