@@ -1,16 +1,18 @@
 package org.hiero.tck.runtime;
 
 import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.mirrornode.MirrorNodeClient;
 import org.hiero.tck.contract.Session;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The state of one test file of the TCK: the client created by {@code setup}.
+ * The state of one test file of the TCK: the client and the Mirror Node client created by {@code setup}.
  */
 final class RuntimeSession implements Session {
 
     private final String id;
     private volatile @Nullable HieroClient<?> client;
+    private volatile @Nullable MirrorNodeClient mirrorNode;
 
     /**
      * Creates an empty session.
@@ -47,6 +49,29 @@ final class RuntimeSession implements Session {
      */
     void client(final @Nullable HieroClient<?> client) {
         this.client = client;
+    }
+
+    /**
+     * Returns the Mirror Node client.
+     *
+     * @return the client
+     * @throws RpcError if {@code setup} was not called
+     */
+    MirrorNodeClient mirrorNode() {
+        final MirrorNodeClient current = mirrorNode;
+        if (current == null) {
+            throw RpcError.internal("setup has not been called for session '" + id + "'");
+        }
+        return current;
+    }
+
+    /**
+     * Sets the Mirror Node client.
+     *
+     * @param mirrorNode the client, {@code null} to reset
+     */
+    void mirrorNode(final @Nullable MirrorNodeClient mirrorNode) {
+        this.mirrorNode = mirrorNode;
     }
 
     /**

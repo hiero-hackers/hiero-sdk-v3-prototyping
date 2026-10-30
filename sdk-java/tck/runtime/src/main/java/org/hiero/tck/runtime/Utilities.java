@@ -24,6 +24,7 @@ import org.hiero.keys.PublicKey;
 import org.hiero.ledger.ConsensusNode;
 import org.hiero.ledger.IpAddress;
 import org.hiero.ledger.MirrorNode;
+import org.hiero.mirrornode.MirrornodeFactory;
 import org.hiero.ledger.Network;
 import org.hiero.ledger.config.NetworkSetting;
 import org.hiero.tck.contract.Session;
@@ -78,11 +79,22 @@ final class Utilities {
                 node.length > 1 ? Integer.parseInt(node[1]) : 50211,
                 converters.accountId(orSolo(params.get("nodeAccountId"), SOLO_NODE_ACCOUNT_ID)));
         // mirrorNetworkIp is the gRPC endpoint of the mirror node, the API uses its REST API: MIRROR_NODE_REST_URL
-        final String mirror = (String) orSolo(System.getenv("MIRROR_NODE_REST_URL"), SOLO_MIRROR_NODE_REST_URL);
+        final MirrorNode mirrorNode = new MirrorNode(restBaseUrl((String) orSolo(System.getenv("MIRROR_NODE_REST_URL"),
+                SOLO_MIRROR_NODE_REST_URL)));
         final NetworkSetting setting = new NetworkSetting(new Network<>(LOCAL_LEDGER_ID, "local", HbarUnit.TINYBAR),
-                Set.of(consensusNode), Set.of(new MirrorNode(mirror)));
+                Set.of(consensusNode), Set.of(mirrorNode));
         RuntimeSession.of(session).client(ClientFactory.createClient(setting, operator));
+        RuntimeSession.of(session).mirrorNode(MirrornodeFactory.createMirrorNodeClient(mirrorNode));
         return Map.of("message", "Successfully setup client", "status", "SUCCESS");
+    }
+
+    /**
+     * The REST base URL of the API ({@code .../api/v1}) for the URL of the TCK, which is the host of the mirror node
+     * without the path of the API.
+     */
+    static String restBaseUrl(final String url) {
+        final String base = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+        return base.endsWith("/api/v1") ? base : base + "/api/v1";
     }
 
     /** A parameter, or the value of a local Solo network if it is not sent. */
@@ -93,6 +105,7 @@ final class Utilities {
     /** Drops the client of a session. */
     Object reset(final Map<String, Object> params, final Session session) {
         RuntimeSession.of(session).client(null);
+        RuntimeSession.of(session).mirrorNode(null);
         return Map.of("status", "SUCCESS");
     }
 

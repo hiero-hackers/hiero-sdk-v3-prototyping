@@ -7,7 +7,7 @@ import type { ExchangeRate, NativeToken, NativeTokenUnit } from "@hiero/base/nat
 import type { TokenSupplyType, TokenType } from "@hiero/base/token";
 import type { UntypedReceipt } from "@hiero/consensus-node-client/consensusnode/queries/receipts";
 import type { TokenNftInfo } from "@hiero/consensus-node-client/consensusnode/queries/tokens";
-import type { TransactionStatus } from "@hiero/consensus-node-client/consensusnode/transactions";
+import type { TransactionStatus } from "@hiero/consensus-node-client/consensusnode/status";
 import type { Duration } from "@hiero/support";
 
 /**
@@ -224,6 +224,14 @@ export interface Converters {
      * @returns the JSON value
      */
     numberJson(value: number): unknown;
+
+    /**
+     * `number64`: A 64-bit integer as JSON number (where the TCK expects a number, not a string). Value to JSON.
+     *
+     * @param value - the value
+     * @returns the JSON value
+     */
+    number64Json(value: bigint): unknown;
 
     /**
      * `utf8`: Bytes as UTF-8 text. JSON to value.

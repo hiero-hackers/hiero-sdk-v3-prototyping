@@ -3,6 +3,7 @@
 import { NodeCreateTransaction, NodeDeleteTransaction, NodeUpdateTransaction, ServiceEndpoint } from "@hiero/consensus-node-admin-client/consensusnode/admin/nodes";
 import type { Converters, Handler, JsonObject, Session, TckRuntime } from "@hiero/tck-contract";
 import type { CommonBindings } from "./CommonBindings.js";
+import { toJson, values } from "./BindingSupport.js";
 import type { Requests } from "./Requests.js";
 
 /** The TCK methods of the bindings file `node-service.md`. */
@@ -29,6 +30,7 @@ export class NodeServiceBindings {
         this.#requests.put("updateNode", (params) => this.buildUpdateNode(params));
         methods.set("deleteNode", (params, session) => this.deleteNode(params, session));
         this.#requests.put("deleteNode", (params) => this.buildDeleteNode(params));
+        methods.set("getAddressBook", (params, session) => this.getAddressBook(params, session));
     }
 
     /**
@@ -72,7 +74,7 @@ export class NodeServiceBindings {
             gossipEndpoints: gossipEndpoints,
             serviceEndpoints: serviceEndpoints,
             gossipCaCertificate: this.#runtime.required(this.#runtime.value(params, [{ path: "gossipCaCertificate", converter: (json) => this.#convert.hex(json) }]), "gossipCaCertificate"),
-            grpcCertificateHash: this.#runtime.required(this.#runtime.value(params, [{ path: "grpcCertificateHash", converter: (json) => this.#convert.hex(json) }]), "grpcCertificateHash"),
+            grpcCertificateHash: this.#runtime.value(params, [{ path: "grpcCertificateHash", converter: (json) => this.#convert.hex(json) }]),
             adminAuthority: this.#runtime.required(this.#runtime.value(params, [{ path: "adminKey", converter: (json) => this.#convert.key(json) }]), "adminKey"),
             declineReward: this.#runtime.or(this.#runtime.value(params, [{ path: "declineReward", converter: (json) => this.#convert.bool(json) }]), false),
             grpcWebProxyEndpoint: (grpcWebProxyEndpointJson1 === null ? null : new ServiceEndpoint({
@@ -153,5 +155,32 @@ export class NodeServiceBindings {
         return new NodeDeleteTransaction({
             nodeId: this.#runtime.required(this.#runtime.value(params, [{ path: "nodeId", converter: (json) => this.#convert.int64(json) }]), "nodeId")
         });
+    }
+
+    /**
+     * Reads the address book from the Mirror Node (AddressBookQuery.md): the consensus nodes of the address-book file
+     * fileId, of all files without it. limit is the number of nodes the TCK wants, not the page size of the REST API:
+     * the pages are read until there are as many.
+     */
+    async getAddressBook(params: JsonObject, session: Session): Promise<unknown> {
+        const response = await this.#runtime.items(this.#runtime.mirrorNode(session).network.nodes(this.#runtime.or(this.#runtime.value(params, [{ path: "fileId", converter: (json) => values(json, (element) => this.#convert.string(element)) }]), []), null, [], null), this.#runtime.value(params, [{ path: "limit", converter: (json) => this.#convert.int32(json) }]));
+        const result: Record<string, unknown> = {};
+        this.#runtime.put(result, "nodeAddresses", response, (values1) => toJson(values1, (element1) => {
+            const object1: Record<string, unknown> = {};
+            this.#runtime.put(object1, "nodeId", element1.nodeId, (value) => this.#convert.number64Json(value));
+            this.#runtime.put(object1, "accountId", element1.accountId, (value) => this.#convert.accountIdJson(value));
+            this.#runtime.put(object1, "serviceEndpoints", element1.serviceEndpoints, (values2) => toJson(values2, (element2) => {
+                const object2: Record<string, unknown> = {};
+                this.#runtime.put(object2, "ipAddressV4", element2.ipAddressV4, (value) => this.#convert.stringJson(value));
+                this.#runtime.put(object2, "domainName", element2.domainName, (value) => this.#convert.stringJson(value));
+                this.#runtime.put(object2, "port", element2.port, (value) => this.#convert.numberJson(value));
+                return object2;
+            }));
+            this.#runtime.put(object1, "rsaPublicKey", element1.publicKey, (value) => this.#convert.stringJson(value));
+            this.#runtime.put(object1, "nodeCertHash", element1.nodeCertHash, (value) => this.#convert.stringJson(value));
+            this.#runtime.put(object1, "description", element1.description, (value) => this.#convert.stringJson(value));
+            return object1;
+        }));
+        return result;
     }
 }

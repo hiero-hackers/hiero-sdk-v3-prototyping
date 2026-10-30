@@ -22,8 +22,8 @@ uses `"ft"` when `tokenType` is not sent.
 - **`queryPayment`**: a paid query has only `maxQueryPayment` in V3; an exact payment cannot be set.
 - **Duplicate token IDs** of `associateToken`, `dissociateToken`: the V3 attribute is a set, so duplicates collapse
   before the network can reject them (`TOKEN_ID_REPEATED_IN_TOKEN_LIST`).
-- **`getMirrorNodeTokenBalance`** is not bound: it reads the Mirror Node, whose V3 client has no counterpart of a
-  submitted request.
+- **`getMirrorNodeTokenBalance`** is not bound yet: it reads the Mirror Node, which a call of a repository of the
+  Mirror Node client (`TokenRepository::...`, as `getAddressBook` in `node-service.md`) can bind.
 
 ```bindings
 requires {TokenCreateTransaction, TokenUpdateTransaction, TokenDeleteTransaction} from consensusnode.transactions.tokens

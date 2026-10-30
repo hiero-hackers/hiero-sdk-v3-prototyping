@@ -10,7 +10,9 @@ seconds and integers as decimal strings.
 - `executeDeprecatedAccountBalanceQuery`: the TCK checks the deprecation warning and error texts of the V2 SDKs; the
   result (`constructionWarning`, `executionError`) is no value of the API. `AccountBalanceQuery` itself exists.
 - `ping`, `pingAll`: the V3 client has no ping of a consensus node.
-- `getMirrorNodeAccountBalance`: reads the Mirror Node, not a request of the consensus node client.
+- `getMirrorNodeAccountBalance`: reads the Mirror Node; not bound yet. A call of the Mirror Node client
+  (`AccountRepository::...`, as `getAddressBook` in `node-service.md`) can bind it; open is how its `accountId`, which
+  may also be an EVM address or a key alias, maps to the parameters of the repository.
 
 ```bindings
 requires {AccountCreateTransaction, AccountUpdateTransaction, AccountDeleteTransaction, TransferTransaction} from consensusnode.transactions.accounts

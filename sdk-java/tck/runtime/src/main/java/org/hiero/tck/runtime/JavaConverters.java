@@ -255,6 +255,11 @@ final class JavaConverters implements Converters {
     }
 
     @Override
+    public Object number64Json(final Long value) {
+        return value;
+    }
+
+    @Override
     public Object utf8Json(final byte[] value) {
         return new String(value, StandardCharsets.UTF_8);
     }

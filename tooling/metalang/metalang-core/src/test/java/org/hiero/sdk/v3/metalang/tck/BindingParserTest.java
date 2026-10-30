@@ -159,6 +159,44 @@ class BindingParserTest {
     }
 
     @Test
+    void callsTakeAndListsOfResultObjectsShouldBeParsed() {
+        // WHEN
+        final BindingParser.Result result = BindingParser.parse("shop.md", """
+                ```bindings
+                // Lists the items.
+                binding listItems -> shop.ShopRepository::items {
+                    names = name : string
+                    take limit
+                    result items = each response.page {
+                        result name = name : string
+                        result parts = each parts {
+                            result id = id : int64
+                        }
+                    }
+                }
+                ```
+                """);
+
+        // THEN
+        assertThat(result.diagnostics()).isEmpty();
+        final Binding binding = result.bindings().getFirst();
+        assertThat(binding.type()).isEqualTo("shop.ShopRepository");
+        assertThat(binding.method()).isEqualTo("items");
+        assertThat(binding.when()).isNull();
+        assertThat(binding.documentation()).isEqualTo("Lists the items.");
+        assertThat(binding.members()).hasSize(3);
+        assertThat(((Binding.Take) binding.members().get(1)).path()).hasToString("limit");
+        final Binding.ResultList items = (Binding.ResultList) binding.members().get(2);
+        assertThat(items.name()).hasToString("items");
+        assertThat(items.value()).hasToString("response.page");
+        assertThat(items.members()).hasSize(2);
+        assertThat(((Binding.ResultList) items.members().get(1)).members()).singleElement()
+                .isInstanceOf(Binding.Result.class);
+        assertThat(BindingParser.parse("shop.md", "```bindings\nbinding a -> OrderQuery { }\n```\n").bindings()
+                .getFirst().method()).isNull();
+    }
+
+    @Test
     void sourcesAreEitherPathsOrConstants() {
         assertThatThrownBy(() -> new Binding.Source(null, null, "string"))
                 .isInstanceOf(IllegalArgumentException.class);

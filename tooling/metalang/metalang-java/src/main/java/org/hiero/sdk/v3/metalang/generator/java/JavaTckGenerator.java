@@ -11,6 +11,7 @@ import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 import org.hiero.sdk.v3.metalang.generator.GenerationException;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
+import org.hiero.sdk.v3.metalang.model.ParameterDefinition;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
 import org.hiero.sdk.v3.metalang.tck.Binding;
 import org.hiero.sdk.v3.metalang.tck.TckBindings;
@@ -215,10 +216,147 @@ public final class JavaTckGenerator {
         }
         for (int i = 0; i < variants.size(); i++) {
             final int variant = single ? 0 : i + 1;
+            if (variants.get(i).kind() == TckBindings.Kind.MIRROR) {
+                methods.add(call(name, variants.get(i), imports));
+                continue;
+            }
             methods.add(handler(name, variant, variants.get(i), imports));
             methods.add(build(name, variant, variants.get(i), imports, context));
         }
         return methods;
+    }
+
+    /**
+     * The handler of a call of a method of a repository of the Mirror Node client: the bound parameters (an unbound
+     * one is {@code null} or, for a list, empty), the call, and the returned value as result; a page is read up to the
+     * limit of {@code take}.
+     */
+    private static String call(final String name, final TckBindings.Resolved binding, final Imports imports) {
+        final TckBindings.Call call = Objects.requireNonNull(binding.call());
+        final String indent = INDENT + INDENT;
+        final StringBuilder java = new StringBuilder();
+        documentation(binding.binding().documentation(), java);
+        java.append(INDENT).append("Object ").append(name)
+                .append("(final Map<String, Object> params, final Session session) {\n");
+        final StringBuilder body = new StringBuilder();
+        rejectUnsupported(binding.members(), "params", body, indent);
+        final List<String> arguments = new ArrayList<>();
+        for (final ParameterDefinition parameter : call.method().parameters()) {
+            final Optional<TckBindings.Argument> argument = binding.members().stream()
+                    .filter(TckBindings.Argument.class::isInstance).map(TckBindings.Argument.class::cast)
+                    .filter(a -> a.parameter().name().equals(parameter.name())).findFirst();
+            final TckBindings.Collection collection = argument.map(TckBindings.Argument::collection)
+                    .orElse(TckBindings.Collection.NONE);
+            final String empty = parameter.type() instanceof org.hiero.sdk.v3.metalang.model.Type.BasicType basic
+                    && basic.builtin().name().equals("set") ? imports.use("java.util", "Set") + ".of()"
+                    : imports.use("java.util", "List") + ".of()";
+            final boolean list = parameter.type() instanceof org.hiero.sdk.v3.metalang.model.Type.BasicType basic
+                    && basic.builtin().category() == org.hiero.sdk.v3.metalang.semantic.BuiltinType.Category.COLLECTION;
+            if (argument.isEmpty()) {
+                arguments.add(list ? empty : "null");
+                continue;
+            }
+            final String value = sources(argument.get().sources(), collection, "params", imports);
+            if (list) {
+                arguments.add("runtime.or(" + value + ", " + empty + ")");
+            } else if (parameter.hasAnnotation("nullable")) {
+                arguments.add(value);
+            } else {
+                arguments.add("runtime.required(" + value + ", " + JavaLiterals.quote(parameter.name()) + ")");
+            }
+        }
+        final String invocation = "runtime.mirrorNode(session)." + JavaMembers.accessor(call.repository().name(), false)
+                + "()." + JavaKeywords.identifier(call.method().name()) + "(" + String.join(", ", arguments) + ")";
+        final boolean async = call.method().hasAnnotation("async");
+        final String value;
+        if (call.paged()) {
+            final String take = binding.members().stream().filter(TckBindings.Take.class::isInstance)
+                    .map(TckBindings.Take.class::cast).findFirst()
+                    .map(t -> "runtime.value(params, " + imports.use("java.util", "List") + ".of(new Source<>("
+                            + JavaLiterals.quote(t.path().toString()) + ", convert::int32)))")
+                    .orElse("null");
+            value = "runtime.items(" + (async ? invocation : imports.use("java.util.concurrent", "CompletableFuture")
+                    + ".completedStage(" + invocation + ")") + ", " + take + ")";
+        } else {
+            value = async ? "runtime.await(" + invocation + ")" : invocation;
+        }
+        body.append(indent).append("final var response = ").append(value).append(";\n");
+        imports.use("java.util", "LinkedHashMap");
+        body.append(indent).append("final Map<String, Object> result = new LinkedHashMap<>();\n");
+        results(binding.members(), "response", "result", 1, body, indent, imports);
+        body.append(indent).append("return result;\n");
+        return java.append(body).append(INDENT).append("}\n").toString();
+    }
+
+    /** The lookup of the sources of a parameter: the first present one wins; a constant is converted directly. */
+    private static String sources(final List<TckBindings.Source> sources, final TckBindings.Collection collection,
+                                  final String json, final Imports imports) {
+        imports.use("java.util", "List");
+        final List<String> groups = new ArrayList<>();
+        List<String> current = new ArrayList<>();
+        for (final TckBindings.Source source : sources) {
+            // a list parameter of a call also accepts a single JSON value
+            final String converter = collection == TckBindings.Collection.NONE
+                    ? converter(source.converter(), collection)
+                    : "json -> BindingSupport.values(json, convert::" + source.converter().id() + ")";
+            if (source.path() == null) {
+                if (!current.isEmpty()) {
+                    groups.add("runtime.value(" + json + ", List.of(" + String.join(", ", current) + "))");
+                    current = new ArrayList<>();
+                }
+                groups.add(apply(converter, JavaLiterals.quote(Objects.requireNonNull(source.literal()))));
+                continue;
+            }
+            current.add("new Source<>(" + JavaLiterals.quote(String.join(".", source.path().segments())) + ", "
+                    + converter + ")");
+        }
+        if (!current.isEmpty()) {
+            groups.add("runtime.value(" + json + ", List.of(" + String.join(", ", current) + "))");
+        }
+        String lookup = groups.getLast();
+        for (int i = groups.size() - 2; i >= 0; i--) {
+            lookup = "runtime.or(" + groups.get(i) + ", " + lookup + ")";
+        }
+        return lookup;
+    }
+
+    /**
+     * The results: every result is put into the JSON object {@code target}; a list of result objects converts every
+     * element into a JSON object with its own results.
+     */
+    private static void results(final List<TckBindings.Member> members, final String root, final String target,
+                                final int depth, final StringBuilder body, final String indent,
+                                final Imports imports) {
+        for (final TckBindings.Member member : members) {
+            if (member instanceof TckBindings.Result result) {
+                final String converter = "convert::" + result.converter().id() + "Json";
+                body.append(indent).append("runtime.put(").append(target).append(", ")
+                        .append(JavaLiterals.quote(result.name().toString())).append(", ")
+                        .append(access(root, result.fields(), imports)).append(", ")
+                        .append(result.collection() == TckBindings.Collection.NONE ? converter
+                                : "values -> BindingSupport.json(values, " + converter + ")")
+                        .append(");\n");
+            } else if (member instanceof TckBindings.ResultList list) {
+                final String element = "element" + depth;
+                final String object = "object" + depth;
+                imports.use("java.util", "LinkedHashMap");
+                body.append(indent).append("runtime.put(").append(target).append(", ")
+                        .append(JavaLiterals.quote(list.name().toString())).append(", ")
+                        .append(access(root, list.fields(), imports)).append(", values")
+                        .append(depth).append(" -> BindingSupport.json(values").append(depth).append(", ")
+                        .append(element).append(" -> {\n");
+                final String inner = indent + INDENT;
+                body.append(inner).append("final Map<String, Object> ").append(object)
+                        .append(" = new LinkedHashMap<>();\n");
+                results(list.members(), element, object, depth + 1, body, inner, imports);
+                body.append(inner).append("return ").append(object).append(";\n")
+                        .append(indent).append("}));\n");
+            } else if (member instanceof TckBindings.Unsupported(final Binding.Unsupported unsupported)
+                    && unsupported.result()) {
+                body.append(indent).append("// not provided: ").append(unsupported.name()).append(" (")
+                        .append(unsupported.reason()).append(")\n");
+            }
+        }
     }
 
     /** Selects the variant by the presence of its parameter. */
@@ -295,20 +433,7 @@ public final class JavaTckGenerator {
         }
         imports.use("java.util", "LinkedHashMap");
         body.append(indent).append("final Map<String, Object> result = new LinkedHashMap<>();\n");
-        for (final TckBindings.Member member : binding.members()) {
-            if (member instanceof TckBindings.Result result) {
-                final String converter = "convert::" + result.converter().id() + "Json";
-                body.append(indent).append("runtime.put(result, ").append(JavaLiterals.quote(result.name()
-                        .toString())).append(", ").append(access(value, result.fields(), imports)).append(", ")
-                        .append(result.collection() == TckBindings.Collection.NONE ? converter
-                                : "values -> BindingSupport.json(values, " + converter + ")")
-                        .append(");\n");
-            } else if (member instanceof TckBindings.Unsupported(final Binding.Unsupported unsupported)
-                    && unsupported.result()) {
-                body.append(indent).append("// not provided: ").append(unsupported.name()).append(" (")
-                        .append(unsupported.reason()).append(")\n");
-            }
-        }
+        results(binding.members(), value, "result", 1, body, indent, imports);
         body.append(indent).append("return result;\n");
         return java.append(body).append(INDENT).append("}\n").toString();
     }
@@ -795,6 +920,17 @@ public final class JavaTckGenerator {
                         values.add(converter.apply(element));
                     }
                     return Collections.unmodifiableList(values);
+                }
+
+                /// Converts every element of a JSON list, or a single JSON value as list of one element (the conditions
+                /// of a repeated query parameter).
+                ///
+                /// @param json      the JSON list or value
+                /// @param converter the converter of an element
+                /// @param <T>       the element type
+                /// @return the values
+                static <T> List<T> values(final Object json, final Function<Object, T> converter) {
+                    return json instanceof List<?> ? list(json, converter) : List.of(converter.apply(json));
                 }
 
                 /// Converts every element of a JSON list into a set (in the order of the list).

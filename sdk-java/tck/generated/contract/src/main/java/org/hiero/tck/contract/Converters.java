@@ -181,6 +181,12 @@ public interface Converters {
     /// @return the JSON value
     Object numberJson(Integer value);
 
+    /// `number64`: A 64-bit integer as JSON number (where the TCK expects a number, not a string). Value to JSON.
+    ///
+    /// @param value the value
+    /// @return the JSON value
+    Object number64Json(Long value);
+
     /// `utf8`: Bytes as UTF-8 text. JSON to value.
     ///
     /// @param json the JSON value (string, number or boolean)

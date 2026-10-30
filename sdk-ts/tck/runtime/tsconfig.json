@@ -24,6 +24,7 @@
     { "path": "../generated/contract" },
     { "path": "../../generated/packages/base" },
     { "path": "../../generated/packages/consensus-node-client" },
+    { "path": "../../generated/packages/mirror-node-client" },
     { "path": "../../support" }
   ]
 }

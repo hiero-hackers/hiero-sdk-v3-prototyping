@@ -40,6 +40,8 @@ public enum Converter {
             "consensusnode.status.TransactionStatus"),
     NUMBER("number", false, true, "A 32-bit integer as JSON number (where the TCK expects a number, not a string).",
             "int32", "uint16"),
+    NUMBER64("number64", false, true, "A 64-bit integer as JSON number (where the TCK expects a number, not a "
+            + "string).", "int64"),
     UTF8("utf8", true, true, "Bytes as UTF-8 text.", "bytes"),
     KEY_LIST("keyList", true, true, "A JSON list of keys (each as for `key`) that must all sign; an empty list is "
             + "no key. In results the keys of a list that must all sign, or the single key.", "authority.Authority"),

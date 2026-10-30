@@ -5,7 +5,10 @@ import org.hiero.sdk.v3.metalang.MetaLang;
 import org.hiero.sdk.v3.metalang.TestSpecs;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
 
-/** A small shop model with a transaction, a query and their result types, and helpers for bindings files. */
+/**
+ * A small shop model with a transaction, a query and their result types, a repository of the Mirror Node client, and
+ * helpers for bindings files.
+ */
 final class TckFixtures {
 
     static final LinkedModel MODEL = LinkedModel.of(new MetaLang().validate(Map.of("f/tx.md", TestSpecs.markdown("""
@@ -17,6 +20,7 @@ final class TckFixtures {
             """), "f/shop.md", TestSpecs.markdown("""
             namespace shop
             requires {Transaction} from consensusnode.transactions
+            requires {Page} from common
 
             Response<$$R> {
                 @@immutable value: $$R
@@ -31,6 +35,7 @@ final class TckFixtures {
                 @@immutable @@default([]) serials: list<int64>
                 @@immutable count: int64
                 @@immutable @@nullable detail: Detail
+                @@immutable @@default([]) lines: list<Item>
             }
 
             Item {
@@ -73,6 +78,30 @@ final class TckFixtures {
             Plain {
                 @@immutable x: string
             }
+
+            ShopRepository {
+                @@async
+                Page<Item> items()
+
+                @@async
+                Page<Item> items(names: list<string>, @@nullable limit: int32, @@nullable gift: bool)
+
+                @@async
+                Detail detail(id: string)
+            }
+            """), "f/common.md", TestSpecs.markdown("""
+            namespace common
+
+            abstraction Page<$$T> {
+                @@immutable data: list<$$T>
+            }
+            """), "f/mirror.md", TestSpecs.markdown("""
+            namespace mirrornode
+            requires {ShopRepository} from shop
+
+            MirrorNodeClient {
+                @@immutable shops: ShopRepository
+            }
             """))).model());
 
     private TckFixtures() {
@@ -80,7 +109,7 @@ final class TckFixtures {
 
     /** Wraps bindings into a bindings file. */
     static String file(final String bindings) {
-        return "# Shop\n\n```bindings\nrequires {OrderTransaction, OrderQuery, Item, Plain, Detail, SerialGrant, AllGrant} from shop\n" + bindings
+        return "# Shop\n\n```bindings\nrequires {OrderTransaction, OrderQuery, Item, Plain, Detail, SerialGrant, AllGrant, ShopRepository} from shop\n" + bindings
                 + "```\n";
     }
 

@@ -3,6 +3,7 @@ import { generatePrivateKey, KeyAlgorithm, KeyFormat } from "@hiero/base/keys";
 import { ConsensusNode, IpAddress, MirrorNode, Network } from "@hiero/base/ledger";
 import { NetworkSetting } from "@hiero/base/ledger/config";
 import { Account, createClient } from "@hiero/consensus-node-client/consensusnode/client";
+import { createMirrorNodeClient } from "@hiero/mirror-node-client/mirrornode";
 import type { JsonObject, Session } from "@hiero/tck-contract";
 import { RpcError } from "./RpcError.js";
 import { RuntimeSession } from "./RuntimeSession.js";
@@ -18,6 +19,15 @@ export const SOLO = {
     nodeAccountId: "0.0.3",
     mirrorNodeRestUrl: "http://127.0.0.1:38081",
 } as const;
+
+/**
+ * The REST base URL of the API (`.../api/v1`) for the URL of the TCK, which is the host of the mirror node without the
+ * path of the API.
+ */
+export function restBaseUrl(url: string): string {
+    const base = url.endsWith("/") ? url.slice(0, -1) : url;
+    return base.endsWith("/api/v1") ? base : `${base}/api/v1`;
+}
 
 /** The ledger ID of a local network (Solo). */
 const LOCAL_LEDGER_ID = Uint8Array.of(3);
@@ -54,19 +64,23 @@ export class Utilities {
             account: c.accountId(params["nodeAccountId"] ?? SOLO.nodeAccountId),
         });
         // mirrorNetworkIp is the gRPC endpoint of the mirror node, the API uses its REST API: MIRROR_NODE_REST_URL
-        const mirror = process.env["MIRROR_NODE_REST_URL"] ?? SOLO.mirrorNodeRestUrl;
+        const mirrorNode = new MirrorNode({
+            restBaseUrl: restBaseUrl(process.env["MIRROR_NODE_REST_URL"] ?? SOLO.mirrorNodeRestUrl),
+        });
         const setting = new NetworkSetting({
             network: new Network({ id: LOCAL_LEDGER_ID, name: "local", nativeTokenUnit: HbarUnit.TINYBAR }),
             getConsensusNodes: new Set([node]),
-            getMirrorNodes: new Set([new MirrorNode({ restBaseUrl: mirror })]),
+            getMirrorNodes: new Set([mirrorNode]),
         });
         RuntimeSession.of(session).client = createClient(setting, operator);
+        RuntimeSession.of(session).mirrorNode = createMirrorNodeClient(mirrorNode);
         return { message: "Successfully setup client", status: "SUCCESS" };
     }
 
     /** Drops the client of a session. */
     async reset(_params: JsonObject, session: Session): Promise<unknown> {
         RuntimeSession.of(session).client = null;
+        RuntimeSession.of(session).mirrorNode = null;
         return { status: "SUCCESS" };
     }
 

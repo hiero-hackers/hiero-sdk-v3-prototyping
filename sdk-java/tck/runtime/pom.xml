@@ -36,6 +36,11 @@
             <artifactId>hiero-consensus-node-client</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-mirror-node-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- Keccak-256 and secp256k1 for the EVM address of generateKey (the API has no such derivation yet) -->
         <dependency>
             <groupId>org.bouncycastle</groupId>

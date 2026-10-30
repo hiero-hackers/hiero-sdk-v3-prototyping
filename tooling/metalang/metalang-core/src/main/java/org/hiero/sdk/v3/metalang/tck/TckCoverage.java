@@ -166,6 +166,8 @@ public final class TckCoverage {
                             undocumentedOutputs.add(result.name().first());
                         }
                     }
+                    case Binding.ResultList list -> outputs.add(list.name().first());
+                    case Binding.Take take -> parameter(take.path(), top, names).ifPresent(p -> input(Set.of(p)));
                     case Binding.Unsupported unsupported -> {
                         if (unsupported.result()) {
                             unsupportedOutputs.add(unsupported.name());

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
+import org.hiero.sdk.v3.metalang.model.QualifiedName;
 import org.hiero.sdk.v3.metalang.model.Type;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
 import org.hiero.sdk.v3.metalang.tck.Converter;
@@ -44,7 +45,7 @@ final class JavaTckContractGenerator {
                                         final JavaGeneratorConfig config) {
         final List<GeneratedFile> files = new ArrayList<>();
         files.add(converters(context));
-        files.add(file("TckRuntime", RUNTIME));
+        files.add(file("TckRuntime", runtime(context)));
         files.add(file("Source", SOURCE));
         files.add(file("Session", SESSION));
         files.add(file("Handler", HANDLER));
@@ -111,6 +112,55 @@ final class JavaTckContractGenerator {
             return parameters == 0 ? name : name + "<" + String.join(", ", Collections.nCopies(parameters, "?")) + ">";
         }
         return JavaTypes.type(type, true, imports);
+    }
+
+    /** The Mirror Node client, whose repositories the bindings can call. */
+    private static final QualifiedName MIRROR_NODE_CLIENT = new QualifiedName("mirrornode", "MirrorNodeClient");
+
+    /** The page of a paginated result. */
+    private static final QualifiedName PAGE = new QualifiedName("common", "Page");
+
+    /**
+     * The runtime interface; with the Mirror Node client in the generated API also the access to it and the reading
+     * of its pages.
+     */
+    private static String runtime(final JavaContext context) {
+        if (!context.isGenerated(MIRROR_NODE_CLIENT) || !context.isGenerated(PAGE)) {
+            return RUNTIME;
+        }
+        final String page = JavaNames.packageName(PAGE.namespace()) + "." + PAGE.name();
+        final String client = JavaNames.packageName(MIRROR_NODE_CLIENT.namespace()) + "." + MIRROR_NODE_CLIENT.name();
+        final String methods = """
+
+                    /// Returns the Mirror Node client of a session, on the Mirror Node of its network.
+                    ///
+                    /// @param session the session
+                    /// @return the client
+                    MirrorNodeClient mirrorNode(Session session);
+
+                    /// Waits for the value of a call of the Mirror Node client.
+                    ///
+                    /// @param value the pending value
+                    /// @param <T>   the type
+                    /// @return the value
+                    <T> T await(CompletionStage<T> value);
+
+                    /// Returns the items of a paginated result: the pages are read one after the other until there are
+                    /// `take` items or no further page.
+                    ///
+                    /// @param first the pending first page
+                    /// @param take  the maximum number of items, `null` for all; negative is rejected
+                    /// @param <T>   the item type
+                    /// @return the items, at most `take`
+                    <T> List<T> items(CompletionStage<? extends Page<T>> first, @Nullable Integer take);
+                """;
+        return RUNTIME
+                .replace("import java.util.function.Function;\n",
+                        "import java.util.concurrent.CompletionStage;\nimport java.util.function.Function;\n"
+                                + "import " + page + ";\n")
+                .replace("import org.jspecify.annotations.Nullable;\n",
+                        "import " + client + ";\nimport org.jspecify.annotations.Nullable;\n")
+                .replace("\n    /// Creates the JSON-RPC server", methods + "\n    /// Creates the JSON-RPC server");
     }
 
     private static GeneratedFile file(final String name, final String body) {

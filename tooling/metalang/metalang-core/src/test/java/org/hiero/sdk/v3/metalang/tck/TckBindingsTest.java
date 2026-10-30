@@ -114,8 +114,101 @@ class TckBindingsTest {
         assertThat(payment.setter()).isTrue();
     }
 
+    @Test
+    void shouldResolveCallsOfMirrorNodeRepositoriesAndListsOfResultObjects() {
+        // WHEN
+        final TckBindings.Bindings bindings = TckFixtures.resolve("""
+                binding listItems -> ShopRepository::items {
+                    names = name : string
+                    gift  = gift : bool
+                    take max
+                    result items = each response {
+                        result name = name : string
+                    }
+                    result count = response : string
+                }
+                binding getDetail -> ShopRepository::detail {
+                    id = id : string
+                    result note = response.note : string
+                }
+                binding createOrder -> OrderTransaction {
+                    customer = customer : string
+                    result lines = each receipt.lines {
+                        result name = name : string
+                        unsupported result price "no price"
+                    }
+                }
+                """.replace("result count = response : string\n", ""));
+
+        // THEN
+        assertThat(bindings.diagnostics()).isEmpty();
+        assertThat(bindings.bindings()).extracting(TckBindings.Resolved::kind)
+                .containsExactly(TckBindings.Kind.MIRROR, TckBindings.Kind.MIRROR, TckBindings.Kind.TRANSACTION);
+        final TckBindings.Resolved items = bindings.bindings().getFirst();
+        assertThat(items.resultType()).isNull();
+        assertThat(items.call()).satisfies(call -> {
+            assertThat(call.repository().name()).isEqualTo("shops");
+            assertThat(call.method().parameters()).hasSize(3);
+            assertThat(call.paged()).isTrue();
+            assertThat(call.response().text()).isEqualTo("list<shop.Item>");
+        });
+        final TckBindings.Argument names = (TckBindings.Argument) items.members().getFirst();
+        assertThat(names.parameter().name()).isEqualTo("names");
+        assertThat(names.collection()).isEqualTo(TckBindings.Collection.LIST);
+        assertThat(((TckBindings.Argument) items.members().get(1)).collection())
+                .isEqualTo(TckBindings.Collection.NONE);
+        assertThat(((TckBindings.Take) items.members().get(2)).path()).hasToString("max");
+        final TckBindings.ResultList list = (TckBindings.ResultList) items.members().get(3);
+        assertThat(list.fields()).isEmpty();
+        assertThat(list.elementType().name().name()).isEqualTo("Item");
+        assertThat(list.members()).singleElement().satisfies(m ->
+                assertThat(((TckBindings.Result) m).fields()).extracting(f -> f.name()).containsExactly("name"));
+        final TckBindings.Resolved detail = bindings.bindings().get(1);
+        assertThat(detail.call().method().parameters()).hasSize(1);
+        assertThat(detail.call().paged()).isFalse();
+        assertThat(((TckBindings.Result) detail.members().get(1)).fields()).extracting(f -> f.name())
+                .containsExactly("note");
+        final TckBindings.ResultList lines = (TckBindings.ResultList) bindings.bindings().get(2).members().get(1);
+        assertThat(lines.fields()).extracting(f -> f.name()).containsExactly("lines");
+        assertThat(lines.members()).hasSize(2);
+    }
+
     @ParameterizedTest
     @CsvSource(delimiter = '|', quoteCharacter = '"', value = {
+            "binding a -> OrderQuery::submit { }|tck.kind|"
+                    + "Type 'OrderQuery' is no repository of MirrorNodeClient; only its methods can be called",
+            "binding a -> ShopRepository::missing { }|tck.unknown-attribute|"
+                    + "Type 'shop.ShopRepository' has no method 'missing'",
+            "binding a -> ShopRepository::items { other = o : string }|tck.unknown-attribute|"
+                    + "No method 'items' of 'shop.ShopRepository' has the parameters [other]",
+            "binding a -> ShopRepository::detail { }|tck.required|"
+                    + "Required parameter 'id' of 'shop.ShopRepository::detail' gets no value",
+            "binding a -> ShopRepository::detail { id = id : string  take max }|tck.syntax|"
+                    + "'take' needs a method that returns a page",
+            "binding a -> ShopRepository::items { take max  take other }|tck.duplicate|'take' is bound twice",
+            "binding a -> ShopRepository::items { names = ^n : string }|tck.parent|"
+                    + "'^n' refers to an enclosing element",
+            "binding a -> ShopRepository::items { names = n : bool }|tck.converter|"
+                    + "Converter 'bool' is for bool, not for 'string'",
+            "binding a -> ShopRepository::items { gift = n : bool  gift = m : bool }|tck.duplicate|"
+                    + "Parameter 'gift' is bound twice",
+            "binding a -> ShopRepository::items { names = request n }|tck.syntax|"
+                    + "A call of a method has only parameters, 'take' and results",
+            "binding a -> ShopRepository::detail { id = id : string  result x = receipt.note : string }|tck.result|"
+                    + "A result of a call of a method starts with 'response', not 'receipt.note'",
+            "binding a -> ShopRepository::items { result x = response.name : string }|tck.result|"
+                    + "'response.name' continues after a value that has no attributes",
+            "common c -> ShopRepository::items { }|tck.syntax|The common transaction parameters call no method",
+            "binding a -> OrderQuery { id = id : string  take max }|tck.syntax|"
+                    + "'take' needs a method that returns a page",
+            "binding a -> OrderQuery { id = id : string  result x = each response.note { } }|tck.result|"
+                    + "'response.note' is no list of a declared type; 'each' needs one",
+            "binding a -> OrderTransaction { customer = c : string  result x = each receipt.lines { "
+                    + "result y = ^name : string } }|tck.result|'^name' cannot refer to an enclosing element",
+            "binding a -> OrderTransaction { customer = c : string  result x = each receipt.lines { "
+                    + "name = n : string } }|tck.syntax|A list of result objects has only results",
+            "binding a -> OrderTransaction { customer = c : string  result x = each receipt.lines { "
+                    + "result y = name : string  result y = name : string } }|tck.duplicate|Result 'y' is bound twice",
             "binding a -> Unknown { }|tck.unknown-type|Type 'Unknown' is not imported or does not exist",
             "binding a -> shop.Unknown { }|tck.unknown-type|Type 'shop.Unknown' is not imported or does not exist",
             "binding a -> Plain { x = x : string }|tck.kind|Type 'Plain' is neither a transaction nor a query",

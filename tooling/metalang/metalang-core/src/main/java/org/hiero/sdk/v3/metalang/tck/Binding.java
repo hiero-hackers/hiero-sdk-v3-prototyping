@@ -24,18 +24,24 @@ import org.jspecify.annotations.Nullable;
  * ({@code binding mintToken when metadata -> A { ... } else -> B { ... }}); every variant is a binding of its own with
  * the same name, the condition in {@link #when()} and the documentation of the first one.
  *
+ * <p>A method that calls a method of a repository of the Mirror Node client names the repository and the method
+ * ({@code binding getAddressBook -> NetworkRepository::nodes { ... }}); its assignments go to the parameters of the
+ * method, and its result is the value the method returns ({@code response}).
+ *
  * @param common        whether this is the binding of the common transaction parameters ({@code common}) instead of
  *                      a method ({@code binding})
  * @param name          the JSON-RPC method, or the JSON object of the common parameters
  * @param type          the name of the target type as written (simple or qualified)
+ * @param method        the method of the target type that is called ({@code Type::method}), {@code null} for a
+ *                      request that is created and sent
  * @param when          the JSON parameter whose presence selects this variant, {@code null} for the only binding of a
  *                      method or for the {@code else} variant
  * @param members       the assignments, results and unsupported parameters
  * @param documentation the comment above the binding
  * @param location      where the binding (or the variant) starts
  */
-public record Binding(boolean common, String name, String type, @Nullable Path when, List<Member> members,
-                      String documentation, SourceLocation location) {
+public record Binding(boolean common, String name, String type, @Nullable String method, @Nullable Path when,
+                      List<Member> members, String documentation, SourceLocation location) {
 
     /**
      * Creates a binding.
@@ -43,6 +49,7 @@ public record Binding(boolean common, String name, String type, @Nullable Path w
      * @param common        whether it binds the common transaction parameters
      * @param name          the method or JSON object
      * @param type          the target type
+     * @param method        the called method, {@code null} if none
      * @param when          the condition of the variant, {@code null} if none
      * @param members       the members
      * @param documentation the documentation
@@ -54,6 +61,22 @@ public record Binding(boolean common, String name, String type, @Nullable Path w
         members = List.copyOf(members);
         Objects.requireNonNull(documentation, "documentation must not be null");
         Objects.requireNonNull(location, "location must not be null");
+    }
+
+    /**
+     * Creates a binding of a request that is created and sent.
+     *
+     * @param common        whether it binds the common transaction parameters
+     * @param name          the method or JSON object
+     * @param type          the target type
+     * @param when          the condition of the variant, {@code null} if none
+     * @param members       the members
+     * @param documentation the documentation
+     * @param location      the location
+     */
+    public Binding(final boolean common, final String name, final String type, final @Nullable Path when,
+                   final List<Member> members, final String documentation, final SourceLocation location) {
+        this(common, name, type, null, when, members, documentation, location);
     }
 
     /** A member of a binding. */
@@ -274,6 +297,57 @@ public record Binding(boolean common, String name, String type, @Nullable Path w
             Objects.requireNonNull(name, "name must not be null");
             Objects.requireNonNull(value, "value must not be null");
             Objects.requireNonNull(converter, "converter must not be null");
+            Objects.requireNonNull(location, "location must not be null");
+        }
+    }
+
+    /**
+     * A JSON list of the result whose elements are objects, one per element of a list value:
+     * {@code result name = each response.path { result ... }}. The results inside read the element: their value paths
+     * have no root ({@code result nodeId = nodeId : int64}); they may again be lists of objects.
+     *
+     * @param name     the result field
+     * @param value    the path to the list, starting with {@code receipt} or {@code response}, or (inside another
+     *                 list) relative to its element
+     * @param members  the results of an element, and unsupported results
+     * @param location the location
+     */
+    public record ResultList(Path name, Path value, List<Member> members, SourceLocation location) implements Member {
+
+        /**
+         * Creates a list of result objects.
+         *
+         * @param name     the result field
+         * @param value    the value path
+         * @param members  the members
+         * @param location the location
+         */
+        public ResultList {
+            Objects.requireNonNull(name, "name must not be null");
+            Objects.requireNonNull(value, "value must not be null");
+            members = List.copyOf(members);
+            Objects.requireNonNull(location, "location must not be null");
+        }
+    }
+
+    /**
+     * The maximum number of items of a paged result: {@code take limit}. The pages are read one after the other until
+     * the result has as many items as the JSON parameter says, or until there is no further page; without the
+     * parameter all pages are read.
+     *
+     * @param path     the JSON parameter (an integer)
+     * @param location the location
+     */
+    public record Take(Path path, SourceLocation location) implements Member {
+
+        /**
+         * Creates a limit.
+         *
+         * @param path     the path
+         * @param location the location
+         */
+        public Take {
+            Objects.requireNonNull(path, "path must not be null");
             Objects.requireNonNull(location, "location must not be null");
         }
     }

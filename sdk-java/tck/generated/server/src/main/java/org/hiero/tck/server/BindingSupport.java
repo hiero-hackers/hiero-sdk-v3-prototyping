@@ -35,6 +35,17 @@ final class BindingSupport {
         return Collections.unmodifiableList(values);
     }
 
+    /// Converts every element of a JSON list, or a single JSON value as list of one element (the conditions
+    /// of a repeated query parameter).
+    ///
+    /// @param json      the JSON list or value
+    /// @param converter the converter of an element
+    /// @param <T>       the element type
+    /// @return the values
+    static <T> List<T> values(final Object json, final Function<Object, T> converter) {
+        return json instanceof List<?> ? list(json, converter) : List.of(converter.apply(json));
+    }
+
     /// Converts every element of a JSON list into a set (in the order of the list).
     ///
     /// @param json      the JSON list

@@ -47,6 +47,7 @@ final class NodeServiceBindings {
         requests.put("updateNode", this::buildUpdateNode);
         methods.put("deleteNode", this::deleteNode);
         requests.put("deleteNode", this::buildDeleteNode);
+        methods.put("getAddressBook", this::getAddressBook);
     }
 
     /// Creates a node (NodeCreateTransaction.md, ServiceEndpoint.md).
@@ -158,5 +159,30 @@ final class NodeServiceBindings {
     NodeDeleteTransaction buildDeleteNode(final Map<String, Object> params) {
         final NodeDeleteTransaction request = new NodeDeleteTransaction(runtime.required(runtime.value(params, List.of(new Source<>("nodeId", convert::int64))), "nodeId"));
         return request;
+    }
+
+    /// Reads the address book from the Mirror Node (AddressBookQuery.md): the consensus nodes of the address-book file
+    /// fileId, of all files without it. limit is the number of nodes the TCK wants, not the page size of the REST API:
+    /// the pages are read until there are as many.
+    Object getAddressBook(final Map<String, Object> params, final Session session) {
+        final var response = runtime.items(runtime.mirrorNode(session).network().nodes(runtime.or(runtime.value(params, List.of(new Source<>("fileId", json -> BindingSupport.values(json, convert::string)))), List.of()), null, List.of(), null), runtime.value(params, List.of(new Source<>("limit", convert::int32))));
+        final Map<String, Object> result = new LinkedHashMap<>();
+        runtime.put(result, "nodeAddresses", response, values1 -> BindingSupport.json(values1, element1 -> {
+            final Map<String, Object> object1 = new LinkedHashMap<>();
+            runtime.put(object1, "nodeId", element1.nodeId(), convert::number64Json);
+            runtime.put(object1, "accountId", element1.accountId(), convert::accountIdJson);
+            runtime.put(object1, "serviceEndpoints", element1.serviceEndpoints(), values2 -> BindingSupport.json(values2, element2 -> {
+                final Map<String, Object> object2 = new LinkedHashMap<>();
+                runtime.put(object2, "ipAddressV4", element2.ipAddressV4(), convert::stringJson);
+                runtime.put(object2, "domainName", element2.domainName(), convert::stringJson);
+                runtime.put(object2, "port", element2.port(), convert::numberJson);
+                return object2;
+            }));
+            runtime.put(object1, "rsaPublicKey", element1.publicKey(), convert::stringJson);
+            runtime.put(object1, "nodeCertHash", element1.nodeCertHash(), convert::stringJson);
+            runtime.put(object1, "description", element1.description(), convert::stringJson);
+            return object1;
+        }));
+        return result;
     }
 }

@@ -21,6 +21,7 @@ import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
 import org.hiero.sdk.v3.metalang.model.MethodDefinition;
+import org.hiero.sdk.v3.metalang.model.ParameterDefinition;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
 import org.hiero.sdk.v3.metalang.model.Type;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
@@ -35,7 +36,9 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>The execution flow is the one of the TCK: a transaction is created with its attributes, gets the common
  * transaction parameters, is sent with {@code signWithOperatorAndSubmit} and answered with its receipt
- * ({@code queryReceipt}); a query is sent with {@code submit} and answered with the value of its response.
+ * ({@code queryReceipt}); a query is sent with {@code submit} and answered with the value of its response. A call of
+ * a method of a repository of the Mirror Node client ({@code -> Repository::method}) passes the bound parameters and
+ * is answered with the value the method returns; a page is read up to the end or up to the limit of {@code take}.
  */
 public final class TckBindings {
 
@@ -46,7 +49,9 @@ public final class TckBindings {
         /** a query: answered with its response */
         QUERY,
         /** the common transaction parameters: setters of mutable attributes */
-        COMMON
+        COMMON,
+        /** a method of a repository of the Mirror Node client: answered with the value it returns */
+        MIRROR
     }
 
     /**
@@ -58,10 +63,11 @@ public final class TckBindings {
      * @param type       the target type
      * @param members    the resolved members
      * @param resultType the receipt type (transactions) or the response value type (queries), {@code null} for the
-     *                   common parameters
+     *                   common parameters and for a call of a method
+     * @param call       the called method of a repository, {@code null} for the other kinds
      */
     public record Resolved(Binding binding, String file, Kind kind, TypeDefinition type, List<Member> members,
-                           @Nullable TypeDefinition resultType) {
+                           @Nullable TypeDefinition resultType, @Nullable Call call) {
 
         /**
          * Creates a resolved binding.
@@ -72,11 +78,39 @@ public final class TckBindings {
          * @param type       the target type
          * @param members    the members
          * @param resultType the result type
+         * @param call       the called method
          */
         public Resolved {
             Objects.requireNonNull(binding, "binding must not be null");
             members = List.copyOf(members);
         }
+
+        /**
+         * Creates a resolved binding of a request.
+         *
+         * @param binding    the binding
+         * @param file       the file
+         * @param kind       the kind
+         * @param type       the target type
+         * @param members    the members
+         * @param resultType the result type
+         */
+        public Resolved(final Binding binding, final String file, final Kind kind, final TypeDefinition type,
+                        final List<Member> members, final @Nullable TypeDefinition resultType) {
+            this(binding, file, kind, type, members, resultType, null);
+        }
+    }
+
+    /**
+     * The method of a repository of the Mirror Node client that a binding calls.
+     *
+     * @param repository the attribute of the Mirror Node client that holds the repository
+     * @param method     the called overload of the method
+     * @param paged      whether the method returns a page: the result is then the list of the items of all pages
+     *                   that are read
+     * @param response   the type of {@code response}: the returned type, or {@code list<T>} for a page of {@code T}
+     */
+    public record Call(FieldDefinition repository, MethodDefinition method, boolean paged, Type response) {
     }
 
     /** A resolved member of a binding. */
@@ -209,6 +243,62 @@ public final class TckBindings {
      * @param path  the JSON object of the request
      */
     public record Request(FieldDefinition field, Binding.Path path) implements Member {
+    }
+
+    /**
+     * A parameter of the called method with its JSON sources. A list parameter (the conditions of a query parameter
+     * of the Mirror Node) also accepts a single JSON value as list of one element; without a source it is empty.
+     *
+     * @param parameter  the parameter
+     * @param sources    the alternative sources with their converters
+     * @param collection whether the converter converts the elements of a list or set
+     */
+    public record Argument(ParameterDefinition parameter, List<Source> sources, Collection collection)
+            implements Member {
+
+        /**
+         * Creates an argument.
+         *
+         * @param parameter  the parameter
+         * @param sources    the sources
+         * @param collection the collection
+         */
+        public Argument {
+            sources = List.copyOf(sources);
+        }
+    }
+
+    /**
+     * The maximum number of items of a paged result, from a JSON parameter.
+     *
+     * @param path the JSON parameter
+     */
+    public record Take(Binding.Path path) implements Member {
+    }
+
+    /**
+     * A JSON list of the result with one object per element of a list value.
+     *
+     * @param name        the result field
+     * @param fields      the attributes to the list, from the receipt, the response or the enclosing element
+     * @param elementType the type of the elements
+     * @param members     the results of an element (relative to it) and unsupported results
+     */
+    public record ResultList(Binding.Path name, List<FieldDefinition> fields, TypeDefinition elementType,
+                             List<Member> members) implements Member {
+
+        /**
+         * Creates a list of result objects.
+         *
+         * @param name        the result field
+         * @param fields      the attribute path
+         * @param elementType the element type
+         * @param members     the members
+         */
+        public ResultList {
+            fields = List.copyOf(fields);
+            members = List.copyOf(members);
+        }
     }
 
     /**
@@ -393,6 +483,9 @@ public final class TckBindings {
         if (type.isEmpty()) {
             return Optional.empty();
         }
+        if (binding.method() != null) {
+            return call(binding, file, type.get());
+        }
         final Kind kind;
         final TypeDefinition resultType;
         if (binding.common()) {
@@ -421,6 +514,133 @@ public final class TckBindings {
             required(binding.members(), type.get(), binding.location());
         }
         return Optional.of(new Resolved(binding, file, kind, type.get(), members, resultType));
+    }
+
+    /** The Mirror Node client, whose attributes hold the repositories a binding can call. */
+    private static final QualifiedName MIRROR_NODE_CLIENT = new QualifiedName("mirrornode", "MirrorNodeClient");
+
+    /** The type of a page of a paginated result. */
+    private static final QualifiedName PAGE = new QualifiedName("common", "Page");
+
+    /**
+     * Resolves the call of a method of a repository: the repository must be an attribute of the Mirror Node client,
+     * the method is the overload with the fewest parameters that has all bound ones.
+     */
+    private Optional<Resolved> call(final Binding binding, final String file, final TypeDefinition type) {
+        final String name = Objects.requireNonNull(binding.method());
+        if (binding.common()) {
+            error("tck.syntax", "The common transaction parameters call no method", binding.location());
+            return Optional.empty();
+        }
+        final Optional<FieldDefinition> repository = model.type(MIRROR_NODE_CLIENT).stream()
+                .flatMap(client -> client.fields().stream())
+                .filter(f -> f.type() instanceof Type.DeclaredType declared && declared.name().equals(type.name()))
+                .findFirst();
+        if (repository.isEmpty()) {
+            error("tck.kind", "Type '" + binding.type() + "' is no repository of " + MIRROR_NODE_CLIENT.name()
+                    + "; only its methods can be called", binding.location());
+            return Optional.empty();
+        }
+        final Set<String> bound = new HashSet<>();
+        binding.members().forEach(m -> {
+            if (m instanceof Binding.Assignment assignment) {
+                bound.add(assignment.attribute());
+            }
+        });
+        final List<MethodDefinition> overloads = type.methods(name).stream().filter(m -> !m.isStatic()).toList();
+        if (overloads.isEmpty()) {
+            error("tck.unknown-attribute", "Type '" + type.name() + "' has no method '" + name + "'",
+                    binding.location());
+            return Optional.empty();
+        }
+        final Optional<MethodDefinition> method = overloads.stream()
+                .filter(m -> m.parameters().stream().map(ParameterDefinition::name).toList().containsAll(bound))
+                .min(java.util.Comparator.comparingInt(m -> m.parameters().size()));
+        if (method.isEmpty()) {
+            error("tck.unknown-attribute", "No method '" + name + "' of '" + type.name() + "' has the parameters "
+                    + new java.util.TreeSet<>(bound), binding.location());
+            return Optional.empty();
+        }
+        final Type returned = method.get().returnType();
+        final boolean paged = returned instanceof Type.DeclaredType declared && declared.name().equals(PAGE);
+        final Type response = paged ? new Type.BasicType(BuiltinType.lookup("list").orElseThrow(),
+                List.of(((Type.DeclaredType) returned).arguments().getFirst())) : returned;
+        final Call call = new Call(repository.get(), method.get(), paged, response);
+        final List<Member> members = new ArrayList<>();
+        final Set<String> assigned = new HashSet<>();
+        final Set<String> results = new HashSet<>();
+        boolean take = false;
+        for (final Binding.Member member : binding.members()) {
+            switch (member) {
+                case Binding.Assignment assignment -> argument(method.get(), assignment, assigned)
+                        .ifPresent(members::add);
+                case Binding.Take limit -> {
+                    if (!paged) {
+                        error("tck.syntax", "'take' needs a method that returns a page", limit.location());
+                    } else if (take) {
+                        error("tck.duplicate", "'take' is bound twice", limit.location());
+                    } else if (limit.path().parent()) {
+                        error("tck.parent", "'" + limit.path() + "' refers to an enclosing element", limit.location());
+                    } else {
+                        members.add(new Take(limit.path()));
+                    }
+                    take = true;
+                }
+                case Binding.Result value -> {
+                    if (!results.add(value.name().toString())) {
+                        error("tck.duplicate", "Result '" + value.name() + "' is bound twice", value.location());
+                    } else {
+                        result(value, root(Kind.MIRROR), response).ifPresent(members::add);
+                    }
+                }
+                case Binding.ResultList list -> {
+                    if (!results.add(list.name().toString())) {
+                        error("tck.duplicate", "Result '" + list.name() + "' is bound twice", list.location());
+                    } else {
+                        resultList(list, root(Kind.MIRROR), response).ifPresent(members::add);
+                    }
+                }
+                case Binding.Unsupported unsupported -> members.add(new Unsupported(unsupported));
+                default -> error("tck.syntax", "A call of a method has only parameters, 'take' and results",
+                        member.location());
+            }
+        }
+        for (final ParameterDefinition parameter : method.get().parameters()) {
+            if (!assigned.contains(parameter.name()) && !parameter.hasAnnotation("nullable")
+                    && collection(parameter.type()) == Collection.NONE) {
+                error("tck.required", "Required parameter '" + parameter.name() + "' of '" + type.name() + "::"
+                        + name + "' gets no value", binding.location());
+            }
+        }
+        return Optional.of(new Resolved(binding, file, Kind.MIRROR, type, members, null, call));
+    }
+
+    private Optional<Argument> argument(final MethodDefinition method, final Binding.Assignment assignment,
+                                        final Set<String> assigned) {
+        final Optional<ParameterDefinition> parameter = method.parameters().stream()
+                .filter(p -> p.name().equals(assignment.attribute())).findFirst();
+        if (parameter.isEmpty()) {
+            error("tck.unknown-attribute", "Method '" + method.name() + "' has no parameter '"
+                    + assignment.attribute() + "'", assignment.location());
+            return Optional.empty();
+        }
+        if (!assigned.add(assignment.attribute())) {
+            error("tck.duplicate", "Parameter '" + assignment.attribute() + "' is bound twice", assignment.location());
+            return Optional.empty();
+        }
+        final Collection collection = collection(parameter.get().type());
+        final Type valueType = collection == Collection.NONE ? parameter.get().type()
+                : ((Type.BasicType) parameter.get().type()).arguments().getFirst();
+        final List<Source> sources = new ArrayList<>();
+        for (final Binding.Source source : assignment.sources()) {
+            if (source.path() != null && source.path().parent()) {
+                error("tck.parent", "'" + source.path() + "' refers to an enclosing element", assignment.location());
+                continue;
+            }
+            converter(source.converter(), true, valueType, assignment.location())
+                    .ifPresent(c -> sources.add(new Source(source.path(), source.literal(), c)));
+        }
+        return Optional.of(new Argument(parameter.get(), sources, collection));
     }
 
     /** The receipt or response type: the first type argument of the result of the method that sends the request. */
@@ -493,9 +713,21 @@ public final class TckBindings {
                     } else if (!results.add(value.name().toString())) {
                         error("tck.duplicate", "Result '" + value.name() + "' is bound twice", value.location());
                     } else {
-                        result(value, kind, resultType).ifPresent(result::add);
+                        result(value, root(kind), declared(resultType)).ifPresent(result::add);
                     }
                 }
+                case Binding.ResultList list -> {
+                    if (resultType == null) {
+                        error("tck.result", kind == Kind.COMMON ? "The common transaction parameters have no result"
+                                : "Only the binding itself has results", list.location());
+                    } else if (!results.add(list.name().toString())) {
+                        error("tck.duplicate", "Result '" + list.name() + "' is bound twice", list.location());
+                    } else {
+                        resultList(list, root(kind), declared(resultType)).ifPresent(result::add);
+                    }
+                }
+                case Binding.Take take -> error("tck.syntax", "'take' needs a method that returns a page",
+                        take.location());
                 case Binding.Unsupported unsupported -> result.add(new Unsupported(unsupported));
             }
         }
@@ -631,36 +863,122 @@ public final class TckBindings {
         }
     }
 
-    private Optional<Result> result(final Binding.Result value, final Kind kind, final TypeDefinition resultType) {
-        final String root = kind == Kind.TRANSACTION ? "receipt" : "response";
-        if (!value.value().first().equals(root) || value.value().parent()) {
-            error("tck.result", "A result of a " + kind.name().toLowerCase(Locale.ROOT) + " starts with '"
-                    + root + "', not '" + value.value() + "'", value.location());
+    /**
+     * The value results start with.
+     *
+     * @param name  {@code receipt} or {@code response}
+     * @param owner what the results belong to, for messages
+     */
+    private record Root(String name, String owner) {
+    }
+
+    /** The value results start with: {@code receipt} (transactions) or {@code response}. */
+    private static Root root(final Kind kind) {
+        return switch (kind) {
+            case TRANSACTION -> new Root("receipt", "a transaction");
+            case MIRROR -> new Root("response", "a call of a method");
+            default -> new Root("response", "a " + kind.name().toLowerCase(Locale.ROOT));
+        };
+    }
+
+    private static Type declared(final TypeDefinition type) {
+        return new Type.DeclaredType(type.name(), List.of());
+    }
+
+    /**
+     * Resolves a result: its value path starts with {@code root} and leads from {@code start} through attributes, or
+     * - with {@code root} {@code null}, inside a list of result objects - starts at an attribute of the element.
+     */
+    private Optional<Result> result(final Binding.Result value, final @Nullable Root root, final Type start) {
+        return walk(value.value(), root, start, value.location()).flatMap(walk -> {
+            final Collection collection = collection(walk.type());
+            final Type valueType = collection == Collection.NONE ? walk.type()
+                    : ((Type.BasicType) walk.type()).arguments().getFirst();
+            return converter(value.converter(), false, valueType, value.location())
+                    .map(c -> new Result(value.name(), walk.fields(), c, collection));
+        });
+    }
+
+    /** Resolves a list of result objects and the results of its elements. */
+    private Optional<ResultList> resultList(final Binding.ResultList list, final @Nullable Root root,
+                                            final Type start) {
+        final Optional<Walk> walk = walk(list.value(), root, start, list.location());
+        if (walk.isEmpty()) {
             return Optional.empty();
         }
-        TypeDefinition current = resultType;
-        Type type = new Type.DeclaredType(resultType.name(), List.of());
+        if (collection(walk.get().type()) == Collection.NONE
+                || !(((Type.BasicType) walk.get().type()).arguments().getFirst() instanceof Type.DeclaredType element)) {
+            error("tck.result", "'" + list.value() + "' is no list of a declared type; 'each' needs one",
+                    list.location());
+            return Optional.empty();
+        }
+        final TypeDefinition elementType = model.definition(element);
+        final List<Member> members = new ArrayList<>();
+        final Set<String> results = new HashSet<>();
+        for (final Binding.Member member : list.members()) {
+            switch (member) {
+                case Binding.Result value -> {
+                    if (!results.add(value.name().toString())) {
+                        error("tck.duplicate", "Result '" + value.name() + "' is bound twice", value.location());
+                    } else {
+                        result(value, null, element).ifPresent(members::add);
+                    }
+                }
+                case Binding.ResultList inner -> {
+                    if (!results.add(inner.name().toString())) {
+                        error("tck.duplicate", "Result '" + inner.name() + "' is bound twice", inner.location());
+                    } else {
+                        resultList(inner, null, element).ifPresent(members::add);
+                    }
+                }
+                case Binding.Unsupported unsupported when unsupported.result() ->
+                        members.add(new Unsupported(unsupported));
+                default -> error("tck.syntax", "A list of result objects has only results", member.location());
+            }
+        }
+        return Optional.of(new ResultList(list.name(), walk.get().fields(), elementType, members));
+    }
+
+    /** The attributes along a value path and the type it leads to. */
+    private record Walk(List<FieldDefinition> fields, Type type) {
+    }
+
+    private Optional<Walk> walk(final Binding.Path path, final @Nullable Root root, final Type start,
+                                final SourceLocation location) {
+        final List<String> segments;
+        if (root == null) {
+            if (path.parent()) {
+                error("tck.result", "'" + path + "' cannot refer to an enclosing element", location);
+                return Optional.empty();
+            }
+            segments = path.segments();
+        } else {
+            if (!path.first().equals(root.name()) || path.parent()) {
+                error("tck.result", "A result of " + root.owner() + " starts with '" + root.name() + "', not '"
+                        + path + "'", location);
+                return Optional.empty();
+            }
+            segments = path.segments().subList(1, path.segments().size());
+        }
+        Type type = start;
+        TypeDefinition current = start instanceof Type.DeclaredType declared ? model.definition(declared) : null;
         final List<FieldDefinition> fields = new ArrayList<>();
-        for (final String segment : value.value().segments().subList(1, value.value().segments().size())) {
+        for (final String segment : segments) {
             if (current == null) {
-                error("tck.result", "'" + value.value() + "' continues after a value that has no attributes",
-                        value.location());
+                error("tck.result", "'" + path + "' continues after a value that has no attributes", location);
                 return Optional.empty();
             }
             final Optional<FieldDefinition> field = current.field(segment);
             if (field.isEmpty()) {
                 error("tck.unknown-attribute", "Type '" + current.name() + "' has no attribute '" + segment + "'",
-                        value.location());
+                        location);
                 return Optional.empty();
             }
             fields.add(field.get());
             type = field.get().type();
             current = type instanceof Type.DeclaredType declared ? model.definition(declared) : null;
         }
-        final Collection collection = collection(type);
-        final Type valueType = collection == Collection.NONE ? type : ((Type.BasicType) type).arguments().getFirst();
-        return converter(value.converter(), false, valueType, value.location())
-                .map(c -> new Result(value.name(), fields, c, collection));
+        return Optional.of(new Walk(fields, type));
     }
 
     private Optional<Converter> converter(final String name, final boolean inbound, final Type type,

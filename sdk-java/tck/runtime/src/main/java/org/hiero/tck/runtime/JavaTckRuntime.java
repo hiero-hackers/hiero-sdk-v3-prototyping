@@ -1,10 +1,12 @@
 package org.hiero.tck.runtime;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import org.hiero.common.Page;
 import org.hiero.consensusnode.client.NodeSignature;
 import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.consensusnode.queries.Query;
@@ -14,6 +16,7 @@ import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
 import org.hiero.keys.PrivateKey;
+import org.hiero.mirrornode.MirrorNodeClient;
 import org.hiero.tck.contract.Converters;
 import org.hiero.tck.contract.Handler;
 import org.hiero.tck.contract.Session;
@@ -135,6 +138,37 @@ public final class JavaTckRuntime implements TckRuntime {
     @Override
     public <T, Q extends QueryResponse<T>> T query(final Session session, final Query<T, Q> query) {
         return join(query.submit(RuntimeSession.of(session).client())).value();
+    }
+
+    @Override
+    public MirrorNodeClient mirrorNode(final Session session) {
+        return RuntimeSession.of(session).mirrorNode();
+    }
+
+    @Override
+    public <T> T await(final CompletionStage<T> value) {
+        return join(value);
+    }
+
+    @Override
+    public <T> List<T> items(final CompletionStage<? extends Page<T>> first, final @Nullable Integer take) {
+        if (take != null && take < 0) {
+            throw RpcError.internal("the number of items must not be negative, but is " + take);
+        }
+        final List<T> items = new ArrayList<>();
+        Page<T> page = join(first);
+        while (true) {
+            for (final T item : page.data()) {
+                if (take != null && items.size() >= take) {
+                    return items;
+                }
+                items.add(item);
+            }
+            if ((take != null && items.size() >= take) || !page.hasNext()) {
+                return items;
+            }
+            page = join(page.next());
+        }
     }
 
     @Override

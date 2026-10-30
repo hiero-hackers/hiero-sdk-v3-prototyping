@@ -19,6 +19,14 @@ export function list<T>(json: unknown, converter: (json: unknown) => T): T[] {
     return elements(json, false).map((element) => converter(element));
 }
 
+/**
+ * Converts every element of a JSON list, or a single JSON value as list of one element (the conditions of a
+ * repeated query parameter).
+ */
+export function values<T>(json: unknown, converter: (json: unknown) => T): T[] {
+    return Array.isArray(json) ? list(json, converter) : [converter(json)];
+}
+
 /** Converts every element of a JSON list into a set (in the order of the list). */
 export function set<T>(json: unknown, converter: (json: unknown) => T): Set<T> {
     return new Set(list(json, converter));

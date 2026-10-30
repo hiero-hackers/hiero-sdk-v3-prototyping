@@ -2,7 +2,9 @@ import type { NodeSignature, TransactionSigner } from "@hiero/consensus-node-cli
 import { NodeSignature as Signature } from "@hiero/consensus-node-client/consensusnode/client";
 import type { Query, QueryResponse } from "@hiero/consensus-node-client/consensusnode/queries";
 import type { PackedTransaction, Receipt, Transaction } from "@hiero/consensus-node-client/consensusnode/transactions";
+import type { Page } from "@hiero/base/common";
 import type { PrivateKey } from "@hiero/base/keys";
+import type { MirrorNodeClient } from "@hiero/mirror-node-client/mirrornode";
 import type { Handler, JsonObject, Session, Source, TckRuntime, TckServer } from "@hiero/tck-contract";
 import { JsonRpcServer } from "./JsonRpcServer.js";
 import { RpcError } from "./RpcError.js";
@@ -91,6 +93,30 @@ export class TsTckRuntime implements TckRuntime {
 
     async query<T>(session: Session, query: Query<any, QueryResponse<T>>): Promise<T> {
         return (await query.submit(RuntimeSession.of(session).client)).value;
+    }
+
+    mirrorNode(session: Session): MirrorNodeClient {
+        return RuntimeSession.of(session).mirrorNode;
+    }
+
+    async items<T>(first: Promise<Page<T>>, take: number | null): Promise<T[]> {
+        if (take !== null && take < 0) {
+            throw RpcError.internal(`the number of items must not be negative, but is ${take}`);
+        }
+        const items: T[] = [];
+        let page = await first;
+        for (;;) {
+            for (const item of page.data) {
+                if (take !== null && items.length >= take) {
+                    return items;
+                }
+                items.push(item);
+            }
+            if ((take !== null && items.length >= take) || !page.hasNext()) {
+                return items;
+            }
+            page = await page.next();
+        }
     }
 
     put<T>(result: Record<string, unknown>, path: string, value: T | null | undefined,

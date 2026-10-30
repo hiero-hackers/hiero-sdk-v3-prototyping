@@ -4,11 +4,14 @@ package org.hiero.tck.contract;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import org.hiero.common.Page;
 import org.hiero.consensusnode.queries.Query;
 import org.hiero.consensusnode.queries.QueryResponse;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Transaction;
+import org.hiero.mirrornode.MirrorNodeClient;
 import org.jspecify.annotations.Nullable;
 
 /// The runtime of the TCK server: everything the generated server needs besides the API. Every language
@@ -97,6 +100,28 @@ public interface TckRuntime {
     /// @param <T>       the API type
     <T> void put(Map<String, Object> result, String path, @Nullable T value,
                  Function<? super T, Object> converter);
+
+    /// Returns the Mirror Node client of a session, on the Mirror Node of its network.
+    ///
+    /// @param session the session
+    /// @return the client
+    MirrorNodeClient mirrorNode(Session session);
+
+    /// Waits for the value of a call of the Mirror Node client.
+    ///
+    /// @param value the pending value
+    /// @param <T>   the type
+    /// @return the value
+    <T> T await(CompletionStage<T> value);
+
+    /// Returns the items of a paginated result: the pages are read one after the other until there are
+    /// `take` items or no further page.
+    ///
+    /// @param first the pending first page
+    /// @param take  the maximum number of items, `null` for all; negative is rejected
+    /// @param <T>   the item type
+    /// @return the items, at most `take`
+    <T> List<T> items(CompletionStage<? extends Page<T>> first, @Nullable Integer take);
 
     /// Creates the JSON-RPC server with the given methods and the runtime methods `setup`, `reset` and
     /// `generateKey`.

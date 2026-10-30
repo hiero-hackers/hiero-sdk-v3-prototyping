@@ -15,9 +15,11 @@ import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 import org.hiero.sdk.v3.metalang.generator.GenerationException;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
+import org.hiero.sdk.v3.metalang.model.ParameterDefinition;
 import org.hiero.sdk.v3.metalang.model.QualifiedName;
 import org.hiero.sdk.v3.metalang.model.Type;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
+import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 import org.hiero.sdk.v3.metalang.tck.Binding;
 import org.hiero.sdk.v3.metalang.tck.Converter;
 import org.hiero.sdk.v3.metalang.tck.TckBindings;
@@ -163,8 +165,12 @@ public final class TsTckGenerator {
         final String receipt = imports.type(new QualifiedName("consensusnode.transactions", "Receipt"));
         final String query = imports.type(new QualifiedName("consensusnode.queries", "Query"));
         final String queryResponse = imports.type(new QualifiedName("consensusnode.queries", "QueryResponse"));
-        final String body = RUNTIME.replace("$Transaction", transaction).replace("$Receipt", receipt)
+        String body = RUNTIME.replace("$Transaction", transaction).replace("$Receipt", receipt)
                 .replace("$QueryResponse", queryResponse).replace("$Query", query);
+        if (context.isGenerated(MIRROR_NODE_CLIENT) && context.isGenerated(PAGE)) {
+            body = body.replace(SERVER_METHOD, MIRROR_METHODS.replace("$MirrorNodeClient",
+                    imports.type(MIRROR_NODE_CLIENT)).replace("$Page", imports.type(PAGE)) + SERVER_METHOD);
+        }
         files.add(new GeneratedFile(CONTRACT + "/src/TckRuntime.ts", TsGenerator.HEADER + "\n"
                 + "import type { Converters } from \"./Converters.js\";\n" + imports.render() + "\n" + body));
         files.add(new GeneratedFile(CONTRACT + "/src/index.ts", TsGenerator.HEADER + "\n"
@@ -223,6 +229,26 @@ public final class TsTckGenerator {
         }
         return TsTypes.type(type, imports);
     }
+
+    /** The Mirror Node client, whose repositories the bindings can call. */
+    private static final QualifiedName MIRROR_NODE_CLIENT = new QualifiedName("mirrornode", "MirrorNodeClient");
+
+    /** The page of a paginated result. */
+    private static final QualifiedName PAGE = new QualifiedName("common", "Page");
+
+    /** The start of the documentation of {@code server} in {@link #RUNTIME}. */
+    private static final String SERVER_METHOD = "    /**\n     * Creates the JSON-RPC server";
+
+    /** The methods of the runtime for the calls of the Mirror Node client. */
+    private static final String MIRROR_METHODS = """
+                /** The Mirror Node client of a session, on the Mirror Node of its network. */
+                mirrorNode(session: Session): $MirrorNodeClient;
+                /**
+                 * Returns the items of a paginated result: the pages are read one after the other until there are
+                 * `take` items or no further page (`null`: all); a negative `take` is rejected.
+                 */
+                items<T>(first: Promise<$Page<T>>, take: number | null): Promise<T[]>;
+            """;
 
     private static final String RUNTIME = """
             /** A JSON object of a request or result. */
@@ -362,7 +388,8 @@ public final class TsTckGenerator {
     }
 
     /** The functions of the generated module {@code BindingSupport}. */
-    private static final List<String> SUPPORT_FUNCTIONS = List.of("elements", "list", "set", "toJson", "withName");
+    private static final List<String> SUPPORT_FUNCTIONS = List.of("elements", "list", "set", "toJson", "values",
+            "withName");
 
     /** The private fields the methods use. */
     private static String fields(final String body, final boolean common, final boolean requests) {
@@ -399,10 +426,138 @@ public final class TsTckGenerator {
         }
         for (int i = 0; i < variants.size(); i++) {
             final int variant = single ? 0 : i + 1;
+            if (variants.get(i).kind() == TckBindings.Kind.MIRROR) {
+                methods.add(call(name, variants.get(i)));
+                continue;
+            }
             methods.add(handler(name, variant, variants.get(i)));
             methods.add(build(name, variant, variants.get(i), imports, context));
         }
         return methods;
+    }
+
+    /**
+     * The handler of a call of a method of a repository of the Mirror Node client: the bound parameters (an unbound
+     * one is {@code null} or, for a list, empty), the call, and the returned value as result; a page is read up to the
+     * limit of {@code take}.
+     */
+    private String call(final String name, final TckBindings.Resolved binding) {
+        final TckBindings.Call call = Objects.requireNonNull(binding.call());
+        final String indent = INDENT + INDENT;
+        final StringBuilder body = new StringBuilder();
+        rejectUnsupported(binding.members(), "params", body, indent);
+        final List<String> arguments = new ArrayList<>();
+        for (final ParameterDefinition parameter : call.method().parameters()) {
+            final Optional<TckBindings.Argument> argument = binding.members().stream()
+                    .filter(TckBindings.Argument.class::isInstance).map(TckBindings.Argument.class::cast)
+                    .filter(a -> a.parameter().name().equals(parameter.name())).findFirst();
+            final boolean collection = parameter.type() instanceof Type.BasicType basic
+                    && basic.builtin().category() == BuiltinType.Category.COLLECTION;
+            final String empty = parameter.type() instanceof Type.BasicType basic
+                    && basic.builtin().name().equals("set") ? "new Set()" : "[]";
+            if (argument.isEmpty()) {
+                arguments.add(collection ? empty : "null");
+                continue;
+            }
+            final String value = sources(argument.get(), "params");
+            if (collection) {
+                arguments.add("this.#runtime.or(" + value + ", " + empty + ")");
+            } else if (parameter.hasAnnotation("nullable")) {
+                arguments.add(value);
+            } else {
+                arguments.add("this.#runtime.required(" + value + ", " + TsLiterals.quote(parameter.name()) + ")");
+            }
+        }
+        final String invocation = "this.#runtime.mirrorNode(session)." + call.repository().name() + "."
+                + call.method().name() + "(" + String.join(", ", arguments) + ")";
+        final boolean async = call.method().hasAnnotation("async");
+        final String value;
+        if (call.paged()) {
+            final String take = binding.members().stream().filter(TckBindings.Take.class::isInstance)
+                    .map(TckBindings.Take.class::cast).findFirst()
+                    .map(t -> "this.#runtime.value(params, [{ path: " + TsLiterals.quote(t.path().toString())
+                            + ", converter: (json) => this.#convert.int32(json) }])")
+                    .orElse("null");
+            value = "await this.#runtime.items(" + (async ? invocation : "Promise.resolve(" + invocation + ")")
+                    + ", " + take + ")";
+        } else {
+            value = async ? "await " + invocation : invocation;
+        }
+        body.append(indent).append("const response = ").append(value).append(";\n");
+        body.append(indent).append("const result: Record<string, unknown> = {};\n");
+        results(binding.members(), "response", "result", 1, body, indent);
+        body.append(indent).append("return result;\n");
+        final StringBuilder code = new StringBuilder();
+        if (!binding.binding().documentation().isBlank()) {
+            code.append(TsDoc.render(INDENT, List.of(binding.binding().documentation())));
+        }
+        return code.append(INDENT).append("async ").append(name)
+                .append("(params: JsonObject, session: Session): Promise<unknown> {\n")
+                .append(body).append(INDENT).append("}\n").toString();
+    }
+
+    /** The lookup of the sources of a parameter; a list parameter also accepts a single JSON value. */
+    private static String sources(final TckBindings.Argument argument, final String json) {
+        final List<String> groups = new ArrayList<>();
+        List<String> current = new ArrayList<>();
+        for (final TckBindings.Source source : argument.sources()) {
+            final String converter = argument.collection() == TckBindings.Collection.NONE
+                    ? converter(source.converter(), argument.collection())
+                    : "(json) => values(json, (element) => this.#convert." + source.converter().id() + "(element))";
+            if (source.path() == null) {
+                if (!current.isEmpty()) {
+                    groups.add("this.#runtime.value(" + json + ", [" + String.join(", ", current) + "])");
+                    current = new ArrayList<>();
+                }
+                groups.add("(" + converter + ")(" + TsLiterals.quote(Objects.requireNonNull(source.literal())) + ")");
+                continue;
+            }
+            current.add("{ path: " + TsLiterals.quote(String.join(".", source.path().segments()))
+                    + ", converter: " + converter + " }");
+        }
+        if (!current.isEmpty()) {
+            groups.add("this.#runtime.value(" + json + ", [" + String.join(", ", current) + "])");
+        }
+        String lookup = groups.getLast();
+        for (int i = groups.size() - 2; i >= 0; i--) {
+            lookup = "this.#runtime.or(" + groups.get(i) + ", " + lookup + ")";
+        }
+        return lookup;
+    }
+
+    /**
+     * The results: every result is put into the JSON object {@code target}; a list of result objects converts every
+     * element into a JSON object with its own results.
+     */
+    private static void results(final List<TckBindings.Member> members, final String root, final String target,
+                                final int depth, final StringBuilder body, final String indent) {
+        for (final TckBindings.Member member : members) {
+            if (member instanceof TckBindings.Result result) {
+                final String converter = "this.#convert." + result.converter().id() + "Json";
+                body.append(indent).append("this.#runtime.put(").append(target).append(", ")
+                        .append(TsLiterals.quote(result.name().toString())).append(", ")
+                        .append(access(root, result.fields()))
+                        .append(result.collection() == TckBindings.Collection.NONE
+                                ? ", (value) => " + converter + "(value));\n"
+                                : ", (values) => toJson(values, (value) => " + converter + "(value)));\n");
+            } else if (member instanceof TckBindings.ResultList list) {
+                final String element = "element" + depth;
+                final String object = "object" + depth;
+                body.append(indent).append("this.#runtime.put(").append(target).append(", ")
+                        .append(TsLiterals.quote(list.name().toString())).append(", ")
+                        .append(access(root, list.fields())).append(", (values").append(depth)
+                        .append(") => toJson(values").append(depth).append(", (").append(element).append(") => {\n");
+                final String inner = indent + INDENT;
+                body.append(inner).append("const ").append(object).append(": Record<string, unknown> = {};\n");
+                results(list.members(), element, object, depth + 1, body, inner);
+                body.append(inner).append("return ").append(object).append(";\n")
+                        .append(indent).append("}));\n");
+            } else if (member instanceof TckBindings.Unsupported(final Binding.Unsupported unsupported)
+                    && unsupported.result()) {
+                body.append(indent).append("// not provided: ").append(unsupported.name()).append(" (")
+                        .append(unsupported.reason()).append(")\n");
+            }
+        }
     }
 
     private String dispatcher(final String name, final List<TckBindings.Resolved> variants, final boolean build,
@@ -466,20 +621,7 @@ public final class TsTckGenerator {
             body.append(indent).append("const response = await this.#runtime.query(session, query);\n");
         }
         body.append(indent).append("const result: Record<string, unknown> = {};\n");
-        for (final TckBindings.Member member : binding.members()) {
-            if (member instanceof TckBindings.Result result) {
-                final String converter = "this.#convert." + result.converter().id() + "Json";
-                body.append(indent).append("this.#runtime.put(result, ").append(TsLiterals.quote(result.name()
-                        .toString())).append(", ").append(access(value, result.fields()))
-                        .append(result.collection() == TckBindings.Collection.NONE
-                                ? ", (value) => " + converter + "(value));\n"
-                                : ", (values) => toJson(values, (value) => " + converter + "(value)));\n");
-            } else if (member instanceof TckBindings.Unsupported(final Binding.Unsupported unsupported)
-                    && unsupported.result()) {
-                body.append(indent).append("// not provided: ").append(unsupported.name()).append(" (")
-                        .append(unsupported.reason()).append(")\n");
-            }
-        }
+        results(binding.members(), value, "result", 1, body, indent);
         body.append(indent).append("return result;\n");
         final StringBuilder code = new StringBuilder();
         if (variant == 0) {
@@ -870,6 +1012,14 @@ public final class TsTckGenerator {
             /** Converts every element of a JSON list. */
             export function list<T>(json: unknown, converter: (json: unknown) => T): T[] {
                 return elements(json, false).map((element) => converter(element));
+            }
+
+            /**
+             * Converts every element of a JSON list, or a single JSON value as list of one element (the conditions of a
+             * repeated query parameter).
+             */
+            export function values<T>(json: unknown, converter: (json: unknown) => T): T[] {
+                return Array.isArray(json) ? list(json, converter) : [converter(json)];
             }
 
             /** Converts every element of a JSON list into a set (in the order of the list). */

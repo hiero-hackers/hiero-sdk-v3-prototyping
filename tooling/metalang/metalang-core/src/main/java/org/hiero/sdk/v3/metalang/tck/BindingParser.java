@@ -13,11 +13,13 @@ import org.hiero.sdk.v3.metalang.source.MarkdownSchemaExtractor;
  * <pre>
  * file         := (requires | binding)*
  * requires     := 'requires' '{' NAME (',' NAME)* '}' 'from' QNAME
- * binding      := ('binding' | 'common') NAME construction
+ * binding      := ('binding' | 'common') NAME (construction | '-&gt;' QNAME '::' NAME body)
  * construction := '-&gt;' QNAME body
  *               | ('when' path '-&gt;' QNAME body)+ ('else' '-&gt;' QNAME body)?
  * body         := '{' member* '}'
  * member       := 'undocumented'? 'result' path '=' path ':' NAME
+ *               | 'result' path '=' 'each' path body
+ *               | 'take' path
  *               | 'unsupported' 'result'? NAME STRING ('unless' ('true' | 'false' | STRING))?
  *               | NAME '=' 'each' generator (',' generator)* '-&gt;' QNAME body
  *               | NAME '=' 'request' path
@@ -139,12 +141,33 @@ public final class BindingParser {
         final String documentation = String.join("\n", start.comments());
         final String name = name();
         final boolean common = start.text().equals("common");
+        if (methodAhead()) {
+            expect("->");
+            final String type = qualifiedName();
+            expect(":");
+            expect(":");
+            final String method = name();
+            return List.of(new Binding(common, name, type, method, null, members(), documentation, location(start)));
+        }
         final List<Binding> result = new ArrayList<>();
         for (final Binding.Variant variant : construction()) {
             result.add(new Binding(common, name, variant.type(), variant.when(), variant.members(), documentation,
                     result.isEmpty() ? location(start) : variant.location()));
         }
         return result;
+    }
+
+    /** Whether a call of a method follows: {@code -> Type::method} (the type possibly qualified). */
+    private boolean methodAhead() {
+        if (!peek().text().equals("->") || peek().kind() != Kind.SYMBOL) {
+            return false;
+        }
+        int offset = 1;
+        while (peekAt(offset).kind() == Kind.NAME && peekAt(offset + 1).text().equals(".")) {
+            offset += 2;
+        }
+        return peekAt(offset).kind() == Kind.NAME && peekAt(offset + 1).text().equals(":")
+                && peekAt(offset + 2).text().equals(":");
     }
 
     /** {@code -> Type { ... }} or the variants {@code when a -> A { ... } else -> B { ... }}. */
@@ -193,9 +216,18 @@ public final class BindingParser {
             next();
             final Binding.Path name = path();
             expect("=");
+            if (!undocumented && keyword("each")) {
+                next();
+                final Binding.Path value = path();
+                return new Binding.ResultList(name, value, members(), location(start));
+            }
             final Binding.Path value = path();
             expect(":");
             return new Binding.Result(name, value, name(), undocumented, location(start));
+        }
+        if (start.text().equals("take") && peekAt(1).kind() == Kind.NAME) {
+            next();
+            return new Binding.Take(path(), location(start));
         }
         if (start.text().equals("unsupported") && peekAt(1).kind() == Kind.NAME) {
             next();

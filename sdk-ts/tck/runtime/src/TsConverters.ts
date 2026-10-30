@@ -215,6 +215,10 @@ export class TsConverters implements Converters {
         return value;
     }
 
+    number64Json(value: bigint): unknown {
+        return Number(value);
+    }
+
     utf8Json(value: Uint8Array): unknown {
         return new TextDecoder().decode(value);
     }

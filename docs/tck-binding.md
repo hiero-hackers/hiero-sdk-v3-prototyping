@@ -292,7 +292,9 @@ binding createAccount -> AccountCreateTransaction {
 
 The kind of a binding follows from its type: a type with `signWithOperatorAndSubmit` is a transaction (answered with
 its receipt), a type with `submit` a query (answered with the value of its response). The common transaction
-parameters bind to the mutable attributes of `Transaction`.
+parameters bind to the mutable attributes of `Transaction`. A binding `-> Repository::method` calls a method of a
+repository of the Mirror Node client (the repository must be an attribute of `MirrorNodeClient`): its assignments go to
+the parameters of the method, and `response` is the value the method returns.
 
 Further forms, added when the other services were bound:
 
@@ -309,13 +311,20 @@ Further forms, added when the other services were bound:
 | `maxQueryPayment = maxQueryPayment : tinybar` on a mutable attribute | set with a setter after the request was created (only on the type of the binding) | the paid queries |
 | `unsupported validateStatus "reason" unless false` | a parameter the API cannot provide, except for the one value it behaves like: that value is accepted, every other value is answered with an error | `getTransactionReceipt` (the V3 receipt query never fails on the status) |
 | `undocumented result transactionId = receipt.transactionId : transactionId` | a result the TCK tests read although the test specification of the method does not name it; the coverage check does not report it | `createAccount` (read by `test-transaction-receipt-query.ts`) |
+| `binding getAddressBook -> NetworkRepository::nodes { fileId = fileId : string }` | a call of a method of a Mirror Node repository: the overload with the fewest parameters that has all bound ones is called; an unbound parameter is `null` or, for a list, empty; a list parameter (the conditions of a REST query parameter) also accepts a single JSON value | `getAddressBook` |
+| `take limit` | for a method that returns a `Page`: the pages are read until the result has as many items as the JSON parameter says (all pages without it, an error if it is negative); `response` is then the list of the items | `getAddressBook` (the TCK's `limit` is a number of nodes, not the page size of the REST API) |
+| `result nodeAddresses = each response { result nodeId = nodeId : number64 ... }` | a JSON list of objects, one per element of a list value; the results inside read the element (paths without root) and may be lists of objects again; usable in every kind of binding | `getAddressBook` |
 
 The converter catalogue grew by `number` (an `int32` as JSON number), `utf8`, `keyList` (a JSON list of keys that
 must all sign), `publicKey`, `tokenType`, `tokenSupplyType`, `nftIdToken` / `nftIdSerial` / `nftId` (the NFT ID
 `0.0.1234/1`), `transactionId` (both directions), `contractId`, `exchangeRate` (`hbars` is 1, `cents` the price of
-one hbar: the API keeps the price, not the pair of the protocol), `receipt` (an `UntypedReceipt` as JSON object) and
-`ipAddress`; `int32` also converts `uint16`. Each is implemented in both runtimes
-(`JavaConverters`, `TsConverters`).
+one hbar: the API keeps the price, not the pair of the protocol), `receipt` (an `UntypedReceipt` as JSON object),
+`ipAddress` and `number64` (an `int64` as JSON number); `int32` also converts `uint16`. Each is implemented in both
+runtimes (`JavaConverters`, `TsConverters`).
+
+The calls of the Mirror Node client need three methods of the runtime, which the contract declares when the API has a
+`MirrorNodeClient`: `mirrorNode(session)` (the client of the session, created by `setup` for the Mirror Node of
+`MIRROR_NODE_REST_URL`, to which it appends the path `/api/v1` of the REST API), `await` and `items(page, take)`.
 
 The generated server has one builder per binding (and variant) besides the handler; the builders of the transactions
 are registered by method name (`Requests`), which is what `request` uses. `BindingSupport` holds the helpers of the
@@ -334,9 +343,13 @@ and the binding accepts both.
   48 bound methods, 16 unbound methods and no finding: every parameter and result of the bound methods is either bound
   or declared `unsupported` with its reason. The unbound methods have no counterpart in the V3 specs (contract
   service, `createEthereumTransaction`, `submitTopicMessage`, `updateTokenFeeSchedule`, `getTransactionReceipt`,
-  `ping`, `pingAll`), read the Mirror Node (`getMirrorNodeAccountBalance`, `getMirrorNodeTokenBalance`), check V2
-  behaviour (`executeDeprecatedAccountBalanceQuery`) or return a list of objects (`getAddressBook`); the bindings
-  files explain each.
+  `ping`, `pingAll`), read the Mirror Node (`getMirrorNodeAccountBalance`, `getMirrorNodeTokenBalance`) or check V2
+  behaviour (`executeDeprecatedAccountBalanceQuery`); the bindings files explain each. `getAddressBook`, unbound at
+  first because its result is a list of objects, is bound since the Mirror Node client covers the REST API with its
+  query parameters: it calls `NetworkRepository::nodes` (49 bound methods). Against a local Solo network 25 of its 27
+  tests pass; test 4 expects an error for an address-book file that does not exist, for which the REST API answers
+  with an empty list, and test 2 times out in the TCK's own check with the V2 SDK. The tests that compare with the V2
+  SDK need the gRPC API of the Mirror Node, which Solo does not forward (see `tooling/tck/solo.env`).
 - **No hand-written handler code:** all five methods, including `transferCrypto` with its three lists of transfers
   and `getAccountInfo` with the nested `stakingInfo`, are generated from the bindings. The generated code builds the
   request with the constructor of the type (missing values become `null` or the `@@default` of the attribute,

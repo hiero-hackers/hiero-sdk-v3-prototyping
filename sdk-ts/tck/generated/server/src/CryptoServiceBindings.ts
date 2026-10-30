@@ -354,7 +354,9 @@ export class CryptoServiceBindings {
 
     /** Builds the request of `getTransactionReceipt` without sending it. */
     buildGetTransactionReceipt(params: JsonObject): TransactionReceiptQuery {
-        this.#runtime.unsupported(params, "validateStatus", "the V3 receipt query returns the receipt of a failed transaction too; the status is a value, not an error");
+        if (params["validateStatus"] !== false) {
+            this.#runtime.unsupported(params, "validateStatus", "the V3 receipt query does not fail on the status of a failed transaction; the status is a value, not an error");
+        }
         return new TransactionReceiptQuery({
             transactionId: this.#runtime.required(this.#runtime.value(params, [{ path: "transactionId", converter: (json) => this.#convert.transactionId(json) }]), "transactionId"),
             includeDuplicates: this.#runtime.or(this.#runtime.value(params, [{ path: "includeDuplicates", converter: (json) => this.#convert.bool(json) }]), false),
