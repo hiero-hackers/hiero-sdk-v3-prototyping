@@ -146,7 +146,7 @@ final class TsSamples {
             case FLOAT -> Constraints.decimal(annotations, variant).map(BigDecimal::toPlainString);
             case DECIMAL -> Constraints.decimal(annotations, variant).map(v -> TsLiterals.quote(v.toPlainString()));
             case BOOL -> Optional.of(variant % 2 == 0 ? "true" : "false");
-            case STRING -> Constraints.string(annotations, variant).map(TsLiterals::quote);
+            case STRING -> Constraints.string(annotations, variant).map(TsLiterals::string);
             case BYTES -> {
                 final int size = Constraints.elementCount(annotations, 3);
                 yield size < 0 ? Optional.empty() : Optional.of(bytes(size, variant));

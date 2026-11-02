@@ -116,7 +116,7 @@ final class RustSamples {
             case FLOAT, DECIMAL -> Constraints.decimal(annotations, variant)
                     .map(v -> RustLiterals.number(v, builtin));
             case BOOL -> Optional.of(variant % 2 == 0 ? "true" : "false");
-            case STRING -> Constraints.string(annotations, variant).map(s -> RustLiterals.quote(s) + ".to_string()");
+            case STRING -> Constraints.string(annotations, variant).map(RustLiterals::string);
             case BYTES -> {
                 final int size = Constraints.elementCount(annotations, 3);
                 yield size < 0 ? Optional.empty() : Optional.of(bytes(size, variant));

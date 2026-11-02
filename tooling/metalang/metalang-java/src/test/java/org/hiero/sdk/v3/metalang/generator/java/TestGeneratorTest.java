@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import org.hiero.sdk.v3.metalang.MetaLang;
 import org.hiero.sdk.v3.metalang.TestSpecs;
+import org.hiero.sdk.v3.metalang.generator.Constraints;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 import org.hiero.sdk.v3.metalang.model.LinkedModel;
 import org.junit.jupiter.api.Nested;
@@ -163,6 +164,33 @@ class TestGeneratorTest {
             assertThat(run.failures()).containsOnlyKeys("LimitsTest.shouldRejectSmallBelowMinimum",
                     "LimitsTest.shouldRejectSmallAboveMaximum", "LimitsTest.shouldCopyTagsIn",
                     "LimitsTest.shouldCopyDataIn", "LimitsTest.shouldRejectMemoAboveMaximumBytes");
+        }
+
+        @Test
+        void shouldBuildLongBoundaryStringsAtRuntime() throws Exception {
+            // GIVEN lengths whose boundary values exceed the limit of a Java string constant (65535 bytes)
+            final List<GeneratedFile> files = generate("""
+                    namespace a
+                    Call {
+                        @@immutable @@maxLength(262146) data: string
+                        @@immutable @@minLength(70000) name: string
+                    }
+                    """);
+
+            // WHEN
+            final String test = test(files, "CallTest");
+
+            // THEN the values are built at runtime, not written as literals
+            assertThat(test).contains("void shouldAcceptDataAtMaximumLength()", "(\"value\" + \"a\".repeat(262141))")
+                    .contains("void shouldRejectDataAboveMaximumLength()", "\"a\".repeat(262147)")
+                    .contains("void shouldRejectNameBelowMinimumLength()", "\"a\".repeat(69999)")
+                    .doesNotContain("a".repeat(Constraints.MAX_LITERAL_LENGTH + 1));
+
+            // WHEN the tests run against the generated code
+            final GeneratedJava.TestRun run = run(files);
+
+            // THEN they compile and pass
+            assertThat(run.failures()).isEmpty();
         }
     }
 

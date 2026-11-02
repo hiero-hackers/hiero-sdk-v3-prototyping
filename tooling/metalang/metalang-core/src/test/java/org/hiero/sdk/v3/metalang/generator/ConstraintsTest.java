@@ -136,4 +136,21 @@ class ConstraintsTest {
         assertThat(Constraints.fitsInstance(new Type.DeclaredType(box.name(), List.of()),
                 new Type.DeclaredType(box.name(), List.of(Constraints.STRING)))).isFalse();
     }
+
+    @Test
+    void shouldSplitLongStringsIntoRepeatedParts() {
+        // GIVEN
+        final String shortValue = "a".repeat(Constraints.MAX_LITERAL_LENGTH);
+        final String longValue = "value" + "a".repeat(262141);
+        final String twoByteValue = "\u00e4".repeat(300) + "a";
+
+        // THEN short strings stay one literal, runs of long ones are repeated
+        assertThat(Constraints.parts(shortValue)).containsExactly(new Constraints.StringPart(shortValue, 1));
+        assertThat(Constraints.parts(longValue)).containsExactly(new Constraints.StringPart("value", 1),
+                new Constraints.StringPart("a", 262141));
+        assertThat(Constraints.parts(twoByteValue)).containsExactly(new Constraints.StringPart("\u00e4", 300),
+                new Constraints.StringPart("a", 1));
+        assertThat(Constraints.parts("\uD83D\uDE00".repeat(200))).containsExactly(
+                new Constraints.StringPart("\uD83D\uDE00", 200));
+    }
 }

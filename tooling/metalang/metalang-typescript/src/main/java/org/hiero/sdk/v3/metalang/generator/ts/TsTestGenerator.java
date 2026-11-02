@@ -688,33 +688,33 @@ public final class TsTestGenerator {
             if (minLength.isPresent()) {
                 final int length = minLength.get();
                 Constraints.string(sized(annotations, "minLength", "maxLength", length), 0)
-                        .ifPresent(s -> cases.add(new Case("a value with the minimum length", TsLiterals.quote(s),
+                        .ifPresent(s -> cases.add(new Case("a value with the minimum length", TsLiterals.string(s),
                                 true)));
                 if (length > 0) {
                     cases.add(new Case("a value shorter than the minimum length",
-                            TsLiterals.quote("a".repeat(length - 1)), false));
+                            TsLiterals.string("a".repeat(length - 1)), false));
                 }
             }
             if (maxLength.isPresent()) {
                 final int length = maxLength.get();
                 Constraints.string(sized(annotations, "minLength", "maxLength", length), 0)
-                        .ifPresent(s -> cases.add(new Case("a value with the maximum length", TsLiterals.quote(s),
+                        .ifPresent(s -> cases.add(new Case("a value with the maximum length", TsLiterals.string(s),
                                 true)));
-                cases.add(new Case("a value longer than the maximum length", TsLiterals.quote("a".repeat(length + 1)),
+                cases.add(new Case("a value longer than the maximum length", TsLiterals.string("a".repeat(length + 1)),
                         false));
             }
             Constraints.maxBytes(annotations).ifPresent(bytes -> {
                 bytes.accepted().ifPresent(s -> cases.add(new Case("a value of the maximum number of UTF-8 bytes",
-                        TsLiterals.quote(s), true)));
+                        TsLiterals.string(s), true)));
                 cases.add(new Case("a value of more than the maximum number of UTF-8 bytes",
-                        TsLiterals.quote(bytes.rejected()), false));
+                        TsLiterals.string(bytes.rejected()), false));
             });
             Constraints.stringArgument(annotations, "pattern").flatMap(RegexSamples::rejected)
                     .filter(s -> !Constraints.isValidString(s, annotations))
-                    .ifPresent(s -> cases.add(new Case("a value that does not match the pattern", TsLiterals.quote(s),
+                    .ifPresent(s -> cases.add(new Case("a value that does not match the pattern", TsLiterals.string(s),
                             false)));
             if (annotations.stream().anyMatch(a -> a.name().equals("urlPattern"))) {
-                cases.add(new Case("a value that is no URL", TsLiterals.quote("not a url"), false));
+                cases.add(new Case("a value that is no URL", TsLiterals.string("not a url"), false));
             }
         }
 

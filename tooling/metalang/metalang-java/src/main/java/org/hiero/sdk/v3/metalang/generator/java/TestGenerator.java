@@ -1032,26 +1032,26 @@ public final class TestGenerator {
             if (minLength.isPresent()) {
                 final int length = minLength.get();
                 Constraints.string(sized(annotations, "minLength", "maxLength", length), 0)
-                        .ifPresent(s -> cases.add(new Case("AtMinimumLength", JavaLiterals.quote(s), true)));
+                        .ifPresent(s -> cases.add(new Case("AtMinimumLength", JavaLiterals.string(s), true)));
                 if (length > 0) {
-                    cases.add(new Case("BelowMinimumLength", JavaLiterals.quote("a".repeat(length - 1)), false));
+                    cases.add(new Case("BelowMinimumLength", JavaLiterals.string("a".repeat(length - 1)), false));
                 }
             }
             if (maxLength.isPresent()) {
                 final int length = maxLength.get();
                 Constraints.string(sized(annotations, "minLength", "maxLength", length), 0)
-                        .ifPresent(s -> cases.add(new Case("AtMaximumLength", JavaLiterals.quote(s), true)));
-                cases.add(new Case("AboveMaximumLength", JavaLiterals.quote("a".repeat(length + 1)), false));
+                        .ifPresent(s -> cases.add(new Case("AtMaximumLength", JavaLiterals.string(s), true)));
+                cases.add(new Case("AboveMaximumLength", JavaLiterals.string("a".repeat(length + 1)), false));
             }
             Constraints.maxBytes(annotations).ifPresent(bytes -> {
-                bytes.accepted().ifPresent(s -> cases.add(new Case("AtMaximumBytes", JavaLiterals.quote(s), true)));
-                cases.add(new Case("AboveMaximumBytes", JavaLiterals.quote(bytes.rejected()), false));
+                bytes.accepted().ifPresent(s -> cases.add(new Case("AtMaximumBytes", JavaLiterals.string(s), true)));
+                cases.add(new Case("AboveMaximumBytes", JavaLiterals.string(bytes.rejected()), false));
             });
             Constraints.stringArgument(annotations, "pattern").flatMap(RegexSamples::rejected)
                     .filter(s -> !Constraints.isValidString(s, annotations))
-                    .ifPresent(s -> cases.add(new Case("NotMatchingThePattern", JavaLiterals.quote(s), false)));
+                    .ifPresent(s -> cases.add(new Case("NotMatchingThePattern", JavaLiterals.string(s), false)));
             if (annotations.stream().anyMatch(a -> a.name().equals("urlPattern"))) {
-                cases.add(new Case("ThatIsNoUrl", JavaLiterals.quote("not a url"), false));
+                cases.add(new Case("ThatIsNoUrl", JavaLiterals.string("not a url"), false));
             }
         }
 

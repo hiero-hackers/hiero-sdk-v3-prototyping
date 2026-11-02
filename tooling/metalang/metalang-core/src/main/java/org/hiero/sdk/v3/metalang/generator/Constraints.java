@@ -30,6 +30,12 @@ public final class Constraints {
     /** The {@code string} type, the default for type variables without bound. */
     public static final Type STRING = new Type.BasicType(BuiltinType.lookup("string").orElseThrow(), List.of());
 
+    /** The longest test string that the generators write as a single literal. */
+    public static final int MAX_LITERAL_LENGTH = 256;
+
+    /** The shortest run of one character that a long test string builds at runtime. */
+    private static final int MIN_REPEAT = 16;
+
     private Constraints() {
     }
 
@@ -171,6 +177,66 @@ public final class Constraints {
      * @param rejected a string of one byte more
      */
     public record MaxBytesCases(Optional<String> accepted, String rejected) {
+    }
+
+    /**
+     * Splits a test string into the parts the generators render, so that a long value (e.g. the boundary of
+     * {@code @@maxLength(262146)}) is built at runtime instead of written as a literal: javac rejects a string constant
+     * of more than 65535 UTF-8 bytes, and long literals bloat the generated tests. A string of at most
+     * {@value #MAX_LITERAL_LENGTH} characters is one literal part; in a longer one, every run of at least
+     * {@value #MIN_REPEAT} equal characters becomes a repeated part.
+     *
+     * @param value the test string
+     * @return the parts in order; their concatenation is the value
+     */
+    public static List<StringPart> parts(final String value) {
+        if (value.length() <= MAX_LITERAL_LENGTH) {
+            return List.of(new StringPart(value, 1));
+        }
+        final List<StringPart> parts = new ArrayList<>();
+        final StringBuilder literal = new StringBuilder();
+        int index = 0;
+        while (index < value.length()) {
+            final int codePoint = value.codePointAt(index);
+            final int width = Character.charCount(codePoint);
+            int end = index + width;
+            while (end < value.length() && value.codePointAt(end) == codePoint) {
+                end += width;
+            }
+            final int times = (end - index) / width;
+            if (times >= MIN_REPEAT) {
+                if (!literal.isEmpty()) {
+                    parts.add(new StringPart(literal.toString(), 1));
+                    literal.setLength(0);
+                }
+                parts.add(new StringPart(Character.toString(codePoint), times));
+            } else {
+                literal.append(value, index, end);
+            }
+            index = end;
+        }
+        if (!literal.isEmpty()) {
+            parts.add(new StringPart(literal.toString(), 1));
+        }
+        return parts;
+    }
+
+    /**
+     * A part of a test string: a literal, or a character repeated at runtime.
+     *
+     * @param text  the literal, or the repeated character
+     * @param times how often the text is repeated; {@code 1} for a literal
+     */
+    public record StringPart(String text, int times) {
+
+        /**
+         * Whether the part is built at runtime by repeating the text.
+         *
+         * @return {@code true} for a repeated character, {@code false} for a literal
+         */
+        public boolean repeated() {
+            return times > 1;
+        }
     }
 
     private static String twoByteString(final int bytes) {

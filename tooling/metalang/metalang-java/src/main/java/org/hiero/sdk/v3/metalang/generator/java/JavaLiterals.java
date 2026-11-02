@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.ast.Literal;
+import org.hiero.sdk.v3.metalang.generator.Constraints;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
 import org.hiero.sdk.v3.metalang.model.Type;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
@@ -138,6 +139,21 @@ final class JavaLiterals {
                     + (builtin.name().equals("seconds") ? ".ofSeconds(" : ".ofMillis(") + text + "L)";
             default -> text.contains(".") ? text : text + ".0"; // double
         };
+    }
+
+    /**
+     * Returns the Java expression of a test string: a literal, or for a long value a concatenation that repeats its
+     * runs of one character at runtime ({@code "a".repeat(262147)}), because javac rejects a string constant of more
+     * than 65535 bytes.
+     *
+     * @param value the string
+     * @return the Java expression
+     */
+    static String string(final String value) {
+        final List<String> parts = Constraints.parts(value).stream()
+                .map(p -> p.repeated() ? quote(p.text()) + ".repeat(" + p.times() + ")" : quote(p.text()))
+                .toList();
+        return parts.size() == 1 ? parts.getFirst() : "(" + String.join(" + ", parts) + ")";
     }
 
     /**

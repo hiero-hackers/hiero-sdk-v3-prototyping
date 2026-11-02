@@ -35,6 +35,7 @@ class RustTestGeneratorTest {
                 @@immutable @@max(30) delay: duration
                 @@immutable @@minLength(2) @@maxLength(5) code: string
                 @@immutable @@maxBytes(5) memo: string
+                @@immutable @@maxLength(300) payload: string
                 @@immutable @@pattern("^/[^\\s]*$") path: string
                 @@immutable @@urlPattern url: string
                 @@immutable @@minSize(1) @@maxSize(3) data: bytes
@@ -96,6 +97,8 @@ class RustTestGeneratorTest {
                 .contains("fn ratio_rejects_a_value_below_the_minimum() {", "0.49999999999999994")
                 .contains("std::time::Duration::from_millis(31)")
                 .contains("fn code_accepts_a_value_with_the_minimum_length() {")
+                // long boundary values are built at runtime
+                .contains("\"value\".to_string() + &\"a\".repeat(295)", "\"a\".repeat(301)")
                 .contains("fn path_rejects_a_value_that_does_not_match_the_pattern() {")
                 .contains("fn url_rejects_a_value_that_is_no_url() {")
                 .contains("fn data_rejects_more_elements_than_the_maximum() {")

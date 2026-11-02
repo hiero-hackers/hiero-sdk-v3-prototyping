@@ -63,9 +63,6 @@ Deviations from the mirror node REST API (see the Design Notes of [`mirror-node.
   `result_data_type` of a `ContractAction` are `ContractCallOperationType`, `ContractActionType`, `ContractEntityType`
   and `ContractResultDataType`. `ContractResult.result` (the name of a transaction status) and `status` (`0x1` or
   `0x0`) stay `string`.
-- **`ContractCallRequest.data` has no `@@maxLength`.** The REST API limits it to 262146 characters (131072 bytes); the
-  limit is documented instead, because the generated Java contract test of a `@@maxLength` builds a string literal one
-  character longer than the limit, which exceeds the limit of a Java string constant (65535).
 - **`links` is the `Page`.** The pagination links of a list response are not an attribute; `Page.next()` follows
   them.
 
@@ -280,7 +277,7 @@ OpcodeTrace {
 @@finalType
 ContractCallRequest {
     @@immutable @@nullable block: string                        // a block number in hex, or "earliest", "pending", "latest" (the default)
-    @@immutable @@nullable data: string                         // the function selector and the encoded parameters in hex, at most 131072 bytes
+    @@immutable @@nullable @@maxLength(262146) data: string     // the function selector and the encoded parameters in hex, at most 131072 bytes
     @@immutable @@nullable estimate: bool                       // whether the gas is estimated instead of the call executed; default false
     @@immutable @@nullable from: EvmAddress                     // the sender
     @@immutable @@nullable @@min(0) gas: int64                  // the gas provided; default 15000000

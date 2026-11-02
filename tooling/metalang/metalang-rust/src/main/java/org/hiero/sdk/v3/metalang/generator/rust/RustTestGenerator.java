@@ -761,7 +761,7 @@ public final class RustTestGenerator {
         }
 
         private static String string(final String value) {
-            return RustLiterals.quote(value) + ".to_string()";
+            return RustLiterals.string(value);
         }
 
         private void sizeCases(final Input input, final List<Case> cases) {

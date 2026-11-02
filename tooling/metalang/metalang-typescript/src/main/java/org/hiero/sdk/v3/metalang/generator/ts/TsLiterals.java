@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.ast.Literal;
+import org.hiero.sdk.v3.metalang.generator.Constraints;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
 import org.hiero.sdk.v3.metalang.model.Type;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
@@ -94,6 +95,20 @@ final class TsLiterals {
                     + (builtin.name().equals("seconds") ? ".ofSeconds(" : ".ofMillis(") + text + ")";
             default -> text;
         };
+    }
+
+    /**
+     * Returns the TypeScript expression of a test string: a literal, or for a long value a concatenation that repeats
+     * its runs of one character at runtime ({@code "a".repeat(262147)}), which keeps the generated tests small.
+     *
+     * @param value the string
+     * @return the TypeScript expression
+     */
+    static String string(final String value) {
+        final List<String> parts = Constraints.parts(value).stream()
+                .map(p -> p.repeated() ? quote(p.text()) + ".repeat(" + p.times() + ")" : quote(p.text()))
+                .toList();
+        return parts.size() == 1 ? parts.getFirst() : "(" + String.join(" + ", parts) + ")";
     }
 
     /**

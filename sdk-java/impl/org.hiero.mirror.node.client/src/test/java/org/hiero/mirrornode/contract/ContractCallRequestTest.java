@@ -92,6 +92,22 @@ class ContractCallRequestTest {
     }
 
     @Test
+    @DisplayName("data: accepts a value with the maximum length")
+    @Tag("testId:mirrornode.contract.ContractCallRequest/data/accepts-at-maximum-length")
+    void shouldAcceptDataAtMaximumLength() {
+        final @Nullable String value = ("value" + "a".repeat(262141));
+        final ContractCallRequest subject = new ContractCallRequest(blockValue(), value, estimateValue(), fromValue(), gasValue(), gasPriceValue(), toValue(), valueValue());
+        assertValue(value, subject.data());
+    }
+
+    @Test
+    @DisplayName("data: rejects a value longer than the maximum length")
+    @Tag("testId:mirrornode.contract.ContractCallRequest/data/rejects-above-maximum-length")
+    void shouldRejectDataAboveMaximumLength() {
+        assertThrows(IllegalArgumentException.class, () -> new ContractCallRequest(blockValue(), "a".repeat(262147), estimateValue(), fromValue(), gasValue(), gasPriceValue(), toValue(), valueValue()));
+    }
+
+    @Test
     @DisplayName("gas: accepts the minimum (0)")
     @Tag("testId:mirrornode.contract.ContractCallRequest/gas/accepts-at-minimum")
     void shouldAcceptGasAtMinimum() {

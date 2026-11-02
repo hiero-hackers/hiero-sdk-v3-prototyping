@@ -191,7 +191,7 @@ final class JavaSamples {
             case DECIMAL -> Constraints.decimal(annotations, variant)
                     .map(v -> "new " + imports.use("java.math", "BigDecimal") + "(\"" + v.toPlainString() + "\")");
             case BOOL -> Optional.of(variant % 2 == 0 ? "true" : "false");
-            case STRING -> Constraints.string(annotations, variant).map(JavaLiterals::quote);
+            case STRING -> Constraints.string(annotations, variant).map(JavaLiterals::string);
             case BYTES -> bytes(annotations, variant);
             case COLLECTION -> collection(type, annotations, variant, visiting);
             case MAP -> map(type, annotations, variant, visiting);

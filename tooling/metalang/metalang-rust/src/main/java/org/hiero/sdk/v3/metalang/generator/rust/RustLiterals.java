@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.ast.Literal;
+import org.hiero.sdk.v3.metalang.generator.Constraints;
 import org.hiero.sdk.v3.metalang.model.FieldDefinition;
 import org.hiero.sdk.v3.metalang.model.Type;
 import org.hiero.sdk.v3.metalang.model.TypeDefinition;
@@ -140,6 +141,28 @@ final class RustLiterals {
             return number(number.value(), basic.builtin());
         }
         return literal.text();
+    }
+
+    /**
+     * Returns the Rust expression of a test string as {@code String}: a literal, or for a long value a concatenation
+     * that repeats its runs of one character at runtime ({@code "a".repeat(262147)}), which keeps the generated tests
+     * small. The callers put parentheses around it where precedence needs them, as {@code rustc} rejects unneeded
+     * ones.
+     *
+     * @param value the string
+     * @return the Rust expression of type {@code String}
+     */
+    static String string(final String value) {
+        final StringBuilder out = new StringBuilder();
+        for (final Constraints.StringPart part : Constraints.parts(value)) {
+            final String quoted = quote(part.text());
+            if (out.isEmpty()) {
+                out.append(quoted).append(part.repeated() ? ".repeat(" + part.times() + ")" : ".to_string()");
+            } else {
+                out.append(" + ").append(part.repeated() ? "&" + quoted + ".repeat(" + part.times() + ")" : quoted);
+            }
+        }
+        return out.toString();
     }
 
     /**

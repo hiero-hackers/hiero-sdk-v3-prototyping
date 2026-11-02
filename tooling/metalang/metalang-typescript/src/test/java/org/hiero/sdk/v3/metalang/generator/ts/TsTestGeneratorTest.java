@@ -36,6 +36,7 @@ class TsTestGeneratorTest {
                 @@immutable @@max(30) delay: duration
                 @@immutable @@minLength(2) @@maxLength(5) code: string
                 @@immutable @@maxBytes(5) memo: string
+                @@immutable @@maxLength(300) payload: string
                 @@immutable @@pattern("^/[^\\s]*$") path: string
                 @@immutable @@urlPattern url: string
                 @@immutable @@minSize(1) @@maxSize(3) data: bytes
@@ -101,6 +102,8 @@ class TsTestGeneratorTest {
                 .contains("test(\"ratio: rejects a value below the minimum\"", "0.49999999999999994")
                 .contains("Duration.ofMillis(31)")
                 .contains("test(\"code: accepts a value with the minimum length\"")
+                // long boundary values are built at runtime
+                .contains("(\"value\" + \"a\".repeat(295))", "\"a\".repeat(301)")
                 .contains("test(\"path: rejects a value that does not match the pattern\"")
                 .contains("test(\"url: rejects a value that is no URL\"")
                 .contains("test(\"data: rejects more elements than the maximum\"")

@@ -29,6 +29,9 @@ public record ContractCallRequest(
     /// @throws NullPointerException if a required value is `null`
     /// @throws IllegalArgumentException if a value violates its constraints
     public ContractCallRequest {
+        if (data != null && data.length() > 262146) {
+            throw new IllegalArgumentException("data must be at most 262146 characters long");
+        }
         if (gas != null && gas < 0L) {
             throw new IllegalArgumentException("gas must be at least 0");
         }
