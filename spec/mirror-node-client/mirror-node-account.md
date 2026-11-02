@@ -653,6 +653,10 @@ test "an account with transactions without transactions has an empty transaction
 - **The transactions of `findById` cannot be paged.** `GET /accounts/{id}` returns a page of the account's
   transactions with a `links.next`; `AccountBalanceTransactions` holds the first page only. Should `transactions` be
   a `Page<TransactionInfo>`?
+- **The conditions of `getHookStorage` are unverified.** No public network has a hook yet, so how the mirror node
+  evaluates `key` and `timestamp` (operators, repeated values, contradictions) could not be measured
+  (docs/mirror-node-query-conditions.md). Until it is known, the filtered overload stays `list<string>`; if it is still
+  unknown when the conditions become typed, that overload is left out and added once the behaviour is verified.
 - **`HookType` and `HookExtensionPoint` are closed enums.** A value that a newer mirror node adds cannot be read, and
   the query fails. Should they be open like `TransactionType`?
 - **Entity ids are nullable in the OpenAPI definition.** The `EntityId` schema is `[string, "null"]`; ids that are
