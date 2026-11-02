@@ -54,7 +54,7 @@ Both networks gave the same behaviour wherever both had data; differences in the
 | **A. Free** | `/accounts` `account.id`, `account.balance`; `/accounts/{id}` `timestamp` (its transactions); `/balances` `account.id`, `account.balance`; `/contracts` `contract.id`; `/contracts[/{id}]/results` `timestamp`; `/schedules` `schedule.id`, `account.id`; `/tokens` `token.id`; `/tokens/{id}/balances` `account.id`, `account.balance`; `/tokens/{id}/nfts` `account.id`, `serialnumber`; `/tokens/{id}/nfts/{serial}/transactions` `timestamp`; `/transactions` `timestamp` | all six | any number (up to 100), all combined with AND, except repeated `eq` (see 2) |
 | **B. Free without `ne`** | `/accounts/{id}/tokens` `token.id`; `/accounts/{id}/allowances/crypto` `spender.id`; `/accounts/{id}/rewards` `timestamp`; `/contracts/{id}/state` `slot`, `timestamp`; `/blocks` `block.number`; `/topics/{id}/messages` `timestamp`, `sequencenumber`; `/contracts/results/{id}/actions` `index` | eq gt gte lt lte; `ne` → 400 | as A |
 | **C. One of each** | `/accounts/{id}/nfts` `token.id`, `serialnumber`, `spender.id`; `/accounts/{id}/allowances/tokens` `spender.id`, `token.id`; `/accounts/{id}/allowances/nfts` `account.id`, `token.id`; `/contracts[/{id}]/results/logs` `timestamp`, `index` | eq gt gte lt lte; `ne` → 400 | at most one `eq`, one lower and one upper bound ("Only one gt/gte operator is allowed"); otherwise 400. Exception: `spender.id` of `/accounts/{id}/nfts` accepts any number of `eq` (IN) and rejects only a second bound ("Multiple range params not allowed") |
-| **D. Last `eq` wins, `ne` ignored** | `/accounts/{id}/airdrops/outstanding` `receiver.id`, `token.id`, `serialnumber`; `/accounts/{id}/airdrops/pending` `sender.id`, `token.id`, `serialnumber` | eq gt gte lt lte; **`ne` → 200 without effect** | **of several `eq` only the last is applied**; redundant bounds are applied together; `eq` with a bound or `ne`, and the range + `ne` → 400 |
+| **D. One `eq` wins, `ne` ignored** | `/accounts/{id}/airdrops/outstanding` `receiver.id`, `token.id`, `serialnumber`; `/accounts/{id}/airdrops/pending` `sender.id`, `token.id`, `serialnumber` | eq gt gte lt lte; **`ne` → 200 without effect** | **of several `eq` only one is applied** - the lexicographically last, whatever their order in the URL; redundant bounds are applied together; `eq` with a bound or `ne`, and the range + `ne` → 400 |
 | **E. `ne` ignored** | `/network/nodes` `node.id`; `/network/registered-nodes` `registerednode.id`; `/transactions` `account.id` | eq gt gte lt lte; **`ne` → 200 without effect** | `node.id`, `account.id`: as A; `registerednode.id`: two different `eq` → 400 |
 | **F. Equality only** | `/contracts[/{id}]/results` `block.number`, `block.hash`, `transaction.index`; `/contracts/results/logs` `transaction.hash`; `/network/nodes` `file.id` | `eq` only, every other → 400 | `transaction.hash`, `file.id`: one value; the others accept repeated `eq` |
 | **G. Point in time** | `timestamp` of `/contracts/{id}`, `/tokens/{id}`, `/network/exchangerate`, `/network/fees`, `/network/supply`, `/balances`, `/tokens/{id}/balances` | varies: `/tokens/{id}` only eq lt lte; `/network/*` gt/gte → 404, `ne` → 400 | selects one state, not a set of items |
@@ -63,13 +63,13 @@ Both networks gave the same behaviour wherever both had data; differences in the
 rejected — and then returns exactly the tokens the account has a relationship with (checked against
 `/accounts/{id}/tokens`).
 
-### 2. Repeated `eq` means IN, AND or "the last one", depending on the parameter
+### 2. Repeated `eq` means IN, AND or "only one", depending on the parameter
 
 | Repeated `eq` | Parameters |
 |---|---|
 | **IN** (any of the values) | `account.id` (`/accounts`, `/balances`, `/transactions`), `contract.id`, `token.id` (`/tokens`, `/accounts/{id}/tokens`), `spender.id` (allowances/crypto, `/accounts/{id}/nfts`), `slot`, `timestamp` of `/contracts[/{id}]/results` and `/accounts/{id}/rewards`, `node.id` |
 | **AND** (all of the values; two different values give nothing) | `account.balance`, `schedule.id`, `account.id` of `/schedules`, `/tokens/{id}/balances` and `/tokens/{id}/nfts`, `timestamp` of `/transactions`, `/accounts/{id}`, `/tokens/{id}/nfts/{serial}/transactions` and `/topics/{id}/messages`, `sequencenumber`, `block.number` (`/blocks`), `serialnumber` (`/tokens/{id}/nfts`), `index` (actions) |
-| **only the last one** | all airdrop parameters (family D) |
+| **only one** (the lexicographically last, independent of the order in the URL) | all airdrop parameters (family D) |
 | **rejected** (400) | family C (except `spender.id` of `/accounts/{id}/nfts`), `registerednode.id`, `transaction.hash`, `file.id` |
 
 The same kind of value behaves differently: `timestamp` is IN on `/contracts/results` and AND on `/transactions`;
@@ -141,10 +141,35 @@ wins — in families A, B and D, and rejected with 400 in family C.
 | `serialnumber` | `\d{1,19}`, also 0 | 0 rejected (NFTs); 0 = fungible (airdrops) |
 | family C, `file.id`, `transaction.hash` | repeatable | at most one per operator / one value |
 
+### 7. Causes in the source code
+
+Read in the mirror node source at tag `v0.165.1` (commit `6a7a3f5`). The REST API has two implementations: most
+endpoints are served by the Node.js module `rest`, a growing part by the Java module `rest-java` (allowances of NFTs,
+airdrops, hooks, `/network/nodes`, `/network/registered-nodes`, `/network/exchangerate`, `/fees`, `/supply`, `/stake`,
+`/topics/{id}`). The Java module replaces the Node.js one endpoint by endpoint (`docs/checklist/rest-conversion.md`
+of the mirror node: implement in Java, then enable the route per network, then delete the JavaScript code); an ingress
+sends the converted paths to `rest-java`, everything else to `rest`. Each endpoint parses its conditions by hand;
+there is no shared contract.
+
+| Behaviour | Cause | Intended? |
+|---|---|---|
+| Family C (one `eq`, one lower, one upper bound) | `rest/controllers/bound.js`: "Holds the filters for query parameters in a multi-column paging query"; the endpoints are paged over two columns (`token.id` + `serialnumber`, `spender.id` + `token.id`, `timestamp` + `index`, `account.id` + `token.id`) | yes, a simplification of keyset paging over two columns |
+| `spender.id` of `/accounts/{id}/nfts` deviates from C | not a paging column; own check in `rest/controllers/accountController.js` (`validateFilters`) | yes |
+| Repeated `eq`: IN or AND | `parseParams` in `rest/utils.js` collects `eq` values into `IN` only when the caller passes `allowMultiple` (`account.id`: yes, `account.balance`, `timestamp`: no); otherwise every `eq` becomes its own `and` clause | the IN is; the AND of different values is a side effect - it can never match and is not rejected |
+| Family B (no `ne`) | explicit `throw` per controller (`topicmessage.js`, `cryptoAllowanceController.js`, `tokenController.js`, ...) | yes, the reason is not documented |
+| Airdrops: one `eq` wins, `ne` ignored | `rest-java/.../service/Bound.java`: every `eq`/`gt`/`gte` overwrites `lower`, `ne` is only counted; the NFT allowances use the same class but call `verifyUnsupported(NE)` and `verifySingleOccurrence()`, `TokenAirdropsController` does not | no, a missing validation |
+| `node.id`, `registerednode.id`: `ne` ignored | the loops in `rest-java/.../service/NetworkServiceImpl.java` have no branch for `ne` | no, a missing validation |
+| `/transactions` `account.id=ne:X` without effect | `transactions.js` applies `ne` to each transfer row (`ctl.entity_id != X`), so it matches every transaction with a transfer to any other account - nearly all | not ignored but per transfer; as an exclusion of an account useless |
+| `/contracts/results/logs`: contradictory or empty `timestamp` range ignored | `optimizeTimestampFilters` in `rest/controllers/contractController.js` returns no filters at all when the range is empty; only used without a contract id | no |
+| Upper-case operators, empty values accepted | `rest-java/.../common/RangeOperator.of` upper-cases the operator; `rest` does not | no, an implementation difference |
+
 ## Not covered
 
-- **Hook storage** (`/accounts/{id}/hooks/{hookId}/storage` `key`, `timestamp`): there is no hook on either network
-  (no `HOOKSTORE` transaction), every request answers 404. The typed conditions are designed without them; if the behaviour is still
+- **Hook storage** (`/accounts/{id}/hooks/{hookId}/storage` `key`, `timestamp`): the hook endpoints are not enabled
+  on either network - they are served by `rest-java` behind the route switch `routes.hooks`, which defaults to `false`
+  (`charts/hedera-mirror-rest-java/values.yaml`), and answer 404 "Not found" like an unknown path; there is also no
+  `HOOKSTORE` transaction yet. The source (`HooksController`, `Bound.of` for `timestamp`) suggests the airdrop
+  pattern of section 7. The typed conditions are designed without them; if the behaviour is still
   unknown when they are specified, the filtered `getHookStorage` overload is left out at first and added once the
   conditions are verified.
 - **`file.id`** of `/network/nodes`: there is only one address book file per network, so only the status was checked.
@@ -161,15 +186,15 @@ wins — in families A, B and D, and rejected with 400 in family C.
 These are inputs for the design, not decisions:
 
 - A **single generic condition type with all six operators** would let callers build requests that are rejected
-  (families C, F), ignored (`ne` in D and E) or silently mean something else (IN, AND, last `eq`). The operator set and
+  (families C, F), ignored (`ne` in D and E) or silently mean something else (IN, AND, one `eq`). The operator set and
   the meaning of repeated values belong to the **parameter**, not to the value type.
 - What remains meaningful everywhere is small: **one value, a set of values (only where it is IN), at most one lower and
   one upper bound, and exclusions (only in family A)**. Redundant and contradictory
   bounds never add expressiveness.
-- Where repeated `eq` means AND or "the last one", a set of values is useless or dangerous; such parameters need a
+- Where repeated `eq` means AND or "only one", a set of values is useless or dangerous; such parameters need a
   single value, not a set.
 - Point-in-time timestamps (family G) are not conditions on items but the selection of a state; they deserve their own
   shape (`at` / `before`).
-- Server faults the SDK should guard against or document: `ne` ignored (D, E), only the last `eq` applied (D),
+- Server faults the SDK should guard against or document: `ne` ignored (D, E), only one `eq` applied (D),
   contradictory range ignored on `/contracts/results/logs`, 503 for large `index` values, several `account.balance`
   values not finishing on mainnet, `limit` above 100 capped.
