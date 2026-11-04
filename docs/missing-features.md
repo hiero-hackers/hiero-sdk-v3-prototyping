@@ -6,6 +6,9 @@ the V3 specification under [`spec/`](../spec/). It is intended as a working
 backlog — not a final scope statement. Items may move, get reprioritized, or
 be intentionally excluded for V3.
 
+Last compared on 2026-11-04 with every `*Transaction`, `*Query` and `*Flow` class of the Hiero Java SDK
+(v2, commit `f917e67b3`, 2026-08-17).
+
 Status legend:
 
 - :x: not specified
@@ -18,6 +21,12 @@ Status legend:
 
 ### 1.2 Token service (HTS)
 
+Specified: create / update / delete, associate / dissociate, mint / burn / wipe (each split into a fungible and an
+NFT variant), freeze / unfreeze, grant / revoke KYC, pause / unpause, `TokenUpdateNfts` (HIP-657), airdrop / claim /
+cancel (HIP-904) and reject — in [`transactions-tokens.md`](../spec/consensus-node-client/transactions-tokens.md),
+[`transactions-tokens-management.md`](../spec/consensus-node-client/transactions-tokens-management.md) and
+[`transactions-tokens-airdrops.md`](../spec/consensus-node-client/transactions-tokens-airdrops.md).
+
 Still open:
 
 - `TokenFeeScheduleUpdate` — sole payload is the custom-fee schedule; blocked on the write-side
@@ -26,6 +35,8 @@ Still open:
   ([ADR-0004](adr/0004-authority-authorization-sum-type.md)).
 - `TokenCreate.customFees` write-side builder — depends on §3.3.
 - Airdrop *pending-airdrop* record field — part of the base-`Record` design decision (§3.5).
+- `TokenRejectFlow` — v2 convenience that rejects tokens and dissociates them in one call (two transactions) — :x:.
+  A candidate for the `enterprise.service.*` layer rather than `consensusnode.*`.
 
 ### 1.3 File service
 
@@ -35,12 +46,16 @@ Open: chunked-append model (per-chunk receipts vs. single-receipt facade) — tr
 ### 1.4 Smart contract service
 
 `ContractCreate`, `ContractCreateFlow`, `ContractUpdate`, `ContractExecute`,
-`ContractDelete`, `EthereumTransaction` — **all :x:**
+`ContractDelete`, `EthereumTransaction`, `EthereumFlow` — **all :x:** (only the privileged `SystemDelete` /
+`SystemUndelete` of a contract exists, in the admin client). Also missing: `ContractFunctionParameters` (ABI encoding
+of the call arguments) and `ContractFunctionResult`. The contract queries are listed in §1.8. This is the largest
+gap to v2.
 
 ### 1.5 Topic / HCS
 
-`TopicMessageSubmit` (chunked) — :x: (shares the chunking design question with
-`FileAppend`). HIP-991 custom fees on topics (`customFees`, `feeScheduleAuthority`,
+`TopicCreate` / `TopicUpdate` / `TopicDelete` and `TopicInfoQuery` are specified. `TopicMessageSubmit` (chunked)
+— :x: (shares the chunking design question with `FileAppend`); it is the only missing topic operation. Reading
+messages (`TopicMessageQuery`) is a mirror-node subscription, see §4. HIP-991 custom fees on topics (`customFees`, `feeScheduleAuthority`,
 `feeExemptAuthorities`) — :x: (depends on write-side custom-fee model from §3.3).
 
 ### 1.6 Schedule service (HIP-423 long-term)
@@ -65,7 +80,9 @@ Still missing: `customFeeLimits` (HIP-991) — :x: blocked on the write-side cus
   misplaced batch key is unrepresentable rather than network-rejected. See open questions in that
   file's *Questions & Comments*.
 - Hiero Hooks (HIP-1195): `HookStoreTransaction`, `EvmHook`, `EvmHookCall`,
-  `HookCreationDetails`, ... — :x:
+  `HookCreationDetails`, ... — :x:. Hooks also reach into existing transactions: v2 has hook-creation details on
+  `AccountCreate` / `AccountUpdate` (and `ContractCreate` / `ContractUpdate`, §1.4) and `HookCall`s on the transfers
+  of `TransferTransaction`; none of them is in the V3 specs yet.
 
 ### 1.8 Queries (consensus-node-side)
 
@@ -77,6 +94,10 @@ account / file / token / topic info queries are specified. Still missing:
   [`queries-schedule.md`](../spec/consensus-node-client/queries-schedule.md)
 - `MirrorNodeContractCallQuery` (HIP-1027), `MirrorNodeContractEstimateGasQuery`
   — these belong on `mirrornode.contract.ContractRepository`, not in `consensusnode.queries`
+- `AccountInfoFlow` — v2 convenience that verifies a signature (or a signed transaction) with the key from
+  `AccountInfoQuery` — :x:. Like `TokenRejectFlow` (§1.2), a candidate for the `enterprise.service.*` layer.
+- `TopicMessageQuery`, `AddressBookQuery` and `FeeEstimateQuery` are mirror-node calls in v2, not consensus-node
+  queries: see §4 (gRPC) and §3.4 (fee estimation).
 
 Two HAPI queries are live (not deprecated) but currently unspecified, each pending a design
 decision before we either spec or formally drop them:
@@ -217,6 +238,10 @@ specified. Remaining open items, each tracked in its file's *Questions & Comment
   into concrete subtypes.
 - **Dynamic Address Book** ([`transactions-nodes.md`](../spec/consensus-node-admin-client/transactions-nodes.md)):
   typed `NodeId` / `X509Certificate` placeholders. (Typed `IpAddress` has landed in `base/ledger.md`.)
+- **Registered nodes (HIP-1137, block-node discoverability)** — `RegisteredNodeCreate` /
+  `RegisteredNodeUpdate` / `RegisteredNodeDelete` (v2) — :x:. The protobufs are vendored
+  (`tooling/protobuf/consensus-node/services/registered_node_*.proto`); the mirror node side is already read in
+  [`mirror-node-network.md`](../spec/mirror-node-client/mirror-node-network.md).
 - **Admin-side queries** ([`queries-network.md`](../spec/consensus-node-admin-client/queries-network.md)):
   extract `SemanticVersion` into `base/common` once §3.1 lands a base type; surface tombstoned
   node-address entries explicitly.
@@ -286,9 +311,11 @@ deferred to a future write-side `KeyUpdate` type. Still missing:
 
 ### 3.4 Fee schedule / fee estimation
 
-`FeeSchedule`, `TransactionFeeSchedule`, `FeeComponents`, `FeeData`,
-`FeeEstimate` / `FeeEstimateQuery` / `FeeEstimateResponse` (HIP-1313 with
-high-volume multiplier) — **all :x:**
+- Fee estimation (HIP-1313, with high-volume multiplier; v2 `FeeEstimateQuery`) — :white_check_mark: specified
+  on the mirror node: `NetworkRepository.estimateFees(...)` and `FeeEstimate` in
+  [`mirror-node-network.md`](../spec/mirror-node-client/mirror-node-network.md).
+- `FeeSchedule`, `TransactionFeeSchedule`, `FeeComponents`, `FeeData` (the fee schedule file of the network)
+  — **all :x:**
 
 ### 3.5 Records / receipts — fields on `Receipt` / `Record`
 
@@ -395,6 +422,10 @@ Still open:
   by the SDK; the meta-language has no annotation for the elements of a `list<string>`.
 - **Response-level values of list endpoints** (e.g. the `timestamp` of `/balances` and `/tokens/{id}/balances`) have
   no place in `Page<$$T>`.
+- **The gRPC API of the mirror node** — :x:. The specs cover only REST. v2 additionally uses the two gRPC
+  services of the mirror node, whose protobufs are vendored in `tooling/protobuf/mirror-node`:
+  `TopicMessageQuery` (subscription to the messages of a topic, `consensus_service.proto`; a `@@streaming` method)
+  and `AddressBookQuery` (the address book of the network, `network_service.proto`).
 - **Cursor-based pagination** via `links.next` — `Page<$$T>` exists (`pageIndex` is counted by the SDK, `first()`
   repeats the original request), but no token / cursor concept is documented.
 
@@ -505,11 +536,11 @@ setup flexibility:
 ## 8. Suggested prioritization
 
 1. **SDK parity (must-have):** the remaining write transactions — contract
-   transactions + `EthereumTransaction`, `TopicMessageSubmit`, the token admin
-   operations (wipe / freeze / KYC / pause / fee-schedule) — and the remaining
-   common queries (contract info; schedule info has landed). The transaction lifecycle, transfers,
-   token/topic/file core, and the account/file/token/topic info queries have landed,
-   so the pattern is established for the rest.
+   transactions + `EthereumTransaction`, `TopicMessageSubmit`, `TokenFeeScheduleUpdate`
+   (with the write-side custom fees, §3.3) — and the contract queries (§1.8). The transaction
+   lifecycle, transfers, the token/topic/file/schedule core with all token admin operations, and
+   the account/file/token/topic/schedule info queries have landed, so the pattern is established
+   for the rest.
 2. **Modern HIPs:** Schedule (HIP-423), airdrops (HIP-904), DAB node ops
    (HIP-869 / HIP-1046 — land in `consensus-node-admin-client`, §2),
    custom fees on topics (HIP-991), batch (HIP-551),
@@ -520,8 +551,9 @@ setup flexibility:
 4. **Mirror node:** blocks, schedules, contracts
    (results / state / logs / call), airdrops, allowances, rewards, generic
    range-filter model.
-5. **Client / infrastructure:** fee estimation, logger abstraction,
-   address-book refresh, shard / realm persistence.
+5. **Client / infrastructure:** logger abstraction, address-book refresh, shard / realm
+   persistence, client-wide `maxQueryPayment` / `maxTransactionFee` defaults, the mirror-node
+   gRPC API (topic subscription, address book; §4). Fee estimation has landed on the mirror node.
 
 ---
 
@@ -535,5 +567,7 @@ setup flexibility:
 - [HIP-904 Frictionless Airdrops](https://hips.hedera.com/hip/hip-904)
 - [HIP-991 Permissionless Revenue-Generating Topics](https://hips.hedera.com/hip/hip-991)
 - [HIP-1195 Hiero Hooks](https://hips.hedera.com/hip/hip-1195)
+- [HIP-1137 Block Node discoverability via on-chain registry](https://hips.hedera.com/hip/hip-1137)
+- [HIP-1313 fee estimation](https://hips.hedera.com/hip/hip-1313)
 - [HIP-415 Blocks](https://hips.hedera.com/HIP/hip-415.html)
 - [Hedera client setup guide](https://docs.hedera.com/hedera/sdks-and-apis/sdks/client)
