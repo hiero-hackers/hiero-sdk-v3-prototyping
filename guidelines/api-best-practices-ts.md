@@ -550,6 +550,18 @@ unavailable to a plain-data variant.
 > The discriminant has to come from the meta-definition, so this is a specification change, not only a generator
 > change.
 
+A `@@static` method of such a sealed abstraction (`AbiType.parse(text)`) cannot live on a type alias. It goes into a
+**namespace of the same name**, as for any abstraction with static methods; TypeScript merges the alias (the type)
+with the namespace (the value), so `AbiType` is both the union and the home of `AbiType.parse(...)`:
+
+```ts
+export type AbiType = AbiBoolType | AbiAddressType | /* … */ AbiTupleType;
+
+export namespace AbiType {
+    export function parse(text: string): AbiType { /* … */ }
+}
+```
+
 ## Generics
 
 - Type parameters lose the `$$` prefix and keep their bounds: `Transaction<$$Receipt extends Receipt, …>` becomes

@@ -69,9 +69,10 @@ final class TsTypeGenerator {
         final String name = type.name().name();
         final List<String> permitted = permitted(type, imports.context());
         if (!permitted.isEmpty() && isPureSum(type, imports.context())) {
-            // a sealed abstraction without members of its own is only the union of its permitted types
+            // a sealed abstraction that extends nothing is the union of its permitted types; its static methods
+            // live in a namespace of the same name, which TypeScript merges with the alias (type and value)
             return TsDoc.render("", List.of(type.documentation()), List.of(), type.hasAnnotation("deprecated"))
-                    + unionAlias(name, permitted, imports);
+                    + unionAlias(name, permitted, imports) + staticNamespace(type, imports);
         }
         final List<String> members = new ArrayList<>();
         for (final FieldDefinition field : type.declaredFields()) {
@@ -90,21 +91,26 @@ final class TsTypeGenerator {
         ts.append("export interface ").append(name).append(TsTypes.typeParameters(type.typeParameters(), imports))
                 .append(supertypes.isEmpty() ? "" : " extends " + String.join(", ", supertypes)).append(" {\n");
         ts.append(String.join("\n", members)).append("}\n");
-        final List<MethodDefinition> statics = type.declaredMethods().stream().filter(MethodDefinition::isStatic)
-                .toList();
-        if (!statics.isEmpty()) {
-            ts.append('\n').append(TsDoc.render("", List.of("Functions of `" + name + "`.")))
-                    .append("export namespace ").append(name).append(" {\n")
-                    .append(String.join("\n", TsMembers.render(name, statics, TsMembers.Kind.FUNCTION, INDENT,
-                            imports)))
-                    .append("}\n");
-        }
+        ts.append(staticNamespace(type, imports));
         if (!permitted.isEmpty()) {
             // the interface carries the shared members, the alias is the closed set for exhaustive narrowing
             ts.append('\n').append(TsDoc.render("", List.of("The variants of `" + name + "`.")))
                     .append(unionAlias(VARIANTS_PREFIX + name, permitted, imports));
         }
         return ts.toString();
+    }
+
+    /** {@code export namespace <name> { ... }} with the static methods of an abstraction, empty if it has none. */
+    private static String staticNamespace(final TypeDefinition.ComplexTypeDefinition type, final TsImports imports) {
+        final String name = type.name().name();
+        final List<MethodDefinition> statics = type.declaredMethods().stream().filter(MethodDefinition::isStatic)
+                .toList();
+        if (statics.isEmpty()) {
+            return "";
+        }
+        return "\n" + TsDoc.render("", List.of("Functions of `" + name + "`.")) + "export namespace " + name
+                + " {\n" + String.join("\n", TsMembers.render(name, statics, TsMembers.Kind.FUNCTION, INDENT, imports))
+                + "}\n";
     }
 
     // --- classes ---------------------------------------------------------------------------------

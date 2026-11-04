@@ -314,6 +314,25 @@ class TsGeneratorTest {
         }
 
         @Test
+        void aStaticMethodOfAUnionShouldLiveInANamespaceOfTheSameName() {
+            final List<GeneratedFile> files = generate("""
+                    namespace a
+                    // A shape.
+                    @@sealed(Circle, Square)
+                    abstraction Shape {
+                        // Reads a shape.
+                        @@static Shape parse(text: string) }
+                    Circle extends Shape { @@immutable r: double }
+                    Square extends Shape { @@immutable side: double }
+                    """);
+            // TypeScript merges the alias (the type) with the namespace (the value): Shape.parse(...) is callable
+            assertThat(file(files, "/a/Shape.ts"))
+                    .contains("export type Shape = Circle | Square;\n")
+                    .contains("export namespace Shape {\n")
+                    .contains("    export function parse(text: string): Shape {");
+        }
+
+        @Test
         void aSealedAbstractionWithASupertypeShouldStayAnInterface() {
             final List<GeneratedFile> files = generate("""
                     namespace a

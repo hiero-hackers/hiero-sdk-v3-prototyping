@@ -190,6 +190,24 @@ pub enum Authority {
 let authority = Authority::from(PublicKeyAuthority::new(key));
 ```
 
+A variant that contains the enum by value would make the type infinitely large (rustc E0072): `AbiArrayType` has an
+`element_type: AbiType`, and `AbiType` has the variant `AbiArrayType`. Such a field — any field whose type reaches its
+own struct by value, through struct fields and enum variants; `Vec`, sets, maps and `Arc` are indirections, `Option`
+is not — is **stored in a `Box`**. The box stays internal: the constructor and the setter take the value, the getter
+returns a reference to it.
+
+```rust
+pub struct AbiArrayType {
+    element_type: Box<AbiType>,
+    length: Option<u32>,
+}
+
+impl AbiArrayType {
+    pub fn new(element_type: AbiType, length: Option<u32>) -> Result<Self, InvalidArgumentError> { /* Box::new */ }
+    pub fn element_type(&self) -> &AbiType { &self.element_type }
+}
+```
+
 **With own members or a supertype it is a sealed trait**: an enum cannot be a supertype, so its variants would lose
 the shared contract — in the specs a mint transaction would stop being a `Transaction`. The trait is public, its
 supertrait is not, which is the standard way to close a trait in Rust (the standard library seals `SliceIndex` and

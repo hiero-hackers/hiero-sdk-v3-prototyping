@@ -540,6 +540,51 @@ final class RustContext {
         return result;
     }
 
+    /**
+     * Whether a field of a struct must be stored in a {@code Box}: its type contains the struct by value - directly,
+     * through the fields of other structs or through the variants of a sealed enum - without an indirection that has a
+     * size of its own ({@code Vec}, sets, maps, {@code Arc}). Rust rejects such a recursive type (it would have an
+     * infinite size), e.g. {@code AbiArrayType { element_type: AbiType }} where the enum {@code AbiType} has the
+     * variant {@code AbiArrayType}. An {@code Option} is no indirection.
+     *
+     * @param owner   the struct that stores the field
+     * @param storage the storage type of the field
+     * @return {@code true} if the field is stored boxed
+     */
+    boolean isBoxed(final QualifiedName owner, final RustType storage) {
+        return reachesByValue(storage, owner, new HashSet<>());
+    }
+
+    private boolean reachesByValue(final RustType type, final QualifiedName target, final Set<QualifiedName> visited) {
+        return switch (type) {
+            case RustType.Optional optional -> reachesByValue(optional.inner(), target, visited);
+            case RustType.Struct struct -> reachesDefinition(struct.name(), target, visited);
+            case RustType.Sealed sealed -> reachesDefinition(sealed.name(), target, visited);
+            default -> false;
+        };
+    }
+
+    private boolean reachesDefinition(final QualifiedName name, final QualifiedName target,
+                                      final Set<QualifiedName> visited) {
+        if (name.equals(target)) {
+            return true;
+        }
+        if (!visited.add(name)) {
+            return false;
+        }
+        final Optional<TypeDefinition> definition = model.type(name);
+        if (definition.isEmpty()) {
+            return false;
+        }
+        if (isSealedEnum(name)) {
+            return sealedVariants(definition.get()).stream().anyMatch(variant -> !isAbstraction(variant)
+                    && reachesDefinition(variant, target, visited));
+        }
+        final Map<Type.TypeVariable, RustType> scope = scope(definition.get());
+        return definition.get().fields().stream().map(f -> RustMembers.storage(f, scope, this))
+                .anyMatch(storage -> reachesByValue(storage, target, visited));
+    }
+
     /** Whether a struct field needs a manual {@code Debug} (a function value has none). */
     static boolean hasDebug(final RustType type) {
         return switch (type) {

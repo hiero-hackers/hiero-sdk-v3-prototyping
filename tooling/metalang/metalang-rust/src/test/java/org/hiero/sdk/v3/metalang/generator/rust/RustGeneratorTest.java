@@ -113,7 +113,7 @@ class RustGeneratorTest {
                 @@immutable @@default(7) level: int32
                 @@deprecated @@immutable old: bool
             }
-            @@sealed(Leaf, Node)
+            @@sealed(Leaf, Node, Wrap)
             abstraction Tree {
             }
             Leaf extends Tree {
@@ -121,6 +121,10 @@ class RustGeneratorTest {
             }
             Node extends Tree {
                 @@immutable children: list<Tree>
+            }
+            Wrap extends Tree {
+                @@immutable inner: Tree
+                @@nullable next: Tree
             }
             Base {
                 @@immutable @@nullable num: int64
@@ -335,6 +339,23 @@ class RustGeneratorTest {
     class Types {
 
         @Test
+        void aFieldThatContainsItsStructByValueShouldBeBoxed() {
+            // GIVEN a variant of a sealed enum with a field of the enum: the struct would contain itself
+            final List<GeneratedFile> files = generate(FEATURES);
+
+            // THEN the field is a Box behind an unboxed constructor parameter, getter and setter; a list needs none
+            assertThat(file(files, "/src/a/wrap.rs"))
+                    .contains("    inner: Box<Tree>,\n")
+                    .contains("    next: Option<Box<Tree>>,\n")
+                    .contains("pub fn new(inner: Tree, next: Option<Tree>) -> Self {")
+                    .contains("Self { inner: Box::new(inner), next: next.map(Box::new) }")
+                    .contains("pub fn inner(&self) -> &Tree {\n        &self.inner\n")
+                    .contains("pub fn next(&self) -> Option<&Tree> {\n        self.next.as_deref()\n")
+                    .contains("self.next = next.map(Box::new);");
+            assertThat(file(files, "/src/a/node.rs")).contains("    children: Vec<Tree>,\n");
+        }
+
+        @Test
         void aSealedAbstractionWithASupertypeShouldBeASealedTrait() {
             // GIVEN a sealed abstraction that extends another abstraction - an enum cannot carry that supertype
             final List<GeneratedFile> files = generate("""
@@ -426,7 +447,7 @@ class RustGeneratorTest {
                     .contains("action: Arc<dyn Fn(i32) + Send + Sync>,")
                     .contains("impl Debug for Values {").contains(".finish_non_exhaustive()")
                     .contains("#[allow(clippy::too_many_arguments)]");
-            assertThat(file(files, "/src/a/tree.rs")).contains("pub enum Tree {\n    Leaf(Leaf),\n    Node(Node),\n}")
+            assertThat(file(files, "/src/a/tree.rs")).contains("pub enum Tree {\n    Leaf(Leaf),\n    Node(Node),\n    Wrap(Wrap),\n}")
                     .contains("impl From<Leaf> for Tree {");
             assertThat(file(files, "/src/a/derived.rs")).contains("pub fn num(&self) -> i64 {")
                     .contains("impl From<Derived> for Base {")

@@ -59,6 +59,8 @@ final class RustTypeGenerator {
         final List<FieldDefinition> fields = type.fields();
         final List<RustType> storages = fields.stream().map(f -> RustMembers.storage(f, scope, context)).toList();
         final List<String> rendered = storages.stream().map(s -> s.render(imports)).toList();
+        // a field that contains the struct by value is stored in a Box, behind the same constructor and getter
+        final List<Boolean> boxed = storages.stream().map(s -> context.isBoxed(type.name(), s)).toList();
         final List<String> unused = context.keptParameters(type).stream()
                 .map(p -> context.variableName(p.name()))
                 .filter(p -> rendered.stream().noneMatch(r -> Pattern.compile("\\b" + p + "\\b").matcher(r).find()))
@@ -72,8 +74,8 @@ final class RustTypeGenerator {
         out.append(derives(debug, caps).replace("Clone", fields.isEmpty() ? "Clone, Default" : "Clone"));
         out.append("pub struct ").append(self).append(" {\n");
         for (int i = 0; i < fields.size(); i++) {
-            out.append(INDENT).append(RustNames.member(fields.get(i).name())).append(": ").append(rendered.get(i))
-                    .append(",\n");
+            out.append(INDENT).append(RustNames.member(fields.get(i).name())).append(": ")
+                    .append(boxed.get(i) ? boxedType(storages.get(i), imports) : rendered.get(i)).append(",\n");
         }
         if (!unused.isEmpty()) {
             out.append(INDENT).append("_marker: ").append(imports.external("std::marker::PhantomData"))
@@ -104,8 +106,11 @@ final class RustTypeGenerator {
         for (final FieldDefinition field : fields) {
             out.append(RustConstraints.checks(field, RustNames.member(field.name()), INDENT + INDENT, imports));
         }
-        final List<String> initializers = new ArrayList<>(fields.stream().map(f -> RustNames.member(f.name()))
-                .toList());
+        final List<String> initializers = new ArrayList<>();
+        for (int i = 0; i < fields.size(); i++) {
+            final String name = RustNames.member(fields.get(i).name());
+            initializers.add(boxed.get(i) ? name + ": " + boxedValue(name, storages.get(i)) : name);
+        }
         if (!unused.isEmpty()) {
             initializers.add("_marker: " + imports.external("std::marker::PhantomData"));
         }
@@ -115,13 +120,18 @@ final class RustTypeGenerator {
         for (int i = 0; i < fields.size(); i++) {
             final FieldDefinition field = fields.get(i);
             final String name = RustNames.member(field.name());
-            final RustMembers.Getter getter = RustMembers.getter(storages.get(i), name, imports);
+            final RustMembers.Getter unboxed = RustMembers.getter(storages.get(i), name, imports);
+            // &Box<T> coerces to &T on return; Option<Box<T>> needs as_deref() for Option<&T>
+            final RustMembers.Getter getter = boxed.get(i) && unboxed.expression().endsWith(".as_ref()")
+                    ? new RustMembers.Getter(unboxed.type(), unboxed.expression().replaceFirst("\\.as_ref\\(\\)$",
+                    ".as_deref()")) : unboxed;
             out.append('\n').append(RustDoc.render(INDENT, List.of(field.documentation().isBlank()
                     ? "Returns the `" + field.name() + "`." : field.documentation()), field.hasAnnotation("deprecated")));
             out.append(INDENT).append("pub fn ").append(name).append("(&self) -> ").append(getter.type()).append(" {\n")
                     .append(INDENT).append(INDENT).append(getter.expression()).append('\n').append(INDENT).append("}\n");
             if (!field.hasAnnotation("immutable")) {
-                out.append('\n').append(setter(field, rendered.get(i), imports));
+                out.append('\n').append(setter(field, rendered.get(i),
+                        boxed.get(i) ? boxedValue(name, storages.get(i)) : name, imports));
             }
         }
         final Map<MethodDefinition, String> names = inherentNames(type, context);
@@ -177,7 +187,19 @@ final class RustTypeGenerator {
         return derives.isEmpty() ? "" : "#[derive(" + String.join(", ", derives) + ")]\n";
     }
 
-    private static String setter(final FieldDefinition field, final String type, final RustImports imports) {
+    /** The declaration of a boxed field: {@code Box<T>}, or {@code Option<Box<T>>} for a nullable one. */
+    private static String boxedType(final RustType storage, final RustImports imports) {
+        return storage instanceof RustType.Optional optional ? "Option<Box<" + optional.inner().render(imports) + ">>"
+                : "Box<" + storage.render(imports) + ">";
+    }
+
+    /** The value of a boxed field from the unboxed parameter {@code name}. */
+    private static String boxedValue(final String name, final RustType storage) {
+        return storage instanceof RustType.Optional ? name + ".map(Box::new)" : "Box::new(" + name + ")";
+    }
+
+    private static String setter(final FieldDefinition field, final String type, final String value,
+                                 final RustImports imports) {
         final String name = RustNames.member(field.name());
         final boolean checked = RustConstraints.isChecked(field);
         final StringBuilder out = new StringBuilder();
@@ -195,7 +217,7 @@ final class RustTypeGenerator {
                 .append(checked ? "Result<&mut Self, " + imports.support("InvalidArgumentError") + ">" : "&mut Self")
                 .append(" {\n");
         out.append(RustConstraints.checks(field, name, INDENT + INDENT, imports));
-        out.append(INDENT).append(INDENT).append("self.").append(name).append(" = ").append(name).append(";\n");
+        out.append(INDENT).append(INDENT).append("self.").append(name).append(" = ").append(value).append(";\n");
         out.append(INDENT).append(INDENT).append(checked ? "Ok(self)" : "self").append('\n');
         return out.append(INDENT).append("}\n").toString();
     }
