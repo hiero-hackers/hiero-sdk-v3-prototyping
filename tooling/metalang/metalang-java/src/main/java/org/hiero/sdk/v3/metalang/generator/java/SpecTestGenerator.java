@@ -519,12 +519,19 @@ final class SpecTestGenerator {
             if (!(value.type() instanceof Type.BasicType from) || from.builtin().category()
                     != BuiltinType.Category.INTEGER || !(target instanceof Type.BasicType to)
                     || to.builtin().category() != BuiltinType.Category.INTEGER
-                    || !JavaTypes.type(from, false, imports).endsWith("BigInteger")
                     || to.builtin().name().equals(from.builtin().name())) {
                 return java;
             }
-            final String checked = "checked(" + java + ", " + JavaLiterals.quote(to.builtin().name())
-                    + ")";
+            final String fromJava = JavaTypes.type(from, false, imports);
+            final String toJava = JavaTypes.type(to, false, imports);
+            // a long (an int64 of the test, e.g. a loop variable) narrows to a smaller Java type only through a check
+            final boolean narrowsLong = fromJava.equals("long")
+                    && (toJava.equals("byte") || toJava.equals("short") || toJava.equals("int"));
+            if (!fromJava.endsWith("BigInteger") && !narrowsLong) {
+                return java;
+            }
+            final String checked = "checked(" + (narrowsLong ? "integer(" + java + ")" : java) + ", "
+                    + JavaLiterals.quote(to.builtin().name()) + ")";
             return switch (JavaTypes.type(to, false, imports)) {
                 case "byte" -> checked + ".byteValueExact()";
                 case "short" -> checked + ".shortValueExact()";

@@ -359,6 +359,12 @@ class ClassGeneratorTest {
                     abstraction Value { @@immutable data: bytes }
                     @@finalType
                     Hash extends Value { @@immutable @@nullable label: string }
+                    @@sealed(Stop, Go) abstraction Signal { string toString() }
+                    @@finalType
+                    Stop extends Signal { string toString() }
+                    @@finalType
+                    Go extends Signal { string toString() }
+                    Service { void run() }
                     """)), temp);
             assertThat(compilation.diagnostics()).isEmpty();
             return compilation.classLoader();
@@ -424,6 +430,19 @@ class ClassGeneratorTest {
                     .isNotEqualTo("other")
                     .hasToString("Hash[data=byte[2], label=null]");
             assertThat(instance.equals(instance)).isTrue();
+        }
+
+        @Test
+        void shouldCompareClassesWithoutAttributesByTypeButServicesByIdentity() throws Throwable {
+            // GIVEN a variant without attributes, another variant, and a type with methods only
+            final Class<?> stop = loader().loadClass("org.hiero.a.Stop");
+            final Class<?> go = loader().loadClass("org.hiero.a.Go");
+            final Class<?> service = loader().loadClass("org.hiero.a.Service");
+
+            // WHEN / THEN
+            assertThat(create(stop)).isEqualTo(create(stop)).hasSameHashCodeAs(create(stop))
+                    .isNotEqualTo(create(go)).isNotEqualTo(null);
+            assertThat(create(service)).isNotEqualTo(create(service));
         }
     }
 }

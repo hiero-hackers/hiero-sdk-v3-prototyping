@@ -485,6 +485,10 @@ Consequences for the other types:
   that return the object (the `$$Self` type parameter if the abstraction declares one), `toString`, and — if all
   attributes are immutable — `equals` and `hashCode` (see
   [Implementing `equals` and `hashCode`](#implementing-equals-and-hashcode)).
+- A concrete type **without attributes** is a class, not a record. If it declares no methods besides `toString`,
+  `equals` and `hashCode`, it is a value — typically a variant of a sealed choice such as `GiveUp` or `AbiBoolType` —
+  and all its instances are equal: `equals` compares the class, `hashCode` is the same for every instance. A type
+  with other methods (a service such as `FileService`) keeps the identity of `Object`.
 - A class is `final` if it is `@@finalType`; a subclass of a sealed type that has no subtypes is `final`, otherwise
   `non-sealed`. `@@sealed(A, B)` maps to `sealed ... permits A, B` for interfaces and abstract classes alike.
 

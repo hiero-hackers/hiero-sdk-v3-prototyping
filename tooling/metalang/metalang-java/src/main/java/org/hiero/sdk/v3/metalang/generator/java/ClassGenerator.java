@@ -202,6 +202,15 @@ final class ClassGenerator {
                     constructorBody.indexOf("IllegalArgumentException") >= 0));
         }
 
+        // value semantics of a concrete class without attributes and own methods (a variant of a sealed choice such as
+        // GiveUp): all its instances are equal; one with methods is a service and keeps its identity
+        if (!isAbstract && fields.isEmpty() && type.methods().stream()
+                .allMatch(m -> m.name().equals("toString") || m.name().equals("equals") || m.name().equals("hashCode"))
+                && type.methods("equals").isEmpty() && type.methods("hashCode").isEmpty()) {
+            members.add(emptyEqualsMethod(imports));
+            members.add(emptyHashCodeMethod());
+        }
+
         // value semantics and string representation of concrete classes
         if (!isAbstract && !fields.isEmpty()) {
             final boolean valueType = fields.stream().allMatch(f -> f.hasAnnotation("immutable"));
@@ -427,6 +436,23 @@ final class ClassGenerator {
                 + INDENT + INDENT + INDENT + "return true;\n"
                 + INDENT + INDENT + "}\n"
                 + INDENT + INDENT + "return obj instanceof " + self + " other" + conditions + ";\n"
+                + INDENT + "}\n";
+    }
+
+    private static String emptyEqualsMethod(final Imports imports) {
+        return INDENT + "/// All instances are equal: the type has no attributes.\n"
+                + INDENT + "@Override\n"
+                + INDENT + "public boolean equals(final @" + imports.use(JavaTypes.JSPECIFY, "Nullable")
+                + " Object obj) {\n"
+                + INDENT + INDENT + "return obj != null && obj.getClass() == getClass();\n"
+                + INDENT + "}\n";
+    }
+
+    private static String emptyHashCodeMethod() {
+        return INDENT + "/// The same for all instances, consistent with [#equals(Object)].\n"
+                + INDENT + "@Override\n"
+                + INDENT + "public int hashCode() {\n"
+                + INDENT + INDENT + "return getClass().getName().hashCode();\n"
                 + INDENT + "}\n";
     }
 

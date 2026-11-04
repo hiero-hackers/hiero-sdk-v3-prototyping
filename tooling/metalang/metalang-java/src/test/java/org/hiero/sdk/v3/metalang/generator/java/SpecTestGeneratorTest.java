@@ -421,6 +421,13 @@ class SpecTestGeneratorTest {
                 Limited{count: 0}
             }
 
+            test "a loop variable narrows to a smaller integer type" {
+                for count in [0, -1] {
+                    @@expectThrows(invalid-argument-error)
+                    Limited{count: count}
+                }
+            }
+
             test "a type literal is passed as class" {
                 assertEquals(expected: 1, actual: Numbers.count(kind: Circle))
             }
@@ -459,6 +466,8 @@ class SpecTestGeneratorTest {
                 .contains("assertInstanceOf(Circle.class, n.shape());")
                 .contains("assertEquals(1, Numbers.count(Circle.class));")
                 .contains("assertThrows(IllegalArgumentException.class, () -> new Limited(0));")
+                // a loop variable is an int64 (a Java long): it reaches an int32 attribute only through a check
+                .contains("() -> new Limited(checked(integer(count), \"int32\").intValueExact())")
                 .contains("assertEquals(toDuration(\"PT90S\"), toDuration(\"PT1M30S\"));")
                 .contains("Map.ofEntries(Map.entry(1L, 1L)")
                 .contains("    /// Deprecated: replaced\n")
