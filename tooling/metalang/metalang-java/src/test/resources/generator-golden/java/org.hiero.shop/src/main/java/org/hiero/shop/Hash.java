@@ -25,12 +25,16 @@ public record Hash(byte[] value) {
         return value.clone();
     }
 
+    /// Compares `value` by content: the implicit `equals` of a record compares
+    /// an array by reference, so two instances with the same values would never be equal (each holds its
+    /// own copy of the array).
     @Override
     public boolean equals(final @Nullable Object obj) {
         return obj instanceof Hash other
             && Arrays.equals(value, other.value);
     }
 
+    /// Hashes `value` by content, consistent with [#equals(Object)].
     @Override
     public int hashCode() {
         return Objects.hash(Arrays.hashCode(value));

@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
@@ -720,6 +721,70 @@ public final class Testing {
      */
     public static List<Long> range(final long start, final long end) {
         return LongStream.range(start, end).boxed().toList();
+    }
+
+    // --- mutation --------------------------------------------------------------------------------
+
+    /**
+     * Overwrites every byte with 0, in place: a test changes a value it got from the API to check that the API does
+     * not share its own state.
+     *
+     * @param value the bytes
+     */
+    public static void clear(final byte[] value) {
+        Arrays.fill(value, (byte) 0);
+    }
+
+    /**
+     * Removes every element, in place; an unmodifiable collection stays as it is (the API shares nothing that can be
+     * changed).
+     *
+     * @param value the list or set
+     */
+    public static void clear(final Collection<?> value) {
+        try {
+            value.clear();
+        } catch (final UnsupportedOperationException unmodifiable) {
+            // nothing to change: the value cannot be modified
+        }
+    }
+
+    /**
+     * Removes every entry, in place; an unmodifiable map stays as it is (the API shares nothing that can be changed).
+     *
+     * @param value the map
+     */
+    public static void clear(final Map<?, ?> value) {
+        try {
+            value.clear();
+        } catch (final UnsupportedOperationException unmodifiable) {
+            // nothing to change: the value cannot be modified
+        }
+    }
+
+    /**
+     * Inverts every byte, in place, so that every byte differs from before.
+     *
+     * @param value the bytes
+     */
+    public static void mix(final byte[] value) {
+        for (int i = 0; i < value.length; i++) {
+            value[i] = (byte) ~value[i];
+        }
+    }
+
+    /**
+     * Reverses the order of the elements, in place; an unmodifiable list stays as it is (the API shares nothing that
+     * can be changed).
+     *
+     * @param value the list
+     */
+    public static void mix(final List<?> value) {
+        try {
+            Collections.reverse(value);
+        } catch (final UnsupportedOperationException unmodifiable) {
+            // nothing to change: the value cannot be modified
+        }
     }
 
     // --- numbers ---------------------------------------------------------------------------------

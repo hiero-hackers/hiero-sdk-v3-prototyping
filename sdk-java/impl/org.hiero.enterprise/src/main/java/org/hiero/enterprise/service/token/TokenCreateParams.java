@@ -19,6 +19,7 @@ import org.jspecify.annotations.Nullable;
 /// @param supplyType INFINITE or FINITE; cannot be changed later.
 /// @param maxSupply The highest total supply; only for a FINITE supply type.
 /// @param freezeDefault When true, newly associated accounts start frozen; requires a freeze authority.
+/// @param tokenMemo A short human-readable label of the token; none if absent.
 /// @param metadata Opaque metadata of the token (e.g. an IPFS CID, a URL or a JSON manifest).
 /// @param expirationTime When the token expires; the network default if absent.
 /// @param autoRenewPeriod The renewal period applied when the expiration approaches; the network default if absent.
@@ -110,6 +111,9 @@ public record TokenCreateParams(
         return metadata.clone();
     }
 
+    /// Compares `metadata` by content: the implicit `equals` of a record compares
+    /// an array by reference, so two instances with the same values would never be equal (each holds its
+    /// own copy of the array).
     @Override
     public boolean equals(final @Nullable Object obj) {
         return obj instanceof TokenCreateParams other
@@ -136,11 +140,13 @@ public record TokenCreateParams(
             && Objects.equals(metadataAuthority, other.metadataAuthority);
     }
 
+    /// Hashes `metadata` by content, consistent with [#equals(Object)].
     @Override
     public int hashCode() {
         return Objects.hash(name, symbol, treasuryAccountId, decimals, initialSupply, supplyType, maxSupply, freezeDefault, tokenMemo, Arrays.hashCode(metadata), expirationTime, autoRenewPeriod, autoRenewAccount, adminAuthority, supplyAuthority, kycAuthority, freezeAuthority, wipeAuthority, pauseAuthority, feeScheduleAuthority, metadataAuthority);
     }
 
+    /// Shows only the length of `metadata` instead of the identity of the array object.
     @Override
     public String toString() {
         return "TokenCreateParams[name=" + name + ", symbol=" + symbol + ", treasuryAccountId=" + treasuryAccountId + ", decimals=" + decimals + ", initialSupply=" + initialSupply + ", supplyType=" + supplyType + ", maxSupply=" + maxSupply + ", freezeDefault=" + freezeDefault + ", tokenMemo=" + tokenMemo + ", metadata=" + "byte[" + metadata.length + "]" + ", expirationTime=" + expirationTime + ", autoRenewPeriod=" + autoRenewPeriod + ", autoRenewAccount=" + autoRenewAccount + ", adminAuthority=" + adminAuthority + ", supplyAuthority=" + supplyAuthority + ", kycAuthority=" + kycAuthority + ", freezeAuthority=" + freezeAuthority + ", wipeAuthority=" + wipeAuthority + ", pauseAuthority=" + pauseAuthority + ", feeScheduleAuthority=" + feeScheduleAuthority + ", metadataAuthority=" + metadataAuthority + "]";

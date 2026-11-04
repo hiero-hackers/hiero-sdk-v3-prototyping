@@ -172,7 +172,8 @@ language carries it at the same place, so the given / when / then parts stay vis
 `test` is the documentation of the test.
 
 There is no assignment, no `while`, no `break`/`continue` and no `return`. A loop always ends: it iterates a finite
-collection, and the collection is computed before the first iteration.
+collection, and the collection is computed before the first iteration. A value only changes through `clear` and `mix`
+(see [Mutation](#mutation)).
 
 `for` is for checks over the elements of a value (`for key in keys { … }`); it does not create separate test cases.
 
@@ -335,6 +336,35 @@ The two operands must have compatible types: one must be assignable to the other
 Generators must not translate `==` into the target's `==` operator where that operator means identity (objects in
 Java, JavaScript and TypeScript) or does not compare contents (Go slices and maps).
 
+### Mutation
+
+`bytes`, lists, sets and maps are mutable in several target languages (Java arrays and collections, JavaScript
+`Uint8Array` and arrays). An immutable type that hands out such a value must not share its own state through it:
+otherwise a caller can change the object from outside. The built-in functions `clear` and `mix` let a test check
+that. They are the only functions with an effect: they change the value they are given **in place**.
+
+| Function | `bytes` | `list<T>` | `set<T>` | `map<K, V>` |
+|---|---|---|---|---|
+| `clear` | every byte becomes 0 (the length stays) | no element left | no element left | no entry left |
+| `mix` | every byte inverted (`~b`) | reversed order | — | — |
+
+`mix` changes the content but not the size; sets and maps have no order to change, so `clear` is their only
+mutation. A value that cannot be changed in the target language — an unmodifiable Java collection, a frozen
+JavaScript array, Python `bytes`, an owned Rust `Vec` returned by value — stays as it is, and the call does nothing:
+the API then shares nothing that can be changed, which is what the test checks. A test therefore changes a value it
+got from the API and asserts that the object still returns the original value:
+
+```
+let raw = key.toRawBytes()
+clear(value: raw)
+assertEquals(expected: hex(text: "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"),
+        actual: key.toRawBytes())
+```
+
+The same holds for a value passed **into** the API: a test changes it after the call and asserts that the object
+did not change with it. A test that uses `mix` uses a value that `mix` changes (a list of at least two different
+elements).
+
 ### `null`
 
 - An expression of a `@@nullable` type cannot be used as the operand of an operator other than `==`, `!=` and `is`,
@@ -420,6 +450,8 @@ What the declarations do not express, and what holds for all of them:
   `assertEquals` and `assertNotEquals` is the value equality of [Equality](#equality).
 - Positions and lengths count code points for `string`, bytes for `bytes` and elements for lists (see
   [Strings](#strings)).
+- `clear` and `mix` change their argument in place, see [Mutation](#mutation); every other function leaves its
+  arguments unchanged.
 - A position out of range, an integer argument that does not fit its parameter type (see [Integers](#integers)) and
   text that `hex`, `base64` or `toInt` cannot read fail the test. They are not errors in the sense of `@@throws` and
   cannot be expected with `@@expectThrows`.
@@ -544,6 +576,26 @@ namespace testing
 
 // The integers from start (inclusive) to end (exclusive).
 @@static list<int64> range(start: int64, end: int64)
+
+// --- mutation --------------------------------------------------------------------------------
+
+// Overwrites every byte with 0, in place.
+@@static void clear(value: bytes)
+
+// Removes every element, in place.
+@@static void clear<$$T>(value: list<$$T>)
+
+// Removes every element, in place.
+@@static void clear<$$T>(value: set<$$T>)
+
+// Removes every entry, in place.
+@@static void clear<$$K, $$V>(value: map<$$K, $$V>)
+
+// Inverts every byte, in place.
+@@static void mix(value: bytes)
+
+// Reverses the order of the elements, in place.
+@@static void mix<$$T>(value: list<$$T>)
 
 // --- numbers ---------------------------------------------------------------------------------
 

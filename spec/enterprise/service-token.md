@@ -36,6 +36,7 @@ TokenCreateParams {
     @@immutable @@nullable @@min(1) maxSupply: int64
     // When true, newly associated accounts start frozen; requires a freeze authority.
     @@immutable @@default(false) freezeDefault: bool
+    // A short human-readable label of the token; none if absent.
     @@immutable @@nullable @@maxBytes(100) tokenMemo: string
     // Opaque metadata of the token (e.g. an IPFS CID, a URL or a JSON manifest).
     @@immutable @@default([]) @@maxSize(100) metadata: bytes

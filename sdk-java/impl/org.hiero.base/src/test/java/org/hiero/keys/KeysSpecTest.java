@@ -736,7 +736,59 @@ class KeysSpecTest {
         assertEquals(defaultPrivateKey(), key);
     }
 
+    /// `keys/changing-the-bytes-a-key-returns-does-not-change-the-key`
+    ///
+    /// Source: this spec (a key is immutable; the raw bytes and the PKCS#8 DER of the default key under "Key examples",
+    /// the public key of the default key in KEY_PAIRS).
+    @Test
+    @DisplayName("changing the bytes a key returns does not change the key")
+    @Tag("testId:keys/changing-the-bytes-a-key-returns-does-not-change-the-key")
+    void changingTheBytesAKeyReturnsDoesNotChangeTheKey() {
+        // given
+        final PrivateKey privateKey = defaultPrivateKey();
+        final PublicKey publicKey = defaultPublicKey();
+
+        // when
+        final byte[] attribute = privateKey.bytes();
+        clear(attribute);
+        final byte[] raw = privateKey.toRawBytes();
+        mix(raw);
+        final byte[] der = privateKey.toBytes(KeyFormat.PKCS8_WITH_DER);
+        clear(der);
+        final byte[] publicRaw = publicKey.toRawBytes();
+        mix(publicRaw);
+
+        // then
+        final byte[] secret = hex("d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c");
+        assertEquals(secret, privateKey.bytes());
+        assertEquals(secret, privateKey.toRawBytes());
+        assertEquals(hex("302e020100300506032b657004220420d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"), privateKey.toBytes(KeyFormat.PKCS8_WITH_DER));
+        assertEquals(hex("690fb5dbd7a8ab708e231a1ada8dec56d57744719ec4ef6ebb180ef5e8ae6b2d"), publicKey.toRawBytes());
+    }
+
+    /// `keys/changing-the-bytes-a-key-was-created-from-does-not-change-the-key`
+    ///
+    /// Source: this spec (a key is immutable; the raw bytes of the default key).
+    @Test
+    @DisplayName("changing the bytes a key was created from does not change the key")
+    @Tag("testId:keys/changing-the-bytes-a-key-was-created-from-does-not-change-the-key")
+    void changingTheBytesAKeyWasCreatedFromDoesNotChangeTheKey() {
+        // given
+        final byte[] rawBytes = hex("d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c");
+        final PrivateKey key = KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, rawBytes);
+
+        // when
+        clear(rawBytes);
+
+        // then
+        assertEquals(defaultPrivateKey(), key);
+    }
+
     private static PrivateKey defaultPrivateKey() {
         return KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c");
+    }
+
+    private static PublicKey defaultPublicKey() {
+        return defaultPrivateKey().createPublicKey();
     }
 }

@@ -894,6 +894,49 @@ test "a PEM key with extra whitespace and blank lines is read" {
     // then
     assertEquals(expected: DEFAULT(PrivateKey), actual: key)
 }
+
+// Source: this spec (a key is immutable; the raw bytes and the PKCS#8 DER of the default key under "Key examples",
+// the public key of the default key in KEY_PAIRS).
+@@testId("changing-the-bytes-a-key-returns-does-not-change-the-key")
+test "changing the bytes a key returns does not change the key" {
+    // given
+    let privateKey = DEFAULT(PrivateKey)
+    let publicKey = DEFAULT(PublicKey)
+
+    // when
+    let attribute = privateKey.bytes
+    clear(value: attribute)
+    let raw = privateKey.toRawBytes()
+    mix(value: raw)
+    let der = privateKey.toBytes(container: KeyFormat.PKCS8_WITH_DER)
+    clear(value: der)
+    let publicRaw = publicKey.toRawBytes()
+    mix(value: publicRaw)
+
+    // then
+    let secret = hex(text: "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c")
+    assertEquals(expected: secret, actual: privateKey.bytes)
+    assertEquals(expected: secret, actual: privateKey.toRawBytes())
+    assertEquals(
+            expected: hex(text: "302e020100300506032b657004220420d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"),
+            actual: privateKey.toBytes(container: KeyFormat.PKCS8_WITH_DER))
+    assertEquals(expected: hex(text: "690fb5dbd7a8ab708e231a1ada8dec56d57744719ec4ef6ebb180ef5e8ae6b2d"),
+            actual: publicKey.toRawBytes())
+}
+
+// Source: this spec (a key is immutable; the raw bytes of the default key).
+@@testId("changing-the-bytes-a-key-was-created-from-does-not-change-the-key")
+test "changing the bytes a key was created from does not change the key" {
+    // given
+    let rawBytes = hex(text: "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c")
+    let key = createPrivateKey(algorithm: KeyAlgorithm.ED25519, rawBytes: rawBytes)
+
+    // when
+    clear(value: rawBytes)
+
+    // then
+    assertEquals(expected: DEFAULT(PrivateKey), actual: key)
+}
 ```
 
 ## Questions & Comments
@@ -904,3 +947,9 @@ test "a PEM key with extra whitespace and blank lines is read" {
   TCK's `generateKey` with type `evmAddress` cannot be answered (see
   [`tck-binding.md`](../../docs/tck-binding.md)). Should `PublicKey` get an `EvmAddress toEvmAddress()`
   that throws for ED25519 keys, or should it live on `EvmAddress`?
+
+- **Which hex text does `ByteImportEncoding.HEX` accept?** The comment allows "a 0x prefix", and
+  `a-hex-key-may-have-a-0x-prefix` tests only the lower-case `0x`. The Java implementation also accepts
+  `0X` and strips leading and trailing whitespace; neither is specified nor tested. Should `HEX` accept
+  `0X` and surrounding whitespace (then both belong in the comment and in a test that calls `decode`
+  directly), or reject them (then the implementation must change)?

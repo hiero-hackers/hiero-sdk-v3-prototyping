@@ -129,6 +129,26 @@ namespace testing
 // The integers from start (inclusive) to end (exclusive).
 @@static list<int64> range(start: int64, end: int64)
 
+// --- mutation --------------------------------------------------------------------------------
+
+// Overwrites every byte with 0, in place.
+@@static void clear(value: bytes)
+
+// Removes every element, in place.
+@@static void clear<$$T>(value: list<$$T>)
+
+// Removes every element, in place.
+@@static void clear<$$T>(value: set<$$T>)
+
+// Removes every entry, in place.
+@@static void clear<$$K, $$V>(value: map<$$K, $$V>)
+
+// Inverts every byte, in place.
+@@static void mix(value: bytes)
+
+// Reverses the order of the elements, in place.
+@@static void mix<$$T>(value: list<$$T>)
+
 // --- numbers ---------------------------------------------------------------------------------
 
 // The absolute value.

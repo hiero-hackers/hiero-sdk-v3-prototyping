@@ -40,6 +40,9 @@ public record Attachment(
         return checksum == null ? null : checksum.clone();
     }
 
+    /// Compares `content` and `checksum` by content: the implicit `equals` of a record compares
+    /// an array by reference, so two instances with the same values would never be equal (each holds its
+    /// own copy of the array).
     @Override
     public boolean equals(final @Nullable Object obj) {
         return obj instanceof Attachment other
@@ -49,11 +52,13 @@ public record Attachment(
             && Objects.equals(count, other.count);
     }
 
+    /// Hashes `content` and `checksum` by content, consistent with [#equals(Object)].
     @Override
     public int hashCode() {
         return Objects.hash(Arrays.hashCode(content), Arrays.hashCode(checksum), weight, count);
     }
 
+    /// Shows only the length of `content` and `checksum` instead of the identity of the array object.
     @Override
     public String toString() {
         return "Attachment[content=" + "byte[" + content.length + "]" + ", checksum=" + (checksum == null ? "null" : "byte[" + checksum.length + "]") + ", weight=" + weight + ", count=" + count + "]";

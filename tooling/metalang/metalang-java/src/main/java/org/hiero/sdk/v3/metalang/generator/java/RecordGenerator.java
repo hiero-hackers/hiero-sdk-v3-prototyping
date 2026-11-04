@@ -251,9 +251,18 @@ final class RecordGenerator {
         final String objects = imports.use("java.util", "Objects");
         final String nullable = imports.use(JavaTypes.JSPECIFY, "Nullable");
         final String self = name + (type.typeParameters().isEmpty() ? "" : "<?>");
+        // why the implicit members of the record are replaced, naming the array components
+        final List<String> arrayNames = fields.stream().filter(f -> JavaConstraints.isBytes(f.type()))
+                .map(f -> "`" + JavaKeywords.identifier(f.name()) + "`").toList();
+        final String arrayFields = arrayNames.size() == 1 ? arrayNames.getFirst()
+                : String.join(", ", arrayNames.subList(0, arrayNames.size() - 1)) + " and " + arrayNames.getLast();
         final StringBuilder out = new StringBuilder();
         if (type.methods("equals").isEmpty()) {
-            out.append('\n').append(INDENT).append("@Override\n")
+            out.append('\n')
+                    .append(INDENT).append("/// Compares ").append(arrayFields).append(" by content: the implicit `equals` of a record compares\n")
+                    .append(INDENT).append("/// an array by reference, so two instances with the same values would never be equal (each holds its\n")
+                    .append(INDENT).append("/// own copy of the array).\n")
+                    .append(INDENT).append("@Override\n")
                     .append(INDENT).append("public boolean equals(final @").append(nullable).append(" Object obj) {\n")
                     .append(INDENT).append(INDENT).append("return obj instanceof ").append(self).append(" other")
                     .append(fields.stream().map(f -> "\n" + INDENT + INDENT + INDENT + "&& "
@@ -261,7 +270,9 @@ final class RecordGenerator {
                     .append(INDENT).append("}\n");
         }
         if (type.methods("hashCode").isEmpty()) {
-            out.append('\n').append(INDENT).append("@Override\n")
+            out.append('\n')
+                    .append(INDENT).append("/// Hashes ").append(arrayFields).append(" by content, consistent with [#equals(Object)].\n")
+                    .append(INDENT).append("@Override\n")
                     .append(INDENT).append("public int hashCode() {\n")
                     .append(INDENT).append(INDENT).append("return ").append(objects).append(".hash(")
                     .append(fields.stream().map(f -> JavaConstraints.isBytes(f.type())
@@ -270,7 +281,9 @@ final class RecordGenerator {
                     .append(INDENT).append("}\n");
         }
         if (type.methods("toString").isEmpty()) {
-            out.append('\n').append(INDENT).append("@Override\n")
+            out.append('\n')
+                    .append(INDENT).append("/// Shows only the length of ").append(arrayFields).append(" instead of the identity of the array object.\n")
+                    .append(INDENT).append("@Override\n")
                     .append(INDENT).append("public String toString() {\n")
                     .append(INDENT).append(INDENT).append("return \"").append(name).append("[")
                     .append(fields.stream().map(f -> {

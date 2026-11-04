@@ -594,6 +594,49 @@ export function range(start: bigint, end: bigint): bigint[] {
     return result;
 }
 
+// --- mutation ----------------------------------------------------------------------------------------------------
+
+/**
+ * Empties a value in place: overwrites every byte with 0, or removes every element of a list or set and every entry
+ * of a map. A test changes a value it got from the API to check that the API does not share its own state; a frozen
+ * value stays as it is (the API shares nothing that can be changed).
+ *
+ * @param value the bytes, list, set or map
+ */
+export function clear(value: Uint8Array | ReadonlyArray<unknown> | ReadonlySet<unknown> | ReadonlyMap<unknown, unknown>): void {
+    unlessFrozen(value, () => {
+        if (value instanceof Uint8Array) {
+            value.fill(0);
+        } else if (Array.isArray(value)) {
+            (value as unknown[]).length = 0;
+        } else {
+            (value as Set<unknown> | Map<unknown, unknown>).clear();
+        }
+    });
+}
+
+/**
+ * Changes a value in place without changing its size: inverts every byte, or reverses the order of a list. A frozen
+ * value stays as it is (the API shares nothing that can be changed).
+ *
+ * @param value the bytes or list
+ */
+export function mix(value: Uint8Array | ReadonlyArray<unknown>): void {
+    unlessFrozen(value, () => {
+        if (value instanceof Uint8Array) {
+            value.forEach((b, i) => value[i] = ~b & 0xff);
+        } else {
+            (value as unknown[]).reverse();
+        }
+    });
+}
+
+function unlessFrozen(value: object, change: () => void): void {
+    if (!Object.isFrozen(value)) {
+        change();
+    }
+}
+
 // --- numbers -----------------------------------------------------------------------------------------------------
 
 /** The absolute value of an integer. */

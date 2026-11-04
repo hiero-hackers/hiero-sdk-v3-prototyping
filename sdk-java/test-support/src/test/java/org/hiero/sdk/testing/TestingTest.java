@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -125,5 +126,32 @@ class TestingTest {
         assertThrows(AssertionFailedError.class, () -> Testing.toZonedDateTime("2022-01-02T02:00:01"));
         assertThrows(AssertionFailedError.class, () -> Testing.toDate("2022-13-01"));
         assertThrows(AssertionFailedError.class, () -> Testing.toDuration("1.5 seconds"));
+    }
+
+    @Test
+    @DisplayName("clear and mix change a modifiable value in place and leave an unmodifiable one as it is")
+    void clearAndMixShouldChangeModifiableValuesInPlace() {
+        final byte[] bytes = {1, 2};
+        Testing.mix(bytes);
+        assertArrayEquals(new byte[] {(byte) 0xfe, (byte) 0xfd}, bytes);
+        Testing.clear(bytes);
+        assertArrayEquals(new byte[] {0, 0}, bytes);
+
+        final List<Integer> list = new ArrayList<>(List.of(1, 2, 3));
+        Testing.mix(list);
+        assertEquals(List.of(3, 2, 1), list);
+        Testing.clear(list);
+        assertTrue(list.isEmpty());
+        final Set<Integer> set = new LinkedHashSet<>(Set.of(1));
+        Testing.clear(set);
+        assertTrue(set.isEmpty());
+        final Map<String, Integer> map = new LinkedHashMap<>(Map.of("a", 1));
+        Testing.clear(map);
+        assertTrue(map.isEmpty());
+
+        assertDoesNotThrow(() -> Testing.mix(List.of(1, 2)));
+        assertDoesNotThrow(() -> Testing.clear(List.of(1)));
+        assertDoesNotThrow(() -> Testing.clear(Set.of(1)));
+        assertDoesNotThrow(() -> Testing.clear(Map.of("a", 1)));
     }
 }

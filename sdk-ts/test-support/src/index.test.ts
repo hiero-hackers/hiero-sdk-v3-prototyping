@@ -6,8 +6,8 @@ import { AssertionError } from "node:assert";
 import { describe, test } from "node:test";
 import {
     abs, absDecimal, addDecimal, assertEquals, assertValue, assertFalse, assertInstanceOf, assertNotEquals, assertNotNull,
-    assertNull, assertTrue, base64, checked, checkedNumber, compare, compareDecimal, concat, contains, containsKey,
-    decimal, divide, endsWith, equal, get, hex, int, keys, length, max, maxDecimal, min, multiplyDecimal,
+    assertNull, assertTrue, base64, checked, clear, checkedNumber, compare, compareDecimal, concat, contains, containsKey,
+    decimal, divide, endsWith, equal, get, hex, int, keys, length, max, maxDecimal, min, mix, multiplyDecimal,
     negateDecimal, range, repeat, slice, startsWith, subtractDecimal, substring, textDecimal, toDecimalDouble, toHex,
     toInt, utf8, values, toZonedDateTime, toDateTime, toDate, toTime, toDuration, toSeconds,
 } from "./index.js";
@@ -177,5 +177,30 @@ describe("test support", () => {
         assert.throws(() => toDuration("PT"), AssertionError);
         assert.ok(equal(toSeconds(7776000n), Duration.ofSeconds(7776000)));
         assert.ok(compare(toSeconds(89n), toSeconds(90n)) < 0 && compare(toDuration("PT1M"), toDuration("PT60S")) === 0);
+    });
+
+    test("clear and mix change a modifiable value in place and leave a frozen one as it is", () => {
+        const bytes = Uint8Array.of(1, 2);
+        mix(bytes);
+        assert.deepEqual(bytes, Uint8Array.of(0xfe, 0xfd));
+        clear(bytes);
+        assert.deepEqual(bytes, Uint8Array.of(0, 0));
+
+        const list = [1, 2, 3];
+        mix(list);
+        assert.deepEqual(list, [3, 2, 1]);
+        clear(list);
+        assert.deepEqual(list, []);
+        const set = new Set([1]);
+        clear(set);
+        assert.equal(set.size, 0);
+        const map = new Map([["a", 1]]);
+        clear(map);
+        assert.equal(map.size, 0);
+
+        const frozen = Object.freeze([1, 2]);
+        mix(frozen);
+        clear(frozen);
+        assert.deepEqual(frozen, [1, 2]);
     });
 });
