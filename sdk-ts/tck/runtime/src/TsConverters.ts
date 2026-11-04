@@ -1,7 +1,8 @@
 import { AuthorityList, of as authorityOf, PublicKeyAuthority, type Authority } from "@hiero/base/authority";
+import { EvmAddress } from "@hiero/base/evm";
 import { Hbar, HbarUnit } from "@hiero/base/hedera";
 import { createPrivateKey, createPublicKey, KeyFormat, type PrivateKey, type PublicKey } from "@hiero/base/keys";
-import { AccountId, Address, type ContractId, EvmAddress, IpAddress, TransactionId } from "@hiero/base/ledger";
+import { AccountId, Address, type ContractId, IpAddress, TransactionId } from "@hiero/base/ledger";
 import type { ExchangeRate, NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
 import { TokenSupplyType, TokenType } from "@hiero/base/token";
 import type { UntypedReceipt } from "@hiero/consensus-node-client/consensusnode/queries/receipts";

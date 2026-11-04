@@ -3,6 +3,7 @@ package org.hiero.ledger;
 import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.hiero.evm.EvmAddress;
 import org.hiero.hedera.HbarUnit;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;

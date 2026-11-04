@@ -1,5 +1,6 @@
 package org.hiero.ledger;
 
+import org.hiero.evm.EvmAddress;
 import org.jspecify.annotations.Nullable;
 
 /// Abstract subtype of BaseAddress for entities that can be addressed either by their numeric

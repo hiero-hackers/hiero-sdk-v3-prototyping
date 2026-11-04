@@ -1,7 +1,7 @@
 package org.hiero.mirrornode.contract;
 
 import java.util.Objects;
-import org.hiero.ledger.EvmAddress;
+import org.hiero.evm.EvmAddress;
 import org.jspecify.annotations.Nullable;
 
 /// A call of a contract that the Mirror Node simulates without submitting a transaction.

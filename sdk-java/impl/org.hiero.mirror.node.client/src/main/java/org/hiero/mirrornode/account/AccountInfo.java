@@ -6,8 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.hiero.authority.Authority;
+import org.hiero.evm.EvmAddress;
 import org.hiero.ledger.AccountId;
-import org.hiero.ledger.EvmAddress;
 import org.jspecify.annotations.Nullable;
 
 /// @param balance hbar balance in tinybars

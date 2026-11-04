@@ -4,8 +4,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HexFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.hiero.evm.EvmAddress;
 import org.hiero.ledger.BaseAddress;
-import org.hiero.ledger.EvmAddress;
 import org.hiero.ledger.Network;
 import org.jspecify.annotations.Nullable;
 

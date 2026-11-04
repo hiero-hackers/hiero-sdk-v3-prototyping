@@ -16,6 +16,7 @@ import com.hederahashgraph.api.proto.java.ScheduleID;
 import com.hederahashgraph.api.proto.java.TokenID;
 import com.hederahashgraph.api.proto.java.TopicID;
 import java.util.List;
+import org.hiero.evm.EvmAddress;
 import org.hiero.hedera.Hbar;
 import org.hiero.hedera.HbarUnit;
 import org.hiero.ledger.Address;
@@ -31,7 +32,6 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.ContractId;
-import org.hiero.ledger.EvmAddress;
 import org.hiero.ledger.TransactionId;
 import org.hiero.nativeToken.ExchangeRate;
 

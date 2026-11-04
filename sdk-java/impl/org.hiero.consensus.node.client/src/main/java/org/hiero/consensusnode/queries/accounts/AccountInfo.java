@@ -4,8 +4,8 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import org.hiero.authority.Authority;
+import org.hiero.evm.EvmAddress;
 import org.hiero.ledger.AccountId;
-import org.hiero.ledger.EvmAddress;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 

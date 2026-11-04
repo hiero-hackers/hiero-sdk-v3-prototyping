@@ -3,8 +3,8 @@ package org.hiero.mirrornode.contract;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import org.hiero.evm.EvmAddress;
 import org.hiero.ledger.ContractId;
-import org.hiero.ledger.EvmAddress;
 import org.jspecify.annotations.Nullable;
 
 /// An event that a contract emitted during an execution.

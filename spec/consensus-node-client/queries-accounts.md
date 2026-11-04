@@ -30,7 +30,8 @@ a worked example of the free / paid split established by `consensusnode.queries`
 
 ```
 namespace consensusnode.queries.accounts
-requires {Address, AccountId, ContractId, EvmAddress} from ledger
+requires {Address, AccountId, ContractId} from ledger
+requires {EvmAddress} from evm
 requires {Authority} from authority
 requires {NativeToken} from nativeToken
 requires {FreeQuery, PaidQuery} from consensusnode.queries

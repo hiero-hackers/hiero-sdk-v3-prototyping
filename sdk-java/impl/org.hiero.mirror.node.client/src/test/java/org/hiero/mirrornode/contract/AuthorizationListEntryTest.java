@@ -3,7 +3,7 @@ package org.hiero.mirrornode.contract;
 import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.hiero.ledger.EvmAddress;
+import org.hiero.evm.EvmAddress;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

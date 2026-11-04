@@ -2,7 +2,7 @@ package org.hiero.mirrornode.contract;
 
 import java.util.List;
 import java.util.Objects;
-import org.hiero.ledger.EvmAddress;
+import org.hiero.evm.EvmAddress;
 
 /// A contract and the storage keys of it that a wrapped Ethereum transaction accesses (EIP-2930).
 ///

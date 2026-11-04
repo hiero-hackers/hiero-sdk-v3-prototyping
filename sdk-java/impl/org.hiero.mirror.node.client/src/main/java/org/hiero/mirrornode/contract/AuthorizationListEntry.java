@@ -1,7 +1,7 @@
 package org.hiero.mirrornode.contract;
 
 import java.util.Objects;
-import org.hiero.ledger.EvmAddress;
+import org.hiero.evm.EvmAddress;
 import org.jspecify.annotations.Nullable;
 
 /// An authorization of a wrapped EIP-7702 Ethereum transaction: the delegation of an account to the code of an address.

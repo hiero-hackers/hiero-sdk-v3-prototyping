@@ -16,8 +16,8 @@
 ///   (exactly one of the two is set).
 /// - `AccountId` — an account, identified by its number, by an EVM-address alias, or by a public-key
 ///   alias (exactly one of the three is set).
-/// - `EvmAddress` — a raw 20-byte EVM address, used inside `ContractId` / `AccountId` and wherever an
-///   EVM address appears on its own.
+///
+/// The EVM-address form of `ContractId` and `AccountId` is an `EvmAddress` of the namespace `evm`.
 ///
 /// All identifier types can be parsed from and formatted to their canonical string form
 /// (e.g. `0.0.1234` or `0.0.1234-abcde` with checksum). `TransactionId` identifies a transaction by its

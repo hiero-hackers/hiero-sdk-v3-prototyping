@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import org.hiero.evm.EvmAddress;
 import org.hiero.ledger.ContractId;
-import org.hiero.ledger.EvmAddress;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

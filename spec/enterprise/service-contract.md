@@ -19,7 +19,8 @@ is reported by `getType(index)`; callers check it before using the value.
 ```
 namespace enterprise.service.contract
 requires {Page} from common
-requires {Address, AccountId, ContractId, EvmAddress} from ledger
+requires {Address, AccountId, ContractId} from ledger
+requires {EvmAddress} from evm
 requires {Authority} from authority
 requires {NativeToken} from nativeToken
 requires {Session} from enterprise.service

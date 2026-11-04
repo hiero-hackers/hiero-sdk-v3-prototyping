@@ -2,8 +2,8 @@ package org.hiero.mirrornode.contract;
 
 import java.util.List;
 import java.util.Objects;
+import org.hiero.evm.EvmAddress;
 import org.hiero.ledger.ContractId;
-import org.hiero.ledger.EvmAddress;
 import org.jspecify.annotations.Nullable;
 
 /// The opcode trace of the execution of a transaction.

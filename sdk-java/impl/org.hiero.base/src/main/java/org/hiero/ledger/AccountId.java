@@ -2,6 +2,7 @@ package org.hiero.ledger;
 
 import java.util.Arrays;
 import java.util.Objects;
+import org.hiero.evm.EvmAddress;
 import org.hiero.ledger.internal.EntityIds;
 import org.jspecify.annotations.Nullable;
 

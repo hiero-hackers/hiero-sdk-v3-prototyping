@@ -71,7 +71,8 @@ Deviations from the mirror node REST API (see the Design Notes of [`mirror-node.
 ```
 namespace mirrornode.contract
 
-requires {AccountId, Address, ContractId, EvmAddress, MirrorNode} from ledger
+requires {AccountId, Address, ContractId, MirrorNode} from ledger
+requires {EvmAddress} from evm
 requires {Authority} from authority
 requires {Page} from common
 requires {Order, TimestampRange} from mirrornode.common

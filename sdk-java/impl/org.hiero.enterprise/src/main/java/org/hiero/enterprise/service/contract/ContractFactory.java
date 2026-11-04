@@ -7,7 +7,7 @@ import org.hiero.enterprise.service.Session;
 import org.hiero.enterprise.service.internal.Abi;
 import org.hiero.enterprise.service.internal.DefaultSession;
 import org.hiero.enterprise.service.internal.DefaultSmartContractService;
-import org.hiero.ledger.EvmAddress;
+import org.hiero.evm.EvmAddress;
 
 /// Factory methods of the package `org.hiero.enterprise.service.contract`.
 public final class ContractFactory {

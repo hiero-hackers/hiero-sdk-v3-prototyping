@@ -128,6 +128,8 @@ spec/                           # The actual V3 public-API specifications, writt
   base/                         # Foundational namespaces shared by everything
     common.md (common)          #   Page<$$T> and other shared types
     ledger.md (ledger)          #   Ledger, Address, AccountId, TransactionId, ConsensusNode, MirrorNode
+    evm.md (evm)                #   EVM-generic types (EvmAddress; the ABI model follows); imports no other
+                                #   namespace (ADR-0015)
     ledger-config.md (ledger.config)  # network settings
     keys.md (keys)              #   Keys + key import/export (PKCS#8, SPKI, DER, PEM); has the first `tests` block
     authority.md (authority)    #   Authorization model (HAPI Key): Authority sum type (public key / contract / m-of-n)

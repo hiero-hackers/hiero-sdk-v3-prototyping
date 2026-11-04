@@ -4,10 +4,10 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import org.hiero.authority.Authority;
+import org.hiero.evm.EvmAddress;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;
-import org.hiero.ledger.EvmAddress;
 import org.hiero.mirrornode.common.TimestampRange;
 import org.jspecify.annotations.Nullable;
 

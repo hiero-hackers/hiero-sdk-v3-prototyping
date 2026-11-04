@@ -2,8 +2,8 @@ package org.hiero.mirrornode.contract;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import org.hiero.evm.EvmAddress;
 import org.hiero.ledger.ContractId;
-import org.hiero.ledger.EvmAddress;
 import org.jspecify.annotations.Nullable;
 
 /// A storage slot of a contract and its value.

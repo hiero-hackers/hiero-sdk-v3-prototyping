@@ -5,6 +5,7 @@ import org.jspecify.annotations.NullMarked;
 /// Packages:
 /// - `org.hiero.authority`
 /// - `org.hiero.common`
+/// - `org.hiero.evm`
 /// - `org.hiero.grpc`
 /// - `org.hiero.hedera`
 /// - `org.hiero.http`
@@ -24,6 +25,7 @@ module org.hiero.base {
 
     exports org.hiero.authority;
     exports org.hiero.common;
+    exports org.hiero.evm;
     exports org.hiero.grpc;
     exports org.hiero.hedera;
     exports org.hiero.http;

@@ -31,7 +31,7 @@ public enum Converter {
     ACCOUNT_ID("accountId", true, true, "An account ID (`\"0.0.1234\"`).", "ledger.AccountId"),
     EVM_ACCOUNT_ID("evmAccountId", true, false, "An account ID given as 20-byte EVM address in hex.",
             "ledger.AccountId"),
-    EVM_ADDRESS("evmAddress", false, true, "An EVM address as hex string.", "ledger.EvmAddress"),
+    EVM_ADDRESS("evmAddress", false, true, "An EVM address as hex string.", "evm.EvmAddress"),
     ADDRESS("address", true, true, "An entity address (`\"0.0.1234\"`), e.g. a token ID.", "ledger.Address"),
     KEY("key", true, true, "A key as hex string: a DER-encoded private or public key, or the serialized protobuf "
             + "`Key` of a key list or threshold key.", "authority.Authority"),

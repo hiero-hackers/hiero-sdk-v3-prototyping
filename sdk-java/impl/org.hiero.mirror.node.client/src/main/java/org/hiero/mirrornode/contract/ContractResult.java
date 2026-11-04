@@ -4,8 +4,8 @@ import java.math.BigInteger;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import org.hiero.evm.EvmAddress;
 import org.hiero.ledger.ContractId;
-import org.hiero.ledger.EvmAddress;
 import org.jspecify.annotations.Nullable;
 
 /// The result of the execution of a contract function, a contract creation or a wrapped Ethereum transaction.

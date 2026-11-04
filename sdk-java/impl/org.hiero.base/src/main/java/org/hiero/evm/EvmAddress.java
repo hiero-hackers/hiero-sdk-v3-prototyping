@@ -1,4 +1,4 @@
-package org.hiero.ledger;
+package org.hiero.evm;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -7,10 +7,7 @@ import java.util.Objects;
 import org.hiero.keys.internal.Secp256k1;
 import org.jspecify.annotations.Nullable;
 
-/// 20-byte EVM address — a flat, single-value identifier for EVM-side entities. NOT a
-/// (shard, realm, num) tuple; therefore cannot extend BaseAddress. Used as the EVM-form
-/// selector inside ContractId and AccountId, and as a stand-alone value type wherever an EVM
-/// address appears on its own.
+/// A 20-byte EVM address: the address of an account or a contract on the EVM.
 ///
 /// @param bytes 20 raw bytes (network byte order)
 public record EvmAddress(byte[] bytes) {
