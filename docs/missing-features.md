@@ -47,9 +47,11 @@ Open: chunked-append model (per-chunk receipts vs. single-receipt facade) — tr
 
 `ContractCreate`, `ContractCreateFlow`, `ContractUpdate`, `ContractExecute`,
 `ContractDelete`, `EthereumTransaction`, `EthereumFlow` — **all :x:** (only the privileged `SystemDelete` /
-`SystemUndelete` of a contract exists, in the admin client). Also missing: `ContractFunctionParameters` (ABI encoding
-of the call arguments) and `ContractFunctionResult`. The contract queries are listed in §1.8. This is the largest
-gap to v2.
+`SystemUndelete` of a contract exists, in the admin client). The ABI that v2 spreads over
+`ContractFunctionParameters` and the getters of `ContractFunctionResult` is :white_check_mark: specified on its own in
+[`evm.md`](../spec/base/evm.md) (`AbiType`, `AbiValue`, `AbiFunction`, `AbiEvent`;
+[ADR-0015](adr/0015-evm-generic-types-in-a-namespace-without-imports.md)); `ContractFunctionResult` itself (gas,
+logs, revert data) is still missing. The contract queries are listed in §1.8. This is the largest gap to v2.
 
 ### 1.5 Topic / HCS
 
