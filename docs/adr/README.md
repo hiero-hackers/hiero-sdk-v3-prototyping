@@ -25,3 +25,4 @@ deleted — superseded ADRs link forward to the decision that replaces them.
 | [0012](0012-open-test-reporting-as-common-test-result-format.md) | Open Test Reporting is the common format of all test results | Accepted |
 | [0013](0013-untyped-receipts-for-the-receipt-query-by-id.md) | Untyped receipts for the receipt query by id; `Response` is a value | Accepted |
 | [0014](0014-specified-and-exchangeable-retry-and-node-selection.md) | Retry and node selection are specified and exchangeable public API | Accepted |
+| [0015](0015-evm-generic-types-in-a-namespace-without-imports.md) | EVM-generic types live in a namespace `evm` that imports nothing | Accepted |
