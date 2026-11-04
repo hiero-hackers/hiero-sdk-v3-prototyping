@@ -45,6 +45,24 @@ class ConstraintsTest {
     }
 
     @Test
+    void shouldNarrowTheIntegerRangeToMultiplesAndChooseValuesOnThem() {
+        final List<Annotation> bits = List.of(number("min", "8"), number("max", "256"), number("multipleOf", "8"));
+        final IntegerRange range = Constraints.range(builtin("uint16"), bits);
+        assertThat(range).isEqualTo(new IntegerRange(BigInteger.valueOf(8), BigInteger.valueOf(256)));
+        assertThat(Constraints.range(builtin("int8"), List.of(number("multipleOf", "8"))))
+                .isEqualTo(new IntegerRange(BigInteger.valueOf(-128), BigInteger.valueOf(120)));
+        assertThat(Constraints.range(builtin("int32"), List.of(number("min", "-9"), number("max", "9"),
+                number("multipleOf", "4")))).isEqualTo(new IntegerRange(BigInteger.valueOf(-8), BigInteger.valueOf(8)));
+        assertThat(Constraints.multipleWithin(BigInteger.valueOf(13), range, bits)).isEqualTo(BigInteger.valueOf(8));
+        assertThat(Constraints.multipleWithin(BigInteger.ONE, range, bits)).isEqualTo(BigInteger.valueOf(8));
+        assertThat(Constraints.multipleWithin(BigInteger.valueOf(13), range, List.of())).isEqualTo(BigInteger.valueOf(13));
+        assertThat(Constraints.notMultiple(range, bits)).contains(BigInteger.valueOf(9));
+        assertThat(Constraints.notMultiple(range, List.of())).isEmpty();
+        assertThat(Constraints.notMultiple(new IntegerRange(BigInteger.valueOf(8), BigInteger.valueOf(8)), bits))
+                .isEmpty();
+    }
+
+    @Test
     void shouldChooseDecimalsWithinTheBounds() {
         assertThat(Constraints.decimal(List.of(), 1)).contains(new BigDecimal("2.5"));
         assertThat(Constraints.decimal(List.of(number("min", "10")), 0)).contains(BigDecimal.TEN);

@@ -660,7 +660,8 @@ public final class RustTestGenerator {
 
         private void integerCases(final BuiltinType builtin, final List<Annotation> annotations,
                                   final List<Case> cases) {
-            final boolean bounded = annotations.stream().anyMatch(a -> a.name().equals("min") || a.name().equals("max"));
+            final boolean bounded = annotations.stream().anyMatch(a -> a.name().equals("min") || a.name().equals("max")
+                    || a.name().equals("multipleOf"));
             if (!bounded && !RustContext.needsRangeCheck(builtin)) {
                 return; // the Rust type has exactly the values of the meta-language type
             }
@@ -679,6 +680,8 @@ public final class RustTestGenerator {
             if (representable.contains(above)) {
                 cases.add(new Case("a value above the maximum (" + above + ")", literal(builtin, above), false));
             }
+            Constraints.notMultiple(range, annotations).ifPresent(value -> cases.add(new Case(
+                    "a value that is no multiple (" + value + ")", literal(builtin, value), false)));
         }
 
         /** The values of the Rust integer type of a meta-language integer type. */

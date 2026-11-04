@@ -602,6 +602,34 @@ class ValidatorTest {
         }
 
         @Test
+        void shouldAllowMultipleOfOnIntegersOnlyAndCheckValues() {
+            // GIVEN
+            final String schema = """
+                    namespace a
+                    X {
+                        @@immutable @@min(8) @@max(256) @@multipleOf(8) @@default(16) bits: uint16
+                        @@immutable @@multipleOf(8) @@default(12) wrong: int32
+                        @@immutable @@min(9) @@max(15) @@multipleOf(8) empty: int32
+                        @@immutable @@multipleOf(2) d: double
+                        @@immutable @@multipleOf(2) s: string
+                        @@immutable @@multipleOf(0) zero: int32
+                        void m(@@multipleOf(4) count: int64)
+                    }
+                    """;
+
+            // WHEN
+            final List<Diagnostic> diagnostics = diagnostics(schema);
+
+            // THEN
+            assertThat(diagnostics).extracting(Diagnostic::message).containsExactlyInAnyOrder(
+                    "@@default of 'wrong': Value 12 violates @@multipleOf(8)",
+                    "no multiple of 8 lies between @@min(9) and @@max(15)",
+                    "@@multipleOf requires an integer type, not 'double'",
+                    "@@multipleOf requires an integer type, not 'string'",
+                    "@@multipleOf takes exactly one positive integer");
+        }
+
+        @Test
         void shouldAllowThreadSafeOnTypes() {
             // GIVEN
             final String schema = """

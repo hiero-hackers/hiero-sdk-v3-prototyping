@@ -135,7 +135,8 @@ final class RustSamples {
                                      final int variant) {
         // the validator rejects contradictory bounds: the range is never empty
         final IntegerRange range = Constraints.range(builtin, annotations);
-        final BigInteger value = BigInteger.valueOf(1L + variant).max(range.min()).min(range.max());
+        final BigInteger value = Constraints.multipleWithin(BigInteger.valueOf(1L + variant).max(range.min())
+                .min(range.max()), range, annotations);
         return Optional.of(RustLiterals.number(new BigDecimal(value), builtin));
     }
 

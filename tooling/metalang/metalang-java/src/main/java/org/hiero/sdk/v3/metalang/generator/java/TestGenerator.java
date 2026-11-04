@@ -200,6 +200,7 @@ public final class TestGenerator {
                 case "AtMaximum" -> "the maximum";
                 case "BelowMinimum" -> "a value below the minimum";
                 case "AboveMaximum" -> "a value above the maximum";
+                case "NotAMultiple" -> "a value that is no multiple";
                 case "AtMinimumLength" -> "a value with the minimum length";
                 case "AtMaximumLength" -> "a value with the maximum length";
                 case "BelowMinimumLength" -> "a value shorter than the minimum length";
@@ -990,6 +991,8 @@ public final class TestGenerator {
                 cases.add(new Case("AboveMaximum", JavaIntegers.literal(builtin, above, imports), false,
                         above.toString()));
             }
+            Constraints.notMultiple(range, annotations).ifPresent(value -> cases.add(new Case("NotAMultiple",
+                    JavaIntegers.literal(builtin, value, imports), false, value.toString())));
         }
 
         private void boundCases(final Type.BasicType type, final List<Annotation> annotations,

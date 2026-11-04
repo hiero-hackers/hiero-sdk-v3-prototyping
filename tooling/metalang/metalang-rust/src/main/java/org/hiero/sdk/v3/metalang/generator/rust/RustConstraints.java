@@ -16,7 +16,7 @@ import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 final class RustConstraints {
 
     /** The annotations that a constructor or setter checks. */
-    static final Set<String> VALIDATIONS = Set.of("min", "max", "minLength", "maxLength", "maxBytes", "minSize", "maxSize",
+    static final Set<String> VALIDATIONS = Set.of("min", "max", "multipleOf", "minLength", "maxLength", "maxBytes", "minSize", "maxSize",
             "pattern", "urlPattern");
 
     private RustConstraints() {
@@ -61,6 +61,9 @@ final class RustConstraints {
                         field.name() + " must be at least " + number(annotation), error);
                 case "max" -> check(checks, value + " > " + bound(field.type(), annotation),
                         field.name() + " must be at most " + number(annotation), error);
+                case "multipleOf" -> check(checks, value + " % " + bound(field.type(), annotation) + " != "
+                                + literal("0", ((Type.BasicType) field.type()).builtin()),
+                        field.name() + " must be a multiple of " + number(annotation), error);
                 case "minLength" -> check(checks, number(annotation).equals("1") ? name + ".is_empty()"
                                 : name + ".chars().count() < " + number(annotation),
                         field.name() + " must be at least " + number(annotation) + " characters long", error);

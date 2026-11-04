@@ -78,6 +78,7 @@ class TestGeneratorTest {
                 Limits {
                     @@immutable small: uint8
                     @@immutable @@min(1) count: int64
+                    @@immutable @@min(8) @@max(256) @@multipleOf(8) bits: uint16
                     @@immutable big: uint64
                     @@immutable huge: int256
                     @@immutable @@min(0.5) @@max(2.5) ratio: double
@@ -118,6 +119,8 @@ class TestGeneratorTest {
                     .contains("void shouldRejectCountBelowMinimum()", "0L")
                     .contains("void shouldAcceptCountAtMaximum()", "9223372036854775807L")
                     .doesNotContain("void shouldRejectCountAboveMaximum()")
+                    .contains("void shouldAcceptBitsAtMinimum()", "void shouldAcceptBitsAtMaximum()")
+                    .contains("void shouldRejectBitsNotAMultiple()", "a value that is no multiple (9)")
                     .contains("void shouldAcceptBigAtMaximum()", "Long.parseUnsignedLong(\"18446744073709551615\")")
                     .doesNotContain("void shouldRejectBigBelowMinimum()")
                     .contains("void shouldRejectHugeAboveMaximum()")
@@ -153,6 +156,7 @@ class TestGeneratorTest {
             // GIVEN the generated code without range check, null check and copies
             List<GeneratedFile> files = generate(SPEC);
             files = mutate(files, "Limits", "small < (short) 0 || small > (short) 255", "false");
+            files = mutate(files, "Limits", "bits % 8 != 0", "false");
             files = mutate(files, "Limits", "tags = List.copyOf(tags);", "");
             files = mutate(files, "Limits", "data = data.clone();", "");
             files = mutate(files, "Limits", "memo.getBytes(StandardCharsets.UTF_8).length > 5", "memo.length() > 5");
@@ -162,7 +166,8 @@ class TestGeneratorTest {
 
             // THEN
             assertThat(run.failures()).containsOnlyKeys("LimitsTest.shouldRejectSmallBelowMinimum",
-                    "LimitsTest.shouldRejectSmallAboveMaximum", "LimitsTest.shouldCopyTagsIn",
+                    "LimitsTest.shouldRejectSmallAboveMaximum", "LimitsTest.shouldRejectBitsNotAMultiple",
+                    "LimitsTest.shouldCopyTagsIn",
                     "LimitsTest.shouldCopyDataIn", "LimitsTest.shouldRejectMemoAboveMaximumBytes");
         }
 

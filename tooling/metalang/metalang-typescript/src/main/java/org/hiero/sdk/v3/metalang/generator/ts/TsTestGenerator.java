@@ -641,6 +641,8 @@ public final class TsTestGenerator {
                     false));
             cases.add(new Case("a value above the maximum (" + above + ")", TsSamples.integerLiteral(builtin, above),
                     false));
+            Constraints.notMultiple(range, annotations).ifPresent(value -> cases.add(new Case(
+                    "a value that is no multiple (" + value + ")", TsSamples.integerLiteral(builtin, value), false)));
             if (!TsTypes.isBigInt(builtin) && range.max().compareTo(range.min()) > 0) {
                 final String fraction = new BigDecimal(range.min()).add(new BigDecimal("0.5")).toPlainString();
                 cases.add(new Case("a value that is no integer (" + fraction + ")", fraction, false));

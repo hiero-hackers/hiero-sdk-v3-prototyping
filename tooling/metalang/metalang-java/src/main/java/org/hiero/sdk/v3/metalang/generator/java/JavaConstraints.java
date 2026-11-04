@@ -72,6 +72,7 @@ final class JavaConstraints {
             final String condition = switch (annotation.name()) {
                 case "min" -> compare(field, name, annotation, "<", imports);
                 case "max" -> compare(field, name, annotation, ">", imports);
+                case "multipleOf" -> remainder(field, name, annotation, imports);
                 case "minLength" -> name + ".length() < " + number(annotation);
                 case "maxLength" -> name + ".length() > " + number(annotation);
                 case "maxBytes" -> name + ".getBytes(" + imports.use("java.nio.charset", "StandardCharsets")
@@ -131,6 +132,23 @@ final class JavaConstraints {
         throw new JavaTypes.UnsupportedTypeException("@@" + annotation.name() + " on " + field.type().text());
     }
 
+    private static String remainder(final FieldDefinition field, final String name, final Annotation annotation,
+                                    final Imports imports) {
+        if (field.type() instanceof Type.BasicType basic
+                && basic.builtin().category() == BuiltinType.Category.INTEGER) {
+            final String multiple = JavaIntegers.literal(basic.builtin(), ((Literal.NumberLiteral) annotation
+                    .arguments().getFirst()).value().toBigIntegerExact(), imports);
+            if (JavaIntegers.isUnsignedLong(basic.builtin())) {
+                return "Long.remainderUnsigned(" + name + ", " + multiple + ") != 0";
+            }
+            if (JavaTypes.javaBits(basic.builtin()) > 64) {
+                return name + ".mod(" + multiple + ").signum() != 0";
+            }
+            return name + " % " + multiple + " != 0";
+        }
+        throw new JavaTypes.UnsupportedTypeException("@@" + annotation.name() + " on " + field.type().text());
+    }
+
     private static String size(final FieldDefinition field, final String name) {
         if (field.type() instanceof Type.BasicType basic) {
             return switch (basic.builtin().category()) {
@@ -175,6 +193,7 @@ final class JavaConstraints {
         final String text = switch (annotation.name()) {
             case "min" -> field + " must be at least " + number(annotation);
             case "max" -> field + " must be at most " + number(annotation);
+            case "multipleOf" -> field + " must be a multiple of " + number(annotation);
             case "minLength" -> field + " must be at least " + number(annotation) + " characters long";
             case "maxLength" -> field + " must be at most " + number(annotation) + " characters long";
             case "maxBytes" -> field + " must be at most " + number(annotation) + " bytes long in UTF-8";

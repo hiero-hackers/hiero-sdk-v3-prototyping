@@ -21,6 +21,7 @@ public enum KnownAnnotation {
     DEFAULT("default", Arguments.ONE_LITERAL, ElementKind.FIELD),
     MIN("min", Arguments.ONE_NUMBER, ElementKind.FIELD, ElementKind.PARAMETER),
     MAX("max", Arguments.ONE_NUMBER, ElementKind.FIELD, ElementKind.PARAMETER),
+    MULTIPLE_OF("multipleOf", Arguments.ONE_POSITIVE_INTEGER, ElementKind.FIELD, ElementKind.PARAMETER),
     MIN_LENGTH("minLength", Arguments.ONE_NON_NEGATIVE_INTEGER, ElementKind.FIELD, ElementKind.PARAMETER),
     MAX_LENGTH("maxLength", Arguments.ONE_NON_NEGATIVE_INTEGER, ElementKind.FIELD, ElementKind.PARAMETER),
     MAX_BYTES("maxBytes", Arguments.ONE_NON_NEGATIVE_INTEGER, ElementKind.FIELD, ElementKind.PARAMETER),
@@ -81,6 +82,8 @@ public enum KnownAnnotation {
         ONE_NUMBER,
         /** Exactly one non-negative integer. */
         ONE_NON_NEGATIVE_INTEGER,
+        /** Exactly one positive integer. */
+        ONE_POSITIVE_INTEGER,
         /** Exactly one string. */
         ONE_STRING,
         /** One or more HIP numbers as strings, e.g. {@code @@hip("869", "1046")}. */

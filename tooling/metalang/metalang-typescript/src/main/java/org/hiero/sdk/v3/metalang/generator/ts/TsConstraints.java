@@ -60,6 +60,8 @@ final class TsConstraints {
                         field.name() + " must be at least " + number(annotation));
                 case "max" -> check(checks, compare(field.type(), value, annotation, ">", imports),
                         field.name() + " must be at most " + number(annotation));
+                case "multipleOf" -> check(checks, remainder(field.type(), value, annotation),
+                        field.name() + " must be a multiple of " + number(annotation));
                 case "minLength" -> check(checks, value + ".length < " + number(annotation),
                         field.name() + " must be at least " + number(annotation) + " characters long");
                 case "maxLength" -> check(checks, value + ".length > " + number(annotation),
@@ -208,6 +210,14 @@ final class TsConstraints {
                         + TsLiterals.number(bound, basic.builtin(), imports) + ".toMillis()";
                 default -> throw new IllegalArgumentException("@@" + annotation.name() + " on " + type.text());
             };
+        }
+        throw new IllegalArgumentException("@@" + annotation.name() + " on " + type.text());
+    }
+
+    private static String remainder(final Type type, final String value, final Annotation annotation) {
+        if (type instanceof Type.BasicType basic && basic.builtin().category() == BuiltinType.Category.INTEGER) {
+            return TsTypes.isBigInt(basic.builtin()) ? value + " % " + new BigInteger(number(annotation)) + "n !== 0n"
+                    : value + " % " + number(annotation) + " !== 0";
         }
         throw new IllegalArgumentException("@@" + annotation.name() + " on " + type.text());
     }

@@ -21,7 +21,8 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * The language-independent part of the test values of the generated tests: what the validation annotations of an
- * attribute or parameter allow ({@code @@min}/{@code @@max} with the range of the integer type, lengths, sizes,
+ * attribute or parameter allow ({@code @@min}/{@code @@max}/{@code @@multipleOf} with the range of the integer type,
+ * lengths, sizes,
  * patterns, URLs), the type arguments used for type parameters, and whether a default instance fits a required type.
  * The generators of the languages render the values in their syntax.
  */
@@ -62,7 +63,8 @@ public final class Constraints {
 
     /**
      * The values of an integer type with its {@code @@min}/{@code @@max}: the range of the type intersected with the
-     * annotations.
+     * annotations. With {@code @@multipleOf} both ends are the multiples closest to the bounds inside the range, so
+     * that the ends are accepted values and the values next to them are rejected.
      *
      * @param builtin     the integer type
      * @param annotations the annotations
@@ -80,7 +82,58 @@ public final class Constraints {
             range = range.intersect(new IntegerRange(range.min(), max.get()
                     .setScale(0, java.math.RoundingMode.FLOOR).toBigIntegerExact()));
         }
+        final Optional<BigInteger> multiple = multiple(annotations);
+        if (multiple.isPresent()) {
+            final BigInteger m = multiple.get();
+            final BigInteger first = floorDiv(range.min(), m)
+                    .add(range.min().mod(m).signum() == 0 ? BigInteger.ZERO : BigInteger.ONE).multiply(m);
+            range = new IntegerRange(first, floorDiv(range.max(), m).multiply(m));
+        }
         return range;
+    }
+
+    /**
+     * The argument of {@code @@multipleOf}.
+     *
+     * @param annotations the annotations
+     * @return the positive integer every value must be a multiple of; empty without the annotation
+     */
+    public static Optional<BigInteger> multiple(final List<Annotation> annotations) {
+        return bound(annotations, "multipleOf").filter(m -> m.signum() > 0)
+                .map(m -> m.setScale(0, java.math.RoundingMode.FLOOR).toBigInteger());
+    }
+
+    /**
+     * Moves a test value onto a multiple of {@code @@multipleOf}: the largest multiple not above it, or the smallest
+     * one of the range if that is below the range. Without the annotation the value is returned unchanged.
+     *
+     * @param value       the value
+     * @param range       the range of {@link #range(BuiltinType, List)}
+     * @param annotations the annotations
+     * @return the value
+     */
+    public static BigInteger multipleWithin(final BigInteger value, final IntegerRange range,
+                                            final List<Annotation> annotations) {
+        return multiple(annotations).map(m -> floorDiv(value, m).multiply(m).max(range.min()).min(range.max()))
+                .orElse(value);
+    }
+
+    /**
+     * A value inside the bounds that is no multiple of {@code @@multipleOf}, for a test that expects it to be rejected.
+     *
+     * @param range       the range of {@link #range(BuiltinType, List)}
+     * @param annotations the annotations
+     * @return the value after the smallest multiple; empty without the annotation, for {@code @@multipleOf(1)} and if
+     *         the range holds no such value
+     */
+    public static Optional<BigInteger> notMultiple(final IntegerRange range, final List<Annotation> annotations) {
+        return multiple(annotations).filter(m -> m.compareTo(BigInteger.ONE) > 0)
+                .map(m -> range.min().add(BigInteger.ONE)).filter(v -> v.compareTo(range.max()) <= 0);
+    }
+
+    private static BigInteger floorDiv(final BigInteger value, final BigInteger divisor) {
+        final BigInteger[] qr = value.divideAndRemainder(divisor);
+        return qr[1].signum() < 0 ? qr[0].subtract(BigInteger.ONE) : qr[0];
     }
 
     public static Optional<BigDecimal> decimal(final List<Annotation> annotations, final int variant) {

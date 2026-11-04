@@ -184,6 +184,12 @@ final class LiteralTypes {
                     ? Optional.of(BigDecimal.valueOf(l.items().size())) : Optional.empty();
             default -> Optional.empty();
         };
+        if (annotation.name().equals("multipleOf") && bound.isPresent()
+                && literal instanceof Literal.NumberLiteral number && bound.get().signum() > 0
+                && number.value().remainder(bound.get()).signum() != 0) {
+            return Optional.of("Value " + literal.text() + " violates @@multipleOf(" + bound.get().toPlainString()
+                    + ")");
+        }
         if (bound.isPresent() && actual.isPresent()) {
             final boolean lower = annotation.name().startsWith("min");
             final int comparison = actual.get().compareTo(bound.get());

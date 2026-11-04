@@ -218,6 +218,7 @@ final class JavaSamples {
         if (!range.contains(value)) {
             value = range.min();
         }
+        value = Constraints.multipleWithin(value, range, annotations);
         return Optional.of(JavaIntegers.literal(builtin, value, imports));
     }
 

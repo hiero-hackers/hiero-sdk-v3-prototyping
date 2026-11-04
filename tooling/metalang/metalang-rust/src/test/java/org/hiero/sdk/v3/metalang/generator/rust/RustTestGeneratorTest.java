@@ -31,6 +31,7 @@ class RustTestGeneratorTest {
             Limits {
                 @@immutable small: int24
                 @@immutable @@min(1) count: int64
+                @@immutable @@min(8) @@max(256) @@multipleOf(8) bits: uint16
                 @@immutable @@min(0.5) @@max(2.5) ratio: double
                 @@immutable @@max(30) delay: duration
                 @@immutable @@minLength(2) @@maxLength(5) code: string
@@ -94,6 +95,7 @@ class RustTestGeneratorTest {
                 .contains("fn small_rejects_a_value_above_the_maximum_8388608() {")
                 .contains("fn count_rejects_a_value_below_the_minimum_0() {")
                 .contains("fn count_accepts_the_maximum_9223372036854775807() {")
+                .contains("fn bits_accepts_the_maximum_256() {", "fn bits_rejects_a_value_that_is_no_multiple_9() {")
                 .contains("fn ratio_rejects_a_value_below_the_minimum() {", "0.49999999999999994")
                 .contains("std::time::Duration::from_millis(31)")
                 .contains("fn code_accepts_a_value_with_the_minimum_length() {")
@@ -139,6 +141,7 @@ class RustTestGeneratorTest {
         files = mutate(files, "limits.rs", "if !(-8388608..=8388607).contains(&small) {", "if false {");
         files = mutate(files, "limits.rs", "if code.chars().count() > 5 {", "if false {");
         files = mutate(files, "limits.rs", "if quantity > 9 {", "if false {");
+        files = mutate(files, "limits.rs", "if bits % 8 != 0 {", "if false {");
         files = mutate(files, "limits.rs", "if memo.len() > 5 {", "if memo.chars().count() > 5 {");
 
         // WHEN
@@ -147,7 +150,8 @@ class RustTestGeneratorTest {
 
         // THEN the mutations are found, all other tests pass or fail because of the stubs
         assertThat(build).isEmpty();
-        assertThat(run.failures()).hasSize(6)
+        assertThat(run.failures()).hasSize(7)
+                .anyMatch(f -> f.startsWith("a::limits::bits_rejects_a_value_that_is_no_multiple_9 "))
                 .anyMatch(f -> f.startsWith("a::limits::memo_rejects_a_value_of_more_than_the_maximum_number_of_utf"))
                 .anyMatch(f -> f.startsWith("a::limits::small_rejects_a_value_above_the_maximum_8388608 "))
                 .anyMatch(f -> f.startsWith("a::limits::small_rejects_a_value_below_the_minimum_8388609 "))

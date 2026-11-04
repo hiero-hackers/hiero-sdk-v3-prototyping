@@ -20,8 +20,8 @@ Examples of good defensive practices:
   explicit locks. The overhead is minimal for collections that are read far more often than written.
 - **Immutable return values** — Return unmodifiable views or copies of internal collections to prevent callers from
   accidentally modifying SDK state.
-- **Validation of constraints** — Enforce `@@min`, `@@max`, `@@minLength`, `@@maxLength`, `@@maxBytes`, `@@minSize`, `@@maxSize`,
-  `@@pattern`, and `@@urlPattern` annotations in constructors and setters to catch invalid data early.
+- **Validation of constraints** — Enforce `@@min`, `@@max`, `@@multipleOf`, `@@minLength`, `@@maxLength`, `@@maxBytes`,
+  `@@minSize`, `@@maxSize`, `@@pattern`, and `@@urlPattern` annotations in constructors and setters to catch invalid data early.
 
 Defensive implementation does **not** mean:
 
@@ -163,6 +163,10 @@ if (Long.compareUnsigned(count, 5L) > 0) {
     throw new IllegalArgumentException("count must be at most 5");
 }
 ```
+
+`@@multipleOf(n)` is checked with the remainder: `value % n != 0` for a primitive, `Long.remainderUnsigned(value, n)`
+for a `uint64` and `value.mod(n).signum() != 0` for a `BigInteger`; the message is `"<name> must be a multiple of
+<n>"`.
 
 ### Function Types
 
@@ -1616,7 +1620,7 @@ public class Example {
 }
 ```
 
-The `@@min(value)`, `@@max(value)`, `@@minLength(value)`, `@@maxLength(value)`, `@@maxBytes(value)`, `@@minSize(value)`,
+The `@@min(value)`, `@@max(value)`, `@@multipleOf(value)`, `@@minLength(value)`, `@@maxLength(value)`, `@@maxBytes(value)`, `@@minSize(value)`,
 `@@maxSize(value)`, `@@pattern(regex)`, and `@@urlPattern` annotations are all handled in the same way
 (`@@minSize`/`@@maxSize` check `size()` of a collection or `length` of a `byte[]`, `@@maxBytes` checks
 `value.getBytes(StandardCharsets.UTF_8).length`): Checks based on the value must be added to the constructor and setter

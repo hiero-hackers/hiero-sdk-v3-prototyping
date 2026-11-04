@@ -526,6 +526,10 @@ The following annotations should be used:
   the SDK level.
 - `@@max(value)`: Indicates the maximum value for numeric fields. Should be included if the value must be enforced at
   the SDK level.
+- `@@multipleOf(value)`: Indicates that the value of an integer field must be a multiple of `value`, a positive integer
+  (e.g. `@@min(8) @@max(256) @@multipleOf(8) bits: uint16` for the widths 8, 16, …, 256). Only allowed on integer
+  types. Together with `@@min` and `@@max` at least one multiple must lie between the bounds
+  (`annotation.contradictory-bounds`). Should be included if the value must be enforced at the SDK level.
 - `@@minLength(value)`: Indicates the minimum length for string fields. Should be included if the value must be enforced
   at the SDK level. Only allowed on `string`; use `@@minSize` for collections and `bytes`.
 - `@@maxLength(value)`: Indicates the maximum length for string fields. Should be included if the value must be enforced
@@ -552,8 +556,8 @@ The following annotations should be used:
   annotation by delegating to its native parser rather than by matching a pattern. Should be included if the value must
   be enforced at the SDK level.
 
-A value that violates one of these validation annotations (`@@min`, `@@max`, `@@minLength`, `@@maxLength`, `@@maxBytes`,
-`@@minSize`, `@@maxSize`, `@@pattern`, `@@urlPattern`) is rejected with the standard error `invalid-argument-error`, without a
+A value that violates one of these validation annotations (`@@min`, `@@max`, `@@multipleOf`, `@@minLength`,
+`@@maxLength`, `@@maxBytes`, `@@minSize`, `@@maxSize`, `@@pattern`, `@@urlPattern`) is rejected with the standard error `invalid-argument-error`, without a
 `@@throws` for it: when a value of the type is created, and when a parameter with such an annotation is passed. The
 same holds for a `@@oneOf` or `@@oneOrNoneOf` group of immutable attributes. Each language maps the error once (Java
 `IllegalArgumentException`, TypeScript `RangeError`, Rust `InvalidArgumentError`), so a test can expect it

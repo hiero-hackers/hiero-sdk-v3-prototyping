@@ -444,7 +444,7 @@ First increment of the Java mapping (`generator/java`, rules from `guidelines/ap
   extend classes; the other complex types become classes. Types without attributes never become records. Generated:
   - components = effective attributes (inherited first), documented with `@param`;
   - a compact constructor with `Objects.requireNonNull` for non-nullable references, `List/Set/Map.copyOf` for
-    collections, `clone()` for `bytes`, and the checks of `@@min`/`@@max`/`@@minLength`/`@@maxLength`/`@@maxBytes`/`@@minSize`/
+    collections, `clone()` for `bytes`, and the checks of `@@min`/`@@max`/`@@multipleOf`/`@@minLength`/`@@maxLength`/`@@maxBytes`/`@@minSize`/
     `@@maxSize`/`@@pattern` (Java regex, `find` semantics like the validator)/`@@urlPattern` (`java.net.URI`, absolute
     with host) throwing `IllegalArgumentException`;
   - a second constructor without the `@@default` attributes;
@@ -708,7 +708,7 @@ ADR-0012):
 | Area | What the tests check |
 |---|---|
 | Constructors | Valid values create an object whose accessors return them; the constructor without the `@@default` attributes sets the defaults; `null` for a non-nullable value throws `NullPointerException`. |
-| Validation | For every validation annotation the boundary values are accepted and the values just outside rejected with `IllegalArgumentException`: `@@min`/`@@max` (with `Math.nextDown`/`nextUp` for `double`, `minusNanos(1)` for durations), the range of the integer type (`int8`…`int256`, `uint8`…`uint256`; boundaries only where the Java type can hold them), `@@minLength`/`@@maxLength`, `@@maxBytes` (a string of two-byte characters, so that counting characters instead of bytes accepts the rejected value), `@@minSize`/`@@maxSize`, `@@pattern` (a string the pattern rejects), `@@urlPattern`. |
+| Validation | For every validation annotation the boundary values are accepted and the values just outside rejected with `IllegalArgumentException`: `@@min`/`@@max` (with `Math.nextDown`/`nextUp` for `double`, `minusNanos(1)` for durations), `@@multipleOf` (the smallest and largest multiple within the bounds are accepted, the value after the smallest multiple is rejected), the range of the integer type (`int8`…`int256`, `uint8`…`uint256`; boundaries only where the Java type can hold them), `@@minLength`/`@@maxLength`, `@@maxBytes` (a string of two-byte characters, so that counting characters instead of bytes accepts the rejected value), `@@minSize`/`@@maxSize`, `@@pattern` (a string the pattern rejects), `@@urlPattern`. |
 | Copies | A collection or `bytes` value passed to a constructor or setter is copied (changing it afterwards does not change the object); returned collections are unmodifiable, returned arrays are copies. |
 | Setters | Return the object, change the value, accept (`@@nullable`) or reject `null`, check the validation annotations and keep the old value when they reject one; the initial value of attributes the constructor does not take. |
 | Value semantics | Records and immutable classes whose attributes compare by value: equal values give equal objects and hash codes. |
@@ -885,6 +885,8 @@ validator):
 - `@@minSize`/`@@maxSize` constrain `list`, `set`, `map`, `bytes` and varargs; `@@minLength`/`@@maxLength` (characters)
   and `@@maxBytes` (UTF-8 bytes) are for `string` only. Wrong usage is reported as `annotation.value-type` with a hint
   to the matching annotation.
+- `@@multipleOf(n)` takes a positive integer and constrains integer types only (`annotation.value-type` otherwise);
+  with `@@min` and `@@max`, a range without any multiple is reported as `annotation.contradictory-bounds`.
 
 Writing the Go generator corrected four decisions in `guidelines/api-best-practices-go.md`, each forced by the Go
 compiler rather than by taste:

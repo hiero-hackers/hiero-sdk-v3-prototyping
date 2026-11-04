@@ -420,6 +420,7 @@ must keep the identical reference type (`Long`) and only the nullability annotat
 | *(integer type)* | range of the type, plus `Number.isInteger` for a `number` | `RangeError` |
 | `@@default(v)` | the property becomes optional; `init.x === undefined ? v : init.x` | — |
 | `@@min(n)` / `@@max(n)` | `value < n` / `value > n` | `RangeError` |
+| `@@multipleOf(n)` | `value % n !== 0` (`value % nn !== 0n` for a `bigint`) | `RangeError` |
 | `@@minLength(n)` / `@@maxLength(n)` | `value.length < n` / `> n` (strings) | `RangeError` |
 | `@@maxBytes(n)` | `utf8Length(value) > n`: the length of the UTF-8 encoding, counted by a helper added to the file (no `TextEncoder`, which not every TypeScript library configuration declares) | `RangeError` |
 | `@@minSize(n)` / `@@maxSize(n)` | the size of a list, set, map or `Uint8Array` | `RangeError` |

@@ -152,6 +152,9 @@ final class AnnotationCheck implements Check {
                     ? null : "takes exactly one number";
             case ONE_NON_NEGATIVE_INTEGER -> args.size() == 1 && args.getFirst() instanceof Literal.NumberLiteral n
                     && INTEGER.matcher(n.text()).matches() ? null : "takes exactly one non-negative integer";
+            case ONE_POSITIVE_INTEGER -> args.size() == 1 && args.getFirst() instanceof Literal.NumberLiteral n
+                    && INTEGER.matcher(n.text()).matches() && n.value().signum() > 0
+                    ? null : "takes exactly one positive integer";
             case ONE_STRING -> args.size() == 1 && args.getFirst() instanceof Literal.StringLiteral s
                     ? regexProblem(s.value()) : "takes exactly one string";
             case HIP_NUMBERS -> !args.isEmpty() && args.stream().allMatch(a -> a instanceof Literal.StringLiteral s
@@ -201,6 +204,20 @@ final class AnnotationCheck implements Check {
                         element.annotation(pair.get(0)).orElseThrow().location());
             }
         }
+        // @@multipleOf with bounds: at least one multiple must lie between them
+        final Optional<BigDecimal> multiple = numericArgument(element, "multipleOf").filter(m -> m.signum() > 0);
+        final Optional<BigDecimal> min = numericArgument(element, "min");
+        final Optional<BigDecimal> max = numericArgument(element, "max");
+        if (multiple.isPresent() && min.isPresent() && max.isPresent() && min.get().compareTo(max.get()) <= 0) {
+            final BigDecimal first = min.get().divide(multiple.get(), 0, java.math.RoundingMode.CEILING)
+                    .multiply(multiple.get());
+            if (first.compareTo(max.get()) > 0) {
+                out.report(Rule.ANNOTATION_CONTRADICTORY_BOUNDS, "no multiple of "
+                        + multiple.get().toPlainString() + " lies between @@min(" + min.get().toPlainString()
+                        + ") and @@max(" + max.get().toPlainString() + ")",
+                        element.annotation("multipleOf").orElseThrow().location());
+            }
+        }
     }
 
     private static Optional<BigDecimal> numericArgument(final Annotated element, final String annotation) {
@@ -219,6 +236,12 @@ final class AnnotationCheck implements Check {
                     if (builtin == null || !(builtin.isNumeric() || builtin.category() == BuiltinType.Category.DURATION)) {
                         out.report(Rule.ANNOTATION_VALUE_TYPE, "@@" + annotation.name()
                                 + " requires a numeric type, not '" + type.text() + "'", annotation.location());
+                    }
+                }
+                case "multipleOf" -> {
+                    if (builtin == null || builtin.category() != BuiltinType.Category.INTEGER) {
+                        out.report(Rule.ANNOTATION_VALUE_TYPE, "@@multipleOf requires an integer type, not '"
+                                + type.text() + "'", annotation.location());
                     }
                 }
                 case "minLength", "maxLength" -> {

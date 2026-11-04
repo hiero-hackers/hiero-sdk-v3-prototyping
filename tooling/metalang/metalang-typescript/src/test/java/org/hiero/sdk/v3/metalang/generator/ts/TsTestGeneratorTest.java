@@ -31,6 +31,8 @@ class TsTestGeneratorTest {
             Limits {
                 @@immutable small: uint8
                 @@immutable @@min(1) count: int64
+                @@immutable @@min(8) @@max(256) @@multipleOf(8) bits: uint16
+                @@immutable @@multipleOf(4) words: int64
                 @@immutable big: uint64
                 @@immutable @@min(0.5) @@max(2.5) ratio: double
                 @@immutable @@max(30) delay: duration
@@ -97,6 +99,11 @@ class TsTestGeneratorTest {
                 .contains("test(\"small: rejects a value above the maximum (256)\"")
                 .contains("test(\"small: rejects a value that is no integer (0.5)\"")
                 .contains("test(\"count: rejects a value below the minimum (0)\"", "0n")
+                .contains("test(\"bits: accepts the maximum (256)\"", "test(\"bits: rejects a value that is no multiple (9)\"")
+                .contains("test(\"words: rejects a value that is no multiple (-9223372036854775807)\"");
+        assertThat(TsGeneratorTest.file(files, "/a/Limits.ts")).contains("if (bits % 8 !== 0) {")
+                .contains("if (words % 4n !== 0n) {");
+        assertThat(test)
                 .contains("test(\"big: accepts the maximum (18446744073709551615)\"", "18446744073709551615n")
                 .contains("test(\"big: rejects a value above the maximum (18446744073709551616)\"")
                 .contains("test(\"ratio: rejects a value below the minimum\"", "0.49999999999999994")
@@ -140,6 +147,7 @@ class TsTestGeneratorTest {
         // GIVEN the generated code without range check, copy and setter check
         List<GeneratedFile> files = generate();
         files = mutate(files, "Limits.ts", "small < 0 || small > 255", "small < 0");
+        files = mutate(files, "Limits.ts", "bits % 8 !== 0", "false");
         files = mutate(files, "Limits.ts", "this.#tags = Object.freeze([...tags]);", "this.#tags = tags;");
         files = mutate(files, "Limits.ts", "this.#data = data.slice();", "this.#data = data;");
         files = mutate(files, "Limits.ts", "utf8Length(memo) > 5", "utf8Length(memo) > 5 && memo.length > 5");
@@ -150,7 +158,8 @@ class TsTestGeneratorTest {
 
         // THEN the mutations are found, all other tests pass or fail because of the stubs
         assertThat(build).isEmpty();
-        assertThat(run.failures()).hasSize(4)
+        assertThat(run.failures()).hasSize(5)
+                .anyMatch(f -> f.startsWith("bits: rejects a value that is no multiple (9) "))
                 .anyMatch(f -> f.startsWith("memo: rejects a value of more than the maximum number of UTF-8 bytes "))
                 .anyMatch(f -> f.startsWith("small: rejects a value above the maximum (256) "))
                 .anyMatch(f -> f.startsWith("the constructor copies tags; the property is frozen "))

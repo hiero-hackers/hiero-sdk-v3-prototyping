@@ -176,7 +176,7 @@ final class TsSamples {
         if (!range.contains(value)) {
             value = range.min();
         }
-        return Optional.of(integerLiteral(builtin, value));
+        return Optional.of(integerLiteral(builtin, Constraints.multipleWithin(value, range, annotations)));
     }
 
     /**
