@@ -1,0 +1,33 @@
+{
+  "name": "@hiero-ledger/sdk-base-api",
+  "version": "0.0.0",
+  "description": "Public base API contracts of the Hiero SDK V3 for TypeScript.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:consumer": "tsc -p test/consumer/tsconfig.json --noEmit",
+    "verify": "npm run typecheck && npm run build && npm run test && npm run test:consumer"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}
