@@ -1,0 +1,8 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": []
+  },
+  "include": ["consumer.ts", "native-token-consumer.ts", "network-consumer.ts", "address-consumer.ts"]
+}

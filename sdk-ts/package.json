@@ -1,0 +1,19 @@
+{
+  "name": "hiero-sdk-ts",
+  "private": true,
+  "description": "Workspace root for the Hiero SDK V3 TypeScript prototype.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "hiero-sdk-base-api"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces",
+    "verify": "npm run verify --workspaces"
+  }
+}
