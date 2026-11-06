@@ -1,30 +1,59 @@
 package org.hiero.enterprise.service.contract;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import org.hiero.evm.AbiValue;
+import org.jspecify.annotations.Nullable;
 
-/// The values a contract function returned; created by the SDK from the result of a call.
-public abstract class ContractCallResult {
-
-    private final short size;
+/// The result of a call of a function without a transaction.
+///
+/// @param values the returned values, decoded with the result types of the function
+/// @param result the returned data, ABI-encoded
+public record ContractCallResult(List<AbiValue> values, byte[] result) {
 
     /// Creates a new `ContractCallResult`.
     ///
-    /// @throws IllegalArgumentException if a value violates its constraints
-    protected ContractCallResult(final short size) {
-        if (size < (short) 0 || size > (short) 255) {
-            throw new IllegalArgumentException("size must be between 0 and 255");
-        }
-        this.size = size;
+    /// @throws NullPointerException if a required value is `null`
+    public ContractCallResult {
+        Objects.requireNonNull(values, "values must not be null");
+        values = List.copyOf(values);
+        Objects.requireNonNull(result, "result must not be null");
+        result = result.clone();
     }
 
-    /// Returns the `size`.
-    public short size() {
-        return size;
+    /// Creates a new `ContractCallResult` with the default value of `values`.
+    public ContractCallResult(final byte[] result) {
+        this(List.of(), result);
     }
 
-    /// Runtime type of the result value at `index`; use it to check the value returned by get(index).
-    public abstract Class<?> getType(final short index);
+    /// the returned data, ABI-encoded
+    ///
+    /// Returns a copy of the `result` array.
+    @Override
+    public byte[] result() {
+        return result.clone();
+    }
 
-    /// Returns the result value at `index`. Its type depends on the called Solidity function and is only known at
-    /// runtime; check it with getType(index) before using the value.
-    public abstract Object get(final short index);
+    /// Compares `result` by content: the implicit `equals` of a record compares
+    /// an array by reference, so two instances with the same values would never be equal (each holds its
+    /// own copy of the array).
+    @Override
+    public boolean equals(final @Nullable Object obj) {
+        return obj instanceof ContractCallResult other
+            && Objects.equals(values, other.values)
+            && Arrays.equals(result, other.result);
+    }
+
+    /// Hashes `result` by content, consistent with [#equals(Object)].
+    @Override
+    public int hashCode() {
+        return Objects.hash(values, Arrays.hashCode(result));
+    }
+
+    /// Shows only the length of `result` instead of the identity of the array object.
+    @Override
+    public String toString() {
+        return "ContractCallResult[values=" + values + ", result=" + "byte[" + result.length + "]" + "]";
+    }
 }

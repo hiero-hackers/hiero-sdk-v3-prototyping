@@ -9,27 +9,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.hiero.authority.Authority;
-import org.hiero.authority.AuthorityFactory;
 import org.hiero.authority.PublicKeyAuthority;
-import org.hiero.consensusnode.client.ClientFactory;
-import org.hiero.consensusnode.transactions.spi.SpiFactory;
-import org.hiero.enterprise.service.ServiceFactory;
-import org.hiero.enterprise.service.account.AccountFactory;
-import org.hiero.enterprise.service.file.FileFactory;
-import org.hiero.enterprise.service.nft.NftFactory;
-import org.hiero.enterprise.service.token.TokenFactory;
-import org.hiero.enterprise.service.topic.TopicFactory;
+import org.hiero.evm.AbiUint;
+import org.hiero.evm.AbiValue;
 import org.hiero.hedera.Hbar;
 import org.hiero.hedera.HbarUnit;
-import org.hiero.http.HttpFactory;
 import org.hiero.keys.ByteImportEncoding;
 import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.AccountId;
-import org.hiero.ledger.config.ConfigFactory;
-import org.hiero.mirrornode.MirrornodeFactory;
-import org.hiero.mirrornode.network.NetworkFactory;
-import org.hiero.mirrornode.transaction.TransactionFactory;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
@@ -44,7 +32,7 @@ class ContractCreateParamsTest {
     @DisplayName("creates a ContractCreateParams and returns the values")
     @Tag("testId:enterprise.service.contract.ContractCreateParams/create")
     void shouldCreateAndReturnTheValues() {
-        final List<Param<?, ?>> constructorParams = constructorParamsValue();
+        final List<AbiValue> constructorArguments = constructorArgumentsValue();
         final @Nullable Long gas = gasValue();
         final @Nullable NativeToken<?, ?> initialBalance = initialBalanceValue();
         final @Nullable Authority adminAuthority = adminAuthorityValue();
@@ -52,8 +40,8 @@ class ContractCreateParamsTest {
         final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
         final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
         final @Nullable Integer maxAutomaticTokenAssociations = maxAutomaticTokenAssociationsValue();
-        final ContractCreateParams subject = new ContractCreateParams(constructorParams, gas, initialBalance, adminAuthority, contractMemo, autoRenewPeriod, autoRenewAccount, maxAutomaticTokenAssociations);
-        assertValue(constructorParams, subject.constructorParams());
+        final ContractCreateParams subject = new ContractCreateParams(constructorArguments, gas, initialBalance, adminAuthority, contractMemo, autoRenewPeriod, autoRenewAccount, maxAutomaticTokenAssociations);
+        assertValue(constructorArguments, subject.constructorArguments());
         assertValue(gas, subject.gas());
         assertValue(initialBalance, subject.initialBalance());
         assertValue(adminAuthority, subject.adminAuthority());
@@ -68,14 +56,14 @@ class ContractCreateParamsTest {
     @Tag("testId:enterprise.service.contract.ContractCreateParams/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final ContractCreateParams subject = new ContractCreateParams(gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue());
-        assertValue(List.of(), subject.constructorParams());
+        assertValue(List.of(), subject.constructorArguments());
     }
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
     @Tag("testId:enterprise.service.contract.ContractCreateParams/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
-        final List<Param<?, ?>> constructorParams = constructorParamsValue();
+        final List<AbiValue> constructorArguments = constructorArgumentsValue();
         final @Nullable Long gas = gasValue();
         final @Nullable NativeToken<?, ?> initialBalance = initialBalanceValue();
         final @Nullable Authority adminAuthority = adminAuthorityValue();
@@ -84,7 +72,7 @@ class ContractCreateParamsTest {
         final @Nullable AccountId autoRenewAccount = autoRenewAccountValue();
         final @Nullable Integer maxAutomaticTokenAssociations = maxAutomaticTokenAssociationsValue();
         final ContractCreateParams subject = ContractCreateParams.builder()
-                .constructorParams(constructorParams)
+                .constructorArguments(constructorArguments)
                 .gas(gas)
                 .initialBalance(initialBalance)
                 .adminAuthority(adminAuthority)
@@ -93,7 +81,7 @@ class ContractCreateParamsTest {
                 .autoRenewAccount(autoRenewAccount)
                 .maxAutomaticTokenAssociations(maxAutomaticTokenAssociations)
                 .build();
-        assertValue(constructorParams, subject.constructorParams());
+        assertValue(constructorArguments, subject.constructorArguments());
         assertValue(gas, subject.gas());
         assertValue(initialBalance, subject.initialBalance());
         assertValue(adminAuthority, subject.adminAuthority());
@@ -109,7 +97,7 @@ class ContractCreateParamsTest {
     void shouldBuildWithoutTheOptionalValues() {
         final ContractCreateParams subject = ContractCreateParams.builder()
                 .build();
-        assertValue(List.of(), subject.constructorParams());
+        assertValue(List.of(), subject.constructorArguments());
         assertNull(subject.gas());
         assertNull(subject.initialBalance());
         assertNull(subject.adminAuthority());
@@ -120,22 +108,22 @@ class ContractCreateParamsTest {
     }
 
     @Test
-    @DisplayName("rejects null for constructorParams")
-    @Tag("testId:enterprise.service.contract.ContractCreateParams/constructorParams/rejects-null")
-    void shouldRejectNullConstructorParams() {
-        assertThrows(NullPointerException.class, () -> new ContractCreateParams((List<Param<?, ?>>) null, gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue()));
+    @DisplayName("rejects null for constructorArguments")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/constructorArguments/rejects-null")
+    void shouldRejectNullConstructorArguments() {
+        assertThrows(NullPointerException.class, () -> new ContractCreateParams((List<AbiValue>) null, gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue()));
     }
 
     @Test
-    @DisplayName("the constructor copies constructorParams; the accessor returns an unmodifiable collection")
-    @Tag("testId:enterprise.service.contract.ContractCreateParams/constructorParams/copies-in")
-    void shouldCopyConstructorParamsIn() {
-        final List<Param<?, ?>> value = new ArrayList<>(constructorParamsValue());
-        final List<Param<?, ?>> expected = List.copyOf(value);
+    @DisplayName("the constructor copies constructorArguments; the accessor returns an unmodifiable collection")
+    @Tag("testId:enterprise.service.contract.ContractCreateParams/constructorArguments/copies-in")
+    void shouldCopyConstructorArgumentsIn() {
+        final List<AbiValue> value = new ArrayList<>(constructorArgumentsValue());
+        final List<AbiValue> expected = List.copyOf(value);
         final ContractCreateParams subject = new ContractCreateParams(value, gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue());
         value.clear();
-        assertValue(expected, subject.constructorParams());
-        assertThrows(UnsupportedOperationException.class, () -> Objects.requireNonNull(subject.constructorParams()).clear());
+        assertValue(expected, subject.constructorArguments());
+        assertThrows(UnsupportedOperationException.class, () -> Objects.requireNonNull(subject.constructorArguments()).clear());
     }
 
     @Test
@@ -143,7 +131,7 @@ class ContractCreateParamsTest {
     @Tag("testId:enterprise.service.contract.ContractCreateParams/gas/accepts-at-minimum")
     void shouldAcceptGasAtMinimum() {
         final @Nullable Long value = 1L;
-        final ContractCreateParams subject = new ContractCreateParams(constructorParamsValue(), value, initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue());
+        final ContractCreateParams subject = new ContractCreateParams(constructorArgumentsValue(), value, initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue());
         assertValue(value, subject.gas());
     }
 
@@ -152,7 +140,7 @@ class ContractCreateParamsTest {
     @Tag("testId:enterprise.service.contract.ContractCreateParams/gas/accepts-at-maximum")
     void shouldAcceptGasAtMaximum() {
         final @Nullable Long value = 9223372036854775807L;
-        final ContractCreateParams subject = new ContractCreateParams(constructorParamsValue(), value, initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue());
+        final ContractCreateParams subject = new ContractCreateParams(constructorArgumentsValue(), value, initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue());
         assertValue(value, subject.gas());
     }
 
@@ -160,7 +148,7 @@ class ContractCreateParamsTest {
     @DisplayName("gas: rejects a value below the minimum (0)")
     @Tag("testId:enterprise.service.contract.ContractCreateParams/gas/rejects-below-minimum")
     void shouldRejectGasBelowMinimum() {
-        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(constructorParamsValue(), 0L, initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue()));
+        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(constructorArgumentsValue(), 0L, initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue()));
     }
 
     @Test
@@ -168,7 +156,7 @@ class ContractCreateParamsTest {
     @Tag("testId:enterprise.service.contract.ContractCreateParams/contractMemo/accepts-at-maximum-bytes")
     void shouldAcceptContractMemoAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
-        final ContractCreateParams subject = new ContractCreateParams(constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), value, autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue());
+        final ContractCreateParams subject = new ContractCreateParams(constructorArgumentsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), value, autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue());
         assertValue(value, subject.contractMemo());
     }
 
@@ -176,7 +164,7 @@ class ContractCreateParamsTest {
     @DisplayName("contractMemo: rejects more elements than the maximum")
     @Tag("testId:enterprise.service.contract.ContractCreateParams/contractMemo/rejects-above-maximum-bytes")
     void shouldRejectContractMemoAboveMaximumBytes() {
-        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue()));
+        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(constructorArgumentsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue()));
     }
 
     @Test
@@ -184,7 +172,7 @@ class ContractCreateParamsTest {
     @Tag("testId:enterprise.service.contract.ContractCreateParams/maxAutomaticTokenAssociations/accepts-at-minimum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
-        final ContractCreateParams subject = new ContractCreateParams(constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), value);
+        final ContractCreateParams subject = new ContractCreateParams(constructorArgumentsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), value);
         assertValue(value, subject.maxAutomaticTokenAssociations());
     }
 
@@ -193,12 +181,12 @@ class ContractCreateParamsTest {
     @Tag("testId:enterprise.service.contract.ContractCreateParams/maxAutomaticTokenAssociations/accepts-at-maximum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMaximum() {
         final @Nullable Integer value = 2147483647;
-        final ContractCreateParams subject = new ContractCreateParams(constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), value);
+        final ContractCreateParams subject = new ContractCreateParams(constructorArgumentsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), value);
         assertValue(value, subject.maxAutomaticTokenAssociations());
     }
 
-    private static List<Param<?, ?>> constructorParamsValue() {
-        return List.of(ContractFactory.int256(new BigInteger("1")));
+    private static List<AbiValue> constructorArgumentsValue() {
+        return List.of(new AbiUint(new BigInteger("1"), 256));
     }
 
     private static long gasValue() {
@@ -230,7 +218,7 @@ class ContractCreateParamsTest {
     }
 
     private static ContractCreateParams create() {
-        return new ContractCreateParams(constructorParamsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue());
+        return new ContractCreateParams(constructorArgumentsValue(), gasValue(), initialBalanceValue(), adminAuthorityValue(), contractMemoValue(), autoRenewPeriodValue(), autoRenewAccountValue(), maxAutomaticTokenAssociationsValue());
     }
 
     private static ContractCreateParams defaultSubject() {

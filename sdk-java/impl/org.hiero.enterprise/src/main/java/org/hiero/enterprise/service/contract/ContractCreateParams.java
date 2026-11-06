@@ -5,20 +5,21 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import org.hiero.authority.Authority;
+import org.hiero.evm.AbiValue;
 import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 
 /// The options of a new smart contract. Where its bytecode comes from is chosen by the method that creates it.
 ///
-/// @param constructorParams The parameters of the constructor, in order.
+/// @param constructorArguments The arguments of the constructor, in order.
 /// @param gas The gas for running the constructor; a default of the service if absent.
 /// @param initialBalance Amount transferred from the payer to the new contract.
 /// @param adminAuthority Allows to update and delete the contract; without it the contract cannot be changed.
 /// @param autoRenewPeriod The renewal period applied when the expiration approaches; the network default if absent.
 /// @param autoRenewAccount The account that pays for the renewal.
 public record ContractCreateParams(
-        List<Param<?, ?>> constructorParams,
+        List<AbiValue> constructorArguments,
         @Nullable Long gas,
         @Nullable NativeToken<?, ?> initialBalance,
         @Nullable Authority adminAuthority,
@@ -32,8 +33,8 @@ public record ContractCreateParams(
     /// @throws NullPointerException if a required value is `null`
     /// @throws IllegalArgumentException if a value violates its constraints
     public ContractCreateParams {
-        Objects.requireNonNull(constructorParams, "constructorParams must not be null");
-        constructorParams = List.copyOf(constructorParams);
+        Objects.requireNonNull(constructorArguments, "constructorArguments must not be null");
+        constructorArguments = List.copyOf(constructorArguments);
         if (gas != null && gas < 1L) {
             throw new IllegalArgumentException("gas must be at least 1");
         }
@@ -42,7 +43,7 @@ public record ContractCreateParams(
         }
     }
 
-    /// Creates a new `ContractCreateParams` with the default value of `constructorParams`.
+    /// Creates a new `ContractCreateParams` with the default value of `constructorArguments`.
     public ContractCreateParams(
             final @Nullable Long gas,
             final @Nullable NativeToken<?, ?> initialBalance,
@@ -68,7 +69,7 @@ public record ContractCreateParams(
     /// A value that is not set is `null`, or has its default value.
     public static final class Builder {
 
-        private List<Param<?, ?>> constructorParams = List.of();
+        private List<AbiValue> constructorArguments = List.of();
         private @Nullable Long gas;
         private @Nullable NativeToken<?, ?> initialBalance;
         private @Nullable Authority adminAuthority;
@@ -81,14 +82,14 @@ public record ContractCreateParams(
             // created by ContractCreateParams.builder()
         }
 
-        /// Sets the `constructorParams`.
+        /// Sets the `constructorArguments`.
         ///
-        /// The parameters of the constructor, in order.
+        /// The arguments of the constructor, in order.
         ///
-        /// @param constructorParams the value
+        /// @param constructorArguments the value
         /// @return this builder
-        public Builder constructorParams(final List<Param<?, ?>> constructorParams) {
-            this.constructorParams = constructorParams;
+        public Builder constructorArguments(final List<AbiValue> constructorArguments) {
+            this.constructorArguments = constructorArguments;
             return this;
         }
 
@@ -171,7 +172,7 @@ public record ContractCreateParams(
         /// @throws IllegalArgumentException if a value violates its constraints
         public ContractCreateParams build() {
             return new ContractCreateParams(
-                    constructorParams,
+                    constructorArguments,
                     gas,
                     initialBalance,
                     adminAuthority,

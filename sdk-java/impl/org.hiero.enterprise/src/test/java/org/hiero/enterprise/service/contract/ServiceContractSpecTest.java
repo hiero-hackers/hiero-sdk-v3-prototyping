@@ -3,12 +3,12 @@ package org.hiero.enterprise.service.contract;
 import static org.hiero.sdk.testing.Testing.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.math.BigInteger;
 import java.time.Duration;
 import java.util.List;
 import org.hiero.authority.Authority;
 import org.hiero.authority.PublicKeyAuthority;
-import org.hiero.evm.EvmAddress;
+import org.hiero.evm.AbiString;
+import org.hiero.evm.AbiValue;
 import org.hiero.keys.ByteImportEncoding;
 import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
@@ -36,7 +36,7 @@ class ServiceContractSpecTest {
         final ContractCreateParams params = defaultContractCreateParams();
 
         // then
-        assertEquals(0L, length(params.constructorParams()));
+        assertEquals(0L, length(params.constructorArguments()));
         assertNull(params.gas());
         assertNull(params.initialBalance());
         assertNull(params.adminAuthority());
@@ -62,13 +62,13 @@ class ServiceContractSpecTest {
         final Authority authority = defaultAuthority();
         final Duration autoRenewPeriod = toSeconds(36000L);
         final AccountId account = defaultAccountId();
-        final Param<String, ?> constructorParam = ContractFactory.ofString("Hello from Hiero.");
+        final AbiValue constructorArgument = new AbiString("Hello from Hiero.");
 
         // when
-        final ContractCreateParams params = new ContractCreateParams(List.of(constructorParam), 1_000_000L, null, authority, "memo", autoRenewPeriod, account, 10);
+        final ContractCreateParams params = new ContractCreateParams(List.of(constructorArgument), 1_000_000L, null, authority, "memo", autoRenewPeriod, account, 10);
 
         // then
-        assertEquals(1L, length(params.constructorParams()));
+        assertEquals(List.of(constructorArgument), params.constructorArguments());
         assertEquals(1_000_000L, params.gas());
         assertEquals(authority, params.adminAuthority());
         assertEquals("memo", params.contractMemo());
@@ -117,51 +117,6 @@ class ServiceContractSpecTest {
     void contractParametersRejectAMemoOf101Characters() {
         // when / then
         assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(List.of(), null, null, null, repeat("a", 101L), null, null, null));
-    }
-
-    /// `enterprise.service.contract/a-parameter-keeps-the-value-it-wraps`
-    ///
-    /// Source: this spec (a Param wraps the value of the host language); hiero-enterprise-java (ContractParam: the value of
-    /// a parameter is the given value).
-    @Test
-    @DisplayName("a parameter keeps the value it wraps")
-    @Tag("testId:enterprise.service.contract/a-parameter-keeps-the-value-it-wraps")
-    void aParameterKeepsTheValueItWraps() {
-        // given
-        final String text = "Hello from Hiero.";
-        final byte[] data = hex("0a1b2c3d");
-        final String hexAddress = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed";
-        final EvmAddress evmAddress = EvmAddress.fromString(hexAddress);
-
-        // when / then
-        assertEquals(text, ContractFactory.ofString(text).value());
-        assertEquals(text, ContractFactory.ofBytes(text).value());
-        assertEquals(data, ContractFactory.ofBytes(data).value());
-        assertEquals(hexAddress, ContractFactory.ofAddress(hexAddress).value());
-        assertEquals(evmAddress, ContractFactory.ofAddress(evmAddress).value());
-        assertTrue(ContractFactory.ofBool(true).value());
-        assertFalse(ContractFactory.ofBool(false).value());
-    }
-
-    /// `enterprise.service.contract/integer-parameters-accept-the-smallest-and-the-largest-value-of-their-solidity-type`
-    ///
-    /// Source: hiero-enterprise-java (ContractParamTests: testUint8Range, testInt8Range, testUint256Range and
-    /// testInt256Range accept the smallest and the largest value of each type); the Solidity documentation (an intN holds
-    /// -2^(N-1) to 2^(N-1)-1, a uintN 0 to 2^N-1). The 256-bit bounds were computed with Python (2**256-1, -2**255,
-    /// 2**255-1).
-    @Test
-    @DisplayName("integer parameters accept the smallest and the largest value of their Solidity type")
-    @Tag("testId:enterprise.service.contract/integer-parameters-accept-the-smallest-and-the-largest-value-of-their-solidity-type")
-    void integerParametersAcceptTheSmallestAndTheLargestValueOfTheirSolidityType() {
-        // when / then
-        assertEquals((short) 0, ContractFactory.uint8((short) 0).value());
-        assertEquals((short) 255, ContractFactory.uint8((short) 255).value());
-        assertEquals((byte) -128, ContractFactory.int8((byte) -128).value());
-        assertEquals((byte) 127, ContractFactory.int8((byte) 127).value());
-        assertEquals(new BigInteger("0"), ContractFactory.uint256(new BigInteger("0")).value());
-        assertEquals(new BigInteger("115792089237316195423570985008687907853269984665640564039457584007913129639935"), ContractFactory.uint256(new BigInteger("115792089237316195423570985008687907853269984665640564039457584007913129639935")).value());
-        assertEquals(new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968"), ContractFactory.int256(new BigInteger("-57896044618658097711785492504343953926634992332820282019728792003956564819968")).value());
-        assertEquals(new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967"), ContractFactory.int256(new BigInteger("57896044618658097711785492504343953926634992332820282019728792003956564819967")).value());
     }
 
     /// `enterprise.service.contract/contracts-with-the-same-contract-id-are-equal`

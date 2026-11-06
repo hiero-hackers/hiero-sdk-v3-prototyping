@@ -4,24 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigInteger;
 import java.util.List;
-import org.hiero.authority.AuthorityFactory;
-import org.hiero.consensusnode.client.ClientFactory;
-import org.hiero.consensusnode.transactions.spi.SpiFactory;
 import org.hiero.enterprise.service.ServiceException;
-import org.hiero.enterprise.service.ServiceFactory;
-import org.hiero.enterprise.service.account.AccountFactory;
-import org.hiero.enterprise.service.file.FileFactory;
-import org.hiero.enterprise.service.nft.NftFactory;
-import org.hiero.enterprise.service.token.TokenFactory;
-import org.hiero.enterprise.service.topic.TopicFactory;
-import org.hiero.http.HttpFactory;
-import org.hiero.keys.KeysFactory;
+import org.hiero.evm.AbiFunction;
+import org.hiero.evm.AbiUint;
+import org.hiero.evm.AbiUintType;
+import org.hiero.evm.AbiValue;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;
-import org.hiero.ledger.config.ConfigFactory;
-import org.hiero.mirrornode.MirrornodeFactory;
-import org.hiero.mirrornode.network.NetworkFactory;
-import org.hiero.mirrornode.transaction.TransactionFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -38,11 +27,11 @@ class SmartContractServiceTest {
     }
 
     @Test
-    @DisplayName("createContract(fileId, constructorParams) can be called and returns a value (only ServiceException may occur)")
+    @DisplayName("createContract(fileId, constructorArguments) can be called and returns a value (only ServiceException may occur)")
     @Tag("testId:enterprise.service.contract.SmartContractService/createContract/call")
     void shouldCallCreateContract() throws Exception {
         try {
-            assertNotNull(create().createContract(fileIdValue(), constructorParamsValue()));
+            assertNotNull(create().createContract(fileIdValue(), constructorArgumentsValue()));
         } catch (final Exception e) {
             if (!(e instanceof ServiceException)) {
                 throw e;
@@ -51,11 +40,11 @@ class SmartContractServiceTest {
     }
 
     @Test
-    @DisplayName("createContract(contents, constructorParams) can be called and returns a value (only ServiceException may occur)")
+    @DisplayName("createContract(contents, constructorArguments) can be called and returns a value (only ServiceException may occur)")
     @Tag("testId:enterprise.service.contract.SmartContractService/createContract/call-2")
     void shouldCallCreateContract2() throws Exception {
         try {
-            assertNotNull(create().createContract(contentsValue(), constructorParamsValue()));
+            assertNotNull(create().createContract(contentsValue(), constructorArgumentsValue()));
         } catch (final Exception e) {
             if (!(e instanceof ServiceException)) {
                 throw e;
@@ -90,11 +79,11 @@ class SmartContractServiceTest {
     }
 
     @Test
-    @DisplayName("callContractFunction(contract, functionName, params) can be called and returns a value (only ServiceException may occur)")
-    @Tag("testId:enterprise.service.contract.SmartContractService/callContractFunction/call")
-    void shouldCallCallContractFunction() throws Exception {
+    @DisplayName("executeFunction(contractId, function, arguments) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.contract.SmartContractService/executeFunction/call")
+    void shouldCallExecuteFunction() throws Exception {
         try {
-            assertNotNull(create().callContractFunction(contractValue(), functionNameValue(), paramsValue2()));
+            assertNotNull(create().executeFunction(contractIdValue(), functionValue(), argumentsValue()));
         } catch (final Exception e) {
             if (!(e instanceof ServiceException)) {
                 throw e;
@@ -103,11 +92,24 @@ class SmartContractServiceTest {
     }
 
     @Test
-    @DisplayName("callContractFunction(contractId, functionName, params) can be called and returns a value (only ServiceException may occur)")
-    @Tag("testId:enterprise.service.contract.SmartContractService/callContractFunction/call-2")
-    void shouldCallCallContractFunction2() throws Exception {
+    @DisplayName("callFunction(contractId, function, arguments) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.contract.SmartContractService/callFunction/call")
+    void shouldCallCallFunction() throws Exception {
         try {
-            assertNotNull(create().callContractFunction(contractIdValue(), functionNameValue(), paramsValue2()));
+            assertNotNull(create().callFunction(contractIdValue(), functionValue(), argumentsValue()));
+        } catch (final Exception e) {
+            if (!(e instanceof ServiceException)) {
+                throw e;
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("estimateGas(contractId, function, arguments) can be called (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.contract.SmartContractService/estimateGas/call")
+    void shouldCallEstimateGas() throws Exception {
+        try {
+            create().estimateGas(contractIdValue(), functionValue(), argumentsValue());
         } catch (final Exception e) {
             if (!(e instanceof ServiceException)) {
                 throw e;
@@ -149,8 +151,8 @@ class SmartContractServiceTest {
         return new Address(0L, 0L, "", 1001L);
     }
 
-    private static Param<?, ?> constructorParamsValue() {
-        return ContractFactory.int256(new BigInteger("1"));
+    private static AbiValue constructorArgumentsValue() {
+        return new AbiUint(new BigInteger("1"), 256);
     }
 
     private static byte[] contentsValue() {
@@ -161,19 +163,15 @@ class SmartContractServiceTest {
         return new ContractCreateParams(List.of(), null, null, null, null, null, null, null);
     }
 
-    private static Contract contractValue() {
-        return new Contract(new ContractId(0L, 0L, "", 1001L, null));
-    }
-
-    private static String functionNameValue() {
-        return "value";
-    }
-
-    private static Param<?, ?> paramsValue2() {
-        return ContractFactory.int256(new BigInteger("1"));
-    }
-
     private static ContractId contractIdValue() {
         return new ContractId(0L, 0L, "", 1001L, null);
+    }
+
+    private static AbiFunction functionValue() {
+        return new AbiFunction("a", List.of(new AbiUintType(256)), List.of(new AbiUintType(256)));
+    }
+
+    private static AbiValue argumentsValue() {
+        return new AbiUint(new BigInteger("1"), 256);
     }
 }

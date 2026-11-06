@@ -3,18 +3,34 @@
 ## Description
 
 `SmartContractService` deploys smart contracts and calls their functions. A contract is created either from bytecode
-stored in a file or directly from bytecode, optionally with constructor parameters; `ContractCreateParams` holds the
+stored in a file or directly from bytecode, optionally with constructor arguments; `ContractCreateParams` holds the
 further options of a new contract. Staking is not part of the service: to create a contract that is staked to an
-account or to a node, use `ContractCreateTransaction` of the consensus node client. Function and constructor
-parameters are passed as `Param` values, created with the factory functions such as `ofString`, `ofAddress`,
-`ofBool` or `uint256`, which wrap a value of your language as the matching Solidity type. The values returned by a
-function call are available from the `ContractCallResult` by index.
+account or to a node, use `ContractCreateTransaction` of the consensus node client.
+
+A function is described by an `AbiFunction` of the namespace `evm`: its name and the types of its arguments and
+results, read from a signature (`AbiFunction.parse("transfer(address,uint256) returns (bool)")`) or built from the
+types. Arguments are `AbiValue`s, which know their type (`AbiUint{value: 1000, bits: 256}`,
+`AbiAddress{value: address}`); constructor arguments are given the same way.
+
+- `executeFunction` calls a function in a transaction: it can change the state of the contract, and the operator of
+  the session pays for it. The result holds the decoded values and the gas the call used.
+- `callFunction` calls a function without a transaction, on the Mirror Node: it reads the state of the contract, and
+  nothing is changed or paid for. Use it for `view` and `pure` functions.
+- `estimateGas` returns the gas a call of the function needs, also computed by the Mirror Node.
+
+The values a function returned are decoded with the result types of its `AbiFunction`; a function described without
+result types returns only the raw result.
 
 ## Design Notes
 
-`ContractCallResult.get(index)` is deliberately `ANY`: the type of a contract call result is only known at runtime (it
-depends on the called Solidity function), so no static type can describe it. The concrete type of the value at `index`
-is reported by `getType(index)`; callers check it before using the value.
+- **The ABI model is the one of `evm`.** Arguments, results and the description of a function are the types of
+  [`evm.md`](../base/evm.md); the service has no ABI model of its own (no parameter wrappers, factory functions or
+  untyped result getters). This carries out the consequence recorded in
+  [ADR-0015](../../docs/adr/0015-evm-generic-types-in-a-namespace-without-imports.md).
+- **Results are decoded with the result types.** ABI-encoded return data carries no type information, so the values
+  can only be decoded if the result types are known; they come from `AbiFunction.outputs`, not from the result.
+- **No `@@oneOf` in the parameters.** Where the bytecode comes from is chosen by the overload of `createContract`, not
+  by two exclusive fields of `ContractCreateParams`.
 
 ## API Schema
 
@@ -22,33 +38,24 @@ is reported by `getType(index)`; callers check it before using the value.
 namespace enterprise.service.contract
 requires {Page} from common
 requires {Address, AccountId, ContractId} from ledger
-requires {EvmAddress} from evm
+requires {AbiFunction, AbiValue} from evm
 requires {Authority} from authority
 requires {NativeToken} from nativeToken
 requires {Session} from enterprise.service
 
-// Supplies the value of a parameter in the form the contract call encodes; the SDK implements it for the parameters
-// that its factory functions (ofString, ofAddress, ...) create.
-abstraction ParamSupplier<$$SolidityType> {
-    $$SolidityType getNativeContractValue()
+// The result of a call of a function without a transaction.
+@@finalType
+ContractCallResult {
+    @@immutable @@default([]) values: list<AbiValue>   // the returned values, decoded with the result types of the function
+    @@immutable result: bytes                          // the returned data, ABI-encoded
 }
 
-Param<$$LangType, $$SolidityType> {
-    @@immutable value:$$LangType
-    @@immutable nativeType:string
-    @@immutable supplier:ParamSupplier<$$SolidityType>
-}
-
-// The values a contract function returned; created by the SDK from the result of a call.
-abstraction ContractCallResult {
-    @@immutable size: uint8
-    
-    // Runtime type of the result value at `index`; use it to check the value returned by get(index).
-    type getType(index:uint8)
-
-    // Returns the result value at `index`. Its type depends on the called Solidity function and is only known at
-    // runtime; check it with getType(index) before using the value.
-    ANY get(index:uint8)
+// The result of a call of a function in a transaction.
+@@finalType
+ContractExecuteResult {
+    @@immutable @@default([]) values: list<AbiValue>   // the returned values, decoded with the result types of the function
+    @@immutable result: bytes                          // the returned data, ABI-encoded
+    @@immutable gasUsed: uint64                        // the gas the call used
 }
 
 @@finalType
@@ -59,8 +66,8 @@ Contract {
 // The options of a new smart contract. Where its bytecode comes from is chosen by the method that creates it.
 @@finalType
 ContractCreateParams {
-    // The parameters of the constructor, in order.
-    @@immutable @@default([]) constructorParams: list<Param<ANY, ANY>>
+    // The arguments of the constructor, in order.
+    @@immutable @@default([]) constructorArguments: list<AbiValue>
     // The gas for running the constructor; a default of the service if absent.
     @@immutable @@nullable @@min(1) gas: int64
     // Amount transferred from the payer to the new contract.
@@ -78,20 +85,29 @@ ContractCreateParams {
 SmartContractService {
 
     // Create a contract from the bytecode in a file or from the bytecode itself. The same as createContract with
-    // ContractCreateParams that have only these values.
-    @@throws(service-error) Contract createContract(fileId:Address, constructorParams:Param<ANY, ANY>...)
+    // ContractCreateParams that have only these arguments.
+    @@throws(service-error) Contract createContract(fileId: Address, constructorArguments: AbiValue...)
 
-    @@throws(service-error) Contract createContract(contents:bytes, constructorParams:Param<ANY, ANY>...)
+    @@throws(service-error) Contract createContract(contents: bytes, constructorArguments: AbiValue...)
 
     // Create a contract from the bytecode in a file or from the bytecode itself, with every option of a new contract:
     // the general form of the methods above.
-    @@throws(service-error) Contract createContract(fileId:Address, params: ContractCreateParams)
+    @@throws(service-error) Contract createContract(fileId: Address, params: ContractCreateParams)
 
-    @@throws(service-error) Contract createContract(contents:bytes, params: ContractCreateParams)
+    @@throws(service-error) Contract createContract(contents: bytes, params: ContractCreateParams)
 
-    @@throws(service-error) ContractCallResult callContractFunction(contract:Contract, functionName:string, params:Param<ANY, ANY>...)
+    // Calls a function of a contract in a transaction, paid by the operator of the session. Throws if the arguments
+    // do not have the argument types of the function.
+    @@throws(service-error) ContractExecuteResult executeFunction(contractId: ContractId, function: AbiFunction,
+            arguments: AbiValue...)
 
-    @@throws(service-error) ContractCallResult callContractFunction(contractId:ContractId, functionName:string, params:Param<ANY, ANY>...)
+    // Calls a function of a contract without a transaction, on the Mirror Node; the state of the contract is not
+    // changed. Throws if the arguments do not have the argument types of the function.
+    @@throws(service-error) ContractCallResult callFunction(contractId: ContractId, function: AbiFunction,
+            arguments: AbiValue...)
+
+    // The gas a call of the function with the arguments needs, estimated by the Mirror Node.
+    @@throws(service-error) int64 estimateGas(contractId: ContractId, function: AbiFunction, arguments: AbiValue...)
 
     // Return the contract information for the given contract id
     @@throws(service-error) @@nullable Contract findById(contractId: ContractId)
@@ -99,23 +115,6 @@ SmartContractService {
     // Return all known contracts
     @@throws(service-error) Page<Contract> findAll()
 }
-
-// Factory functions that wrap values of the host language as Solidity parameter types.
-// Solidity's `address` type is a 20-byte EVM address: prefer the EvmAddress overload of ofAddress;
-// the string overload accepts the hex form ("0x...").
-
-@@static Param<string, ANY> ofString(value:string)
-@@static Param<string, ANY> ofBytes(value:string)
-@@static Param<string, ANY> ofBytes23(value:string)
-@@static Param<bytes, ANY> ofBytes(value:bytes)
-@@static Param<bytes, ANY> ofBytes23(value:bytes)
-@@static Param<string, ANY> ofAddress(@@pattern("^(0x)?[0-9a-fA-F]{40}$") value:string)
-@@static Param<EvmAddress, ANY> ofAddress(value:EvmAddress)
-@@static Param<bool, ANY> ofBool(value:bool)
-@@static Param<uint8, ANY> uint8(value:uint8)
-@@static Param<int8, ANY> int8(value:int8)
-@@static Param<uint256, ANY> uint256(value:uint256)
-@@static Param<int256, ANY> int256(value:int256)
 
 // Creates the service for the given session. With a framework integration the service is usually obtained via
 // dependency injection instead.
@@ -132,16 +131,13 @@ instance ContractCreateParams = ContractCreateParams{}
 
 // A contract addressed by the default contract id.
 instance Contract = Contract{contractId: DEFAULT}
-
-// The supplier of a string parameter, created by its factory function.
-instance ParamSupplier = ofString(value: "value").supplier
 ```
 
 ## Testing
 
-Tests of `ContractCreateParams`, `Contract` and the parameter factory functions. The methods of
-`SmartContractService` talk to the network and are not unit-tested here; a `ContractCallResult` can only be obtained
-from them. A violation of `@@min` or `@@maxBytes` is rejected with `invalid-argument-error`. The ABI encoding of a `Param` is not part of this API and is not tested.
+Tests of `ContractCreateParams` and `Contract`. The methods of `SmartContractService` talk to the network and are not
+unit-tested here; the encoding of the arguments and the decoding of the results are tested with the types of `evm`. A
+violation of `@@min` or `@@maxBytes` is rejected with `invalid-argument-error`.
 
 ```tests
 // Source: this spec (@@default and @@nullable of ContractCreateParams); the Python SDK (contract_create_transaction_test.py,
@@ -152,7 +148,7 @@ test "contract parameters without values have the defaults of the spec" {
     let params = DEFAULT(ContractCreateParams)
 
     // then
-    assertEquals(expected: 0, actual: length(value: params.constructorParams))
+    assertEquals(expected: 0, actual: length(value: params.constructorArguments))
     assertNull(actual: params.gas)
     assertNull(actual: params.initialBalance)
     assertNull(actual: params.adminAuthority)
@@ -174,15 +170,15 @@ test "contract parameters keep the values they are created with" {
     let authority = DEFAULT(Authority)
     let autoRenewPeriod = toSeconds(value: 36000)
     let account = DEFAULT(AccountId)
-    let constructorParam = ofString(value: "Hello from Hiero.")
+    let constructorArgument: AbiValue = evm.AbiString{value: "Hello from Hiero."}
 
     // when
-    let params = ContractCreateParams{constructorParams: [constructorParam], gas: 1_000_000, adminAuthority: authority,
+    let params = ContractCreateParams{constructorArguments: [constructorArgument], gas: 1_000_000, adminAuthority: authority,
             contractMemo: "memo", autoRenewPeriod: autoRenewPeriod, autoRenewAccount: account,
             maxAutomaticTokenAssociations: 10}
 
     // then
-    assertEquals(expected: 1, actual: length(value: params.constructorParams))
+    assertEquals(expected: [constructorArgument], actual: params.constructorArguments)
     assertEquals(expected: 1_000_000, actual: params.gas)
     assertEquals(expected: authority, actual: params.adminAuthority)
     assertEquals(expected: "memo", actual: params.contractMemo)
@@ -223,46 +219,6 @@ test "contract parameters reject a memo of 101 characters" {
     ContractCreateParams{contractMemo: repeat(value: "a", count: 101)}
 }
 
-// Source: this spec (a Param wraps the value of the host language); hiero-enterprise-java (ContractParam: the value of
-// a parameter is the given value).
-@@testId("a-parameter-keeps-the-value-it-wraps")
-test "a parameter keeps the value it wraps" {
-    // given
-    let text = "Hello from Hiero."
-    let data = hex(text: "0a1b2c3d")
-    let hexAddress = "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
-    let evmAddress = EvmAddress.fromString(value: hexAddress)
-
-    // when / then
-    assertEquals(expected: text, actual: ofString(value: text).value)
-    assertEquals(expected: text, actual: ofBytes(value: text).value)
-    assertEquals(expected: data, actual: ofBytes(value: data).value)
-    assertEquals(expected: hexAddress, actual: ofAddress(value: hexAddress).value)
-    assertEquals(expected: evmAddress, actual: ofAddress(value: evmAddress).value)
-    assertTrue(condition: ofBool(value: true).value)
-    assertFalse(condition: ofBool(value: false).value)
-}
-
-// Source: hiero-enterprise-java (ContractParamTests: testUint8Range, testInt8Range, testUint256Range and
-// testInt256Range accept the smallest and the largest value of each type); the Solidity documentation (an intN holds
-// -2^(N-1) to 2^(N-1)-1, a uintN 0 to 2^N-1). The 256-bit bounds were computed with Python (2**256-1, -2**255,
-// 2**255-1).
-@@testId("integer-parameters-accept-the-smallest-and-the-largest-value-of-their-solidity-type")
-test "integer parameters accept the smallest and the largest value of their Solidity type" {
-    // when / then
-    assertEquals(expected: 0, actual: uint8(value: 0).value)
-    assertEquals(expected: 255, actual: uint8(value: 255).value)
-    assertEquals(expected: -128, actual: int8(value: -128).value)
-    assertEquals(expected: 127, actual: int8(value: 127).value)
-    assertEquals(expected: 0, actual: uint256(value: 0).value)
-    assertEquals(expected: 115792089237316195423570985008687907853269984665640564039457584007913129639935,
-            actual: uint256(value: 115792089237316195423570985008687907853269984665640564039457584007913129639935).value)
-    assertEquals(expected: -57896044618658097711785492504343953926634992332820282019728792003956564819968,
-            actual: int256(value: -57896044618658097711785492504343953926634992332820282019728792003956564819968).value)
-    assertEquals(expected: 57896044618658097711785492504343953926634992332820282019728792003956564819967,
-            actual: int256(value: 57896044618658097711785492504343953926634992332820282019728792003956564819967).value)
-}
-
 // Source: this spec (Contract is a value of its contract id).
 @@testId("contracts-with-the-same-contract-id-are-equal")
 test "contracts with the same contract id are equal" {
@@ -282,21 +238,22 @@ test "contracts with the same contract id are equal" {
 
 ## Questions & Comments
 
-- Long-form (shard.realm.num) Hedera id overloads of `ofAddress` (taking `AccountId` / `ContractId`) belong next to the
-  other param factory functions as follow-ups once a HAPI long-form-encoding helper is decided.
+- **An `AbiAddress` of an account or contract without an EVM address.** An argument of type `address` is an
+  `EvmAddress`. For an `AccountId` or `ContractId` that has only a number, its address is the long-zero form (shard,
+  realm and number in 20 bytes), but no type offers this conversion. Should `ledger` offer it (e.g.
+  `ContractId.toEvmAddress()`), or should the enterprise layer accept ids as arguments?
 
 - **`ContractCreateParams` is not yet aligned with `ContractCreateTransaction`**
-  ([`transactions-contracts.md`](../consensus-node-client/transactions-contracts.md)): the constructor parameters are
-  `Param` values instead of `AbiValue`s of the namespace `evm`, and `gas` is optional with `@@min(1)` (a default chosen
-  by the service) while the transaction requires it with `@@min(0)`. The Java implementation does not implement the
-  contract transactions yet, so `createContract…` and `callContractFunction` fail.
-- **How is a `ContractCallResult` obtained?** `ContractCallResult` had no values of its own and is now an abstraction
-  the SDK creates from the result of a call. Which source the SDK reads the result from (the record of a
-  `ContractCall` transaction, a `ContractCallLocal` query, or the Mirror Node `POST /contracts/call`) and how the
-  result types are known for decoding is not specified.
-- **`nativeType` of a `Param` is not specified.** Hiero Enterprise Java sets it to the Solidity type name
-  (`string`, `address`, `bool`, `uint8`, `uint256`, ...), and the Java implementation does the same. Stating that in
-  the spec would let the tests check it for every factory function; today they check only `value`.
-- **`ofBytes23` looks like a typo of `ofBytes32`** (Solidity has `bytes1` to `bytes32`; Hiero Enterprise Java has
-  `bytes32`). Which length is meant? The Java implementation takes the name literally and creates a `bytes23`
-  parameter.
+  ([`transactions-contracts.md`](../consensus-node-client/transactions-contracts.md)): `gas` is optional with
+  `@@min(1)` (a default chosen by the service) while the transaction requires it with `@@min(0)`. Which default gas
+  the service uses is not specified. The Java implementation does not implement the contract transactions yet, so
+  `createContract…` and `executeFunction` fail after the arguments have been checked.
+
+- **`executeFunction` has no gas, no payable amount and no logs.** The service chooses the gas and sends no native
+  tokens, and `ContractExecuteResult` holds neither the logs nor an error message of a reverted call. Should there be
+  an `executeFunction` with options (gas, payable amount), and should the result carry the logs (`ContractLog` of
+  `consensusnode.transactions`, decoded with `AbiEvent`)?
+
+- **Who is the sender of `callFunction`?** The Mirror Node simulates the call without a sender unless one is given, so a
+  function that depends on `msg.sender` returns another result than in a transaction. Should the operator of the
+  session be the sender?
