@@ -16,6 +16,7 @@
 #   TCK_ENV   the TCK configuration (default: tooling/tck/solo.env); it is copied to $TCK_DIR/.env, an existing .env is
 #             saved as .env.before-v3
 #   JAVA_HOME a JDK 25 (Java server only; `sdk env` sets it from .sdkmanrc)
+#   TCK_JAVA_OPTIONS  options of the JVM of the Java server, e.g. a -javaagent for code coverage (Java server only)
 #   TCK_IGNORE_FAILURES  true: failed TCK tests do not fail this script (exit code 0 after the summary); an unreachable
 #             network or a server that cannot start still does
 #   TCK_SERVER_LOG  how much the server logs about failed calls: 'error' (default) logs the first call of each
@@ -70,7 +71,9 @@ port="$(echo "$JSON_RPC_SERVER_URL" | sed -E 's#.*:([0-9]+)/?$#\1#')"
 if [[ "$language" == "java" ]]; then
   jar="$repository/sdk-java/tck/generated/server/target/hiero-sdk-tck-0.1.0-SNAPSHOT.jar"
   [[ -f "$jar" ]] || { echo "Build the Java TCK server first: $jar is missing" >&2; exit 1; }
-  "${JAVA_HOME:+$JAVA_HOME/bin/}java" -jar "$jar" "$port" > >(tee "$server_log") 2>&1 &
+  # TCK_JAVA_OPTIONS: options of the server's JVM, e.g. the JaCoCo agent of the module tck-run (split into words)
+  # shellcheck disable=SC2086
+  "${JAVA_HOME:+$JAVA_HOME/bin/}java" ${TCK_JAVA_OPTIONS:-} -jar "$jar" "$port" > >(tee "$server_log") 2>&1 &
 else
   main="$repository/sdk-ts/tck/generated/server/dist/main.js"
   [[ -f "$main" ]] || { echo "Build the TypeScript TCK server first: $main is missing" >&2; exit 1; }

@@ -50,6 +50,29 @@
                     </execution>
                 </executions>
             </plugin>
+            <!--
+              The coverage of the TCK run: the TCK server runs with the JaCoCo agent, which writes
+              target/jacoco-tck.exec when the server stops. The agent goes into the property tck.jacoco.argLine (not
+              argLine, which belongs to surefire) and reaches the server through TCK_JAVA_OPTIONS (tooling/tck/run-tck.sh).
+              The module coverage renders it.
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>tck-coverage</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <propertyName>tck.jacoco.argLine</propertyName>
+                            <destFile>${project.build.directory}/jacoco-tck.exec</destFile>
+                            <append>false</append>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
@@ -72,6 +95,8 @@
                                 <TCK_IGNORE_FAILURES>${tck.ignoreFailures}</TCK_IGNORE_FAILURES>
                                 <!-- the server runs on the JDK of this build -->
                                 <JAVA_HOME>${java.home}</JAVA_HOME>
+                                <!-- with the JaCoCo agent: the coverage of the TCK run -->
+                                <TCK_JAVA_OPTIONS>${tck.jacoco.argLine}</TCK_JAVA_OPTIONS>
                             </environmentVariables>
                         </configuration>
                     </execution>

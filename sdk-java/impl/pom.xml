@@ -16,6 +16,8 @@
         <module>org.hiero.consensus.node.client</module>
         <module>org.hiero.enterprise</module>
         <module>org.hiero.mirror.node.client</module>
+        <!-- the code coverage of the unit tests and, with the profile tck, of the TCK run and of both together -->
+        <module>coverage</module>
         <!-- the results of all tests as one HTML page (after the modules; with the profile tck after the TCK run) -->
         <module>test-report</module>
     </modules>
@@ -25,6 +27,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jspecify.version>1.0.0</jspecify.version>
         <junit.version>6.0.3</junit.version>
+        <jacoco.version>0.8.13</jacoco.version>
     </properties>
 
     <dependencyManagement>
@@ -110,9 +113,36 @@
                     <artifactId>exec-maven-plugin</artifactId>
                     <version>3.6.4</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>3.1.0</version>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
+            <!--
+              Code coverage: the unit tests of every module run with the JaCoCo agent (it sets the property argLine,
+              which surefire passes to the forked JVM) and write target/jacoco.exec. The module coverage renders the
+              reports; tck-run records the coverage of the TCK run the same way.
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>unit-coverage</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>

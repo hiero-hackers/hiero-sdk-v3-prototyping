@@ -75,6 +75,27 @@ render() {
 }
 
 # <label>=<report file> for the OTR file of every Maven module below <directory>, labelled by the module's directory
+# Puts links to the code coverage reports of sdk-java/impl/target/coverage (module impl/coverage) at the top of the page:
+# the coverage of the unit tests, and of the TCK run and of both if they exist. The page is rendered by the Open Test
+# Reporting CLI, so the links are added afterwards, right after <body>.
+coverage_links() {
+  local page="$1" coverage="$2" links="" kind label
+  [[ -f "$page" ]] || return 0
+  for kind in unit tck all; do
+    case "$kind" in
+      unit) label="unit tests" ;;
+      tck) label="TCK" ;;
+      all) label="unit tests and TCK" ;;
+    esac
+    if [[ -f "$coverage/$kind/index.html" ]]; then
+      links+="${links:+ &middot; }<a href=\"../coverage/$kind/index.html\">$label</a>"
+    fi
+  done
+  [[ -n "$links" ]] || return 0
+  local bar="<div style=\"font: 14px sans-serif; padding: 8px 16px; background: #f3f4f6; border-bottom: 1px solid #d1d5db\">Code coverage: $links</div>"
+  BAR="$bar" perl -0pi -e 's/<body>/<body>$ENV{BAR}/' "$page"
+}
+
 modules() {
   local file module
   for file in "$1"/*/target/surefire-reports/open-test-report.xml; do
@@ -90,6 +111,7 @@ if [[ "$area" == "sdk" || "$area" == "all" ]]; then
   render "sdk" "$repository/sdk-java/impl/target/test-report" $(modules "$repository/sdk-java/impl") \
     "test-support=$repository/sdk-java/test-support/target/surefire-reports/open-test-report.xml" \
     "TCK=$repository/sdk-java/tck/target/open-test-report.xml"
+  coverage_links "$repository/sdk-java/impl/target/test-report/index.html" "$repository/sdk-java/impl/target/coverage"
 fi
 if [[ "$area" == "tck" ]]; then
   render "tck" "$repository/sdk-java/tck/target/test-report" "TCK=$repository/sdk-java/tck/target/open-test-report.xml"

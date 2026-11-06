@@ -152,9 +152,10 @@ files. `verify` is enough:
 ./mvnw -f impl verify -Ptck
 ```
 
-The bindings cover 48 of the 65 TCK methods (`metalang tck check`, see `docs/tck-binding.md`); the TCK skips the
-others (`-32601`). The implementation has not been measured against Solo yet. Offline, the server can be checked with
-calls that need no network (`setup` succeeds, a transaction fails only at the connection):
+The bindings cover 54 of the 64 TCK methods (`metalang tck check`, see `docs/tck-binding.md`); the TCK skips the
+others (`-32601`). Against a local Solo network about 1,590 of the 2,327 TCK tests pass (`docs/test-comparison-v2.md`).
+Offline, the server can be checked with calls that need no network (`setup` succeeds, a transaction fails only at the
+connection):
 
 ```bash
 java -jar sdk-java/tck/generated/server/target/hiero-sdk-tck-*.jar 8599 &
@@ -163,6 +164,16 @@ curl -s -X POST -d '{"jsonrpc":"2.0","id":1,"method":"generateKey","params":{"ty
 ```
 
 `TCK_SERVER_LOG=debug` prints the stack trace of every failed call.
+
+**Code coverage** is part of every build of `impl` (JaCoCo). The parent POM runs the unit tests of every module with
+the JaCoCo agent (`target/jacoco.exec`); with the profile `tck`, the module `impl/tck-run` starts the TCK server with
+the agent as well (`TCK_JAVA_OPTIONS`, read by `tooling/tck/run-tck.sh`; `target/jacoco-tck.exec`, written when the
+server stops). The module `impl/coverage` renders HTML, XML and CSV reports in `sdk-java/impl/target/coverage`: `unit`
+always, `tck` and `all` (unit tests and TCK merged) once the TCK has run - without the profile from the data of the last
+TCK run, as the test report does (`-Dcoverage.skip=true` leaves it out). The page of `impl/test-report` links to them. The server
+loads the SDK modules of the same build from its `lib` directory, so the TCK's data matches their classes. On
+2026-11-06: unit tests 69.1 % of the lines (40.0 % of the branches), TCK 30.2 % (23.2 %), both together 73.4 %
+(46.7 %).
 
 ## 4. Generated tests are fixed at the source, not in `impl`
 

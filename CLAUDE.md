@@ -306,7 +306,9 @@ provides the API. What the specs cannot express is recorded in their `## Questio
 Maven coordinates as `generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The
 TCK binds 54 of its 64 methods (`tooling/tck/bindings`); `./mvnw -f impl verify -Ptck` (in `sdk-java`) builds the TCK server in the same reactor and runs it after
 the build against a local Solo network. The last module of every build of `impl`, `impl/test-report`, renders the
-results of all tests (with the profile also the TCK) as `sdk-java/impl/target/test-report/index.html`. [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is the
+results of all tests (with the profile also the TCK) as `sdk-java/impl/target/test-report/index.html`; the module
+`impl/coverage` renders the JaCoCo code coverage of the unit tests (`sdk-java/impl/target/coverage/unit`) and, with the
+profile, of the TCK run (`tck`) and of both together (`all`). [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is the
 runbook: how the copy was made, file inventory, filled stubs, build and verify, the TCK, and the traps.
 
 Four spec problems made the implementation harder than it should be; they are recorded in the `## Questions &

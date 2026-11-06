@@ -15,7 +15,7 @@
     <description>
         Renders the results of all tests of the SDK - the unit tests of every module and, with the profile `tck`, the
         TCK run - as one HTML page, sdk-java/impl/target/test-report/index.html (Open Test Reporting, ADR-0012;
-        scripts/test-report.sh sdk). -DtestReport.skip=true leaves it out. While it is part of the build, failed unit
+        scripts/test-report.sh sdk), with links to the code coverage reports of the module coverage. -DtestReport.skip=true leaves it out. While it is part of the build, failed unit
         tests do not stop the build (profile test-report of the parent); this module fails it at the end instead, after
         the page is rendered (-DtestReport.failOnFailures=false: it does not). Failed TCK tests are governed by the
         module tck-run (tck.ignoreFailures).
@@ -53,6 +53,13 @@
             <groupId>org.hiero.sdk</groupId>
             <artifactId>hiero-enterprise</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <!-- after the coverage reports, which the page links to -->
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-sdk-coverage</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
         </dependency>
     </dependencies>
 

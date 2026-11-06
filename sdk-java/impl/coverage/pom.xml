@@ -1,0 +1,174 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.hiero.sdk</groupId>
+        <artifactId>hiero-sdk</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>hiero-sdk-coverage</artifactId>
+    <packaging>pom</packaging>
+
+    <name>Hiero SDK: code coverage</name>
+    <description>
+        Renders the code coverage of the SDK modules (JaCoCo) in sdk-java/impl/target/coverage: unit/ for the unit tests
+        of all modules, and once the TCK has run (profile `tck`; without it the data of the last TCK run) also tck/ for
+        the TCK run and all/ for both together. The data comes
+        from target/jacoco.exec of every module (the agent of the parent) and target/jacoco-tck.exec of tck-run. Each
+        report is HTML (index.html), XML and CSV. -Dcoverage.skip=true leaves it out.
+    </description>
+
+    <properties>
+        <coverage.skip>false</coverage.skip>
+    </properties>
+
+    <!-- not a library: the dependencies only make this module run after the modules whose coverage it reports -->
+    <dependencies>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-consensus-node-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-consensus-node-admin-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-mirror-node-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-enterprise</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- no Javadoc for a module without sources -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- the reports, with the Ant tasks of JaCoCo: they take the data of several modules and runs at once -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>org.jacoco.ant</artifactId>
+                        <version>${jacoco.version}</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>coverage</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${coverage.skip}</skip>
+                            <target xmlns:jacoco="antlib:org.jacoco.ant" xmlns:if="ant:if">
+                                <taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml"
+                                         classpathref="maven.plugin.classpath"/>
+                                <property name="impl" location="${project.basedir}/.."/>
+                                <property name="out" location="${impl}/target/coverage"/>
+                                <property name="tck.exec" location="${impl}/tck-run/target/jacoco-tck.exec"/>
+                                <available file="${tck.exec}" property="tck.present"/>
+                                <delete dir="${out}"/>
+
+                                <!-- one report: the SDK modules (classes and sources) with the given data -->
+                                <macrodef name="coverage-report">
+                                    <attribute name="title"/>
+                                    <attribute name="dir"/>
+                                    <element name="data"/>
+                                    <sequential>
+                                        <jacoco:report>
+                                            <executiondata>
+                                                <data/>
+                                            </executiondata>
+                                            <structure name="@{title}">
+                                                <group name="org.hiero.base">
+                                                    <classfiles><fileset dir="${impl}/org.hiero.base/target/classes"/></classfiles>
+                                                    <sourcefiles encoding="UTF-8"><fileset dir="${impl}/org.hiero.base/src/main/java"/></sourcefiles>
+                                                </group>
+                                                <group name="org.hiero.consensus.node.client">
+                                                    <classfiles><fileset dir="${impl}/org.hiero.consensus.node.client/target/classes"/></classfiles>
+                                                    <sourcefiles encoding="UTF-8"><fileset dir="${impl}/org.hiero.consensus.node.client/src/main/java"/></sourcefiles>
+                                                </group>
+                                                <group name="org.hiero.consensus.node.admin.client">
+                                                    <classfiles><fileset dir="${impl}/org.hiero.consensus.node.admin.client/target/classes"/></classfiles>
+                                                    <sourcefiles encoding="UTF-8"><fileset dir="${impl}/org.hiero.consensus.node.admin.client/src/main/java"/></sourcefiles>
+                                                </group>
+                                                <group name="org.hiero.mirror.node.client">
+                                                    <classfiles><fileset dir="${impl}/org.hiero.mirror.node.client/target/classes"/></classfiles>
+                                                    <sourcefiles encoding="UTF-8"><fileset dir="${impl}/org.hiero.mirror.node.client/src/main/java"/></sourcefiles>
+                                                </group>
+                                                <group name="org.hiero.enterprise">
+                                                    <classfiles><fileset dir="${impl}/org.hiero.enterprise/target/classes"/></classfiles>
+                                                    <sourcefiles encoding="UTF-8"><fileset dir="${impl}/org.hiero.enterprise/src/main/java"/></sourcefiles>
+                                                </group>
+                                            </structure>
+                                            <html destdir="${out}/@{dir}"/>
+                                            <xml destfile="${out}/@{dir}/jacoco.xml"/>
+                                            <csv destfile="${out}/@{dir}/jacoco.csv"/>
+                                        </jacoco:report>
+                                        <echo level="info" message="Code coverage (@{title}): file://${out}/@{dir}/index.html"/>
+                                    </sequential>
+                                </macrodef>
+
+                                <coverage-report title="Hiero SDK: unit tests" dir="unit">
+                                    <data><fileset dir="${impl}" includes="org.hiero.*/target/jacoco.exec"/></data>
+                                </coverage-report>
+                                <sequential if:set="tck.present">
+                                    <coverage-report title="Hiero SDK: TCK" dir="tck">
+                                        <data><file file="${tck.exec}"/></data>
+                                    </coverage-report>
+                                    <coverage-report title="Hiero SDK: unit tests and TCK" dir="all">
+                                        <data>
+                                            <fileset dir="${impl}" includes="org.hiero.*/target/jacoco.exec"/>
+                                            <file file="${tck.exec}"/>
+                                        </data>
+                                    </coverage-report>
+                                </sequential>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- with the TCK run: after tck-run, so that the TCK's data is there -->
+        <profile>
+            <id>tck</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.hiero.sdk</groupId>
+                    <artifactId>hiero-sdk-tck-run</artifactId>
+                    <version>${project.version}</version>
+                    <type>pom</type>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+</project>
