@@ -150,7 +150,8 @@ The `TransactionId` cannot be set by the caller.
 
 ```
 namespace consensusnode.transactions
-requires {AccountId, TransactionId} from ledger
+requires {AccountId, ContractId, TransactionId} from ledger
+requires {EvmAddress} from evm
 requires {NativeToken, ExchangeRate} from nativeToken
 requires {Authority} from authority
 requires {Account, HieroClient, NodeSignature, Submittable, TransactionSigner} from consensusnode.client
@@ -287,6 +288,47 @@ Record<$$Receipt extends Receipt> {
   // contract-spawned child — the consensusTimestamp of the parent that spawned it; absent for an
   // ordinary top-level transaction. This is the link from a child record back to its parent.
   @@immutable @@nullable parentConsensusTimestamp: zonedDateTime
+
+  // The result of the contract execution of the transaction: of a contract creation, a contract call or an Ethereum
+  // transaction, and of the child transactions of a contract call. Absent for every other transaction.
+  @@immutable @@nullable contractResult: ContractFunctionResult
+}
+
+// The result of executing a contract: what the function or constructor returned, the gas it used and the logs it
+// emitted. The result and the logs are encoded in the contract ABI; decode them with `AbiFunction.decodeResult` and
+// `AbiEvent.decodeLog` of the namespace `evm`.
+@@finalType
+ContractFunctionResult {
+  @@immutable contractId: ContractId                          // the contract that was called or created
+  @@immutable @@nullable evmAddress: EvmAddress               // the EVM address of a created contract; absent for a call
+  @@immutable result: bytes                                    // the data the function returned, ABI-encoded
+  @@immutable @@nullable errorMessage: string                  // why the execution failed or reverted; absent on success
+  @@immutable bloom: bytes                                     // the 256-byte bloom filter of all logs
+  @@immutable gasUsed: uint64                                  // the gas the execution used
+  @@immutable gas: int64                                       // the gas the execution was allowed to use
+  @@immutable amount: NativeToken<ANY, ANY>                    // the amount transferred to the contract
+  @@immutable callData: bytes                                  // the call data: the selector and the ABI-encoded arguments
+  @@immutable @@nullable senderId: AccountId                   // the account that sent the call; absent if it is the payer
+  @@immutable @@default([]) logs: list<ContractLog>            // the logs the execution emitted, in their order
+  @@immutable @@default([]) contractNonces: list<ContractNonce> // the nonces of the contracts the execution changed
+  @@immutable @@nullable signerNonce: int64                    // the nonce of the signer of an Ethereum transaction
+}
+
+// A log emitted by a contract during an execution (an event in Solidity). Decode it with `AbiEvent.decodeLog(topics,
+// data)`.
+@@finalType
+ContractLog {
+  @@immutable contractId: ContractId                          // the contract that emitted the log
+  @@immutable bloom: bytes                                     // the 256-byte bloom filter of the log
+  @@immutable @@default([]) topics: list<bytes>                // the topics, 32 bytes each; the first is the event's topic unless it is anonymous
+  @@immutable data: bytes                                      // the non-indexed parameters, ABI-encoded
+}
+
+// The nonce of a contract after an execution. The nonce counts the contracts the contract created.
+@@finalType
+ContractNonce {
+  @@immutable contractId: ContractId
+  @@immutable nonce: int64
 }
 ```
 

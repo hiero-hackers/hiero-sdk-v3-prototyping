@@ -45,13 +45,22 @@ Open: chunked-append model (per-chunk receipts vs. single-receipt facade) — tr
 
 ### 1.4 Smart contract service
 
-`ContractCreate`, `ContractCreateFlow`, `ContractUpdate`, `ContractExecute`,
-`ContractDelete`, `EthereumTransaction`, `EthereumFlow` — **all :x:** (only the privileged `SystemDelete` /
-`SystemUndelete` of a contract exists, in the admin client). The ABI that v2 spreads over
-`ContractFunctionParameters` and the getters of `ContractFunctionResult` is :white_check_mark: specified on its own in
-[`evm.md`](../spec/base/evm.md) (`AbiType`, `AbiValue`, `AbiFunction`, `AbiEvent`;
-[ADR-0015](adr/0015-evm-generic-types-in-a-namespace-without-imports.md)); `ContractFunctionResult` itself (gas,
-logs, revert data) is still missing. The contract queries are listed in §1.8. This is the largest gap to v2.
+`ContractCreate`, `ContractExecute`, `ContractUpdate`, `ContractDelete` and `EthereumTransaction` — :white_check_mark:
+specified in [`transactions-contracts.md`](../spec/consensus-node-client/transactions-contracts.md). Call data and
+constructor arguments are `bytes` produced with the ABI types of [`evm.md`](../spec/base/evm.md) (`AbiFunction`,
+`AbiTuple`; [ADR-0015](adr/0015-evm-generic-types-in-a-namespace-without-imports.md)). The result of an execution
+(`ContractFunctionResult` with `ContractLog` and `ContractNonce`) is a nullable attribute `contractResult` of the base
+`Record` in [`transactions.md`](../spec/consensus-node-client/transactions.md), as in HAPI's `TransactionRecord`.
+Not yet implemented in `sdk-java/impl`.
+
+Still open:
+
+- `ContractCreateFlow` (upload the bytecode to a file, create, delete the file) and `EthereumFlow` (move call data
+  that is too large into a file) — :x:. Candidates for `enterprise.service.contract` rather than `consensusnode.*`.
+- The hooks of HIP-1195 on `ContractCreate` / `ContractUpdate` — :x: (see §1.7).
+- `TransactionRecord.ethereum_hash` of an `EthereumTransaction` — :x:, a type-specific record attribute (§3.5).
+
+The contract queries are listed in §1.8.
 
 ### 1.5 Topic / HCS
 
@@ -83,7 +92,7 @@ Still missing: `customFeeLimits` (HIP-991) — :x: blocked on the write-side cus
   file's *Questions & Comments*.
 - Hiero Hooks (HIP-1195): `HookStoreTransaction`, `EvmHook`, `EvmHookCall`,
   `HookCreationDetails`, ... — :x:. Hooks also reach into existing transactions: v2 has hook-creation details on
-  `AccountCreate` / `AccountUpdate` (and `ContractCreate` / `ContractUpdate`, §1.4) and `HookCall`s on the transfers
+  `AccountCreate` / `AccountUpdate` (and `ContractCreate` / `ContractUpdate`, §1.4, still without them) and `HookCall`s on the transfers
   of `TransferTransaction`; none of them is in the V3 specs yet.
 
 ### 1.8 Queries (consensus-node-side)
@@ -341,7 +350,7 @@ cleanly.
 | `totalSupply` | `TokenMint`, `TokenBurn`, `TokenWipe` | `TokenMintReceipt` :white_check_mark: / `TokenBurnReceipt` :white_check_mark: ([`transactions-tokens.md`](../spec/consensus-node-client/transactions-tokens.md)); add to `TokenWipeReceipt` when it lands |
 | `serials` | `TokenMint` (NFT only) | `TokenMintReceipt` :white_check_mark: |
 | `scheduleId` (+ `scheduledTransactionId`) | `ScheduleCreate` | `ScheduleCreateReceipt` :white_check_mark: ([`transactions-schedule.md`](../spec/consensus-node-client/transactions-schedule.md)); `scheduledTransactionId` also on `ScheduleSignReceipt` |
-| `evmAddress` | `AccountCreate` (alias / auto-create path) **and** `ContractCreate` | `AccountCreateReceipt` (nullable — only populated on the alias path) **and** `ContractCreateReceipt` (file pending — §1.4) |
+| `evmAddress` | `AccountCreate` (alias / auto-create path) **and** `ContractCreate` | `AccountCreateReceipt` (nullable — only populated on the alias path); for a contract the EVM address is not in the receipt but in the record (`ContractFunctionResult.evmAddress`, :white_check_mark:) |
 | `prngBytes` **xor** `prngNumber` | `UtilPrng` (HIP-351) — one of the two depending on the `range` parameter | `PrngReceipt` :white_check_mark:, modelled as `@@oneOf(prngNumber, prngBytes)` ([`transactions-utility.md`](../spec/consensus-node-client/transactions-utility.md)) |
 
 These seven fields are routine: each rides on the existing
@@ -359,7 +368,7 @@ receipts, and `prngBytes` / `prngNumber` on `PrngReceipt` are already in.
 | `assessedCustomFees` | any transaction touching tokens-with-custom-fees — typically `TransferTransaction`, `TokenAirdrop` | base `Record<$$Receipt>` as `@@default([]) list<AssessedCustomFee>`; depends on the write-side `CustomFee` hierarchy in §3.3 |
 | `automaticTokenAssociations` | any transaction whose execution auto-associates an account (`maxAutomaticTokenAssociations > 0`, first inbound transfer) | base `Record<$$Receipt>` as `@@default([]) list<TokenAssociation>` |
 | `paidStakingRewards` | any transaction whose execution triggers a staking-reward payout to a participating account | base `Record<$$Receipt>` as `@@default([]) list<AccountAmount>` |
-| `signerNonce` | `EthereumTransaction` only | typed `EthereumTransactionRecord` — not on the base |
+| `signerNonce` | `EthereumTransaction` only | :white_check_mark: `ContractFunctionResult.signerNonce` (where HAPI has it too); `ethereum_hash` is still open |
 | `pendingAirdropRecords` | `TokenAirdrop` only (HIP-904), when the recipient is not auto-associated | typed `TokenAirdropRecord` — not on the base |
 
 The first three are **genuinely cross-cutting**: they can appear on most

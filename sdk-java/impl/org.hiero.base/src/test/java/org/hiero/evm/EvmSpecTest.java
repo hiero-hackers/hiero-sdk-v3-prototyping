@@ -404,6 +404,27 @@ class EvmSpecTest {
         }
     }
 
+    /// `evm/a-function-and-an-event-built-from-their-types-equal-the-parsed-ones`
+    ///
+    /// Source: the Solidity documentation, "Contract ABI Specification", section "Examples" (baz(uint32,bool) with the
+    /// selector cdcd77c0); this spec (a function and an event are values of their name and types, parse only reads them
+    /// from a signature).
+    @Test
+    @DisplayName("a function and an event built from their types equal the parsed ones")
+    @Tag("testId:evm/a-function-and-an-event-built-from-their-types-equal-the-parsed-ones")
+    void aFunctionAndAnEventBuiltFromTheirTypesEqualTheParsedOnes() {
+        // when
+        final AbiFunction baz = new AbiFunction("baz", List.of(new AbiUintType(32), new AbiBoolType()), List.of(new AbiBoolType()));
+        final AbiEvent bazEvent = new AbiEvent("baz", List.of(new AbiEventParameter(new AbiUintType(32), true), new AbiEventParameter(new AbiBoolType(), false)), false);
+
+        // then
+        assertEquals(AbiFunction.parse("baz(uint32,bool) returns (bool)"), baz);
+        assertEquals("baz(uint32,bool)", baz.signature());
+        assertEquals(hex("cdcd77c0"), baz.selector());
+        assertEquals(AbiEvent.parse("baz(uint32 indexed,bool)"), bazEvent);
+        assertEquals(hex("cdcd77c0"), slice(bazEvent.topic(), 0L, 4L));
+    }
+
     /// `evm/the-topic-of-an-event-is-the-hash-whose-first-4-bytes-are-the-selector`
     ///
     /// Source: the Solidity documentation, "Contract ABI Specification", sections "Function Selector" and "Events" (the

@@ -714,6 +714,24 @@ test "a width that the ABI does not have is rejected" {
     }
 }
 
+// Source: the Solidity documentation, "Contract ABI Specification", section "Examples" (baz(uint32,bool) with the
+// selector cdcd77c0); this spec (a function and an event are values of their name and types, parse only reads them
+// from a signature).
+@@testId("a-function-and-an-event-built-from-their-types-equal-the-parsed-ones")
+test "a function and an event built from their types equal the parsed ones" {
+    // when
+    let baz = AbiFunction{name: "baz", inputs: [AbiUintType{bits: 32}, AbiBoolType{}], outputs: [AbiBoolType{}]}
+    let bazEvent = AbiEvent{name: "baz", parameters: [AbiEventParameter{abiType: AbiUintType{bits: 32}, indexed: true},
+            AbiEventParameter{abiType: AbiBoolType{}}]}
+
+    // then
+    assertEquals(expected: AbiFunction.parse(signature: "baz(uint32,bool) returns (bool)"), actual: baz)
+    assertEquals(expected: "baz(uint32,bool)", actual: baz.signature())
+    assertEquals(expected: hex(text: "cdcd77c0"), actual: baz.selector())
+    assertEquals(expected: AbiEvent.parse(signature: "baz(uint32 indexed,bool)"), actual: bazEvent)
+    assertEquals(expected: hex(text: "cdcd77c0"), actual: slice(value: bazEvent.topic(), start: 0, end: 4))
+}
+
 // Source: the Solidity documentation, "Contract ABI Specification", sections "Function Selector" and "Events" (the
 // selector is the first 4 bytes of the Keccak-256 hash of the signature, the topic of an event the whole hash); the
 // selector of baz(uint32,bool) of section "Examples".
