@@ -2,7 +2,7 @@ import { AuthorityList, of as authorityOf, PublicKeyAuthority, type Authority } 
 import { EvmAddress } from "@hiero/base/evm";
 import { Hbar, HbarUnit } from "@hiero/base/hedera";
 import { createPrivateKey, createPublicKey, KeyFormat, type PrivateKey, type PublicKey } from "@hiero/base/keys";
-import { AccountId, Address, type ContractId, IpAddress, TransactionId } from "@hiero/base/ledger";
+import { AccountId, Address, ContractId, IpAddress, TransactionId } from "@hiero/base/ledger";
 import type { ExchangeRate, NativeToken, NativeTokenUnit } from "@hiero/base/nativeToken";
 import { TokenSupplyType, TokenType } from "@hiero/base/token";
 import type { UntypedReceipt } from "@hiero/consensus-node-client/consensusnode/queries/receipts";
@@ -54,7 +54,14 @@ export class TsConverters implements Converters {
     }
 
     accountId(json: unknown): AccountId {
-        return AccountId.fromString(this.string(json));
+        const text = this.string(json);
+        const hex = text.startsWith("0x") ? text.substring(2) : text;
+        if (/^[0-9a-fA-F]{40}$/.test(hex)) {
+            // the TCK also sends the EVM address of an account alone (an alias of an account not created yet), as
+            // the V2 SDKs accept it
+            return AccountId.fromEvmAddress(0n, 0n, EvmAddress.fromString(hex));
+        }
+        return AccountId.fromString(text);
     }
 
     evmAccountId(json: unknown): AccountId {
@@ -254,6 +261,10 @@ export class TsConverters implements Converters {
 
     transactionId(json: unknown): TransactionId {
         return TransactionId.fromString(this.string(json));
+    }
+
+    contractId(json: unknown): ContractId {
+        return ContractId.fromString(this.string(json));
     }
 
     contractIdJson(value: ContractId): unknown {

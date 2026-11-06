@@ -4,10 +4,10 @@ How the V3 API is implemented today, how to build and verify it, and what cost t
 executed by an agent.
 
 - **Java:** `sdk-java/impl` is a **copy of the generated Java project** that is maintained by hand. It implements the
-  whole API of the specs: all 386 tests of the specs and all 2,787 contract tests pass against it, no method is a stub
+  whole API of the specs: all 441 tests of the specs and all 3,513 contract tests pass against it, no method is a stub
   any more, and `metalang check` reports that it provides the API. What the specs cannot express is recorded in their
-  `## Questions & Comments` (and implemented as a documented workaround where one exists). The TCK binds 48 of its
-  65 methods (section 3); the implementation has not been run against Solo yet.
+  `## Questions & Comments` (and implemented as a documented workaround where one exists). The TCK binds 54 of its
+  64 methods (section 3); the implementation has not been run against Solo yet.
 - **TypeScript:** only the first spike, which was written into the generated code in place and exists in git
   history only (section 6).
 
@@ -112,7 +112,7 @@ In `sdk-java` (JDK 25, `sdk env`):
 
 **Done when:**
 
-- every test passes: the 386 tests of the specs (`<Spec>SpecTest`) and the 2,787 contract tests (`<Type>Test`).
+- every test passes: the 441 tests of the specs (`<Spec>SpecTest`) and the 3,513 contract tests (`<Type>Test`).
   None of them needs a network. A failed test does not stop the build: while `impl/test-report` is part of it (the
   default), the profile `test-report` sets `maven.test.failure.ignore`, every module is tested, and `impl/test-report`
   fails the build at the end, after the page is rendered (`-DtestReport.failOnFailures=false`: it does not;

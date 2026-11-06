@@ -347,6 +347,14 @@ export interface Converters {
     transactionIdJson(value: TransactionId): unknown;
 
     /**
+     * `contractId`: A contract ID (`"0.0.1234"`). JSON to value.
+     *
+     * @param json - the JSON value (string, number or boolean)
+     * @returns the value
+     */
+    contractId(json: unknown): ContractId;
+
+    /**
      * `contractId`: A contract ID (`"0.0.1234"`). Value to JSON.
      *
      * @param value - the value

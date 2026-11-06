@@ -28,6 +28,7 @@ public final class TckMain {
         final CommonBindings common = new CommonBindings(runtime);
         final Requests requests = new Requests(runtime);
         final Map<String, Handler> methods = new LinkedHashMap<>();
+        new ContractServiceBindings(runtime, common, requests).register(methods);
         new CryptoServiceBindings(runtime, common, requests).register(methods);
         new FileServiceBindings(runtime, common, requests).register(methods);
         new NodeServiceBindings(runtime, common, requests).register(methods);

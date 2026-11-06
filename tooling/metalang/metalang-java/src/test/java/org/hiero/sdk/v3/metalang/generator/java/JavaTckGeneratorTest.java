@@ -249,6 +249,7 @@ class JavaTckGeneratorTest {
                     "server/pom.xml",
                     "server/src/main/java/org/hiero/tck/server/BindingSupport.java",
                     "server/src/main/java/org/hiero/tck/server/CommonBindings.java",
+                    "server/src/main/java/org/hiero/tck/server/ContractServiceBindings.java",
                     "server/src/main/java/org/hiero/tck/server/CryptoServiceBindings.java",
                     "server/src/main/java/org/hiero/tck/server/FileServiceBindings.java",
                     "server/src/main/java/org/hiero/tck/server/NodeServiceBindings.java",

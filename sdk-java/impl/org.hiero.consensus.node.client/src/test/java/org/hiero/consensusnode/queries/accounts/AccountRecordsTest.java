@@ -88,7 +88,7 @@ class AccountRecordsTest {
             public boolean isExpired() {
                 throw new UnsupportedOperationException("test double");
             }
-        }), null));
+        }), null, null));
     }
 
     private static AccountRecords create() {

@@ -25,8 +25,8 @@ public final class Records {
                 Protobuf.currentRate(receipt.getExchangeRate()), Protobuf.nextRate(receipt.getExchangeRate()));
     }
 
-    /// Builds the record of a transaction: the transaction id and the timestamps from the record message, the typed
-    /// receipt from the support of the transaction type.
+    /// Builds the record of a transaction: the transaction id, the timestamps and the result of a contract execution
+    /// from the record message, the typed receipt from the support of the transaction type.
     ///
     /// @param support the support of the transaction type
     /// @param record  the record message
@@ -38,6 +38,6 @@ public final class Records {
         final R receipt = support.createReceipt(header(id, record.getReceipt()), record);
         return new Record<>(id, Protobuf.fromProto(record.getConsensusTimestamp()), receipt,
                 record.hasParentConsensusTimestamp() ? Protobuf.fromProto(record.getParentConsensusTimestamp())
-                        : null);
+                        : null, ContractKinds.contractResult(record));
     }
 }

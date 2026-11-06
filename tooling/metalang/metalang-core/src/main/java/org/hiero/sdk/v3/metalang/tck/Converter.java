@@ -56,7 +56,7 @@ public enum Converter {
             "consensusnode.queries.tokens.TokenNftInfo"),
     TRANSACTION_ID("transactionId", true, true, "A transaction ID (`\"0.0.1234@1700000000.000000000\"`).",
             "ledger.TransactionId"),
-    CONTRACT_ID("contractId", false, true, "A contract ID (`\"0.0.1234\"`).", "ledger.ContractId"),
+    CONTRACT_ID("contractId", true, true, "A contract ID (`\"0.0.1234\"`).", "ledger.ContractId"),
     EXCHANGE_RATE("exchangeRate", false, true, "An exchange rate as JSON object: `hbars` and `cents` as JSON numbers "
             + "(one hbar and its price in US cents), `expirationTime` as ISO-8601 string.", "nativeToken.ExchangeRate"),
     RECEIPT("receipt", false, true, "An untyped receipt as JSON object with the attributes of the result of "

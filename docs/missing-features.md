@@ -51,7 +51,7 @@ constructor arguments are `bytes` produced with the ABI types of [`evm.md`](../s
 `AbiTuple`; [ADR-0015](adr/0015-evm-generic-types-in-a-namespace-without-imports.md)). The result of an execution
 (`ContractFunctionResult` with `ContractLog` and `ContractNonce`) is a nullable attribute `contractResult` of the base
 `Record` in [`transactions.md`](../spec/consensus-node-client/transactions.md), as in HAPI's `TransactionRecord`.
-Not yet implemented in `sdk-java/impl`.
+Implemented in `sdk-java/impl` (`ContractKinds`) and bound to the TCK (`tooling/tck/bindings/contract-service.md`).
 
 Still open:
 

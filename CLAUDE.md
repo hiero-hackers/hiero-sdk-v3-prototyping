@@ -300,11 +300,11 @@ git history (`3b5305d~1`, introduced in `3caad63 "Durchstich :)"`), and the Type
 `impl` implements the **whole API**: every transaction type (one `TransactionKind` per type in an area class such as
 `TokenKinds`, all sharing `Packing`; the admin client registers its types as `TransactionSupport` via the
 `ServiceLoader`), every query (`QueryKind` + `Querying`, with query payment), the mirror node REST client, the base
-utilities and the enterprise services. The specs have 386 spec tests (45 spec files, 88 of them check that an invalid
-value is rejected); **all 386 and all 2,787 contract tests pass** against `impl`, and `metalang check` reports that it
+utilities and the enterprise services. The specs have 441 spec tests (51 spec files, 122 of them check that an invalid
+value is rejected); **all 441 and all 3,513 contract tests pass** against `impl`, and `metalang check` reports that it
 provides the API. What the specs cannot express is recorded in their `## Questions & Comments`. It has the same
 Maven coordinates as `generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The
-TCK binds 49 of its 65 methods (`tooling/tck/bindings`); `./mvnw -f impl verify -Ptck` (in `sdk-java`) builds the TCK server in the same reactor and runs it after
+TCK binds 54 of its 64 methods (`tooling/tck/bindings`); `./mvnw -f impl verify -Ptck` (in `sdk-java`) builds the TCK server in the same reactor and runs it after
 the build against a local Solo network. The last module of every build of `impl`, `impl/test-report`, renders the
 results of all tests (with the profile also the TCK) as `sdk-java/impl/target/test-report/index.html`. [`docs/rebuilding-the-spike.md`](docs/rebuilding-the-spike.md) is the
 runbook: how the copy was made, file inventory, filled stubs, build and verify, the TCK, and the traps.

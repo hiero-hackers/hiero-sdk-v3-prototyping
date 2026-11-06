@@ -148,7 +148,7 @@ public final class AccountQueries {
                 new UntypedReceipt(id, HapiTransactionStatus.ofCode(receipt.getStatusValue()),
                         Protobuf.currentRate(receipt.getExchangeRate()), Protobuf.nextRate(receipt.getExchangeRate())),
                 record.hasParentConsensusTimestamp() ? Protobuf.fromProto(record.getParentConsensusTimestamp())
-                        : null);
+                        : null, ContractKinds.contractResult(record));
     }
 
     /// The receipt of a record whose transaction type is unknown: only the attributes every receipt has.

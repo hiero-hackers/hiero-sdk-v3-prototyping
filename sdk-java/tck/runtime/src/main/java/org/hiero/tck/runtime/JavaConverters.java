@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import org.hiero.authority.Authority;
 import org.hiero.authority.AuthorityFactory;
 import org.hiero.authority.AuthorityList;
@@ -45,6 +46,9 @@ import org.jspecify.annotations.Nullable;
  * interface is generated from the catalogue, so a converter that is added there must be implemented here.
  */
 final class JavaConverters implements Converters {
+
+    /// 40 hex digits: an EVM address without `0x`.
+    private static final Pattern EVM_ADDRESS = Pattern.compile("[0-9a-fA-F]{40}");
 
     // --- inbound -------------------------------------------------------------------------------------
 
@@ -85,7 +89,14 @@ final class JavaConverters implements Converters {
 
     @Override
     public AccountId accountId(final Object json) {
-        return AccountId.fromString(string(json));
+        final String text = string(json);
+        final String hex = text.startsWith("0x") ? text.substring(2) : text;
+        if (EVM_ADDRESS.matcher(hex).matches()) {
+            // the TCK also sends the EVM address of an account alone (an alias of an account not created yet), as
+            // the V2 SDKs accept it
+            return AccountId.fromEvmAddress(0, 0, EvmAddress.fromString(hex));
+        }
+        return AccountId.fromString(text);
     }
 
     @Override
@@ -305,6 +316,11 @@ final class JavaConverters implements Converters {
     @Override
     public TransactionId transactionId(final Object json) {
         return TransactionId.fromString(string(json));
+    }
+
+    @Override
+    public ContractId contractId(final Object json) {
+        return ContractId.fromString(string(json));
     }
 
     @Override

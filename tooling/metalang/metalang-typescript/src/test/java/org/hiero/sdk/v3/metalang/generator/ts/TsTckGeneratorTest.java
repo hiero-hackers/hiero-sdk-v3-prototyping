@@ -50,6 +50,7 @@ class TsTckGeneratorTest {
                 "server/package.json",
                 "server/src/BindingSupport.ts",
                 "server/src/CommonBindings.ts",
+                "server/src/ContractServiceBindings.ts",
                 "server/src/CryptoServiceBindings.ts",
                 "server/src/FileServiceBindings.ts",
                 "server/src/NodeServiceBindings.ts",

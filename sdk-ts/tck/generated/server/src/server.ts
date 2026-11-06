@@ -3,6 +3,7 @@
 import type { Handler, TckRuntimeModule, TckServer } from "@hiero/tck-contract";
 import { CommonBindings } from "./CommonBindings.js";
 import { Requests } from "./Requests.js";
+import { ContractServiceBindings } from "./ContractServiceBindings.js";
 import { CryptoServiceBindings } from "./CryptoServiceBindings.js";
 import { FileServiceBindings } from "./FileServiceBindings.js";
 import { NodeServiceBindings } from "./NodeServiceBindings.js";
@@ -25,6 +26,7 @@ export async function createServer(): Promise<TckServer> {
     const common = new CommonBindings(runtime);
     const requests = new Requests(runtime);
     const methods = new Map<string, Handler>();
+    new ContractServiceBindings(runtime, common, requests).register(methods);
     new CryptoServiceBindings(runtime, common, requests).register(methods);
     new FileServiceBindings(runtime, common, requests).register(methods);
     new NodeServiceBindings(runtime, common, requests).register(methods);

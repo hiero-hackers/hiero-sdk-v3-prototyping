@@ -350,6 +350,17 @@ and the binding accepts both.
   tests pass; test 4 expects an error for an address-book file that does not exist, for which the REST API answers
   with an empty list, and test 2 times out in the TCK's own check with the V2 SDK. The tests that compare with the V2
   SDK need the gRPC API of the Mirror Node, which Solo does not forward (see `tooling/tck/solo.env`).
+  Since the contract transactions are specified, `createContract`, `executeContract`, `updateContract`,
+  `deleteContract` and `createEthereumTransaction` are bound as well (`contract-service.md`; 54 bound methods, 10
+  unbound, no finding); the contract queries stay unbound until their API is specified. For this, the converter
+  `contractId` converts in both directions, and `accountId` also accepts a bare EVM address (40 hex digits), as the
+  TCK sends the alias of the Ethereum account that way. Against a local Solo network 199 of the 229 tests of the five
+  test files pass, 21 fail and 9 are skipped: 5 fail because bytecode of more than 4096 bytes cannot be appended to a
+  file yet (chunking; for the same reason three `before each` hooks fail and three `executeContract` suites do not
+  run), 14 because the SDK rejects a value before
+  sending it where the TCK expects the status of the network (`@@oneOf`, `@@oneOrNoneOf`, `@@maxBytes`, a missing
+  `contractId`, empty `ethereumData`, `permanentRemoval: true`), and 2 because the Java runtime cannot convert an
+  expiration time of `int64` max or min seconds (see the gaps in `contract-service.md`).
 - **No hand-written handler code:** all five methods, including `transferCrypto` with its three lists of transfers
   and `getAccountInfo` with the nested `stakingInfo`, are generated from the bindings. The generated code builds the
   request with the constructor of the type (missing values become `null` or the `@@default` of the attribute,

@@ -14,6 +14,7 @@ import org.jspecify.annotations.NullMarked;
 /// - `org.hiero.consensusnode.transactions`
 /// - `org.hiero.consensusnode.transactions.accounts`
 /// - `org.hiero.consensusnode.transactions.batch`
+/// - `org.hiero.consensusnode.transactions.contracts`
 /// - `org.hiero.consensusnode.transactions.files`
 /// - `org.hiero.consensusnode.transactions.schedule`
 /// - `org.hiero.consensusnode.transactions.spi`
@@ -43,6 +44,7 @@ module org.hiero.consensus.node.client {
     exports org.hiero.consensusnode.transactions;
     exports org.hiero.consensusnode.transactions.accounts;
     exports org.hiero.consensusnode.transactions.batch;
+    exports org.hiero.consensusnode.transactions.contracts;
     exports org.hiero.consensusnode.transactions.files;
     exports org.hiero.consensusnode.transactions.schedule;
     exports org.hiero.consensusnode.transactions.spi;

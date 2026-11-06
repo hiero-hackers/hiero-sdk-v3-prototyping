@@ -271,6 +271,12 @@ public interface Converters {
     /// @return the JSON value
     Object transactionIdJson(TransactionId value);
 
+    /// `contractId`: A contract ID (`"0.0.1234"`). JSON to value.
+    ///
+    /// @param json the JSON value (string, number or boolean)
+    /// @return the value
+    ContractId contractId(Object json);
+
     /// `contractId`: A contract ID (`"0.0.1234"`). Value to JSON.
     ///
     /// @param value the value

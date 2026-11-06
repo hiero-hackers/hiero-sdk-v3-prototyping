@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
 public final class TransactionKinds {
 
     private static final List<TransactionKind<?, ?>> BUILT_IN = Stream.of(AccountKinds.ALL, FileKinds.ALL,
-            TopicKinds.ALL, ScheduleKinds.ALL, TokenKinds.ALL, UtilityKinds.ALL).flatMap(List::stream).toList();
+            TopicKinds.ALL, ScheduleKinds.ALL, TokenKinds.ALL, UtilityKinds.ALL, ContractKinds.ALL).flatMap(List::stream).toList();
 
     private static volatile @Nullable List<TransactionKind<?, ?>> all;
 
