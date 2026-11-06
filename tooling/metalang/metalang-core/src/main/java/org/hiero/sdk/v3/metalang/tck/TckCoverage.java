@@ -168,6 +168,17 @@ public final class TckCoverage {
                     }
                     case Binding.ResultList list -> outputs.add(list.name().first());
                     case Binding.Take take -> parameter(take.path(), top, names).ifPresent(p -> input(Set.of(p)));
+                    case Binding.Chunk chunk -> {
+                        for (final List<Binding.Source> sources : List.of(chunk.size(), chunk.max())) {
+                            final Set<String> parameters = new LinkedHashSet<>();
+                            sources.forEach(s -> {
+                                if (s.path() != null) {
+                                    parameter(s.path(), top, names).ifPresent(parameters::add);
+                                }
+                            });
+                            input(parameters);
+                        }
+                    }
                     case Binding.Unsupported unsupported -> {
                         if (unsupported.result()) {
                             unsupportedOutputs.add(unsupported.name());

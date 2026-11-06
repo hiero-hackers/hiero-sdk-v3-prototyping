@@ -194,6 +194,12 @@ public final class JavaTckGenerator {
         return java.append(INDENT).append("}\n\n").toString();
     }
 
+    /** The {@code chunk} of a binding, {@code null} if it sends one transaction. */
+    private static TckBindings.@Nullable Chunk chunk(final TckBindings.Resolved binding) {
+        return binding.members().stream().filter(TckBindings.Chunk.class::isInstance)
+                .map(TckBindings.Chunk.class::cast).findFirst().orElse(null);
+    }
+
     /** The name of the builder of a variant (1-based), or of the method ({@code 0}). */
     private static String builder(final String method, final int variant) {
         return "build" + Character.toUpperCase(method.charAt(0)) + method.substring(1)
@@ -422,7 +428,34 @@ public final class JavaTckGenerator {
         body.append(indent).append("final var ").append(variable).append(" = ").append(builder(name, variant))
                 .append("(params);\n");
         final String value = transaction ? "receipt" : "response";
-        if (transaction) {
+        final TckBindings.Chunk chunk = chunk(binding);
+        if (transaction && chunk != null) {
+            // one transaction per chunk, one after the other; the results are those of the last one
+            final String builder = builder(name, variant);
+            final TckBindings.Value contents = binding.members().stream()
+                    .filter(TckBindings.Value.class::isInstance).map(TckBindings.Value.class::cast)
+                    .filter(v -> v.field().name().equals(chunk.field().name())).findFirst().orElseThrow();
+            imports.use("java.util", "List");
+            body.setLength(0);
+            body.append(indent).append("final Map<String, Object> commonParams = runtime.object(params, ")
+                    .append(JavaLiterals.quote(TckSpecifications.COMMON)).append(");\n")
+                    .append(indent).append("final var chunks = BindingSupport.chunks(")
+                    .append(lookup(contents, "params", null, imports)).append(", ")
+                    .append(lookup(new TckBindings.Value(chunk.field(), chunk.size(), TckBindings.Collection.NONE),
+                            "params", null, imports)).append(", ")
+                    .append(lookup(new TckBindings.Value(chunk.field(), chunk.max(), TckBindings.Collection.NONE),
+                            "params", null, imports)).append(");\n")
+                    .append(indent).append("var transaction = ").append(builder).append("(params, chunks.getFirst());\n")
+                    .append(indent).append("common.apply(transaction, commonParams);\n")
+                    .append(indent).append("var receipt = runtime.transaction(session, transaction, commonParams);\n")
+                    .append(indent).append("for (int i = 1; i < chunks.size(); i++) {\n")
+                    .append(indent).append(INDENT).append("transaction = ").append(builder)
+                    .append("(params, chunks.get(i));\n")
+                    .append(indent).append(INDENT).append("common.apply(transaction, commonParams);\n")
+                    .append(indent).append(INDENT)
+                    .append("receipt = runtime.transaction(session, transaction, commonParams);\n")
+                    .append(indent).append("}\n");
+        } else if (transaction) {
             body.append(indent).append("final Map<String, Object> commonParams = runtime.object(params, ")
                     .append(JavaLiterals.quote(TckSpecifications.COMMON)).append(");\n")
                     .append(indent).append("common.apply(transaction, commonParams);\n")
@@ -444,8 +477,9 @@ public final class JavaTckGenerator {
         final String indent = INDENT + INDENT;
         final StringBuilder body = new StringBuilder();
         rejectUnsupported(binding.members(), "params", body, indent);
+        final TckBindings.Chunk chunk = chunk(binding);
         final String request = construct(binding.type(), binding.members(), "params", null, 1, body, indent,
-                imports, context);
+                imports, context, chunk);
         final String type = imports.use(JavaNames.packageName(binding.type().name().namespace()),
                 binding.type().name().name());
         body.append(indent).append("final ").append(type).append(" request = ").append(request).append(";\n");
@@ -462,10 +496,21 @@ public final class JavaTckGenerator {
             }
         }
         body.append(indent).append("return request;\n");
-        return INDENT + "/// Builds the request of `" + name + "`" + (variant > 0 ? " (variant " + variant + ")" : "")
-                + " without sending it.\n"
+        final String documentation = INDENT + "/// Builds the request of `" + name + "`"
+                + (variant > 0 ? " (variant " + variant + ")" : "") + " without sending it.\n";
+        if (chunk == null) {
+            return documentation + INDENT + type + " " + builder(name, variant)
+                    + "(final Map<String, Object> params) {\n" + body + INDENT + "}\n";
+        }
+        imports.use(JavaTypes.JSPECIFY, "Nullable");
+        return documentation
                 + INDENT + type + " " + builder(name, variant) + "(final Map<String, Object> params) {\n"
-                + body + INDENT + "}\n";
+                + indent + "return " + builder(name, variant) + "(params, null);\n"
+                + INDENT + "}\n\n"
+                + INDENT + "/// Builds the request of `" + name + "` with `" + chunk.field().name()
+                + "` set to one chunk; `null`: the whole value.\n"
+                + INDENT + type + " " + builder(name, variant)
+                + "(final Map<String, Object> params, final byte @Nullable [] chunk) {\n" + body + INDENT + "}\n";
     }
 
     /** The JSON parameters the API cannot provide are rejected if they are sent. */
@@ -498,6 +543,17 @@ public final class JavaTckGenerator {
                                     final String json, final @Nullable String parent, final int depth,
                                     final StringBuilder body, final String indent, final Imports imports,
                                     final JavaContext context) {
+        return construct(type, members, json, parent, depth, body, indent, imports, context, null);
+    }
+
+    /**
+     * The constructor call of a type; with {@code chunk} the attribute it splits takes the parameter {@code chunk}
+     * of the builder when it is not {@code null}.
+     */
+    private static String construct(final TypeDefinition type, final List<TckBindings.Member> members,
+                                    final String json, final @Nullable String parent, final int depth,
+                                    final StringBuilder body, final String indent, final Imports imports,
+                                    final JavaContext context, final TckBindings.@Nullable Chunk chunk) {
         if (!context.isGenerated(type.name())) {
             throw new IllegalStateException("Type '" + type.name() + "' is not part of the generated Java API");
         }
@@ -512,6 +568,8 @@ public final class JavaTckGenerator {
                 continue;
             }
             arguments.add(switch (member.get()) {
+                case TckBindings.Value value when chunk != null && chunk.field().name().equals(field.name()) ->
+                        "chunk != null ? chunk : " + value(field, value, json, parent, imports, context);
                 case TckBindings.Value value -> value(field, value, json, parent, imports, context);
                 case TckBindings.Elements elements -> elements(field, elements, json, parent, depth, body, indent,
                         imports, context);
@@ -905,6 +963,37 @@ public final class JavaTckGenerator {
             final class BindingSupport {
 
                 private BindingSupport() {
+                }
+
+                /// Splits bytes into chunks of at most `size` bytes, for the transactions of a `chunk` binding. Empty bytes
+                /// are one empty chunk, so that one transaction is still sent; absent bytes are one `null` chunk, with
+                /// which the builder reads the value as without `chunk` (its default, or the error that it is missing).
+                ///
+                /// @param value the bytes, `null` if the JSON parameter is absent
+                /// @param size  the size of a chunk
+                /// @param max   the maximum number of chunks
+                /// @return the chunks
+                /// @throws IllegalArgumentException if the size or the maximum is below 1, or more chunks are needed
+                static List<byte @Nullable []> chunks(final byte @Nullable [] value, final @Nullable Integer size,
+                                                      final @Nullable Integer max) {
+                    if (size == null || size < 1) {
+                        throw new IllegalArgumentException("the size of a chunk must be at least 1, but is " + size);
+                    }
+                    if (max == null || max < 1) {
+                        throw new IllegalArgumentException("the maximum number of chunks must be at least 1, but is " + max);
+                    }
+                    if (value == null) {
+                        return Collections.singletonList(null);
+                    }
+                    final List<byte[]> chunks = new ArrayList<>();
+                    for (int start = 0; start < value.length || chunks.isEmpty(); start += size) {
+                        chunks.add(java.util.Arrays.copyOfRange(value, start, Math.min(value.length, start + size)));
+                    }
+                    if (chunks.size() > max) {
+                        throw new IllegalArgumentException("the contents need " + chunks.size()
+                                + " chunks of " + size + " bytes, but at most " + max + " are allowed");
+                    }
+                    return chunks;
                 }
 
                 /// Converts every element of a JSON list.

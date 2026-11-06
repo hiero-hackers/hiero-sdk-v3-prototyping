@@ -269,6 +269,28 @@ public final class TckBindings {
     }
 
     /**
+     * The splitting of a {@code bytes} attribute of a transaction into chunks, one transaction per chunk.
+     *
+     * @param field the attribute; it is bound by a {@link Value} of the same binding
+     * @param size  the alternative sources of the size of a chunk
+     * @param max   the alternative sources of the maximum number of chunks
+     */
+    public record Chunk(FieldDefinition field, List<Source> size, List<Source> max) implements Member {
+
+        /**
+         * Creates a chunking.
+         *
+         * @param field the attribute
+         * @param size  the size
+         * @param max   the maximum
+         */
+        public Chunk {
+            size = List.copyOf(size);
+            max = List.copyOf(max);
+        }
+    }
+
+    /**
      * The maximum number of items of a paged result, from a JSON parameter.
      *
      * @param path the JSON parameter
@@ -728,8 +750,64 @@ public final class TckBindings {
                 }
                 case Binding.Take take -> error("tck.syntax", "'take' needs a method that returns a page",
                         take.location());
+                case Binding.Chunk chunk -> chunk(chunk, type, kind, scope, members, result);
                 case Binding.Unsupported unsupported -> result.add(new Unsupported(unsupported));
             }
+        }
+        return result;
+    }
+
+    /** The type of the size and the maximum number of chunks. */
+    private static final Type INT32 = new Type.BasicType(BuiltinType.lookup("int32").orElseThrow(), List.of());
+
+    /**
+     * Resolves {@code chunk}: only on the transaction of the binding itself, once, for a {@code bytes} attribute that
+     * the binding assigns, with integer sources for the size and the maximum.
+     */
+    private void chunk(final Binding.Chunk chunk, final TypeDefinition type, final Kind kind, final Scope scope,
+                       final List<Binding.Member> members, final List<Member> result) {
+        if (kind != Kind.TRANSACTION || !scope.top()) {
+            error("tck.syntax", "'chunk' needs the transaction of the binding itself", chunk.location());
+            return;
+        }
+        if (result.stream().anyMatch(Chunk.class::isInstance)) {
+            error("tck.duplicate", "'chunk' is bound twice", chunk.location());
+            return;
+        }
+        final Optional<FieldDefinition> field = type.field(chunk.attribute());
+        if (field.isEmpty()) {
+            error("tck.unknown-attribute", "Type '" + type.name() + "' has no attribute '" + chunk.attribute() + "'",
+                    chunk.location());
+            return;
+        }
+        if (!(field.get().type() instanceof Type.BasicType basic)
+                || basic.builtin().category() != BuiltinType.Category.BYTES) {
+            error("tck.converter", "Attribute '" + chunk.attribute() + "' is no bytes; 'chunk' splits bytes",
+                    chunk.location());
+            return;
+        }
+        if (members.stream().noneMatch(m -> m instanceof Binding.Assignment a
+                && a.attribute().equals(chunk.attribute()))) {
+            error("tck.syntax", "'chunk' splits attribute '" + chunk.attribute() + "', which the binding does not "
+                    + "assign", chunk.location());
+            return;
+        }
+        final List<Source> size = integers(chunk.size(), chunk.location());
+        final List<Source> max = integers(chunk.max(), chunk.location());
+        if (size.size() == chunk.size().size() && max.size() == chunk.max().size()) {
+            result.add(new Chunk(field.get(), size, max));
+        }
+    }
+
+    private List<Source> integers(final List<Binding.Source> sources, final SourceLocation location) {
+        final List<Source> result = new ArrayList<>();
+        for (final Binding.Source source : sources) {
+            if (source.path() != null && source.path().parent()) {
+                error("tck.parent", "'" + source.path() + "' refers to an enclosing element", location);
+                continue;
+            }
+            converter(source.converter(), true, INT32, location)
+                    .ifPresent(c -> result.add(new Source(source.path(), source.literal(), c)));
         }
         return result;
     }

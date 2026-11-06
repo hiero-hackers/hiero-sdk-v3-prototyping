@@ -87,7 +87,7 @@ export class ContractServiceBindings {
             contractId: this.#runtime.required(this.#runtime.value(params, [{ path: "contractId", converter: (json) => this.#convert.contractId(json) }]), "contractId"),
             gas: this.#runtime.required(this.#runtime.or(this.#runtime.value(params, [{ path: "gas", converter: (json) => this.#convert.int64(json) }]), ((json) => this.#convert.int64(json))("0")), "gas | \"0\""),
             payableAmount: this.#runtime.value(params, [{ path: "amount", converter: (json) => this.#convert.tinybar(json) }]),
-            callData: this.#runtime.or(this.#runtime.value(params, [{ path: "parameters", converter: (json) => this.#convert.hex(json) }]), new Uint8Array([]))
+            callData: this.#runtime.or(this.#runtime.value(params, [{ path: "functionParameters", converter: (json) => this.#convert.hex(json) }, { path: "parameters", converter: (json) => this.#convert.hex(json) }]), new Uint8Array([]))
         });
     }
 

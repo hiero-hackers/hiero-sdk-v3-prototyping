@@ -388,8 +388,8 @@ public final class TsTckGenerator {
     }
 
     /** The functions of the generated module {@code BindingSupport}. */
-    private static final List<String> SUPPORT_FUNCTIONS = List.of("elements", "list", "set", "toJson", "values",
-            "withName");
+    private static final List<String> SUPPORT_FUNCTIONS = List.of("chunks", "elements", "list", "set", "toJson",
+            "values", "withName");
 
     /** The private fields the methods use. */
     private static String fields(final String body, final boolean common, final boolean requests) {
@@ -405,6 +405,12 @@ public final class TsTckGenerator {
             java.append(INDENT).append("readonly #requests: Requests;\n");
         }
         return java.append('\n').toString();
+    }
+
+    /** The {@code chunk} of a binding, {@code null} if it sends one transaction. */
+    private static TckBindings.@Nullable Chunk chunk(final TckBindings.Resolved binding) {
+        return binding.members().stream().filter(TckBindings.Chunk.class::isInstance)
+                .map(TckBindings.Chunk.class::cast).findFirst().orElse(null);
     }
 
     /** The name of the builder of a variant (1-based), or of the method ({@code 0}). */
@@ -611,7 +617,34 @@ public final class TsTckGenerator {
         body.append(indent).append("const ").append(variable).append(" = this.").append(builder(name, variant))
                 .append("(params);\n");
         final String value = transaction ? "receipt" : "response";
-        if (transaction) {
+        final TckBindings.Chunk chunk = chunk(binding);
+        if (transaction && chunk != null) {
+            // one transaction per chunk, one after the other; the results are those of the last one
+            final String builder = builder(name, variant);
+            final TckBindings.Value contents = binding.members().stream()
+                    .filter(TckBindings.Value.class::isInstance).map(TckBindings.Value.class::cast)
+                    .filter(v -> v.field().name().equals(chunk.field().name())).findFirst().orElseThrow();
+            body.setLength(0);
+            body.append(indent).append("const commonParams = this.#runtime.object(params, ")
+                    .append(TsLiterals.quote(TckSpecifications.COMMON)).append(");\n")
+                    .append(indent).append("const parts = chunks(").append(lookup(contents, "params", null))
+                    .append(", ")
+                    .append(lookup(new TckBindings.Value(chunk.field(), chunk.size(), TckBindings.Collection.NONE),
+                            "params", null)).append(", ")
+                    .append(lookup(new TckBindings.Value(chunk.field(), chunk.max(), TckBindings.Collection.NONE),
+                            "params", null)).append(");\n")
+                    .append(indent).append("let transaction = this.").append(builder).append("(params, parts[0]);\n")
+                    .append(indent).append("this.#common.apply(transaction, commonParams);\n")
+                    .append(indent)
+                    .append("let receipt = await this.#runtime.transaction(session, transaction, commonParams);\n")
+                    .append(indent).append("for (const part of parts.slice(1)) {\n")
+                    .append(indent).append(INDENT).append("transaction = this.").append(builder)
+                    .append("(params, part);\n")
+                    .append(indent).append(INDENT).append("this.#common.apply(transaction, commonParams);\n")
+                    .append(indent).append(INDENT)
+                    .append("receipt = await this.#runtime.transaction(session, transaction, commonParams);\n")
+                    .append(indent).append("}\n");
+        } else if (transaction) {
             body.append(indent).append("const commonParams = this.#runtime.object(params, ")
                     .append(TsLiterals.quote(TckSpecifications.COMMON)).append(");\n")
                     .append(indent).append("this.#common.apply(transaction, commonParams);\n")
@@ -642,13 +675,18 @@ public final class TsTckGenerator {
         final String indent = INDENT + INDENT;
         final StringBuilder body = new StringBuilder();
         rejectUnsupported(binding.members(), "params", body, indent);
+        final TckBindings.Chunk chunk = chunk(binding);
         final String request = construct(binding.type(), binding.members(), "params", null, 1, body, indent,
-                imports, context);
+                imports, context, chunk);
         body.append(indent).append("return ").append(request).append(";\n");
         final String type = imports.type(binding.type().name());
-        return INDENT + "/** Builds the request of `" + name + "`" + (variant > 0 ? " (variant " + variant + ")" : "")
-                + " without sending it. */\n"
-                + INDENT + builder(name, variant) + "(params: JsonObject): " + type + " {\n" + body + INDENT + "}\n";
+        final String documentation = INDENT + "/** Builds the request of `" + name + "`"
+                + (variant > 0 ? " (variant " + variant + ")" : "")
+                + (chunk == null ? "" : " with `" + chunk.field().name() + "` set to one chunk (`null`: the whole "
+                + "value)") + " without sending it. */\n";
+        return documentation + INDENT + builder(name, variant) + "(params: JsonObject"
+                + (chunk == null ? "" : ", chunk: Uint8Array | null = null") + "): " + type + " {\n" + body
+                + INDENT + "}\n";
     }
 
     /** The JSON parameters the API cannot provide are rejected if they are sent. */
@@ -680,6 +718,17 @@ public final class TsTckGenerator {
     private String construct(final TypeDefinition type, final List<TckBindings.Member> members, final String json,
                              final @Nullable String parent, final int depth, final StringBuilder body,
                              final String indent, final TsImports imports, final TsContext context) {
+        return construct(type, members, json, parent, depth, body, indent, imports, context, null);
+    }
+
+    /**
+     * The constructor call of a type; with {@code chunk} the attribute it splits takes the parameter {@code chunk}
+     * of the builder when it is not {@code null}.
+     */
+    private String construct(final TypeDefinition type, final List<TckBindings.Member> members, final String json,
+                             final @Nullable String parent, final int depth, final StringBuilder body,
+                             final String indent, final TsImports imports, final TsContext context,
+                             final TckBindings.@Nullable Chunk chunk) {
         if (!context.isGenerated(type.name()) || !context.isClass(type.name())) {
             throw new IllegalStateException("Type '" + type.name() + "' is not a class of the generated API");
         }
@@ -695,6 +744,8 @@ public final class TsTckGenerator {
                 continue; // the constructor applies null or the default
             }
             final String value = switch (member.get()) {
+                case TckBindings.Value v when chunk != null && chunk.field().name().equals(field.name()) ->
+                        "chunk ?? " + value(field, v, json, parent, imports);
                 case TckBindings.Value v -> value(field, v, json, parent, imports);
                 case TckBindings.Elements e -> elements(field, e, json, parent, depth, body, indent, imports,
                         context);
@@ -1007,6 +1058,31 @@ public final class TsTckGenerator {
                     throw new TypeError(`not a JSON list: ${String(json)}`);
                 }
                 return json as ReadonlyArray<unknown>;
+            }
+
+            /**
+             * Splits bytes into chunks of at most `size` bytes, for the transactions of a `chunk` binding. Empty bytes are
+             * one empty chunk, so that one transaction is still sent; absent bytes are one `null` chunk, with which the
+             * builder reads the value as without `chunk` (its default, or the error that it is missing).
+             */
+            export function chunks(value: Uint8Array | null, size: number | null, max: number | null): (Uint8Array | null)[] {
+                if (size === null || size < 1) {
+                    throw new RangeError(`the size of a chunk must be at least 1, but is ${String(size)}`);
+                }
+                if (max === null || max < 1) {
+                    throw new RangeError(`the maximum number of chunks must be at least 1, but is ${String(max)}`);
+                }
+                if (value === null) {
+                    return [null];
+                }
+                const parts: Uint8Array[] = [];
+                for (let start = 0; start < value.length || parts.length === 0; start += size) {
+                    parts.push(value.slice(start, Math.min(value.length, start + size)));
+                }
+                if (parts.length > max) {
+                    throw new RangeError(`the contents need ${parts.length} chunks of ${size} bytes, but at most ${max} are allowed`);
+                }
+                return parts;
             }
 
             /** Converts every element of a JSON list. */

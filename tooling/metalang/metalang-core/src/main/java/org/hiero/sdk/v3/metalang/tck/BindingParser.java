@@ -20,6 +20,7 @@ import org.hiero.sdk.v3.metalang.source.MarkdownSchemaExtractor;
  * member       := 'undocumented'? 'result' path '=' path ':' NAME
  *               | 'result' path '=' 'each' path body
  *               | 'take' path
+ *               | 'chunk' NAME 'by' source ('|' source)* 'max' source ('|' source)*
  *               | 'unsupported' 'result'? NAME STRING ('unless' ('true' | 'false' | STRING))?
  *               | NAME '=' 'each' generator (',' generator)* '-&gt;' QNAME body
  *               | NAME '=' 'request' path
@@ -225,6 +226,14 @@ public final class BindingParser {
             expect(":");
             return new Binding.Result(name, value, name(), undocumented, location(start));
         }
+        if (start.text().equals("chunk") && peekAt(1).kind() == Kind.NAME && peekAt(2).text().equals("by")) {
+            next();
+            final String attribute = name();
+            expectName("by");
+            final List<Binding.Source> size = sources();
+            expectName("max");
+            return new Binding.Chunk(attribute, size, sources(), location(start));
+        }
         if (start.text().equals("take") && peekAt(1).kind() == Kind.NAME) {
             next();
             return new Binding.Take(path(), location(start));
@@ -287,6 +296,23 @@ public final class BindingParser {
             sources.add(new Binding.Source(path, name()));
         } while (accept("|"));
         return new Binding.Assignment(attribute, sources, location(start));
+    }
+
+    /** {@code source ('|' source)*}, where a source is {@code path ':' NAME} or {@code STRING ':' NAME}. */
+    private List<Binding.Source> sources() {
+        final List<Binding.Source> sources = new ArrayList<>();
+        do {
+            if (peek().kind() == Kind.STRING) {
+                final String literal = next().text();
+                expect(":");
+                sources.add(new Binding.Source(null, literal, name()));
+            } else {
+                final Binding.Path path = path();
+                expect(":");
+                sources.add(new Binding.Source(path, name()));
+            }
+        } while (accept("|"));
+        return sources;
     }
 
     /** {@code list.object} or {@code name in list} or {@code name in list?}. */

@@ -14,6 +14,31 @@ export function elements(json: unknown, optional: boolean): ReadonlyArray<unknow
     return json as ReadonlyArray<unknown>;
 }
 
+/**
+ * Splits bytes into chunks of at most `size` bytes, for the transactions of a `chunk` binding. Empty bytes are
+ * one empty chunk, so that one transaction is still sent; absent bytes are one `null` chunk, with which the
+ * builder reads the value as without `chunk` (its default, or the error that it is missing).
+ */
+export function chunks(value: Uint8Array | null, size: number | null, max: number | null): (Uint8Array | null)[] {
+    if (size === null || size < 1) {
+        throw new RangeError(`the size of a chunk must be at least 1, but is ${String(size)}`);
+    }
+    if (max === null || max < 1) {
+        throw new RangeError(`the maximum number of chunks must be at least 1, but is ${String(max)}`);
+    }
+    if (value === null) {
+        return [null];
+    }
+    const parts: Uint8Array[] = [];
+    for (let start = 0; start < value.length || parts.length === 0; start += size) {
+        parts.push(value.slice(start, Math.min(value.length, start + size)));
+    }
+    if (parts.length > max) {
+        throw new RangeError(`the contents need ${parts.length} chunks of ${size} bytes, but at most ${max} are allowed`);
+    }
+    return parts;
+}
+
 /** Converts every element of a JSON list. */
 export function list<T>(json: unknown, converter: (json: unknown) => T): T[] {
     return elements(json, false).map((element) => converter(element));

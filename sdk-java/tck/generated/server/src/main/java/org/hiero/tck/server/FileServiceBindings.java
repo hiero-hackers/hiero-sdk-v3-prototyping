@@ -16,6 +16,7 @@ import org.hiero.tck.contract.Handler;
 import org.hiero.tck.contract.Session;
 import org.hiero.tck.contract.Source;
 import org.hiero.tck.contract.TckRuntime;
+import org.jspecify.annotations.Nullable;
 
 /// The TCK methods of the bindings file `file-service.md`.
 @javax.annotation.processing.Generated("org.hiero.sdk.v3.metalang.generator.java.JavaGenerator")
@@ -100,10 +101,16 @@ final class FileServiceBindings {
 
     /// Appends contents to a file (FileAppendTransaction.md).
     Object appendFile(final Map<String, Object> params, final Session session) {
-        final var transaction = buildAppendFile(params);
         final Map<String, Object> commonParams = runtime.object(params, "commonTransactionParams");
+        final var chunks = BindingSupport.chunks(runtime.value(params, List.of(new Source<>("contents", convert::utf8))), runtime.or(runtime.value(params, List.of(new Source<>("chunkSize", convert::int32))), convert.int32("4096")), runtime.or(runtime.value(params, List.of(new Source<>("maxChunks", convert::int32))), convert.int32("20")));
+        var transaction = buildAppendFile(params, chunks.getFirst());
         common.apply(transaction, commonParams);
-        final var receipt = runtime.transaction(session, transaction, commonParams);
+        var receipt = runtime.transaction(session, transaction, commonParams);
+        for (int i = 1; i < chunks.size(); i++) {
+            transaction = buildAppendFile(params, chunks.get(i));
+            common.apply(transaction, commonParams);
+            receipt = runtime.transaction(session, transaction, commonParams);
+        }
         final Map<String, Object> result = new LinkedHashMap<>();
         runtime.put(result, "status", receipt.status(), convert::statusJson);
         return result;
@@ -111,11 +118,14 @@ final class FileServiceBindings {
 
     /// Builds the request of `appendFile` without sending it.
     FileAppendTransaction buildAppendFile(final Map<String, Object> params) {
-        runtime.unsupported(params, "maxChunks", "FileAppendTransaction chunks the contents itself; it has no chunk settings");
-        runtime.unsupported(params, "chunkSize", "FileAppendTransaction chunks the contents itself; it has no chunk settings");
+        return buildAppendFile(params, null);
+    }
+
+    /// Builds the request of `appendFile` with `contents` set to one chunk; `null`: the whole value.
+    FileAppendTransaction buildAppendFile(final Map<String, Object> params, final byte @Nullable [] chunk) {
         final FileAppendTransaction request = new FileAppendTransaction(
                 runtime.required(runtime.value(params, List.of(new Source<>("fileId", convert::address))), "fileId"),
-                runtime.required(runtime.value(params, List.of(new Source<>("contents", convert::utf8))), "contents"));
+                chunk != null ? chunk : runtime.required(runtime.value(params, List.of(new Source<>("contents", convert::utf8))), "contents"));
         return request;
     }
 

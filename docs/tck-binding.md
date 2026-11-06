@@ -312,6 +312,7 @@ Further forms, added when the other services were bound:
 | `unsupported validateStatus "reason" unless false` | a parameter the API cannot provide, except for the one value it behaves like: that value is accepted, every other value is answered with an error | `getTransactionReceipt` (the V3 receipt query never fails on the status) |
 | `undocumented result transactionId = receipt.transactionId : transactionId` | a result the TCK tests read although the test specification of the method does not name it; the coverage check does not report it | `createAccount` (read by `test-transaction-receipt-query.ts`) |
 | `binding getAddressBook -> NetworkRepository::nodes { fileId = fileId : string }` | a call of a method of a Mirror Node repository: the overload with the fewest parameters that has all bound ones is called; an unbound parameter is `null` or, for a list, empty; a list parameter (the conditions of a REST query parameter) also accepts a single JSON value | `getAddressBook` |
+| `chunk contents by chunkSize : int32 \| "4096" : int32 max maxChunks : int32 \| "20" : int32` | the bound `bytes` attribute is split into chunks of the size; one transaction per chunk is built (the attribute set to the chunk), sent one after the other with the common parameters, and the results are those of the last one. A size or maximum below 1, or more chunks than the maximum, is answered with `-32603`; absent contents are one transaction without `chunk`. The loop is generated, the runtimes are unchanged | `appendFile` (a `FileAppendTransaction` is one transaction; the TCK expects the chunking of the V2 SDKs) |
 | `take limit` | for a method that returns a `Page`: the pages are read until the result has as many items as the JSON parameter says (all pages without it, an error if it is negative); `response` is then the list of the items | `getAddressBook` (the TCK's `limit` is a number of nodes, not the page size of the REST API) |
 | `result nodeAddresses = each response { result nodeId = nodeId : number64 ... }` | a JSON list of objects, one per element of a list value; the results inside read the element (paths without root) and may be lists of objects again; usable in every kind of binding | `getAddressBook` |
 
@@ -354,10 +355,11 @@ and the binding accepts both.
   `deleteContract` and `createEthereumTransaction` are bound as well (`contract-service.md`; 54 bound methods, 10
   unbound, no finding); the contract queries stay unbound until their API is specified. For this, the converter
   `contractId` converts in both directions, and `accountId` also accepts a bare EVM address (40 hex digits), as the
-  TCK sends the alias of the Ethereum account that way. Against a local Solo network 199 of the 229 tests of the five
-  test files pass, 21 fail and 9 are skipped: 5 fail because bytecode of more than 4096 bytes cannot be appended to a
-  file yet (chunking; for the same reason three `before each` hooks fail and three `executeContract` suites do not
-  run), 14 because the SDK rejects a value before
+  TCK sends the alias of the Ethereum account that way. Since `appendFile` splits its contents (`chunk`), the
+  contracts of the TCK whose bytecode is larger than one transaction can be deployed. Against a local Solo network 236
+  of the 264 tests of the five test files pass, 16 fail and 12 are skipped (21 of the 23 tests of
+  `test-file-append-transaction.ts` pass; the failing one sends no `fileId`, which the SDK requires): 14 fail because
+  the SDK rejects a value before
   sending it where the TCK expects the status of the network (`@@oneOf`, `@@oneOrNoneOf`, `@@maxBytes`, a missing
   `contractId`, empty `ethereumData`, `permanentRemoval: true`), and 2 because the Java runtime cannot convert an
   expiration time of `int64` max or min seconds (see the gaps in `contract-service.md`).

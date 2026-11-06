@@ -8,8 +8,11 @@ creating, updating, appending to and deleting files, and the file queries. File 
 
 ## Gaps
 
-- **Chunking** (`maxChunks`, `chunkSize` of `appendFile`): the V3 `FileAppendTransaction` splits large contents
-  itself and has no settings for it.
+- **Chunking** (`maxChunks`, `chunkSize` of `appendFile`): `FileAppendTransaction` is one transaction and does not
+  split its contents; splitting is the job of the enterprise `FileService`. The TCK expects the chunking of the V2
+  SDKs, so the binding splits the contents (`chunk`): one `FileAppendTransaction` per chunk of `chunkSize` bytes
+  (default 4096), at most `maxChunks` (default 20), sent one after the other; the status is that of the last one.
+  Chunk sizes and maximums below 1 and contents that need more chunks are answered with an error, as the TCK expects.
 - **`ledgerId`** of `getFileInfo`, **`queryPayment`** of `getFileContents`: as for the other queries, the results
   have no ledger ID and a paid query only a maximum payment.
 - **An empty key list** (`keys: []`, an immutable file): an `AuthorityList` needs at least one key, so `keyList`
@@ -46,8 +49,7 @@ binding updateFile -> FileUpdateTransaction {
 binding appendFile -> FileAppendTransaction {
     fileId   = fileId : address
     contents = contents : utf8
-    unsupported maxChunks "FileAppendTransaction chunks the contents itself; it has no chunk settings"
-    unsupported chunkSize "FileAppendTransaction chunks the contents itself; it has no chunk settings"
+    chunk contents by chunkSize : int32 | "4096" : int32 max maxChunks : int32 | "20" : int32
     result status = receipt.status : status
 }
 

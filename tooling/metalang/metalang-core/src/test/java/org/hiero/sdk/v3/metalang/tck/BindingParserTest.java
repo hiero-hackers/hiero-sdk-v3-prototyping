@@ -197,6 +197,29 @@ class BindingParserTest {
     }
 
     @Test
+    void chunkShouldBeParsedWithTheSourcesOfTheSizeAndTheMaximum() {
+        // WHEN
+        final BindingParser.Result result = BindingParser.parse("shop.md", """
+                ```bindings
+                binding appendPayload -> OrderTransaction {
+                    payload = payload : hex
+                    chunk payload by chunkSize : int32 | "4096" : int32 max maxChunks : int32
+                }
+                ```
+                """);
+
+        // THEN
+        assertThat(result.diagnostics()).isEmpty();
+        final Binding.Chunk chunk = (Binding.Chunk) result.bindings().getFirst().members().get(1);
+        assertThat(chunk.attribute()).isEqualTo("payload");
+        assertThat(chunk.size()).extracting(Binding.Source::toString).containsExactly("chunkSize", "\"4096\"");
+        assertThat(chunk.size()).extracting(Binding.Source::converter).containsExactly("int32", "int32");
+        assertThat(chunk.max()).extracting(Binding.Source::toString).containsExactly("maxChunks");
+        assertThat(BindingParser.parse("shop.md", "```bindings\nbinding a -> B { chunk payload by s : int32 }\n```\n")
+                .diagnostics()).extracting(d -> d.ruleId()).containsExactly("tck.syntax");
+    }
+
+    @Test
     void sourcesAreEitherPathsOrConstants() {
         assertThatThrownBy(() -> new Binding.Source(null, null, "string"))
                 .isInstanceOf(IllegalArgumentException.class);

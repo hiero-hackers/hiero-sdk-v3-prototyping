@@ -201,6 +201,20 @@ class TckBindingsTest {
             "common c -> ShopRepository::items { }|tck.syntax|The common transaction parameters call no method",
             "binding a -> OrderQuery { id = id : string  take max }|tck.syntax|"
                     + "'take' needs a method that returns a page",
+            "binding a -> OrderQuery { id = id : string  chunk id by s : int32 max m : int32 }|tck.syntax|"
+                    + "'chunk' needs the transaction of the binding itself",
+            "binding a -> OrderTransaction { customer = c : string  chunk payload by s : int32 max m : int32 }"
+                    + "|tck.syntax|'chunk' splits attribute 'payload', which the binding does not assign",
+            "binding a -> OrderTransaction { customer = c : string  chunk customer by s : int32 max m : int32 }"
+                    + "|tck.converter|Attribute 'customer' is no bytes; 'chunk' splits bytes",
+            "binding a -> OrderTransaction { customer = c : string  chunk other by s : int32 max m : int32 }"
+                    + "|tck.unknown-attribute|Type 'shop.OrderTransaction' has no attribute 'other'",
+            "binding a -> OrderTransaction { customer = c : string  payload = p : hex  chunk payload by s : string "
+                    + "max m : int32 }|tck.converter|Converter 'string' is for string, not for 'int32'",
+            "binding a -> OrderTransaction { customer = c : string  payload = p : hex  chunk payload by ^s : int32 "
+                    + "max m : int32 }|tck.parent|'^s' refers to an enclosing element",
+            "binding a -> OrderTransaction { customer = c : string  payload = p : hex  chunk payload by s : int32 "
+                    + "max m : int32  chunk payload by s : int32 max m : int32 }|tck.duplicate|'chunk' is bound twice",
             "binding a -> OrderQuery { id = id : string  result x = each response.note { } }|tck.result|"
                     + "'response.note' is no list of a declared type; 'each' needs one",
             "binding a -> OrderTransaction { customer = c : string  result x = each receipt.lines { "

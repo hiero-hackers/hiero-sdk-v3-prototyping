@@ -4,6 +4,7 @@ import { FileContentsQuery, FileInfoQuery } from "@hiero/consensus-node-client/c
 import { FileAppendTransaction, FileCreateTransaction, FileDeleteTransaction, FileUpdateTransaction } from "@hiero/consensus-node-client/consensusnode/transactions/files";
 import type { Converters, Handler, JsonObject, Session, TckRuntime } from "@hiero/tck-contract";
 import type { CommonBindings } from "./CommonBindings.js";
+import { chunks } from "./BindingSupport.js";
 import type { Requests } from "./Requests.js";
 
 /** The TCK methods of the bindings file `file-service.md`. */
@@ -88,22 +89,26 @@ export class FileServiceBindings {
      * Appends contents to a file (FileAppendTransaction.md).
      */
     async appendFile(params: JsonObject, session: Session): Promise<unknown> {
-        const transaction = this.buildAppendFile(params);
         const commonParams = this.#runtime.object(params, "commonTransactionParams");
+        const parts = chunks(this.#runtime.value(params, [{ path: "contents", converter: (json) => this.#convert.utf8(json) }]), this.#runtime.or(this.#runtime.value(params, [{ path: "chunkSize", converter: (json) => this.#convert.int32(json) }]), ((json) => this.#convert.int32(json))("4096")), this.#runtime.or(this.#runtime.value(params, [{ path: "maxChunks", converter: (json) => this.#convert.int32(json) }]), ((json) => this.#convert.int32(json))("20")));
+        let transaction = this.buildAppendFile(params, parts[0]);
         this.#common.apply(transaction, commonParams);
-        const receipt = await this.#runtime.transaction(session, transaction, commonParams);
+        let receipt = await this.#runtime.transaction(session, transaction, commonParams);
+        for (const part of parts.slice(1)) {
+            transaction = this.buildAppendFile(params, part);
+            this.#common.apply(transaction, commonParams);
+            receipt = await this.#runtime.transaction(session, transaction, commonParams);
+        }
         const result: Record<string, unknown> = {};
         this.#runtime.put(result, "status", receipt.status, (value) => this.#convert.statusJson(value));
         return result;
     }
 
-    /** Builds the request of `appendFile` without sending it. */
-    buildAppendFile(params: JsonObject): FileAppendTransaction {
-        this.#runtime.unsupported(params, "maxChunks", "FileAppendTransaction chunks the contents itself; it has no chunk settings");
-        this.#runtime.unsupported(params, "chunkSize", "FileAppendTransaction chunks the contents itself; it has no chunk settings");
+    /** Builds the request of `appendFile` with `contents` set to one chunk (`null`: the whole value) without sending it. */
+    buildAppendFile(params: JsonObject, chunk: Uint8Array | null = null): FileAppendTransaction {
         return new FileAppendTransaction({
             fileId: this.#runtime.required(this.#runtime.value(params, [{ path: "fileId", converter: (json) => this.#convert.address(json) }]), "fileId"),
-            contents: this.#runtime.required(this.#runtime.value(params, [{ path: "contents", converter: (json) => this.#convert.utf8(json) }]), "contents")
+            contents: chunk ?? this.#runtime.required(this.#runtime.value(params, [{ path: "contents", converter: (json) => this.#convert.utf8(json) }]), "contents")
         });
     }
 

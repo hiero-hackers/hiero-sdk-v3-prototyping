@@ -20,6 +20,37 @@ final class BindingSupport {
     private BindingSupport() {
     }
 
+    /// Splits bytes into chunks of at most `size` bytes, for the transactions of a `chunk` binding. Empty bytes
+    /// are one empty chunk, so that one transaction is still sent; absent bytes are one `null` chunk, with
+    /// which the builder reads the value as without `chunk` (its default, or the error that it is missing).
+    ///
+    /// @param value the bytes, `null` if the JSON parameter is absent
+    /// @param size  the size of a chunk
+    /// @param max   the maximum number of chunks
+    /// @return the chunks
+    /// @throws IllegalArgumentException if the size or the maximum is below 1, or more chunks are needed
+    static List<byte @Nullable []> chunks(final byte @Nullable [] value, final @Nullable Integer size,
+                                          final @Nullable Integer max) {
+        if (size == null || size < 1) {
+            throw new IllegalArgumentException("the size of a chunk must be at least 1, but is " + size);
+        }
+        if (max == null || max < 1) {
+            throw new IllegalArgumentException("the maximum number of chunks must be at least 1, but is " + max);
+        }
+        if (value == null) {
+            return Collections.singletonList(null);
+        }
+        final List<byte[]> chunks = new ArrayList<>();
+        for (int start = 0; start < value.length || chunks.isEmpty(); start += size) {
+            chunks.add(java.util.Arrays.copyOfRange(value, start, Math.min(value.length, start + size)));
+        }
+        if (chunks.size() > max) {
+            throw new IllegalArgumentException("the contents need " + chunks.size()
+                    + " chunks of " + size + " bytes, but at most " + max + " are allowed");
+        }
+        return chunks;
+    }
+
     /// Converts every element of a JSON list.
     ///
     /// @param json      the JSON list

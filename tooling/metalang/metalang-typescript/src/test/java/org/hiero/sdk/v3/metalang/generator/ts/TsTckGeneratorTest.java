@@ -131,6 +131,14 @@ class TsTckGeneratorTest {
                 .contains("const scope1 = withName(params, \"serial\", value1);")
                 .contains("maxQueryPayment: this.#runtime.value(params, [{ path: \"maxQueryPayment\"")
                 .contains("this.#runtime.put(result, \"nftId\", response, (value) => this.#convert.nftIdJson(value));");
+        assertThat(content("server/src/FileServiceBindings.ts"))
+                // chunk: one transaction per chunk, the builder takes the chunk
+                .contains("const parts = chunks(this.#runtime.value(params, [{ path: \"contents\"")
+                .contains("for (const part of parts.slice(1)) {\n"
+                        + "            transaction = this.buildAppendFile(params, part);")
+                .contains("buildAppendFile(params: JsonObject, chunk: Uint8Array | null = null): FileAppendTransaction {")
+                .contains("contents: chunk ?? this.#runtime.required(")
+                .contains("import { chunks } from \"./BindingSupport.js\";");
         assertThat(content("server/src/CryptoServiceBindings.ts")).contains("!== null ? new NftSerialGrant({")
                 // unsupported ... unless false: the value the API behaves like is accepted
                 .contains("if (params[\"validateStatus\"] !== false) {\n");

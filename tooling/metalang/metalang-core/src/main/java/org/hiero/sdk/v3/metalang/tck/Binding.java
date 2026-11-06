@@ -331,6 +331,40 @@ public record Binding(boolean common, String name, String type, @Nullable String
     }
 
     /**
+     * The splitting of a {@code bytes} attribute of a transaction into chunks:
+     * {@code chunk contents by chunkSize : int32 | "4096" : int32 max maxChunks : int32 | "20" : int32}. The bound
+     * value of the attribute is split into chunks of the size, and one transaction is sent per chunk, one after the
+     * other, each with the attribute set to its chunk; the results are those of the last one. A size or a maximum
+     * below 1, or more chunks than the maximum, are an error.
+     *
+     * @param attribute the attribute that holds the contents
+     * @param size      the alternative sources of the size of a chunk
+     * @param max       the alternative sources of the maximum number of chunks
+     * @param location  the location
+     */
+    public record Chunk(String attribute, List<Source> size, List<Source> max, SourceLocation location)
+            implements Member {
+
+        /**
+         * Creates a chunking.
+         *
+         * @param attribute the attribute
+         * @param size      the size
+         * @param max       the maximum
+         * @param location  the location
+         */
+        public Chunk {
+            Objects.requireNonNull(attribute, "attribute must not be null");
+            size = List.copyOf(size);
+            max = List.copyOf(max);
+            if (size.isEmpty() || max.isEmpty()) {
+                throw new IllegalArgumentException("'chunk' needs a size and a maximum");
+            }
+            Objects.requireNonNull(location, "location must not be null");
+        }
+    }
+
+    /**
      * The maximum number of items of a paged result: {@code take limit}. The pages are read one after the other until
      * the result has as many items as the JSON parameter says, or until there is no further page; without the
      * parameter all pages are read.

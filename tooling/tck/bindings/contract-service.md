@@ -18,13 +18,11 @@ call data and Ethereum data are hex strings (`hex`); amounts are tinybar.
   account and a node (`@@oneOrNoneOf`) are rejected by the SDK, where the TCK may expect a status of the network.
 - **`permanentRemoval`** of `deleteContract`: only the network itself may set it; `ContractDeleteTransaction` does not
   offer it. `false`, which a user transaction has anyway, is accepted.
-- **Bytecode of more than 4096 bytes** (the ERC-20 and ERC-721 contracts of the TCK) is uploaded with `appendFile`,
-  which cannot chunk yet (see the Questions & Comments of `transactions-files.md`); the tests that deploy it fail, and
-  with them the suites of `executeContract` that deploy it before each test.
 - **Expiration times beyond the range of a Java `Instant`** (`int64` max / min seconds) cannot be converted by the
   Java runtime (`timestamp`); the TCK expects the status of the network.
 - The specification of `createContract` names the parameter `maxAutomaticTokenAssociation`, its tests send
-  `maxAutomaticTokenAssociations`; the binding accepts both.
+  `maxAutomaticTokenAssociations`; the specification of `executeContract` names the call data `parameters`, its tests
+  send `functionParameters`. The bindings accept both.
 - **The contract queries** (`contractCallQuery`, `getContractInfo`, `getContractBytecode`) are not bound: their API is
   not specified yet.
 
@@ -56,7 +54,7 @@ binding executeContract -> ContractExecuteTransaction {
     contractId    = contractId : contractId
     gas           = gas : int64 | "0" : int64
     payableAmount = amount : tinybar
-    callData      = parameters : hex
+    callData      = functionParameters : hex | parameters : hex
     result status = receipt.status : status
 }
 

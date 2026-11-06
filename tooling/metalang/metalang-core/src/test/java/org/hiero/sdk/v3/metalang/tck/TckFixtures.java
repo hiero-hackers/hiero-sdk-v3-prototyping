@@ -63,6 +63,7 @@ final class TckFixtures {
                 @@immutable @@default([]) tags: set<string>
                 @@immutable @@default([]) ids: list<int64>
                 @@immutable @@nullable note: string
+                @@immutable @@nullable payload: bytes
                 @@immutable @@default([]) items: list<Item>
                 @@immutable @@default([]) names: list<string>
                 @@nullable memo: string

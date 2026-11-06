@@ -160,6 +160,34 @@ class TckCoverageTest {
     }
 
     @Test
+    void theParametersOfChunkShouldBeBound() {
+        // GIVEN
+        final TckBindings.Bindings bindings = TckFixtures.resolve("""
+                binding appendPayload -> OrderTransaction {
+                    customer = customer : string
+                    payload = payload : hex
+                    chunk payload by chunkSize : int32 | "4096" : int32 max maxChunks : int32 | "20" : int32
+                }
+                """);
+        final Map<String, TckSpecifications.Method> methods = Map.of("appendPayload",
+                new TckSpecifications.Method("appendPayload", "o.md",
+                        List.of("customer", "payload", "chunkSize", "maxChunks", "commonTransactionParams"),
+                        List.of()));
+
+        // WHEN
+        final TckCoverage.Report report = TckCoverage.check(bindings, methods);
+
+        // THEN
+        assertThat(bindings.diagnostics()).isEmpty();
+        assertThat(report.bound()).containsExactly("appendPayload");
+        assertThat(report.findings()).isEmpty();
+        final TckBindings.Chunk chunk = (TckBindings.Chunk) bindings.bindings().getFirst().members().get(2);
+        assertThat(chunk.field().name()).isEqualTo("payload");
+        assertThat(chunk.size()).extracting(TckBindings.Source::literal).containsExactly(null, "4096");
+        assertThat(chunk.max()).extracting(s -> s.converter().id()).containsExactly("int32", "int32");
+    }
+
+    @Test
     void variantsNestedObjectsAndBoundNamesShouldBeCompared() {
         // GIVEN
         final TckBindings.Bindings bindings = TckFixtures.resolve("""

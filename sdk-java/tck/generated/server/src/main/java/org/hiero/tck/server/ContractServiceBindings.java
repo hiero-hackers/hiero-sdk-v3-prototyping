@@ -101,7 +101,7 @@ final class ContractServiceBindings {
                 runtime.required(runtime.value(params, List.of(new Source<>("contractId", convert::contractId))), "contractId"),
                 runtime.required(runtime.or(runtime.value(params, List.of(new Source<>("gas", convert::int64))), convert.int64("0")), "gas | \"0\""),
                 runtime.value(params, List.of(new Source<>("amount", convert::tinybar))),
-                runtime.or(runtime.value(params, List.of(new Source<>("parameters", convert::hex))), new byte[0]));
+                runtime.or(runtime.value(params, List.of(new Source<>("functionParameters", convert::hex), new Source<>("parameters", convert::hex))), new byte[0]));
         return request;
     }
 

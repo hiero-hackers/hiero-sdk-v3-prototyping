@@ -324,6 +324,16 @@ class JavaTckGeneratorTest {
                             + "values -> BindingSupport.json(values, convert::receiptJson));");
             assertThat(content("NodeServiceBindings.java"))
                     .contains("grpcWebProxyEndpointJson1 == null ? null : new ServiceEndpoint(");
+            assertThat(content("FileServiceBindings.java"))
+                    // chunk: one transaction per chunk, the builder takes the chunk
+                    .contains("final var chunks = BindingSupport.chunks(runtime.value(params, List.of(new Source<>("
+                            + "\"contents\", convert::utf8))), runtime.or(runtime.value(params, List.of(new Source<>("
+                            + "\"chunkSize\", convert::int32))), convert.int32(\"4096\"))")
+                    .contains("for (int i = 1; i < chunks.size(); i++) {\n"
+                            + "            transaction = buildAppendFile(params, chunks.get(i));")
+                    .contains("FileAppendTransaction buildAppendFile(final Map<String, Object> params) {\n"
+                            + "        return buildAppendFile(params, null);")
+                    .contains("chunk != null ? chunk : runtime.required(");
             assertThat(content("ScheduleServiceBindings.java"))
                     .contains("requests.build(runtime.object(params, \"scheduledTransaction\"))");
             assertThat(content("CommonBindings.java"))
