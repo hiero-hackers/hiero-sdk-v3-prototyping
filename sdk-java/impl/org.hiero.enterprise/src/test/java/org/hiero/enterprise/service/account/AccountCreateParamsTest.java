@@ -11,7 +11,6 @@ import org.hiero.hedera.HbarUnit;
 import org.hiero.keys.ByteImportEncoding;
 import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
-import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
@@ -32,20 +31,14 @@ class AccountCreateParamsTest {
         final boolean receiverSignatureRequired = receiverSignatureRequiredValue();
         final @Nullable Integer maxAutomaticTokenAssociations = maxAutomaticTokenAssociationsValue();
         final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
-        final @Nullable AccountId stakedAccountId = stakedAccountIdValue();
-        final @Nullable Long stakedNodeId = (Long) null;
-        final boolean declineStakingReward = declineStakingRewardValue();
         final byte @Nullable [] alias = aliasValue();
-        final AccountCreateParams subject = new AccountCreateParams(authority, initialBalance, accountMemo, receiverSignatureRequired, maxAutomaticTokenAssociations, autoRenewPeriod, stakedAccountId, stakedNodeId, declineStakingReward, alias);
+        final AccountCreateParams subject = new AccountCreateParams(authority, initialBalance, accountMemo, receiverSignatureRequired, maxAutomaticTokenAssociations, autoRenewPeriod, alias);
         assertValue(authority, subject.authority());
         assertValue(initialBalance, subject.initialBalance());
         assertValue(accountMemo, subject.accountMemo());
         assertValue(receiverSignatureRequired, subject.receiverSignatureRequired());
         assertValue(maxAutomaticTokenAssociations, subject.maxAutomaticTokenAssociations());
         assertValue(autoRenewPeriod, subject.autoRenewPeriod());
-        assertValue(stakedAccountId, subject.stakedAccountId());
-        assertValue(stakedNodeId, subject.stakedNodeId());
-        assertValue(declineStakingReward, subject.declineStakingReward());
         assertValue(alias, subject.alias());
     }
 
@@ -53,9 +46,8 @@ class AccountCreateParamsTest {
     @DisplayName("creates an AccountCreateParams with the default values")
     @Tag("testId:enterprise.service.account.AccountCreateParams/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
-        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, aliasValue());
+        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), aliasValue());
         assertValue(false, subject.receiverSignatureRequired());
-        assertValue(false, subject.declineStakingReward());
     }
 
     @Test
@@ -68,9 +60,6 @@ class AccountCreateParamsTest {
         final boolean receiverSignatureRequired = receiverSignatureRequiredValue();
         final @Nullable Integer maxAutomaticTokenAssociations = maxAutomaticTokenAssociationsValue();
         final @Nullable Duration autoRenewPeriod = autoRenewPeriodValue();
-        final @Nullable AccountId stakedAccountId = stakedAccountIdValue();
-        final @Nullable Long stakedNodeId = (Long) null;
-        final boolean declineStakingReward = declineStakingRewardValue();
         final byte @Nullable [] alias = aliasValue();
         final AccountCreateParams subject = AccountCreateParams.builder()
                 .authority(authority)
@@ -79,9 +68,6 @@ class AccountCreateParamsTest {
                 .receiverSignatureRequired(receiverSignatureRequired)
                 .maxAutomaticTokenAssociations(maxAutomaticTokenAssociations)
                 .autoRenewPeriod(autoRenewPeriod)
-                .stakedAccountId(stakedAccountId)
-                .stakedNodeId(stakedNodeId)
-                .declineStakingReward(declineStakingReward)
                 .alias(alias)
                 .build();
         assertValue(authority, subject.authority());
@@ -90,9 +76,6 @@ class AccountCreateParamsTest {
         assertValue(receiverSignatureRequired, subject.receiverSignatureRequired());
         assertValue(maxAutomaticTokenAssociations, subject.maxAutomaticTokenAssociations());
         assertValue(autoRenewPeriod, subject.autoRenewPeriod());
-        assertValue(stakedAccountId, subject.stakedAccountId());
-        assertValue(stakedNodeId, subject.stakedNodeId());
-        assertValue(declineStakingReward, subject.declineStakingReward());
         assertValue(alias, subject.alias());
     }
 
@@ -102,16 +85,12 @@ class AccountCreateParamsTest {
     void shouldBuildWithoutTheOptionalValues() {
         final AccountCreateParams subject = AccountCreateParams.builder()
                 .authority(authorityValue())
-                .stakedAccountId(stakedAccountIdValue())
                 .build();
         assertNull(subject.initialBalance());
         assertNull(subject.accountMemo());
         assertValue(false, subject.receiverSignatureRequired());
         assertNull(subject.maxAutomaticTokenAssociations());
         assertNull(subject.autoRenewPeriod());
-        assertValue(stakedAccountIdValue(), subject.stakedAccountId());
-        assertNull(subject.stakedNodeId());
-        assertValue(false, subject.declineStakingReward());
         assertNull(subject.alias());
     }
 
@@ -126,7 +105,7 @@ class AccountCreateParamsTest {
     @DisplayName("rejects null for authority")
     @Tag("testId:enterprise.service.account.AccountCreateParams/authority/rejects-null")
     void shouldRejectNullAuthority() {
-        assertThrows(NullPointerException.class, () -> new AccountCreateParams((Authority) null, initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue()));
+        assertThrows(NullPointerException.class, () -> new AccountCreateParams((Authority) null, initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), aliasValue()));
     }
 
     @Test
@@ -134,7 +113,7 @@ class AccountCreateParamsTest {
     @Tag("testId:enterprise.service.account.AccountCreateParams/accountMemo/accepts-at-maximum-bytes")
     void shouldAcceptAccountMemoAtMaximumBytes() {
         final @Nullable String value = "ääääääääääääääääääääääääääääääääääääääääääääääääää";
-        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), value, receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
+        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), value, receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), aliasValue());
         assertValue(value, subject.accountMemo());
     }
 
@@ -142,7 +121,7 @@ class AccountCreateParamsTest {
     @DisplayName("accountMemo: rejects more elements than the maximum")
     @Tag("testId:enterprise.service.account.AccountCreateParams/accountMemo/rejects-above-maximum-bytes")
     void shouldRejectAccountMemoAboveMaximumBytes() {
-        assertThrows(IllegalArgumentException.class, () -> new AccountCreateParams(authorityValue(), initialBalanceValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue()));
+        assertThrows(IllegalArgumentException.class, () -> new AccountCreateParams(authorityValue(), initialBalanceValue(), "ääääääääääääääääääääääääääääääääääääääääääääääääääa", receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), aliasValue()));
     }
 
     @Test
@@ -150,7 +129,7 @@ class AccountCreateParamsTest {
     @Tag("testId:enterprise.service.account.AccountCreateParams/maxAutomaticTokenAssociations/accepts-at-minimum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMinimum() {
         final @Nullable Integer value = Integer.MIN_VALUE;
-        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), value, autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
+        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), value, autoRenewPeriodValue(), aliasValue());
         assertValue(value, subject.maxAutomaticTokenAssociations());
     }
 
@@ -159,26 +138,8 @@ class AccountCreateParamsTest {
     @Tag("testId:enterprise.service.account.AccountCreateParams/maxAutomaticTokenAssociations/accepts-at-maximum")
     void shouldAcceptMaxAutomaticTokenAssociationsAtMaximum() {
         final @Nullable Integer value = 2147483647;
-        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), value, autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
+        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), value, autoRenewPeriodValue(), aliasValue());
         assertValue(value, subject.maxAutomaticTokenAssociations());
-    }
-
-    @Test
-    @DisplayName("stakedNodeId: accepts the minimum (-9223372036854775808)")
-    @Tag("testId:enterprise.service.account.AccountCreateParams/stakedNodeId/accepts-at-minimum")
-    void shouldAcceptStakedNodeIdAtMinimum() {
-        final @Nullable Long value = -9223372036854775808L;
-        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), (AccountId) null, value, declineStakingRewardValue(), aliasValue());
-        assertValue(value, subject.stakedNodeId());
-    }
-
-    @Test
-    @DisplayName("stakedNodeId: accepts the maximum (9223372036854775807)")
-    @Tag("testId:enterprise.service.account.AccountCreateParams/stakedNodeId/accepts-at-maximum")
-    void shouldAcceptStakedNodeIdAtMaximum() {
-        final @Nullable Long value = 9223372036854775807L;
-        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), (AccountId) null, value, declineStakingRewardValue(), aliasValue());
-        assertValue(value, subject.stakedNodeId());
     }
 
     @Test
@@ -187,20 +148,13 @@ class AccountCreateParamsTest {
     void shouldCopyAliasIn() {
         final byte[] value = aliasValue();
         final byte[] expected = value.clone();
-        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), value);
+        final AccountCreateParams subject = new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), value);
         value[0] = (byte) (value[0] + 1);
         assertValue(expected, subject.alias());
         final byte[] returned = subject.alias();
         assertNotNull(returned);
         returned[0] = (byte) (returned[0] + 1);
         assertValue(expected, subject.alias());
-    }
-
-    @Test
-    @DisplayName("rejects stakedAccountId and stakedNodeId together (@@oneOrNoneOf)")
-    @Tag("testId:enterprise.service.account.AccountCreateParams/stakedAccountId-stakedNodeId/rejects-two")
-    void shouldRejectTwoOfStakedAccountIdOrStakedNodeId() {
-        assertThrows(IllegalArgumentException.class, () -> new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), stakedNodeIdValue(), declineStakingRewardValue(), aliasValue()));
     }
 
     private static Authority authorityValue() {
@@ -227,27 +181,15 @@ class AccountCreateParamsTest {
         return Duration.ofSeconds(1L);
     }
 
-    private static AccountId stakedAccountIdValue() {
-        return new AccountId(0L, 0L, "", 1001L, null, null);
-    }
-
-    private static long stakedNodeIdValue() {
-        return 1L;
-    }
-
-    private static boolean declineStakingRewardValue() {
-        return true;
-    }
-
     private static byte[] aliasValue() {
         return new byte[] {1, 2, 3};
     }
 
     private static AccountCreateParams create() {
-        return new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), stakedAccountIdValue(), (Long) null, declineStakingRewardValue(), aliasValue());
+        return new AccountCreateParams(authorityValue(), initialBalanceValue(), accountMemoValue(), receiverSignatureRequiredValue(), maxAutomaticTokenAssociationsValue(), autoRenewPeriodValue(), aliasValue());
     }
 
     private static AccountCreateParams defaultSubject() {
-        return new AccountCreateParams(new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c").createPublicKey()), null, null, false, null, null, null, null, false, null);
+        return new AccountCreateParams(new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c").createPublicKey()), null, null, false, null, null, null);
     }
 }

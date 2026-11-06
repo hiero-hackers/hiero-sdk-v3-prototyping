@@ -27,11 +27,16 @@ public class SmartContractService {
         throw Unbound.error("SmartContractService", "ContractFactory");
     }
 
-    /// Create a contract with the given parameters: the general form of the methods above, for every option of a new
-    /// contract.
+    /// Create a contract from the bytecode in a file or from the bytecode itself, with every option of a new contract:
+    /// the general form of the methods above.
     ///
     /// @throws ServiceException if a service error occurs
-    public Contract createContract(final ContractCreateParams params) {
+    public Contract createContract(final Address fileId, final ContractCreateParams params) {
+        throw Unbound.error("SmartContractService", "ContractFactory");
+    }
+
+    /// @throws ServiceException if a service error occurs
+    public Contract createContract(final byte[] contents, final ContractCreateParams params) {
         throw Unbound.error("SmartContractService", "ContractFactory");
     }
 

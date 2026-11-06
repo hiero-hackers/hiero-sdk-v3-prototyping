@@ -15,7 +15,6 @@ import org.hiero.keys.KeysFactory;
 import org.hiero.keys.PrivateKey;
 import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
-import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -25,23 +24,19 @@ import org.junit.jupiter.api.Test;
 @DisplayName("service-contract")
 class ServiceContractSpecTest {
 
-    /// `enterprise.service.contract/contract-parameters-with-bytecode-from-a-file-have-the-defaults-of-the-spec`
+    /// `enterprise.service.contract/contract-parameters-without-values-have-the-defaults-of-the-spec`
     ///
-    /// Source: this spec (@@oneOf(fileId, bytecode), @@default and @@nullable of ContractCreateParams); the Python SDK
-    /// (contract_create_transaction_test.py, test_constructor_default_values: no bytecode, gas, admin key, memo or staking
-    /// target).
+    /// Source: this spec (@@default and @@nullable of ContractCreateParams); the Python SDK (contract_create_transaction_test.py,
+    /// test_constructor_default_values: no gas, admin key or memo).
     @Test
-    @DisplayName("contract parameters with bytecode from a file have the defaults of the spec")
-    @Tag("testId:enterprise.service.contract/contract-parameters-with-bytecode-from-a-file-have-the-defaults-of-the-spec")
-    void contractParametersWithBytecodeFromAFileHaveTheDefaultsOfTheSpec() {
+    @DisplayName("contract parameters without values have the defaults of the spec")
+    @Tag("testId:enterprise.service.contract/contract-parameters-without-values-have-the-defaults-of-the-spec")
+    void contractParametersWithoutValuesHaveTheDefaultsOfTheSpec() {
         // when
         final ContractCreateParams params = defaultContractCreateParams();
 
         // then
-        assertEquals(defaultAddress(), params.fileId());
-        assertNull(params.bytecode());
         assertEquals(0L, length(params.constructorParams()));
-        assertFalse(params.declineStakingReward());
         assertNull(params.gas());
         assertNull(params.initialBalance());
         assertNull(params.adminAuthority());
@@ -49,27 +44,6 @@ class ServiceContractSpecTest {
         assertNull(params.autoRenewPeriod());
         assertNull(params.autoRenewAccount());
         assertNull(params.maxAutomaticTokenAssociations());
-        assertNull(params.stakedAccountId());
-        assertNull(params.stakedNodeId());
-    }
-
-    /// `enterprise.service.contract/contract-parameters-take-the-bytecode-directly-instead-of-from-a-file`
-    ///
-    /// Source: this spec (@@oneOf(fileId, bytecode)); the Python SDK (contract_create_transaction_test.py,
-    /// test_build_transaction_body_with_bytecode and test_bytecode_setters_clear_each_other).
-    @Test
-    @DisplayName("contract parameters take the bytecode directly instead of from a file")
-    @Tag("testId:enterprise.service.contract/contract-parameters-take-the-bytecode-directly-instead-of-from-a-file")
-    void contractParametersTakeTheBytecodeDirectlyInsteadOfFromAFile() {
-        // given
-        final byte[] bytecode = hex("608060405234801561001057600080fd5b50");
-
-        // when
-        final ContractCreateParams params = new ContractCreateParams(null, bytecode, List.of(), null, null, null, null, null, null, null, null, null, false);
-
-        // then
-        assertEquals(bytecode, params.bytecode());
-        assertNull(params.fileId());
     }
 
     /// `enterprise.service.contract/contract-parameters-keep-the-values-they-are-created-with`
@@ -77,8 +51,8 @@ class ServiceContractSpecTest {
     /// Source: the ContractCreateTransaction unit tests of the Java (ContractCreateTransactionTest), Go
     /// (contract_create_transaction_unit_test.go), C++ (ContractCreateTransactionUnitTests), Swift
     /// (ContractCreateTransactionUnitTests) and Python (contract_create_transaction_test.py, test_constructor_with_parameters)
-    /// SDKs; hiero-enterprise-java (ProtocolLayerDataCreationTests, testContractCreateRequestCreation: a file id, gas, an
-    /// admin key and constructor parameters): every value that is set is read back unchanged. The auto-renew period is the
+    /// SDKs; hiero-enterprise-java (ProtocolLayerDataCreationTests, testContractCreateRequestCreation: gas, an admin key and
+    /// constructor parameters): every value that is set is read back unchanged. The auto-renew period is the
     /// one of the Java test (Duration.ofHours(10), which is exactly 36000 seconds).
     @Test
     @DisplayName("contract parameters keep the values they are created with")
@@ -91,7 +65,7 @@ class ServiceContractSpecTest {
         final Param<String, ?> constructorParam = ContractFactory.ofString("Hello from Hiero.");
 
         // when
-        final ContractCreateParams params = new ContractCreateParams(defaultAddress(), null, List.of(constructorParam), 1_000_000L, null, authority, "memo", autoRenewPeriod, account, 10, null, 3L, true);
+        final ContractCreateParams params = new ContractCreateParams(List.of(constructorParam), 1_000_000L, null, authority, "memo", autoRenewPeriod, account, 10);
 
         // then
         assertEquals(1L, length(params.constructorParams()));
@@ -101,8 +75,6 @@ class ServiceContractSpecTest {
         assertEquals(autoRenewPeriod, params.autoRenewPeriod());
         assertEquals(account, params.autoRenewAccount());
         assertEquals(10, params.maxAutomaticTokenAssociations());
-        assertEquals(3L, params.stakedNodeId());
-        assertTrue(params.declineStakingReward());
     }
 
     /// `enterprise.service.contract/contract-parameters-accept-a-gas-of-1-and-a-memo-of-100-characters`
@@ -117,7 +89,7 @@ class ServiceContractSpecTest {
         final String memo = repeat("a", 100L);
 
         // when
-        final ContractCreateParams params = new ContractCreateParams(defaultAddress(), null, List.of(), 1L, null, null, memo, null, null, null, null, null, false);
+        final ContractCreateParams params = new ContractCreateParams(List.of(), 1L, null, null, memo, null, null, null);
 
         // then
         assertEquals(1L, params.gas());
@@ -133,7 +105,7 @@ class ServiceContractSpecTest {
     @Tag("testId:enterprise.service.contract/contract-parameters-reject-a-gas-of-0")
     void contractParametersRejectAGasOf0() {
         // when / then
-        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(defaultAddress(), null, List.of(), 0L, null, null, null, null, null, null, null, null, false));
+        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(List.of(), 0L, null, null, null, null, null, null));
     }
 
     /// `enterprise.service.contract/contract-parameters-reject-a-memo-of-101-characters`
@@ -144,66 +116,7 @@ class ServiceContractSpecTest {
     @Tag("testId:enterprise.service.contract/contract-parameters-reject-a-memo-of-101-characters")
     void contractParametersRejectAMemoOf101Characters() {
         // when / then
-        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(defaultAddress(), null, List.of(), null, null, null, repeat("a", 101L), null, null, null, null, null, false));
-    }
-
-    /// `enterprise.service.contract/contract-parameters-with-bytecode-both-from-a-file-and-directly-are-rejected`
-    ///
-    /// Source: this spec (@@oneOf(fileId, bytecode)); HAPI contract_create.proto (initcodeSource is a oneof of fileID and
-    /// initcode).
-    @Test
-    @DisplayName("contract parameters with bytecode both from a file and directly are rejected")
-    @Tag("testId:enterprise.service.contract/contract-parameters-with-bytecode-both-from-a-file-and-directly-are-rejected")
-    void contractParametersWithBytecodeBothFromAFileAndDirectlyAreRejected() {
-        // when / then
-        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(defaultAddress(), hex("608060405234801561001057600080fd5b50"), List.of(), null, null, null, null, null, null, null, null, null, false));
-    }
-
-    /// `enterprise.service.contract/contract-parameters-without-bytecode-are-rejected`
-    ///
-    /// Source: this spec (@@oneOf(fileId, bytecode): the bytecode is required).
-    @Test
-    @DisplayName("contract parameters without bytecode are rejected")
-    @Tag("testId:enterprise.service.contract/contract-parameters-without-bytecode-are-rejected")
-    void contractParametersWithoutBytecodeAreRejected() {
-        // when / then
-        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(null, null, List.of(), null, null, null, null, null, null, null, null, null, false));
-    }
-
-    /// `enterprise.service.contract/a-contract-is-staked-to-an-account-to-a-node-or-to-neither`
-    ///
-    /// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); the Python SDK (contract_create_transaction_test.py,
-    /// test_staked_setters_clear_each_other).
-    @Test
-    @DisplayName("a contract is staked to an account, to a node or to neither")
-    @Tag("testId:enterprise.service.contract/a-contract-is-staked-to-an-account-to-a-node-or-to-neither")
-    void aContractIsStakedToAnAccountToANodeOrToNeither() {
-        // given
-        final AccountId stakedAccount = defaultAccountId();
-
-        // when
-        final ContractCreateParams toAccount = new ContractCreateParams(defaultAddress(), null, List.of(), null, null, null, null, null, null, null, stakedAccount, null, false);
-        final ContractCreateParams toNode = new ContractCreateParams(defaultAddress(), null, List.of(), null, null, null, null, null, null, null, null, 1L, false);
-        final ContractCreateParams toNeither = defaultContractCreateParams();
-
-        // then
-        assertEquals(stakedAccount, toAccount.stakedAccountId());
-        assertNull(toAccount.stakedNodeId());
-        assertEquals(1L, toNode.stakedNodeId());
-        assertNull(toNode.stakedAccountId());
-        assertNull(toNeither.stakedAccountId());
-        assertNull(toNeither.stakedNodeId());
-    }
-
-    /// `enterprise.service.contract/contract-parameters-staked-to-both-an-account-and-a-node-are-rejected`
-    ///
-    /// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI contract_create.proto (staked_id is a oneof).
-    @Test
-    @DisplayName("contract parameters staked to both an account and a node are rejected")
-    @Tag("testId:enterprise.service.contract/contract-parameters-staked-to-both-an-account-and-a-node-are-rejected")
-    void contractParametersStakedToBothAnAccountAndANodeAreRejected() {
-        // when / then
-        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(defaultAddress(), null, List.of(), null, null, null, null, null, null, null, defaultAccountId(), 3L, false));
+        assertThrows(IllegalArgumentException.class, () -> new ContractCreateParams(List.of(), null, null, null, repeat("a", 101L), null, null, null));
     }
 
     /// `enterprise.service.contract/a-parameter-keeps-the-value-it-wraps`
@@ -271,11 +184,7 @@ class ServiceContractSpecTest {
     }
 
     private static ContractCreateParams defaultContractCreateParams() {
-        return new ContractCreateParams(defaultAddress(), null, List.of(), null, null, null, null, null, null, null, null, null, false);
-    }
-
-    private static Address defaultAddress() {
-        return new Address(0L, 0L, "", 1001L);
+        return new ContractCreateParams(List.of(), null, null, null, null, null, null, null);
     }
 
     private static Authority defaultAuthority() {

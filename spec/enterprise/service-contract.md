@@ -3,7 +3,9 @@
 ## Description
 
 `SmartContractService` deploys smart contracts and calls their functions. A contract is created either from bytecode
-stored in a file or directly from bytecode, optionally with constructor parameters. Function and constructor
+stored in a file or directly from bytecode, optionally with constructor parameters; `ContractCreateParams` holds the
+further options of a new contract. Staking is not part of the service: to create a contract that is staked to an
+account or to a node, use `ContractCreateTransaction` of the consensus node client. Function and constructor
 parameters are passed as `Param` values, created with the factory functions such as `ofString`, `ofAddress`,
 `ofBool` or `uint256`, which wrap a value of your language as the matching Solidity type. The values returned by a
 function call are available from the `ContractCallResult` by index.
@@ -54,16 +56,9 @@ Contract {
     @@immutable contractId: ContractId
 }
 
-// The parameters of a new smart contract: everything that can be set when it is created. The bytecode comes either
-// from a file or directly; a contract is staked to an account or to a node, not to both.
+// The options of a new smart contract. Where its bytecode comes from is chosen by the method that creates it.
 @@finalType
-@@oneOf(fileId, bytecode)
-@@oneOrNoneOf(stakedAccountId, stakedNodeId)
 ContractCreateParams {
-    // The file that holds the bytecode.
-    @@immutable @@nullable fileId: Address
-    // The bytecode itself.
-    @@immutable @@nullable bytecode: bytes
     // The parameters of the constructor, in order.
     @@immutable @@default([]) constructorParams: list<Param<ANY, ANY>>
     // The gas for running the constructor; a default of the service if absent.
@@ -78,9 +73,6 @@ ContractCreateParams {
     // The account that pays for the renewal.
     @@immutable @@nullable autoRenewAccount: AccountId
     @@immutable @@nullable maxAutomaticTokenAssociations: int32
-    @@immutable @@nullable stakedAccountId: AccountId
-    @@immutable @@nullable stakedNodeId: int64
-    @@immutable @@default(false) declineStakingReward: bool
 }
 
 SmartContractService {
@@ -91,9 +83,11 @@ SmartContractService {
 
     @@throws(service-error) Contract createContract(contents:bytes, constructorParams:Param<ANY, ANY>...)
 
-    // Create a contract with the given parameters: the general form of the methods above, for every option of a new
-    // contract.
-    @@throws(service-error) Contract createContract(params: ContractCreateParams)
+    // Create a contract from the bytecode in a file or from the bytecode itself, with every option of a new contract:
+    // the general form of the methods above.
+    @@throws(service-error) Contract createContract(fileId:Address, params: ContractCreateParams)
+
+    @@throws(service-error) Contract createContract(contents:bytes, params: ContractCreateParams)
 
     @@throws(service-error) ContractCallResult callContractFunction(contract:Contract, functionName:string, params:Param<ANY, ANY>...)
 
@@ -133,8 +127,8 @@ SmartContractService createService(session: Session)
 ## Default Instances for Testing
 
 ```
-// The parameters of a contract whose bytecode is stored in the default file.
-instance ContractCreateParams = ContractCreateParams{fileId: DEFAULT}
+// The options of a contract that sets none of them.
+instance ContractCreateParams = ContractCreateParams{}
 
 // A contract addressed by the default contract id.
 instance Contract = Contract{contractId: DEFAULT}
@@ -147,23 +141,18 @@ instance ParamSupplier = ofString(value: "value").supplier
 
 Tests of `ContractCreateParams`, `Contract` and the parameter factory functions. The methods of
 `SmartContractService` talk to the network and are not unit-tested here; a `ContractCallResult` can only be obtained
-from them. A violation of `@@oneOf`, `@@oneOrNoneOf`, `@@min` or `@@maxBytes` is rejected with
-`invalid-argument-error`. The ABI encoding of a `Param` is not part of this API and is not tested.
+from them. A violation of `@@min` or `@@maxBytes` is rejected with `invalid-argument-error`. The ABI encoding of a `Param` is not part of this API and is not tested.
 
 ```tests
-// Source: this spec (@@oneOf(fileId, bytecode), @@default and @@nullable of ContractCreateParams); the Python SDK
-// (contract_create_transaction_test.py, test_constructor_default_values: no bytecode, gas, admin key, memo or staking
-// target).
-@@testId("contract-parameters-with-bytecode-from-a-file-have-the-defaults-of-the-spec")
-test "contract parameters with bytecode from a file have the defaults of the spec" {
+// Source: this spec (@@default and @@nullable of ContractCreateParams); the Python SDK (contract_create_transaction_test.py,
+// test_constructor_default_values: no gas, admin key or memo).
+@@testId("contract-parameters-without-values-have-the-defaults-of-the-spec")
+test "contract parameters without values have the defaults of the spec" {
     // when
     let params = DEFAULT(ContractCreateParams)
 
     // then
-    assertEquals(expected: DEFAULT(Address), actual: params.fileId)
-    assertNull(actual: params.bytecode)
     assertEquals(expected: 0, actual: length(value: params.constructorParams))
-    assertFalse(condition: params.declineStakingReward)
     assertNull(actual: params.gas)
     assertNull(actual: params.initialBalance)
     assertNull(actual: params.adminAuthority)
@@ -171,30 +160,13 @@ test "contract parameters with bytecode from a file have the defaults of the spe
     assertNull(actual: params.autoRenewPeriod)
     assertNull(actual: params.autoRenewAccount)
     assertNull(actual: params.maxAutomaticTokenAssociations)
-    assertNull(actual: params.stakedAccountId)
-    assertNull(actual: params.stakedNodeId)
-}
-
-// Source: this spec (@@oneOf(fileId, bytecode)); the Python SDK (contract_create_transaction_test.py,
-// test_build_transaction_body_with_bytecode and test_bytecode_setters_clear_each_other).
-@@testId("contract-parameters-take-the-bytecode-directly-instead-of-from-a-file")
-test "contract parameters take the bytecode directly instead of from a file" {
-    // given
-    let bytecode = hex(text: "608060405234801561001057600080fd5b50")
-
-    // when
-    let params = ContractCreateParams{bytecode: bytecode}
-
-    // then
-    assertEquals(expected: bytecode, actual: params.bytecode)
-    assertNull(actual: params.fileId)
 }
 
 // Source: the ContractCreateTransaction unit tests of the Java (ContractCreateTransactionTest), Go
 // (contract_create_transaction_unit_test.go), C++ (ContractCreateTransactionUnitTests), Swift
 // (ContractCreateTransactionUnitTests) and Python (contract_create_transaction_test.py, test_constructor_with_parameters)
-// SDKs; hiero-enterprise-java (ProtocolLayerDataCreationTests, testContractCreateRequestCreation: a file id, gas, an
-// admin key and constructor parameters): every value that is set is read back unchanged. The auto-renew period is the
+// SDKs; hiero-enterprise-java (ProtocolLayerDataCreationTests, testContractCreateRequestCreation: gas, an admin key and
+// constructor parameters): every value that is set is read back unchanged. The auto-renew period is the
 // one of the Java test (Duration.ofHours(10), which is exactly 36000 seconds).
 @@testId("contract-parameters-keep-the-values-they-are-created-with")
 test "contract parameters keep the values they are created with" {
@@ -205,9 +177,9 @@ test "contract parameters keep the values they are created with" {
     let constructorParam = ofString(value: "Hello from Hiero.")
 
     // when
-    let params = ContractCreateParams{fileId: DEFAULT, constructorParams: [constructorParam], gas: 1_000_000,
-            adminAuthority: authority, contractMemo: "memo", autoRenewPeriod: autoRenewPeriod,
-            autoRenewAccount: account, maxAutomaticTokenAssociations: 10, stakedNodeId: 3, declineStakingReward: true}
+    let params = ContractCreateParams{constructorParams: [constructorParam], gas: 1_000_000, adminAuthority: authority,
+            contractMemo: "memo", autoRenewPeriod: autoRenewPeriod, autoRenewAccount: account,
+            maxAutomaticTokenAssociations: 10}
 
     // then
     assertEquals(expected: 1, actual: length(value: params.constructorParams))
@@ -217,8 +189,6 @@ test "contract parameters keep the values they are created with" {
     assertEquals(expected: autoRenewPeriod, actual: params.autoRenewPeriod)
     assertEquals(expected: account, actual: params.autoRenewAccount)
     assertEquals(expected: 10, actual: params.maxAutomaticTokenAssociations)
-    assertEquals(expected: 3, actual: params.stakedNodeId)
-    assertTrue(condition: params.declineStakingReward)
 }
 
 // Source: this spec (@@min(1) of gas and @@maxBytes(100) of contractMemo); HAPI limits a memo to 100 bytes, which
@@ -229,7 +199,7 @@ test "contract parameters accept a gas of 1 and a memo of 100 characters" {
     let memo = repeat(value: "a", count: 100)
 
     // when
-    let params = ContractCreateParams{fileId: DEFAULT, gas: 1, contractMemo: memo}
+    let params = ContractCreateParams{gas: 1, contractMemo: memo}
 
     // then
     assertEquals(expected: 1, actual: params.gas)
@@ -242,7 +212,7 @@ test "contract parameters accept a gas of 1 and a memo of 100 characters" {
 test "contract parameters reject a gas of 0" {
     // when / then
     @@expectThrows(invalid-argument-error)
-    ContractCreateParams{fileId: DEFAULT, gas: 0}
+    ContractCreateParams{gas: 0}
 }
 
 // Source: this spec (@@maxBytes(100) of contractMemo); HAPI limits a memo to 100 bytes.
@@ -250,53 +220,7 @@ test "contract parameters reject a gas of 0" {
 test "contract parameters reject a memo of 101 characters" {
     // when / then
     @@expectThrows(invalid-argument-error)
-    ContractCreateParams{fileId: DEFAULT, contractMemo: repeat(value: "a", count: 101)}
-}
-
-// Source: this spec (@@oneOf(fileId, bytecode)); HAPI contract_create.proto (initcodeSource is a oneof of fileID and
-// initcode).
-@@testId("contract-parameters-with-bytecode-both-from-a-file-and-directly-are-rejected")
-test "contract parameters with bytecode both from a file and directly are rejected" {
-    // when / then
-    @@expectThrows(invalid-argument-error)
-    ContractCreateParams{fileId: DEFAULT, bytecode: hex(text: "608060405234801561001057600080fd5b50")}
-}
-
-// Source: this spec (@@oneOf(fileId, bytecode): the bytecode is required).
-@@testId("contract-parameters-without-bytecode-are-rejected")
-test "contract parameters without bytecode are rejected" {
-    // when / then
-    @@expectThrows(invalid-argument-error)
-    ContractCreateParams{fileId: null, bytecode: null}
-}
-
-// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); the Python SDK (contract_create_transaction_test.py,
-// test_staked_setters_clear_each_other).
-@@testId("a-contract-is-staked-to-an-account-to-a-node-or-to-neither")
-test "a contract is staked to an account, to a node or to neither" {
-    // given
-    let stakedAccount = DEFAULT(AccountId)
-
-    // when
-    let toAccount = ContractCreateParams{fileId: DEFAULT, stakedAccountId: stakedAccount}
-    let toNode = ContractCreateParams{fileId: DEFAULT, stakedNodeId: 1}
-    let toNeither = DEFAULT(ContractCreateParams)
-
-    // then
-    assertEquals(expected: stakedAccount, actual: toAccount.stakedAccountId)
-    assertNull(actual: toAccount.stakedNodeId)
-    assertEquals(expected: 1, actual: toNode.stakedNodeId)
-    assertNull(actual: toNode.stakedAccountId)
-    assertNull(actual: toNeither.stakedAccountId)
-    assertNull(actual: toNeither.stakedNodeId)
-}
-
-// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI contract_create.proto (staked_id is a oneof).
-@@testId("contract-parameters-staked-to-both-an-account-and-a-node-are-rejected")
-test "contract parameters staked to both an account and a node are rejected" {
-    // when / then
-    @@expectThrows(invalid-argument-error)
-    ContractCreateParams{fileId: DEFAULT, stakedAccountId: DEFAULT(AccountId), stakedNodeId: 3}
+    ContractCreateParams{contractMemo: repeat(value: "a", count: 101)}
 }
 
 // Source: this spec (a Param wraps the value of the host language); hiero-enterprise-java (ContractParam: the value of
@@ -361,12 +285,11 @@ test "contracts with the same contract id are equal" {
 - Long-form (shard.realm.num) Hedera id overloads of `ofAddress` (taking `AccountId` / `ContractId`) belong next to the
   other param factory functions as follow-ups once a HAPI long-form-encoding helper is decided.
 
-- `ContractCreateParams` follows the HAPI `ContractCreateTransactionBody` (bytecode from a file or inline, gas,
-  constructor parameters, admin authority, staking), because the consensus layer has no `ContractCreateTransaction`
-  yet. Once it exists, the fields should be aligned with it, as the other `…CreateParams` types are with their
-  transactions. Open: whether `gas` should stay optional (a default chosen by the service) or be required as in HAPI.
-  Because `consensusnode.transactions` has neither a contract create nor a contract call transaction, the Java
-  implementation cannot implement `createContract…` or `callContractFunction` at all; both fail.
+- **`ContractCreateParams` is not yet aligned with `ContractCreateTransaction`**
+  ([`transactions-contracts.md`](../consensus-node-client/transactions-contracts.md)): the constructor parameters are
+  `Param` values instead of `AbiValue`s of the namespace `evm`, and `gas` is optional with `@@min(1)` (a default chosen
+  by the service) while the transaction requires it with `@@min(0)`. The Java implementation does not implement the
+  contract transactions yet, so `createContract…` and `callContractFunction` fail.
 - **How is a `ContractCallResult` obtained?** `ContractCallResult` had no values of its own and is now an abstraction
   the SDK creates from the result of a call. Which source the SDK reads the result from (the record of a
   `ContractCall` transaction, a `ContractCallLocal` query, or the Mirror Node `POST /contracts/call`) and how the

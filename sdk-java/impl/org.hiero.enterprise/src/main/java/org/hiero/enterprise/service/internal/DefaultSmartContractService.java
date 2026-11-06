@@ -31,19 +31,28 @@ public final class DefaultSmartContractService extends SmartContractService {
     @Override
     public Contract createContract(final Address fileId, final Param<?, ?>... constructorParams) {
         Objects.requireNonNull(fileId, "fileId must not be null");
-        return createContract(ContractCreateParams.builder().fileId(fileId).constructorParams(params(constructorParams))
-                .build());
+        return createContract(fileId, ContractCreateParams.builder().constructorParams(params(constructorParams)).build());
     }
 
     @Override
     public Contract createContract(final byte[] contents, final Param<?, ?>... constructorParams) {
         Objects.requireNonNull(contents, "contents must not be null");
-        return createContract(ContractCreateParams.builder().bytecode(contents)
-                .constructorParams(params(constructorParams)).build());
+        return createContract(contents, ContractCreateParams.builder().constructorParams(params(constructorParams)).build());
     }
 
     @Override
-    public Contract createContract(final ContractCreateParams params) {
+    public Contract createContract(final Address fileId, final ContractCreateParams params) {
+        Objects.requireNonNull(fileId, "fileId must not be null");
+        return create(params);
+    }
+
+    @Override
+    public Contract createContract(final byte[] contents, final ContractCreateParams params) {
+        Objects.requireNonNull(contents, "contents must not be null");
+        return create(params);
+    }
+
+    private Contract create(final ContractCreateParams params) {
         Objects.requireNonNull(params, "params must not be null");
         Abi.encodeArguments(params.constructorParams());
         throw new ServiceException("The consensus node client offers no transaction to create a smart contract", null);

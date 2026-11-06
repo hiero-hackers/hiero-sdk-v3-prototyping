@@ -64,11 +64,24 @@ class SmartContractServiceTest {
     }
 
     @Test
-    @DisplayName("createContract(params) can be called and returns a value (only ServiceException may occur)")
+    @DisplayName("createContract(fileId, params) can be called and returns a value (only ServiceException may occur)")
     @Tag("testId:enterprise.service.contract.SmartContractService/createContract/call-3")
     void shouldCallCreateContract3() throws Exception {
         try {
-            assertNotNull(create().createContract(paramsValue()));
+            assertNotNull(create().createContract(fileIdValue(), paramsValue()));
+        } catch (final Exception e) {
+            if (!(e instanceof ServiceException)) {
+                throw e;
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("createContract(contents, params) can be called and returns a value (only ServiceException may occur)")
+    @Tag("testId:enterprise.service.contract.SmartContractService/createContract/call-4")
+    void shouldCallCreateContract4() throws Exception {
+        try {
+            assertNotNull(create().createContract(contentsValue(), paramsValue()));
         } catch (final Exception e) {
             if (!(e instanceof ServiceException)) {
                 throw e;
@@ -145,7 +158,7 @@ class SmartContractServiceTest {
     }
 
     private static ContractCreateParams paramsValue() {
-        return new ContractCreateParams(new Address(0L, 0L, "", 1001L), null, List.of(), null, null, null, null, null, null, null, null, null, false);
+        return new ContractCreateParams(List.of(), null, null, null, null, null, null, null);
     }
 
     private static Contract contractValue() {

@@ -5,12 +5,11 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Objects;
 import org.hiero.authority.Authority;
-import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
 
 /// The parameters of a new account: everything that can be set when an account is created. Only the authority is
-/// required. An account is staked to another account or to a node, not to both.
+/// required.
 ///
 /// @param initialBalance Amount transferred from the payer to the new account. If absent, the account is created with a balance
 ///   of 0 in the native token of the network.
@@ -21,9 +20,6 @@ public record AccountCreateParams(
         boolean receiverSignatureRequired,
         @Nullable Integer maxAutomaticTokenAssociations,
         @Nullable Duration autoRenewPeriod,
-        @Nullable AccountId stakedAccountId,
-        @Nullable Long stakedNodeId,
-        boolean declineStakingReward,
         byte @Nullable [] alias) {
 
     /// Creates a new `AccountCreateParams`.
@@ -36,22 +32,17 @@ public record AccountCreateParams(
             throw new IllegalArgumentException("accountMemo must be at most 100 bytes long in UTF-8");
         }
         alias = alias == null ? null : alias.clone();
-        if ((stakedAccountId != null ? 1 : 0) + (stakedNodeId != null ? 1 : 0) > 1) {
-            throw new IllegalArgumentException("at most one of stakedAccountId, stakedNodeId may be set");
-        }
     }
 
-    /// Creates a new `AccountCreateParams` with the default value of `receiverSignatureRequired`, `declineStakingReward`.
+    /// Creates a new `AccountCreateParams` with the default value of `receiverSignatureRequired`.
     public AccountCreateParams(
             final Authority authority,
             final @Nullable NativeToken<?, ?> initialBalance,
             final @Nullable String accountMemo,
             final @Nullable Integer maxAutomaticTokenAssociations,
             final @Nullable Duration autoRenewPeriod,
-            final @Nullable AccountId stakedAccountId,
-            final @Nullable Long stakedNodeId,
             final byte @Nullable [] alias) {
-        this(authority, initialBalance, accountMemo, false, maxAutomaticTokenAssociations, autoRenewPeriod, stakedAccountId, stakedNodeId, false, alias);
+        this(authority, initialBalance, accountMemo, false, maxAutomaticTokenAssociations, autoRenewPeriod, alias);
     }
 
     /// Returns a copy of the `alias` array.
@@ -60,6 +51,9 @@ public record AccountCreateParams(
         return alias == null ? null : alias.clone();
     }
 
+    /// Compares `alias` by content: the implicit `equals` of a record compares
+    /// an array by reference, so two instances with the same values would never be equal (each holds its
+    /// own copy of the array).
     @Override
     public boolean equals(final @Nullable Object obj) {
         return obj instanceof AccountCreateParams other
@@ -69,20 +63,19 @@ public record AccountCreateParams(
             && receiverSignatureRequired == other.receiverSignatureRequired
             && Objects.equals(maxAutomaticTokenAssociations, other.maxAutomaticTokenAssociations)
             && Objects.equals(autoRenewPeriod, other.autoRenewPeriod)
-            && Objects.equals(stakedAccountId, other.stakedAccountId)
-            && Objects.equals(stakedNodeId, other.stakedNodeId)
-            && declineStakingReward == other.declineStakingReward
             && Arrays.equals(alias, other.alias);
     }
 
+    /// Hashes `alias` by content, consistent with [#equals(Object)].
     @Override
     public int hashCode() {
-        return Objects.hash(authority, initialBalance, accountMemo, receiverSignatureRequired, maxAutomaticTokenAssociations, autoRenewPeriod, stakedAccountId, stakedNodeId, declineStakingReward, Arrays.hashCode(alias));
+        return Objects.hash(authority, initialBalance, accountMemo, receiverSignatureRequired, maxAutomaticTokenAssociations, autoRenewPeriod, Arrays.hashCode(alias));
     }
 
+    /// Shows only the length of `alias` instead of the identity of the array object.
     @Override
     public String toString() {
-        return "AccountCreateParams[authority=" + authority + ", initialBalance=" + initialBalance + ", accountMemo=" + accountMemo + ", receiverSignatureRequired=" + receiverSignatureRequired + ", maxAutomaticTokenAssociations=" + maxAutomaticTokenAssociations + ", autoRenewPeriod=" + autoRenewPeriod + ", stakedAccountId=" + stakedAccountId + ", stakedNodeId=" + stakedNodeId + ", declineStakingReward=" + declineStakingReward + ", alias=" + (alias == null ? "null" : "byte[" + alias.length + "]") + "]";
+        return "AccountCreateParams[authority=" + authority + ", initialBalance=" + initialBalance + ", accountMemo=" + accountMemo + ", receiverSignatureRequired=" + receiverSignatureRequired + ", maxAutomaticTokenAssociations=" + maxAutomaticTokenAssociations + ", autoRenewPeriod=" + autoRenewPeriod + ", alias=" + (alias == null ? "null" : "byte[" + alias.length + "]") + "]";
     }
 
     /// Returns a builder for a new `AccountCreateParams`.
@@ -105,9 +98,6 @@ public record AccountCreateParams(
         private boolean receiverSignatureRequired = false;
         private @Nullable Integer maxAutomaticTokenAssociations;
         private @Nullable Duration autoRenewPeriod;
-        private @Nullable AccountId stakedAccountId;
-        private @Nullable Long stakedNodeId;
-        private boolean declineStakingReward = false;
         private byte @Nullable [] alias;
 
         private Builder() {
@@ -171,33 +161,6 @@ public record AccountCreateParams(
             return this;
         }
 
-        /// Sets the `stakedAccountId`.
-        ///
-        /// @param stakedAccountId the value
-        /// @return this builder
-        public Builder stakedAccountId(final @Nullable AccountId stakedAccountId) {
-            this.stakedAccountId = stakedAccountId;
-            return this;
-        }
-
-        /// Sets the `stakedNodeId`.
-        ///
-        /// @param stakedNodeId the value
-        /// @return this builder
-        public Builder stakedNodeId(final @Nullable Long stakedNodeId) {
-            this.stakedNodeId = stakedNodeId;
-            return this;
-        }
-
-        /// Sets the `declineStakingReward`.
-        ///
-        /// @param declineStakingReward the value
-        /// @return this builder
-        public Builder declineStakingReward(final boolean declineStakingReward) {
-            this.declineStakingReward = declineStakingReward;
-            return this;
-        }
-
         /// Sets the `alias`.
         ///
         /// @param alias the value
@@ -220,9 +183,6 @@ public record AccountCreateParams(
                     receiverSignatureRequired,
                     maxAutomaticTokenAssociations,
                     autoRenewPeriod,
-                    stakedAccountId,
-                    stakedNodeId,
-                    declineStakingReward,
                     alias);
         }
     }

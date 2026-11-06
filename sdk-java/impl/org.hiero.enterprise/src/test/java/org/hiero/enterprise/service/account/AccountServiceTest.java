@@ -131,7 +131,7 @@ class AccountServiceTest {
     }
 
     private static AccountCreateParams paramsValue() {
-        return new AccountCreateParams(new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c").createPublicKey()), null, null, false, null, null, null, null, false, null);
+        return new AccountCreateParams(new PublicKeyAuthority(KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c").createPublicKey()), null, null, false, null, null, null);
     }
 
     private static AccountId accountIdValue() {

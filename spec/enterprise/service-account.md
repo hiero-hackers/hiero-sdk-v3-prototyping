@@ -6,6 +6,9 @@
 `Authority` and can be funded with an initial balance; the operator account of the `Session` pays for the
 transactions. `AccountInformation` describes an account with its balance and its current authority.
 
+Staking is not part of the service: to create an account that is staked to another account or to a node, use
+`AccountCreateTransaction` of the consensus node client.
+
 ## API Schema
 
 ```
@@ -23,9 +26,8 @@ AccountInformation {
 }
 
 // The parameters of a new account: everything that can be set when an account is created. Only the authority is
-// required. An account is staked to another account or to a node, not to both.
+// required.
 @@finalType
-@@oneOrNoneOf(stakedAccountId, stakedNodeId)
 AccountCreateParams {
     @@immutable authority: Authority
     // Amount transferred from the payer to the new account. If absent, the account is created with a balance
@@ -35,9 +37,6 @@ AccountCreateParams {
     @@immutable @@default(false) receiverSignatureRequired: bool
     @@immutable @@nullable maxAutomaticTokenAssociations: int32
     @@immutable @@nullable autoRenewPeriod: seconds
-    @@immutable @@nullable stakedAccountId: AccountId
-    @@immutable @@nullable stakedNodeId: int64
-    @@immutable @@default(false) declineStakingReward: bool
     @@immutable @@nullable alias: bytes
 }
 
@@ -80,8 +79,7 @@ instance AccountCreateParams = AccountCreateParams{authority: DEFAULT}
 
 ## Testing
 
-Tests of `AccountCreateParams`. The methods of `AccountService` talk to the network and are not unit-tested here. A
-violation of `@@oneOrNoneOf` (both staking targets set) is rejected with `invalid-argument-error`.
+Tests of `AccountCreateParams`. The methods of `AccountService` talk to the network and are not unit-tested here.
 
 ```tests
 // Source: this spec (@@default and @@nullable of AccountCreateParams).
@@ -93,13 +91,10 @@ test "account parameters with only an authority have the defaults of the spec" {
     // then
     assertEquals(expected: DEFAULT(Authority), actual: params.authority)
     assertFalse(condition: params.receiverSignatureRequired)
-    assertFalse(condition: params.declineStakingReward)
     assertNull(actual: params.initialBalance)
     assertNull(actual: params.accountMemo)
     assertNull(actual: params.maxAutomaticTokenAssociations)
     assertNull(actual: params.autoRenewPeriod)
-    assertNull(actual: params.stakedAccountId)
-    assertNull(actual: params.stakedNodeId)
     assertNull(actual: params.alias)
 }
 
@@ -116,8 +111,7 @@ test "account parameters keep the values they are created with" {
 
     // when
     let params = AccountCreateParams{authority: authority, accountMemo: "memo", receiverSignatureRequired: true,
-            maxAutomaticTokenAssociations: 10, autoRenewPeriod: autoRenewPeriod, stakedNodeId: 3,
-            declineStakingReward: true}
+            maxAutomaticTokenAssociations: 10, autoRenewPeriod: autoRenewPeriod}
 
     // then
     assertEquals(expected: authority, actual: params.authority)
@@ -125,39 +119,6 @@ test "account parameters keep the values they are created with" {
     assertTrue(condition: params.receiverSignatureRequired)
     assertEquals(expected: 10, actual: params.maxAutomaticTokenAssociations)
     assertEquals(expected: autoRenewPeriod, actual: params.autoRenewPeriod)
-    assertEquals(expected: 3, actual: params.stakedNodeId)
-    assertTrue(condition: params.declineStakingReward)
-}
-
-// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); the Python SDK (account_create_transaction_test.py,
-// test_set_stake_account_id_reset_stake_node_id and test_set_stack_node_id_reset_stake_account_id: one target clears
-// the other).
-@@testId("an-account-is-staked-to-an-account-to-a-node-or-to-neither")
-test "an account is staked to an account, to a node or to neither" {
-    // given
-    let stakedAccount = DEFAULT(AccountId)
-
-    // when
-    let toAccount = AccountCreateParams{authority: DEFAULT, stakedAccountId: stakedAccount}
-    let toNode = AccountCreateParams{authority: DEFAULT, stakedNodeId: 1}
-    let toNeither = DEFAULT(AccountCreateParams)
-
-    // then
-    assertEquals(expected: stakedAccount, actual: toAccount.stakedAccountId)
-    assertNull(actual: toAccount.stakedNodeId)
-    assertEquals(expected: 1, actual: toNode.stakedNodeId)
-    assertNull(actual: toNode.stakedAccountId)
-    assertNull(actual: toNeither.stakedAccountId)
-    assertNull(actual: toNeither.stakedNodeId)
-}
-
-// Source: this spec (@@oneOrNoneOf(stakedAccountId, stakedNodeId)); HAPI crypto_create.proto (staked_id is a oneof:
-// staked_account_id or staked_node_id).
-@@testId("account-parameters-staked-to-both-an-account-and-a-node-are-rejected")
-test "account parameters staked to both an account and a node are rejected" {
-    // when / then
-    @@expectThrows(invalid-argument-error)
-    AccountCreateParams{authority: DEFAULT, stakedAccountId: DEFAULT(AccountId), stakedNodeId: 3}
 }
 ```
 

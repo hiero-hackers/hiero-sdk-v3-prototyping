@@ -46,8 +46,7 @@ public final class DefaultAccountService extends AccountService {
         Objects.requireNonNull(params, "params must not be null");
         return session.execute(new AccountCreateTransaction(params.authority(), params.initialBalance(),
                 params.accountMemo(), params.receiverSignatureRequired(), params.maxAutomaticTokenAssociations(),
-                params.autoRenewPeriod(), params.stakedAccountId(), params.stakedNodeId(),
-                params.declineStakingReward(), params.alias())).accountId();
+                params.autoRenewPeriod(), null, null, false, params.alias())).accountId();
     }
 
     @Override

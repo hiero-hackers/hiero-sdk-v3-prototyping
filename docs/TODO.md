@@ -176,6 +176,16 @@ actually referenced.
 
 
 
+## Enterprise layer
+
+- [ ] **Staking options for `AccountCreateParams` and `ContractCreateParams`.** The enterprise services have no staking
+  options; a staked account or contract is created with `AccountCreateTransaction` / `ContractCreateTransaction` of
+  the consensus node client, whose `@@oneOrNoneOf(stakedAccountId, stakedNodeId)` mirrors HAPI's `oneof staked_id`.
+  The enterprise layer avoids `@@oneOf`-style rules. If staking is needed there, one option is a shared value type
+  instead of two exclusive fields, e.g. `@@nullable staking: StakingTarget` with
+  `@@sealed(StakedToAccount, StakedToNode) abstraction StakingTarget` (`StakedToAccount{accountId}`,
+  `StakedToNode{nodeId}`) and `declineStakingReward` beside it, used by both parameter types.
+
 ## tests
 
 Zwei Grenzen der Test-Sprache melden beide fertigen Agents übereinstimmend:
