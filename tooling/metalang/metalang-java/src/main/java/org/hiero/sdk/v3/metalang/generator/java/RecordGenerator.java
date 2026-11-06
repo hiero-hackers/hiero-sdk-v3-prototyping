@@ -98,13 +98,15 @@ final class RecordGenerator {
         // explicit accessors: copies of bytes arrays; @Deprecated (on a component it only causes a javac warning)
         for (final FieldDefinition field : fields) {
             final boolean bytes = JavaConstraints.isBytes(field.type());
-            if (!bytes && !field.hasAnnotation("deprecated")) {
+            final boolean bytesCollection = JavaConstraints.isBytesCollection(field.type());
+            if (!bytes && !bytesCollection && !field.hasAnnotation("deprecated")) {
                 continue;
             }
             final String component = JavaKeywords.identifier(field.name());
             body.append(body.isEmpty() ? "" : "\n");
             body.append(MarkdownComment.render(INDENT, List.of(field.documentation(), bytes
                     ? "Returns a copy of the `" + field.name() + "` array."
+                    : bytesCollection ? "Returns a copy of the `" + field.name() + "` arrays."
                     : "Returns the `" + field.name() + "` of this value."), JavaHips.seeTags(field),
                     field.hasAnnotation("deprecated")));
             body.append(INDENT).append("@Override\n");
@@ -114,10 +116,12 @@ final class RecordGenerator {
             body.append(ThreadSafeGenerator.member(field, context.threadSafe(type.name()).isPresent(), INDENT, imports));
             body.append(INDENT).append("public ").append(declarations.get(field.name())).append(' ').append(component)
                     .append("() {\n").append(INDENT).append(INDENT).append("return ")
-                    .append(bytes && field.hasAnnotation("nullable") ? component + " == null ? null : " : "")
-                    .append(component).append(bytes ? ".clone()" : "").append(";\n").append(INDENT).append("}\n");
+                    .append((bytes || bytesCollection) && field.hasAnnotation("nullable")
+                            ? component + " == null ? null : " : "")
+                    .append(bytesCollection ? copy(field.type(), component, imports)
+                            : component + (bytes ? ".clone()" : "")).append(";\n").append(INDENT).append("}\n");
         }
-        if (fields.stream().anyMatch(f -> JavaConstraints.isBytes(f.type()))) {
+        if (fields.stream().anyMatch(f -> JavaConstraints.holdsArrays(f.type()))) {
             body.append(contentEquality(type, declarations, imports));
         }
 
@@ -204,6 +208,11 @@ final class RecordGenerator {
 
     /** The expression that copies a collection or array, {@code null} for other types. */
     static String copy(final Type type, final String name, final Imports imports) {
+        if (JavaConstraints.isBytesCollection(type)) {
+            // the arrays are copied too, so that the record holds the only reference to them
+            return name + ".stream().map(byte[]::clone)." + (((Type.BasicType) type).builtin().name().equals("set")
+                    ? "collect(" + imports.use("java.util.stream", "Collectors") + ".toUnmodifiableSet())" : "toList()");
+        }
         if (type instanceof Type.BasicType basic) {
             final BuiltinType builtin = basic.builtin();
             return switch (builtin.category()) {
@@ -252,7 +261,7 @@ final class RecordGenerator {
         final String nullable = imports.use(JavaTypes.JSPECIFY, "Nullable");
         final String self = name + (type.typeParameters().isEmpty() ? "" : "<?>");
         // why the implicit members of the record are replaced, naming the array components
-        final List<String> arrayNames = fields.stream().filter(f -> JavaConstraints.isBytes(f.type()))
+        final List<String> arrayNames = fields.stream().filter(f -> JavaConstraints.holdsArrays(f.type()))
                 .map(f -> "`" + JavaKeywords.identifier(f.name()) + "`").toList();
         final String arrayFields = arrayNames.size() == 1 ? arrayNames.getFirst()
                 : String.join(", ", arrayNames.subList(0, arrayNames.size() - 1)) + " and " + arrayNames.getLast();
@@ -275,9 +284,8 @@ final class RecordGenerator {
                     .append(INDENT).append("@Override\n")
                     .append(INDENT).append("public int hashCode() {\n")
                     .append(INDENT).append(INDENT).append("return ").append(objects).append(".hash(")
-                    .append(fields.stream().map(f -> JavaConstraints.isBytes(f.type())
-                            ? arrays + ".hashCode(" + JavaKeywords.identifier(f.name()) + ")"
-                            : JavaKeywords.identifier(f.name())).collect(Collectors.joining(", "))).append(");\n")
+                    .append(fields.stream().map(f -> hash(f, arrays)).collect(Collectors.joining(", ")))
+                    .append(");\n")
                     .append(INDENT).append("}\n");
         }
         if (type.methods("toString").isEmpty()) {
@@ -288,6 +296,12 @@ final class RecordGenerator {
                     .append(INDENT).append(INDENT).append("return \"").append(name).append("[")
                     .append(fields.stream().map(f -> {
                         final String component = JavaKeywords.identifier(f.name());
+                        if (JavaConstraints.isBytesCollection(f.type())) {
+                            // the lengths of the arrays, for the same reason as below
+                            final String lengths = component + ".stream().map(b -> \"byte[\" + b.length + \"]\").toList()";
+                            return f.name() + "=\" + " + (f.hasAnnotation("nullable")
+                                    ? "(" + component + " == null ? \"null\" : " + lengths + ")" : lengths) + " + \"";
+                        }
                         if (!JavaConstraints.isBytes(f.type())) {
                             return f.name() + "=\" + " + component + " + \"";
                         }
@@ -301,11 +315,37 @@ final class RecordGenerator {
         return out.toString();
     }
 
+    /** The hash of a component in {@code hashCode}: by content for arrays and lists of them. */
+    private static String hash(final FieldDefinition field, final String arrays) {
+        final String name = JavaKeywords.identifier(field.name());
+        if (JavaConstraints.isBytes(field.type())) {
+            return arrays + ".hashCode(" + name + ")";
+        }
+        if (JavaConstraints.isBytesCollection(field.type())
+                && ((Type.BasicType) field.type()).builtin().name().equals("list")) {
+            return arrays + ".deepHashCode(" + (field.hasAnnotation("nullable") ? name + " == null ? null : " : "")
+                    + name + ".toArray())";
+        }
+        return name;
+    }
+
     private static String equality(final FieldDefinition field, final String java, final String arrays,
                                    final String objects) {
         final String name = JavaKeywords.identifier(field.name());
         if (JavaConstraints.isBytes(field.type())) {
             return arrays + ".equals(" + name + ", other." + name + ")";
+        }
+        if (JavaConstraints.isBytesCollection(field.type())) {
+            final String list = ((Type.BasicType) field.type()).builtin().name().equals("set") ? null : name;
+            if (list == null) {
+                // a set of arrays has no content equality in Java; compare the sets as given
+                return objects + ".equals(" + name + ", other." + name + ")";
+            }
+            final String left = field.hasAnnotation("nullable") ? "(" + name + " == null ? null : " + name
+                    + ".toArray())" : name + ".toArray()";
+            final String right = field.hasAnnotation("nullable") ? "(other." + name + " == null ? null : other." + name
+                    + ".toArray())" : "other." + name + ".toArray()";
+            return arrays + ".deepEquals(" + left + ", " + right + ")";
         }
         return switch (java) {
             case "double" -> "Double.compare(" + name + ", other." + name + ") == 0";

@@ -300,6 +300,40 @@ class RecordGeneratorTest {
         }
 
         @Test
+        void shouldCopyCompareAndPrintAListOfBytesByContent() {
+            assertThat(source("""
+                    namespace a
+                    Log { @@immutable topics: list<bytes>
+                        @@immutable @@nullable extra: list<bytes>
+                        @@immutable count: int32 }
+                    """, "Log"))
+                    .contains("public record Log(List<byte[]> topics, @Nullable List<byte[]> extra, int count)")
+                    .contains("        topics = topics.stream().map(byte[]::clone).toList();\n")
+                    .contains("        extra = extra == null ? null : extra.stream().map(byte[]::clone).toList();\n")
+                    .contains("    public List<byte[]> topics() {\n"
+                            + "        return topics.stream().map(byte[]::clone).toList();\n    }")
+                    .contains("return obj instanceof Log other\n"
+                            + "            && Arrays.deepEquals(topics.toArray(), other.topics.toArray())\n"
+                            + "            && Arrays.deepEquals((extra == null ? null : extra.toArray()), "
+                            + "(other.extra == null ? null : other.extra.toArray()))\n"
+                            + "            && count == other.count;")
+                    .contains("return Objects.hash(Arrays.deepHashCode(topics.toArray()), "
+                            + "Arrays.deepHashCode(extra == null ? null : extra.toArray()), count);")
+                    .contains("\"Log[topics=\" + topics.stream().map(b -> \"byte[\" + b.length + \"]\").toList()");
+        }
+
+        @Test
+        void shouldCopyASetOfBytesButCompareItAsASet() {
+            assertThat(source("""
+                    namespace a
+                    Blobs { @@immutable blobs: set<bytes> }
+                    """, "Blobs"))
+                    .contains("        blobs = blobs.stream().map(byte[]::clone).collect(Collectors.toUnmodifiableSet());\n")
+                    .contains("            && Objects.equals(blobs, other.blobs);")
+                    .contains("return Objects.hash(blobs);");
+        }
+
+        @Test
         void shouldGenerateComparisonsForAllNumericTypes() {
             assertThat(source("""
                     namespace a

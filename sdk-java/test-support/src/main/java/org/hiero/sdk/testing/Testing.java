@@ -245,8 +245,8 @@ public final class Testing {
     }
 
     /**
-     * The comparison of the contract tests generated per type: arrays of bytes by their content, everything else with
-     * {@link Object#equals(Object)}. Unlike {@link #assertEquals(Object, Object)} it does not use the value equality
+     * The comparison of the contract tests generated per type: arrays of bytes and lists of them by their content,
+     * everything else with {@link Object#equals(Object)}. Unlike {@link #assertEquals(Object, Object)} it does not use the value equality
      * of the test language: a contract test checks that a value is passed through unchanged.
      *
      * @param expected the expected value, may be {@code null}
@@ -256,6 +256,10 @@ public final class Testing {
         if (expected instanceof byte[] bytes && actual instanceof byte[] other) {
             Assertions.assertArrayEquals(bytes, other, () -> "expected " + Arrays.toString(bytes) + " but was "
                     + Arrays.toString(other));
+        } else if (expected instanceof List<?> list && actual instanceof List<?> other
+                && list.stream().anyMatch(byte[].class::isInstance)) {
+            Assertions.assertTrue(Arrays.deepEquals(list.toArray(), other.toArray()), () -> "expected "
+                    + Arrays.deepToString(list.toArray()) + " but was " + Arrays.deepToString(other.toArray()));
         } else {
             Assertions.assertEquals(expected, actual);
         }

@@ -226,4 +226,26 @@ final class JavaConstraints {
     static boolean isBytes(final Type type) {
         return type instanceof Type.BasicType basic && basic.builtin().category() == BuiltinType.Category.BYTES;
     }
+
+    /**
+     * Whether the attribute's type is a list or set of {@code bytes} arrays: in Java a collection of arrays, which
+     * {@code equals} compares by reference.
+     *
+     * @param type the type
+     * @return {@code true} for {@code list<bytes>} and {@code set<bytes>}
+     */
+    static boolean isBytesCollection(final Type type) {
+        return type instanceof Type.BasicType basic && basic.builtin().category() == BuiltinType.Category.COLLECTION
+                && basic.arguments().size() == 1 && isBytes(basic.arguments().getFirst());
+    }
+
+    /**
+     * Whether the attribute holds arrays: {@code bytes} or a collection of them.
+     *
+     * @param type the type
+     * @return {@code true} if the record must compare, copy and print the attribute itself
+     */
+    static boolean holdsArrays(final Type type) {
+        return isBytes(type) || isBytesCollection(type);
+    }
 }
