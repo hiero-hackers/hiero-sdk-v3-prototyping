@@ -43,6 +43,14 @@ that points outside the data, or a value with bits set that its type does not ha
   not read yet (see Questions & Comments).
 - **Not supported:** the types `fixed<M>x<N>` / `ufixed<M>x<N>` (Solidity cannot use them) and `function` (a 24-byte
   address and selector, not used by the Hiero SDKs). `parse` rejects them.
+- **Signatures are canonical.** `parse` accepts exactly the form that `signature()` writes, plus ` returns (…)` and
+  ` indexed`: no other spaces, no parameter names, and `uint` / `int` as the only synonyms (of `uint256` / `int256`).
+  A signature that a person may have typed differently (`f(uint256, bool)`) is rejected rather than guessed.
+- **Limits.** The ABI limits neither the number of arguments, results or parameters nor how deeply tuples and arrays
+  are nested, so `parse` does not either; the length of a fixed-size array is a `uint32`. A log has at most four
+  topics, the first of which is the hash of the signature, so an event has at most three indexed parameters (Solidity
+  documentation, "Events"); `parse` rejects more. An event created with more indexed parameters has no valid logs:
+  `decodeLog` rejects every log of it, because the number of topics never matches.
 - **Indexed dynamic values.** A log stores an indexed parameter of a dynamic type (`bytes`, `string`, an array, a
   tuple) only as the Keccak-256 hash of its value; the value cannot be recovered. `decodeLog` returns the hash as
   an `AbiFixedBytes` of 32 bytes in its place.
@@ -233,7 +241,8 @@ AbiFunction {
     @@throws(illegal-format) list<AbiValue> decodeResult(data: bytes)
 
     // Reads a function from its signature, optionally followed by " returns " and the output types in parentheses:
-    // "balanceOf(address) returns (uint256)". Throws for text that is no such signature.
+    // "balanceOf(address) returns (uint256)". The signature is canonical: no spaces except the two around "returns",
+    // no parameter names. Throws for text that is no such signature.
     @@throws(illegal-format) @@static AbiFunction parse(signature: string)
 }
 
@@ -266,7 +275,9 @@ AbiEvent {
     @@throws(illegal-format) list<AbiValue> decodeLog(topics: list<bytes>, data: bytes)
 
     // Reads an event from its signature; an indexed parameter has " indexed" after its type:
-    // "Transfer(address indexed,address indexed,uint256)". Throws for text that is no such signature.
+    // "Transfer(address indexed,address indexed,uint256)". The event is not anonymous, so at most three parameters
+    // can be indexed. The signature is canonical: no spaces except the one before "indexed", no parameter names.
+    // Throws for text that is no such signature.
     @@throws(illegal-format) @@static AbiEvent parse(signature: string)
 }
 ```
@@ -290,6 +301,24 @@ values EIP55_ADDRESSES: list<string> = ["0x52908400098527886E0F7030069857D2E4169
 values NO_ABI_TYPES: list<string> = ["", "uint7", "uint0", "uint264", "int12", "bytes0", "bytes33", "uint256[0]",
         "uint256[", "uint256]", "(uint256", "(uint256,)", "fixed128x18", "ufixed128x18", "function", "address payable",
         "uint 256", "Uint256", "struct"]
+
+// Function signatures that parse rejects: incomplete or misplaced parentheses, names that are no identifiers, spaces
+// other than the two around "returns", parameter names, "indexed", empty arguments, unsupported types, widths with a
+// leading zero, array lengths that are 0, negative, beyond uint32 or have a leading zero, and anything after the end.
+values MALFORMED_FUNCTION_SIGNATURES: list<string> = ["", "f", "f(", "f)", "()", "(uint256)", "1f()", "f-g()",
+        "f.g()", "Fü()", "f (uint256)", "f( uint256)", "f(uint256 )", "f(uint256, bool)", "f(,)", "f(uint256,)",
+        "f(,uint256)", "f(uint256))", "f()x", "f();", "f() returns", "f() returns ", "f()returns (bool)",
+        "f() returns(bool)", "f() returns  (bool)", "f()  returns (bool)", "f() returns bool", "f() RETURNS (bool)",
+        "f() returns (bool) returns (bool)", "f(address to)", "f(uint256 indexed)", "f(uint7)", "f(byte)", "f(uint08)",
+        "f(bytes01)", "f(uint256[01])", "f(uint256[0])", "f(uint256[-1])", "f(uint256[4294967296])",
+        "f(uint256[99999999999])", "f(uint256[)", "f((uint256)", "f(uint256))", "f(fixed128x18)", "f(function)"]
+
+// Event signatures that parse rejects: the cases of a function that apply to events, "indexed" misspelt, doubled,
+// without its space or before the type, and "returns".
+values MALFORMED_EVENT_SIGNATURES: list<string> = ["", "E", "E(", "1E()", "E (uint256)", "E( uint256)",
+        "E(uint256 indexed, bool)", "E(uint256 indexed,)", "E(uint256 indexed indexed)", "E(uint256  indexed)",
+        "E(uint256indexed)", "E(uint256 Indexed)", "E(indexed uint256)", "E(address indexed from)", "E(address from)",
+        "E(uint256) returns (bool)", "E() anonymous", "E(uint7 indexed)", "E()x"]
 ```
 
 ## Examples
@@ -730,6 +759,141 @@ test "a function and an event built from their types equal the parsed ones" {
     assertEquals(expected: hex(text: "cdcd77c0"), actual: baz.selector())
     assertEquals(expected: AbiEvent.parse(signature: "baz(uint32 indexed,bool)"), actual: bazEvent)
     assertEquals(expected: hex(text: "cdcd77c0"), actual: slice(value: bazEvent.topic(), start: 0, end: 4))
+}
+
+// Source: the Solidity documentation, "Contract ABI Specification", sections "Function Selector" and "Types" (the
+// signature is the name and the canonical types of the arguments, separated by commas without spaces; tuples are in
+// parentheses); this spec (" returns " and the result types).
+@@testId("a-function-signature-is-read-with-its-name-arguments-and-results")
+test "a function signature is read with its name, arguments and results" {
+    for text in ["f()", "_()", "$()", "f_1$()", "transfer(address,uint256)", "f((uint256,address)[],bool)",
+            "f(uint256[][3],bytes32[2][])", "f(())", "f(bytes,string,bool,address,int8,uint8,bytes1)"] {
+        // when / then
+        assertEquals(expected: text, actual: AbiFunction.parse(signature: text).signature())
+    }
+
+    // when
+    let transfer = AbiFunction.parse(signature: "transfer(address,uint256) returns (bool)")
+    let noResults = AbiFunction.parse(signature: "f() returns ()")
+
+    // then
+    assertEquals(expected: "transfer", actual: transfer.name)
+    assertEquals(expected: [AbiAddressType{}, AbiUintType{bits: 256}], actual: transfer.inputs)
+    assertEquals(expected: [AbiBoolType{}], actual: transfer.outputs)
+    assertEquals(expected: AbiFunction.parse(signature: "f()"), actual: noResults)
+}
+
+// Source: EIP-165, section "How a Contract will Publish the Interfaces it Implements" (the interface identifier of
+// ERC165, the selector of supportsInterface(bytes4), is 0x01ffc9a7).
+@@testId("the-selector-of-supportsinterface-is-the-one-of-eip-165")
+test "the selector of supportsInterface is the one of EIP-165" {
+    // when
+    let supportsInterface = AbiFunction.parse(signature: "supportsInterface(bytes4) returns (bool)")
+
+    // then
+    assertEquals(expected: hex(text: "01ffc9a7"), actual: supportsInterface.selector())
+}
+
+// Source: the Solidity documentation, "Contract ABI Specification", section "Function Selector" (uint and int are
+// written as uint256 and int256 in the signature from which the selector is computed).
+@@testId("uint-and-int-in-a-signature-are-read-as-uint256-and-int256")
+test "uint and int in a signature are read as uint256 and int256" {
+    // when
+    let short = AbiFunction.parse(signature: "f(uint,int[]) returns (uint)")
+
+    // then
+    assertEquals(expected: "f(uint256,int256[])", actual: short.signature())
+    assertEquals(expected: AbiFunction.parse(signature: "f(uint256,int256[]) returns (uint256)"), actual: short)
+    assertEquals(expected: AbiFunction.parse(signature: "f(uint256,int256[])").selector(), actual: short.selector())
+}
+
+// Source: this spec (the ABI limits neither the number of arguments and results nor the nesting of tuples and arrays,
+// so parse does not either).
+@@testId("a-function-with-100-arguments-and-results-and-deeply-nested-types-is-read")
+test "a function with 100 arguments and results and deeply nested types is read" {
+    // given
+    let hundred = repeat(value: "uint256,", count: 99) + "uint256"
+    let nestedTuple = repeat(value: "(", count: 32) + "uint256" + repeat(value: ")", count: 32)
+    let nestedArray = "uint256" + repeat(value: "[]", count: 32)
+
+    // when
+    let wide = AbiFunction.parse(signature: "f(" + hundred + ") returns (" + hundred + ")")
+    let deep = AbiFunction.parse(signature: "f(" + nestedTuple + "," + nestedArray + ")")
+
+    // then
+    assertEquals(expected: 100, actual: length(value: wide.inputs))
+    assertEquals(expected: 100, actual: length(value: wide.outputs))
+    assertEquals(expected: "f(" + hundred + ")", actual: wide.signature())
+    assertEquals(expected: "f(" + nestedTuple + "," + nestedArray + ")", actual: deep.signature())
+}
+
+// Source: this spec (the length of a fixed-size array is a uint32 of at least 1, written without leading zeros).
+@@testId("an-array-length-from-1-to-the-largest-uint32-is-read")
+test "an array length from 1 to the largest uint32 is read" {
+    for text in ["f(uint256[1])", "f(uint256[10])", "f(uint256[4294967295])"] {
+        // when / then
+        assertEquals(expected: text, actual: AbiFunction.parse(signature: text).signature())
+    }
+
+    // when / then
+    @@expectThrows(illegal-format)
+    AbiFunction.parse(signature: "f(uint256[4294967296])")
+}
+
+// Source: this spec (parse reads only the canonical signature: no spaces except around "returns", no parameter names,
+// no unsupported types, array lengths of a uint32 of at least 1).
+@@testId("a-malformed-function-signature-is-rejected")
+test "a malformed function signature is rejected" {
+    for text in MALFORMED_FUNCTION_SIGNATURES {
+        // when / then
+        @@expectThrows(illegal-format)
+        AbiFunction.parse(signature: text)
+    }
+}
+
+// Source: the Solidity documentation, "Contract ABI Specification", section "Events" (the signature of an event does
+// not contain "indexed"); this spec (" indexed" after the type of an indexed parameter).
+@@testId("an-event-signature-is-read-with-its-name-and-indexed-parameters")
+test "an event signature is read with its name and indexed parameters" {
+    // when
+    let empty = AbiEvent.parse(signature: "E()")
+    let mixed = AbiEvent.parse(signature: "E((uint256,address) indexed,string,bytes32[2] indexed)")
+    let wide = AbiEvent.parse(signature: "E(" + repeat(value: "uint256,", count: 99) + "uint256)")
+
+    // then
+    assertEquals(expected: "E()", actual: empty.signature())
+    assertEquals(expected: 0, actual: length(value: empty.parameters))
+    assertFalse(condition: empty.anonymous)
+    assertEquals(expected: "E((uint256,address),string,bytes32[2])", actual: mixed.signature())
+    assertEquals(expected: [true, false, true], actual: [mixed.parameters[0].indexed, mixed.parameters[1].indexed,
+            mixed.parameters[2].indexed])
+    assertEquals(expected: 100, actual: length(value: wide.parameters))
+}
+
+// Source: the Solidity documentation, "Events" (up to three parameters of an event can be indexed; a log has at most
+// four topics, the first of which is the hash of the signature).
+@@testId("an-event-with-three-indexed-parameters-is-read-and-one-with-four-is-rejected")
+test "an event with three indexed parameters is read and one with four is rejected" {
+    // when
+    let three = AbiEvent.parse(signature: "E(uint256 indexed,address indexed,bool indexed,string)")
+
+    // then
+    assertEquals(expected: "E(uint256,address,bool,string)", actual: three.signature())
+
+    // when / then
+    @@expectThrows(illegal-format)
+    AbiEvent.parse(signature: "E(uint256 indexed,address indexed,bool indexed,string indexed)")
+}
+
+// Source: this spec (parse reads only the canonical signature: " indexed" after the type, no other spaces, no
+// parameter names, no "returns").
+@@testId("a-malformed-event-signature-is-rejected")
+test "a malformed event signature is rejected" {
+    for text in MALFORMED_EVENT_SIGNATURES {
+        // when / then
+        @@expectThrows(illegal-format)
+        AbiEvent.parse(signature: text)
+    }
 }
 
 // Source: the Solidity documentation, "Contract ABI Specification", sections "Function Selector" and "Events" (the

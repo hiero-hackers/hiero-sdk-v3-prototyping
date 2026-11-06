@@ -27,6 +27,8 @@ public final class AbiSignatures {
     private static final Pattern ELEMENTARY = Pattern.compile("(uint|int|bytes)([1-9][0-9]*)?|address|bool|string");
     private static final String RETURNS = " returns ";
     private static final String INDEXED = " indexed";
+    /// A log has at most four topics; the first is the hash of the signature of an event that is not anonymous.
+    private static final int MAX_INDEXED = 3;
 
     private AbiSignatures() {
     }
@@ -64,7 +66,7 @@ public final class AbiSignatures {
     ///
     /// @param signature the signature; an indexed parameter has ` indexed` after its type
     /// @return the event, not anonymous
-    /// @throws IllegalArgumentException if the text is no such signature
+    /// @throws IllegalArgumentException if the text is no such signature or has more than three indexed parameters
     public static AbiEvent parseEvent(final String signature) {
         final Parser parser = new Parser(signature);
         final String name = parser.name();
@@ -78,6 +80,10 @@ public final class AbiSignatures {
             parser.expect(')');
         }
         parser.end();
+        if (parameters.stream().filter(AbiEventParameter::indexed).count() > MAX_INDEXED) {
+            throw new IllegalArgumentException("'" + signature + "' has more than " + MAX_INDEXED
+                    + " indexed parameters");
+        }
         return new AbiEvent(name, parameters, false);
     }
 

@@ -24,6 +24,19 @@ class EvmSpecTest {
         return List.of("", "uint7", "uint0", "uint264", "int12", "bytes0", "bytes33", "uint256[0]", "uint256[", "uint256]", "(uint256", "(uint256,)", "fixed128x18", "ufixed128x18", "function", "address payable", "uint 256", "Uint256", "struct");
     }
 
+    /// Function signatures that parse rejects: incomplete or misplaced parentheses, names that are no identifiers, spaces
+    /// other than the two around "returns", parameter names, "indexed", empty arguments, unsupported types, widths with a
+    /// leading zero, array lengths that are 0, negative, beyond uint32 or have a leading zero, and anything after the end.
+    private static List<String> MALFORMED_FUNCTION_SIGNATURES() {
+        return List.of("", "f", "f(", "f)", "()", "(uint256)", "1f()", "f-g()", "f.g()", "Fü()", "f (uint256)", "f( uint256)", "f(uint256 )", "f(uint256, bool)", "f(,)", "f(uint256,)", "f(,uint256)", "f(uint256))", "f()x", "f();", "f() returns", "f() returns ", "f()returns (bool)", "f() returns(bool)", "f() returns  (bool)", "f()  returns (bool)", "f() returns bool", "f() RETURNS (bool)", "f() returns (bool) returns (bool)", "f(address to)", "f(uint256 indexed)", "f(uint7)", "f(byte)", "f(uint08)", "f(bytes01)", "f(uint256[01])", "f(uint256[0])", "f(uint256[-1])", "f(uint256[4294967296])", "f(uint256[99999999999])", "f(uint256[)", "f((uint256)", "f(uint256))", "f(fixed128x18)", "f(function)");
+    }
+
+    /// Event signatures that parse rejects: the cases of a function that apply to events, "indexed" misspelt, doubled,
+    /// without its space or before the type, and "returns".
+    private static List<String> MALFORMED_EVENT_SIGNATURES() {
+        return List.of("", "E", "E(", "1E()", "E (uint256)", "E( uint256)", "E(uint256 indexed, bool)", "E(uint256 indexed,)", "E(uint256 indexed indexed)", "E(uint256  indexed)", "E(uint256indexed)", "E(uint256 Indexed)", "E(indexed uint256)", "E(address indexed from)", "E(address from)", "E(uint256) returns (bool)", "E() anonymous", "E(uint7 indexed)", "E()x");
+    }
+
     /// `evm/an-evm-address-is-read-from-40-hex-digits-with-or-without-0x`
     ///
     /// Source: the Swift, Rust, Python and C++ SDKs.
@@ -423,6 +436,171 @@ class EvmSpecTest {
         assertEquals(hex("cdcd77c0"), baz.selector());
         assertEquals(AbiEvent.parse("baz(uint32 indexed,bool)"), bazEvent);
         assertEquals(hex("cdcd77c0"), slice(bazEvent.topic(), 0L, 4L));
+    }
+
+    /// `evm/a-function-signature-is-read-with-its-name-arguments-and-results`
+    ///
+    /// Source: the Solidity documentation, "Contract ABI Specification", sections "Function Selector" and "Types" (the
+    /// signature is the name and the canonical types of the arguments, separated by commas without spaces; tuples are in
+    /// parentheses); this spec (" returns " and the result types).
+    @Test
+    @DisplayName("a function signature is read with its name, arguments and results")
+    @Tag("testId:evm/a-function-signature-is-read-with-its-name-arguments-and-results")
+    void aFunctionSignatureIsReadWithItsNameArgumentsAndResults() {
+        for (final String text : List.of("f()", "_()", "$()", "f_1$()", "transfer(address,uint256)", "f((uint256,address)[],bool)", "f(uint256[][3],bytes32[2][])", "f(())", "f(bytes,string,bool,address,int8,uint8,bytes1)")) {
+            // when / then
+            assertEquals(text, AbiFunction.parse(text).signature());
+        }
+
+        // when
+        final AbiFunction transfer = AbiFunction.parse("transfer(address,uint256) returns (bool)");
+        final AbiFunction noResults = AbiFunction.parse("f() returns ()");
+
+        // then
+        assertEquals("transfer", transfer.name());
+        assertEquals(List.of(new AbiAddressType(), new AbiUintType(256)), transfer.inputs());
+        assertEquals(List.of(new AbiBoolType()), transfer.outputs());
+        assertEquals(AbiFunction.parse("f()"), noResults);
+    }
+
+    /// `evm/the-selector-of-supportsinterface-is-the-one-of-eip-165`
+    ///
+    /// Source: EIP-165, section "How a Contract will Publish the Interfaces it Implements" (the interface identifier of
+    /// ERC165, the selector of supportsInterface(bytes4), is 0x01ffc9a7).
+    @Test
+    @DisplayName("the selector of supportsInterface is the one of EIP-165")
+    @Tag("testId:evm/the-selector-of-supportsinterface-is-the-one-of-eip-165")
+    void theSelectorOfSupportsInterfaceIsTheOneOfEIP165() {
+        // when
+        final AbiFunction supportsInterface = AbiFunction.parse("supportsInterface(bytes4) returns (bool)");
+
+        // then
+        assertEquals(hex("01ffc9a7"), supportsInterface.selector());
+    }
+
+    /// `evm/uint-and-int-in-a-signature-are-read-as-uint256-and-int256`
+    ///
+    /// Source: the Solidity documentation, "Contract ABI Specification", section "Function Selector" (uint and int are
+    /// written as uint256 and int256 in the signature from which the selector is computed).
+    @Test
+    @DisplayName("uint and int in a signature are read as uint256 and int256")
+    @Tag("testId:evm/uint-and-int-in-a-signature-are-read-as-uint256-and-int256")
+    void uintAndIntInASignatureAreReadAsUint256AndInt256() {
+        // when
+        final AbiFunction short_ = AbiFunction.parse("f(uint,int[]) returns (uint)");
+
+        // then
+        assertEquals("f(uint256,int256[])", short_.signature());
+        assertEquals(AbiFunction.parse("f(uint256,int256[]) returns (uint256)"), short_);
+        assertEquals(AbiFunction.parse("f(uint256,int256[])").selector(), short_.selector());
+    }
+
+    /// `evm/a-function-with-100-arguments-and-results-and-deeply-nested-types-is-read`
+    ///
+    /// Source: this spec (the ABI limits neither the number of arguments and results nor the nesting of tuples and arrays,
+    /// so parse does not either).
+    @Test
+    @DisplayName("a function with 100 arguments and results and deeply nested types is read")
+    @Tag("testId:evm/a-function-with-100-arguments-and-results-and-deeply-nested-types-is-read")
+    void aFunctionWith100ArgumentsAndResultsAndDeeplyNestedTypesIsRead() {
+        // given
+        final String hundred = repeat("uint256,", 99L) + "uint256";
+        final String nestedTuple = (repeat("(", 32L) + "uint256") + repeat(")", 32L);
+        final String nestedArray = "uint256" + repeat("[]", 32L);
+
+        // when
+        final AbiFunction wide = AbiFunction.parse(((("f(" + hundred) + ") returns (") + hundred) + ")");
+        final AbiFunction deep = AbiFunction.parse(((("f(" + nestedTuple) + ",") + nestedArray) + ")");
+
+        // then
+        assertEquals(100L, length(wide.inputs()));
+        assertEquals(100L, length(wide.outputs()));
+        assertEquals(("f(" + hundred) + ")", wide.signature());
+        assertEquals(((("f(" + nestedTuple) + ",") + nestedArray) + ")", deep.signature());
+    }
+
+    /// `evm/an-array-length-from-1-to-the-largest-uint32-is-read`
+    ///
+    /// Source: this spec (the length of a fixed-size array is a uint32 of at least 1, written without leading zeros).
+    @Test
+    @DisplayName("an array length from 1 to the largest uint32 is read")
+    @Tag("testId:evm/an-array-length-from-1-to-the-largest-uint32-is-read")
+    void anArrayLengthFrom1ToTheLargestUint32IsRead() {
+        for (final String text : List.of("f(uint256[1])", "f(uint256[10])", "f(uint256[4294967295])")) {
+            // when / then
+            assertEquals(text, AbiFunction.parse(text).signature());
+        }
+
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> AbiFunction.parse("f(uint256[4294967296])"));
+    }
+
+    /// `evm/a-malformed-function-signature-is-rejected`
+    ///
+    /// Source: this spec (parse reads only the canonical signature: no spaces except around "returns", no parameter names,
+    /// no unsupported types, array lengths of a uint32 of at least 1).
+    @Test
+    @DisplayName("a malformed function signature is rejected")
+    @Tag("testId:evm/a-malformed-function-signature-is-rejected")
+    void aMalformedFunctionSignatureIsRejected() {
+        for (final String text : MALFORMED_FUNCTION_SIGNATURES()) {
+            // when / then
+            assertThrows(IllegalArgumentException.class, () -> AbiFunction.parse(text));
+        }
+    }
+
+    /// `evm/an-event-signature-is-read-with-its-name-and-indexed-parameters`
+    ///
+    /// Source: the Solidity documentation, "Contract ABI Specification", section "Events" (the signature of an event does
+    /// not contain "indexed"); this spec (" indexed" after the type of an indexed parameter).
+    @Test
+    @DisplayName("an event signature is read with its name and indexed parameters")
+    @Tag("testId:evm/an-event-signature-is-read-with-its-name-and-indexed-parameters")
+    void anEventSignatureIsReadWithItsNameAndIndexedParameters() {
+        // when
+        final AbiEvent empty = AbiEvent.parse("E()");
+        final AbiEvent mixed = AbiEvent.parse("E((uint256,address) indexed,string,bytes32[2] indexed)");
+        final AbiEvent wide = AbiEvent.parse(("E(" + repeat("uint256,", 99L)) + "uint256)");
+
+        // then
+        assertEquals("E()", empty.signature());
+        assertEquals(0L, length(empty.parameters()));
+        assertFalse(empty.anonymous());
+        assertEquals("E((uint256,address),string,bytes32[2])", mixed.signature());
+        assertEquals(List.of(true, false, true), List.of(get(mixed.parameters(), 0L).indexed(), get(mixed.parameters(), 1L).indexed(), get(mixed.parameters(), 2L).indexed()));
+        assertEquals(100L, length(wide.parameters()));
+    }
+
+    /// `evm/an-event-with-three-indexed-parameters-is-read-and-one-with-four-is-rejected`
+    ///
+    /// Source: the Solidity documentation, "Events" (up to three parameters of an event can be indexed; a log has at most
+    /// four topics, the first of which is the hash of the signature).
+    @Test
+    @DisplayName("an event with three indexed parameters is read and one with four is rejected")
+    @Tag("testId:evm/an-event-with-three-indexed-parameters-is-read-and-one-with-four-is-rejected")
+    void anEventWithThreeIndexedParametersIsReadAndOneWithFourIsRejected() {
+        // when
+        final AbiEvent three = AbiEvent.parse("E(uint256 indexed,address indexed,bool indexed,string)");
+
+        // then
+        assertEquals("E(uint256,address,bool,string)", three.signature());
+
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> AbiEvent.parse("E(uint256 indexed,address indexed,bool indexed,string indexed)"));
+    }
+
+    /// `evm/a-malformed-event-signature-is-rejected`
+    ///
+    /// Source: this spec (parse reads only the canonical signature: " indexed" after the type, no other spaces, no
+    /// parameter names, no "returns").
+    @Test
+    @DisplayName("a malformed event signature is rejected")
+    @Tag("testId:evm/a-malformed-event-signature-is-rejected")
+    void aMalformedEventSignatureIsRejected() {
+        for (final String text : MALFORMED_EVENT_SIGNATURES()) {
+            // when / then
+            assertThrows(IllegalArgumentException.class, () -> AbiEvent.parse(text));
+        }
     }
 
     /// `evm/the-topic-of-an-event-is-the-hash-whose-first-4-bytes-are-the-selector`
