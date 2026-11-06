@@ -343,9 +343,9 @@ test "a topic delete transaction keeps its topic and survives toBytes and fromBy
   same convenience methods over the sentinels (additive change) — see the placement
   decision recorded in the `ZERO_ADDRESS` comment in `ledger.md`.
 
-- **`TopicMessageSubmit` is out of scope of this file.** Message-submit shares the chunking
-  question raised in [`transactions-files.md`](transactions-files.md) (`FileAppend` chunked
-  appends) and additionally interacts with HIP-991 custom-fee limits; it deserves its own
+- **`TopicMessageSubmit` is out of scope of this file.** Large messages are submitted in chunks;
+  following [`transactions-files.md`](transactions-files.md), the transaction would carry one chunk and the
+  enterprise layer would split, which still has to be confirmed for messages. It additionally interacts with HIP-991 custom-fee limits; it deserves its own
   spec rather than being smuggled into the lifecycle file. Tracked in
   [`missing-features.md`](../../docs/missing-features.md) section 1.5. Until it is specified, no message
   can be submitted to a topic at all: the Java implementation has no such transaction, and

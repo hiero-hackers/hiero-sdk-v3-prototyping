@@ -40,8 +40,9 @@ Still open:
 
 ### 1.3 File service
 
-Open: chunked-append model (per-chunk receipts vs. single-receipt facade) — tracked in
-[`transactions-files.md`](../spec/consensus-node-client/transactions-files.md) *Questions & Comments*.
+Chunked appends: decided — `FileAppendTransaction` is one transaction without chunking; the enterprise `FileService`
+splits large contents ([`transactions-files.md`](../spec/consensus-node-client/transactions-files.md)). Open: whether
+the spec states a maximum size of the contents of one transaction.
 
 ### 1.4 Smart contract service
 
@@ -65,7 +66,7 @@ The contract queries are listed in §1.8.
 ### 1.5 Topic / HCS
 
 `TopicCreate` / `TopicUpdate` / `TopicDelete` and `TopicInfoQuery` are specified. `TopicMessageSubmit` (chunked)
-— :x: (shares the chunking design question with `FileAppend`); it is the only missing topic operation. Reading
+— :x: (chunking presumably as for `FileAppend`: one chunk per transaction, split by the enterprise layer); it is the only missing topic operation. Reading
 messages (`TopicMessageQuery`) is a mirror-node subscription, see §4. HIP-991 custom fees on topics (`customFees`, `feeScheduleAuthority`,
 `feeExemptAuthorities`) — :x: (depends on write-side custom-fee model from §3.3).
 

@@ -29,8 +29,9 @@ import org.jspecify.annotations.Nullable;
 /// The transaction types of files.
 public final class FileKinds {
 
-    /// The most bytes one `FileAppend` transaction carries - the chunk size of the Hiero SDKs. A packed transaction has
-    /// one transaction id, so a larger append (several chunks, each with its own transaction id) cannot be packed.
+    /// The most bytes one `FileAppend` transaction carries - the chunk size of the V2 SDKs. A `FileAppendTransaction` is
+    /// one transaction; larger contents are appended in several (the enterprise `FileService` does so). Whether the
+    /// spec states this limit is open (Questions & Comments of `transactions-files.md`).
     public static final int MAX_APPEND_CHUNK_SIZE = 4096;
 
     /// The lifetime of a new file without an expiration time, counted from the valid start of the transaction - the
@@ -131,8 +132,8 @@ public final class FileKinds {
         final byte[] contents = transaction.contents();
         if (contents.length > MAX_APPEND_CHUNK_SIZE) {
             throw new IllegalArgumentException("The contents of a FileAppendTransaction are " + contents.length
-                    + " bytes; appends of more than " + MAX_APPEND_CHUNK_SIZE + " bytes need several transactions"
-                    + " (chunks), which cannot be packed into one PackedTransaction yet");
+                    + " bytes, but one transaction appends at most " + MAX_APPEND_CHUNK_SIZE + " bytes; append larger"
+                    + " contents in several transactions");
         }
         body.setFileAppend(FileAppendTransactionBody.newBuilder()
                 .setFileID(Protobuf.toFileId(transaction.fileId()))

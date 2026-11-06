@@ -22,16 +22,12 @@ A file's lifecycle is:
 - `FileDeleteTransaction` deletes the file. The file id is not reusable; reads against a deleted file
   return `FILE_DELETED`.
 
-### Chunked appends
+### Large contents
 
-The consensus node imposes a maximum body size per transaction. A `FileAppend` whose
-`contents` exceeds that limit cannot be sent as a single transaction; the SDK splits it into
-N consecutive `FileAppend` transactions on the same `fileId` and submits them in order. From
-the caller's perspective this remains a single `Transaction.signWithOperator…` call — the SDK
-hides the split. The receipt surfaced back to the caller is the receipt of the *last* chunk.
-
-Note that each underlying chunk is a separate consensus transaction with its own fee and its own
-`TransactionId`.
+The consensus node limits the size of a transaction, so the contents of one `FileCreate`, `FileUpdate` or
+`FileAppend` must fit into one transaction. A `FileAppendTransaction` is exactly one transaction: it does not split
+its contents. Larger contents are written as a create followed by several appends, each a transaction of its own with
+its own fee and `TransactionId`; the enterprise `FileService` does this automatically.
 
 ### Signing requirements (file)
 
@@ -48,11 +44,13 @@ enough. Multi-key files require the multi-signature flow: build → `signWithOpe
 
 ## Design Notes
 
-- **Chunked appends are a leaky abstraction.** Each underlying chunk is a separate consensus
-  transaction with its own fee and its own `TransactionId`. The current model intentionally keeps
-  the surface simple; surfacing per-chunk receipts is deferred (see *Questions & Comments*). The
-  same chunking concept applies to `TopicMessageSubmit` and other HAPI transactions that ride on the
-  consensus-node body size limit.
+- **No chunking in the transaction.** A `FileAppendTransaction` is one transaction, so that it maps onto one
+  `PackedTransaction` with one `TransactionId` and one body per node, and offline signing (`signableBodies()`,
+  `toBytes()`) works as for every other transaction. Splitting large contents into several appends is a convenience
+  of the enterprise layer (`FileService`), which also decides what happens when one of the appends fails. The V2
+  SDKs split inside `FileAppendTransaction` (chunk size 4096 bytes, at most 20 chunks); the TCK expects that, so
+  its binding splits the contents itself (`chunk` in `tooling/tck/bindings/file-service.md`). The same applies to
+  `TopicMessageSubmit` once it is specified.
 - The multi-signature flow for multi-key files is the one shown in
   [`transactions-accounts.md`](transactions-accounts.md).
 
@@ -77,12 +75,12 @@ FileCreateReceipt extends Receipt {
     @@immutable fileId: Address                                // id of the newly created file
 }
 
-// Appends `contents` to the end of the file. The SDK transparently splits this into multiple
-// consensus transactions when `contents` exceeds the single-transaction body limit.
+// Appends `contents` to the end of the file in one transaction. The contents must fit into one transaction; larger
+// contents are appended in several transactions (the enterprise `FileService` does this automatically).
 @@finalType
 FileAppendTransaction extends Transaction<FileAppendReceipt, FileAppendTransaction> {
     @@immutable fileId: Address
-    @@immutable contents: bytes                                // bytes to append; large payloads are chunked by the SDK
+    @@immutable contents: bytes                                // bytes to append
 }
 
 @@finalType
@@ -140,17 +138,17 @@ Response<FileCreateReceipt> response = new FileCreateTransaction()
 Address fileId = response.queryReceipt(client).fileId;
 ```
 
-### Append (transparently chunked when needed)
-
-`largeBlob` may be hundreds of kilobytes; the SDK splits it into multiple `FileAppend`
-consensus transactions internally and returns the final receipt.
+### Append
 
 ```
 new FileAppendTransaction()
     .fileId(fileId)
-    .contents(largeBlob)
+    .contents(nextBlock)             // fits into one transaction, e.g. at most 4096 bytes
     .signWithOperatorAndSubmit(client);
 ```
+
+Contents of hundreds of kilobytes are appended block by block in this way, one transaction per block; the enterprise
+`FileService` does it automatically.
 
 ### Update — replace contents, rotate keys (multi-signature)
 
@@ -181,7 +179,7 @@ new FileDeleteTransaction()
 
 Offline tests of the file transactions, written as given / when / then: the attributes a transaction keeps, the
 defaults of the attributes it leaves out, and the packed form of each transaction. The contents are small enough for
-one transaction; chunking and the network's key checks are tested by the TCK, not here.
+one transaction; the network's key checks are tested by the TCK, not here.
 
 ```tests
 // Source: this spec (@@default([]) of contents, @@nullable).
@@ -344,15 +342,11 @@ test "a file delete transaction keeps its file and survives toBytes and fromByte
   [ADR-0004](../../docs/adr/0004-authority-authorization-sum-type.md) and specified in
   [`authority.md`](../base/authority.md), resolving the former `list<PublicKey>` placeholder.
 
-- **Chunked appends are not modelled at the type level.** `FileAppendTransaction.contents`
-  accepts the full byte payload and relies on the SDK to split it into multiple consensus
-  transactions when the body exceeds the single-tx size limit. The model returns a single
-  `Response<FileAppendReceipt>` — there is no first-class way for advanced callers to inspect
-  per-chunk receipts, control chunk size, or recover from a partially-applied append (where
-  chunk K succeeded but chunk K+1 timed out). Once HIP-1300 (jumbo transactions, section
-  1.11 of `docs/missing-features.md`) is specified, the choice between "explicit chunk control"
-  and "always pretend it's one transaction" needs a decision; the same question applies to
-  `TopicMessageSubmit`.
+- **How large may the contents of one transaction be?** The network limits the size of the whole transaction (6 KiB,
+  more with HIP-1300 jumbo transactions), not of the contents, so the spec states no maximum. The Java implementation
+  rejects contents of more than 4096 bytes in `pack(...)`, the chunk size of the V2 SDKs, instead of letting the
+  network answer `TRANSACTION_OVERSIZE`. Should the spec state the limit (e.g. `@@maxSize(4096)` on `contents`), or
+  should the SDK leave it to the network?
 
 - **`FileUpdate.contents` replaces, not appends.** This mirrors HAPI semantics but is a
   common foot-gun: callers expecting "update" to mean "merge" will silently drop the rest of
@@ -375,14 +369,6 @@ test "a file delete transaction keeps its file and survives toBytes and fromByte
   current time plus 90 days (7,776,000 seconds) in the constructor. Should the default be stated (e.g. as an
   `@@default`-like rule relative to the valid start), or should "unset" mean that the network's default applies?
   The Java implementation sends the valid start of the transaction id plus 90 days, as the V2 SDKs do.
-
-- **How does a chunked `FileAppendTransaction` map onto `PackedTransaction`?** A `PackedTransaction` has one
-  `transactionId` and one body per target node, but each chunk of a large append is a transaction of its own with its
-  own `TransactionId`. What `pack(...)`, `signableBodies()` and `toBytes()` return for contents above the body limit is
-  not stated, so the chunking tests of the current SDKs (one body per chunk and node, consecutive valid starts) cannot
-  be written against this API. Because of this, the Java implementation does not chunk at all: `pack(...)` rejects a
-  `FileAppendTransaction` whose contents exceed 4096 bytes, so larger contents can only be appended by the caller in
-  several transactions.
 
 - **An immutable file cannot be expressed.** HAPI makes a file immutable with an empty key list, but
   `AuthorityList` requires at least one child (`@@minSize(1)`) and `authority` cannot be set to "no keys". So
