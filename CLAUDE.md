@@ -147,6 +147,9 @@ spec/                           # The actual V3 public-API specifications, writt
     transactions-spi.md         #   SPI for custom services/transaction types
     proto.md, proto-accounts.md #   (consensusnode.proto[.account]) the protobuf messages the SPI exposes
   consensus-node-admin-client/  # Network administration (consensusnode.admin.*): freeze, nodes, system, network
+  consensus-node-clpr/          # Cross Ledger Protocol, HIP-1535 (consensusnode.clpr.*): Channel/Connector
+                                #   transactions, bundles, ledger configuration and endpoint manifest queries; the
+                                #   pinned protobuf has no CLPR yet, so sdk-java/impl does not implement it
   mirror-node-client/           # Querying the Hiero Mirror Node REST API (mirrornode.*), paginated Page<$$T>
   enterprise/                   # High-level "service" layer on top of the raw SDK for app/framework integration
                                 #   (enterprise.service.*: account, contract, file, nft, token, topic)

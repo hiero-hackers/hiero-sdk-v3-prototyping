@@ -4,7 +4,7 @@ This document gives an overview of how the V3 API modules (namespaces) depend on
 from the `requires {Type} from <namespace>` declarations in the spec files — an edge `A --> B` means "namespace `A`
 imports one or more types from namespace `B`".
 
-The namespaces group into the five `spec/` folders / layers:
+The namespaces group into the six `spec/` folders / layers:
 
 - **base** — `common`, `grpc`, `http`, `proto`, `evm`, `nativeToken`, `keys`, `ledger`, `ledger.config`, `authority`,
   `token`, `hedera`, `solo`
@@ -12,6 +12,7 @@ The namespaces group into the five `spec/` folders / layers:
   `consensusnode.transactions[.accounts|.batch|.contracts|.files|.schedule|.spi|.tokens|.topics|.utility]`,
   `consensusnode.queries[.accounts|.files|.receipts|.schedule|.tokens|.topics]`, `consensusnode.proto[.account]`
 - **consensus-node-admin-client** — `consensusnode.admin.{freeze|system|nodes|network}`
+- **consensus-node-clpr** — `consensusnode.clpr[.transactions|.queries]` (Cross Ledger Protocol, HIP-1535)
 - **mirror-node-client** — `mirrornode` and its sub-namespaces (`account`, `block`, `common`, `contract`, `http`,
   `network`, `nft`, `schedule`, `token`, `topic`, `transaction`)
 - **enterprise** — `enterprise.service[.account|.contract|.file|.token|.nft|.topic]`
@@ -23,6 +24,7 @@ flowchart LR
     enterprise["enterprise<br/>(high-level service layer)"]
     consensus["consensus-node-client"]
     admin["consensus-node-admin-client<br/>(privileged council ops)"]
+    clpr["consensus-node-clpr<br/>(Cross Ledger Protocol)"]
     mirror["mirror-node-client"]
     base["base<br/>(common, ledger, keys, authority, nativeToken, evm, …)"]
 
@@ -32,12 +34,16 @@ flowchart LR
     consensus --> base
     admin --> consensus
     admin --> base
+    clpr --> consensus
+    clpr --> base
     mirror --> base
 ```
 
 `mirror-node-client` and `consensus-node-client` are independent of each other;
 `consensus-node-admin-client` is opt-in on top of `consensus-node-client` (privileged
 freeze / system-delete / DAB-node transactions that normal applications do not consume);
+`consensus-node-clpr` is opt-in on top of `consensus-node-client` in the same way (the CLPR service is disabled on a
+ledger by default);
 `enterprise` builds on top of `consensus-node-client`, `mirror-node-client`, and `base`.
 Everything ultimately rests on `base`.
 
@@ -45,7 +51,7 @@ Everything ultimately rests on `base`.
 
 One graph per layer; `consensus-node-client` is split into client & transactions and queries. Each graph shows its
 namespaces and every edge that starts in them; other namespaces appear only as far as they are imported, in their own
-box and the color of their layer. Together the six graphs contain every edge exactly once. `∅` marks namespaces that are still empty stubs (no types defined yet).
+box and the color of their layer. Together the seven graphs contain every edge exactly once. `∅` marks namespaces that are still empty stubs (no types defined yet).
 
 ### base
 
@@ -261,6 +267,46 @@ flowchart LR
     class ledger,authority base;
 ```
 
+### consensus-node-clpr
+
+```mermaid
+flowchart LR
+    subgraph clpr["consensus-node-clpr"]
+        clpr_base["consensusnode.clpr"]
+        clpr_tx["consensusnode.clpr.transactions"]
+        clpr_queries["consensusnode.clpr.queries"]
+    end
+    subgraph ext_base["base"]
+        ledger["ledger"]
+        keys["keys"]
+        authority["authority"]
+        nativeToken["nativeToken"]
+    end
+    subgraph ext_consensus["consensus-node-client"]
+        cn_status["consensusnode.status"]
+        cn_tx["consensusnode.transactions"]
+        cn_queries["consensusnode.queries"]
+    end
+
+    clpr_base --> cn_status
+    clpr_tx --> authority
+    clpr_tx --> clpr_base
+    clpr_tx --> cn_tx
+    clpr_tx --> keys
+    clpr_tx --> ledger
+    clpr_tx --> nativeToken
+    clpr_queries --> clpr_base
+    clpr_queries --> cn_queries
+
+    classDef clpr fill:#f3e8fd,stroke:#9334e6,color:#000;
+    classDef consensus fill:#e6f4ea,stroke:#34a853,color:#000;
+    classDef base fill:#e8f0fe,stroke:#4285f4,color:#000;
+
+    class clpr_base,clpr_tx,clpr_queries clpr;
+    class cn_status,cn_tx,cn_queries consensus;
+    class ledger,keys,authority,nativeToken base;
+```
+
 ### mirror-node-client
 
 ```mermaid
@@ -425,10 +471,11 @@ flowchart LR
 
 ## Observations
 
-- **Foundation:** `ledger` (40 incoming edges) and `authority` (26) are by far the most depended-upon namespaces —
+- **Foundation:** `ledger` (41 incoming edges) and `authority` (27) are by far the most depended-upon namespaces —
   every layer imports `ledger`, and every namespace that carries an admin/submit/supply/... key imports `Authority`.
-  `keys` itself is imported only by `authority`, `consensusnode.client` (signing) and
-  `consensusnode.queries.schedule`; everything else reaches keys through `Authority`. `common` (the `Page<$$T>`
+  `keys` itself is imported only by `authority`, `consensusnode.client` (signing),
+  `consensusnode.queries.schedule` and `consensusnode.clpr.transactions` (ownership proofs); everything else reaches
+  keys through `Authority`. `common` (the `Page<$$T>`
   type) is required by most mirror-node namespaces and by every enterprise service that exposes paginated queries
   (`account`, `topic`, `nft`, `token`, `contract`).
 - **Base-internal leaves:** `evm`, `nativeToken`, `keys`, `common`, `token`, `grpc` and `http` import nothing.
@@ -443,16 +490,21 @@ flowchart LR
   thin local `Contract` type and therefore does not depend on `mirrornode.contract`; it imports the ABI types from
   `evm` directly.)
 - **`consensusnode.transactions` is the hub of the client:** every `…transactions.*` sub-namespace, the admin
-  transactions and the queries that return receipts, records or scheduled transactions (`…queries.accounts`,
+  and CLPR transactions and the queries that return receipts, records or scheduled transactions (`…queries.accounts`,
   `…queries.receipts`, `…queries.schedule`) depend on it. The only edge between two sibling sub-namespaces is
   `…transactions.tokens --> …transactions.accounts` (token airdrops reuse the transfer types).
-- **Status codes:** `consensusnode.status` is imported by `consensusnode.client`, `consensusnode.transactions` and
-  `…transactions.spi`.
+- **Status codes:** `consensusnode.status` is imported by `consensusnode.client`, `consensusnode.transactions`,
+  `…transactions.spi` and `consensusnode.clpr`, which adds the status codes of the CLPR service to the open
+  `TransactionStatus`.
 - **Admin layer is opt-in and one-way:** `consensus-node-admin-client` depends on `consensus-node-client` (it
   reuses `Transaction<$$Receipt, $$Self>`, `Receipt`, and the signing / packing lifecycle) but is not depended on by it —
   the edge is strictly `admin --> consensus-node-client`. Applications that never call freeze / system-delete / DAB
   node operations do not pull the admin module in. `enterprise` does not depend on the admin module either; surfacing
   these privileged operations through the high-level service layer is intentionally out of scope.
+- **CLPR is opt-in and one-way as well:** `consensus-node-clpr` depends on `consensus-node-client` (transactions,
+  queries, status) and on `base`, and nothing depends on it. `consensusnode.clpr` holds what its transactions and
+  queries share (`ClprThrottles`, `ClprTransactionStatus`). The mirror node queries of HIP-1535 are not specified yet;
+  they would go to `mirror-node-client`, not to this module.
 - **Session as the shared root of `enterprise`:** `enterprise.service` defines the `Session` (network settings,
   operator account, transaction signer, read-your-writes high-water-mark) that every concrete service
   (`…service.account`, `…service.contract`, `…service.file`, `…service.token`, `…service.nft`, `…service.topic`)
