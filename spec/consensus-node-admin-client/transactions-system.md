@@ -216,6 +216,40 @@ test "a system undelete without a file and without a contract is rejected" {
     @@expectThrows(invalid-argument-error)
     SystemUndeleteTransaction{fileId: null, contractId: null}
 }
+
+// Source: the Java (SystemDeleteTransactionTest.shouldBytesFile, shouldBytesContract,
+// SystemUndeleteTransactionTest.shouldBytesFile, shouldBytesContract), JavaScript, Go and Swift unit tests (to and from
+// bytes). The expiration time is the one of the Java test (Instant.ofEpochSecond(1554158542) = 2019-04-01T22:42:22Z).
+@@testId("system-delete-and-undelete-survive-tobytes-and-frombytes")
+test "system delete and undelete survive toBytes and fromBytes" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+    let nodes = [ledger.AccountId.fromString(value: "0.0.3"), ledger.AccountId.fromString(value: "0.0.4")]
+    let deleteFile = SystemDeleteTransaction{fileId: DEFAULT(Address), contractId: null,
+            expirationTime: toZonedDateTime(text: "2019-04-01T22:42:22Z")}
+    let deleteContract = SystemDeleteTransaction{fileId: null, contractId: DEFAULT(ContractId), expirationTime: null}
+    let undeleteFile = SystemUndeleteTransaction{fileId: DEFAULT(Address), contractId: null}
+    let undeleteContract = SystemUndeleteTransaction{fileId: null, contractId: DEFAULT(ContractId)}
+
+    for transaction in [deleteFile, deleteContract] {
+        // when
+        let packed = transaction.pack(payer: payer, nodes: nodes)
+        let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+        // then
+        assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
+        assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+    }
+    for undelete in [undeleteFile, undeleteContract] {
+        // when
+        let packedUndelete = undelete.pack(payer: payer, nodes: nodes)
+        let restoredUndelete = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packedUndelete.toBytes())
+
+        // then
+        assertEquals(expected: packedUndelete.toBytes(), actual: restoredUndelete.toBytes())
+        assertEquals(expected: packedUndelete.signableBodies(), actual: restoredUndelete.signableBodies())
+    }
+}
 ```
 
 ## Questions & Comments

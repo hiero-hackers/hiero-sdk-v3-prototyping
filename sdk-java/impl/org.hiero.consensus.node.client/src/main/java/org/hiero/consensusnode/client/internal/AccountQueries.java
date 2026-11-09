@@ -18,6 +18,7 @@ import org.hiero.consensusnode.queries.accounts.AccountInfo;
 import org.hiero.consensusnode.queries.accounts.AccountInfoQuery;
 import org.hiero.consensusnode.queries.accounts.AccountRecords;
 import org.hiero.consensusnode.queries.accounts.AccountRecordsQuery;
+import org.hiero.consensusnode.status.BasicTransactionStatus;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Record;
 import org.hiero.consensusnode.status.TransactionStatus;
@@ -145,7 +146,7 @@ public final class AccountQueries {
         final TransactionReceipt receipt = record.getReceipt();
         final TransactionId id = Protobuf.fromProto(record.getTransactionID());
         return new Record<>(id, Protobuf.fromProto(record.getConsensusTimestamp()),
-                new UntypedReceipt(id, HapiTransactionStatus.ofCode(receipt.getStatusValue()),
+                new UntypedReceipt(id, Statuses.ofCode(receipt.getStatusValue()),
                         Protobuf.currentRate(receipt.getExchangeRate()), Protobuf.nextRate(receipt.getExchangeRate())),
                 record.hasParentConsensusTimestamp() ? Protobuf.fromProto(record.getParentConsensusTimestamp())
                         : null, ContractKinds.contractResult(record));

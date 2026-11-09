@@ -4,19 +4,29 @@ import static org.hiero.sdk.testing.Testing.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
+import java.util.Set;
 import org.hiero.authority.Authority;
 import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.consensusnode.client.Account;
+import org.hiero.consensusnode.client.ClientFactory;
+import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.consensusnode.transactions.NodeBody;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.utility.PrngReceipt;
 import org.hiero.consensusnode.transactions.utility.PrngTransaction;
+import org.hiero.hedera.HbarUnit;
 import org.hiero.keys.ByteImportEncoding;
 import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
 import org.hiero.keys.PrivateKey;
 import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
+import org.hiero.ledger.ConsensusNode;
+import org.hiero.ledger.IpAddress;
+import org.hiero.ledger.MirrorNode;
+import org.hiero.ledger.Network;
+import org.hiero.ledger.config.NetworkSetting;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -131,6 +141,77 @@ class TransactionsBatchSpecTest {
         assertThrows(IllegalArgumentException.class, () -> new BatchTransaction(List.of()));
     }
 
+    /// `consensusnode.transactions.batch/an-inner-transaction-packed-for-a-batch-has-one-unsigned-body-for-node-0-0-0`
+    ///
+    /// Source: this spec (packForBatch packs an inner transaction without signing it: one body for node 0.0.0); HIP-551.
+    @Test
+    @DisplayName("an inner transaction packed for a batch has one unsigned body for node 0.0.0")
+    @Tag("testId:consensusnode.transactions.batch/an-inner-transaction-packed-for-a-batch-has-one-unsigned-body-for-node-0-0-0")
+    void anInnerTransactionPackedForABatchHasOneUnsignedBodyForNode000() {
+        // given
+        final Account payer = defaultAccount();
+
+        // when
+        final PackedTransaction<PrngReceipt, PrngTransaction> inner = new PrngTransaction(null).packForBatch(payer, defaultAuthority());
+
+        // then
+        assertEquals(1L, length(inner.signableBodies()));
+        assertEquals(AccountId.fromString("0.0.0"), get(inner.signableBodies(), 0L).node());
+        assertEquals(payer.accountId(), inner.transactionId().accountId());
+        assertEquals(0L, length(inner.nodeSignatures()));
+    }
+
+    /// `consensusnode.transactions.batch/an-inner-transaction-packed-for-a-batch-is-signed-later-by-its-payer`
+    ///
+    /// Source: this spec (an inner transaction packed for a batch is signed later like any packed transaction, e.g. by its
+    /// payer in another process); the Java SDK (BatchTransactionTest: inner transactions are signed after batchify).
+    @Test
+    @DisplayName("an inner transaction packed for a batch is signed later by its payer")
+    @Tag("testId:consensusnode.transactions.batch/an-inner-transaction-packed-for-a-batch-is-signed-later-by-its-payer")
+    void anInnerTransactionPackedForABatchIsSignedLaterByItsPayer() {
+        // given
+        final Account payer = defaultAccount();
+        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).packForBatch(payer, defaultAuthority());
+
+        // when
+        final PackedTransaction<PrngReceipt, PrngTransaction> signed = packed.sign(payer);
+
+        // then
+        assertEquals(1L, length(signed.nodeSignatures()));
+        assertEquals(payer.privateKey().createPublicKey(), get(signed.nodeSignatures(), 0L).publicKey());
+        assertTrue(get(signed.nodeSignatures(), 0L).publicKey().verify(get(signed.signableBodies(), 0L).bytes(), get(signed.nodeSignatures(), 0L).signature()));
+        assertEquals(packed.signableBodies(), signed.signableBodies());
+    }
+
+    /// `consensusnode.transactions.batch/an-inner-transaction-is-signed-for-a-batch-by-a-signer-or-by-the-operator`
+    ///
+    /// Source: this spec (signForBatch with a payer id and a TransactionSigner: the payer is the given account, the
+    /// signature the signer's; signForBatchWithOperator: the client's operator pays and signs). The secp256k1 key is the
+    /// one of the tests of keys.md.
+    @Test
+    @DisplayName("an inner transaction is signed for a batch by a signer or by the operator")
+    @Tag("testId:consensusnode.transactions.batch/an-inner-transaction-is-signed-for-a-batch-by-a-signer-or-by-the-operator")
+    void anInnerTransactionIsSignedForABatchByASignerOrByTheOperator() {
+        // given
+        final PrivateKey signerKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
+        final AccountId signerPayer = AccountId.fromString("0.0.1002");
+        final TransactionSigner signer = ClientFactory.createClient(defaultNetworkSetting(), new Account(signerPayer, signerKey)).transactionSigner();
+        final HieroClient<?> client = defaultHieroClient();
+
+        // when
+        final PackedTransaction<PrngReceipt, PrngTransaction> bySigner = new PrngTransaction(null).signForBatch(signerPayer, signer, defaultAuthority());
+        final PackedTransaction<PrngReceipt, PrngTransaction> byOperator = new PrngTransaction(null).signForBatchWithOperator(client, defaultAuthority());
+
+        // then
+        assertEquals(signerPayer, bySigner.transactionId().accountId());
+        assertEquals(AccountId.fromString("0.0.0"), get(bySigner.signableBodies(), 0L).node());
+        assertEquals(signerKey.createPublicKey(), get(bySigner.nodeSignatures(), 0L).publicKey());
+        assertTrue(get(bySigner.nodeSignatures(), 0L).publicKey().verify(get(bySigner.signableBodies(), 0L).bytes(), get(bySigner.nodeSignatures(), 0L).signature()));
+        assertEquals(client.operatorAccount().accountId(), byOperator.transactionId().accountId());
+        assertEquals(AccountId.fromString("0.0.0"), get(byOperator.signableBodies(), 0L).node());
+        assertEquals(client.operatorAccount().privateKey().createPublicKey(), get(byOperator.nodeSignatures(), 0L).publicKey());
+    }
+
     private static Account defaultAccount() {
         return new Account(defaultAccountId(), defaultPrivateKey());
     }
@@ -149,5 +230,29 @@ class TransactionsBatchSpecTest {
 
     private static PublicKey defaultPublicKey() {
         return defaultPrivateKey().createPublicKey();
+    }
+
+    private static NetworkSetting defaultNetworkSetting() {
+        return new NetworkSetting(defaultNetwork(), Set.of(defaultConsensusNode()), Set.of(defaultMirrorNode()));
+    }
+
+    private static Network<?> defaultNetwork() {
+        return new Network<>(new byte[] {(byte) 3}, "local", HbarUnit.HBAR);
+    }
+
+    private static ConsensusNode defaultConsensusNode() {
+        return new ConsensusNode(defaultIpAddress(), 35211, new AccountId(0L, 0L, "", 3L, null, null));
+    }
+
+    private static IpAddress defaultIpAddress() {
+        return new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1});
+    }
+
+    private static MirrorNode defaultMirrorNode() {
+        return new MirrorNode("http://127.0.0.1:38081");
+    }
+
+    private static HieroClient<?> defaultHieroClient() {
+        return ClientFactory.createClient(defaultNetworkSetting(), defaultAccount());
     }
 }

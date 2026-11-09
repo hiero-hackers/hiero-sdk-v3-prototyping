@@ -10,6 +10,7 @@ import com.hederahashgraph.api.proto.java.TransactionReceipt;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.hiero.consensusnode.queries.receipts.UntypedReceipt;
+import org.hiero.consensusnode.status.BasicTransactionStatus;
 import org.hiero.consensusnode.status.TransactionStatus;
 import org.hiero.consensusnode.transactions.accounts.AccountCreateReceipt;
 import org.hiero.consensusnode.transactions.accounts.AccountCreateTransaction;
@@ -42,13 +43,13 @@ class ReceiptsTest {
     @Tag("testId:impl/receipts/an-untyped-receipt-with-an-account-id-is-typed-as-the-receipt-of-an-account-creation")
     void anUntypedReceiptWithAnAccountIdIsTypedAsTheReceiptOfAnAccountCreation() {
         // when
-        final AccountCreateReceipt receipt = untyped(HapiTransactionStatus.SUCCESS, ACCOUNT)
+        final AccountCreateReceipt receipt = untyped(BasicTransactionStatus.SUCCESS, ACCOUNT)
                 .typed(AccountCreateTransaction.class);
 
         // then
         assertEquals(ACCOUNT, receipt.accountId());
         assertEquals(ID, receipt.transactionId());
-        assertEquals(HapiTransactionStatus.SUCCESS, receipt.status());
+        assertEquals(BasicTransactionStatus.SUCCESS, receipt.status());
     }
 
     @Test
@@ -56,10 +57,10 @@ class ReceiptsTest {
     @Tag("testId:impl/receipts/an-untyped-receipt-without-an-account-id-is-not-the-receipt-of-an-account-creation")
     void anUntypedReceiptWithoutAnAccountIdIsNotTheReceiptOfAnAccountCreation() {
         assertThrows(IllegalArgumentException.class,
-                () -> untyped(HapiTransactionStatus.SUCCESS, null).typed(AccountCreateTransaction.class));
+                () -> untyped(BasicTransactionStatus.SUCCESS, null).typed(AccountCreateTransaction.class));
         // a failed creation has no account either
         assertThrows(IllegalArgumentException.class,
-                () -> untyped(HapiTransactionStatus.INSUFFICIENT_PAYER_BALANCE, null)
+                () -> untyped(BasicTransactionStatus.INSUFFICIENT_PAYER_BALANCE, null)
                         .typed(AccountCreateTransaction.class));
     }
 
@@ -67,7 +68,7 @@ class ReceiptsTest {
     @DisplayName("a receipt without attributes is typed as the receipt of a transfer")
     @Tag("testId:impl/receipts/a-receipt-without-attributes-is-typed-as-the-receipt-of-a-transfer")
     void aReceiptWithoutAttributesIsTypedAsTheReceiptOfATransfer() {
-        final TransferReceipt receipt = untyped(HapiTransactionStatus.SUCCESS, null).typed(TransferTransaction.class);
+        final TransferReceipt receipt = untyped(BasicTransactionStatus.SUCCESS, null).typed(TransferTransaction.class);
 
         assertEquals(ID, receipt.transactionId());
     }
@@ -78,7 +79,7 @@ class ReceiptsTest {
     void theProtocolMessageIsReadIntoAnUntypedReceiptAndWrittenBack() {
         // given
         final TransactionReceipt proto = TransactionReceipt.newBuilder()
-                .setStatusValue(HapiTransactionStatus.SUCCESS.code())
+                .setStatusValue(BasicTransactionStatus.SUCCESS.code())
                 .setAccountID(Protobuf.toProto(ACCOUNT))
                 .setTopicRunningHash(ByteString.copyFrom(new byte[] {1, 2, 3}))
                 .setNewTotalSupply(5L)
@@ -103,7 +104,7 @@ class ReceiptsTest {
     @Tag("testId:impl/receipts/a-number-the-protocol-reports-as-0-is-absent")
     void aNumberTheProtocolReportsAs0IsAbsent() {
         final UntypedReceipt receipt = Receipts.untyped(ID, TransactionReceipt.newBuilder()
-                .setStatusValue(HapiTransactionStatus.SUCCESS.code()).build());
+                .setStatusValue(BasicTransactionStatus.SUCCESS.code()).build());
 
         assertNull(receipt.totalSupply());
         assertNull(receipt.nodeId());

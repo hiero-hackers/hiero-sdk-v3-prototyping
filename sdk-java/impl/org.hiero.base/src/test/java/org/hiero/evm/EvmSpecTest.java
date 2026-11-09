@@ -711,4 +711,33 @@ class EvmSpecTest {
         assertEquals(bytes3, new AbiFixedBytes(utf8("abc")).abiType());
         assertEquals(AbiType.parse("(bool,string)"), new AbiTuple(List.of(new AbiBool(true), new AbiString("x"))).abiType());
     }
+
+    /// `evm/the-revert-data-of-error-string-and-panic-uint256-is-decoded`
+    ///
+    /// Source: the Solidity documentation, "Expressions and Control Structures", section "Error handling: Assert, Require,
+    /// Revert and Exceptions": a revert with a reason is the call data of Error(string) (selector 0x08c379a0), the example
+    /// "Not enough Ether provided."; a panic is Panic(uint256) (selector 0x4e487b71), code 0x11 for an arithmetic overflow.
+    @Test
+    @DisplayName("the revert data of Error(string) and Panic(uint256) is decoded")
+    @Tag("testId:evm/the-revert-data-of-error-string-and-panic-uint256-is-decoded")
+    void theRevertDataOfErrorStringAndPanicUint256IsDecoded() {
+        // given
+        final AbiFunction error = AbiFunction.parse("Error(string)");
+        final AbiFunction panic = AbiFunction.parse("Panic(uint256)");
+        final byte[] revert = hex((("08c379a0" + "0000000000000000000000000000000000000000000000000000000000000020") + "000000000000000000000000000000000000000000000000000000000000001a") + "4e6f7420656e6f7567682045746865722070726f76696465642e000000000000");
+        final byte[] overflow = hex("4e487b71" + "0000000000000000000000000000000000000000000000000000000000000011");
+
+        // when
+        final List<AbiValue> reason = error.decodeCall(revert);
+        final List<AbiValue> code = panic.decodeCall(overflow);
+
+        // then
+        assertEquals(hex("08c379a0"), error.selector());
+        assertEquals(hex("4e487b71"), panic.selector());
+        assertEquals(List.of(new AbiString("Not enough Ether provided.")), reason);
+        assertEquals(List.of(new AbiUint(new BigInteger("17"), 256)), code);
+
+        // when / then: revert data of the other one is rejected
+        assertThrows(IllegalArgumentException.class, () -> error.decodeCall(overflow));
+    }
 }

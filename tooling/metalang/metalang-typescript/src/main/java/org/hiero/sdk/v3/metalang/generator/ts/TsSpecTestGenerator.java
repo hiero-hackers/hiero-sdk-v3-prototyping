@@ -298,7 +298,14 @@ final class TsSpecTestGenerator {
                     .collect(Collectors.joining());
             if (!helpers.containsKey(name)) {
                 helpers.put(name, ""); // reserved: the value may use other default instances
-                final Optional<String> value = samples.value(type, List.of(), 0, false);
+                final Optional<String> value;
+                try {
+                    value = samples.value(type, List.of(), 0, false);
+                } catch (final Unsupported e) {
+                    // a default instance it needs has no value: no helper, or a later test would call a missing one
+                    helpers.remove(name);
+                    throw e;
+                }
                 if (value.isEmpty()) {
                     helpers.remove(name);
                     throw new Unsupported("no value of " + type.text());

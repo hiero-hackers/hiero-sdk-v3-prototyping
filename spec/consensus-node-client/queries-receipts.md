@@ -173,6 +173,110 @@ test "an untyped receipt without an account id is not the receipt of an account 
     @@expectThrows(invalid-argument-error)
     DEFAULT(UntypedReceipt).typed(transactionType: consensusnode.transactions.accounts.AccountCreateTransaction)
 }
+
+// Source: this spec (UntypedReceipt.typed: the typed receipt of a creation takes the id the untyped one carries); the
+// Java SDK (TransactionReceiptTest: the receipt of each creation carries the id of the new entity).
+@@testId("an-untyped-receipt-is-typed-with-the-id-of-the-entity-it-created")
+test "an untyped receipt is typed with the id of the entity it created" {
+    // given
+    let entity = Address.fromString(address: "0.0.5005")
+    let contract = ContractId.fromString(value: "0.0.5006")
+    let untyped = UntypedReceipt{transactionId: DEFAULT, status: DEFAULT, exchangeRate: DEFAULT,
+            nextExchangeRate: DEFAULT, fileId: entity, topicId: entity, tokenId: entity, contractId: contract}
+
+    // when
+    let file = untyped.typed(transactionType: consensusnode.transactions.files.FileCreateTransaction)
+    let topic = untyped.typed(transactionType: consensusnode.transactions.topics.TopicCreateTransaction)
+    let token = untyped.typed(transactionType: consensusnode.transactions.tokens.TokenCreateTransaction)
+    let created = untyped.typed(transactionType: consensusnode.transactions.contracts.ContractCreateTransaction)
+    let ethereum = untyped.typed(transactionType: consensusnode.transactions.contracts.EthereumTransaction)
+
+    // then
+    assertEquals(expected: entity, actual: file.fileId)
+    assertEquals(expected: entity, actual: topic.topicId)
+    assertEquals(expected: entity, actual: token.tokenId)
+    assertEquals(expected: contract, actual: created.contractId)
+    assertEquals(expected: contract, actual: ethereum.contractId)
+    assertEquals(expected: untyped.status, actual: token.status)
+}
+
+// Source: this spec (UntypedReceipt.typed: a schedule creation carries the schedule and the id of the scheduled
+// transaction, a mint the new total supply and the serial numbers of new NFTs).
+@@testId("an-untyped-receipt-is-typed-with-the-schedule-the-supply-and-the-serials")
+test "an untyped receipt is typed with the schedule, the supply and the serials" {
+    // given
+    let schedule = Address.fromString(address: "0.0.5007")
+    let scheduled = TransactionId.fromString(transactionId: "0.0.1001@1554158542.000000000")
+    let untyped = UntypedReceipt{transactionId: DEFAULT, status: DEFAULT, exchangeRate: DEFAULT,
+            nextExchangeRate: DEFAULT, scheduleId: schedule, scheduledTransactionId: scheduled, totalSupply: 3,
+            serials: [1, 2, 3]}
+
+    // when
+    let created = untyped.typed(transactionType: consensusnode.transactions.schedule.ScheduleCreateTransaction)
+    let signed = untyped.typed(transactionType: consensusnode.transactions.schedule.ScheduleSignTransaction)
+    let fungible = untyped.typed(transactionType: consensusnode.transactions.tokens.TokenMintFungibleTransaction)
+    let nft = untyped.typed(transactionType: consensusnode.transactions.tokens.TokenMintNftTransaction)
+
+    // then
+    assertEquals(expected: schedule, actual: created.scheduleId)
+    assertEquals(expected: scheduled, actual: created.scheduledTransactionId)
+    assertEquals(expected: scheduled, actual: signed.scheduledTransactionId)
+    assertEquals(expected: 3, actual: fungible.totalSupply)
+    assertEquals(expected: 3, actual: nft.totalSupply)
+    assertEquals(expected: [1, 2, 3], actual: nft.serials)
+}
+
+// Source: this spec (UntypedReceipt.typed fails when the receipt lacks an attribute the typed receipt requires, and
+// succeeds when nothing is missing - also for a transaction type the receipt does not belong to, and for an optional
+// attribute such as the contract of an Ethereum transaction).
+@@testId("an-untyped-receipt-is-typed-only-when-nothing-required-is-missing")
+test "an untyped receipt is typed only when nothing required is missing" {
+    // given
+    let untyped = DEFAULT(UntypedReceipt)
+
+    // when / then
+    @@expectThrows(invalid-argument-error)
+    untyped.typed(transactionType: consensusnode.transactions.files.FileCreateTransaction)
+    @@expectThrows(invalid-argument-error)
+    untyped.typed(transactionType: consensusnode.transactions.tokens.TokenCreateTransaction)
+    @@expectThrows(invalid-argument-error)
+    untyped.typed(transactionType: consensusnode.transactions.schedule.ScheduleCreateTransaction)
+    @@expectThrows(invalid-argument-error)
+    untyped.typed(transactionType: consensusnode.transactions.tokens.TokenMintFungibleTransaction)
+
+    // when
+    let deleted = untyped.typed(transactionType: consensusnode.transactions.files.FileDeleteTransaction)
+    let ethereum = untyped.typed(transactionType: consensusnode.transactions.contracts.EthereumTransaction)
+
+    // then
+    assertEquals(expected: untyped.transactionId, actual: deleted.transactionId)
+    assertEquals(expected: untyped.status, actual: deleted.status)
+    assertNull(actual: ethereum.contractId)
+}
+
+// Source: this spec (@@default(false) of includeDuplicates and includeChildren, @@nullable nodeAccountId: any node of
+// the client); the Java SDK (TransactionReceiptQueryTest: setIncludeDuplicates, setIncludeChildren) and the Python SDK
+// (transaction_receipt_query_test.py, test_include_children_and_duplicates).
+@@testId("a-receipt-query-asks-only-for-the-receipt-unless-it-names-duplicates-children-or-a-node")
+test "a receipt query asks only for the receipt unless it names duplicates, children or a node" {
+    // given
+    let id = TransactionId.fromString(transactionId: "0.0.1001@1554158542.000000000")
+    let node = AccountId.fromString(value: "0.0.3")
+
+    // when
+    let plain = TransactionReceiptQuery{transactionId: id}
+    let all = TransactionReceiptQuery{transactionId: id, includeDuplicates: true, includeChildren: true,
+            nodeAccountId: node}
+
+    // then
+    assertEquals(expected: id, actual: plain.transactionId)
+    assertFalse(condition: plain.includeDuplicates)
+    assertFalse(condition: plain.includeChildren)
+    assertNull(actual: plain.nodeAccountId)
+    assertTrue(condition: all.includeDuplicates)
+    assertTrue(condition: all.includeChildren)
+    assertEquals(expected: node, actual: all.nodeAccountId)
+}
 ```
 
 ## Questions & Comments

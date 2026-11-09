@@ -26,6 +26,7 @@ import org.hiero.consensusnode.client.RetryPolicy;
 import org.hiero.consensusnode.client.Submittable;
 import org.hiero.consensusnode.client.TransportFailure;
 import org.hiero.consensusnode.client.TransportFailureKind;
+import org.hiero.consensusnode.status.BasicTransactionStatus;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.ConsensusNode;
 import org.hiero.ledger.IpAddress;
@@ -58,11 +59,11 @@ class ExecutionTest {
     }
 
     private static Execution.Answer<String> success() {
-        return new Execution.Answer<>(HapiTransactionStatus.OK, AttemptOutcome.SUCCESS, "value");
+        return new Execution.Answer<>(BasicTransactionStatus.OK, AttemptOutcome.SUCCESS, "value");
     }
 
     private static Execution.Answer<String> busy() {
-        return Execution.Answer.precheck(HapiTransactionStatus.BUSY, false, () -> "value");
+        return Execution.Answer.precheck(BasicTransactionStatus.BUSY, false, () -> "value");
     }
 
     /// Sends the given answers one after the other and records the nodes and timeouts of the attempts.
@@ -143,7 +144,7 @@ class ExecutionTest {
                 }));
 
         assertEquals("value", Execution.run(settings, request(), List.of(NODE_3),
-                new Script(Execution.Answer.precheck(HapiTransactionStatus.UNKNOWN, true, () -> "value"), success())));
+                new Script(Execution.Answer.precheck(BasicTransactionStatus.UNKNOWN, true, () -> "value"), success())));
     }
 
     @Test
@@ -205,7 +206,7 @@ class ExecutionTest {
         final Attempt second = seen.get(1).get(1);
         assertEquals(1, first.number());
         assertEquals(AttemptOutcome.NODE_BUSY, first.outcome());
-        assertEquals(new NodeAnswer(HapiTransactionStatus.BUSY), first.result());
+        assertEquals(new NodeAnswer(BasicTransactionStatus.BUSY), first.result());
         assertEquals(2, second.number());
         assertEquals(AttemptOutcome.NODE_TIMEOUT, second.outcome());
         assertEquals(new TransportFailure(TransportFailureKind.TIMEOUT, "late"), second.result());
@@ -233,10 +234,10 @@ class ExecutionTest {
         final AttemptsExhaustedException error = assertThrows(AttemptsExhaustedException.class, () -> Execution.run(
                 settings(context -> new GiveUp(), new FirstSelector(new ArrayList<>()), new ArrayList<>()),
                 request(), List.of(NODE_3), new Script(Execution.Answer.precheck(
-                        HapiTransactionStatus.INSUFFICIENT_PAYER_BALANCE, false, () -> "value"))));
+                        BasicTransactionStatus.INSUFFICIENT_PAYER_BALANCE, false, () -> "value"))));
 
         final PrecheckException cause = assertInstanceOf(PrecheckException.class, error.getCause());
-        assertEquals(HapiTransactionStatus.INSUFFICIENT_PAYER_BALANCE, cause.status());
+        assertEquals(BasicTransactionStatus.INSUFFICIENT_PAYER_BALANCE, cause.status());
     }
 
     @Test
@@ -274,28 +275,28 @@ class ExecutionTest {
     @DisplayName("the precheck statuses have the outcomes of the specification")
     @Tag("testId:impl/execution/the-precheck-statuses-have-the-outcomes-of-the-specification")
     void thePrecheckStatusesHaveTheOutcomesOfTheSpecification() {
-        assertEquals(AttemptOutcome.SUCCESS, Execution.outcome(HapiTransactionStatus.OK, false));
-        assertEquals(AttemptOutcome.NODE_BUSY, Execution.outcome(HapiTransactionStatus.BUSY, false));
+        assertEquals(AttemptOutcome.SUCCESS, Execution.outcome(BasicTransactionStatus.OK, false));
+        assertEquals(AttemptOutcome.NODE_BUSY, Execution.outcome(BasicTransactionStatus.BUSY, false));
         assertEquals(AttemptOutcome.NODE_BUSY,
-                Execution.outcome(HapiTransactionStatus.PLATFORM_TRANSACTION_NOT_CREATED, false));
-        assertEquals(AttemptOutcome.NODE_BUSY, Execution.outcome(HapiTransactionStatus.PLATFORM_NOT_ACTIVE, false));
-        assertEquals(AttemptOutcome.WRONG_NODE, Execution.outcome(HapiTransactionStatus.INVALID_NODE_ACCOUNT, false));
-        assertEquals(AttemptOutcome.PENDING, Execution.outcome(HapiTransactionStatus.UNKNOWN, true));
-        assertEquals(AttemptOutcome.PENDING, Execution.outcome(HapiTransactionStatus.RECEIPT_NOT_FOUND, true));
-        assertEquals(AttemptOutcome.PENDING, Execution.outcome(HapiTransactionStatus.RECORD_NOT_FOUND, true));
-        assertEquals(AttemptOutcome.REJECTED, Execution.outcome(HapiTransactionStatus.UNKNOWN, false));
-        assertEquals(AttemptOutcome.REJECTED, Execution.outcome(HapiTransactionStatus.DUPLICATE_TRANSACTION, false));
-        assertEquals(AttemptOutcome.REJECTED, Execution.outcome(HapiTransactionStatus.INVALID_SIGNATURE, false));
+                Execution.outcome(BasicTransactionStatus.PLATFORM_TRANSACTION_NOT_CREATED, false));
+        assertEquals(AttemptOutcome.NODE_BUSY, Execution.outcome(BasicTransactionStatus.PLATFORM_NOT_ACTIVE, false));
+        assertEquals(AttemptOutcome.WRONG_NODE, Execution.outcome(BasicTransactionStatus.INVALID_NODE_ACCOUNT, false));
+        assertEquals(AttemptOutcome.PENDING, Execution.outcome(BasicTransactionStatus.UNKNOWN, true));
+        assertEquals(AttemptOutcome.PENDING, Execution.outcome(BasicTransactionStatus.RECEIPT_NOT_FOUND, true));
+        assertEquals(AttemptOutcome.PENDING, Execution.outcome(BasicTransactionStatus.RECORD_NOT_FOUND, true));
+        assertEquals(AttemptOutcome.REJECTED, Execution.outcome(BasicTransactionStatus.UNKNOWN, false));
+        assertEquals(AttemptOutcome.REJECTED, Execution.outcome(BasicTransactionStatus.DUPLICATE_TRANSACTION, false));
+        assertEquals(AttemptOutcome.REJECTED, Execution.outcome(BasicTransactionStatus.INVALID_SIGNATURE, false));
     }
 
     @Test
     @DisplayName("a receipt is pending while its status is UNKNOWN or OK")
     @Tag("testId:impl/execution/a-receipt-is-pending-while-its-status-is-unknown-or-ok")
     void aReceiptIsPendingWhileItsStatusIsUnknownOrOk() {
-        assertEquals(AttemptOutcome.PENDING, Execution.receiptOutcome(HapiTransactionStatus.UNKNOWN));
-        assertEquals(AttemptOutcome.PENDING, Execution.receiptOutcome(HapiTransactionStatus.OK));
-        assertEquals(AttemptOutcome.SUCCESS, Execution.receiptOutcome(HapiTransactionStatus.SUCCESS));
-        assertEquals(AttemptOutcome.SUCCESS, Execution.receiptOutcome(HapiTransactionStatus.INVALID_SIGNATURE));
+        assertEquals(AttemptOutcome.PENDING, Execution.receiptOutcome(BasicTransactionStatus.UNKNOWN));
+        assertEquals(AttemptOutcome.PENDING, Execution.receiptOutcome(BasicTransactionStatus.OK));
+        assertEquals(AttemptOutcome.SUCCESS, Execution.receiptOutcome(BasicTransactionStatus.SUCCESS));
+        assertEquals(AttemptOutcome.SUCCESS, Execution.receiptOutcome(BasicTransactionStatus.INVALID_SIGNATURE));
     }
 
     @Test

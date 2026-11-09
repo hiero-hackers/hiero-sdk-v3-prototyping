@@ -1,6 +1,7 @@
 import type { NodeSignature, TransactionSigner } from "@hiero/consensus-node-client/consensusnode/client";
 import { NodeSignature as Signature } from "@hiero/consensus-node-client/consensusnode/client";
 import type { Query, QueryResponse } from "@hiero/consensus-node-client/consensusnode/queries";
+import { BasicTransactionStatus } from "@hiero/consensus-node-client/consensusnode/status";
 import type { PackedTransaction, Receipt, Transaction } from "@hiero/consensus-node-client/consensusnode/transactions";
 import type { Page } from "@hiero/base/common";
 import type { PrivateKey } from "@hiero/base/keys";
@@ -11,12 +12,6 @@ import { RpcError } from "./RpcError.js";
 import { RuntimeSession } from "./RuntimeSession.js";
 import { TsConverters } from "./TsConverters.js";
 import { Utilities } from "./Utilities.js";
-
-/**
- * The HAPI code of `SUCCESS`. `BasicTransactionStatus` has no such constant yet (a gap of the specs), so the code is
- * used.
- */
-const SUCCESS = 22;
 
 /**
  * The TypeScript runtime of the TCK server: access to the JSON parameters, the execution flow (a transaction is signed
@@ -81,7 +76,7 @@ export class TsTckRuntime implements TckRuntime {
         }
         const response = await packed.submit(client);
         const receipt = await response.queryReceipt(client);
-        if (receipt.status.code !== SUCCESS) {
+        if (receipt.status.code !== BasicTransactionStatus.SUCCESS.code) {
             // the transaction id, so that the receipt of a failed transaction can be read (getTransactionReceipt)
             throw new RpcError(RpcError.HIERO_ERROR, "Hiero error", {
                 status: this.converters.statusJson(receipt.status),

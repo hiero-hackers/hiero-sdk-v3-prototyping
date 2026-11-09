@@ -633,9 +633,54 @@ test "a transaction of another SDK is read with a valid start in 2125" {
     assertEquals(expected: AccountId.fromString(value: "0.0.3"), actual: transaction.signableBodies()[0].node)
     assertEquals(expected: 1, actual: length(value: transaction.nodeSignatures))
 }
+
+// Source: this spec (a Response is a plain value created from a transaction id and the type of the transaction, e.g.
+// to read the outcome of a scheduled transaction; nodeAccountId defaults to null: any node); ADR-0013.
+@@testId("a-response-is-created-from-a-transaction-id-and-a-transaction-type")
+test "a response is created from a transaction id and a transaction type" {
+    // given
+    let id = TransactionId.fromString(transactionId: "0.0.1001@1554158542.000000000")
+    let node = AccountId.fromString(value: "0.0.3")
+
+    // when
+    let anyNode = Response<consensusnode.transactions.accounts.AccountCreateReceipt>{transactionId: id,
+            transactionType: consensusnode.transactions.accounts.AccountCreateTransaction}
+    let oneNode = Response<consensusnode.transactions.accounts.AccountCreateReceipt>{transactionId: id,
+            transactionType: consensusnode.transactions.accounts.AccountCreateTransaction, nodeAccountId: node}
+
+    // then
+    assertEquals(expected: id, actual: anyNode.transactionId)
+    assertNull(actual: anyNode.nodeAccountId)
+    assertEquals(expected: node, actual: oneNode.nodeAccountId)
+    assertEquals(expected: anyNode.transactionType, actual: oneNode.transactionType)
+}
+
+// Source: this spec (fromBytes throws illegal-format for bytes that are no serialized transaction).
+@@testId("bytes-that-are-no-transaction-are-rejected")
+test "bytes that are no transaction are rejected" {
+    // given
+    let packed = consensusnode.transactions.utility.PrngTransaction{}.pack(payer: DEFAULT(consensusnode.client.Account),
+            nodes: [AccountId.fromString(value: "0.0.3")])
+    let complete = packed.toBytes()
+
+    // when / then
+    @@expectThrows(illegal-format)
+    PackedTransaction.fromBytes(bytes: hex(text: "ff"))
+    @@expectThrows(illegal-format)
+    PackedTransaction.fromBytes(bytes: utf8(text: "no transaction"))
+    @@expectThrows(illegal-format)
+    PackedTransaction.fromBytes(bytes: slice(value: complete, start: 0, end: length(value: complete) - 10))
+}
 ```
 
 ## Questions & Comments
+
+- **Does `fromBytes` read the single-transaction form of earlier SDKs?** `fromBytes` reads the form `toBytes()` writes
+  (a `TransactionList`). The V2 SDKs also read a single protobuf `Transaction` with the deprecated fields `bodyBytes`
+  and `sigMap`, as they wrote it before `TransactionList` - e.g. the fixture of the Java SDK's
+  `TransactionTest.transactionFromBytesWorksWithProtobufTransactionBytes` (a transfer of 1 hbar from 0.0.476260 with
+  two signatures). The Java implementation rejects it (`illegal-format`). Should V3 read it, so that transactions
+  signed with an older SDK can still be submitted, or is the deprecated form out of scope?
 
 - **What is the typed receipt of a failed transaction?** A typed receipt declares the attributes a successful
   transaction yields as required, e.g. `AccountCreateReceipt.accountId`; a failed creation has no account. The Java

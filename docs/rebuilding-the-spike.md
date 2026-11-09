@@ -4,7 +4,7 @@ How the V3 API is implemented today, how to build and verify it, and what cost t
 executed by an agent.
 
 - **Java:** `sdk-java/impl` is a **copy of the generated Java project** that is maintained by hand. It implements the
-  whole API of the specs: all 441 tests of the specs and all 3,513 contract tests pass against it, no method is a stub
+  whole API of the specs: all 459 tests of the specs that have a Java form and all 3,514 contract tests pass against it, no method is a stub
   any more, and `metalang check` reports that it provides the API. What the specs cannot express is recorded in their
   `## Questions & Comments` (and implemented as a documented workaround where one exists). The TCK binds 54 of its
   64 methods (section 3); the implementation has not been run against Solo yet.
@@ -63,7 +63,7 @@ Helpers live in non-exported `internal` packages of each module. The parts that 
 | `…/client/internal/QueryKind.java`, `Querying.java` | per query type: gRPC method, request, answer; free and paid queries (cost query, payment transfer to the node signed by the operator, `maxQueryPayment`), retry while the node is busy |
 | `…/client/internal/AccountQueries.java`, `FileQueries`, `TopicQueries`, `ScheduleQueries`, `TokenQueries` | the query kinds of the module |
 | `…/client/internal/PrecheckException.java` | a node rejected a request in precheck; message `precheck failed: <STATUS>` (trap 18) |
-| `…/client/internal/HapiTransactionStatus.java` | one constant per HAPI `ResponseCodeEnum` value, derived from the vendored proto |
+| `…/client/internal/Statuses.java` | the `BasicTransactionStatus` of a HAPI status code |
 | `org.hiero.consensus.node.admin.client/…/admin/internal/AdminKinds.java`, `AdminQueries.java`, `AdminSupports.java` | the six administration transaction types, the version and address book queries; registered with the `ServiceLoader` as `TransactionSupport` |
 | `org.hiero.mirror.node.client/…/mirrornode/internal/` | REST client of the Mirror Node (`/api/v1`), a small JSON parser, pagination over `links.next`, one repository implementation per area |
 | `org.hiero.enterprise/…/service/internal/` | the session and the six services on top of the public API of the other modules; Solidity ABI encoding of the contract parameters |
@@ -73,19 +73,9 @@ Dependencies: `org.hiero.base` needs `org.bouncycastle:bcprov-jdk18on:1.83` (`re
 (compile) plus `grpc-netty-shaded` (runtime), each with six exclusions (trap 13). The hand-written `sdk-java/protobuf`
 exports `com.hedera.hashgraph.sdk.proto` (`TransactionList`) to `org.hiero.consensus.node.client`.
 
-`HapiTransactionStatus` is mechanical — regenerate it instead of editing it:
-
-```bash
-python3 - <<'PY'
-import re
-src = open('tooling/protobuf/consensus-node/services/response_code.proto').read()
-body = src[src.index('enum ResponseCodeEnum'):]; body = body[:body.index('\n}')]
-seen, out = set(), []
-for name, num in re.findall(r'^\s*([A-Z][A-Z0-9_]*)\s*=\s*(\d+)\s*;', body, re.M):
-    if name not in seen: seen.add(name); out.append((name, int(num)))
-print(len(out), 'constants, SUCCESS =', dict(out)['SUCCESS'])
-PY
-```
+`BasicTransactionStatus` (spec `status.md`) lists every value of `ResponseCodeEnum`; it is taken over mechanically from
+the vendored `response_code.proto` and generated like every other enum, so `impl` copies it from `sdk-java/generated`
+when the protobuf definitions are updated.
 
 **Adding a transaction type:** add a `TransactionKind` constant to the kind class of its area (gRPC service and
 method, body field, how the body is filled, how the receipt is built) and let the nine methods of the type delegate to
@@ -112,7 +102,7 @@ In `sdk-java` (JDK 25, `sdk env`):
 
 **Done when:**
 
-- every test passes: the 441 tests of the specs (`<Spec>SpecTest`) and the 3,513 contract tests (`<Type>Test`).
+- every test passes: the 459 tests of the specs that have a Java form (`<Spec>SpecTest`) and the 3,514 contract tests (`<Type>Test`).
   None of them needs a network. A failed test does not stop the build: while `impl/test-report` is part of it (the
   default), the profile `test-report` sets `maven.test.failure.ignore`, every module is tested, and `impl/test-report`
   fails the build at the end, after the page is rendered (`-DtestReport.failOnFailures=false`: it does not;
@@ -205,9 +195,9 @@ are new.
 1. **`KeysFactory.createPrivateKey` must throw `IllegalArgumentException`** when the bytes are not
    PKCS#8. `JavaConverters.key()` catches exactly that to fall back to the public-key branch; any
    other exception makes a public key unparseable and every `createAccount` fails.
-2. **The receipt status must report `code() == 22`.** `JavaTckRuntime` compares against a hard-coded
-   `SUCCESS = 22` because `BasicTransactionStatus` has no such constant. `statusJson` uses
-   `Enum.name()`, so the status must be an enum whose names match HAPI — hence `HapiTransactionStatus`.
+2. **The receipt status must be `BasicTransactionStatus.SUCCESS`.** `JavaTckRuntime` compares the code with it, and
+   `statusJson` uses `Enum.name()`, so the status must be an enum whose names match HAPI - `BasicTransactionStatus`
+   is one (before the spec listed every code, the implementation had its own `HapiTransactionStatus`).
 3. **`AccountCreateReceipt` null-checks `exchangeRate` and `nextExchangeRate`.** `queryReceipt()` has
    to supply real values; `null` throws inside the constructor.
 4. **`HieroClient` cannot reach its network.** It is a record of operator, `Network` and signer, and

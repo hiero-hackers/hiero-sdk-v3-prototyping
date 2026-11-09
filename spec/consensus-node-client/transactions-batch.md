@@ -319,6 +319,75 @@ test "a batch rejects an empty list of inner transactions" {
     @@expectThrows(invalid-argument-error)
     BatchTransaction{innerTransactions: []}
 }
+
+// Source: this spec (packForBatch packs an inner transaction without signing it: one body for node 0.0.0); HIP-551.
+@@testId("an-inner-transaction-packed-for-a-batch-has-one-unsigned-body-for-node-0-0-0")
+test "an inner transaction packed for a batch has one unsigned body for node 0.0.0" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+
+    // when
+    let inner = consensusnode.transactions.utility.PrngTransaction{}
+            .packForBatch(payer: payer, batchKey: DEFAULT(authority.Authority))
+
+    // then
+    assertEquals(expected: 1, actual: length(value: inner.signableBodies()))
+    assertEquals(expected: ledger.AccountId.fromString(value: "0.0.0"), actual: inner.signableBodies()[0].node)
+    assertEquals(expected: payer.accountId, actual: inner.transactionId.accountId)
+    assertEquals(expected: 0, actual: length(value: inner.nodeSignatures))
+}
+
+// Source: this spec (an inner transaction packed for a batch is signed later like any packed transaction, e.g. by its
+// payer in another process); the Java SDK (BatchTransactionTest: inner transactions are signed after batchify).
+@@testId("an-inner-transaction-packed-for-a-batch-is-signed-later-by-its-payer")
+test "an inner transaction packed for a batch is signed later by its payer" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+    let packed = consensusnode.transactions.utility.PrngTransaction{}
+            .packForBatch(payer: payer, batchKey: DEFAULT(authority.Authority))
+
+    // when
+    let signed = packed.sign(account: payer)
+
+    // then
+    assertEquals(expected: 1, actual: length(value: signed.nodeSignatures))
+    assertEquals(expected: payer.privateKey.createPublicKey(), actual: signed.nodeSignatures[0].publicKey)
+    assertTrue(condition: signed.nodeSignatures[0].publicKey.verify(message: signed.signableBodies()[0].bytes,
+            signature: signed.nodeSignatures[0].signature))
+    assertEquals(expected: packed.signableBodies(), actual: signed.signableBodies())
+}
+
+// Source: this spec (signForBatch with a payer id and a TransactionSigner: the payer is the given account, the
+// signature the signer's; signForBatchWithOperator: the client's operator pays and signs). The secp256k1 key is the
+// one of the tests of keys.md.
+@@testId("an-inner-transaction-is-signed-for-a-batch-by-a-signer-or-by-the-operator")
+test "an inner transaction is signed for a batch by a signer or by the operator" {
+    // given
+    let signerKey = keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
+            value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
+    let signerPayer = ledger.AccountId.fromString(value: "0.0.1002")
+    let signer = consensusnode.client.createClient(networkSettings: DEFAULT,
+            operatorAccount: consensusnode.client.Account{accountId: signerPayer, privateKey: signerKey})
+            .transactionSigner
+    let client = DEFAULT(consensusnode.client.HieroClient<ANY>)
+
+    // when
+    let bySigner = consensusnode.transactions.utility.PrngTransaction{}
+            .signForBatch(payerId: signerPayer, signer: signer, batchKey: DEFAULT(authority.Authority))
+    let byOperator = consensusnode.transactions.utility.PrngTransaction{}
+            .signForBatchWithOperator(client: client, batchKey: DEFAULT(authority.Authority))
+
+    // then
+    assertEquals(expected: signerPayer, actual: bySigner.transactionId.accountId)
+    assertEquals(expected: ledger.AccountId.fromString(value: "0.0.0"), actual: bySigner.signableBodies()[0].node)
+    assertEquals(expected: signerKey.createPublicKey(), actual: bySigner.nodeSignatures[0].publicKey)
+    assertTrue(condition: bySigner.nodeSignatures[0].publicKey.verify(message: bySigner.signableBodies()[0].bytes,
+            signature: bySigner.nodeSignatures[0].signature))
+    assertEquals(expected: client.operatorAccount.accountId, actual: byOperator.transactionId.accountId)
+    assertEquals(expected: ledger.AccountId.fromString(value: "0.0.0"), actual: byOperator.signableBodies()[0].node)
+    assertEquals(expected: client.operatorAccount.privateKey.createPublicKey(),
+            actual: byOperator.nodeSignatures[0].publicKey)
+}
 ```
 
 ## Questions & Comments

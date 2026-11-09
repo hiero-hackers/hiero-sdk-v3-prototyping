@@ -229,6 +229,32 @@ test "a freeze transaction keeps every freeze type" {
         assertEquals(expected: freezeType, actual: transaction.freezeType)
     }
 }
+
+// Source: the Java (FreezeTransactionTest.shouldBytes: start time Instant.ofEpochSecond(1554158542) =
+// 2019-04-01T22:42:22Z), JavaScript, Go and Swift FreezeTransaction unit tests (to and from bytes).
+@@testId("a-freeze-transaction-survives-tobytes-and-frombytes")
+test "a freeze transaction survives toBytes and fromBytes" {
+    // given
+    let startTime = toZonedDateTime(text: "2019-04-01T22:42:22Z")
+    let upgrade = FreezeTransaction{freezeType: FreezeType.FREEZE_UPGRADE, startTime: startTime,
+            updateFile: UPGRADE_FILE, fileHash: UPGRADE_FILE_HASH}
+    let abort = FreezeTransaction{freezeType: FreezeType.FREEZE_ABORT, startTime: null, updateFile: null,
+            fileHash: null}
+
+    for transaction in [upgrade, abort] {
+        // given
+        let packed = transaction.pack(payer: DEFAULT(consensusnode.client.Account),
+                nodes: [ledger.AccountId.fromString(value: "0.0.3"), ledger.AccountId.fromString(value: "0.0.4")])
+
+        // when
+        let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+        // then
+        assertEquals(expected: 2, actual: length(value: packed.signableBodies()))
+        assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
+        assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+    }
+}
 ```
 
 ## Questions & Comments

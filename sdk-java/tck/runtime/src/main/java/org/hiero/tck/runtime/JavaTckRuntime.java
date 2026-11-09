@@ -11,6 +11,7 @@ import org.hiero.consensusnode.client.NodeSignature;
 import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.consensusnode.queries.Query;
 import org.hiero.consensusnode.queries.QueryResponse;
+import org.hiero.consensusnode.status.BasicTransactionStatus;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Response;
@@ -33,11 +34,6 @@ import org.jspecify.annotations.Nullable;
  */
 public final class JavaTckRuntime implements TckRuntime {
 
-    /**
-     * The HAPI code of {@code SUCCESS}. {@code BasicTransactionStatus} has no such constant yet (a gap of the specs),
-     * so the code is used.
-     */
-    private static final int SUCCESS = 22;
 
     private final JavaConverters converters = new JavaConverters();
 
@@ -122,7 +118,7 @@ public final class JavaTckRuntime implements TckRuntime {
         }
         final Response<R> response = join(packed.submit(runtime.client()));
         final R receipt = join(response.queryReceipt(runtime.client()));
-        if (receipt.status().code() != SUCCESS) {
+        if (receipt.status().code() != BasicTransactionStatus.SUCCESS.code()) {
             // the transaction id, so that the receipt of a failed transaction can be read (getTransactionReceipt)
             throw new RpcError(RpcError.HIERO_ERROR, "Hiero error", Map.of("status",
                     converters.statusJson(receipt.status()), "transactionId", receipt.transactionId().toString()));

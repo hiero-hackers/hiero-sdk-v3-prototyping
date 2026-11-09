@@ -522,6 +522,37 @@ test "a node create transaction with a description of more than 100 UTF-8 bytes 
             gossipCaCertificate: GOSSIP_CA_CERTIFICATE, grpcCertificateHash: GRPC_CERTIFICATE_HASH,
             adminAuthority: DEFAULT(Authority)}
 }
+
+// Source: the Java (NodeCreateTransactionTest.shouldBytes, NodeUpdateTransactionTest.shouldBytes,
+// NodeDeleteTransactionTest.shouldBytes), JavaScript, Go and Swift node transaction unit tests (to and from bytes).
+@@testId("node-transactions-survive-tobytes-and-frombytes")
+test "node transactions survive toBytes and fromBytes" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+    let nodes = [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")]
+    let create = NodeCreateTransaction{accountId: DEFAULT(AccountId), description: "consensus-node-7",
+            gossipEndpoints: [DEFAULT(ServiceEndpoint)], serviceEndpoints: [NODE_DOMAIN_ENDPOINT],
+            gossipCaCertificate: GOSSIP_CA_CERTIFICATE, grpcCertificateHash: GRPC_CERTIFICATE_HASH,
+            adminAuthority: DEFAULT(Authority), declineReward: true, grpcWebProxyEndpoint: NODE_DOMAIN_ENDPOINT}
+    let update = NodeUpdateTransaction{nodeId: 7, description: "consensus-node-7b",
+            serviceEndpoints: [DEFAULT(ServiceEndpoint)], declineReward: false}
+    let delete = NodeDeleteTransaction{nodeId: 7}
+
+    // when
+    let packedCreate = create.pack(payer: payer, nodes: nodes)
+    let packedUpdate = update.pack(payer: payer, nodes: nodes)
+    let packedDelete = delete.pack(payer: payer, nodes: nodes)
+
+    // then
+    assertEquals(expected: packedCreate.toBytes(),
+            actual: consensusnode.transactions.PackedTransaction.fromBytes(bytes: packedCreate.toBytes()).toBytes())
+    assertEquals(expected: packedUpdate.toBytes(),
+            actual: consensusnode.transactions.PackedTransaction.fromBytes(bytes: packedUpdate.toBytes()).toBytes())
+    assertEquals(expected: packedDelete.toBytes(),
+            actual: consensusnode.transactions.PackedTransaction.fromBytes(bytes: packedDelete.toBytes()).toBytes())
+    assertEquals(expected: packedCreate.signableBodies(),
+            actual: consensusnode.transactions.PackedTransaction.fromBytes(bytes: packedCreate.toBytes()).signableBodies())
+}
 ```
 
 ## Questions & Comments

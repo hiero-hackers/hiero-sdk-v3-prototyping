@@ -4,6 +4,13 @@ import static org.hiero.sdk.testing.Testing.*;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import org.hiero.consensusnode.client.Account;
+import org.hiero.consensusnode.transactions.PackedTransaction;
+import org.hiero.keys.ByteImportEncoding;
+import org.hiero.keys.KeyAlgorithm;
+import org.hiero.keys.KeysFactory;
+import org.hiero.keys.PrivateKey;
+import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -122,5 +129,43 @@ class TransactionsFreezeSpecTest {
             // then
             assertEquals(freezeType, transaction.freezeType());
         }
+    }
+
+    /// `consensusnode.admin.freeze/a-freeze-transaction-survives-tobytes-and-frombytes`
+    ///
+    /// Source: the Java (FreezeTransactionTest.shouldBytes: start time Instant.ofEpochSecond(1554158542) =
+    /// 2019-04-01T22:42:22Z), JavaScript, Go and Swift FreezeTransaction unit tests (to and from bytes).
+    @Test
+    @DisplayName("a freeze transaction survives toBytes and fromBytes")
+    @Tag("testId:consensusnode.admin.freeze/a-freeze-transaction-survives-tobytes-and-frombytes")
+    void aFreezeTransactionSurvivesToBytesAndFromBytes() {
+        // given
+        final ZonedDateTime startTime = toZonedDateTime("2019-04-01T22:42:22Z");
+        final FreezeTransaction upgrade = new FreezeTransaction(FreezeType.FREEZE_UPGRADE, startTime, UPGRADE_FILE(), UPGRADE_FILE_HASH());
+        final FreezeTransaction abort = new FreezeTransaction(FreezeType.FREEZE_ABORT, null, null, null);
+        for (final FreezeTransaction transaction : List.of(upgrade, abort)) {
+            // given
+            final PackedTransaction<FreezeReceipt, FreezeTransaction> packed = transaction.pack(defaultAccount(), List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4")));
+
+            // when
+            final PackedTransaction<?, ?> restored = PackedTransaction.fromBytes(packed.toBytes());
+
+            // then
+            assertEquals(2L, length(packed.signableBodies()));
+            assertEquals(packed.toBytes(), restored.toBytes());
+            assertEquals(packed.signableBodies(), restored.signableBodies());
+        }
+    }
+
+    private static Account defaultAccount() {
+        return new Account(defaultAccountId(), defaultPrivateKey());
+    }
+
+    private static AccountId defaultAccountId() {
+        return new AccountId(0L, 0L, "", 1001L, null, null);
+    }
+
+    private static PrivateKey defaultPrivateKey() {
+        return KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c");
     }
 }

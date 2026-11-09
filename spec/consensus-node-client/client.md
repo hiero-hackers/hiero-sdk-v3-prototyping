@@ -463,6 +463,193 @@ test "a client created with a signer signs with that signer" {
     assertEquals(expected: signerKey.createPublicKey(), actual: signature.publicKey)
     assertTrue(condition: signature.publicKey.verify(message: transactionBytes, signature: signature.signature))
 }
+
+// Source: this spec ("The default execution", rule 7): a node failure is retried on another node, a pending receipt
+// on the same node, a rejection is not retried. The current SDKs differ here (see the Design Notes).
+@@testId("the-default-retry-policy-decides-by-the-outcome-of-the-last-attempt")
+test "the default retry policy decides by the outcome of the last attempt" {
+    // given
+    let policy = ExecutionSettings.createDefault().retryPolicy
+    let request = consensusnode.queries.accounts.AccountBalanceQuery{accountId: DEFAULT, contractId: null}
+    let failure: AttemptResult = TransportFailure{kind: TransportFailureKind.CONNECTION, message: "connection refused"}
+    let firstWait = toDuration(text: "PT0.25S")
+    let onOtherNode: RetryDecision = RetryOnOtherNode{delay: firstWait}
+    let onSameNode: RetryDecision = RetryOnSameNode{delay: firstWait}
+    let giveUp: RetryDecision = GiveUp{}
+
+    for outcome in [AttemptOutcome.NODE_UNAVAILABLE, AttemptOutcome.NODE_TIMEOUT, AttemptOutcome.NODE_BUSY,
+            AttemptOutcome.WRONG_NODE] {
+        // when
+        let decision = policy.decide(context: RetryContext{request: request, attempts: [Attempt{number: 1,
+                node: DEFAULT, result: failure, outcome: outcome, duration: toDuration(text: "PT1S")}],
+                elapsed: toDuration(text: "PT1S")})
+
+        // then
+        assertEquals(expected: onOtherNode, actual: decision)
+    }
+
+    // when
+    let pending = policy.decide(context: RetryContext{request: request, attempts: [Attempt{number: 1, node: DEFAULT,
+            result: NodeAnswer{status: consensusnode.status.BasicTransactionStatus.OK}, outcome: AttemptOutcome.PENDING,
+            duration: toDuration(text: "PT1S")}], elapsed: toDuration(text: "PT1S")})
+    let rejected = policy.decide(context: RetryContext{request: request, attempts: [Attempt{number: 1, node: DEFAULT,
+            result: NodeAnswer{status: consensusnode.status.BasicTransactionStatus.INVALID_TRANSACTION}, outcome: AttemptOutcome.REJECTED,
+            duration: toDuration(text: "PT1S")}], elapsed: toDuration(text: "PT1S")})
+
+    // then
+    assertEquals(expected: onSameNode, actual: pending)
+    assertEquals(expected: giveUp, actual: rejected)
+}
+
+// Source: this spec ("The default execution", rules 9 and 10): 250 ms before the second attempt, doubled up to 8 s, no
+// random share; with 10 attempts the waits add up to 39.75 s.
+@@testId("the-default-retry-policy-waits-250-ms-doubled-up-to-8-s")
+test "the default retry policy waits 250 ms doubled up to 8 s" {
+    // given
+    let policy = ExecutionSettings.createDefault().retryPolicy
+    let request = consensusnode.queries.accounts.AccountBalanceQuery{accountId: DEFAULT, contractId: null}
+    let busy: AttemptResult = NodeAnswer{status: consensusnode.status.BasicTransactionStatus.OK}
+    let second = toDuration(text: "PT1S")
+    let attempts: list<Attempt> = [Attempt{number: 1, node: DEFAULT, result: busy, outcome: AttemptOutcome.NODE_BUSY, duration: second},
+            Attempt{number: 2, node: DEFAULT, result: busy, outcome: AttemptOutcome.NODE_BUSY, duration: second},
+            Attempt{number: 3, node: DEFAULT, result: busy, outcome: AttemptOutcome.NODE_BUSY, duration: second},
+            Attempt{number: 4, node: DEFAULT, result: busy, outcome: AttemptOutcome.NODE_BUSY, duration: second},
+            Attempt{number: 5, node: DEFAULT, result: busy, outcome: AttemptOutcome.NODE_BUSY, duration: second},
+            Attempt{number: 6, node: DEFAULT, result: busy, outcome: AttemptOutcome.NODE_BUSY, duration: second},
+            Attempt{number: 7, node: DEFAULT, result: busy, outcome: AttemptOutcome.NODE_BUSY, duration: second},
+            Attempt{number: 8, node: DEFAULT, result: busy, outcome: AttemptOutcome.NODE_BUSY, duration: second},
+            Attempt{number: 9, node: DEFAULT, result: busy, outcome: AttemptOutcome.NODE_BUSY, duration: second}]
+    let waits = [toDuration(text: "PT0.25S"), toDuration(text: "PT0.5S"), toDuration(text: "PT1S"),
+            toDuration(text: "PT2S"), toDuration(text: "PT4S"), toDuration(text: "PT8S"), toDuration(text: "PT8S"),
+            toDuration(text: "PT8S"), toDuration(text: "PT8S")]
+
+    for n in range(start: 1, end: 10) {
+        // when
+        let decision = policy.decide(context: RetryContext{request: request,
+                attempts: slice(value: attempts, start: 0, end: n), elapsed: second})
+
+        // then: the wait before attempt n + 1
+        let expected: RetryDecision = RetryOnOtherNode{delay: waits[n - 1]}
+        assertEquals(expected: expected, actual: decision, message: toString(value: n))
+    }
+}
+
+// Source: this spec ("The default execution", rule 8): after attempt number maxAttempts the policy gives up, whatever
+// the outcome; 10 attempts by default.
+@@testId("the-default-retry-policy-gives-up-after-the-last-attempt")
+test "the default retry policy gives up after the last attempt" {
+    // given
+    let request = consensusnode.queries.accounts.AccountBalanceQuery{accountId: DEFAULT, contractId: null}
+    let pending: AttemptResult = NodeAnswer{status: consensusnode.status.BasicTransactionStatus.OK}
+    let second = toDuration(text: "PT1S")
+    let onSameNode: RetryDecision = RetryOnSameNode{delay: toDuration(text: "PT0.5S")}
+    let giveUp: RetryDecision = GiveUp{}
+    let three = ExecutionSettings.createDefault(maxAttempts: 3, attemptTimeout: second).retryPolicy
+
+    // when
+    let afterSecond = three.decide(context: RetryContext{request: request, attempts: [
+            Attempt{number: 1, node: DEFAULT, result: pending, outcome: AttemptOutcome.PENDING, duration: second},
+            Attempt{number: 2, node: DEFAULT, result: pending, outcome: AttemptOutcome.PENDING, duration: second}],
+            elapsed: second})
+    let afterThird = three.decide(context: RetryContext{request: request, attempts: [
+            Attempt{number: 1, node: DEFAULT, result: pending, outcome: AttemptOutcome.PENDING, duration: second},
+            Attempt{number: 2, node: DEFAULT, result: pending, outcome: AttemptOutcome.PENDING, duration: second},
+            Attempt{number: 3, node: DEFAULT, result: pending, outcome: AttemptOutcome.PENDING, duration: second}],
+            elapsed: second})
+    let afterTenth = ExecutionSettings.createDefault().retryPolicy.decide(context: RetryContext{request: request,
+            attempts: [Attempt{number: 10, node: DEFAULT, result: pending, outcome: AttemptOutcome.NODE_BUSY,
+            duration: second}], elapsed: second})
+
+    // then
+    assertEquals(expected: onSameNode, actual: afterSecond)
+    assertEquals(expected: giveUp, actual: afterThird)
+    assertEquals(expected: giveUp, actual: afterTenth)
+}
+
+// Source: this spec ("The default execution", rules 12 and 13): after NODE_UNAVAILABLE, NODE_TIMEOUT or WRONG_NODE a
+// node is avoided, so the choice among the candidates falls on the others. The choice among equal candidates is
+// random, so it is repeated.
+@@testId("the-default-node-selector-avoids-a-node-that-failed")
+test "the default node selector avoids a node that failed" {
+    // given
+    let a = DEFAULT(ConsensusNode)
+    let b = ConsensusNode{ip: DEFAULT, port: 35212, account: AccountId.fromString(value: "0.0.4")}
+
+    for outcome in [AttemptOutcome.NODE_UNAVAILABLE, AttemptOutcome.NODE_TIMEOUT, AttemptOutcome.WRONG_NODE] {
+        // given
+        let selector = ExecutionSettings.createDefault().nodeSelector
+
+        // when
+        selector.attemptCompleted(attempt: Attempt{number: 1, node: a,
+                result: TransportFailure{kind: TransportFailureKind.CONNECTION, message: "failed"}, outcome: outcome,
+                duration: toDuration(text: "PT1S")})
+
+        // then
+        for i in range(start: 0, end: 20) {
+            assertEquals(expected: b, actual: selector.select(candidates: [a, b], attempts: []),
+                    message: "choice " + toString(value: i))
+        }
+    }
+}
+
+// Source: this spec ("The default execution", rules 11 and 12): only NODE_UNAVAILABLE, NODE_TIMEOUT and WRONG_NODE
+// make a node avoided; a busy node is chosen like any other. (That a retry on another node leaves out the node of the
+// last attempt is part of the execution, which passes the remaining candidates to the selector.)
+@@testId("the-default-node-selector-does-not-avoid-a-busy-node")
+test "the default node selector does not avoid a busy node" {
+    // given
+    let selector = ExecutionSettings.createDefault().nodeSelector
+    let a = DEFAULT(ConsensusNode)
+    let b = ConsensusNode{ip: DEFAULT, port: 35212, account: AccountId.fromString(value: "0.0.4")}
+    let second = toDuration(text: "PT1S")
+
+    // when: a is busy, b cannot be reached
+    selector.attemptCompleted(attempt: Attempt{number: 1, node: a,
+            result: NodeAnswer{status: consensusnode.status.BasicTransactionStatus.OK},
+            outcome: AttemptOutcome.NODE_BUSY, duration: second})
+    selector.attemptCompleted(attempt: Attempt{number: 1, node: b,
+            result: TransportFailure{kind: TransportFailureKind.CONNECTION, message: "failed"},
+            outcome: AttemptOutcome.NODE_UNAVAILABLE, duration: second})
+
+    // then
+    for i in range(start: 0, end: 20) {
+        assertEquals(expected: a, actual: selector.select(candidates: [a, b], attempts: []),
+                message: "choice " + toString(value: i))
+    }
+}
+
+// Source: this spec ("The default execution", rules 12 and 13): every failure doubles the time a node is avoided
+// (8 s, 16 s, ...); when every candidate is avoided, the one whose avoidance ends first is chosen; an attempt with
+// another outcome ends the avoidance.
+@@testId("the-default-node-selector-picks-the-node-whose-avoidance-ends-first")
+test "the default node selector picks the node whose avoidance ends first" {
+    // given
+    let selector = ExecutionSettings.createDefault().nodeSelector
+    let a = DEFAULT(ConsensusNode)
+    let b = ConsensusNode{ip: DEFAULT, port: 35212, account: AccountId.fromString(value: "0.0.4")}
+    let failure: AttemptResult = TransportFailure{kind: TransportFailureKind.TIMEOUT, message: "timeout"}
+    let second = toDuration(text: "PT1S")
+
+    // when: a is avoided for 8 s, b for 16 s
+    selector.attemptCompleted(attempt: Attempt{number: 1, node: a, result: failure,
+            outcome: AttemptOutcome.NODE_TIMEOUT, duration: second})
+    selector.attemptCompleted(attempt: Attempt{number: 1, node: b, result: failure,
+            outcome: AttemptOutcome.NODE_TIMEOUT, duration: second})
+    selector.attemptCompleted(attempt: Attempt{number: 2, node: b, result: failure,
+            outcome: AttemptOutcome.NODE_TIMEOUT, duration: second})
+
+    // then
+    assertEquals(expected: a, actual: selector.select(candidates: [a, b], attempts: []))
+
+    // when: a answers again, b still fails
+    selector.attemptCompleted(attempt: Attempt{number: 1, node: a, result: NodeAnswer{status: consensusnode.status.BasicTransactionStatus.OK},
+            outcome: AttemptOutcome.SUCCESS, duration: second})
+    selector.attemptCompleted(attempt: Attempt{number: 1, node: a, result: failure,
+            outcome: AttemptOutcome.NODE_TIMEOUT, duration: second})
+
+    // then: a is avoided for 8 s again, not 16 s, so it still ends first
+    assertEquals(expected: a, actual: selector.select(candidates: [a, b], attempts: []))
+}
 ```
 
 ## Questions & Comments

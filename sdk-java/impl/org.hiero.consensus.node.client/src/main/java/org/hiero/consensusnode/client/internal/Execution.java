@@ -22,6 +22,7 @@ import org.hiero.consensusnode.client.RetryPolicy;
 import org.hiero.consensusnode.client.Submittable;
 import org.hiero.consensusnode.client.TransportFailure;
 import org.hiero.consensusnode.client.TransportFailureKind;
+import org.hiero.consensusnode.status.BasicTransactionStatus;
 import org.hiero.ledger.ConsensusNode;
 import org.jspecify.annotations.Nullable;
 
@@ -57,7 +58,7 @@ public final class Execution {
     /// @param outcome the outcome of the attempt
     /// @param value   the value of the request, present exactly when the outcome is `SUCCESS`
     /// @param <T> the type of the value
-    public record Answer<T>(HapiTransactionStatus status, AttemptOutcome outcome, @Nullable T value) {
+    public record Answer<T>(BasicTransactionStatus status, AttemptOutcome outcome, @Nullable T value) {
 
         /// Creates an answer.
         ///
@@ -77,7 +78,7 @@ public final class Execution {
         /// @param value           supplies the value when the precheck succeeded
         /// @param <T> the type of the value
         /// @return the answer
-        public static <T> Answer<T> precheck(final HapiTransactionStatus precheck, final boolean receiptOrRecord,
+        public static <T> Answer<T> precheck(final BasicTransactionStatus precheck, final boolean receiptOrRecord,
                                              final Supplier<T> value) {
             final AttemptOutcome outcome = Execution.outcome(precheck, receiptOrRecord);
             return new Answer<>(precheck, outcome, outcome == AttemptOutcome.SUCCESS ? value.get() : null);
@@ -172,12 +173,12 @@ public final class Execution {
     /// the cause is a [PrecheckException] with the status.
     private static AttemptsExhaustedException exhausted(final Attempt last) {
         final String result = switch (last.result()) {
-            case NodeAnswer answer -> "status " + ((HapiTransactionStatus) answer.status()).name();
+            case NodeAnswer answer -> "status " + ((BasicTransactionStatus) answer.status()).name();
             case TransportFailure failure -> failure.kind() + " (" + failure.message() + ")";
         };
         final @Nullable Throwable cause = last.result() instanceof NodeAnswer answer
                 && last.outcome() != AttemptOutcome.PENDING
-                ? new PrecheckException((HapiTransactionStatus) answer.status()) : null;
+                ? new PrecheckException((BasicTransactionStatus) answer.status()) : null;
         return new AttemptsExhaustedException("Gave up after " + last.number() + " attempt(s); the last one, to node "
                 + last.node().account() + ", ended " + last.outcome() + " with " + result, cause);
     }
@@ -187,7 +188,7 @@ public final class Execution {
     /// @param precheck        the precheck status
     /// @param receiptOrRecord whether the request asks for a receipt or a record
     /// @return the outcome
-    public static AttemptOutcome outcome(final HapiTransactionStatus precheck, final boolean receiptOrRecord) {
+    public static AttemptOutcome outcome(final BasicTransactionStatus precheck, final boolean receiptOrRecord) {
         return switch (precheck) {
             case OK -> AttemptOutcome.SUCCESS;
             case BUSY, PLATFORM_TRANSACTION_NOT_CREATED, PLATFORM_NOT_ACTIVE -> AttemptOutcome.NODE_BUSY;
@@ -202,8 +203,8 @@ public final class Execution {
     ///
     /// @param status the status of the receipt
     /// @return the outcome
-    public static AttemptOutcome receiptOutcome(final HapiTransactionStatus status) {
-        return status == HapiTransactionStatus.UNKNOWN || status == HapiTransactionStatus.OK
+    public static AttemptOutcome receiptOutcome(final BasicTransactionStatus status) {
+        return status == BasicTransactionStatus.UNKNOWN || status == BasicTransactionStatus.OK
                 ? AttemptOutcome.PENDING : AttemptOutcome.SUCCESS;
     }
 

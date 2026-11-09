@@ -22,6 +22,7 @@ import org.hiero.consensusnode.client.RetryContext;
 import org.hiero.consensusnode.client.RetryOnOtherNode;
 import org.hiero.consensusnode.client.RetryOnSameNode;
 import org.hiero.consensusnode.client.Submittable;
+import org.hiero.consensusnode.status.BasicTransactionStatus;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.ConsensusNode;
 import org.hiero.ledger.IpAddress;
@@ -43,7 +44,7 @@ class DefaultExecutionTest {
     }
 
     private static Attempt attempt(final int number, final ConsensusNode node, final AttemptOutcome outcome) {
-        return new Attempt(number, node, new NodeAnswer(HapiTransactionStatus.BUSY), outcome, Duration.ZERO);
+        return new Attempt(number, node, new NodeAnswer(BasicTransactionStatus.BUSY), outcome, Duration.ZERO);
     }
 
     private static RetryContext after(final int number, final AttemptOutcome outcome) {

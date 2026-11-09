@@ -300,8 +300,8 @@ git history (`3b5305d~1`, introduced in `3caad63 "Durchstich :)"`), and the Type
 `impl` implements the **whole API**: every transaction type (one `TransactionKind` per type in an area class such as
 `TokenKinds`, all sharing `Packing`; the admin client registers its types as `TransactionSupport` via the
 `ServiceLoader`), every query (`QueryKind` + `Querying`, with query payment), the mirror node REST client, the base
-utilities and the enterprise services. The specs have 441 spec tests (51 spec files, 122 of them check that an invalid
-value is rejected); **all 441 and all 3,513 contract tests pass** against `impl`, and `metalang check` reports that it
+utilities and the enterprise services. The specs have 464 spec tests (51 spec files, 125 of them check that an invalid
+value is rejected; the 5 receipt tests need an `ExchangeRate`, which no API creates, so 459 are generated); **all 459 and all 3,514 contract tests pass** against `impl`, and `metalang check` reports that it
 provides the API. What the specs cannot express is recorded in their `## Questions & Comments`. It has the same
 Maven coordinates as `generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The
 TCK binds 54 of its 64 methods (`tooling/tck/bindings`); `./mvnw -f impl verify -Ptck` (in `sdk-java`) builds the TCK server in the same reactor and runs it after
@@ -320,7 +320,8 @@ Comments` of the respective spec files and are its real output:
    by [ADR-0013](docs/adr/0013-untyped-receipts-for-the-receipt-query-by-id.md): `Response` holds the transaction
    type and the node, `queryReceipt(client)` takes the client, and `TransactionReceiptQuery` reads a receipt by id.
 3. `TransactionId.generateTransactionId` takes an `Address`, but `TransactionId` holds an `AccountId`.
-4. `BasicTransactionStatus` has no `SUCCESS`; the protocol value is 22.
+4. ~~`BasicTransactionStatus` has no `SUCCESS`; the protocol value is 22.~~ Resolved: `status.md` lists every value of
+   the protocol's `ResponseCodeEnum`.
 
 `ClientRuntime` (in `impl`) bridges (1) with a process-wide registry - a workaround, not a design.
 

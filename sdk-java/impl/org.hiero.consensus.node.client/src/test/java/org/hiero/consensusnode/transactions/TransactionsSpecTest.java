@@ -1,11 +1,15 @@
 package org.hiero.consensusnode.transactions;
 
 import static org.hiero.sdk.testing.Testing.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.math.BigInteger;
 import java.util.List;
 import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.NodeSignature;
+import org.hiero.consensusnode.transactions.accounts.AccountCreateReceipt;
+import org.hiero.consensusnode.transactions.accounts.AccountCreateTransaction;
 import org.hiero.consensusnode.transactions.utility.PrngReceipt;
 import org.hiero.consensusnode.transactions.utility.PrngTransaction;
 import org.hiero.keys.ByteImportEncoding;
@@ -13,6 +17,7 @@ import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
 import org.hiero.keys.PrivateKey;
 import org.hiero.ledger.AccountId;
+import org.hiero.ledger.TransactionId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -226,6 +231,46 @@ class TransactionsSpecTest {
         assertEquals(1L, length(transaction.signableBodies()));
         assertEquals(AccountId.fromString("0.0.3"), get(transaction.signableBodies(), 0L).node());
         assertEquals(1L, length(transaction.nodeSignatures()));
+    }
+
+    /// `consensusnode.transactions/a-response-is-created-from-a-transaction-id-and-a-transaction-type`
+    ///
+    /// Source: this spec (a Response is a plain value created from a transaction id and the type of the transaction, e.g.
+    /// to read the outcome of a scheduled transaction; nodeAccountId defaults to null: any node); ADR-0013.
+    @Test
+    @DisplayName("a response is created from a transaction id and a transaction type")
+    @Tag("testId:consensusnode.transactions/a-response-is-created-from-a-transaction-id-and-a-transaction-type")
+    void aResponseIsCreatedFromATransactionIdAndATransactionType() {
+        // given
+        final TransactionId id = TransactionId.fromString("0.0.1001@1554158542.000000000");
+        final AccountId node = AccountId.fromString("0.0.3");
+
+        // when
+        final Response<AccountCreateReceipt> anyNode = new Response<>(id, AccountCreateTransaction.class, null);
+        final Response<AccountCreateReceipt> oneNode = new Response<>(id, AccountCreateTransaction.class, node);
+
+        // then
+        assertEquals(id, anyNode.transactionId());
+        assertNull(anyNode.nodeAccountId());
+        assertEquals(node, oneNode.nodeAccountId());
+        assertEquals(anyNode.transactionType(), oneNode.transactionType());
+    }
+
+    /// `consensusnode.transactions/bytes-that-are-no-transaction-are-rejected`
+    ///
+    /// Source: this spec (fromBytes throws illegal-format for bytes that are no serialized transaction).
+    @Test
+    @DisplayName("bytes that are no transaction are rejected")
+    @Tag("testId:consensusnode.transactions/bytes-that-are-no-transaction-are-rejected")
+    void bytesThatAreNoTransactionAreRejected() {
+        // given
+        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).pack(defaultAccount(), List.of(AccountId.fromString("0.0.3")));
+        final byte[] complete = packed.toBytes();
+
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> PackedTransaction.fromBytes(hex("ff")));
+        assertThrows(IllegalArgumentException.class, () -> PackedTransaction.fromBytes(utf8("no transaction")));
+        assertThrows(IllegalArgumentException.class, () -> PackedTransaction.fromBytes(slice(complete, 0L, checked(integer(length(complete)).subtract(integer(10L)), "int64").longValueExact())));
     }
 
     private static Account defaultAccount() {

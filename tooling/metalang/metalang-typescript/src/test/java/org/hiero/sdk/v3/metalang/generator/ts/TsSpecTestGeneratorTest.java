@@ -43,6 +43,10 @@ class TsSpecTestGeneratorTest {
             Holder {
                 @@immutable shape: Shape
             }
+
+            Wrapper {
+                @@immutable holder: Holder
+            }
             """;
 
     private static final String INSTANCES = """
@@ -51,6 +55,7 @@ class TsSpecTestGeneratorTest {
             // labels of one letter
             values LABELS: list<string> = ["a", "b"]
             values HOLDERS: list<Holder> = [DEFAULT(Holder)]
+            instance Wrapper = Wrapper{holder: DEFAULT}
             """;
 
     private static final String TESTS = """
@@ -178,6 +183,14 @@ class TsSpecTestGeneratorTest {
                 assertEquals(expected: toDecimal(value: 2), actual: max(a: toDecimal(value: 1), b: toDecimal(value: 2)))
                 assertEquals(expected: 0.5, actual: toDouble(value: toDecimal(value: 0.5)))
             }
+            
+            test "a wrapper" {
+                assertNotNull(actual: DEFAULT(Wrapper))
+            }
+
+            test "another wrapper" {
+                assertNotNull(actual: DEFAULT(Wrapper).holder)
+            }
             """;
 
     @TempDir
@@ -262,6 +275,10 @@ class TsSpecTestGeneratorTest {
                 .contains("assertInstanceOf(Color, Color.RED);")
                 .contains("for (const label of LABELS()) {")
                 .contains("test.todo(\"not generated: `named test values without TypeScript form`")
+                // a default instance whose value fails leaves no helper behind that a later test would call
+                .contains("test.todo(\"not generated: `a wrapper`: no value of a.Holder\")")
+                .contains("test.todo(\"not generated: `another wrapper`: no value of a.Holder\")")
+                .doesNotContain("defaultWrapper()")
                 .contains("\nfunction defaultPoint(): Point {\n    return new Point({ x: 2, big: 18446744073709551615n,")
                 .contains("assertApprox(1.5, absDouble(half), 0.0);")
                 .contains("assertEquals(\"-1234\", text(-1234n));")

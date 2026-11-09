@@ -993,6 +993,35 @@ test "a value knows its type" {
     assertEquals(expected: AbiType.parse(text: "(bool,string)"),
             actual: AbiTuple{values: [AbiBool{value: true}, AbiString{value: "x"}]}.abiType())
 }
+
+// Source: the Solidity documentation, "Expressions and Control Structures", section "Error handling: Assert, Require,
+// Revert and Exceptions": a revert with a reason is the call data of Error(string) (selector 0x08c379a0), the example
+// "Not enough Ether provided."; a panic is Panic(uint256) (selector 0x4e487b71), code 0x11 for an arithmetic overflow.
+@@testId("the-revert-data-of-error-string-and-panic-uint256-is-decoded")
+test "the revert data of Error(string) and Panic(uint256) is decoded" {
+    // given
+    let error = AbiFunction.parse(signature: "Error(string)")
+    let panic = AbiFunction.parse(signature: "Panic(uint256)")
+    let revert = hex(text: "08c379a0"
+            + "0000000000000000000000000000000000000000000000000000000000000020"
+            + "000000000000000000000000000000000000000000000000000000000000001a"
+            + "4e6f7420656e6f7567682045746865722070726f76696465642e000000000000")
+    let overflow = hex(text: "4e487b71" + "0000000000000000000000000000000000000000000000000000000000000011")
+
+    // when
+    let reason = error.decodeCall(data: revert)
+    let code = panic.decodeCall(data: overflow)
+
+    // then
+    assertEquals(expected: hex(text: "08c379a0"), actual: error.selector())
+    assertEquals(expected: hex(text: "4e487b71"), actual: panic.selector())
+    assertEquals(expected: [AbiString{value: "Not enough Ether provided."}], actual: reason)
+    assertEquals(expected: [AbiUint{value: 17, bits: 256}], actual: code)
+
+    // when / then: revert data of the other one is rejected
+    @@expectThrows(illegal-format)
+    error.decodeCall(data: overflow)
+}
 ```
 
 ## Questions & Comments

@@ -16,6 +16,8 @@
     <file url="file://$PROJECT_DIR$/sdk-java/generated/org.hiero.mirror.node.client/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sdk-java/generated/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sdk-java/generated/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sdk-java/impl/coverage/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/sdk-java/impl/coverage/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sdk-java/impl/org.hiero.base/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sdk-java/impl/org.hiero.base/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/sdk-java/impl/org.hiero.consensus.node.admin.client/src/main/java" charset="UTF-8" />
@@ -55,5 +57,7 @@
     <file url="file://$PROJECT_DIR$/tooling/metalang/metalang-typescript/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tooling/metalang/src/main/resources" charset="UTF-8" />
+    <file url="file:///src/main/java" charset="UTF-8" />
+    <file url="file:///src/main/resources" charset="UTF-8" />
   </component>
 </project>

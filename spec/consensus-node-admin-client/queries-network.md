@@ -334,6 +334,27 @@ test "an address book keeps its nodes in order" {
     assertEquals(expected: node0, actual: book.nodes[0])
     assertEquals(expected: node1, actual: book.nodes[1])
 }
+
+// Source: this spec (NetworkVersionInfoQuery is a free query, NodeAddressBookQuery a paid one; a new query has no
+// payment limit and no execution settings of its own); the Java SDK (NetworkVersionInfoQuery and AddressBookQuery
+// have no attributes to set besides the ones of every query).
+@@testId("the-version-and-address-book-queries-start-without-settings-and-keep-a-payment-limit")
+test "the version and address book queries start without settings and keep a payment limit" {
+    // given
+    let limit: nativeToken.NativeToken<ANY, ANY> = DEFAULT(hedera.Hbar)
+
+    // when
+    let version = NetworkVersionInfoQuery{}
+    let addressBook = NodeAddressBookQuery{}
+    let limited = NodeAddressBookQuery{maxQueryPayment: limit}
+
+    // then
+    assertNull(actual: version.retryPolicy)
+    assertNull(actual: version.attemptTimeout)
+    assertNull(actual: addressBook.maxQueryPayment)
+    assertNull(actual: addressBook.retryPolicy)
+    assertEquals(expected: limit, actual: limited.maxQueryPayment)
+}
 ```
 
 ## Questions & Comments

@@ -5,7 +5,10 @@ import static org.hiero.sdk.testing.Testing.*;
 import java.util.List;
 import java.util.Map;
 import org.hiero.consensusnode.admin.nodes.ServiceEndpoint;
+import org.hiero.hedera.Hbar;
+import org.hiero.hedera.HbarUnit;
 import org.hiero.ledger.AccountId;
+import org.hiero.nativeToken.NativeToken;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -183,6 +186,31 @@ class QueriesNetworkSpecTest {
         assertEquals(node1, get(book.nodes(), 1L));
     }
 
+    /// `consensusnode.admin.network/the-version-and-address-book-queries-start-without-settings-and-keep-a-payment-limit`
+    ///
+    /// Source: this spec (NetworkVersionInfoQuery is a free query, NodeAddressBookQuery a paid one; a new query has no
+    /// payment limit and no execution settings of its own); the Java SDK (NetworkVersionInfoQuery and AddressBookQuery
+    /// have no attributes to set besides the ones of every query).
+    @Test
+    @DisplayName("the version and address book queries start without settings and keep a payment limit")
+    @Tag("testId:consensusnode.admin.network/the-version-and-address-book-queries-start-without-settings-and-keep-a-payment-limit")
+    void theVersionAndAddressBookQueriesStartWithoutSettingsAndKeepAPaymentLimit() {
+        // given
+        final NativeToken<?, ?> limit = defaultHbar();
+
+        // when
+        final NetworkVersionInfoQuery version = new NetworkVersionInfoQuery();
+        final NodeAddressBookQuery addressBook = new NodeAddressBookQuery();
+        final NodeAddressBookQuery limited = new NodeAddressBookQuery().setMaxQueryPayment(limit);
+
+        // then
+        assertNull(version.retryPolicy());
+        assertNull(version.attemptTimeout());
+        assertNull(addressBook.maxQueryPayment());
+        assertNull(addressBook.retryPolicy());
+        assertEquals(limit, limited.maxQueryPayment());
+    }
+
     private static NetworkVersionInfo defaultNetworkVersionInfo() {
         return new NetworkVersionInfo(defaultSemanticVersion(), new SemanticVersion(0, 49, 1, "", ""));
     }
@@ -193,5 +221,9 @@ class QueriesNetworkSpecTest {
 
     private static NodeAddress defaultNodeAddress() {
         return new NodeAddress(0L, new AccountId(0L, 0L, "", 3L, null, null), List.of(new ServiceEndpoint(null, "network-node1-svc", 50211)), "node1", new byte[] {(byte) 1, (byte) 2, (byte) 3}, new byte[] {(byte) 4, (byte) 5, (byte) 6}, new byte[] {(byte) 7, (byte) 8, (byte) 9});
+    }
+
+    private static Hbar defaultHbar() {
+        return new Hbar(1L, HbarUnit.HBAR);
     }
 }

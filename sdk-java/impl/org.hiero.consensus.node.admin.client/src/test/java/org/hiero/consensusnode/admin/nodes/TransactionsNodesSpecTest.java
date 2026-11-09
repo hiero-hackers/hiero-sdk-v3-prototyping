@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.List;
 import org.hiero.authority.Authority;
 import org.hiero.authority.PublicKeyAuthority;
+import org.hiero.consensusnode.client.Account;
+import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.keys.ByteImportEncoding;
 import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
@@ -344,6 +346,33 @@ class TransactionsNodesSpecTest {
         assertThrows(IllegalArgumentException.class, () -> new NodeCreateTransaction(defaultAccountId(), repeat("€", 34L), List.of(defaultServiceEndpoint()), List.of(NODE_DOMAIN_ENDPOINT()), GOSSIP_CA_CERTIFICATE(), GRPC_CERTIFICATE_HASH(), defaultAuthority(), false, null));
     }
 
+    /// `consensusnode.admin.nodes/node-transactions-survive-tobytes-and-frombytes`
+    ///
+    /// Source: the Java (NodeCreateTransactionTest.shouldBytes, NodeUpdateTransactionTest.shouldBytes,
+    /// NodeDeleteTransactionTest.shouldBytes), JavaScript, Go and Swift node transaction unit tests (to and from bytes).
+    @Test
+    @DisplayName("node transactions survive toBytes and fromBytes")
+    @Tag("testId:consensusnode.admin.nodes/node-transactions-survive-tobytes-and-frombytes")
+    void nodeTransactionsSurviveToBytesAndFromBytes() {
+        // given
+        final Account payer = defaultAccount();
+        final List<AccountId> nodes = List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"));
+        final NodeCreateTransaction create = new NodeCreateTransaction(defaultAccountId(), "consensus-node-7", List.of(defaultServiceEndpoint()), List.of(NODE_DOMAIN_ENDPOINT()), GOSSIP_CA_CERTIFICATE(), GRPC_CERTIFICATE_HASH(), defaultAuthority(), true, NODE_DOMAIN_ENDPOINT());
+        final NodeUpdateTransaction update = new NodeUpdateTransaction(7L, null, "consensus-node-7b", List.of(), List.of(defaultServiceEndpoint()), null, null, null, false, null);
+        final NodeDeleteTransaction delete = new NodeDeleteTransaction(7L);
+
+        // when
+        final PackedTransaction<NodeCreateReceipt, NodeCreateTransaction> packedCreate = create.pack(payer, nodes);
+        final PackedTransaction<NodeUpdateReceipt, NodeUpdateTransaction> packedUpdate = update.pack(payer, nodes);
+        final PackedTransaction<NodeDeleteReceipt, NodeDeleteTransaction> packedDelete = delete.pack(payer, nodes);
+
+        // then
+        assertEquals(packedCreate.toBytes(), PackedTransaction.fromBytes(packedCreate.toBytes()).toBytes());
+        assertEquals(packedUpdate.toBytes(), PackedTransaction.fromBytes(packedUpdate.toBytes()).toBytes());
+        assertEquals(packedDelete.toBytes(), PackedTransaction.fromBytes(packedDelete.toBytes()).toBytes());
+        assertEquals(packedCreate.signableBodies(), PackedTransaction.fromBytes(packedCreate.toBytes()).signableBodies());
+    }
+
     private static ServiceEndpoint defaultServiceEndpoint() {
         return new ServiceEndpoint(new IpAddress(new byte[] {(byte) 10, (byte) 0, (byte) 0, (byte) 7}), null, 50211);
     }
@@ -362,5 +391,9 @@ class TransactionsNodesSpecTest {
 
     private static PrivateKey defaultPrivateKey() {
         return KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c");
+    }
+
+    private static Account defaultAccount() {
+        return new Account(defaultAccountId(), defaultPrivateKey());
     }
 }

@@ -20,6 +20,7 @@ import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.NodeSignature;
 import org.hiero.consensusnode.client.TransactionSigner;
+import org.hiero.consensusnode.status.BasicTransactionStatus;
 import org.hiero.consensusnode.transactions.NodeBody;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Receipt;
@@ -133,7 +134,7 @@ public final class DefaultPackedTransaction<R extends Receipt, T extends Transac
         return runtime.execute(this, candidates, (node, timeout) -> {
             final TransactionResponse response = runtime.call(node, type.grpcMethod(), transaction(body(node)),
                     timeout);
-            return Execution.Answer.precheck(HapiTransactionStatus.ofCode(
+            return Execution.Answer.precheck(Statuses.ofCode(
                     response.getNodeTransactionPrecheckCodeValue()), false,
                     () -> new Response<>(transactionId(), type.type(), node.account()));
         });

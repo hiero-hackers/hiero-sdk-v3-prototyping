@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.hiero.authority.Authority;
+import org.hiero.consensusnode.status.BasicTransactionStatus;
 import org.hiero.consensusnode.transactions.accounts.AccountAllowanceApproveReceipt;
 import org.hiero.consensusnode.transactions.accounts.AccountAllowanceApproveTransaction;
 import org.hiero.consensusnode.transactions.accounts.AccountAllowanceDeleteReceipt;
@@ -62,7 +63,7 @@ public final class AccountKinds {
             new TransactionKind<>(AccountCreateTransaction.class, "proto.CryptoService", "createAccount",
                     TransactionBody.DataCase.CRYPTOCREATEACCOUNT, AccountKinds::accountCreate,
                     (id, status, rate, nextRate, receipt) -> new AccountCreateReceipt(id, status, rate, nextRate,
-                            status == HapiTransactionStatus.SUCCESS ? Protobuf.fromProto(receipt.getAccountID())
+                            status == BasicTransactionStatus.SUCCESS ? Protobuf.fromProto(receipt.getAccountID())
                                     : new AccountId(0L, 0L, "", 0L, null, null)));
 
     /// `AccountUpdateTransaction`: `CryptoService.updateAccount`.

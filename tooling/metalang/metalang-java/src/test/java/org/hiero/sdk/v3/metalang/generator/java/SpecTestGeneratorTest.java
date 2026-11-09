@@ -41,6 +41,10 @@ class SpecTestGeneratorTest {
             Holder {
                 @@immutable shape: Shape
             }
+
+            Wrapper {
+                @@immutable holder: Holder
+            }
             """;
 
     private static final String INSTANCES = """
@@ -49,6 +53,7 @@ class SpecTestGeneratorTest {
             // labels of one letter
             values LABELS: list<string> = ["a", "b"]
             values HOLDERS: list<Holder> = [DEFAULT(Holder)]
+            instance Wrapper = Wrapper{holder: DEFAULT}
             """;
 
     private static final String TESTS = """
@@ -128,6 +133,14 @@ class SpecTestGeneratorTest {
             test "a holder" {
                 let h = DEFAULT(Holder)
                 assertNotNull(actual: h)
+            }
+
+            test "a wrapper" {
+                assertNotNull(actual: DEFAULT(Wrapper))
+            }
+
+            test "another wrapper" {
+                assertNotNull(actual: DEFAULT(Wrapper).holder)
             }
             """;
 
@@ -243,7 +256,10 @@ class SpecTestGeneratorTest {
                         + "    private static List<String> LABELS() {\n        return List.of(\"a\", \"b\");\n    }\n")
                 .contains("for (final String label : LABELS()) {")
                 .doesNotContain("HOLDERS =")
-                .doesNotContain("void aHolder()");
+                .doesNotContain("void aHolder()")
+                // a default instance whose value fails leaves no helper behind that a later test would call
+                .contains("/// - `a wrapper`: no value of a.Holder\n/// - `another wrapper`: no value of a.Holder\n")
+                .doesNotContain("defaultWrapper()");
         assertThat(TestGenerator.untested(files)).contains("ASpecTest: `a holder`: no value of a.Holder");
     }
 
@@ -428,6 +444,12 @@ class SpecTestGeneratorTest {
                 }
             }
 
+            test "a computed index of a list" {
+                for x in [1, 2] {
+                    assertTrue(condition: [5, 6][x - 1] > 4)
+                }
+            }
+
             test "a type literal is passed as class" {
                 assertEquals(expected: 1, actual: Numbers.count(kind: Circle))
             }
@@ -495,6 +517,8 @@ class SpecTestGeneratorTest {
                 .contains("        // when\n        // and then\n")
                 .contains("n.echoHuge(integer(n.i()).subtract(integer(1)))")
                 .contains("n.echoLong(checked(integer(n.i()).subtract(integer(1)), \"int64\").longValueExact())")
+                // a computed index of a list is narrowed to the long of get(list, index)
+                .contains("get(List.of(5L, 6L), checked(integer(x).subtract(integer(1L)), \"int64\").longValueExact())")
                 .contains("    private static Box<Circle> defaultBoxCircle() {\n")
                 .contains("    private static Box<String> defaultBox() {\n");
         final GeneratedJava.Compilation modules = GeneratedJava.compile(files, temp);

@@ -39,6 +39,10 @@ import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
  */
 final class SpecTestGenerator {
 
+    /** The type of the index of a list. */
+    private static final Type INT64 = new Type.BasicType(BuiltinType.lookup("int64").orElseThrow(), List.of());
+
+
     /** The class with the built-in functions and assertions. */
     static final String TESTING = "org.hiero.sdk.testing.Testing";
 
@@ -355,8 +359,10 @@ final class SpecTestGenerator {
                 case InstanceExpression.IsType isType -> (isType.negated() ? "!(" : "") + operand(isType.operand())
                         + " instanceof " + JavaTypes.type(isType.checked(), true, imports)
                         + (isType.negated() ? ")" : "");
+                // the index of a list is a long: an index computed exactly (n - 1) is checked and narrowed to it
                 case InstanceExpression.Index index -> "get(" + expression(index.target()) + ", "
-                        + expression(index.index()) + ")";
+                        + (isList(index.target().type()) ? converted(index.index(), INT64) : expression(index.index()))
+                        + ")";
                 case InstanceExpression.MapValue map -> map(map);
                 case InstanceExpression.Call call when call.namespace().equals(Builtins.NAMESPACE) -> builtin(call);
                 default -> samples.expression(expression).orElseThrow(() -> new Unsupported(
@@ -389,7 +395,14 @@ final class SpecTestGenerator {
                     .collect(Collectors.joining());
             if (!helpers.containsKey(name)) {
                 helpers.put(name, ""); // reserved: the value may use other default instances
-                final Optional<String> value = samples.value(type, List.of(), 0);
+                final Optional<String> value;
+                try {
+                    value = samples.value(type, List.of(), 0);
+                } catch (final Unsupported e) {
+                    // a default instance it needs has no value: no helper, or a later test would call a missing one
+                    helpers.remove(name);
+                    throw e;
+                }
                 if (value.isEmpty()) {
                     helpers.remove(name);
                     throw new Unsupported("no value of " + type.text());
@@ -540,6 +553,10 @@ final class SpecTestGenerator {
                         : ".longValueExact()");
                 default -> checked;
             };
+        }
+
+        private static boolean isList(final Type type) {
+            return type instanceof Type.BasicType basic && basic.builtin().name().equals("list");
         }
 
         private String map(final InstanceExpression.MapValue map) {

@@ -2,6 +2,7 @@ package org.hiero.consensusnode.client.internal;
 
 import com.hederahashgraph.api.proto.java.TransactionReceipt;
 import com.hederahashgraph.api.proto.java.TransactionRecord;
+import org.hiero.consensusnode.status.BasicTransactionStatus;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Record;
 import org.hiero.consensusnode.transactions.spi.ReceiptHeader;
@@ -21,7 +22,7 @@ public final class Records {
     /// @param receipt       the receipt message
     /// @return the header
     public static ReceiptHeader header(final TransactionId transactionId, final TransactionReceipt receipt) {
-        return new ReceiptHeader(transactionId, HapiTransactionStatus.ofCode(receipt.getStatusValue()),
+        return new ReceiptHeader(transactionId, Statuses.ofCode(receipt.getStatusValue()),
                 Protobuf.currentRate(receipt.getExchangeRate()), Protobuf.nextRate(receipt.getExchangeRate()));
     }
 

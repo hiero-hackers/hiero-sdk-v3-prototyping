@@ -4,6 +4,14 @@ import static org.hiero.sdk.testing.Testing.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZonedDateTime;
+import java.util.List;
+import org.hiero.consensusnode.client.Account;
+import org.hiero.consensusnode.transactions.PackedTransaction;
+import org.hiero.keys.ByteImportEncoding;
+import org.hiero.keys.KeyAlgorithm;
+import org.hiero.keys.KeysFactory;
+import org.hiero.keys.PrivateKey;
+import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;
 import org.junit.jupiter.api.DisplayName;
@@ -141,11 +149,59 @@ class TransactionsSystemSpecTest {
         assertThrows(IllegalArgumentException.class, () -> new SystemUndeleteTransaction(null, null));
     }
 
+    /// `consensusnode.admin.system/system-delete-and-undelete-survive-tobytes-and-frombytes`
+    ///
+    /// Source: the Java (SystemDeleteTransactionTest.shouldBytesFile, shouldBytesContract,
+    /// SystemUndeleteTransactionTest.shouldBytesFile, shouldBytesContract), JavaScript, Go and Swift unit tests (to and from
+    /// bytes). The expiration time is the one of the Java test (Instant.ofEpochSecond(1554158542) = 2019-04-01T22:42:22Z).
+    @Test
+    @DisplayName("system delete and undelete survive toBytes and fromBytes")
+    @Tag("testId:consensusnode.admin.system/system-delete-and-undelete-survive-tobytes-and-frombytes")
+    void systemDeleteAndUndeleteSurviveToBytesAndFromBytes() {
+        // given
+        final Account payer = defaultAccount();
+        final List<AccountId> nodes = List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"));
+        final SystemDeleteTransaction deleteFile = new SystemDeleteTransaction(defaultAddress(), null, toZonedDateTime("2019-04-01T22:42:22Z"));
+        final SystemDeleteTransaction deleteContract = new SystemDeleteTransaction(null, defaultContractId(), null);
+        final SystemUndeleteTransaction undeleteFile = new SystemUndeleteTransaction(defaultAddress(), null);
+        final SystemUndeleteTransaction undeleteContract = new SystemUndeleteTransaction(null, defaultContractId());
+        for (final SystemDeleteTransaction transaction : List.of(deleteFile, deleteContract)) {
+            // when
+            final PackedTransaction<SystemDeleteReceipt, SystemDeleteTransaction> packed = transaction.pack(payer, nodes);
+            final PackedTransaction<?, ?> restored = PackedTransaction.fromBytes(packed.toBytes());
+
+            // then
+            assertEquals(packed.toBytes(), restored.toBytes());
+            assertEquals(packed.signableBodies(), restored.signableBodies());
+        }
+        for (final SystemUndeleteTransaction undelete : List.of(undeleteFile, undeleteContract)) {
+            // when
+            final PackedTransaction<SystemUndeleteReceipt, SystemUndeleteTransaction> packedUndelete = undelete.pack(payer, nodes);
+            final PackedTransaction<?, ?> restoredUndelete = PackedTransaction.fromBytes(packedUndelete.toBytes());
+
+            // then
+            assertEquals(packedUndelete.toBytes(), restoredUndelete.toBytes());
+            assertEquals(packedUndelete.signableBodies(), restoredUndelete.signableBodies());
+        }
+    }
+
     private static Address defaultAddress() {
         return new Address(0L, 0L, "", 1001L);
     }
 
     private static ContractId defaultContractId() {
         return new ContractId(0L, 0L, "", 1001L, null);
+    }
+
+    private static Account defaultAccount() {
+        return new Account(defaultAccountId(), defaultPrivateKey());
+    }
+
+    private static AccountId defaultAccountId() {
+        return new AccountId(0L, 0L, "", 1001L, null, null);
+    }
+
+    private static PrivateKey defaultPrivateKey() {
+        return KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c");
     }
 }
