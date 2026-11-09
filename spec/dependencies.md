@@ -6,11 +6,15 @@ imports one or more types from namespace `B`".
 
 The namespaces group into the five `spec/` folders / layers:
 
-- **base** — `common`, `grpc`, `proto`, `nativeToken`, `keys`, `ledger`, `ledger.config`, `authority`, `hedera`
-- **consensus-node-client** — `consensusnode.client`, `consensusnode.transactions[.accounts|.spi]`, `consensusnode.queries[.accounts|.files]`, `consensusnode.proto[.account]`
+- **base** — `common`, `grpc`, `http`, `proto`, `evm`, `nativeToken`, `keys`, `ledger`, `ledger.config`, `authority`,
+  `token`, `hedera`, `solo`
+- **consensus-node-client** — `consensusnode.client`, `consensusnode.status`,
+  `consensusnode.transactions[.accounts|.batch|.contracts|.files|.schedule|.spi|.tokens|.topics|.utility]`,
+  `consensusnode.queries[.accounts|.files|.receipts|.schedule|.tokens|.topics]`, `consensusnode.proto[.account]`
 - **consensus-node-admin-client** — `consensusnode.admin.{freeze|system|nodes|network}`
-- **mirror-node-client** — `mirrornode` and its per-domain sub-namespaces
-- **enterprise** — `enterprise.service[.common|.account|.contract|.file|.token|.nft|.topic]`
+- **mirror-node-client** — `mirrornode` and its sub-namespaces (`account`, `block`, `common`, `contract`, `http`,
+  `network`, `nft`, `schedule`, `token`, `topic`, `transaction`)
+- **enterprise** — `enterprise.service[.account|.contract|.file|.token|.nft|.topic]`
 
 ## Layer overview
 
@@ -20,7 +24,7 @@ flowchart LR
     consensus["consensus-node-client"]
     admin["consensus-node-admin-client<br/>(privileged council ops)"]
     mirror["mirror-node-client"]
-    base["base<br/>(common, ledger, keys, nativeToken, …)"]
+    base["base<br/>(common, ledger, keys, authority, nativeToken, evm, …)"]
 
     enterprise --> consensus
     enterprise --> mirror
@@ -37,53 +41,318 @@ freeze / system-delete / DAB-node transactions that normal applications do not c
 `enterprise` builds on top of `consensus-node-client`, `mirror-node-client`, and `base`.
 Everything ultimately rests on `base`.
 
-## Namespace dependency graph
+## Namespace dependency graphs
+
+One graph per layer; `consensus-node-client` is split into client & transactions and queries. Each graph shows its
+namespaces and every edge that starts in them; other namespaces appear only as far as they are imported, in their own
+box and the color of their layer. Together the six graphs contain every edge exactly once. `∅` marks namespaces that are still empty stubs (no types defined yet).
+
+### base
 
 ```mermaid
 flowchart LR
     subgraph base["base"]
         common["common"]
         grpc["grpc"]
+        http["http"]
         proto["proto ∅"]
+        evm["evm"]
         nativeToken["nativeToken"]
         keys["keys"]
         ledger["ledger"]
         ledger_config["ledger.config"]
         authority["authority"]
+        token["token"]
         hedera["hedera"]
+        solo["solo"]
     end
 
-    subgraph consensus["consensus-node-client"]
+    authority --> keys
+    authority --> ledger
+    hedera --> ledger_config
+    hedera --> nativeToken
+    ledger --> evm
+    ledger --> nativeToken
+    ledger_config --> ledger
+    solo --> ledger_config
+
+    classDef base fill:#e8f0fe,stroke:#4285f4,color:#000;
+
+    class common,grpc,http,proto,evm,nativeToken,keys,ledger,ledger_config,authority,token,hedera,solo base;
+```
+
+### consensus-node-client: client & transactions
+
+```mermaid
+flowchart LR
+    subgraph consensus["consensus-node-client: client & transactions"]
         cn_client["consensusnode.client"]
+        cn_status["consensusnode.status"]
         cn_tx["consensusnode.transactions"]
         cn_tx_accounts["…transactions.accounts"]
+        cn_tx_batch["…transactions.batch"]
+        cn_tx_contracts["…transactions.contracts"]
+        cn_tx_files["…transactions.files"]
+        cn_tx_schedule["…transactions.schedule"]
         cn_tx_spi["…transactions.spi"]
-        cn_queries["consensusnode.queries"]
-        cn_queries_accounts["…queries.accounts"]
-        cn_queries_files["…queries.files"]
+        cn_tx_tokens["…transactions.tokens"]
+        cn_tx_topics["…transactions.topics"]
+        cn_tx_utility["…transactions.utility"]
         cn_proto["consensusnode.proto"]
         cn_proto_account["…proto.account ∅"]
     end
+    subgraph ext_base["base"]
+        grpc["grpc"]
+        evm["evm"]
+        nativeToken["nativeToken"]
+        keys["keys"]
+        ledger["ledger"]
+        ledger_config["ledger.config"]
+        authority["authority"]
+        token["token"]
+    end
 
+    cn_client --> cn_status
+    cn_client --> keys
+    cn_client --> ledger
+    cn_client --> ledger_config
+    cn_client --> nativeToken
+    cn_tx --> authority
+    cn_tx --> cn_client
+    cn_tx --> cn_status
+    cn_tx --> evm
+    cn_tx --> ledger
+    cn_tx --> nativeToken
+    cn_tx_accounts --> authority
+    cn_tx_accounts --> cn_tx
+    cn_tx_accounts --> ledger
+    cn_tx_accounts --> nativeToken
+    cn_tx_batch --> cn_tx
+    cn_tx_contracts --> authority
+    cn_tx_contracts --> cn_tx
+    cn_tx_contracts --> ledger
+    cn_tx_contracts --> nativeToken
+    cn_tx_files --> authority
+    cn_tx_files --> cn_tx
+    cn_tx_files --> ledger
+    cn_tx_schedule --> authority
+    cn_tx_schedule --> cn_tx
+    cn_tx_schedule --> ledger
+    cn_tx_spi --> cn_proto
+    cn_tx_spi --> cn_status
+    cn_tx_spi --> cn_tx
+    cn_tx_spi --> grpc
+    cn_tx_spi --> ledger
+    cn_tx_spi --> nativeToken
+    cn_tx_tokens --> authority
+    cn_tx_tokens --> cn_tx
+    cn_tx_tokens --> cn_tx_accounts
+    cn_tx_tokens --> ledger
+    cn_tx_tokens --> token
+    cn_tx_topics --> authority
+    cn_tx_topics --> cn_tx
+    cn_tx_topics --> ledger
+    cn_tx_utility --> cn_tx
+
+    classDef consensus fill:#e6f4ea,stroke:#34a853,color:#000;
+    classDef base fill:#e8f0fe,stroke:#4285f4,color:#000;
+
+    class cn_client,cn_status,cn_tx,cn_tx_accounts,cn_tx_batch,cn_tx_contracts,cn_tx_files,cn_tx_schedule,cn_tx_spi,cn_tx_tokens,cn_tx_topics,cn_tx_utility,cn_proto,cn_proto_account consensus;
+    class keys,ledger,ledger_config,nativeToken,authority,evm,grpc,token base;
+```
+
+### consensus-node-client: queries
+
+```mermaid
+flowchart LR
+    subgraph consensus["consensus-node-client: queries"]
+        cn_queries["consensusnode.queries"]
+        cn_queries_accounts["…queries.accounts"]
+        cn_queries_files["…queries.files"]
+        cn_queries_receipts["…queries.receipts"]
+        cn_queries_schedule["…queries.schedule"]
+        cn_queries_tokens["…queries.tokens"]
+        cn_queries_topics["…queries.topics"]
+    end
+    subgraph ext_base["base"]
+        evm["evm"]
+        nativeToken["nativeToken"]
+        keys["keys"]
+        ledger["ledger"]
+        authority["authority"]
+        token["token"]
+    end
+    subgraph ext_consensus["consensus-node-client: client & transactions"]
+        cn_client["consensusnode.client"]
+        cn_tx["consensusnode.transactions"]
+    end
+
+    cn_queries --> cn_client
+    cn_queries --> ledger
+    cn_queries --> nativeToken
+    cn_queries_accounts --> authority
+    cn_queries_accounts --> cn_queries
+    cn_queries_accounts --> cn_tx
+    cn_queries_accounts --> evm
+    cn_queries_accounts --> ledger
+    cn_queries_accounts --> nativeToken
+    cn_queries_files --> authority
+    cn_queries_files --> cn_queries
+    cn_queries_files --> ledger
+    cn_queries_receipts --> cn_queries
+    cn_queries_receipts --> cn_tx
+    cn_queries_receipts --> ledger
+    cn_queries_schedule --> authority
+    cn_queries_schedule --> cn_queries
+    cn_queries_schedule --> cn_tx
+    cn_queries_schedule --> keys
+    cn_queries_schedule --> ledger
+    cn_queries_tokens --> authority
+    cn_queries_tokens --> cn_queries
+    cn_queries_tokens --> ledger
+    cn_queries_tokens --> token
+    cn_queries_topics --> authority
+    cn_queries_topics --> cn_queries
+    cn_queries_topics --> ledger
+
+    classDef consensus fill:#e6f4ea,stroke:#34a853,color:#000;
+    classDef base fill:#e8f0fe,stroke:#4285f4,color:#000;
+
+    class cn_queries,cn_queries_accounts,cn_queries_files,cn_queries_receipts,cn_queries_schedule,cn_queries_tokens,cn_queries_topics,cn_client,cn_tx consensus;
+    class ledger,nativeToken,authority,evm,keys,token base;
+```
+
+### consensus-node-admin-client
+
+```mermaid
+flowchart LR
     subgraph admin["consensus-node-admin-client"]
         cn_admin_freeze["consensusnode.admin.freeze"]
         cn_admin_system["consensusnode.admin.system"]
         cn_admin_nodes["consensusnode.admin.nodes"]
         cn_admin_network["consensusnode.admin.network"]
     end
+    subgraph ext_base["base"]
+        ledger["ledger"]
+        authority["authority"]
+    end
+    subgraph ext_consensus["consensus-node-client"]
+        cn_tx["consensusnode.transactions"]
+        cn_queries["consensusnode.queries"]
+    end
 
+    cn_admin_freeze --> cn_tx
+    cn_admin_freeze --> ledger
+    cn_admin_network --> cn_admin_nodes
+    cn_admin_network --> cn_queries
+    cn_admin_network --> ledger
+    cn_admin_nodes --> authority
+    cn_admin_nodes --> cn_tx
+    cn_admin_nodes --> ledger
+    cn_admin_system --> cn_tx
+    cn_admin_system --> ledger
+
+    classDef admin fill:#d2e3fc,stroke:#1967d2,color:#000;
+    classDef consensus fill:#e6f4ea,stroke:#34a853,color:#000;
+    classDef base fill:#e8f0fe,stroke:#4285f4,color:#000;
+
+    class cn_admin_freeze,cn_admin_system,cn_admin_nodes,cn_admin_network admin;
+    class cn_tx,cn_queries consensus;
+    class ledger,authority base;
+```
+
+### mirror-node-client
+
+```mermaid
+flowchart LR
     subgraph mirror["mirror-node-client"]
         mn["mirrornode"]
         mn_account["mirrornode.account"]
+        mn_block["mirrornode.block"]
         mn_common["mirrornode.common"]
         mn_contract["mirrornode.contract"]
+        mn_http["mirrornode.http"]
         mn_network["mirrornode.network"]
         mn_nft["mirrornode.nft"]
+        mn_schedule["mirrornode.schedule"]
         mn_token["mirrornode.token"]
         mn_topic["mirrornode.topic"]
         mn_transaction["mirrornode.transaction"]
     end
+    subgraph ext_base["base"]
+        common["common"]
+        http["http"]
+        evm["evm"]
+        ledger["ledger"]
+        authority["authority"]
+        token["token"]
+    end
 
+    mn --> ledger
+    mn --> mn_account
+    mn --> mn_block
+    mn --> mn_contract
+    mn --> mn_http
+    mn --> mn_network
+    mn --> mn_nft
+    mn --> mn_schedule
+    mn --> mn_token
+    mn --> mn_topic
+    mn --> mn_transaction
+    mn_account --> authority
+    mn_account --> common
+    mn_account --> evm
+    mn_account --> ledger
+    mn_account --> mn_common
+    mn_account --> mn_transaction
+    mn_block --> common
+    mn_block --> ledger
+    mn_block --> mn_common
+    mn_common --> ledger
+    mn_contract --> authority
+    mn_contract --> common
+    mn_contract --> evm
+    mn_contract --> ledger
+    mn_contract --> mn_common
+    mn_http --> http
+    mn_http --> ledger
+    mn_network --> authority
+    mn_network --> common
+    mn_network --> ledger
+    mn_network --> mn_common
+    mn_nft --> common
+    mn_nft --> ledger
+    mn_nft --> mn_common
+    mn_nft --> mn_transaction
+    mn_schedule --> authority
+    mn_schedule --> common
+    mn_schedule --> ledger
+    mn_schedule --> mn_common
+    mn_token --> authority
+    mn_token --> common
+    mn_token --> ledger
+    mn_token --> mn_common
+    mn_token --> token
+    mn_topic --> authority
+    mn_topic --> common
+    mn_topic --> ledger
+    mn_topic --> mn_common
+    mn_transaction --> authority
+    mn_transaction --> common
+    mn_transaction --> ledger
+    mn_transaction --> mn_common
+
+    classDef mirror fill:#fef7e0,stroke:#f9ab00,color:#000;
+    classDef base fill:#e8f0fe,stroke:#4285f4,color:#000;
+
+    class mn,mn_account,mn_block,mn_common,mn_contract,mn_http,mn_network,mn_nft,mn_schedule,mn_token,mn_topic,mn_transaction mirror;
+    class ledger,authority,common,evm,http,token base;
+```
+
+### enterprise
+
+```mermaid
+flowchart LR
     subgraph enterprise["enterprise"]
         ent_service["enterprise.service"]
         ent_account["…service.account"]
@@ -93,142 +362,92 @@ flowchart LR
         ent_nft["…service.nft"]
         ent_topic["…service.topic"]
     end
+    subgraph ext_base["base"]
+        common["common"]
+        evm["evm"]
+        nativeToken["nativeToken"]
+        ledger["ledger"]
+        ledger_config["ledger.config"]
+        authority["authority"]
+        token["token"]
+    end
+    subgraph ext_consensus["consensus-node-client"]
+        cn_client["consensusnode.client"]
+    end
+    subgraph ext_mirror["mirror-node-client"]
+        mn_nft["mirrornode.nft"]
+        mn_token["mirrornode.token"]
+    end
 
-    %% base-internal
-    hedera --> ledger_config
-    hedera --> nativeToken
-    ledger_config --> ledger
-    ledger --> nativeToken
-    authority --> keys
-    authority --> ledger
-
-    %% consensus-node-client
-    cn_client --> ledger
-    cn_client --> ledger_config
-    cn_client --> keys
-    cn_client --> nativeToken
-    cn_tx --> ledger
-    cn_tx --> nativeToken
-    cn_tx --> cn_client
-    cn_tx_accounts --> ledger
-    cn_tx_accounts --> keys
-    cn_tx_accounts --> nativeToken
-    cn_tx_accounts --> cn_tx
-    cn_tx_spi --> cn_tx
-    cn_tx_spi --> grpc
-    cn_tx_spi --> cn_proto
-
-    %% consensus-node-client (queries)
-    cn_queries --> ledger
-    cn_queries --> cn_client
-    cn_queries --> nativeToken
-    cn_queries_accounts --> ledger
-    cn_queries_accounts --> keys
-    cn_queries_accounts --> nativeToken
-    cn_queries_accounts --> cn_queries
-    cn_queries_files --> ledger
-    cn_queries_files --> keys
-    cn_queries_files --> cn_queries
-
-    %% consensus-node-admin-client
-    cn_admin_freeze --> ledger
-    cn_admin_freeze --> cn_tx
-    cn_admin_system --> ledger
-    cn_admin_system --> cn_tx
-    cn_admin_nodes --> ledger
-    cn_admin_nodes --> keys
-    cn_admin_nodes --> cn_tx
-    cn_admin_network --> ledger
-    cn_admin_network --> cn_queries
-    cn_admin_network --> cn_admin_nodes
-
-    %% mirror-node-client
-    mn --> ledger
-    mn --> mn_account
-    mn --> mn_contract
-    mn --> mn_network
-    mn --> mn_nft
-    mn --> mn_token
-    mn --> mn_topic
-    mn --> mn_transaction
-    mn_account --> ledger
-    mn_account --> keys
-    mn_account --> common
-    mn_common --> ledger
-    mn_contract --> ledger
-    mn_contract --> keys
-    mn_contract --> common
-    mn_network --> ledger
-    mn_network --> common
-    mn_nft --> ledger
-    mn_nft --> common
-    mn_token --> ledger
-    mn_token --> mn_common
-    mn_token --> common
-    mn_topic --> ledger
-    mn_topic --> keys
-    mn_topic --> mn_common
-    mn_topic --> common
-    mn_transaction --> ledger
-    mn_transaction --> mn_common
-    mn_transaction --> common
-
-    %% enterprise
-    ent_service --> ledger_config
     ent_service --> cn_client
+    ent_service --> ledger_config
+    ent_account --> authority
     ent_account --> common
-    ent_account --> ledger
-    ent_account --> keys
-    ent_account --> nativeToken
     ent_account --> ent_service
+    ent_account --> ledger
+    ent_account --> nativeToken
+    ent_contract --> authority
     ent_contract --> common
-    ent_contract --> ledger
     ent_contract --> ent_service
-    ent_file --> ledger
+    ent_contract --> evm
+    ent_contract --> ledger
+    ent_contract --> nativeToken
+    ent_file --> authority
     ent_file --> ent_service
-    ent_token --> common
-    ent_token --> ledger
-    ent_token --> keys
-    ent_token --> mn_token
-    ent_token --> ent_service
+    ent_file --> ledger
+    ent_nft --> authority
     ent_nft --> common
-    ent_nft --> ledger
-    ent_nft --> keys
-    ent_nft --> mn_nft
     ent_nft --> ent_service
+    ent_nft --> ledger
+    ent_nft --> mn_nft
+    ent_nft --> token
+    ent_token --> authority
+    ent_token --> common
+    ent_token --> ent_service
+    ent_token --> ledger
+    ent_token --> mn_token
+    ent_token --> token
+    ent_topic --> authority
     ent_topic --> common
-    ent_topic --> ledger
-    ent_topic --> keys
     ent_topic --> ent_service
+    ent_topic --> ledger
 
-    classDef base fill:#e8f0fe,stroke:#4285f4,color:#000;
-    classDef consensus fill:#e6f4ea,stroke:#34a853,color:#000;
-    classDef admin fill:#d2e3fc,stroke:#1967d2,color:#000;
-    classDef mirror fill:#fef7e0,stroke:#f9ab00,color:#000;
     classDef enterprise fill:#fce8e6,stroke:#ea4335,color:#000;
+    classDef consensus fill:#e6f4ea,stroke:#34a853,color:#000;
+    classDef base fill:#e8f0fe,stroke:#4285f4,color:#000;
+    classDef mirror fill:#fef7e0,stroke:#f9ab00,color:#000;
 
-    class common,grpc,proto,nativeToken,keys,ledger,ledger_config,authority,hedera base;
-    class cn_client,cn_tx,cn_tx_accounts,cn_tx_spi,cn_queries,cn_queries_accounts,cn_queries_files,cn_proto,cn_proto_account consensus;
-    class cn_admin_freeze,cn_admin_system,cn_admin_nodes,cn_admin_network admin;
-    class mn,mn_account,mn_common,mn_contract,mn_network,mn_nft,mn_token,mn_topic,mn_transaction mirror;
     class ent_service,ent_account,ent_contract,ent_file,ent_token,ent_nft,ent_topic enterprise;
+    class cn_client consensus;
+    class ledger_config,authority,common,ledger,nativeToken,evm,token base;
+    class mn_nft,mn_token mirror;
 ```
-
-`∅` marks namespaces that are still empty stubs (no types defined yet).
 
 ## Observations
 
-- **Foundation:** `nativeToken` and `ledger` are the most depended-upon base namespaces; `common` (the `Page<$$T>`
+- **Foundation:** `ledger` (40 incoming edges) and `authority` (26) are by far the most depended-upon namespaces —
+  every layer imports `ledger`, and every namespace that carries an admin/submit/supply/... key imports `Authority`.
+  `keys` itself is imported only by `authority`, `consensusnode.client` (signing) and
+  `consensusnode.queries.schedule`; everything else reaches keys through `Authority`. `common` (the `Page<$$T>`
   type) is required by most mirror-node namespaces and by every enterprise service that exposes paginated queries
   (`account`, `topic`, `nft`, `token`, `contract`).
+- **Base-internal leaves:** `evm`, `nativeToken`, `keys`, `common`, `token`, `grpc` and `http` import nothing.
+  `evm` is deliberately dependency-free (ADR-0015); `ledger` imports it for `EvmAddress`.
 - **No cycles:** the dependency graph is acyclic. (The earlier `keys ↔ keys.io` cycle was removed by merging the
   `keys.io` sub-namespace into `keys`.)
 - **Clean layer separation:** `mirror-node-client` has no dependency on `consensus-node-client` (or vice versa), and
   `base` depends on nothing outside `base`. `enterprise` is the only layer that combines `consensus-node-client`,
-  `mirror-node-client`, and `base` — the mirror-node edge was introduced so that the service layer can reuse the
-  domain types (`Nft`, `NftMetadata`, `Token`, `TokenInfo`, `Balance`) for its query methods instead of redeclaring
-  them. (`enterprise.service.contract` keeps a thin local `Contract` type and therefore does not depend on
-  `mirrornode.contract`.)
+  `mirror-node-client`, and `base` — the mirror-node edges (`…service.nft --> mirrornode.nft`,
+  `…service.token --> mirrornode.token`) let the service layer reuse the domain types (`Nft`, `NftMetadata`, `Token`,
+  `TokenInfo`, `Balance`) for its query methods instead of redeclaring them. (`enterprise.service.contract` keeps a
+  thin local `Contract` type and therefore does not depend on `mirrornode.contract`; it imports the ABI types from
+  `evm` directly.)
+- **`consensusnode.transactions` is the hub of the client:** every `…transactions.*` sub-namespace, the admin
+  transactions and the queries that return receipts, records or scheduled transactions (`…queries.accounts`,
+  `…queries.receipts`, `…queries.schedule`) depend on it. The only edge between two sibling sub-namespaces is
+  `…transactions.tokens --> …transactions.accounts` (token airdrops reuse the transfer types).
+- **Status codes:** `consensusnode.status` is imported by `consensusnode.client`, `consensusnode.transactions` and
+  `…transactions.spi`.
 - **Admin layer is opt-in and one-way:** `consensus-node-admin-client` depends on `consensus-node-client` (it
   reuses `Transaction<$$Receipt, $$Self>`, `Receipt`, and the signing / packing lifecycle) but is not depended on by it —
   the edge is strictly `admin --> consensus-node-client`. Applications that never call freeze / system-delete / DAB
@@ -239,10 +458,13 @@ flowchart LR
   (`…service.account`, `…service.contract`, `…service.file`, `…service.token`, `…service.nft`, `…service.topic`)
   depends on. As a result the concrete services no longer import `ledger.config` or `consensusnode.client`
   directly — both reach them through `enterprise.service`.
+- **Transport namespaces have one consumer each:** `grpc` is used only by `consensusnode.transactions.spi`, `http`
+  only by `mirrornode.http`.
 - **Empty stubs (no edges):** `proto` and `consensusnode.proto.account` define no types yet. `consensusnode.proto`
-  is used only by `consensusnode.transactions.spi`.
-- **Hedera is base-resident:** `hedera` (HBAR + Hedera network settings) currently lives in the base layer and depends
-  on `ledger.config` and `nativeToken` — see the open question in
-  [`native-token.md`](base/native-token.md) about whether Hedera-specific namespaces should move out of `base`.
+  (the four protobuf messages of the SPI, ADR-0009) is used only by `consensusnode.transactions.spi`.
+- **Network settings are base-resident:** `hedera` (HBAR + Hedera network settings) and `solo` (the local Solo
+  network) live in the base layer and depend on `ledger.config` (`hedera` also on `nativeToken`) — see the open
+  question in [`native-token.md`](base/native-token.md) about whether Hedera-specific namespaces should move out of
+  `base`.
 
 > The graphs are generated from the `requires` declarations; regenerate after changing imports.
