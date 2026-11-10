@@ -127,7 +127,7 @@ spec/                           # The actual V3 public-API specifications, writt
                                 #   folder is one module/package/crate of the generated code
   base/                         # Foundational namespaces shared by everything
     common.md (common)          #   Page<$$T> and other shared types
-    ledger.md (ledger)          #   Ledger, Address, AccountId, TransactionId, ConsensusNode, MirrorNode
+    ledger.md (ledger)          #   Ledger, Address, AccountId, TransactionId, ConsensusNode, MirrorNode, BlockNode
     evm.md (evm)                #   EVM-generic types: EvmAddress and the contract ABI (AbiType, AbiValue,
                                 #   AbiFunction, AbiEvent); imports no other namespace (ADR-0015)
     ledger-config.md (ledger.config)  # network settings
@@ -151,6 +151,9 @@ spec/                           # The actual V3 public-API specifications, writt
                                 #   transactions, bundles, ledger configuration and endpoint manifest queries; the
                                 #   pinned protobuf has no CLPR yet, so sdk-java/impl does not implement it
   mirror-node-client/           # Querying the Hiero Mirror Node REST API (mirrornode.*), paginated Page<$$T>
+  block-node-client/            # Reading a block node over gRPC (blocknode.*): status, single blocks and block
+                                #   subscriptions; blocks stay opaque protobuf bytes (RawBlock); BlockNode itself is in
+                                #   ledger; sdk-java/impl does not implement it yet
   enterprise/                   # High-level "service" layer on top of the raw SDK for app/framework integration
                                 #   (enterprise.service.*: account, contract, file, nft, token, topic)
 

@@ -6,9 +6,9 @@ Foundational types that identify a Hiero network and the entities that live on i
 throughout the SDK wherever a network, a node, an account, a contract or another ledger entity is
 referenced.
 
-`Network` identifies a specific network instance and the unit of its native token. `ConsensusNode`
-and `MirrorNode` describe the nodes of a network that a client talks to; `IpAddress` holds the
-address of a consensus node.
+`Network` identifies a specific network instance and the unit of its native token. `ConsensusNode`,
+`MirrorNode` and `BlockNode` describe the nodes of a network that a client talks to; `IpAddress` holds
+the address of a consensus node.
 
 Every entity on a Hiero ledger lives in a `(shard, realm)` space and is selected within that space by
 a third part — usually a number. `BaseAddress` is the common base of all entity identifiers and
@@ -311,6 +311,14 @@ MirrorNode {
     @@immutable @@urlPattern restBaseUrl: string
 }
 
+// Represents a block node on a network, reached over gRPC.
+@@finalType
+BlockNode {
+    @@immutable @@minLength(1) host: string   // the host name or IP address of the block node
+    @@immutable port: uint16                  // the gRPC port of the block node
+    @@immutable requiresTls: bool             // whether the block node is reached over TLS
+}
+
 // The zero address (0.0.0). HAPI uses this value as a clear-sentinel on update
 // transactions for Address-typed fields: writing ZERO_ADDRESS to e.g. a generic-Address
 // update slot removes the previously configured value (distinct from leaving the field
@@ -361,6 +369,9 @@ instance ConsensusNode = ConsensusNode{ip: DEFAULT, port: 35211,
 
 // The mirror node of a local Solo network.
 instance MirrorNode = MirrorNode{restBaseUrl: "http://127.0.0.1:38081"}
+
+// A block node of a local network on the default gRPC port of the block node.
+instance BlockNode = BlockNode{host: "127.0.0.1", port: 40840, requiresTls: false}
 
 // HIP-15, section "Specification": the inputs that must be rejected (all but "0.0.123-abcde", which is well formed and
 // fails only the checksum validation), checked against its regex.

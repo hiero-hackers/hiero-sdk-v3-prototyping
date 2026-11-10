@@ -74,7 +74,9 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | [`tooling/protobuf/`](tooling/protobuf) | The protobuf definitions of consensus, block and mirror node, vendored at pinned versions — one source for every generator |
 | `spec/base/` | Foundational namespaces: `ledger`, `keys`, `hbar`, `common`, `proto`, `grpc` |
 | `spec/consensus-node-client/` | Low-level client: build, sign, and execute transactions (incl. an SPI for custom services) |
+| `spec/consensus-node-clpr/` | Cross Ledger Protocol (HIP-1535): Channel and Connector transactions, ledger configuration queries |
 | `spec/mirror-node-client/` | Querying the Hiero Mirror Node REST API |
+| `spec/block-node-client/` | Reading a block node: status, single blocks and block subscriptions (blocks as opaque bytes) |
 | `spec/enterprise/` | High-level service layer for easy use and framework integration |
 
 ## Writing specifications

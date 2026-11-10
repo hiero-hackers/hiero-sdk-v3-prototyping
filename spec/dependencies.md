@@ -4,7 +4,7 @@ This document gives an overview of how the V3 API modules (namespaces) depend on
 from the `requires {Type} from <namespace>` declarations in the spec files — an edge `A --> B` means "namespace `A`
 imports one or more types from namespace `B`".
 
-The namespaces group into the six `spec/` folders / layers:
+The namespaces group into the seven `spec/` folders / layers:
 
 - **base** — `common`, `grpc`, `http`, `proto`, `evm`, `nativeToken`, `keys`, `ledger`, `ledger.config`, `authority`,
   `token`, `hedera`, `solo`
@@ -13,6 +13,7 @@ The namespaces group into the six `spec/` folders / layers:
   `consensusnode.queries[.accounts|.files|.receipts|.schedule|.tokens|.topics]`, `consensusnode.proto[.account]`
 - **consensus-node-admin-client** — `consensusnode.admin.{freeze|system|nodes|network}`
 - **consensus-node-clpr** — `consensusnode.clpr[.transactions|.queries]` (Cross Ledger Protocol, HIP-1535)
+- **block-node-client** — `blocknode`, `blocknode.status`
 - **mirror-node-client** — `mirrornode` and its sub-namespaces (`account`, `block`, `common`, `contract`, `http`,
   `network`, `nft`, `schedule`, `token`, `topic`, `transaction`)
 - **enterprise** — `enterprise.service[.account|.contract|.file|.token|.nft|.topic]`
@@ -26,6 +27,7 @@ flowchart LR
     admin["consensus-node-admin-client<br/>(privileged council ops)"]
     clpr["consensus-node-clpr<br/>(Cross Ledger Protocol)"]
     mirror["mirror-node-client"]
+    block["block-node-client"]
     base["base<br/>(common, ledger, keys, authority, nativeToken, evm, …)"]
 
     enterprise --> consensus
@@ -37,9 +39,10 @@ flowchart LR
     clpr --> consensus
     clpr --> base
     mirror --> base
+    block --> base
 ```
 
-`mirror-node-client` and `consensus-node-client` are independent of each other;
+`mirror-node-client`, `block-node-client` and `consensus-node-client` are independent of each other;
 `consensus-node-admin-client` is opt-in on top of `consensus-node-client` (privileged
 freeze / system-delete / DAB-node transactions that normal applications do not consume);
 `consensus-node-clpr` is opt-in on top of `consensus-node-client` in the same way (the CLPR service is disabled on a
@@ -51,7 +54,7 @@ Everything ultimately rests on `base`.
 
 One graph per layer; `consensus-node-client` is split into client & transactions and queries. Each graph shows its
 namespaces and every edge that starts in them; other namespaces appear only as far as they are imported, in their own
-box and the color of their layer. Together the seven graphs contain every edge exactly once. `∅` marks namespaces that are still empty stubs (no types defined yet).
+box and the color of their layer. Together the eight graphs contain every edge exactly once. `∅` marks namespaces that are still empty stubs (no types defined yet).
 
 ### base
 
@@ -307,6 +310,28 @@ flowchart LR
     class ledger,keys,authority,nativeToken base;
 ```
 
+### block-node-client
+
+```mermaid
+flowchart LR
+    subgraph block["block-node-client"]
+        bn["blocknode"]
+        bn_status["blocknode.status"]
+    end
+    subgraph ext_base["base"]
+        ledger["ledger"]
+    end
+
+    bn --> bn_status
+    bn --> ledger
+
+    classDef block fill:#e0f7fa,stroke:#00838f,color:#000;
+    classDef base fill:#e8f0fe,stroke:#4285f4,color:#000;
+
+    class bn,bn_status block;
+    class ledger base;
+```
+
 ### mirror-node-client
 
 ```mermaid
@@ -471,7 +496,7 @@ flowchart LR
 
 ## Observations
 
-- **Foundation:** `ledger` (41 incoming edges) and `authority` (27) are by far the most depended-upon namespaces —
+- **Foundation:** `ledger` (42 incoming edges) and `authority` (27) are by far the most depended-upon namespaces —
   every layer imports `ledger`, and every namespace that carries an admin/submit/supply/... key imports `Authority`.
   `keys` itself is imported only by `authority`, `consensusnode.client` (signing),
   `consensusnode.queries.schedule` and `consensusnode.clpr.transactions` (ownership proofs); everything else reaches
@@ -482,8 +507,8 @@ flowchart LR
   `evm` is deliberately dependency-free (ADR-0015); `ledger` imports it for `EvmAddress`.
 - **No cycles:** the dependency graph is acyclic. (The earlier `keys ↔ keys.io` cycle was removed by merging the
   `keys.io` sub-namespace into `keys`.)
-- **Clean layer separation:** `mirror-node-client` has no dependency on `consensus-node-client` (or vice versa), and
-  `base` depends on nothing outside `base`. `enterprise` is the only layer that combines `consensus-node-client`,
+- **Clean layer separation:** `mirror-node-client` has no dependency on `consensus-node-client` (or vice versa),
+  `block-node-client` depends on neither, and `base` depends on nothing outside `base`. `enterprise` is the only layer that combines `consensus-node-client`,
   `mirror-node-client`, and `base` — the mirror-node edges (`…service.nft --> mirrornode.nft`,
   `…service.token --> mirrornode.token`) let the service layer reuse the domain types (`Nft`, `NftMetadata`, `Token`,
   `TokenInfo`, `Balance`) for its query methods instead of redeclaring them. (`enterprise.service.contract` keeps a
@@ -505,6 +530,9 @@ flowchart LR
   queries, status) and on `base`, and nothing depends on it. `consensusnode.clpr` holds what its transactions and
   queries share (`ClprThrottles`, `ClprTransactionStatus`). The mirror node queries of HIP-1535 are not specified yet;
   they would go to `mirror-node-client`, not to this module.
+- **The block node client is the smallest layer:** `blocknode` imports only `BlockNode` from `ledger` (declared there
+  beside `ConsensusNode` and `MirrorNode`) and the status types of `blocknode.status`, which imports nothing. Blocks are
+  returned as their protobuf encoding, so the layer has no dependency on the consensus node's block stream types.
 - **Session as the shared root of `enterprise`:** `enterprise.service` defines the `Session` (network settings,
   operator account, transaction signer, read-your-writes high-water-mark) that every concrete service
   (`…service.account`, `…service.contract`, `…service.file`, `…service.token`, `…service.nft`, `…service.topic`)
