@@ -152,8 +152,8 @@ spec/                           # The actual V3 public-API specifications, writt
                                 #   pinned protobuf has no CLPR yet, so sdk-java/impl does not implement it
   mirror-node-client/           # Querying the Hiero Mirror Node REST API (mirrornode.*), paginated Page<$$T>
   block-node-client/            # Reading a block node over gRPC (blocknode.*): status, single blocks and block
-                                #   subscriptions; blocks stay opaque protobuf bytes (RawBlock); BlockNode itself is in
-                                #   ledger; sdk-java/impl does not implement it yet
+                                #   subscriptions; a Block is its items as kind + protobuf bytes, only header and
+                                #   footer are typed; BlockNode is in ledger; sdk-java/impl does not implement it yet
   enterprise/                   # High-level "service" layer on top of the raw SDK for app/framework integration
                                 #   (enterprise.service.*: account, contract, file, nft, token, topic)
 

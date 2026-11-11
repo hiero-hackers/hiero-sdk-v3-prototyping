@@ -531,8 +531,9 @@ flowchart LR
   queries share (`ClprThrottles`, `ClprTransactionStatus`). The mirror node queries of HIP-1535 are not specified yet;
   they would go to `mirror-node-client`, not to this module.
 - **The block node client is the smallest layer:** `blocknode` imports only `BlockNode` from `ledger` (declared there
-  beside `ConsensusNode` and `MirrorNode`) and the status types of `blocknode.status`, which imports nothing. Blocks are
-  returned as their protobuf encoding, so the layer has no dependency on the consensus node's block stream types.
+  beside `ConsensusNode` and `MirrorNode`) and the status types of `blocknode.status`, which imports nothing. A block is
+  returned as its items (kind and protobuf bytes) with a typed header and footer, so the layer has no dependency on the
+  consensus node's block stream types.
 - **Session as the shared root of `enterprise`:** `enterprise.service` defines the `Session` (network settings,
   operator account, transaction signer, read-your-writes high-water-mark) that every concrete service
   (`…service.account`, `…service.contract`, `…service.file`, `…service.token`, `…service.nft`, `…service.topic`)

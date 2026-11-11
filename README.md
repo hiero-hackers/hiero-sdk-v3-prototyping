@@ -76,7 +76,7 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | `spec/consensus-node-client/` | Low-level client: build, sign, and execute transactions (incl. an SPI for custom services) |
 | `spec/consensus-node-clpr/` | Cross Ledger Protocol (HIP-1535): Channel and Connector transactions, ledger configuration queries |
 | `spec/mirror-node-client/` | Querying the Hiero Mirror Node REST API |
-| `spec/block-node-client/` | Reading a block node: status, single blocks and block subscriptions (blocks as opaque bytes) |
+| `spec/block-node-client/` | Reading a block node: status, single blocks and block subscriptions (items as kind + bytes, typed header and footer) |
 | `spec/enterprise/` | High-level service layer for easy use and framework integration |
 
 ## Writing specifications
