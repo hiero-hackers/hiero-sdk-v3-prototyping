@@ -356,7 +356,7 @@ test "a file delete transaction keeps its file and survives toBytes and fromByte
 
 - **`FileCreate` does not set `shard` / `realm`.** They are inherited from the
   client's configured network. Once persistent shard / realm
-  (HIP-1299, section 5.2 in `docs/missing-features.md`) is added to the client, no per-transaction
+  (HIP-1299, section 6.2 in `docs/missing-features.md`) is added to the client, no per-transaction
   shard / realm fields are needed here either.
 
 - **No `autoRenewPeriod` field.** Unlike accounts, files in HAPI do not currently carry an

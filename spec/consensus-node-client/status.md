@@ -881,6 +881,7 @@ enum BasicTransactionStatus(code: int32) extends TransactionStatus {
 // Source: ResponseCodeEnum of the HAPI (response_code.proto).
 @@testId("the-basic-transaction-statuses-have-the-codes-of-the-protocol")
 test "the basic transaction statuses have the codes of the protocol" {
+    // when / then
     assertEquals(expected: 0, actual: BasicTransactionStatus.OK.code)
     assertEquals(expected: 1, actual: BasicTransactionStatus.INVALID_TRANSACTION.code)
     assertEquals(expected: 2, actual: BasicTransactionStatus.PAYER_ACCOUNT_NOT_FOUND.code)
@@ -892,6 +893,7 @@ test "the basic transaction statuses have the codes of the protocol" {
 // client.md names, and the status of a successful transaction.
 @@testId("the-statuses-of-the-default-execution-have-the-codes-of-the-protocol")
 test "the statuses of the default execution have the codes of the protocol" {
+    // when / then
     assertEquals(expected: 22, actual: BasicTransactionStatus.SUCCESS.code)
     assertEquals(expected: 3, actual: BasicTransactionStatus.INVALID_NODE_ACCOUNT.code)
     assertEquals(expected: 11, actual: BasicTransactionStatus.DUPLICATE_TRANSACTION.code)

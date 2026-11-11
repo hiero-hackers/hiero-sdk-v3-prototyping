@@ -196,16 +196,43 @@ test "throttles with a limit of zero are rejected" {
 }
 
 // Source: HAPI response_code.proto of consensus node commit 76ba2903 (the CLPR values and their numbers); the SDK
-// proposal for HIP-1535 (Response-code coverage: name and number are preserved).
+// proposal for HIP-1535 (Response-code coverage: name and number of every value are preserved). CLPR_EMPTY_BUNDLE (569)
+// is deprecated and therefore not asserted.
 @@testId("clpr-statuses-carry-the-codes-of-the-protocol")
 @@hip("1535")
 test "CLPR statuses carry the codes of the protocol" {
-    // then
+    // when / then
     assertEquals(expected: 537, actual: ClprTransactionStatus.CLPR_NOT_ENABLED.code)
+    assertEquals(expected: 538, actual: ClprTransactionStatus.INVALID_CLPR_CONFIGURATION.code)
+    assertEquals(expected: 539, actual: ClprTransactionStatus.CLPR_CHAIN_ID_IMMUTABLE.code)
+    assertEquals(expected: 540, actual: ClprTransactionStatus.CLPR_TOO_MANY_SEED_ENDPOINTS.code)
+    assertEquals(expected: 541, actual: ClprTransactionStatus.CLPR_INVALID_SEED_ENDPOINT.code)
+    assertEquals(expected: 542, actual: ClprTransactionStatus.CLPR_CHANNEL_ALREADY_EXISTS.code)
+    assertEquals(expected: 543, actual: ClprTransactionStatus.CLPR_INVALID_SIGNATURE.code)
+    assertEquals(expected: 544, actual: ClprTransactionStatus.CLPR_INVALID_VERIFIER_CONTRACT.code)
+    assertEquals(expected: 545, actual: ClprTransactionStatus.CLPR_VERIFIER_CONFIG_FAILED.code)
+    assertEquals(expected: 546, actual: ClprTransactionStatus.CLPR_COMMITMENT_MISMATCH.code)
+    assertEquals(expected: 547, actual: ClprTransactionStatus.CLPR_CHANNEL_NOT_FOUND.code)
+    assertEquals(expected: 548, actual: ClprTransactionStatus.CLPR_INVALID_CHANNEL_STATUS.code)
     assertEquals(expected: 549, actual: ClprTransactionStatus.CLPR_MESSAGE_NOT_FOUND.code)
     assertEquals(expected: 551, actual: ClprTransactionStatus.CLPR_INVALID_ENDPOINT_SIGNATURE.code)
+    assertEquals(expected: 552, actual: ClprTransactionStatus.CLPR_BUNDLE_VERIFICATION_FAILED.code)
+    assertEquals(expected: 553, actual: ClprTransactionStatus.CLPR_RUNNING_HASH_MISMATCH.code)
+    assertEquals(expected: 554, actual: ClprTransactionStatus.CLPR_QUEUE_FULL.code)
+    assertEquals(expected: 555, actual: ClprTransactionStatus.CLPR_CONNECTOR_NOT_FOUND.code)
+    assertEquals(expected: 556, actual: ClprTransactionStatus.CLPR_CONNECTOR_ALREADY_EXISTS.code)
+    assertEquals(expected: 557, actual: ClprTransactionStatus.CLPR_CONNECTOR_UNAUTHORIZED.code)
+    assertEquals(expected: 558, actual: ClprTransactionStatus.CLPR_INVALID_CONNECTOR_ADDRESS.code)
+    assertEquals(expected: 559, actual: ClprTransactionStatus.CLPR_INVALID_CONNECTOR_CONTRACT.code)
+    assertEquals(expected: 560, actual: ClprTransactionStatus.CLPR_INSUFFICIENT_STAKE.code)
+    assertEquals(expected: 561, actual: ClprTransactionStatus.CLPR_PAYLOAD_TOO_LARGE.code)
     assertEquals(expected: 562, actual: ClprTransactionStatus.CLPR_AUTHORIZATION_FAILED.code)
     assertEquals(expected: 564, actual: ClprTransactionStatus.CLPR_QUEUE_QUOTA_EXCEEDED.code)
+    assertEquals(expected: 565, actual: ClprTransactionStatus.CLPR_INSUFFICIENT_CONNECTOR_BALANCE.code)
+    assertEquals(expected: 566, actual: ClprTransactionStatus.CLPR_INTERNAL_STATE_CORRUPTION.code)
+    assertEquals(expected: 567, actual: ClprTransactionStatus.CLPR_CONNECTOR_HAS_IN_FLIGHT_MESSAGES.code)
+    assertEquals(expected: 568, actual: ClprTransactionStatus.CLPR_BUNDLE_DECODE_FAILED.code)
+    assertEquals(expected: 570, actual: ClprTransactionStatus.CLPR_RATE_LIMITED.code)
     assertEquals(expected: 571, actual: ClprTransactionStatus.CLPR_NO_PROGRESS.code)
 }
 ```

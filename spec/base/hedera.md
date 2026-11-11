@@ -88,7 +88,7 @@ and their factors are those of this spec, which match the HBAR denominations of 
 @@testId("every-unit-has-its-symbol-and-its-number-of-tinybars")
 test "every unit has its symbol and its number of tinybars" {
     for unit in keys(value: TINYBARS_PER_UNIT) {
-        // then
+        // when / then
         assertEquals(expected: TINYBARS_PER_UNIT[unit], actual: unit.baseUnitFactor, message: unit.symbol)
         assertEquals(expected: SYMBOLS[unit], actual: unit.symbol)
     }
@@ -173,7 +173,7 @@ test "the largest amounts that fit into int64 tinybars convert exactly" {
 // Source: this spec (an Hbar is its amount and its unit).
 @@testId("an-amount-keeps-its-amount-and-its-unit")
 test "an amount keeps its amount and its unit" {
-    // given
+    // when
     let hbar = Hbar{amount: 42, unit: HbarUnit.KILOBAR}
 
     // then
@@ -189,11 +189,13 @@ test "amounts of the same number of tinybars are equal whatever their units" {
         let one = Hbar{amount: 1, unit: unit}
         let inTinybars = Hbar{amount: TINYBARS_PER_UNIT[unit], unit: HbarUnit.TINYBAR}
 
-        // then
+        // when / then
         assertEquals(expected: inTinybars, actual: one, message: unit.symbol)
         assertEquals(expected: inTinybars.hashCode(), actual: one.hashCode(), message: unit.symbol)
         assertNotEquals(unexpected: Hbar{amount: TINYBARS_PER_UNIT[unit] + 1, unit: HbarUnit.TINYBAR}, actual: one)
     }
+
+    // when / then: units other than tinybars
     assertEquals(expected: Hbar{amount: 1_000, unit: HbarUnit.HBAR}, actual: Hbar{amount: 1, unit: HbarUnit.KILOBAR})
     assertNotEquals(unexpected: Hbar{amount: -1, unit: HbarUnit.HBAR}, actual: DEFAULT(Hbar))
 }
@@ -205,7 +207,7 @@ test "amounts beyond int64 tinybars are compared exactly" {
     // given
     let gigabars = Hbar{amount: 100, unit: HbarUnit.GIGABAR}
 
-    // then
+    // when / then
     assertEquals(expected: Hbar{amount: 100_000, unit: HbarUnit.MEGABAR}, actual: gigabars)
     assertEquals(expected: Hbar{amount: 100_000, unit: HbarUnit.MEGABAR}.hashCode(), actual: gigabars.hashCode())
     assertNotEquals(unexpected: Hbar{amount: 100_001, unit: HbarUnit.MEGABAR}, actual: gigabars)

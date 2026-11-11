@@ -551,6 +551,47 @@ test "an update ledger configuration transaction keeps the throttles" {
     // then
     assertEquals(expected: throttles, actual: transaction.throttles)
 }
+
+// Source: this spec (a packed transaction survives toBytes and fromBytes, as every transaction of the SDK); the SDK
+// proposal for HIP-1535 (Test Plan 24: a decoded completion transaction keeps its proof without a private key when it is
+// re-serialized unchanged).
+@@testId("every-clpr-transaction-survives-tobytes-and-frombytes")
+@@hip("1535")
+test "every CLPR transaction survives toBytes and fromBytes" {
+    // given
+    let payer = DEFAULT(consensusnode.client.Account)
+    let nodes = [AccountId.fromString(value: "0.0.5005"), AccountId.fromString(value: "0.0.5006")]
+    let channelProof = ClprChannelOwnershipProof.create(channelId: CHANNEL_ID, privateKey: ED25519_KEY)
+    let connectorProof = ClprConnectorOwnershipProof.create(channelId: CHANNEL_ID, salt: SALT, privateKey: ECDSA_KEY)
+    let stake: nativeToken.NativeToken<ANY, ANY> = DEFAULT(hedera.Hbar)
+    let transactions: list<Transaction<ANY, ANY>> = [
+            ClprRegisterChannelTransaction{ownershipCommitment: ClprRegisterChannelTransaction.computeOwnershipCommitment(
+                    channelId: CHANNEL_ID, publicKey: ED25519_KEY.createPublicKey())},
+            ClprCompleteChannelTransaction{ownershipProof: channelProof,
+                    verifierContract: ContractId.fromString(value: "0.0.366"),
+                    configProof: utf8(text: "config proof"), endpointManifestProof: utf8(text: "manifest proof")},
+            ClprCloseChannelTransaction{channelId: CHANNEL_ID},
+            ClprSubmitBundleTransaction{channelId: CHANNEL_ID, bundlePayload: utf8(text: "bundle")},
+            ClprRegisterConnectorTransaction{commitment: connectorProof.connectorId},
+            ClprCompleteConnectorTransaction{ownershipProof: connectorProof,
+                    connectorContract: ContractId.fromString(value: "0.0.5007"), adminAuthority: DEFAULT(Authority),
+                    lockedStake: stake},
+            ClprDeregisterConnectorTransaction{channelId: CHANNEL_ID, connectorId: connectorProof.connectorId,
+                    stakeRecipient: DEFAULT(AccountId)},
+            ClprUpdateLedgerConfigurationTransaction{throttles: DEFAULT(consensusnode.clpr.ClprThrottles)}]
+
+    for transaction in transactions {
+        // given
+        let packed = transaction.pack(payer: payer, nodes: nodes)
+
+        // when
+        let restored = consensusnode.transactions.PackedTransaction.fromBytes(bytes: packed.toBytes())
+
+        // then
+        assertEquals(expected: packed.toBytes(), actual: restored.toBytes())
+        assertEquals(expected: packed.signableBodies(), actual: restored.signableBodies())
+    }
+}
 ```
 
 ## Questions & Comments

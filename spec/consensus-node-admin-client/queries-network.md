@@ -34,8 +34,8 @@ canonical way to read the address book is via `FileGetContents` on file `0.0.102
 shards/realms), which is a paid `FileService` query. `NodeAddressBookQuery` is a typed convenience that hides the
 file mechanism but **not** the cost: the underlying file read is still billed by the
 network, so the query honestly extends `PaidQuery` with full cost-discovery behaviour. A
-caller that wants a free node list today uses the mirror node (`GET /network/nodes` —
-tracked in [`missing-features.md`](../../docs/missing-features.md) §4.2) instead.
+caller that wants a free node list today uses the mirror node (`GET /network/nodes`,
+`NetworkRepository` in [`mirror-node-network.md`](../mirror-node-client/mirror-node-network.md)) instead.
 
 ### Reusing `ServiceEndpoint` from `consensusnode.admin.nodes`
 

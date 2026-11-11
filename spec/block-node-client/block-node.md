@@ -231,6 +231,7 @@ test "a block node client talks to the block node it was created for" {
 // Source: this spec (the host of a block node must not be empty).
 @@testId("a-block-node-without-a-host-is-rejected")
 test "a block node without a host is rejected" {
+    // when / then
     @@expectThrows(invalid-argument-error)
     BlockNode{host: "", port: 40840, requiresTls: false}
 }
@@ -238,6 +239,7 @@ test "a block node without a host is rejected" {
 // Source: block_item.proto of the consensus node (the field numbers of the `item` oneof of `BlockItem`).
 @@testId("block-item-kinds-carry-the-field-numbers-of-the-block-stream")
 test "block item kinds carry the field numbers of the block stream" {
+    // when / then
     assertEquals(expected: 1, actual: BasicBlockItemKind.BLOCK_HEADER.code)
     assertEquals(expected: 4, actual: BasicBlockItemKind.SIGNED_TRANSACTION.code)
     assertEquals(expected: 7, actual: BasicBlockItemKind.STATE_CHANGES.code)
@@ -287,6 +289,7 @@ test "a block keeps its header, footer and items" {
 // Source: this spec (a block has at least its header item).
 @@testId("a-block-without-items-is-rejected")
 test "a block without items is rejected" {
+    // when / then
     @@expectThrows(invalid-argument-error)
     Block{header: DEFAULT(BlockHeader), footer: DEFAULT(BlockFooter), items: []}
 }

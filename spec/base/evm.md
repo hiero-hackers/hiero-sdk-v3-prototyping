@@ -622,6 +622,49 @@ test "a value with bits its type does not have is rejected when decoded" {
     boolResult.decodeResult(data: hex(text: "0000000000000000000000000000000000000000000000000000000000000002"))
 }
 
+// Source: the Solidity documentation, "Contract ABI Specification", section "Examples" (the arguments of baz and sam
+// without their selector are the encoding of the tuples (uint32,bool) and (bytes,bool,uint256[])).
+@@testId("a-tuple-type-decodes-the-static-and-dynamic-tuples-of-the-abi-specification")
+test "a tuple type decodes the static and dynamic tuples of the ABI specification" {
+    // given
+    let bazArguments = AbiTupleType{components: [AbiUintType{bits: 32}, AbiBoolType{}]}
+    let bazType: AbiType = bazArguments
+    let samArguments = AbiTupleType{components: [AbiBytesType{}, AbiBoolType{},
+            AbiArrayType{elementType: AbiUintType{bits: 256}, length: null}]}
+    let numbers = AbiArray{arrayType: AbiArrayType{elementType: AbiUintType{bits: 256}, length: null},
+            values: [AbiUint{value: 1, bits: 256}, AbiUint{value: 2, bits: 256}, AbiUint{value: 3, bits: 256}]}
+
+    // when
+    let baz = bazArguments.decode(data: hex(text: "0000000000000000000000000000000000000000000000000000000000000045"
+            + "0000000000000000000000000000000000000000000000000000000000000001"))
+    let sam = samArguments.decode(data: hex(text: "0000000000000000000000000000000000000000000000000000000000000060"
+            + "0000000000000000000000000000000000000000000000000000000000000001"
+            + "00000000000000000000000000000000000000000000000000000000000000a0"
+            + "0000000000000000000000000000000000000000000000000000000000000004"
+            + "6461766500000000000000000000000000000000000000000000000000000000"
+            + "0000000000000000000000000000000000000000000000000000000000000003"
+            + "0000000000000000000000000000000000000000000000000000000000000001"
+            + "0000000000000000000000000000000000000000000000000000000000000002"
+            + "0000000000000000000000000000000000000000000000000000000000000003"))
+
+    // then
+    assertEquals(expected: AbiTuple{values: [AbiUint{value: 69, bits: 32}, AbiBool{value: true}]}, actual: baz)
+    assertEquals(expected: AbiTuple{values: [AbiBytes{value: utf8(text: "dave")}, AbiBool{value: true}, numbers]},
+            actual: sam)
+    assertEquals(expected: bazType, actual: baz.abiType())
+}
+
+// Source: this spec (decoding is strict: data that is too short for the tuple is rejected).
+@@testId("a-tuple-type-rejects-data-that-is-too-short-for-it")
+test "a tuple type rejects data that is too short for it" {
+    // given
+    let bazArguments = AbiTupleType{components: [AbiUintType{bits: 32}, AbiBoolType{}]}
+
+    // when / then
+    @@expectThrows(illegal-format)
+    bazArguments.decode(data: hex(text: "0000000000000000000000000000000000000000000000000000000000000045"))
+}
+
 // Source: this spec (decoding is strict: data that is too short or an offset outside the data is rejected).
 @@testId("data-that-is-too-short-or-points-outside-itself-is-rejected-when-decoded")
 test "data that is too short or points outside itself is rejected when decoded" {
