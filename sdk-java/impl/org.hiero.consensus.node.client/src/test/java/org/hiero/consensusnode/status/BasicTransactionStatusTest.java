@@ -413,5 +413,6 @@ class BasicTransactionStatusTest {
         assertValue(533, BasicTransactionStatus.INVALID_REGISTERED_ENDPOINT_TYPE.code());
         assertValue(534, BasicTransactionStatus.REGISTERED_NODE_STILL_ASSOCIATED.code());
         assertValue(535, BasicTransactionStatus.MAX_REGISTERED_NODES_EXCEEDED.code());
+        assertValue(536, BasicTransactionStatus.CONFIG_FILE_PART_UPLOADED.code());
     }
 }

@@ -4,7 +4,7 @@ How the V3 API is implemented today, how to build and verify it, and what cost t
 executed by an agent.
 
 - **Java:** `sdk-java/impl` is a **copy of the generated Java project** that is maintained by hand. It implements the
-  whole API of the specs: all 459 tests of the specs that have a Java form and all 3,514 contract tests pass against it, no method is a stub
+  whole API of the specs: all 490 tests of the specs that have a Java form and all 4,007 contract tests pass against it, no method is a stub
   any more, and `metalang check` reports that it provides the API. What the specs cannot express is recorded in their
   `## Questions & Comments` (and implemented as a documented workaround where one exists). The TCK binds 54 of its
   64 methods (section 3); the implementation has not been run against Solo yet.
@@ -63,15 +63,21 @@ Helpers live in non-exported `internal` packages of each module. The parts that 
 | `…/client/internal/QueryKind.java`, `Querying.java` | per query type: gRPC method, request, answer; free and paid queries (cost query, payment transfer to the node signed by the operator, `maxQueryPayment`), retry while the node is busy |
 | `…/client/internal/AccountQueries.java`, `FileQueries`, `TopicQueries`, `ScheduleQueries`, `TokenQueries` | the query kinds of the module |
 | `…/client/internal/PrecheckException.java` | a node rejected a request in precheck; message `precheck failed: <STATUS>` (trap 18) |
-| `…/client/internal/Statuses.java` | the `BasicTransactionStatus` of a HAPI status code |
+| `…/client/internal/Statuses.java` | the status of a HAPI status code: the status of the `TransactionStatusSupport` that names it - `BasicStatusSupport` (the codes of the protocol, always registered first) and those of the `ServiceLoader` (the CLPR module registers one), loaded with the first client; two statuses with one code fail `createClient` (`StatusConflictException`), a code no one names fails the request (`UnknownStatusException`, no further attempt) |
 | `org.hiero.consensus.node.admin.client/…/admin/internal/AdminKinds.java`, `AdminQueries.java`, `AdminSupports.java` | the six administration transaction types, the version and address book queries; registered with the `ServiceLoader` as `TransactionSupport` |
+| `org.hiero.consensus.node.clpr/…/clpr/internal/ClprKinds.java`, `ClprSupports.java`, `ClprQueries.java` | the eight CLPR transaction types and the two free CLPR queries (`proto.ClprService`); registered with the `ServiceLoader` as `TransactionSupport`, and `ClprTransactionStatus` as `TransactionStatusSupport` (module path and `META-INF/services`) |
+| `…/clpr/internal/Ownership.java` | the commitments, Connector IDs and ownership proofs of HIP-1535 (Keccak-256 with BouncyCastle; the public key as 64 bytes `x \|\| y` for secp256k1, 32 bytes for Ed25519) |
+| `org.hiero.block.node.client/…/blocknode/internal/DefaultBlockNodeClient.java`, `BlockSubscription.java`, `Blocks.java` | the block node over gRPC without generated stubs (status, status detail, `getBlock`, `subscribeBlockStream` with flow control); the items are read as `BlockItemUnparsed` (kind and bytes, as the importer of the mirror node does), only header and footer are decoded |
 | `org.hiero.mirror.node.client/…/mirrornode/internal/` | REST client of the Mirror Node (`/api/v1`), a small JSON parser, pagination over `links.next`, one repository implementation per area |
 | `org.hiero.enterprise/…/service/internal/` | the session and the six services on top of the public API of the other modules; Solidity ABI encoding of the contract parameters |
 
 Dependencies: `org.hiero.base` needs `org.bouncycastle:bcprov-jdk18on:1.83` (`requires org.bouncycastle.provider`) and
 `requires java.net.http`; `org.hiero.consensus.node.client` needs `io.grpc:grpc-api` and `grpc-protobuf-lite`
 (compile) plus `grpc-netty-shaded` (runtime), each with six exclusions (trap 13). The hand-written `sdk-java/protobuf`
-exports `com.hedera.hashgraph.sdk.proto` (`TransactionList`) to `org.hiero.consensus.node.client`.
+exports `com.hedera.hashgraph.sdk.proto` (`TransactionList`) to `org.hiero.consensus.node.client`; it also compiles
+`tooling/protobuf/block-node` and exports the block node API, its "unparsed" messages and the block stream packages to
+`org.hiero.block.node.client`, which needs gRPC like the client module. `org.hiero.consensus.node.clpr` needs
+BouncyCastle (`requires org.bouncycastle.provider`).
 
 `BasicTransactionStatus` (spec `status.md`) lists every value of `ResponseCodeEnum`; it is taken over mechanically from
 the vendored `response_code.proto` and generated like every other enum, so `impl` copies it from `sdk-java/generated`
@@ -102,7 +108,7 @@ In `sdk-java` (JDK 25, `sdk env`):
 
 **Done when:**
 
-- every test passes: the 459 tests of the specs that have a Java form (`<Spec>SpecTest`) and the 3,514 contract tests (`<Type>Test`).
+- every test passes: the 490 tests of the specs that have a Java form (`<Spec>SpecTest`) and the 4,007 contract tests (`<Type>Test`).
   None of them needs a network. A failed test does not stop the build: while `impl/test-report` is part of it (the
   default), the profile `test-report` sets `maven.test.failure.ignore`, every module is tested, and `impl/test-report`
   fails the build at the end, after the page is rendered (`-DtestReport.failOnFailures=false`: it does not;

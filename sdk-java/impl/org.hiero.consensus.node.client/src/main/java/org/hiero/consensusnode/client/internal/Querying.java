@@ -19,7 +19,7 @@ import org.hiero.consensusnode.client.NodeSignature;
 import org.hiero.consensusnode.client.Submittable;
 import org.hiero.consensusnode.queries.PaidQueryResponse;
 import org.hiero.consensusnode.queries.QueryResponse;
-import org.hiero.consensusnode.status.BasicTransactionStatus;
+import org.hiero.consensusnode.status.TransactionStatus;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.TransactionId;
 import org.hiero.nativeToken.NativeToken;
@@ -119,7 +119,7 @@ public final class Querying {
         });
     }
 
-    private static <Q, T> BasicTransactionStatus precheck(final QueryKind<Q, T> kind, final Response response) {
+    private static <Q, T> TransactionStatus precheck(final QueryKind<Q, T> kind, final Response response) {
         return Statuses.ofCode(kind.header().apply(response).getNodeTransactionPrecheckCodeValue());
     }
 

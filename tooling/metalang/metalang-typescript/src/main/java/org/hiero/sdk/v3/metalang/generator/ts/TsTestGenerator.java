@@ -787,14 +787,15 @@ public final class TsTestGenerator {
             code.append("describe(").append(TsLiterals.quote(suite)).append(", () => {\n");
             code.append(String.join("\n", all));
             code.append("});\n");
-            // only the helpers that the tests (or other used helpers) use
+            // only the helpers that the tests (or other used helpers) use; a name at the start of a string (the name of
+            // a test such as "create(channelId, privateKey) can be called") is no call
             final List<String> used = new ArrayList<>();
             boolean changed = true;
             while (changed) {
                 changed = false;
                 final String text = code + String.join("", used);
                 for (final Map.Entry<String, String> helper : helpers.entrySet()) {
-                    if (!used.contains(helper.getValue()) && java.util.regex.Pattern.compile("(?<![\\w$.])"
+                    if (!used.contains(helper.getValue()) && java.util.regex.Pattern.compile("(?<![\\w$.\"'`])"
                             + java.util.regex.Pattern.quote(helper.getKey()) + "\\(").matcher(text).find()) {
                         used.add(helper.getValue());
                         changed = true;

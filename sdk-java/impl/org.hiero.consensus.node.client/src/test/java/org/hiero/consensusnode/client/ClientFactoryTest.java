@@ -22,10 +22,16 @@ import org.junit.jupiter.api.Test;
 class ClientFactoryTest {
 
     @Test
-    @DisplayName("createClient(networkSettings, operatorAccount) can be called and returns a value")
+    @DisplayName("createClient(networkSettings, operatorAccount) can be called and returns a value (only StatusConflictException may occur)")
     @Tag("testId:consensusnode.client/createClient/call")
-    void shouldCallCreateClient() {
-        assertNotNull(ClientFactory.createClient(networkSettingsValue(), operatorAccountValue()));
+    void shouldCallCreateClient() throws Exception {
+        try {
+            assertNotNull(ClientFactory.createClient(networkSettingsValue(), operatorAccountValue()));
+        } catch (final Exception e) {
+            if (!(e instanceof StatusConflictException)) {
+                throw e;
+            }
+        }
     }
 
     @Test
@@ -43,10 +49,16 @@ class ClientFactoryTest {
     }
 
     @Test
-    @DisplayName("createClient(networkSettings, operatorAccount, transactionSigner) can be called and returns a value")
+    @DisplayName("createClient(networkSettings, operatorAccount, transactionSigner) can be called and returns a value (only StatusConflictException may occur)")
     @Tag("testId:consensusnode.client/createClient/call-2")
-    void shouldCallCreateClient2() {
-        assertNotNull(ClientFactory.createClient(networkSettingsValue(), operatorAccountValue(), transactionSignerValue()));
+    void shouldCallCreateClient2() throws Exception {
+        try {
+            assertNotNull(ClientFactory.createClient(networkSettingsValue(), operatorAccountValue(), transactionSignerValue()));
+        } catch (final Exception e) {
+            if (!(e instanceof StatusConflictException)) {
+                throw e;
+            }
+        }
     }
 
     @Test
@@ -71,10 +83,16 @@ class ClientFactoryTest {
     }
 
     @Test
-    @DisplayName("createClient(networkSettings, operatorAccount, transactionSigner, executionSettings) can be called and returns a value")
+    @DisplayName("createClient(networkSettings, operatorAccount, transactionSigner, executionSettings) can be called and returns a value (only StatusConflictException may occur)")
     @Tag("testId:consensusnode.client/createClient/call-3")
-    void shouldCallCreateClient3() {
-        assertNotNull(ClientFactory.createClient(networkSettingsValue(), operatorAccountValue(), transactionSignerValue(), executionSettingsValue()));
+    void shouldCallCreateClient3() throws Exception {
+        try {
+            assertNotNull(ClientFactory.createClient(networkSettingsValue(), operatorAccountValue(), transactionSignerValue(), executionSettingsValue()));
+        } catch (final Exception e) {
+            if (!(e instanceof StatusConflictException)) {
+                throw e;
+            }
+        }
     }
 
     @Test

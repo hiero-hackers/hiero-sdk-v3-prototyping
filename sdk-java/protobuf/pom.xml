@@ -47,6 +47,8 @@
                         <sourceDirectory>${protobuf.root}/consensus-node</sourceDirectory>
                         <!-- the mirror node's gRPC API -->
                         <sourceDirectory>${protobuf.root}/mirror-node</sourceDirectory>
+                        <!-- the block node's gRPC API and its "unparsed" forms of the block stream messages -->
+                        <sourceDirectory>${protobuf.root}/block-node</sourceDirectory>
                     </sourceDirectories>
                     <excludes>
                         <!--

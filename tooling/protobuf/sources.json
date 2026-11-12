@@ -5,12 +5,12 @@
   "sources": {
     "consensus-node": {
       "repository": "https://github.com/hiero-ledger/hiero-consensus-node.git",
-      "tag": "v0.77.2",
+      "tag": "v0.78.2",
       "path": "hapi/hedera-protobuf-java-api/src/main/proto",
       "description": "The Hiero API (HAPI). The base every other node type imports from: 'services' holds the transaction and query definitions, 'block' the block stream, 'streams' the record stream, 'platform' the consensus internals.",
       "includeRoot": true,
-      "commit": "74a11d913a948651132c282d93aa46662751aaa9",
-      "files": 208
+      "commit": "ba7a27b6fbc0f0646bc95cb17013efecd4ec491d",
+      "files": 232
     },
     "block-node": {
       "repository": "https://github.com/hiero-ledger/hiero-block-node.git",
@@ -31,5 +31,5 @@
       "files": 2
     }
   },
-  "updated": "2026-10-07T10:11:06Z"
+  "updated": "2026-11-12T07:54:42Z"
 }

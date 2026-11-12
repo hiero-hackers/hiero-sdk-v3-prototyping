@@ -12,8 +12,10 @@
 
     <modules>
         <module>org.hiero.base</module>
+        <module>org.hiero.block.node.client</module>
         <module>org.hiero.consensus.node.admin.client</module>
         <module>org.hiero.consensus.node.client</module>
+        <module>org.hiero.consensus.node.clpr</module>
         <module>org.hiero.enterprise</module>
         <module>org.hiero.mirror.node.client</module>
         <!-- the code coverage of the unit tests and, with the profile tck, of the TCK run and of both together -->

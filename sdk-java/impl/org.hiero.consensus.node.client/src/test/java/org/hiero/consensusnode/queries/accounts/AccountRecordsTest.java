@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Objects;
 import org.hiero.authority.AuthorityFactory;
 import org.hiero.consensusnode.client.ClientFactory;
+import org.hiero.consensusnode.queries.receipts.UntypedReceipt;
 import org.hiero.consensusnode.status.BasicTransactionStatus;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Record;
-import org.hiero.consensusnode.transactions.accounts.AccountAllowanceApproveReceipt;
 import org.hiero.consensusnode.transactions.spi.SpiFactory;
 import org.hiero.http.HttpFactory;
 import org.hiero.keys.KeysFactory;
@@ -80,7 +80,7 @@ class AccountRecordsTest {
     }
 
     private static List<Record<Receipt>> recordsValue() {
-        return List.of(new Record<>(TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L)), ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), new AccountAllowanceApproveReceipt(TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L)), BasicTransactionStatus.OK, new ExchangeRate(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), 1.5) {
+        return List.of(new Record<>(TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L)), ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), new UntypedReceipt(TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L)), BasicTransactionStatus.OK, new ExchangeRate(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), 1.5) {
             public boolean isExpired() {
                 throw new UnsupportedOperationException("test double");
             }
@@ -88,7 +88,7 @@ class AccountRecordsTest {
             public boolean isExpired() {
                 throw new UnsupportedOperationException("test double");
             }
-        }), null, null));
+        }, null, null, null, null, null, null, null, null, null, null, null, List.of(1L), null, null, null), null, null));
     }
 
     private static AccountRecords create() {

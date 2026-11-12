@@ -324,8 +324,10 @@ class JavaGeneratorTest {
             assertThat(files).filteredOn(f -> f.path().endsWith("/module-info.java")).extracting(GeneratedFile::path)
                     .containsExactly(
                             "org.hiero.base/src/main/java/module-info.java",
+                            "org.hiero.block.node.client/src/main/java/module-info.java",
                             "org.hiero.consensus.node.admin.client/src/main/java/module-info.java",
                             "org.hiero.consensus.node.client/src/main/java/module-info.java",
+                            "org.hiero.consensus.node.clpr/src/main/java/module-info.java",
                             "org.hiero.enterprise/src/main/java/module-info.java",
                             "org.hiero.mirror.node.client/src/main/java/module-info.java");
             // the types generated from the specs (without the support files of the guideline)
@@ -347,7 +349,7 @@ class JavaGeneratorTest {
             assertThat(files.stream().filter(f -> f.path().equals("org.hiero.base/pom.xml")).findFirst().orElseThrow()
                     .content()).contains("<artifactId>hiero-sdk-support</artifactId>");
             assertThat(files).filteredOn(f -> !f.path().contains("/src/test/java/"))
-                    .hasSize(5 + 6 + (int) withDescription + (int) enumFiles + (int) records + (int) interfaces
+                    .hasSize(7 + 8 + (int) withDescription + (int) enumFiles + (int) records + (int) interfaces
                     + (int) classes);
             assertThat(enumFiles).isEqualTo(enums);
             assertThat(records).isGreaterThanOrEqualTo(80);
@@ -361,7 +363,7 @@ class JavaGeneratorTest {
             assertThat(files).filteredOn(f -> f.path().endsWith("/module-info.java"))
                     .allMatch(f -> f.content().contains("@NullMarked\nmodule "));
             assertThat(files).noneMatch(f -> f.content().contains("@NonNull"));
-            assertThat(enums).isEqualTo(32);
+            assertThat(enums).isEqualTo(35);
         }
 
         @Test

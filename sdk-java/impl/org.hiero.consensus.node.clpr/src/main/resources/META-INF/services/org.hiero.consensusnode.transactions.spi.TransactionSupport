@@ -1,0 +1,8 @@
+org.hiero.consensusnode.clpr.internal.ClprSupports$RegisterChannel
+org.hiero.consensusnode.clpr.internal.ClprSupports$CompleteChannel
+org.hiero.consensusnode.clpr.internal.ClprSupports$CloseChannel
+org.hiero.consensusnode.clpr.internal.ClprSupports$SubmitBundle
+org.hiero.consensusnode.clpr.internal.ClprSupports$RegisterConnector
+org.hiero.consensusnode.clpr.internal.ClprSupports$CompleteConnector
+org.hiero.consensusnode.clpr.internal.ClprSupports$DeregisterConnector
+org.hiero.consensusnode.clpr.internal.ClprSupports$UpdateLedgerConfiguration

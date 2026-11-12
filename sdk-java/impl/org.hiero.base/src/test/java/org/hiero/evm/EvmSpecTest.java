@@ -289,6 +289,44 @@ class EvmSpecTest {
         assertThrows(IllegalArgumentException.class, () -> boolResult.decodeResult(hex("0000000000000000000000000000000000000000000000000000000000000002")));
     }
 
+    /// `evm/a-tuple-type-decodes-the-static-and-dynamic-tuples-of-the-abi-specification`
+    ///
+    /// Source: the Solidity documentation, "Contract ABI Specification", section "Examples" (the arguments of baz and sam
+    /// without their selector are the encoding of the tuples (uint32,bool) and (bytes,bool,uint256[])).
+    @Test
+    @DisplayName("a tuple type decodes the static and dynamic tuples of the ABI specification")
+    @Tag("testId:evm/a-tuple-type-decodes-the-static-and-dynamic-tuples-of-the-abi-specification")
+    void aTupleTypeDecodesTheStaticAndDynamicTuplesOfTheABISpecification() {
+        // given
+        final AbiTupleType bazArguments = new AbiTupleType(List.of(new AbiUintType(32), new AbiBoolType()));
+        final AbiType bazType = bazArguments;
+        final AbiTupleType samArguments = new AbiTupleType(List.of(new AbiBytesType(), new AbiBoolType(), new AbiArrayType(new AbiUintType(256), null)));
+        final AbiArray numbers = new AbiArray(new AbiArrayType(new AbiUintType(256), null), List.of(new AbiUint(new BigInteger("1"), 256), new AbiUint(new BigInteger("2"), 256), new AbiUint(new BigInteger("3"), 256)));
+
+        // when
+        final AbiTuple baz = bazArguments.decode(hex("0000000000000000000000000000000000000000000000000000000000000045" + "0000000000000000000000000000000000000000000000000000000000000001"));
+        final AbiTuple sam = samArguments.decode(hex(((((((("0000000000000000000000000000000000000000000000000000000000000060" + "0000000000000000000000000000000000000000000000000000000000000001") + "00000000000000000000000000000000000000000000000000000000000000a0") + "0000000000000000000000000000000000000000000000000000000000000004") + "6461766500000000000000000000000000000000000000000000000000000000") + "0000000000000000000000000000000000000000000000000000000000000003") + "0000000000000000000000000000000000000000000000000000000000000001") + "0000000000000000000000000000000000000000000000000000000000000002") + "0000000000000000000000000000000000000000000000000000000000000003"));
+
+        // then
+        assertEquals(new AbiTuple(List.of(new AbiUint(new BigInteger("69"), 32), new AbiBool(true))), baz);
+        assertEquals(new AbiTuple(List.of(new AbiBytes(utf8("dave")), new AbiBool(true), numbers)), sam);
+        assertEquals(bazType, baz.abiType());
+    }
+
+    /// `evm/a-tuple-type-rejects-data-that-is-too-short-for-it`
+    ///
+    /// Source: this spec (decoding is strict: data that is too short for the tuple is rejected).
+    @Test
+    @DisplayName("a tuple type rejects data that is too short for it")
+    @Tag("testId:evm/a-tuple-type-rejects-data-that-is-too-short-for-it")
+    void aTupleTypeRejectsDataThatIsTooShortForIt() {
+        // given
+        final AbiTupleType bazArguments = new AbiTupleType(List.of(new AbiUintType(32), new AbiBoolType()));
+
+        // when / then
+        assertThrows(IllegalArgumentException.class, () -> bazArguments.decode(hex("0000000000000000000000000000000000000000000000000000000000000045")));
+    }
+
     /// `evm/data-that-is-too-short-or-points-outside-itself-is-rejected-when-decoded`
     ///
     /// Source: this spec (decoding is strict: data that is too short or an offset outside the data is rejected).

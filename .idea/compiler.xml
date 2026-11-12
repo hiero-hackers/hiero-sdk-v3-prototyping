@@ -14,13 +14,17 @@
         <module name="hiero-base (1)" />
         <module name="hiero-enterprise (1)" />
         <module name="hiero-consensus-node-admin-client" />
+        <module name="hiero-consensus-node-clpr" />
         <module name="hiero-sdk-tck" />
         <module name="metalang-go" />
         <module name="hiero-mirror-node-client" />
+        <module name="hiero-consensus-node-clpr (1)" />
         <module name="hiero-consensus-node-admin-client (1)" />
         <module name="hiero-sdk-tck-runtime" />
         <module name="metalang-python" />
         <module name="metalang-typescript" />
+        <module name="hiero-block-node-client" />
+        <module name="hiero-block-node-client (1)" />
         <module name="hiero-enterprise" />
         <module name="metalang-rust" />
         <module name="hiero-consensus-node-client (1)" />
@@ -33,10 +37,14 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="hiero-base" options="-Xlint:all -Werror" />
       <module name="hiero-base (1)" options="-Xlint:all -Werror" />
+      <module name="hiero-block-node-client" options="-Xlint:all -Werror" />
+      <module name="hiero-block-node-client (1)" options="-Xlint:all -Werror" />
       <module name="hiero-consensus-node-admin-client" options="-Xlint:all -Werror" />
       <module name="hiero-consensus-node-admin-client (1)" options="-Xlint:all -Werror" />
       <module name="hiero-consensus-node-client" options="-Xlint:all -Werror" />
       <module name="hiero-consensus-node-client (1)" options="-Xlint:all -Werror" />
+      <module name="hiero-consensus-node-clpr" options="-Xlint:all -Werror" />
+      <module name="hiero-consensus-node-clpr (1)" options="-Xlint:all -Werror" />
       <module name="hiero-enterprise" options="-Xlint:all -Werror" />
       <module name="hiero-enterprise (1)" options="-Xlint:all -Werror" />
       <module name="hiero-mirror-node-client" options="-Xlint:all -Werror" />

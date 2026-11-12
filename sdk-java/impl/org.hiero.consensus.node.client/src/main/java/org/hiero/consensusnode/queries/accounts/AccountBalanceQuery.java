@@ -63,9 +63,10 @@ public final class AccountBalanceQuery extends FreeQuery<AccountBalance> {
 
     /// Sends this request to the network and returns the typed result asynchronously. Node selection, retries
     /// and operation-specific protocol details (for example cost discovery and payment for a `PaidQuery`) are
-    /// handled transparently. Fails with `attempts-exhausted-error` when the retry policy gives up.
+    /// handled transparently. Fails with `attempts-exhausted-error` when the retry policy gives up, and with
+    /// `unknown-status-error` when a node answers with a status code that the SDK cannot name.
     ///
-    /// The returned stage completes exceptionally with `AttemptsExhaustedException` if the operation fails.
+    /// The returned stage completes exceptionally with `AttemptsExhaustedException` or `UnknownStatusException` if the operation fails.
     @Override
     public CompletionStage<QueryResponse<AccountBalance>> submit(final HieroClient<?> client) {
         return Querying.free(this, this, AccountQueries.ACCOUNT_BALANCE, client);

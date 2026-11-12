@@ -251,6 +251,12 @@ proofs for HSM keys.
 - Reading blocks from files (`Block.fromBytes`), retry / failover, and closing the client — open questions in
   [`block-node.md`](../spec/block-node-client/block-node.md).
 
+### 7.3 `consensus-node-clpr`
+
+- The redaction of a message (`ClprService.redactMessage`, `ClprRedactMessageTransactionBody`), which the pinned
+  consensus node v0.78.2 has and the baseline of the HIP-1535 proposal did not (its status codes are named).
+- The mirror node queries of the proposal (§4).
+
 ### 7.2 Sub-layers without content
 
 - `spec/consensus-node-client/proto-accounts.md` and `spec/base/proto.md` are empty placeholders; `grpc.md` holds only

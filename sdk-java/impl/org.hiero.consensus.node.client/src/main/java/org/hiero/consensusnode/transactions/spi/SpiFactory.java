@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.transactions.spi;
 
+import org.hiero.consensusnode.client.internal.Statuses;
 import org.hiero.consensusnode.transactions.Transaction;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.client.internal.TransactionKinds;
@@ -10,6 +11,9 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import org.hiero.consensusnode.client.StatusConflictException;
+import org.hiero.consensusnode.client.UnknownStatusException;
+import org.hiero.consensusnode.status.TransactionStatus;
 
 /// Factory methods of the package `org.hiero.consensusnode.transactions.spi`.
 public final class SpiFactory {
@@ -36,6 +40,24 @@ public final class SpiFactory {
     private static <R extends Receipt, T extends Transaction<R, T>> TransactionSupport<R, T> support(
             final TransactionKind<R, T> kind) {
         return new KindSupport<>(kind);
+    }
+
+    /// Returns every registered TransactionStatusSupport, among them the one of BasicTransactionStatus. They are loaded once,
+    /// when the first client is created or this function or getTransactionStatus is called first. Throws if two supports
+    /// name the same code.
+    ///
+    /// @throws StatusConflictException if a status conflict error occurs
+    public static Set<TransactionStatusSupport> getAllTransactionStatusSupports() {
+        return Statuses.supports();
+    }
+
+    /// Returns the status of a code: the status of the registered TransactionStatusSupport that names it. Throws if no
+    /// support names the code, or if the registered supports conflict.
+    ///
+    /// @throws UnknownStatusException if an unknown status error occurs
+    /// @throws StatusConflictException if a status conflict error occurs
+    public static TransactionStatus getTransactionStatus(final int code) {
+        return Statuses.ofCode(code);
     }
 
     private SpiFactory() {

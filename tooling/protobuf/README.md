@@ -12,7 +12,7 @@ Everything here is **vendored, never edited by hand**. [`update.sh`](update.sh) 
 
 | Directory | Upstream | Version | Path in the repository | Files |
 |---|---|---|---|---|
-| [`consensus-node/`](consensus-node) | [hiero-consensus-node](https://github.com/hiero-ledger/hiero-consensus-node) | `v0.77.2` | `hapi/hedera-protobuf-java-api/src/main/proto` | 208 |
+| [`consensus-node/`](consensus-node) | [hiero-consensus-node](https://github.com/hiero-ledger/hiero-consensus-node) | `v0.78.2` | `hapi/hedera-protobuf-java-api/src/main/proto` | 232 |
 | [`block-node/`](block-node) | [hiero-block-node](https://github.com/hiero-ledger/hiero-block-node) | `v0.44.2` | `protobuf-sources/src/main/proto` | 18 |
 | [`mirror-node/`](mirror-node) | [hiero-mirror-node](https://github.com/hiero-ledger/hiero-mirror-node) | `v0.164.0` | `tooling/protobuf/src/main/proto` | 2 |
 
@@ -69,13 +69,13 @@ them collide, which is one reason they stay separate. Which repository owns this
 question for upstream.
 
 **The block node pins an older consensus node than we do.** `protobuf-sources/build.gradle.kts` of
-`hiero-block-node v0.44.2` sets `cnVersion = "0.76.1"`, while this directory vendors `v0.77.2`.
+`hiero-block-node v0.44.2` sets `cnVersion = "0.76.1"`, while this directory vendors `v0.78.2`.
 `verify.sh` proves the combination resolves, so the newer base is safe to use here; a future
 upgrade should re-check it.
 
 **The block node's `proto-overrides` are not vendored.** Upstream keeps one overriding copy of
 `block/stream/record_file_item.proto` to add fields before they reach a consensus node release.
-Against `v0.77.2` that override differs from the consensus node file only in its import list, and
+Against `v0.78.2` that override differs from the consensus node file only in its import list, and
 the messages are identical, so it is not applied here.
 
 **`block-node/internal/` is not a public API.** Those nine files are the block node's own state

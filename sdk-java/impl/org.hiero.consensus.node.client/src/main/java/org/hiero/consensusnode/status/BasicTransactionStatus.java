@@ -850,7 +850,10 @@ public enum BasicTransactionStatus implements TransactionStatus {
     /// registered node list.
     REGISTERED_NODE_STILL_ASSOCIATED(534),
     /// The number of associated registered nodes exceeds the maximum allowed limit.
-    MAX_REGISTERED_NODES_EXCEEDED(535);
+    MAX_REGISTERED_NODES_EXCEEDED(535),
+    /// The contents of a configuration system file (network properties or HAPI permissions) could not be parsed as a
+    /// `ServicesConfigurationList`.
+    CONFIG_FILE_PART_UPLOADED(536);
 
     private final int code;
 

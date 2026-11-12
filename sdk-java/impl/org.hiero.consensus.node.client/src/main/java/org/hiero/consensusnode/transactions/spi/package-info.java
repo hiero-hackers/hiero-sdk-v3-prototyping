@@ -11,4 +11,13 @@
 /// transaction, reads the values every receipt has (`ReceiptHeader`) and builds the `Record` around
 /// the typed receipt. The SDK looks up the matching `TransactionSupport` via `getTransactionSupport(...)`,
 /// and `getAllTransactionSupports()` returns all registered implementations.
+///
+/// A custom service can also define its own status codes. Name them with a `TransactionStatusSupport`, which returns the
+/// `TransactionStatus` values of the service. Every status code the SDK knows comes from such a support: the SDK registers
+/// the one of `BasicTransactionStatus` itself, a module such as the CLPR module registers its own. The SDK reads the
+/// status of every answer — the precheck of a request and the status of a receipt — and turns its code into a status with
+/// `getTransactionStatus(code)`, the status of the registered support that names the code. A code that no support names
+/// is an error (`unknown-status-error`): the request fails without another attempt. The supports are loaded once, when
+/// the first client is created; if two of them name the same code, creating the client fails with
+/// `status-conflict-error`.
 package org.hiero.consensusnode.transactions.spi;

@@ -33,7 +33,8 @@ module org.hiero.sdk.protobuf {
     // The HAPI service definitions (descriptors only; the gRPC stubs are not generated).
     exports com.hederahashgraph.service.proto.java to
             org.hiero.consensus.node.client,
-            org.hiero.consensus.node.admin.client;
+            org.hiero.consensus.node.admin.client,
+            org.hiero.consensus.node.clpr;
 
     // The SDK-defined messages: TransactionList is the byte form of a packed transaction with one signed
     // transaction per node, as all Hiero SDKs write it.
@@ -43,4 +44,15 @@ module org.hiero.sdk.protobuf {
     // The mirror node's gRPC API.
     exports com.hedera.mirror.api.proto to
             org.hiero.mirror.node.client;
+
+    // The block node's gRPC API, the block stream messages it carries, and their "unparsed" forms (a block item as
+    // its kind and its bytes).
+    exports org.hiero.block.api.protoc to
+            org.hiero.block.node.client;
+    exports org.hiero.block.internal.protoc to
+            org.hiero.block.node.client;
+    exports com.hedera.hapi.block.stream.protoc to
+            org.hiero.block.node.client;
+    exports com.hedera.hapi.block.stream.output.protoc to
+            org.hiero.block.node.client;
 }

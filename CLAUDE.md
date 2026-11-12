@@ -148,12 +148,11 @@ spec/                           # The actual V3 public-API specifications, writt
     proto.md, proto-accounts.md #   (consensusnode.proto[.account]) the protobuf messages the SPI exposes
   consensus-node-admin-client/  # Network administration (consensusnode.admin.*): freeze, nodes, system, network
   consensus-node-clpr/          # Cross Ledger Protocol, HIP-1535 (consensusnode.clpr.*): Channel/Connector
-                                #   transactions, bundles, ledger configuration and endpoint manifest queries; the
-                                #   pinned protobuf has no CLPR yet, so sdk-java/impl does not implement it
+                                #   transactions, bundles, ledger configuration and endpoint manifest queries
   mirror-node-client/           # Querying the Hiero Mirror Node REST API (mirrornode.*), paginated Page<$$T>
   block-node-client/            # Reading a block node over gRPC (blocknode.*): status, single blocks and block
                                 #   subscriptions; a Block is its items as kind + protobuf bytes, only header and
-                                #   footer are typed; BlockNode is in ledger; sdk-java/impl does not implement it yet
+                                #   footer are typed; BlockNode is in ledger
   enterprise/                   # High-level "service" layer on top of the raw SDK for app/framework integration
                                 #   (enterprise.service.*: account, contract, file, nft, token, topic)
 
@@ -304,10 +303,11 @@ polling), which had been written into the generated code in place and reached 34
 `test-account-create-transaction.ts` against a local Solo network, in Java and TypeScript; that spike exists only in
 git history (`3b5305d~1`, introduced in `3caad63 "Durchstich :)"`), and the TypeScript one has not been ported. Today
 `impl` implements the **whole API**: every transaction type (one `TransactionKind` per type in an area class such as
-`TokenKinds`, all sharing `Packing`; the admin client registers its types as `TransactionSupport` via the
-`ServiceLoader`), every query (`QueryKind` + `Querying`, with query payment), the mirror node REST client, the base
-utilities and the enterprise services. The specs have 464 spec tests (51 spec files, 125 of them check that an invalid
-value is rejected; the 5 receipt tests need an `ExchangeRate`, which no API creates, so 459 are generated); **all 459 and all 3,514 contract tests pass** against `impl`, and `metalang check` reports that it
+`TokenKinds`, all sharing `Packing`; the admin client and the CLPR module register their types as
+`TransactionSupport` via the `ServiceLoader`), every query (`QueryKind` + `Querying`, with query payment), the mirror
+node REST client, the block node gRPC client, the base utilities and the enterprise services. The specs have 495 spec
+tests (56 spec files; the 5 receipt tests need an `ExchangeRate`, which no API creates, so 490 are generated); **all
+490 and all 4,007 contract tests pass** against `impl`, and `metalang check` reports that it
 provides the API. What the specs cannot express is recorded in their `## Questions & Comments`. It has the same
 Maven coordinates as `generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The
 TCK binds 54 of its 64 methods (`tooling/tck/bindings`); `./mvnw -f impl verify -Ptck` (in `sdk-java`) builds the TCK server in the same reactor and runs it after

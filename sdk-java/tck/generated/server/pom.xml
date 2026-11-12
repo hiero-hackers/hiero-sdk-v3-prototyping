@@ -29,12 +29,22 @@
         </dependency>
         <dependency>
             <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-block-node-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
             <artifactId>hiero-consensus-node-admin-client</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.hiero.sdk</groupId>
             <artifactId>hiero-consensus-node-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-consensus-node-clpr</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

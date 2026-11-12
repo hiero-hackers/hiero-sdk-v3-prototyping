@@ -1,6 +1,6 @@
 package org.hiero.consensusnode.client.internal;
 
-import org.hiero.consensusnode.status.BasicTransactionStatus;
+import org.hiero.consensusnode.status.TransactionStatus;
 /// A node rejected a transaction or a query before consensus (precheck). The specs have no error type that carries
 /// the status yet (see the `## Questions & Comments` of `transactions.md`), so the status is part of the message in
 /// a fixed form, `precheck failed: <STATUS>`, which callers outside the SDK (the TCK runtime) can read.
@@ -12,20 +12,20 @@ public final class PrecheckException extends IllegalStateException {
     private static final long serialVersionUID = 1L;
 
     /// The status.
-    private final transient BasicTransactionStatus status;
+    private final transient TransactionStatus status;
 
     /// Creates the error.
     ///
     /// @param status the status the node answered with
-    public PrecheckException(final BasicTransactionStatus status) {
-        super(PREFIX + status.name());
+    public PrecheckException(final TransactionStatus status) {
+        super(PREFIX + Statuses.name(status));
         this.status = status;
     }
 
     /// The status the node answered with.
     ///
     /// @return the status
-    public BasicTransactionStatus status() {
+    public TransactionStatus status() {
         return status;
     }
 }

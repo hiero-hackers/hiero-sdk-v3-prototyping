@@ -18,7 +18,28 @@ transaction, reads the values every receipt has (`ReceiptHeader`) and builds the
 the typed receipt. The SDK looks up the matching `TransactionSupport` via `getTransactionSupport(...)`,
 and `getAllTransactionSupports()` returns all registered implementations.
 
+A custom service can also define its own status codes. Name them with a `TransactionStatusSupport`, which returns the
+`TransactionStatus` values of the service. Every status code the SDK knows comes from such a support: the SDK registers
+the one of `BasicTransactionStatus` itself, a module such as the CLPR module registers its own. The SDK reads the
+status of every answer — the precheck of a request and the status of a receipt — and turns its code into a status with
+`getTransactionStatus(code)`, the status of the registered support that names the code. A code that no support names
+is an error (`unknown-status-error`): the request fails without another attempt. The supports are loaded once, when
+the first client is created; if two of them name the same code, creating the client fails with
+`status-conflict-error`.
+
 ## Design Notes
+
+- **Status codes are named by a support of their own.** The codes belong to a service, not to one transaction type
+  (the CLPR service has eight transaction types and one set of codes), and queries report codes as well, for which
+  there is no `TransactionSupport`. A `TransactionStatusSupport` therefore names the codes of a service once.
+- **The codes of the protocol are a support as well.** `BasicTransactionStatus` is not a special case beside the
+  supports: the SDK registers a `TransactionStatusSupport` for it, so a code of another support that collides with a
+  code of the protocol is found by the same check, and `getAllTransactionStatusSupports()` lists every code the SDK
+  knows. The support of `BasicTransactionStatus` cannot be missing; it is part of the SDK.
+- **Unknown and conflicting codes are errors.** A status that the SDK cannot name would reach the caller as a bare
+  number, and a code with two names would make the status of an answer depend on the order in which the supports are
+  loaded. Both are rejected: a conflict when the client is created, before any request; an unknown code when it
+  arrives.
 
 - Since the consensus node is designed in a service-oriented manner, transactions are handled by a
   separate service. The consensus node supports adding custom services next to the services that are
@@ -92,6 +113,22 @@ abstraction TransactionSupport<$$Receipt extends Receipt, $$Transaction extends 
 @@throws(not-found-error) @@static TransactionSupport<ANY, ANY> getTransactionSupport(transactionType:type) // returns the TransactionSupport for the given transaction type; throws if none is registered
 
 @@static set<TransactionSupport<ANY, ANY>> getAllTransactionSupports() // returns all TransactionSupport instances
+
+// The status codes of a service: those of the protocol (`BasicTransactionStatus`, registered by the SDK itself), of an
+// optional service such as CLPR, or of a custom service.
+abstraction TransactionStatusSupport {
+
+    set<TransactionStatus> getStatuses() // the statuses of the service; no two with the same code
+}
+
+// Returns every registered TransactionStatusSupport, among them the one of BasicTransactionStatus. They are loaded once,
+// when the first client is created or this function or getTransactionStatus is called first. Throws if two supports
+// name the same code.
+@@throws(status-conflict-error) @@static set<TransactionStatusSupport> getAllTransactionStatusSupports()
+
+// Returns the status of a code: the status of the registered TransactionStatusSupport that names it. Throws if no
+// support names the code, or if the registered supports conflict.
+@@throws(unknown-status-error, status-conflict-error) @@static TransactionStatus getTransactionStatus(code: int32)
 ```
 
 ## Default Instances for Testing
@@ -130,9 +167,48 @@ test "a type without a registered transaction support is rejected" {
     @@expectThrows(not-found-error)
     getTransactionSupport(transactionType: Receipt)
 }
+
+// Source: this spec (the SDK registers the support of BasicTransactionStatus, so getTransactionStatus returns the
+// BasicTransactionStatus of a code of the protocol); HAPI response_code.proto
+// (SUCCESS is 22, INVALID_SIGNATURE 7).
+@@testId("a-code-of-the-protocol-is-its-basic-transaction-status")
+test "a code of the protocol is its basic transaction status" {
+    // given
+    let success: TransactionStatus = consensusnode.status.BasicTransactionStatus.SUCCESS
+    let invalidSignature: TransactionStatus = consensusnode.status.BasicTransactionStatus.INVALID_SIGNATURE
+
+    // when / then
+    assertEquals(expected: success, actual: getTransactionStatus(code: 22))
+    assertEquals(expected: invalidSignature, actual: getTransactionStatus(code: 7))
+}
+
+// Source: this spec (a code that no registered TransactionStatusSupport names is an
+// error); HAPI response_code.proto (no code is negative, none is above 1,000).
+@@testId("a-code-no-one-names-is-rejected")
+test "a code no one names is rejected" {
+    for code in [-1, 1000000] {
+        // when / then
+        @@expectThrows(unknown-status-error)
+        getTransactionStatus(code: code)
+    }
+}
+
+// Source: this spec (every status of a registered support is found by its code).
+@@testId("every-status-of-a-registered-support-is-found-by-its-code")
+test "every status of a registered support is found by its code" {
+    for support in getAllTransactionStatusSupports() {
+        for status in support.getStatuses() {
+            // when / then
+            assertEquals(expected: status, actual: getTransactionStatus(code: status.code))
+        }
+    }
+}
 ```
 
 ## Questions & Comments
+
+- **A conflict cannot be tested by the spec.** `status-conflict-error` needs two registered supports that name the
+  same code; the tests of a spec cannot register a support. Each implementation tests it.
 
 - **Are the built-in transaction types registered as `TransactionSupport`?** `PackedTransaction.fromBytes(...)`,
   `Response.queryReceipt(client)` and `UntypedReceipt.typed(...)` resolve the concrete transaction type at runtime, which suggests that every built-in type

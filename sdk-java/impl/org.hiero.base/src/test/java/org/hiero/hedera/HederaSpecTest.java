@@ -30,7 +30,7 @@ class HederaSpecTest {
     @Tag("testId:hedera/every-unit-has-its-symbol-and-its-number-of-tinybars")
     void everyUnitHasItsSymbolAndItsNumberOfTinybars() {
         for (final HbarUnit unit : keys(TINYBARS_PER_UNIT())) {
-            // then
+            // when / then
             assertEquals(get(TINYBARS_PER_UNIT(), unit), unit.baseUnitFactor(), unit.symbol());
             assertEquals(get(SYMBOLS(), unit), unit.symbol());
         }
@@ -139,7 +139,7 @@ class HederaSpecTest {
     @DisplayName("an amount keeps its amount and its unit")
     @Tag("testId:hedera/an-amount-keeps-its-amount-and-its-unit")
     void anAmountKeepsItsAmountAndItsUnit() {
-        // given
+        // when
         final Hbar hbar = new Hbar(42L, HbarUnit.KILOBAR);
 
         // then
@@ -159,11 +159,13 @@ class HederaSpecTest {
             final Hbar one = new Hbar(1L, unit);
             final Hbar inTinybars = new Hbar(get(TINYBARS_PER_UNIT(), unit), HbarUnit.TINYBAR);
 
-            // then
+            // when / then
             assertEquals(inTinybars, one, unit.symbol());
             assertEquals(inTinybars.hashCode(), one.hashCode(), unit.symbol());
             assertNotEquals(new Hbar(checked(integer(get(TINYBARS_PER_UNIT(), unit)).add(integer(1L)), "int64").longValueExact(), HbarUnit.TINYBAR), one);
         }
+
+        // when / then: units other than tinybars
         assertEquals(new Hbar(1_000L, HbarUnit.HBAR), new Hbar(1L, HbarUnit.KILOBAR));
         assertNotEquals(new Hbar(-1L, HbarUnit.HBAR), defaultHbar());
     }
@@ -179,7 +181,7 @@ class HederaSpecTest {
         // given
         final Hbar gigabars = new Hbar(100L, HbarUnit.GIGABAR);
 
-        // then
+        // when / then
         assertEquals(new Hbar(100_000L, HbarUnit.MEGABAR), gigabars);
         assertEquals(new Hbar(100_000L, HbarUnit.MEGABAR).hashCode(), gigabars.hashCode());
         assertNotEquals(new Hbar(100_001L, HbarUnit.MEGABAR), gigabars);

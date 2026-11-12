@@ -596,10 +596,10 @@ test "every CLPR transaction survives toBytes and fromBytes" {
 
 ## Questions & Comments
 
-- **The CLPR transactions cannot be packed with the pinned protobuf definitions.** `tooling/protobuf` is pinned to
-  consensus node v0.77.2, which has no CLPR service. Generating the API works; an implementation needs the protobuf
-  definitions of a release with CLPR (the proposal names commit `a6b24529` for the bindings). Until then
-  `sdk-java/impl` has no CLPR module, and `metalang check --project=sdk-java/impl` reports it as missing.
+- **v0.78.2 has a ninth CLPR transaction.** The pinned protobuf definitions (consensus node v0.78.2) have the eight
+  transactions of this spec with the same messages as the baseline of the proposal (`76ba2903`), and in addition
+  `ClprRedactMessageTransactionBody` (`ClprService.redactMessage`) and a node-internal endpoint publication. Should the
+  redaction of a message become a transaction of this module?
 - **Scheduling.** The proposal asks to reject `schedule()` locally for all eight transactions, because none of their
   bodies is part of `SchedulableTransactionBody`. The Design Notes of
   [`transactions-schedule.md`](../consensus-node-client/transactions-schedule.md) say that the SDK does no

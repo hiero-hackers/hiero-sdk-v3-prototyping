@@ -19,7 +19,9 @@ that a bundle with one message of the maximum size still has room for its proof;
 that violates it with `INVALID_CLPR_CONFIGURATION`.
 
 `ClprTransactionStatus` names the status codes of the CLPR service. A code that is defined by the protocol but that the
-service does not return today is listed as well, so that every status of the network can be read.
+service does not return today is listed as well, so that every status of the network can be read. The module registers
+them with the client as a `TransactionStatusSupport`; without this module, an answer with a CLPR code fails with
+`unknown-status-error`.
 
 ## Design Notes
 
@@ -28,10 +30,11 @@ service does not return today is listed as well, so that every status of the net
   It registers its transaction types with the client in the same way (`TransactionSupport` of
   `consensusnode.transactions.spi`).
 - **Status codes as an own enum.** `TransactionStatus` is open for the codes of further services, so the CLPR codes
-  are an enum of this module and not values of `BasicTransactionStatus`. `BasicTransactionStatus` lists the values of
-  the protobuf definitions pinned in `tooling/protobuf` (consensus node v0.77.2), which have no CLPR yet. The codes and
-  their comments are taken from `response_code.proto` of consensus node commit `76ba2903`, the baseline of the
-  SDK proposal for HIP-1535 (hiero-ledger/sdk-collaboration-hub, `proposals/hips/hip-1535.md`).
+  (537 to 572) are an enum of this module, registered as a `TransactionStatusSupport`, and not values of
+  `BasicTransactionStatus`, which leaves them out. A code with two names would make creating a client fail. The codes
+  and their comments are taken from `response_code.proto` of the pinned consensus node v0.78.2; the three codes of the
+  redaction of messages (550, 563, 572) are not in the baseline of the SDK proposal for HIP-1535
+  (hiero-ledger/sdk-collaboration-hub, `proposals/hips/hip-1535.md`, consensus node commit `76ba2903`).
 - **`ClprThrottles` is a plain value.** The proposal adds a factory `ClprThrottles.of(...)` that requires every field;
   here every field is required by the type itself, and the validation annotations reject the values that must be
   greater than zero.
@@ -89,6 +92,8 @@ enum ClprTransactionStatus(code: int32) extends TransactionStatus {
     CLPR_INVALID_CHANNEL_STATUS(548)
     // The specified message ID does not exist in the queue.
     CLPR_MESSAGE_NOT_FOUND(549)
+    // The message has already been acknowledged by the peer and cannot be redacted.
+    CLPR_MESSAGE_ALREADY_ACKNOWLEDGED(550)
     // The endpoint signature is invalid or the signer is not a registered endpoint.
     CLPR_INVALID_ENDPOINT_SIGNATURE(551)
     // The bundle proof verification failed.
@@ -116,6 +121,8 @@ enum ClprTransactionStatus(code: int32) extends TransactionStatus {
     // The Connector's authorization contract rejected the message. Not the same as AUTHORIZATION_FAILED, which a
     // payer without the privilege of the network administrator receives.
     CLPR_AUTHORIZATION_FAILED(562)
+    // The message has already been redacted (payload already removed).
+    CLPR_MESSAGE_ALREADY_REDACTED(563)
     // The Connector has exceeded its per-Channel queue quota.
     CLPR_QUEUE_QUOTA_EXCEEDED(564)
     // The Connector's balance is insufficient to cover the queue fee (including any congestion escalation).
@@ -135,6 +142,8 @@ enum ClprTransactionStatus(code: int32) extends TransactionStatus {
     CLPR_RATE_LIMITED(570)
     // A submitted bundle satisfies none of the Bundle Progress Criteria.
     CLPR_NO_PROGRESS(571)
+    // Attempted to redact a message slot whose payload is not a Data Message; only Data Messages may be redacted.
+    CLPR_MESSAGE_NOT_REDACTABLE(572)
 }
 ```
 
@@ -195,7 +204,7 @@ test "throttles with a limit of zero are rejected" {
             maxSyncBytes: 0, maxLocalEndpoints: 0, maxPeerEndpoints: 0}
 }
 
-// Source: HAPI response_code.proto of consensus node commit 76ba2903 (the CLPR values and their numbers); the SDK
+// Source: HAPI response_code.proto of consensus node v0.78.2 (the CLPR values and their numbers); the SDK
 // proposal for HIP-1535 (Response-code coverage: name and number of every value are preserved). CLPR_EMPTY_BUNDLE (569)
 // is deprecated and therefore not asserted.
 @@testId("clpr-statuses-carry-the-codes-of-the-protocol")
@@ -215,6 +224,7 @@ test "CLPR statuses carry the codes of the protocol" {
     assertEquals(expected: 547, actual: ClprTransactionStatus.CLPR_CHANNEL_NOT_FOUND.code)
     assertEquals(expected: 548, actual: ClprTransactionStatus.CLPR_INVALID_CHANNEL_STATUS.code)
     assertEquals(expected: 549, actual: ClprTransactionStatus.CLPR_MESSAGE_NOT_FOUND.code)
+    assertEquals(expected: 550, actual: ClprTransactionStatus.CLPR_MESSAGE_ALREADY_ACKNOWLEDGED.code)
     assertEquals(expected: 551, actual: ClprTransactionStatus.CLPR_INVALID_ENDPOINT_SIGNATURE.code)
     assertEquals(expected: 552, actual: ClprTransactionStatus.CLPR_BUNDLE_VERIFICATION_FAILED.code)
     assertEquals(expected: 553, actual: ClprTransactionStatus.CLPR_RUNNING_HASH_MISMATCH.code)
@@ -227,6 +237,7 @@ test "CLPR statuses carry the codes of the protocol" {
     assertEquals(expected: 560, actual: ClprTransactionStatus.CLPR_INSUFFICIENT_STAKE.code)
     assertEquals(expected: 561, actual: ClprTransactionStatus.CLPR_PAYLOAD_TOO_LARGE.code)
     assertEquals(expected: 562, actual: ClprTransactionStatus.CLPR_AUTHORIZATION_FAILED.code)
+    assertEquals(expected: 563, actual: ClprTransactionStatus.CLPR_MESSAGE_ALREADY_REDACTED.code)
     assertEquals(expected: 564, actual: ClprTransactionStatus.CLPR_QUEUE_QUOTA_EXCEEDED.code)
     assertEquals(expected: 565, actual: ClprTransactionStatus.CLPR_INSUFFICIENT_CONNECTOR_BALANCE.code)
     assertEquals(expected: 566, actual: ClprTransactionStatus.CLPR_INTERNAL_STATE_CORRUPTION.code)
@@ -234,6 +245,21 @@ test "CLPR statuses carry the codes of the protocol" {
     assertEquals(expected: 568, actual: ClprTransactionStatus.CLPR_BUNDLE_DECODE_FAILED.code)
     assertEquals(expected: 570, actual: ClprTransactionStatus.CLPR_RATE_LIMITED.code)
     assertEquals(expected: 571, actual: ClprTransactionStatus.CLPR_NO_PROGRESS.code)
+    assertEquals(expected: 572, actual: ClprTransactionStatus.CLPR_MESSAGE_NOT_REDACTABLE.code)
+}
+
+// Source: this spec (the module registers the CLPR codes as a TransactionStatusSupport); transactions-spi.md
+// (getTransactionStatus returns the status of a registered support).
+@@testId("a-clpr-code-is-its-clpr-status")
+@@hip("1535")
+test "a CLPR code is its CLPR status" {
+    // given
+    let notEnabled: TransactionStatus = ClprTransactionStatus.CLPR_NOT_ENABLED
+    let noProgress: TransactionStatus = ClprTransactionStatus.CLPR_NO_PROGRESS
+
+    // when / then
+    assertEquals(expected: notEnabled, actual: consensusnode.transactions.spi.getTransactionStatus(code: 537))
+    assertEquals(expected: noProgress, actual: consensusnode.transactions.spi.getTransactionStatus(code: 571))
 }
 ```
 
@@ -243,11 +269,6 @@ test "CLPR statuses carry the codes of the protocol" {
   `maxSyncBytes < maxMessagePayloadBytes + 65,536` locally. The meta-language has no annotation that relates two
   fields, so today only the network rejects it (`INVALID_CLPR_CONFIGURATION`). Is a type-level annotation for such
   a rule worth adding, or is the network check enough?
-- **Where do the CLPR status codes belong once the protobuf definitions are updated?** `status.md` takes over every
-  value of `response_code.proto` mechanically, so an update of `tooling/protobuf` to a consensus node release with CLPR
-  puts the same 33 values (and `CONFIG_FILE_PART_UPLOADED`, 536, which is not CLPR) into `BasicTransactionStatus`.
-  Two enums would then name the same codes. Should the mechanical take-over skip the codes of optional services, or
-  should `ClprTransactionStatus` be dropped then?
 - **Several codes are not returned by the service today.** According to the proposal, `CLPR_CHAIN_ID_IMMUTABLE`,
   `CLPR_TOO_MANY_SEED_ENDPOINTS`, `CLPR_INVALID_SEED_ENDPOINT`, `CLPR_MESSAGE_NOT_FOUND`,
   `CLPR_INVALID_ENDPOINT_SIGNATURE`, `CLPR_INVALID_CONNECTOR_ADDRESS`, `CLPR_INSUFFICIENT_CONNECTOR_BALANCE` and

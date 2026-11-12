@@ -24,6 +24,7 @@ import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.Submittable;
 import org.hiero.consensusnode.queries.QueryResponse;
 import org.hiero.consensusnode.status.BasicTransactionStatus;
+import org.hiero.consensusnode.status.TransactionStatus;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.ConsensusNode;
 import org.hiero.ledger.TransactionId;
@@ -161,12 +162,12 @@ public final class ClientRuntime {
         return execute(request, candidates, (target, timeout) -> {
             final TransactionGetReceiptResponse answer = call(target, RECEIPT_METHOD, query, timeout)
                     .getTransactionGetReceipt();
-            final BasicTransactionStatus precheck = Statuses.ofCode(
+            final TransactionStatus precheck = Statuses.ofCode(
                     answer.getHeader().getNodeTransactionPrecheckCodeValue());
             if (precheck != BasicTransactionStatus.OK) {
                 return Execution.Answer.precheck(precheck, true, () -> null);
             }
-            final BasicTransactionStatus status = Statuses.ofCode(answer.getReceipt().getStatusValue());
+            final TransactionStatus status = Statuses.ofCode(answer.getReceipt().getStatusValue());
             final AttemptOutcome outcome = Execution.receiptOutcome(status);
             return new Execution.Answer<>(status, outcome, outcome == AttemptOutcome.SUCCESS
                     ? new QueryResponse<>(answer, target.account()) : null);

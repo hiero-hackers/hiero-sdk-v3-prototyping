@@ -43,6 +43,16 @@
         </dependency>
         <dependency>
             <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-consensus-node-clpr</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
+            <artifactId>hiero-block-node-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hiero.sdk</groupId>
             <artifactId>hiero-mirror-node-client</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -117,6 +127,14 @@
                                                 <group name="org.hiero.consensus.node.admin.client">
                                                     <classfiles><fileset dir="${impl}/org.hiero.consensus.node.admin.client/target/classes"/></classfiles>
                                                     <sourcefiles encoding="UTF-8"><fileset dir="${impl}/org.hiero.consensus.node.admin.client/src/main/java"/></sourcefiles>
+                                                </group>
+                                                <group name="org.hiero.consensus.node.clpr">
+                                                    <classfiles><fileset dir="${impl}/org.hiero.consensus.node.clpr/target/classes"/></classfiles>
+                                                    <sourcefiles encoding="UTF-8"><fileset dir="${impl}/org.hiero.consensus.node.clpr/src/main/java"/></sourcefiles>
+                                                </group>
+                                                <group name="org.hiero.block.node.client">
+                                                    <classfiles><fileset dir="${impl}/org.hiero.block.node.client/target/classes"/></classfiles>
+                                                    <sourcefiles encoding="UTF-8"><fileset dir="${impl}/org.hiero.block.node.client/src/main/java"/></sourcefiles>
                                                 </group>
                                                 <group name="org.hiero.mirror.node.client">
                                                     <classfiles><fileset dir="${impl}/org.hiero.mirror.node.client/target/classes"/></classfiles>

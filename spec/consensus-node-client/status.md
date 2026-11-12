@@ -6,8 +6,10 @@ This namespace defines the status codes the consensus node reports.
 
 Every answer of a consensus node carries a status: the precheck of a submitted transaction or query, and the
 receipt of an executed transaction. A `TransactionStatus` is identified by its numeric code. `BasicTransactionStatus`
-names the codes of the built-in services of the consensus node; custom services can define further codes, so a
-status the SDK does not name is still a `TransactionStatus` with its code.
+names the codes of the built-in services of the consensus node. Every status the SDK knows is registered as a
+`TransactionStatusSupport` (`consensusnode.transactions.spi`): the SDK registers the one of `BasicTransactionStatus`,
+a module or a custom service its own codes. An answer with a code that no support names fails with
+`unknown-status-error`.
 
 ## Design Notes
 
@@ -16,7 +18,8 @@ status the SDK does not name is still a `TransactionStatus` with its code.
   the attempts of a request (`consensusnode.client`), and the transactions build on the client, so the status cannot
   live in `consensusnode.transactions` without a dependency cycle between the namespaces.
 - **Every code of the protocol.** `BasicTransactionStatus` lists every value of `ResponseCodeEnum` in
-  `tooling/protobuf/consensus-node/services/response_code.proto`, in its order, with its name and code; the comment of
+  `tooling/protobuf/consensus-node/services/response_code.proto` except the codes of the CLPR service (537 to 572),
+  which the module `consensus-node-clpr` names (`ClprTransactionStatus`), in its order, with its name and code; the comment of
   each value is the first sentence of the protocol's comment, values the protocol deprecates are `@@deprecated`. The list
   is taken over mechanically and has to be taken over again when the protobuf definitions are updated.
 
@@ -872,6 +875,9 @@ enum BasicTransactionStatus(code: int32) extends TransactionStatus {
     REGISTERED_NODE_STILL_ASSOCIATED(534)
     // The number of associated registered nodes exceeds the maximum allowed limit.
     MAX_REGISTERED_NODES_EXCEEDED(535)
+    // The contents of a configuration system file (network properties or HAPI permissions) could not be parsed as a
+    // `ServicesConfigurationList`.
+    CONFIG_FILE_PART_UPLOADED(536)
 }
 ```
 

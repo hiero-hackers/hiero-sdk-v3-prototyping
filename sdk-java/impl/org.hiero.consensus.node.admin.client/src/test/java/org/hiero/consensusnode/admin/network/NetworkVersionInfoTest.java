@@ -59,6 +59,6 @@ class NetworkVersionInfoTest {
     }
 
     private static NetworkVersionInfo defaultSubject() {
-        return new NetworkVersionInfo(new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85"), new SemanticVersion(0, 49, 1, null, null));
+        return new NetworkVersionInfo(new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85"), new SemanticVersion(0, 49, 1, "", ""));
     }
 }

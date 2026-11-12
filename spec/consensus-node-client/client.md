@@ -31,7 +31,9 @@ its `ExecutionSettings`:
 attemptTimeout)` the same with your own number of attempts and attempt timeout. Implement `RetryPolicy` or `NodeSelector` to use your own strategy, and
 add an `AttemptListener` to log or measure every attempt. A single request can override the retry policy and the
 attempt timeout of the client. When the retry policy gives up, `submit(client)` fails with
-`attempts-exhausted-error`.
+`attempts-exhausted-error`. An answer with a status code that the SDK cannot name fails the request at once with
+`unknown-status-error` (see `TransactionStatusSupport`), and creating a client fails with `status-conflict-error` if
+two registered status supports name the same code.
 
 A transaction is packed for a fixed set of consensus nodes, so its attempts only go to these nodes.
 
@@ -125,6 +127,9 @@ deterministic: the same answers of the network lead to the same decisions and th
 
 17. When the retry policy gives up, `submit(client)` fails with `attempts-exhausted-error`. The error describes the
     outcome and the result of the last attempt.
+18. When an answer carries a status code that no registered `TransactionStatusSupport` names (the SDK registers the
+    one of `BasicTransactionStatus` itself), `submit(client)` fails with `unknown-status-error`; there is no further
+    attempt.
 
 By default, transactions are signed with the operator's private key. If the key lives elsewhere (for example in an
 HSM or a remote signing service), pass your own `TransactionSigner` when creating the client.
@@ -202,8 +207,9 @@ abstraction Submittable<$$Result> {
 
     // Sends this request to the network and returns the typed result asynchronously. Node selection, retries
     // and operation-specific protocol details (for example cost discovery and payment for a `PaidQuery`) are
-    // handled transparently. Fails with `attempts-exhausted-error` when the retry policy gives up.
-    @@async @@throws(attempts-exhausted-error) $$Result submit(client: HieroClient<ANY>)
+    // handled transparently. Fails with `attempts-exhausted-error` when the retry policy gives up, and with
+    // `unknown-status-error` when a node answers with a status code that the SDK cannot name.
+    @@async @@throws(attempts-exhausted-error, unknown-status-error) $$Result submit(client: HieroClient<ANY>)
 }
 
 // How the SDK classifies the outcome of one attempt. The classification is the same in every SDK.
@@ -341,13 +347,17 @@ HieroClient<$$Unit extends NativeTokenUnit> {
 
 // factory methods of `HieroClient` that should be added to the namespace in the best language dependent way
 
-// Creates a client for the given network that uses the operator account to pay for and sign requests.
+// Creates a client for the given network that uses the operator account to pay for and sign requests. Every
+// createClient loads the registered status supports first and fails if two of them name the same code.
+@@throws(status-conflict-error)
 @@static HieroClient<ANY> createClient(networkSettings: NetworkSetting, operatorAccount: Account)
 // Creates a client for the given network that uses the operator account to pay for requests and the given
 // signer to sign transactions.
+@@throws(status-conflict-error)
 @@static HieroClient<ANY> createClient(networkSettings: NetworkSetting, operatorAccount: Account, transactionSigner: TransactionSigner)
 // Creates a client for the given network that uses the operator account to pay for requests, the given signer to
 // sign transactions and the given settings to execute requests.
+@@throws(status-conflict-error)
 @@static HieroClient<ANY> createClient(networkSettings: NetworkSetting, operatorAccount: Account,
         transactionSigner: TransactionSigner, executionSettings: ExecutionSettings)
 ```

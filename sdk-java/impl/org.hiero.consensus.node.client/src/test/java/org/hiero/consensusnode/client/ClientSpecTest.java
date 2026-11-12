@@ -219,7 +219,7 @@ class ClientSpecTest {
 
             // then
             for (final long i : range(0L, 20L)) {
-                assertEquals(b, selector.select(List.of(a, b), List.of()));
+                assertEquals(b, selector.select(List.of(a, b), List.of()), "choice " + text(integer(i)));
             }
         }
     }
@@ -245,7 +245,7 @@ class ClientSpecTest {
 
         // then
         for (final long i : range(0L, 20L)) {
-            assertEquals(a, selector.select(List.of(a, b), List.of()));
+            assertEquals(a, selector.select(List.of(a, b), List.of()), "choice " + text(integer(i)));
         }
     }
 

@@ -857,10 +857,23 @@ public final class TestGenerator {
                     }
                     for (final Case c : parameter.varargs() ? List.<Case>of() : cases(parameter)) {
                         if (c.accepted()) {
+                            final String statement = (returnsReference(method) ? "assertNotNull("
+                                    + call.apply(c.expression()) + ")" : call.apply(c.expression())) + ";\n";
+                            final List<String> errors = declaredErrors(method);
+                            // a value the parameter accepts may still be one the function answers with a declared
+                            // error (an unknown status code): that error is an allowed result, as in shouldCall
                             test(id(method.name(), parameter.name(), TestIds.accepts(c.label())), "shouldAccept" + parameter.capitalized() + c.label() + "In" + name, method.name()
-                                            + ": " + parameter.name() + " accepts " + c.text(), "",
-                                    INDENT + INDENT + (returnsReference(method) ? "assertNotNull("
-                                            + call.apply(c.expression()) + ")" : call.apply(c.expression())) + ";\n");
+                                            + ": " + parameter.name() + " accepts " + c.text(),
+                                    errors.isEmpty() ? "" : " throws Exception", errors.isEmpty()
+                                            ? INDENT + INDENT + statement
+                                            : INDENT + INDENT + "try {\n" + INDENT + INDENT + INDENT + statement
+                                            + INDENT + INDENT + "} catch (final Exception e) {\n"
+                                            + INDENT + INDENT + INDENT + "if (!(" + errors.stream()
+                                            .map(e -> "e instanceof " + e).collect(Collectors.joining(" || "))
+                                            + ")) {\n"
+                                            + INDENT + INDENT + INDENT + INDENT + "throw e;\n"
+                                            + INDENT + INDENT + INDENT + "}\n"
+                                            + INDENT + INDENT + "}\n");
                         } else {
                             test(id(method.name(), parameter.name(), TestIds.rejects(c.label())), "shouldReject" + parameter.capitalized() + c.label() + "In" + name, method.name()
                                             + ": " + parameter.name() + " rejects " + c.text(), "",
@@ -872,6 +885,17 @@ public final class TestGenerator {
                 }
                 memberHips = enclosing;
             }
+        }
+
+        /** The exception classes of the errors a synchronous method declares; none for an asynchronous one. */
+        private List<String> declaredErrors(final MethodDefinition method) {
+            if (method.hasAnnotation("async") || method.hasAnnotation("streaming")) {
+                return List.of();
+            }
+            return method.annotation("throws").stream()
+                    .flatMap(t -> t.arguments().stream()).map(Literal::text).distinct()
+                    .map(context::exception).map(e -> imports.use(e.packageName(), e.simpleName())).distinct()
+                    .toList();
         }
 
         private boolean returnsReference(final MethodDefinition method) {

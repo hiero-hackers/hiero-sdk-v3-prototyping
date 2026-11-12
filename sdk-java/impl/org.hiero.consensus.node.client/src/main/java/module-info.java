@@ -51,9 +51,13 @@ module org.hiero.consensus.node.client {
     exports org.hiero.consensusnode.transactions.tokens;
     exports org.hiero.consensusnode.transactions.topics;
     exports org.hiero.consensusnode.transactions.utility;
-    // the implementation of the transaction types of the admin client (Packing, TransactionKind, Protobuf)
-    exports org.hiero.consensusnode.client.internal to org.hiero.consensus.node.admin.client;
+    // the implementation of the transaction and query types of the admin client and the CLPR module (Packing,
+    // TransactionKind, QueryKind, Protobuf)
+    exports org.hiero.consensusnode.client.internal to org.hiero.consensus.node.admin.client,
+            org.hiero.consensus.node.clpr;
 
     // transaction types of other modules (the administration client, a custom service)
     uses org.hiero.consensusnode.transactions.spi.TransactionSupport;
+    // status codes of other modules (the CLPR module, a custom service)
+    uses org.hiero.consensusnode.transactions.spi.TransactionStatusSupport;
 }
