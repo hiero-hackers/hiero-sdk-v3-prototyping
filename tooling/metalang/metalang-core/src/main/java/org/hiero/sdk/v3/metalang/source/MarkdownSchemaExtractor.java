@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.hiero.sdk.v3.metalang.ast.BehaviorRule;
 import org.hiero.sdk.v3.metalang.diagnostic.DiagnosticCollector;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
 import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
@@ -42,6 +43,19 @@ public final class MarkdownSchemaExtractor {
     private static final Pattern FENCE_OPEN = Pattern.compile("^ {0,3}(`{3,}|~{3,})(.*)$");
     private static final Pattern HEADING_2 = Pattern.compile("^ {0,3}## +(.*?)(?: +#+)? *$");
 
+    /** The heading of the section that holds the behavior rules. */
+    public static final String DESCRIPTION = "Description";
+
+    /**
+     * The marker of a behavior rule: {@code `rule:<id>`} at the start of a line, of a list item ({@code -}, {@code *},
+     * {@code +} or a number) or of a bold text. Group 1 is the list marker, group 2 the id.
+     */
+    private static final Pattern RULE_MARKER =
+            Pattern.compile("^\\s*((?:[-*+]|\\d+[.)])\\s+)?(?:\\*\\*)?`rule:([^`]*)`");
+
+    /** The form of a rule id: lowercase words of letters and digits, joined by hyphens. */
+    public static final Pattern RULE_ID = Pattern.compile("[a-z0-9]+(-[a-z0-9]+)*");
+
     private record Heading(String text, int line) {
     }
 
@@ -76,7 +90,11 @@ public final class MarkdownSchemaExtractor {
         }
     }
 
-    private record Scan(List<Heading> headings, List<CodeBlock> blocks, List<String> lines) {
+    /** A line outside of the code blocks, with the level-2 heading it belongs to ({@code null} before the first). */
+    private record ProseLine(int line, String text, @Nullable String section) {
+    }
+
+    private record Scan(List<Heading> headings, List<CodeBlock> blocks, List<String> lines, List<ProseLine> prose) {
     }
 
     /**
@@ -114,12 +132,43 @@ public final class MarkdownSchemaExtractor {
                 selected.lineOffset(), description.text(), description.line());
         SchemaSource instances = null;
         List<SchemaSource> tests = List.of();
+        List<BehaviorRule> rules = List.of();
         if (source != null) {
             checkSkeleton(file, scan.headings(), diagnostics);
             instances = instances(file, scan, diagnostics);
             tests = tests(file, scan, diagnostics);
+            rules = rules(file, scan, diagnostics);
         }
-        return new ExtractionResult(source, diagnostics.sorted(), instances, tests);
+        return new ExtractionResult(source, diagnostics.sorted(), instances, tests, rules);
+    }
+
+    /**
+     * The behavior rules of the "## Description" section: every list item and every paragraph outside the code blocks
+     * that starts with the marker {@code `rule:<id>`}. A marker at the start of a continuation line of a paragraph is
+     * a reference that the line break moved there, not a definition. A marker in another section defines no rule and is
+     * reported.
+     */
+    private static List<BehaviorRule> rules(final String file, final Scan scan, final DiagnosticCollector diagnostics) {
+        final List<BehaviorRule> rules = new ArrayList<>();
+        for (final ProseLine line : scan.prose()) {
+            final Matcher marker = RULE_MARKER.matcher(line.text());
+            final boolean startsParagraph = line.line() == 1 || scan.lines().get(line.line() - 2).isBlank();
+            if (!marker.find() || (marker.group(1) == null && !startsParagraph)) {
+                continue;
+            }
+            final String id = marker.group(2);
+            final SourceLocation location = new SourceLocation(file, line.line(), marker.start(2) - "rule:".length());
+            if (!DESCRIPTION.equals(line.section())) {
+                diagnostics.report(Rule.RULE_OUTSIDE_DESCRIPTION, "The rule '" + id + "' is outside the '## "
+                        + DESCRIPTION + "' section and is ignored", location);
+            } else if (!RULE_ID.matcher(id).matches()) {
+                diagnostics.report(Rule.RULE_INVALID_ID, "The rule id '" + id + "' is not lowercase words of letters "
+                        + "and digits joined by hyphens, e.g. `rule:node-choice`", location);
+            } else {
+                rules.add(new BehaviorRule(id, location));
+            }
+        }
+        return List.copyOf(rules);
     }
 
     /** The {@code tests} code blocks of the "## Testing" section; such blocks elsewhere are reported and ignored. */
@@ -158,6 +207,7 @@ public final class MarkdownSchemaExtractor {
         final String[] lines = markdown.split("\\R");
         final List<Heading> headings = new ArrayList<>();
         final List<CodeBlock> blocks = new ArrayList<>();
+        final List<ProseLine> prose = new ArrayList<>();
         Heading currentSection = null;
         String fence = null;
         int fenceStart = 0;
@@ -178,6 +228,8 @@ public final class MarkdownSchemaExtractor {
                 } else if (heading.matches()) {
                     currentSection = new Heading(heading.group(1).strip(), lineNumber);
                     headings.add(currentSection);
+                } else {
+                    prose.add(new ProseLine(lineNumber, line, currentSection == null ? null : currentSection.text()));
                 }
             } else if (isClosingFence(line, fence)) {
                 blocks.add(block(fenceStart, info, blockContent, currentSection, true));
@@ -190,7 +242,7 @@ public final class MarkdownSchemaExtractor {
         if (fence != null) {
             blocks.add(block(fenceStart, info, blockContent, currentSection, false));
         }
-        return new Scan(List.copyOf(headings), List.copyOf(blocks), List.of(lines));
+        return new Scan(List.copyOf(headings), List.copyOf(blocks), List.of(lines), List.copyOf(prose));
     }
 
     private record Description(String text, int line) {

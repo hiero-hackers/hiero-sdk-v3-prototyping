@@ -5,6 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigInteger;
 import java.util.Map;
+import org.hiero.ledger.AccountId;
+import org.hiero.ledger.ConsensusNode;
+import org.hiero.ledger.IpAddress;
+import org.hiero.ledger.MirrorNode;
+import org.hiero.ledger.config.ConfigFactory;
+import org.hiero.ledger.config.NetworkSetting;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -20,6 +26,16 @@ class HederaSpecTest {
 
     private static Map<HbarUnit, String> SYMBOLS() {
         return Map.of(HbarUnit.TINYBAR, "tℏ", HbarUnit.MICROBAR, "μℏ", HbarUnit.MILLIBAR, "mℏ", HbarUnit.HBAR, "ℏ", HbarUnit.KILOBAR, "kℏ", HbarUnit.MEGABAR, "Mℏ", HbarUnit.GIGABAR, "Gℏ");
+    }
+
+    /// The consensus nodes of the Hedera mainnet, IP address to node account, as listed in `rule:hedera-mainnet-setting`.
+    private static Map<String, String> MAINNET_NODES() {
+        return Map.ofEntries(Map.entry("34.239.82.6", "0.0.3"), Map.entry("35.237.200.180", "0.0.3"), Map.entry("3.130.52.236", "0.0.4"), Map.entry("35.186.191.247", "0.0.4"), Map.entry("3.18.18.254", "0.0.5"), Map.entry("35.192.2.25", "0.0.5"), Map.entry("74.50.117.35", "0.0.5"), Map.entry("23.111.186.250", "0.0.5"), Map.entry("107.155.64.98", "0.0.5"), Map.entry("3.114.54.4", "0.0.7"), Map.entry("35.203.82.240", "0.0.7"), Map.entry("35.236.5.219", "0.0.8"), Map.entry("35.183.66.150", "0.0.8"), Map.entry("35.181.158.250", "0.0.9"), Map.entry("35.197.192.225", "0.0.9"), Map.entry("177.154.62.234", "0.0.10"), Map.entry("3.248.27.48", "0.0.10"), Map.entry("35.242.233.154", "0.0.10"), Map.entry("35.204.86.32", "0.0.12"), Map.entry("35.177.162.180", "0.0.12"), Map.entry("34.215.192.104", "0.0.13"), Map.entry("35.234.132.107", "0.0.13"), Map.entry("52.8.21.141", "0.0.14"), Map.entry("35.236.2.27", "0.0.14"), Map.entry("35.228.11.53", "0.0.15"), Map.entry("3.121.238.26", "0.0.15"), Map.entry("141.94.175.187", "0.0.18"), Map.entry("34.82.78.255", "0.0.20"), Map.entry("52.39.162.216", "0.0.20"), Map.entry("34.76.140.109", "0.0.21"), Map.entry("13.36.123.209", "0.0.21"), Map.entry("52.78.202.34", "0.0.22"), Map.entry("34.64.141.166", "0.0.22"), Map.entry("3.18.91.176", "0.0.23"), Map.entry("35.232.244.145", "0.0.23"), Map.entry("69.167.169.208", "0.0.23"), Map.entry("34.89.103.38", "0.0.24"), Map.entry("18.135.7.211", "0.0.24"), Map.entry("34.93.112.7", "0.0.25"), Map.entry("13.232.240.207", "0.0.25"), Map.entry("35.198.220.75", "0.0.28"), Map.entry("18.139.47.5", "0.0.28"), Map.entry("54.74.60.120", "0.0.29"), Map.entry("34.142.71.129", "0.0.29"), Map.entry("80.85.70.197", "0.0.29"), Map.entry("217.76.57.165", "0.0.31"), Map.entry("3.77.94.254", "0.0.31"), Map.entry("34.107.78.179", "0.0.31"), Map.entry("18.136.65.22", "0.0.33"), Map.entry("34.142.172.228", "0.0.33"), Map.entry("34.16.139.248", "0.0.34"), Map.entry("35.155.212.90", "0.0.34"));
+    }
+
+    /// The consensus nodes of the Hedera testnet, IP address to node account, as listed in `rule:hedera-testnet-setting`.
+    private static Map<String, String> TESTNET_NODES() {
+        return Map.ofEntries(Map.entry("34.94.106.61", "0.0.3"), Map.entry("50.18.132.211", "0.0.3"), Map.entry("3.212.6.13", "0.0.4"), Map.entry("35.237.119.55", "0.0.4"), Map.entry("35.245.27.193", "0.0.5"), Map.entry("52.20.18.86", "0.0.5"), Map.entry("34.83.112.116", "0.0.6"), Map.entry("54.70.192.33", "0.0.6"), Map.entry("34.94.160.4", "0.0.7"), Map.entry("54.176.199.109", "0.0.7"), Map.entry("35.155.49.147", "0.0.8"), Map.entry("34.106.102.218", "0.0.8"), Map.entry("34.133.197.230", "0.0.9"), Map.entry("52.14.252.207", "0.0.9"));
     }
 
     /// `hedera/every-unit-has-its-symbol-and-its-number-of-tinybars`
@@ -215,6 +231,52 @@ class HederaSpecTest {
         assertThrows(IllegalArgumentException.class, () -> tooMuch.toBaseUnits());
         assertThrows(IllegalArgumentException.class, () -> tooMuch.to(HbarUnit.TINYBAR));
         assertThrows(IllegalArgumentException.class, () -> new Hbar(-93L, HbarUnit.GIGABAR).toTinybars());
+    }
+
+    /// `hedera/the-mainnet-setting-has-the-hedera-mainnet-its-mirror-node-and-its-consensus-nodes`
+    ///
+    /// Source: this spec (`rule:hedera-mainnet-setting`).
+    @Test
+    @DisplayName("the mainnet setting has the Hedera mainnet, its mirror node and its consensus nodes")
+    @Tag("testId:hedera/the-mainnet-setting-has-the-hedera-mainnet-its-mirror-node-and-its-consensus-nodes")
+    @Tag("rule:hedera/hedera-mainnet-setting")
+    void theMainnetSettingHasTheHederaMainnetItsMirrorNodeAndItsConsensusNodes() {
+        // when
+        final NetworkSetting setting = ConfigFactory.getNetworkSetting(HederaConstants.HEDERA_MAINNET_IDENTIFIER);
+
+        // then
+        assertInstanceOf(HederaNetworkSetting.class, setting);
+        assertEquals(hex("00"), setting.network().id());
+        assertEquals("mainnet", setting.network().name());
+        assertEquals(1L, length(setting.getMirrorNodes()));
+        assertTrue(contains(setting.getMirrorNodes(), new MirrorNode("https://mainnet-public.mirrornode.hedera.com/api/v1")));
+        assertEquals(length(MAINNET_NODES()), length(setting.getConsensusNodes()));
+        for (final String ip : keys(MAINNET_NODES())) {
+            assertTrue(contains(setting.getConsensusNodes(), new ConsensusNode(IpAddress.fromString(ip), 50211, AccountId.fromString(get(MAINNET_NODES(), ip)))), ip);
+        }
+    }
+
+    /// `hedera/the-testnet-setting-has-the-hedera-testnet-its-mirror-node-and-its-consensus-nodes`
+    ///
+    /// Source: this spec (`rule:hedera-testnet-setting`).
+    @Test
+    @DisplayName("the testnet setting has the Hedera testnet, its mirror node and its consensus nodes")
+    @Tag("testId:hedera/the-testnet-setting-has-the-hedera-testnet-its-mirror-node-and-its-consensus-nodes")
+    @Tag("rule:hedera/hedera-testnet-setting")
+    void theTestnetSettingHasTheHederaTestnetItsMirrorNodeAndItsConsensusNodes() {
+        // when
+        final NetworkSetting setting = ConfigFactory.getNetworkSetting(HederaConstants.HEDERA_TESTNET_IDENTIFIER);
+
+        // then
+        assertInstanceOf(HederaNetworkSetting.class, setting);
+        assertEquals(hex("01"), setting.network().id());
+        assertEquals("testnet", setting.network().name());
+        assertEquals(1L, length(setting.getMirrorNodes()));
+        assertTrue(contains(setting.getMirrorNodes(), new MirrorNode("https://testnet.mirrornode.hedera.com/api/v1")));
+        assertEquals(length(TESTNET_NODES()), length(setting.getConsensusNodes()));
+        for (final String ip : keys(TESTNET_NODES())) {
+            assertTrue(contains(setting.getConsensusNodes(), new ConsensusNode(IpAddress.fromString(ip), 50211, AccountId.fromString(get(TESTNET_NODES(), ip)))), ip);
+        }
     }
 
     private static Hbar defaultHbar() {

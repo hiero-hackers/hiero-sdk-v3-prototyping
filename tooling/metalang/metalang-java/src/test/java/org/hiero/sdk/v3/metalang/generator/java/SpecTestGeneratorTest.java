@@ -155,6 +155,8 @@ class SpecTestGeneratorTest {
 
                 Text.
 
+                1. `rule:a-rule` A rule of the spec.
+
                 ## API Schema
 
                 ```
@@ -243,6 +245,20 @@ class SpecTestGeneratorTest {
                 + "    @Tag(\"hip:869\")\n"
                 + "    @Tag(\"hip:1046\")\n"
                 + "    void aTestOfAProposal() {\n");
+    }
+
+    @Test
+    void aTestShouldBeTaggedWithItsRules() {
+        final String java = file(generate("""
+                @@testId("a-rule-test")
+                @@rule("a-rule", "a/a-rule")
+                test "a test of a rule" {
+                    assertTrue(condition: true)
+                }
+                """), "/org/hiero/a/ASpecTest.java");
+        assertThat(java).contains("    @Tag(\"testId:a/a-rule-test\")\n"
+                + "    @Tag(\"rule:a/a-rule\")\n"
+                + "    void aTestOfARule() {\n");
     }
 
     @Test

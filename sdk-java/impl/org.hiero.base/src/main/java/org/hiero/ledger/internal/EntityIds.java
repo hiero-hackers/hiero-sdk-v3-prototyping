@@ -11,7 +11,8 @@ import org.jspecify.annotations.Nullable;
 
 /// The text form of the entity ids and their HIP-15 checksum: `shard.realm.num` with an optional `-<checksum>`, exactly
 /// as HIP-15 defines it (decimal numbers without leading zeros, five lowercase letters), and `shard.realm.<40 lowercase
-/// hex digits>` for an id of an EVM address (HIP-583, without `0x`).
+/// hex digits>` for an id of an EVM address (HIP-583, without `0x`); rules entity-id-text-form, evm-entity-id-text-form,
+/// entity-id-checksum and checksum-validation of `ledger.md`.
 public final class EntityIds {
 
     private static final Pattern ENTITY_ID =

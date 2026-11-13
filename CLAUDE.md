@@ -224,6 +224,11 @@ points to keep specs valid and consistent:
   Expected values must come from the spec itself or a published test vector, never from a value computed for the
   test (see the guideline's `## Questions & Comments`). Every test has a stable `@@testId("kebab-id")`, unique per
   namespace (a tooling test checks it): it identifies the test across languages in the test results.
+- **Behavior rules:** a statement of the `## Description` that every SDK must implement identically (retry, defaults
+  the SDK sends, classification of answers) starts with a stable id, `` `rule:node-choice` ``, unique per namespace.
+  Tests reference it with `@@rule("node-choice")` (tag `rule:<namespace>/<id>`), hand-written code by its id. A value
+  that is not API (a default, an internal timeout) is a rule, not a `constant`. See "Behavior rules" in
+  `guidelines/api-guideline.md`.
 - `## Default Instances for Testing` records the standard way to obtain an instance of the spec's types through the API
   (`instance PublicKey = DEFAULT(PrivateKey).createPublicKey()`), with concrete values where implementations check them
   (keys, addresses). Generated tests use them first; the validator warns (`instance.missing`) about types that cannot

@@ -6,6 +6,59 @@ Support for the Hedera network, the public network built on Hiero. It provides t
 the Hedera mainnet and testnet, which can be used to look up their network settings, and `Hbar`,
 the native token of Hedera, together with its units (`HbarUnit`) from tinybar up to gigabar.
 
+The SDK knows the network settings of the Hedera mainnet and testnet; every SDK knows the same:
+
+`rule:hedera-mainnet-setting` The network setting of `HEDERA_MAINNET_IDENTIFIER` is a `HederaNetworkSetting` of the
+network with the id `0x00` and the name `mainnet`, with the mirror node
+`https://mainnet-public.mirrornode.hedera.com/api/v1` and these 52 consensus nodes, each with the gRPC port 50211
+(plaintext):
+
+| Node account | IP addresses |
+|---|---|
+| `0.0.3` | `34.239.82.6`, `35.237.200.180` |
+| `0.0.4` | `3.130.52.236`, `35.186.191.247` |
+| `0.0.5` | `3.18.18.254`, `35.192.2.25`, `74.50.117.35`, `23.111.186.250`, `107.155.64.98` |
+| `0.0.7` | `3.114.54.4`, `35.203.82.240` |
+| `0.0.8` | `35.236.5.219`, `35.183.66.150` |
+| `0.0.9` | `35.181.158.250`, `35.197.192.225` |
+| `0.0.10` | `177.154.62.234`, `3.248.27.48`, `35.242.233.154` |
+| `0.0.12` | `35.204.86.32`, `35.177.162.180` |
+| `0.0.13` | `34.215.192.104`, `35.234.132.107` |
+| `0.0.14` | `52.8.21.141`, `35.236.2.27` |
+| `0.0.15` | `35.228.11.53`, `3.121.238.26` |
+| `0.0.18` | `141.94.175.187` |
+| `0.0.20` | `34.82.78.255`, `52.39.162.216` |
+| `0.0.21` | `34.76.140.109`, `13.36.123.209` |
+| `0.0.22` | `52.78.202.34`, `34.64.141.166` |
+| `0.0.23` | `3.18.91.176`, `35.232.244.145`, `69.167.169.208` |
+| `0.0.24` | `34.89.103.38`, `18.135.7.211` |
+| `0.0.25` | `34.93.112.7`, `13.232.240.207` |
+| `0.0.28` | `35.198.220.75`, `18.139.47.5` |
+| `0.0.29` | `54.74.60.120`, `34.142.71.129`, `80.85.70.197` |
+| `0.0.31` | `217.76.57.165`, `3.77.94.254`, `34.107.78.179` |
+| `0.0.33` | `18.136.65.22`, `34.142.172.228` |
+| `0.0.34` | `34.16.139.248`, `35.155.212.90` |
+
+`rule:hedera-testnet-setting` The network setting of `HEDERA_TESTNET_IDENTIFIER` is a `HederaNetworkSetting` of the
+network with the id `0x01` and the name `testnet`, with the mirror node `https://testnet.mirrornode.hedera.com/api/v1`
+and these 14 consensus nodes, each with the gRPC port 50211 (plaintext):
+
+| Node account | IP addresses |
+|---|---|
+| `0.0.3` | `34.94.106.61`, `50.18.132.211` |
+| `0.0.4` | `3.212.6.13`, `35.237.119.55` |
+| `0.0.5` | `35.245.27.193`, `52.20.18.86` |
+| `0.0.6` | `34.83.112.116`, `54.70.192.33` |
+| `0.0.7` | `34.94.160.4`, `54.176.199.109` |
+| `0.0.8` | `35.155.49.147`, `34.106.102.218` |
+| `0.0.9` | `34.133.197.230`, `52.14.252.207` |
+
+## Design Notes
+
+- **Source of the node addresses.** The consensus nodes of the mainnet and testnet settings are those of the Hiero
+  JavaScript SDK (`ClientConstants.ALL_NETWORK_IPS`); a node account with several IP addresses is one node reachable
+  under each of them, so it appears once per address in `getConsensusNodes`.
+
 ## API Schema — Abstraction
 
 ```
@@ -75,6 +128,80 @@ values SYMBOLS: map<HbarUnit, string> = {
     HbarUnit.KILOBAR: "kℏ",
     HbarUnit.MEGABAR: "Mℏ",
     HbarUnit.GIGABAR: "Gℏ"
+}
+
+// The consensus nodes of the Hedera mainnet, IP address to node account, as listed in `rule:hedera-mainnet-setting`.
+values MAINNET_NODES: map<string, string> = {
+    "34.239.82.6": "0.0.3",
+    "35.237.200.180": "0.0.3",
+    "3.130.52.236": "0.0.4",
+    "35.186.191.247": "0.0.4",
+    "3.18.18.254": "0.0.5",
+    "35.192.2.25": "0.0.5",
+    "74.50.117.35": "0.0.5",
+    "23.111.186.250": "0.0.5",
+    "107.155.64.98": "0.0.5",
+    "3.114.54.4": "0.0.7",
+    "35.203.82.240": "0.0.7",
+    "35.236.5.219": "0.0.8",
+    "35.183.66.150": "0.0.8",
+    "35.181.158.250": "0.0.9",
+    "35.197.192.225": "0.0.9",
+    "177.154.62.234": "0.0.10",
+    "3.248.27.48": "0.0.10",
+    "35.242.233.154": "0.0.10",
+    "35.204.86.32": "0.0.12",
+    "35.177.162.180": "0.0.12",
+    "34.215.192.104": "0.0.13",
+    "35.234.132.107": "0.0.13",
+    "52.8.21.141": "0.0.14",
+    "35.236.2.27": "0.0.14",
+    "35.228.11.53": "0.0.15",
+    "3.121.238.26": "0.0.15",
+    "141.94.175.187": "0.0.18",
+    "34.82.78.255": "0.0.20",
+    "52.39.162.216": "0.0.20",
+    "34.76.140.109": "0.0.21",
+    "13.36.123.209": "0.0.21",
+    "52.78.202.34": "0.0.22",
+    "34.64.141.166": "0.0.22",
+    "3.18.91.176": "0.0.23",
+    "35.232.244.145": "0.0.23",
+    "69.167.169.208": "0.0.23",
+    "34.89.103.38": "0.0.24",
+    "18.135.7.211": "0.0.24",
+    "34.93.112.7": "0.0.25",
+    "13.232.240.207": "0.0.25",
+    "35.198.220.75": "0.0.28",
+    "18.139.47.5": "0.0.28",
+    "54.74.60.120": "0.0.29",
+    "34.142.71.129": "0.0.29",
+    "80.85.70.197": "0.0.29",
+    "217.76.57.165": "0.0.31",
+    "3.77.94.254": "0.0.31",
+    "34.107.78.179": "0.0.31",
+    "18.136.65.22": "0.0.33",
+    "34.142.172.228": "0.0.33",
+    "34.16.139.248": "0.0.34",
+    "35.155.212.90": "0.0.34"
+}
+
+// The consensus nodes of the Hedera testnet, IP address to node account, as listed in `rule:hedera-testnet-setting`.
+values TESTNET_NODES: map<string, string> = {
+    "34.94.106.61": "0.0.3",
+    "50.18.132.211": "0.0.3",
+    "3.212.6.13": "0.0.4",
+    "35.237.119.55": "0.0.4",
+    "35.245.27.193": "0.0.5",
+    "52.20.18.86": "0.0.5",
+    "34.83.112.116": "0.0.6",
+    "54.70.192.33": "0.0.6",
+    "34.94.160.4": "0.0.7",
+    "54.176.199.109": "0.0.7",
+    "35.155.49.147": "0.0.8",
+    "34.106.102.218": "0.0.8",
+    "34.133.197.230": "0.0.9",
+    "52.14.252.207": "0.0.9"
 }
 ```
 
@@ -241,6 +368,54 @@ test "an amount that does not fit into int64 tinybars fails to convert" {
     @@expectThrows(invalid-argument-error)
     Hbar{amount: -93, unit: HbarUnit.GIGABAR}.toTinybars()
 }
+
+// Source: this spec (`rule:hedera-mainnet-setting`).
+@@testId("the-mainnet-setting-has-the-hedera-mainnet-its-mirror-node-and-its-consensus-nodes")
+@@rule("hedera-mainnet-setting")
+test "the mainnet setting has the Hedera mainnet, its mirror node and its consensus nodes" {
+    // when
+    let setting = ledger.config.getNetworkSetting(identifier: HEDERA_MAINNET_IDENTIFIER)
+
+    // then
+    assertInstanceOf(expected: HederaNetworkSetting, actual: setting)
+    assertEquals(expected: hex(text: "00"), actual: setting.network.id)
+    assertEquals(expected: "mainnet", actual: setting.network.name)
+    assertEquals(expected: 1, actual: length(value: setting.getMirrorNodes))
+    assertTrue(condition: contains(value: setting.getMirrorNodes,
+            element: ledger.MirrorNode{restBaseUrl: "https://mainnet-public.mirrornode.hedera.com/api/v1"}))
+    assertEquals(expected: length(value: MAINNET_NODES), actual: length(value: setting.getConsensusNodes))
+    for ip in keys(value: MAINNET_NODES) {
+        assertTrue(condition: contains(value: setting.getConsensusNodes, element: ledger.ConsensusNode{
+                ip: ledger.IpAddress.fromString(value: ip), port: 50211,
+                account: ledger.AccountId.fromString(value: MAINNET_NODES[ip])}), message: ip)
+    }
+}
+
+// Source: this spec (`rule:hedera-testnet-setting`).
+@@testId("the-testnet-setting-has-the-hedera-testnet-its-mirror-node-and-its-consensus-nodes")
+@@rule("hedera-testnet-setting")
+test "the testnet setting has the Hedera testnet, its mirror node and its consensus nodes" {
+    // when
+    let setting = ledger.config.getNetworkSetting(identifier: HEDERA_TESTNET_IDENTIFIER)
+
+    // then
+    assertInstanceOf(expected: HederaNetworkSetting, actual: setting)
+    assertEquals(expected: hex(text: "01"), actual: setting.network.id)
+    assertEquals(expected: "testnet", actual: setting.network.name)
+    assertEquals(expected: 1, actual: length(value: setting.getMirrorNodes))
+    assertTrue(condition: contains(value: setting.getMirrorNodes,
+            element: ledger.MirrorNode{restBaseUrl: "https://testnet.mirrornode.hedera.com/api/v1"}))
+    assertEquals(expected: length(value: TESTNET_NODES), actual: length(value: setting.getConsensusNodes))
+    for ip in keys(value: TESTNET_NODES) {
+        assertTrue(condition: contains(value: setting.getConsensusNodes, element: ledger.ConsensusNode{
+                ip: ledger.IpAddress.fromString(value: ip), port: 50211,
+                account: ledger.AccountId.fromString(value: TESTNET_NODES[ip])}), message: ip)
+    }
+}
 ```
 
 ## Questions & Comments
+- **Keeping the node lists current.** The consensus nodes of `rule:hedera-mainnet-setting` and
+  `rule:hedera-testnet-setting` are a snapshot; the address book of a network changes. Should a client update them at
+  runtime (from the address book file or the `/network/nodes` endpoint of the mirror node), and who updates the
+  snapshot in the specs? — open

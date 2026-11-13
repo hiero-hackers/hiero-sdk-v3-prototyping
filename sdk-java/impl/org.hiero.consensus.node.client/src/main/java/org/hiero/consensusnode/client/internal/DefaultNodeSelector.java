@@ -10,8 +10,8 @@ import org.hiero.consensusnode.client.Attempt;
 import org.hiero.consensusnode.client.NodeSelector;
 import org.hiero.ledger.ConsensusNode;
 
-/// The node selector of `ExecutionSettings.createDefault(maxAttempts, attemptTimeout)`: rules 11 to 13 of the
-/// section "The default execution" of `client.md`. Keeps, per node, the failures in a row and until when the node is
+/// The node selector of `ExecutionSettings.createDefault(maxAttempts, attemptTimeout)`: rules node-failures-in-a-row,
+/// node-avoidance and node-choice of `client.md`. Keeps, per node, the failures in a row and until when the node is
 /// avoided; the state is shared by all requests of the clients that use the instance.
 public final class DefaultNodeSelector implements NodeSelector {
 
@@ -51,7 +51,7 @@ public final class DefaultNodeSelector implements NodeSelector {
         if (!available.isEmpty()) {
             return random(available);
         }
-        // rule 13: every candidate is avoided - the one whose avoidance ends first, a random one of a tie
+        // rule node-choice: every candidate is avoided - the one whose avoidance ends first, a random one of a tie
         final long first = candidates.stream().mapToLong(this::avoidedUntil).min().orElseThrow();
         return random(candidates.stream().filter(node -> avoidedUntil(node) == first).toList());
     }
@@ -70,7 +70,7 @@ public final class DefaultNodeSelector implements NodeSelector {
         }
     }
 
-    /// Rule 12: how long a node is avoided after its k-th failure in a row, min(8 s × 2^(k − 1), 1 h).
+    /// Rule node-avoidance: how long a node is avoided after its k-th failure in a row, min(8 s × 2^(k − 1), 1 h).
     ///
     /// @param failures the failures in a row, at least 1
     /// @return the time

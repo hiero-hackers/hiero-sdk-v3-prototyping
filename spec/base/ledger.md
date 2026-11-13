@@ -28,6 +28,21 @@ All identifier types can be parsed from and formatted to their canonical string 
 payer account and valid-start time. The constants `ZERO_ADDRESS`, `ZERO_ACCOUNT_ID` and
 `ZERO_CONTRACT_ID` are used in update transactions to remove a previously configured value.
 
+The text forms and the checksum of an entity id are the same in every SDK:
+
+- `rule:entity-id-text-form` The text form of an entity id is `shard.realm.num`, each number in decimal without
+  leading zeros, optionally followed by `-` and a checksum of five lowercase letters, as defined by HIP-15. Text in
+  any other form, including whitespace, a sign or upper-case letters, is rejected. `toString()` writes an id without
+  its checksum, `toStringWithChecksum()` with it.
+- `rule:evm-entity-id-text-form` A `ContractId` or `AccountId` addressed by an EVM address has the text form
+  `shard.realm.<address>`, the address as 40 lowercase hexadecimal digits without `0x`, as defined by HIP-583. It has
+  no checksum.
+- `rule:entity-id-checksum` The checksum of an entity id on a network is the HIP-15 checksum of its text form
+  `shard.realm.num`, computed with the `id` of the `Network` as the ledger id.
+- `rule:checksum-validation` `validateChecksum(network)` is `true` for an id without a checksum and for an id without
+  a number (addressed by an EVM address or a key alias), for which HIP-15 defines no checksum; otherwise it is `true`
+  exactly if the checksum is the checksum of the id on that network. Parsing an id never validates its checksum.
+
 ## Design Notes
 
 ### The address hierarchy
@@ -421,6 +436,7 @@ Tests of the ids, written as given / when / then. The checksums are those of HIP
 ```tests
 // Source: HIP-15 (the checksum belongs to every entity id and to its ledger); the vectors of HIP15_CHECKSUMS.
 @@testId("the-hip-15-checksums-are-valid-on-their-ledger")
+@@rule("entity-id-checksum")
 test "the HIP-15 checksums are valid on their ledger" {
     for text in keys(value: HIP15_CHECKSUMS) {
         // given
@@ -444,6 +460,7 @@ test "the HIP-15 checksums are valid on their ledger" {
 // of the Python SDK (ledgers 0 to 3) and of the Rust and Swift SDKs (a ledger id of more than one byte); the token,
 // topic, schedule and contract id tests of all SDKs.
 @@testId("a-hip-15-checksum-is-not-valid-on-another-ledger")
+@@rule("entity-id-checksum", "checksum-validation")
 test "a HIP-15 checksum is not valid on another ledger" {
     // given
     let mainnet = Network<hedera.HbarUnit>{id: [0], name: "mainnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
@@ -461,6 +478,7 @@ test "a HIP-15 checksum is not valid on another ledger" {
 
 // Source: HIP-15 (five lowercase letters); rejected by the Java, Go, Rust and Swift SDKs.
 @@testId("a-malformed-checksum-is-rejected")
+@@rule("entity-id-text-form")
 test "a malformed checksum is rejected" {
     for text in MALFORMED_CHECKSUMS {
         // when / then
@@ -475,6 +493,7 @@ test "a malformed checksum is rejected" {
 
 // Source: the JavaScript, Python, C++, Java, Rust and Swift SDKs; the C++ and Python SDKs.
 @@testId("text-that-is-no-entity-id-is-rejected")
+@@rule("entity-id-text-form")
 test "text that is no entity id is rejected" {
     for text in MALFORMED_ENTITY_IDS {
         // when / then
@@ -489,6 +508,7 @@ test "text that is no entity id is rejected" {
 
 // Source: all seven SDKs.
 @@testId("an-account-id-is-read-from-and-written-as-shard-realm-num")
+@@rule("entity-id-text-form")
 test "an account id is read from and written as shard.realm.num" {
     for text in ["0.0.5005", "1.2.3", "10.50.25050"] {
         // when
@@ -588,6 +608,7 @@ test "text that is no transaction id is rejected" {
 
 // Source: the Java, Rust, Swift, JavaScript and Python SDKs (the canonical string form carries no checksum).
 @@testId("tostring-omits-the-checksum-and-tostringwithchecksum-keeps-it")
+@@rule("entity-id-text-form")
 test "toString omits the checksum and toStringWithChecksum keeps it" {
     // given
     let id = AccountId.fromString(value: "0.0.123-esxsf")
@@ -601,6 +622,7 @@ test "toString omits the checksum and toStringWithChecksum keeps it" {
 // 0.0.b794f5ea0ba39494ce839613fffba74279579268); the Java, Rust, JavaScript, Go and Python SDKs write it so. The
 // addresses are those of EIP55_ADDRESSES.
 @@testId("a-contract-id-and-an-account-id-of-an-evm-address-are-read-from-and-written-as-shard-realm-address")
+@@rule("evm-entity-id-text-form")
 test "a contract id and an account id of an EVM address are read from and written as shard.realm.<address>" {
     for checksummed in EIP55_ADDRESSES {
         // given
@@ -623,6 +645,7 @@ test "a contract id and an account id of an EVM address are read from and writte
 // Source: HIP-583 and HIP-15 (no other formats are accepted): the "0x" belongs to the stand-alone Ethereum address,
 // not to an id, and an id is written in lower case.
 @@testId("an-id-with-0x-or-upper-case-hex-digits-in-its-evm-address-form-is-rejected")
+@@rule("evm-entity-id-text-form")
 test "an id with 0x or upper case hex digits in its EVM-address form is rejected" {
     for checksummed in EIP55_ADDRESSES {
         // when / then
@@ -681,6 +704,7 @@ test "a transaction id without a valid start of seconds and nanoseconds is rejec
 
 // Source: the C++ SDK (100,000 ids), the Go SDK (concurrently) and the Python SDK (the payer is kept).
 @@testId("generated-transaction-ids-keep-their-payer-and-differ")
+@@rule("consensusnode.transactions/valid-start")
 test "generated transaction ids keep their payer and differ" {
     // given
     let payer = DEFAULT(Address)
@@ -698,6 +722,7 @@ test "generated transaction ids keep their payer and differ" {
 // Source: HIP-15, section "Specification": the inputs that must be rejected (all but "0.0.123-abcde", which is well
 // formed and fails only the checksum validation), checked against its regex.
 @@testId("the-inputs-that-hip-15-rejects-are-rejected")
+@@rule("entity-id-text-form", "checksum-validation")
 test "the inputs that HIP-15 rejects are rejected" {
     for text in HIP15_REJECTED_IDS {
         // when / then
@@ -739,6 +764,24 @@ test "an IPv4 address is read only from a dotted quad of numbers up to 255" {
         @@expectThrows(illegal-format)
         IpAddress.fromString(value: text)
     }
+}
+
+// Source: this spec (`rule:checksum-validation`): HIP-15 defines no checksum for an id without one or for an id in its
+// EVM form, so nothing contradicts the network.
+@@testId("an-id-without-a-checksum-is-valid-on-every-network")
+@@rule("checksum-validation")
+test "an id without a checksum is valid on every network" {
+    // given
+    let mainnet = Network<hedera.HbarUnit>{id: [0], name: "mainnet", nativeTokenUnit: hedera.HbarUnit.HBAR}
+    let local = Network<hedera.HbarUnit>{id: [3], name: "local", nativeTokenUnit: hedera.HbarUnit.HBAR}
+
+    // when / then
+    assertTrue(condition: Address.fromString(address: "0.0.123").validateChecksum(network: mainnet))
+    assertTrue(condition: Address.fromString(address: "0.0.123").validateChecksum(network: local))
+    assertTrue(condition: AccountId.fromString(value: "0.0.52908400098527886e0f7030069857d2e4169ee7")
+            .validateChecksum(network: mainnet))
+    assertTrue(condition: ContractId.fromString(value: "1.2.52908400098527886e0f7030069857d2e4169ee7")
+            .validateChecksum(network: local))
 }
 ```
 

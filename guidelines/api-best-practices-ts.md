@@ -911,6 +911,7 @@ one test file per spec, next to the other generated tests:
 |---|---|
 | the tests of spec `keys.md` | `keys.spec.test.ts` in the directory of the namespace (`packages/base/src/keys/`), one `describe("keys", …)` |
 | `test "name" { … }` | `test("name", () => { … })`; the id (`keys/name`) and the comment above the test as `//` comments; `async () =>` if the test awaits a call |
+| `@@rule("node-choice")` | `// Rules: \`<namespace>/node-choice\`` below the id comment, with the qualified ids ([behavior rules](api-guideline.md#behavior-rules)); `node:test` has no tags |
 | `@@disabled("reason")` | `test("name", { skip: "reason" }, …)` |
 | `@@deprecated("reason")` | `// Deprecated: reason` |
 | `// given`, `// when`, `// then` and every other comment inside a test | the same `//` comment at the same place |

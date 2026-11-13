@@ -39,7 +39,7 @@ A transaction is packed for a fixed set of consensus nodes, so its attempts only
 
 ### The outcome of an attempt
 
-Every SDK classifies the answer of a node in the same way:
+`rule:attempt-outcome` Every SDK classifies the answer of a node in the same way:
 
 | `AttemptOutcome` | Answer of the node |
 |---|---|
@@ -63,29 +63,30 @@ deterministic: the same answers of the network lead to the same decisions and th
 
 **Candidates.** The nodes the attempts of a request may go to:
 
-1. a packed transaction: the nodes it was packed for;
-2. a `TransactionReceiptQuery` whose `nodeAccountId` is set, and the receipt and record queries of a `Response` whose
-   `nodeAccountId` is set: that node alone;
-3. every other request: all consensus nodes of the network of the client.
+1. `rule:candidates-of-a-packed-transaction` a packed transaction: the nodes it was packed for;
+2. `rule:candidates-of-a-receipt-of-a-node` a `TransactionReceiptQuery` whose `nodeAccountId` is set, and the receipt
+   and record queries of a `Response` whose `nodeAccountId` is set: that node alone;
+3. `rule:candidates-of-every-other-request` every other request: all consensus nodes of the network of the client.
 
 **Attempts.**
 
-4. A request is sent in attempts, numbered from 1. Every attempt counts towards `maxAttempts`, whatever its
-   outcome; this includes every attempt that asks again for a receipt or record that is not available yet.
-5. An attempt starts when the SDK begins to send the request to its node, including establishing the connection.
-   It ends when the complete answer has arrived, when the transport fails, or when `attemptTimeout` has elapsed
-   since its start, whichever comes first. An attempt that ends by the timeout has the result `TransportFailure` with
-   the kind `TIMEOUT`.
-6. The answer of an attempt is classified into an `AttemptOutcome` as described in "The outcome of an attempt".
-   After that, in this order:
+4. `rule:every-attempt-counts` A request is sent in attempts, numbered from 1. Every attempt counts towards
+   `maxAttempts`, whatever its outcome; this includes every attempt that asks again for a receipt or record that is not
+   available yet.
+5. `rule:attempt-duration` An attempt starts when the SDK begins to send the request to its node, including establishing
+   the connection. It ends when the complete answer has arrived, when the transport fails, or when `attemptTimeout` has
+   elapsed since its start, whichever comes first. An attempt that ends by the timeout has the result `TransportFailure`
+   with the kind `TIMEOUT`.
+6. `rule:after-an-attempt` The answer of an attempt is classified into an `AttemptOutcome` as described in "The outcome
+   of an attempt". After that, in this order:
    1. the node selector is told about the attempt (`NodeSelector.attemptCompleted`);
    2. every `AttemptListener` is told about it, in the order of `listeners`. An error raised by a listener is
       ignored: it neither changes nor ends the request;
-   3. if the outcome is `SUCCESS`, the request is complete. Otherwise the retry policy decides (rules 7 to 10).
+   3. if the outcome is `SUCCESS`, the request is complete. Otherwise the retry policy decides (see **Retry policy**).
 
 **Retry policy.**
 
-7. The decision depends on the outcome of the last attempt:
+7. `rule:retry-decision` The decision depends on the outcome of the last attempt:
 
    | Outcome of the last attempt | Decision |
    |---|---|
@@ -93,43 +94,46 @@ deterministic: the same answers of the network lead to the same decisions and th
    | `PENDING` | try again on the same node (`RetryOnSameNode`) |
    | `REJECTED` | give up (`GiveUp`) |
 
-8. When the last attempt is attempt number `maxAttempts`, the policy gives up, whatever the outcome.
-9. Before attempt n + 1 the SDK waits min(250 ms × 2^(n − 1), 8 s): 250 ms before the second attempt, then 500 ms,
-   1 s, 2 s, 4 s, and 8 s before every further attempt. The wait starts when attempt n ends. There is no random
-   share.
-10. A request therefore takes at most `maxAttempts` × `attemptTimeout` plus the waits between its attempts; with
-    10 attempts the waits add up to 39.75 s.
+8. `rule:give-up-after-max-attempts` When the last attempt is attempt number `maxAttempts`, the policy gives up,
+   whatever the outcome.
+9. `rule:wait-between-attempts` Before attempt n + 1 the SDK waits min(250 ms × 2^(n − 1), 8 s): 250 ms before the
+   second attempt, then 500 ms, 1 s, 2 s, 4 s, and 8 s before every further attempt. The wait starts when attempt n
+   ends. There is no random share.
+10. `rule:request-duration` A request therefore takes at most `maxAttempts` × `attemptTimeout` plus the waits between
+    its attempts; with 10 attempts the waits add up to 39.75 s.
 
 **Node selection.**
 
-11. The node selector keeps, for every node, the number k of its attempts in a row with the outcome
-    `NODE_UNAVAILABLE`, `NODE_TIMEOUT` or `WRONG_NODE`, starting at 0. This state is shared by all requests of the
-    client.
-12. After an attempt with one of these three outcomes, k of its node grows by 1, and the node is avoided until
-    min(8 s × 2^(k − 1), 1 h) after the end of the attempt: 8 s after the first such attempt, then 16 s, 32 s and so
-    on, at most 1 hour. After an attempt with any other outcome, k of its node is 0 again and the node is no longer
-    avoided.
-13. For the first attempt, and after a decision to try again on another node, the node is chosen among the
-    candidates; after such a decision without the node of the last attempt, unless it is the only candidate. The
-    choice is uniformly random among the candidates that are not avoided at that moment. When every candidate is
-    avoided, it is the candidate whose avoidance ends first; when several end at the same time, uniformly random
-    among them.
-14. After a decision to try again on the same node, the attempt goes to the node of the last attempt, also when that
-    node is avoided; no node is chosen.
+11. `rule:node-failures-in-a-row` The node selector keeps, for every node, the number k of its attempts in a row with
+    the outcome `NODE_UNAVAILABLE`, `NODE_TIMEOUT` or `WRONG_NODE`, starting at 0. This state is shared by all requests
+    of the client.
+12. `rule:node-avoidance` After an attempt with one of these three outcomes, k of its node grows by 1, and the node is
+    avoided until min(8 s × 2^(k − 1), 1 h) after the end of the attempt: 8 s after the first such attempt, then 16 s,
+    32 s and so on, at most 1 hour. After an attempt with any other outcome, k of its node is 0 again and the node is no
+    longer avoided.
+13. `rule:node-choice` For the first attempt, and after a decision to try again on another node, the node is chosen
+    among the candidates; after such a decision without the node of the last attempt, unless it is the only candidate.
+    The choice is uniformly random among the candidates that are not avoided at that moment. When every candidate is
+    avoided, it is the candidate whose avoidance ends first; when several end at the same time, uniformly random among
+    them.
+14. `rule:same-node-retry` After a decision to try again on the same node, the attempt goes to the node of the last
+    attempt, also when that node is avoided; no node is chosen.
 
 **Paid queries.**
 
-15. Before a paid query is sent, the SDK asks for its cost in a request of its own, which follows the same rules.
-16. Every attempt of a paid query carries a payment to its node. An attempt on the same node as the attempt before
-    it sends the same payment again; an attempt on another node gets a new payment to that node.
+15. `rule:cost-of-a-paid-query` Before a paid query is sent, the SDK asks for its cost in a request of its own, which
+    follows the same rules.
+16. `rule:payment-of-a-paid-query` Every attempt of a paid query carries a payment to its node. An attempt on the same
+    node as the attempt before it sends the same payment again; an attempt on another node gets a new payment to that
+    node.
 
 **Giving up.**
 
-17. When the retry policy gives up, `submit(client)` fails with `attempts-exhausted-error`. The error describes the
-    outcome and the result of the last attempt.
-18. When an answer carries a status code that no registered `TransactionStatusSupport` names (the SDK registers the
-    one of `BasicTransactionStatus` itself), `submit(client)` fails with `unknown-status-error`; there is no further
-    attempt.
+17. `rule:attempts-exhausted` When the retry policy gives up, `submit(client)` fails with `attempts-exhausted-error`.
+    The error describes the outcome and the result of the last attempt.
+18. `rule:unknown-status` When an answer carries a status code that no registered `TransactionStatusSupport` names (the
+    SDK registers the one of `BasicTransactionStatus` itself), `submit(client)` fails with `unknown-status-error`; there
+    is no further attempt.
 
 By default, transactions are signed with the operator's private key. If the key lives elsewhere (for example in an
 HSM or a remote signing service), pass your own `TransactionSigner` when creating the client.
@@ -474,9 +478,10 @@ test "a client created with a signer signs with that signer" {
     assertTrue(condition: signature.publicKey.verify(message: transactionBytes, signature: signature.signature))
 }
 
-// Source: this spec ("The default execution", rule 7): a node failure is retried on another node, a pending receipt
-// on the same node, a rejection is not retried. The current SDKs differ here (see the Design Notes).
+// Source: this spec (`rule:retry-decision`): a node failure is retried on another node, a pending receipt on the
+// same node, a rejection is not retried. The current SDKs differ here (see the Design Notes).
 @@testId("the-default-retry-policy-decides-by-the-outcome-of-the-last-attempt")
+@@rule("retry-decision")
 test "the default retry policy decides by the outcome of the last attempt" {
     // given
     let policy = ExecutionSettings.createDefault().retryPolicy
@@ -511,9 +516,10 @@ test "the default retry policy decides by the outcome of the last attempt" {
     assertEquals(expected: giveUp, actual: rejected)
 }
 
-// Source: this spec ("The default execution", rules 9 and 10): 250 ms before the second attempt, doubled up to 8 s, no
-// random share; with 10 attempts the waits add up to 39.75 s.
+// Source: this spec (`rule:wait-between-attempts`, `rule:request-duration`): 250 ms before the second attempt,
+// doubled up to 8 s, no random share; with 10 attempts the waits add up to 39.75 s.
 @@testId("the-default-retry-policy-waits-250-ms-doubled-up-to-8-s")
+@@rule("wait-between-attempts", "request-duration")
 test "the default retry policy waits 250 ms doubled up to 8 s" {
     // given
     let policy = ExecutionSettings.createDefault().retryPolicy
@@ -544,9 +550,10 @@ test "the default retry policy waits 250 ms doubled up to 8 s" {
     }
 }
 
-// Source: this spec ("The default execution", rule 8): after attempt number maxAttempts the policy gives up, whatever
-// the outcome; 10 attempts by default.
+// Source: this spec (`rule:give-up-after-max-attempts`): after attempt number maxAttempts the policy gives up,
+// whatever the outcome; 10 attempts by default.
 @@testId("the-default-retry-policy-gives-up-after-the-last-attempt")
+@@rule("give-up-after-max-attempts")
 test "the default retry policy gives up after the last attempt" {
     // given
     let request = consensusnode.queries.accounts.AccountBalanceQuery{accountId: DEFAULT, contractId: null}
@@ -576,10 +583,11 @@ test "the default retry policy gives up after the last attempt" {
     assertEquals(expected: giveUp, actual: afterTenth)
 }
 
-// Source: this spec ("The default execution", rules 12 and 13): after NODE_UNAVAILABLE, NODE_TIMEOUT or WRONG_NODE a
-// node is avoided, so the choice among the candidates falls on the others. The choice among equal candidates is
+// Source: this spec (`rule:node-avoidance`, `rule:node-choice`): after NODE_UNAVAILABLE, NODE_TIMEOUT or WRONG_NODE
+// a node is avoided, so the choice among the candidates falls on the others. The choice among equal candidates is
 // random, so it is repeated.
 @@testId("the-default-node-selector-avoids-a-node-that-failed")
+@@rule("node-avoidance", "node-choice")
 test "the default node selector avoids a node that failed" {
     // given
     let a = DEFAULT(ConsensusNode)
@@ -602,10 +610,11 @@ test "the default node selector avoids a node that failed" {
     }
 }
 
-// Source: this spec ("The default execution", rules 11 and 12): only NODE_UNAVAILABLE, NODE_TIMEOUT and WRONG_NODE
-// make a node avoided; a busy node is chosen like any other. (That a retry on another node leaves out the node of the
-// last attempt is part of the execution, which passes the remaining candidates to the selector.)
+// Source: this spec (`rule:node-failures-in-a-row`, `rule:node-avoidance`): only NODE_UNAVAILABLE, NODE_TIMEOUT and
+// WRONG_NODE make a node avoided; a busy node is chosen like any other. (That a retry on another node leaves out the
+// node of the last attempt is part of the execution, which passes the remaining candidates to the selector.)
 @@testId("the-default-node-selector-does-not-avoid-a-busy-node")
+@@rule("node-failures-in-a-row", "node-avoidance")
 test "the default node selector does not avoid a busy node" {
     // given
     let selector = ExecutionSettings.createDefault().nodeSelector
@@ -628,10 +637,11 @@ test "the default node selector does not avoid a busy node" {
     }
 }
 
-// Source: this spec ("The default execution", rules 12 and 13): every failure doubles the time a node is avoided
+// Source: this spec (`rule:node-avoidance`, `rule:node-choice`): every failure doubles the time a node is avoided
 // (8 s, 16 s, ...); when every candidate is avoided, the one whose avoidance ends first is chosen; an attempt with
 // another outcome ends the avoidance.
 @@testId("the-default-node-selector-picks-the-node-whose-avoidance-ends-first")
+@@rule("node-avoidance", "node-choice")
 test "the default node selector picks the node whose avoidance ends first" {
     // given
     let selector = ExecutionSettings.createDefault().nodeSelector
@@ -690,8 +700,8 @@ test "the default node selector picks the node whose avoidance ends first" {
   a wait from 250 ms to 8 s, 10 s per attempt, nodes avoided from 8 s to 1 h. None of these values is derived from
   measured answer times of the nodes; the current SDKs took them over from the Java SDK without a documented reason.
   Changing a value is not a change of the API, but of the specified behavior. — open, to be measured
-- **A payment sent again.** Rule 16 sends the payment of a paid query again when the query is retried on the same
-  node. If the earlier attempt timed out after the node had accepted the payment, the node answers
+- **A payment sent again.** `rule:payment-of-a-paid-query` sends the payment of a paid query again when the query is
+  retried on the same node. If the earlier attempt timed out after the node had accepted the payment, the node answers
   `DUPLICATE_TRANSACTION` (the same question as for transactions above). — open
 - **The address book after `WRONG_NODE`.** The current SDKs update their list of nodes when a node answers
   `INVALID_NODE_ACCOUNT`. Where V3 keeps its nodes is the first question above. — open

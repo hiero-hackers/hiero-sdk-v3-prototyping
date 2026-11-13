@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.ast.Expression.Operator;
 import org.hiero.sdk.v3.metalang.ast.Literal;
+import org.hiero.sdk.v3.metalang.generator.BehaviorRules;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
 import org.hiero.sdk.v3.metalang.generator.SpecFolders;
 import org.hiero.sdk.v3.metalang.model.Builtins;
@@ -175,6 +176,11 @@ final class TsSpecTestGenerator {
             }
             final StringBuilder ts = new StringBuilder();
             ts.append(INDENT).append("// `").append(test.id()).append("`\n");
+            final List<String> rules = BehaviorRules.of(test.namespace(), test.annotations());
+            if (!rules.isEmpty()) {
+                ts.append(INDENT).append("// Rules: ").append(rules.stream().map(r -> "`" + r + "`")
+                        .collect(Collectors.joining(", "))).append('\n');
+            }
             if (!test.documentation().isBlank()) {
                 ts.append(INDENT).append("//\n");
                 test.documentation().lines().forEach(l -> ts.append((INDENT + "// " + l).stripTrailing())

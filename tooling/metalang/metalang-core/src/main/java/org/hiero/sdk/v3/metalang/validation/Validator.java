@@ -28,7 +28,8 @@ public final class Validator {
             new EnumCheck(),
             new DocumentationCheck(),
             new InstanceCheck(),
-            new TestCheck());
+            new TestCheck(),
+            new BehaviorRuleCheck());
 
     /**
      * Validates the model.

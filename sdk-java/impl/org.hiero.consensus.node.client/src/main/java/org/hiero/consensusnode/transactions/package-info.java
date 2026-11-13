@@ -91,11 +91,28 @@
 /// during `pack(...)`. The fields are set as follows:
 ///
 /// - `payer` — the address of the `Account` passed to `pack(...)`.
-/// - `validStart` — "now minus a small drift offset", set by the SDK.
+/// - `validStart` — set by the SDK:
+///
+///   `rule:valid-start` The valid start of a generated `TransactionId` is the current time minus 10 seconds plus a random
+///   number of nanoseconds below 1,000, so that a node whose clock is behind still accepts the transaction. Within a
+///   process the valid starts of generated ids strictly increase: an id whose valid start would not be later than the one
+///   generated before gets that one plus 1 nanosecond, so that two transactions of the same payer never share an id.
 /// - `scheduled` — always `false`; the consensus node sets `true` when materializing a
 ///   `ScheduleCreate`.
 /// - `nonce` — always `0`; the consensus node uses non-zero values only for child transactions
 ///   spawned by smart-contract execution.
 ///
 /// The `TransactionId` cannot be set by the caller.
+///
+/// ### Defaults of a transaction
+///
+/// `maxTransactionFee` and `validDuration` may be left unset; the network requires both, so the SDK fills them in when it
+/// packs the transaction:
+///
+/// - `rule:default-max-transaction-fee` A transaction whose `maxTransactionFee` is not set is packed with a maximum fee
+///   of 200,000,000 base units of the native token of the network: 2 ℏ on Hedera.
+/// - `rule:default-valid-duration` A transaction whose `validDuration` is not set is packed with a valid duration of
+///   120 seconds.
+///
+/// A value that is set is packed as it is, also when it is higher than the default.
 package org.hiero.consensusnode.transactions;

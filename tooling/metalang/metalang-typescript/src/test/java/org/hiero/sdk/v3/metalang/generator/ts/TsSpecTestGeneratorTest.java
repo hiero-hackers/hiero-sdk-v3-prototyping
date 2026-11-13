@@ -196,6 +196,18 @@ class TsSpecTestGeneratorTest {
     @TempDir
     Path temp;
 
+    @Test
+    void aTestShouldNameItsRules() {
+        final String ts = file(generate(SCHEMA, INSTANCES, """
+                @@testId("a-rule-test")
+                @@rule("a-rule")
+                test "a test of a rule" {
+                    assertTrue(condition: true)
+                }
+                """), "/src/a/a.spec.test.ts");
+        assertThat(ts).contains("    // `a/a-rule-test`\n    // Rules: `a/a-rule`\n    test(\"a test of a rule\", () => {\n");
+    }
+
     private static String spec(final String schema, final String instances, final String tests) {
         return """
                 # A
@@ -203,6 +215,8 @@ class TsSpecTestGeneratorTest {
                 ## Description
 
                 Text.
+
+                1. `rule:a-rule` A rule of the spec.
 
                 ## API Schema
 

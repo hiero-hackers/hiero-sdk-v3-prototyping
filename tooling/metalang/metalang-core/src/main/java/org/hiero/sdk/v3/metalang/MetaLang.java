@@ -126,7 +126,7 @@ public final class MetaLang {
                 diagnostics.addAll(parsedTests.diagnostics());
                 tests.addAll(parsedTests.tests());
             }
-            schema = schema == null ? null : schema.withTests(tests);
+            schema = schema == null ? null : schema.withTests(tests).withRules(extraction.rules());
             if (schema != null) {
                 schemas.add(schema);
             }

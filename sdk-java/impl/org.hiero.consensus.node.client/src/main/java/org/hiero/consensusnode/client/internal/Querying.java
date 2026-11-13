@@ -29,7 +29,7 @@ import org.jspecify.annotations.Nullable;
 /// operator to the node that answers. The query types delegate to it.
 public final class Querying {
 
-    /// The fee the payment transaction of a query may cost, in tinybar (1 hbar).
+    /// The fee the payment transaction of a query may cost, in tinybar (1 hbar; rule query-payment).
     private static final long PAYMENT_FEE = 100_000_000L;
 
     private static final Duration PAYMENT_VALID_DURATION = Duration.ofSeconds(120);
@@ -59,7 +59,7 @@ public final class Querying {
         });
     }
 
-    /// Asks a node what a query costs, in a request of its own (rule 15 of "The default execution").
+    /// Asks a node what a query costs, in a request of its own (rule cost-of-a-paid-query).
     ///
     /// @param request the request whose execution settings apply
     /// @param query   the query
@@ -75,7 +75,7 @@ public final class Querying {
     }
 
     /// Sends a paid query: asks for the cost, then sends the query with a payment of that cost to the node of each
-    /// attempt (rules 15 and 16 of "The default execution").
+    /// attempt (rules cost-of-a-paid-query and payment-of-a-paid-query).
     ///
     /// @param request         the request whose execution settings apply
     /// @param query           the query
@@ -124,7 +124,8 @@ public final class Querying {
     }
 
     /// The payments of the attempts of one paid query. An attempt on the same node as the attempt before it sends
-    /// the same payment again; an attempt on another node gets a new payment to that node (rule 16).
+    /// the same payment again; an attempt on another node gets a new payment to that node (rule
+    /// payment-of-a-paid-query).
     private static final class Payments {
 
         private final HieroClient<?> client;
@@ -147,7 +148,8 @@ public final class Querying {
         }
     }
 
-    /// The payment of a query: a transfer of the cost from the operator to the node, signed by the operator.
+    /// The payment of a query: a transfer of the cost from the operator to the node, signed by the operator (rules
+    /// query-payment and cost-request-payment).
     private static Transaction payment(final HieroClient<?> client, final AccountId node, final long tinybars) {
         final AccountId operator = client.operatorAccount().accountId();
         final TransactionId id = Packing.transactionId(operator);

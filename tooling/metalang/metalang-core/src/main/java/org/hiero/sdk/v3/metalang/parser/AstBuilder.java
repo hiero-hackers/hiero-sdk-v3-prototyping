@@ -51,7 +51,8 @@ final class AstBuilder {
         final List<Requires> requires = ctx.requiresDecl().stream().map(this::requires).toList();
         final List<Declaration> declarations = ctx.topLevelDecl().stream().map(this::declaration).toList();
         return new SchemaFile(qualifiedName(ns.qualifiedName()), requires, declarations, comments(),
-                location(ns.start), source.description(), source.descriptionLine(), List.of(), List.of(), List.of());
+                location(ns.start), source.description(), source.descriptionLine(), List.of(), List.of(), List.of(),
+                List.of());
     }
 
     /**

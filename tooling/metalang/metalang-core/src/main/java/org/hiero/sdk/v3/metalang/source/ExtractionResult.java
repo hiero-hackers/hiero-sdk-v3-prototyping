@@ -3,6 +3,7 @@ package org.hiero.sdk.v3.metalang.source;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import org.hiero.sdk.v3.metalang.ast.BehaviorRule;
 import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
 import org.jspecify.annotations.Nullable;
 
@@ -13,9 +14,11 @@ import org.jspecify.annotations.Nullable;
  * @param diagnostics findings about the document structure
  * @param instances   the code block of the "## Default Instances for Testing" section, or {@code null} if there is none
  * @param tests       the {@code tests} code blocks of the "## Testing" section, in document order
+ * @param rules       the behavior rules of the "## Description" section, in document order
  */
 public record ExtractionResult(@Nullable SchemaSource source, List<Diagnostic> diagnostics,
-                               @Nullable SchemaSource instances, List<SchemaSource> tests) {
+                               @Nullable SchemaSource instances, List<SchemaSource> tests,
+                               List<BehaviorRule> rules) {
 
     /**
      * Creates a new extraction result.
@@ -24,10 +27,12 @@ public record ExtractionResult(@Nullable SchemaSource source, List<Diagnostic> d
      * @param diagnostics findings about the document structure
      * @param instances   the default instances block or {@code null}
      * @param tests       the tests blocks
+     * @param rules       the behavior rules
      */
     public ExtractionResult {
         diagnostics = List.copyOf(Objects.requireNonNull(diagnostics, "diagnostics must not be null"));
         tests = List.copyOf(Objects.requireNonNull(tests, "tests must not be null"));
+        rules = List.copyOf(Objects.requireNonNull(rules, "rules must not be null"));
     }
 
     /**
@@ -46,7 +51,7 @@ public record ExtractionResult(@Nullable SchemaSource source, List<Diagnostic> d
      * @param diagnostics findings about the document structure
      */
     public ExtractionResult(final @Nullable SchemaSource source, final List<Diagnostic> diagnostics) {
-        this(source, diagnostics, null, List.of());
+        this(source, diagnostics, null, List.of(), List.of());
     }
 
     /**

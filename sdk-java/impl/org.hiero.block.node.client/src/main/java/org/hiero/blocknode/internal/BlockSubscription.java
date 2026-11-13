@@ -20,7 +20,8 @@ import org.jspecify.annotations.Nullable;
 
 /// A subscription to the block stream: joins the items of each block and yields the block once its `BlockEnd` has
 /// arrived. The next message is requested only when the consumer has taken the one before (flow control), and
-/// closing the stream cancels the call.
+/// closing the stream cancels the call (rules block-stream-assembly, block-stream-flow-control and block-stream-close of
+/// `block-node.md`).
 final class BlockSubscription implements HieroStream<Block> {
 
     /// A message of the call, or its end.

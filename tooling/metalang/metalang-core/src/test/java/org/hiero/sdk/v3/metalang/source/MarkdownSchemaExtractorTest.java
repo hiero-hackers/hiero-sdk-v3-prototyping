@@ -191,4 +191,66 @@ class MarkdownSchemaExtractorTest {
             assertThat(SchemaSource.ofPlainText("a", "x").lineOffset()).isZero();
         }
     }
+
+    @Nested
+    class BehaviorRules {
+
+        @Test
+        void shouldReadTheRulesOfTheDescriptionOutsideOfCodeBlocks() {
+            // GIVEN markers at the start of a paragraph, of a numbered and of a nested item and of a bold text; a
+            // marker in a code block, one in the middle of a sentence and one that a line break moved to the start of a
+            // continuation line define no rule
+            final String markdown = """
+                    # T
+
+                    ## Description
+
+                    `rule:first` A paragraph.
+
+                    1. `rule:second` An item.
+                       2. `rule:third` A nested item.
+                    - **`rule:fourth` Bold.**
+                    See `rule:first` for details, and also
+                    `rule:second` for more.
+
+                    ```
+                    `rule:in-a-code-block`
+                    ```
+
+                    ## API Schema
+
+                    ```
+                    namespace a
+                    ```
+
+                    ## Testing
+
+                    ## Questions & Comments
+                    """;
+
+            // WHEN
+            final ExtractionResult result = extractor.extract("a.md", markdown);
+
+            // THEN
+            assertThat(result.rules()).extracting(org.hiero.sdk.v3.metalang.ast.BehaviorRule::id)
+                    .containsExactly("first", "second", "third", "fourth");
+            assertThat(result.rules().get(1).location().line()).isEqualTo(7);
+            assertThat(result.rules().get(1).location().column()).isEqualTo(4);
+            assertThat(result.diagnostics()).isEmpty();
+        }
+
+        @Test
+        void shouldIgnoreAndReportARuleOutsideOfTheDescription() {
+            // GIVEN
+            final String markdown = TestSpecs.markdown("namespace a\n").replace("## Questions & Comments",
+                    "## Questions & Comments\n\n- `rule:open` Is this a rule?");
+
+            // WHEN
+            final ExtractionResult result = extractor.extract("a.md", markdown);
+
+            // THEN
+            assertThat(result.rules()).isEmpty();
+            assertThat(ruleIds(result)).containsExactly("rule.outside-description");
+        }
+    }
 }

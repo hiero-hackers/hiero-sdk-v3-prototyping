@@ -13,7 +13,8 @@ import org.jspecify.annotations.Nullable;
 /// The only concrete `TransactionId`: the payer, the valid start and the nonce of a child transaction.
 public final class DefaultTransactionId extends TransactionId {
 
-    /// The valid start lies this far in the past, so that a node whose clock is behind still accepts it.
+    /// The valid start lies this far in the past, so that a node whose clock is behind still accepts it (rule
+    /// valid-start of `transactions.md`).
     private static final long BACKDATE_NANOS = 10_000_000_000L;
 
     private static final AtomicLong LAST_NANOS = new AtomicLong();

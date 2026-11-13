@@ -81,9 +81,10 @@ class DefaultExecutionTest {
     }
 
     @Test
-    @DisplayName("rule 7: the decision depends on the outcome of the last attempt")
+    @DisplayName("retry-decision: the decision depends on the outcome of the last attempt")
     @Tag("testId:impl/default-execution/rule-7-the-decision-depends-on-the-outcome")
-    void rule7TheDecisionDependsOnTheOutcome() {
+    @Tag("rule:consensusnode.client/retry-decision")
+    void theDecisionDependsOnTheOutcome() {
         final DefaultRetryPolicy policy = new DefaultRetryPolicy(10);
 
         for (final AttemptOutcome outcome : List.of(AttemptOutcome.NODE_UNAVAILABLE, AttemptOutcome.NODE_TIMEOUT,
@@ -95,9 +96,10 @@ class DefaultExecutionTest {
     }
 
     @Test
-    @DisplayName("rule 8: after the last attempt the policy gives up, whatever the outcome")
+    @DisplayName("give-up-after-max-attempts: after the last attempt the policy gives up, whatever the outcome")
     @Tag("testId:impl/default-execution/rule-8-after-the-last-attempt-the-policy-gives-up")
-    void rule8AfterTheLastAttemptThePolicyGivesUp() {
+    @Tag("rule:consensusnode.client/give-up-after-max-attempts")
+    void afterTheLastAttemptThePolicyGivesUp() {
         final DefaultRetryPolicy policy = new DefaultRetryPolicy(3);
 
         assertEquals(new RetryOnSameNode(Duration.ofMillis(500)), policy.decide(after(2, AttemptOutcome.PENDING)));
@@ -106,9 +108,11 @@ class DefaultExecutionTest {
     }
 
     @Test
-    @DisplayName("rule 9: the waits double from 250 ms up to 8 s")
+    @DisplayName("wait-between-attempts: the waits double from 250 ms up to 8 s")
     @Tag("testId:impl/default-execution/rule-9-the-waits-double-from-250-ms-up-to-8-s")
-    void rule9TheWaitsDoubleFrom250MsUpTo8S() {
+    @Tag("rule:consensusnode.client/wait-between-attempts")
+    @Tag("rule:consensusnode.client/request-duration")
+    void theWaitsDoubleFrom250MsUpTo8S() {
         final List<Long> waits = new ArrayList<>();
         for (int attempt = 1; attempt <= 9; attempt++) {
             waits.add(DefaultRetryPolicy.delay(attempt).toMillis());
@@ -116,14 +120,15 @@ class DefaultExecutionTest {
 
         assertEquals(List.of(250L, 500L, 1_000L, 2_000L, 4_000L, 8_000L, 8_000L, 8_000L, 8_000L), waits);
         assertEquals(Duration.ofSeconds(8), DefaultRetryPolicy.delay(Integer.MAX_VALUE));
-        // rule 10: with 10 attempts the waits add up to 39.75 s
+        // rule request-duration: with 10 attempts the waits add up to 39.75 s
         assertEquals(39_750L, waits.stream().mapToLong(Long::longValue).sum());
     }
 
     @Test
-    @DisplayName("rule 12: a node is avoided for 8 s after a failure, doubled with every further one up to 1 hour")
+    @DisplayName("node-avoidance: a node is avoided for 8 s after a failure, doubled with every further one up to 1 hour")
     @Tag("testId:impl/default-execution/rule-12-a-failed-node-is-avoided-for-a-doubling-time")
-    void rule12AFailedNodeIsAvoidedForADoublingTime() {
+    @Tag("rule:consensusnode.client/node-avoidance")
+    void aFailedNodeIsAvoidedForADoublingTime() {
         final List<Long> avoidances = new ArrayList<>();
         for (int failures = 1; failures <= 11; failures++) {
             avoidances.add(DefaultNodeSelector.avoidance(failures).toSeconds());
@@ -134,9 +139,11 @@ class DefaultExecutionTest {
     }
 
     @Test
-    @DisplayName("rules 12 and 13: a failed node is not chosen while it is avoided, and again afterwards")
+    @DisplayName("node-avoidance and node-choice: a failed node is not chosen while it is avoided, and again afterwards")
     @Tag("testId:impl/default-execution/rules-12-and-13-a-failed-node-is-avoided")
-    void rules12And13AFailedNodeIsAvoided() {
+    @Tag("rule:consensusnode.client/node-avoidance")
+    @Tag("rule:consensusnode.client/node-choice")
+    void aFailedNodeIsAvoided() {
         final AtomicLong now = new AtomicLong();
         final DefaultNodeSelector selector = new DefaultNodeSelector(now::get);
         final List<ConsensusNode> candidates = List.of(NODE_3, NODE_4);
@@ -151,9 +158,11 @@ class DefaultExecutionTest {
     }
 
     @Test
-    @DisplayName("rule 12: an attempt with another outcome ends the avoidance, also BUSY")
+    @DisplayName("node-avoidance: an attempt with another outcome ends the avoidance, also BUSY")
     @Tag("testId:impl/default-execution/rule-12-another-outcome-ends-the-avoidance")
-    void rule12AnotherOutcomeEndsTheAvoidance() {
+    @Tag("rule:consensusnode.client/node-failures-in-a-row")
+    @Tag("rule:consensusnode.client/node-avoidance")
+    void anotherOutcomeEndsTheAvoidance() {
         final DefaultNodeSelector selector = new DefaultNodeSelector(() -> 0L);
         final List<ConsensusNode> candidates = List.of(NODE_3, NODE_4);
 
@@ -164,9 +173,10 @@ class DefaultExecutionTest {
     }
 
     @Test
-    @DisplayName("rule 13: when every candidate is avoided, the one whose avoidance ends first is chosen")
+    @DisplayName("node-choice: when every candidate is avoided, the one whose avoidance ends first is chosen")
     @Tag("testId:impl/default-execution/rule-13-the-avoidance-that-ends-first-wins")
-    void rule13TheAvoidanceThatEndsFirstWins() {
+    @Tag("rule:consensusnode.client/node-choice")
+    void theAvoidanceThatEndsFirstWins() {
         final AtomicLong now = new AtomicLong();
         final DefaultNodeSelector selector = new DefaultNodeSelector(now::get);
 
@@ -181,9 +191,10 @@ class DefaultExecutionTest {
     }
 
     @Test
-    @DisplayName("rule 13: the choice among the nodes that are not avoided is random")
+    @DisplayName("node-choice: the choice among the nodes that are not avoided is random")
     @Tag("testId:impl/default-execution/rule-13-the-choice-is-random")
-    void rule13TheChoiceIsRandom() {
+    @Tag("rule:consensusnode.client/node-choice")
+    void theChoiceIsRandom() {
         final DefaultNodeSelector selector = new DefaultNodeSelector(() -> 0L);
 
         assertEquals(Set.of(NODE_3, NODE_4, NODE_5), chosen(selector, List.of(NODE_3, NODE_4, NODE_5)));

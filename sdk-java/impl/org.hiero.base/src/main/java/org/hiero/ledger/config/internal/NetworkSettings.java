@@ -19,7 +19,8 @@ import org.hiero.solo.SoloConstants;
 import org.hiero.solo.SoloNetworkSetting;
 
 /// The process-wide registry of network settings behind `ConfigFactory`, preloaded with the settings of the Hedera
-/// mainnet, the Hedera testnet and a local Solo network.
+/// mainnet, the Hedera testnet and a local Solo network (rules hedera-mainnet-setting, hedera-testnet-setting of
+/// `hedera.md` and solo-setting of `solo.md`).
 ///
 /// A second registration of an identifier replaces the first one (the spec leaves this open, see the
 /// `## Questions & Comments` of `ledger-config.md`).

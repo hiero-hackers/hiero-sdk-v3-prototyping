@@ -3787,6 +3787,7 @@ JUnit tests that look like the other generated tests:
 | the tests of spec `keys.md` | class `KeysSpecTest` in `src/test/java`, package of the namespace (`org.hiero.keys`) |
 | `test "name" { … }` | `@Test @DisplayName("name") @Tag("testId:keys/<id>") void name() { … }`; the id (`keys/<id>`) and the comment above the test as `///` comment; the tag carries the id into the test results (Open Test Reporting, ADR-0012) |
 | `@@hip("869")` | an additional `@Tag("hip:869")`; a contract test also carries the HIPs of the type and the member it tests |
+| `@@rule("node-choice")` | an additional `@Tag("rule:<namespace>/node-choice")` per rule, with the qualified id ([behavior rules](api-guideline.md#behavior-rules)) |
 | `@@disabled("reason")` | `@Disabled("reason")` |
 | `// given`, `// when`, `// then` and every other comment inside a test | the same `//` comment at the same place; a comment after a statement starts a new paragraph (blank line), a comment behind a statement stays behind it |
 | `@@deprecated("reason")` | `/// Deprecated: reason` and `@SuppressWarnings("deprecation")` on the class |

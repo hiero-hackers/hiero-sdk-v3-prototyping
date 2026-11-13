@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.hiero.sdk.v3.metalang.ast.Expression.Operator;
 import org.hiero.sdk.v3.metalang.ast.Literal;
 import org.hiero.sdk.v3.metalang.generator.GeneratedFile;
+import org.hiero.sdk.v3.metalang.generator.BehaviorRules;
 import org.hiero.sdk.v3.metalang.generator.Hips;
 import org.hiero.sdk.v3.metalang.generator.TestIds;
 import org.hiero.sdk.v3.metalang.model.Builtins;
@@ -194,6 +195,10 @@ final class SpecTestGenerator {
             for (final String hip : Hips.of(test.annotations())) {
                 java.append(INDENT).append('@').append(imports.use(TestGenerator.JUNIT, "Tag")).append('(')
                         .append(JavaLiterals.quote(Hips.tag(hip))).append(")\n");
+            }
+            for (final String rule : BehaviorRules.of(test.namespace(), test.annotations())) {
+                java.append(INDENT).append('@').append(imports.use(TestGenerator.JUNIT, "Tag")).append('(')
+                        .append(JavaLiterals.quote(BehaviorRules.tag(rule))).append(")\n");
             }
             test.annotation("disabled").ifPresent(a -> java.append(INDENT).append('@')
                     .append(imports.use(TestGenerator.JUNIT, "Disabled")).append('(')

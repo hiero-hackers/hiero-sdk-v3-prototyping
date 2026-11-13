@@ -44,10 +44,10 @@ public final class DefaultBlockNodeClient extends BlockNodeClient {
     /// The value of the protocol for "no end" and "the latest block".
     static final long UINT64_MAX = -1L;
 
-    /// The time a request other than a subscription may take.
+    /// The time a request other than a subscription may take (rule block-node-request-timeout).
     private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
-    /// The largest message the client accepts: a block can be many megabytes in size.
+    /// The largest message the client accepts: a block can be many megabytes in size (rule block-node-message-size).
     private static final int MAX_MESSAGE_SIZE = 256 * 1024 * 1024;
 
     private static final MethodDescriptor<ServerStatusRequest, ServerStatusResponse> SERVER_STATUS = method(
@@ -188,7 +188,7 @@ public final class DefaultBlockNodeClient extends BlockNodeClient {
         return new BlockNodeException(method.getFullMethodName() + " failed: " + status, status.getCause());
     }
 
-    /// The channel to the block node, opened with the first request.
+    /// The channel to the block node, opened with the first request (rule block-node-connection).
     private ManagedChannel channel() {
         synchronized (lock) {
             if (channel == null) {

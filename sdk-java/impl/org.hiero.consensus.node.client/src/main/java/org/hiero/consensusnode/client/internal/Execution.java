@@ -28,8 +28,9 @@ import org.hiero.ledger.ConsensusNode;
 import org.jspecify.annotations.Nullable;
 
 /// Executes a request in attempts, as the section "The default execution" of `client.md` specifies the steps every
-/// execution shares (rules 4 to 6, 13, 14 and 17): send to a node, classify the answer, tell the node selector and the
-/// listeners, ask the retry policy, wait, and pick the node of the next attempt. What a decision is and how long a node
+/// execution shares (rules every-attempt-counts, attempt-duration, after-an-attempt, node-choice, same-node-retry and
+/// attempts-exhausted): send to a node, classify the answer, tell the node selector and the listeners, ask the retry
+/// policy, wait, and pick the node of the next attempt. What a decision is and how long a node
 /// is avoided is up to the `RetryPolicy` and the `NodeSelector` of the settings.
 ///
 /// Runs on the calling thread and blocks while it waits; the callers run it on the executor of the client.
@@ -116,7 +117,7 @@ public final class Execution {
                 try {
                     listener.attemptCompleted(request, attempt);
                 } catch (final RuntimeException ignored) {
-                    // rule 6: an error of a listener neither changes nor ends the request
+                    // rule after-an-attempt: an error of a listener neither changes nor ends the request
                 }
             }
             if (sent.value() != null) {
@@ -170,7 +171,7 @@ public final class Execution {
         return node;
     }
 
-    /// Rule 17: the error of a request the retry policy gave up. When the node rejected the request in its precheck,
+    /// Rule attempts-exhausted: the error of a request the retry policy gave up. When the node rejected the request in its precheck,
     /// the cause is a [PrecheckException] with the status.
     private static AttemptsExhaustedException exhausted(final Attempt last) {
         final String result = switch (last.result()) {

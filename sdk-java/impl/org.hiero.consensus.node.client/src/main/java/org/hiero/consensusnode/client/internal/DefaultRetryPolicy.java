@@ -9,8 +9,8 @@ import org.hiero.consensusnode.client.RetryOnOtherNode;
 import org.hiero.consensusnode.client.RetryOnSameNode;
 import org.hiero.consensusnode.client.RetryPolicy;
 
-/// The retry policy of `ExecutionSettings.createDefault(maxAttempts, attemptTimeout)`: rules 7 to 9 of the section
-/// "The default execution" of `client.md`. Stateless, so one instance serves all requests.
+/// The retry policy of `ExecutionSettings.createDefault(maxAttempts, attemptTimeout)`: rules retry-decision,
+/// give-up-after-max-attempts and wait-between-attempts of `client.md`. Stateless, so one instance serves all requests.
 ///
 /// @param maxAttempts the number of attempts after which it gives up, at least 1
 public record DefaultRetryPolicy(int maxAttempts) implements RetryPolicy {
@@ -44,7 +44,7 @@ public record DefaultRetryPolicy(int maxAttempts) implements RetryPolicy {
         };
     }
 
-    /// Rule 9: the wait before attempt n + 1, min(250 ms × 2^(n − 1), 8 s).
+    /// Rule wait-between-attempts: the wait before attempt n + 1, min(250 ms × 2^(n − 1), 8 s).
     ///
     /// @param attempt the number n of the attempt that ended
     /// @return the wait

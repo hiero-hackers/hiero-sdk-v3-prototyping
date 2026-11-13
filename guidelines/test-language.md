@@ -119,6 +119,7 @@ test "name" {
 |---|---|
 | `@@testId("id")` | The stable id of the test within its namespace (see **Id**); the name may change, the id stays. |
 | `@@hip("869"[, ...])` | The Hiero Improvement Proposal(s) the tested behaviour comes from (see [HIP references](api-guideline.md#hip-references)). The generators tag the test with `hip:<number>`, so that a test run can be filtered by a proposal. |
+| `@@rule("node-choice"[, ...])` | The [behavior rule(s)](api-guideline.md#behavior-rules) the test checks: the id of a rule of the test's namespace, or `<namespace>/<id>` for a rule of another one (`rule.unknown` if no spec defines it). The generators tag the test with `rule:<namespace>/<id>`, so that the results of a test run show which rules are checked in which language. |
 | `@@deprecated("reason")` | The test still runs but is scheduled for removal, e.g. together with a deprecated method. |
 | `@@disabled("reason")` | The test is generated but not run (`@Disabled`, `test.skip`, `#[ignore]`, `t.Skip`, `pytest.mark.skip`). The reason is mandatory. |
 
@@ -699,6 +700,7 @@ The spec validator parses and checks every `tests` block. The rules (all ERROR u
 | `test.empty` (WARNING) | a test calls no assertion function and has no `@@expectThrows` |
 | `test.duplicate-values` | two named test values of one spec have the same name |
 | `test.unused-values` (WARNING) | no test of the spec uses the named test values |
+| `rule.unknown` | `@@rule` names a rule that no spec of the namespace defines (see [behavior rules](api-guideline.md#behavior-rules)) |
 
 ## Translation into the languages
 

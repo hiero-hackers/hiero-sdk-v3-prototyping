@@ -124,7 +124,7 @@ public final class DefaultPackedTransaction<R extends Receipt, T extends Transac
         }
         final TransactionKind<R, T> type = kind;
         final ClientRuntime runtime = ClientRuntime.of(client);
-        // rule 1 of "The default execution": a packed transaction goes only to the nodes it was packed for
+        // rule candidates-of-a-packed-transaction: a packed transaction goes only to the nodes it was packed for
         final List<ConsensusNode> candidates = bodies.stream().map(body -> runtime.node(body.node()))
                 .flatMap(Optional::stream).toList();
         if (candidates.isEmpty()) {

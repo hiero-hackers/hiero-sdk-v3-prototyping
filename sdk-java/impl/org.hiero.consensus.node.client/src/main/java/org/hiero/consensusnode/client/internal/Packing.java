@@ -28,10 +28,11 @@ import org.hiero.nativeToken.NativeToken;
 /// @param <T> the transaction type
 public final class Packing<R extends Receipt, T extends Transaction<R, T>> {
 
-    /// HAPI rejects a body without a fee; the default when the transaction sets none.
+    /// HAPI rejects a body without a fee; the default when the transaction sets none (rule default-max-transaction-fee).
     private static final Hbar DEFAULT_MAX_TRANSACTION_FEE = new Hbar(2, HbarUnit.HBAR);
 
-    /// HAPI rejects a body without a valid duration; the default when the transaction sets none.
+    /// HAPI rejects a body without a valid duration; the default when the transaction sets none (rule
+    /// default-valid-duration).
     private static final Duration DEFAULT_VALID_DURATION = Duration.ofSeconds(120);
 
     /// The node of the single body of an inner batch transaction.

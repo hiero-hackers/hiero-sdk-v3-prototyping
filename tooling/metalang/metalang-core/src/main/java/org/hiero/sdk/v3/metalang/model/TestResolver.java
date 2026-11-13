@@ -22,6 +22,7 @@ import org.hiero.sdk.v3.metalang.diagnostic.Diagnostic;
 import org.hiero.sdk.v3.metalang.diagnostic.DiagnosticCollector;
 import org.hiero.sdk.v3.metalang.diagnostic.Rule;
 import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
+import org.hiero.sdk.v3.metalang.generator.BehaviorRules;
 import org.hiero.sdk.v3.metalang.generator.Hips;
 import org.hiero.sdk.v3.metalang.semantic.BuiltinType;
 import org.hiero.sdk.v3.metalang.semantic.SpecModel;
@@ -34,7 +35,8 @@ import org.jspecify.annotations.Nullable;
  */
 final class TestResolver {
 
-    private static final Set<String> TEST_ANNOTATIONS = Set.of("disabled", "deprecated", "testId", Hips.ANNOTATION);
+    private static final Set<String> TEST_ANNOTATIONS = Set.of("disabled", "deprecated", "testId", Hips.ANNOTATION,
+            BehaviorRules.ANNOTATION);
 
     /** The form of a test id: lowercase words of letters and digits, joined by hyphens. */
     private static final Pattern TEST_ID = Pattern.compile("[a-z0-9]+(-[a-z0-9]+)*");
@@ -208,8 +210,8 @@ final class TestResolver {
         for (final Annotation annotation : test.annotations()) {
             if (!TEST_ANNOTATIONS.contains(annotation.name())) {
                 out.report(Rule.TEST_INVALID, "A test cannot be annotated with @@" + annotation.name()
-                        + "; allowed are @@testId(\"id\"), @@hip(\"869\"), @@disabled(\"reason\") and "
-                        + "@@deprecated(\"reason\")", annotation.location());
+                        + "; allowed are @@testId(\"id\"), @@hip(\"869\"), @@rule(\"id\"), @@disabled(\"reason\") "
+                        + "and @@deprecated(\"reason\")", annotation.location());
             } else if (annotation.name().equals("testId")) {
                 if (annotation.arguments().size() != 1
                         || !(annotation.arguments().getFirst() instanceof Literal.StringLiteral id)
@@ -222,6 +224,13 @@ final class TestResolver {
                         .allMatch(a -> a instanceof Literal.StringLiteral s && Hips.isNumber(s.value()))) {
                     out.report(Rule.TEST_INVALID, "@@hip needs one or more HIP numbers as strings, e.g. "
                             + "@@hip(\"869\")", annotation.location());
+                }
+            } else if (annotation.name().equals(BehaviorRules.ANNOTATION)) {
+                if (annotation.arguments().isEmpty() || !annotation.arguments().stream()
+                        .allMatch(a -> a instanceof Literal.StringLiteral s && BehaviorRules.isReference(s.value()))) {
+                    out.report(Rule.TEST_INVALID, "@@rule needs one or more rule ids as strings, of the namespace of "
+                            + "the test or qualified by a namespace, e.g. @@rule(\"node-choice\") or "
+                            + "@@rule(\"consensusnode.client/node-choice\")", annotation.location());
                 }
             } else if (annotation.arguments().size() != 1
                     || !(annotation.arguments().getFirst() instanceof Literal.StringLiteral)) {

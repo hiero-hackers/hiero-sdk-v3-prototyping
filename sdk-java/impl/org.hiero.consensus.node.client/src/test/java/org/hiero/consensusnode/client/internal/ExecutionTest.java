@@ -34,8 +34,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-/// Tests of the steps every execution shares (rules 4 to 6, 13, 14 and 17 of "The default execution" in
-/// `client.md`) and of the classification of answers ("The outcome of an attempt"). The policies used here do not wait.
+/// Tests of the steps every execution shares (rules every-attempt-counts, attempt-duration, after-an-attempt,
+/// node-choice, same-node-retry and attempts-exhausted of `client.md`) and of the classification of answers (rule
+/// attempt-outcome). The policies used here do not wait.
 @DisplayName("Execution")
 class ExecutionTest {
 
@@ -121,6 +122,7 @@ class ExecutionTest {
     @Test
     @DisplayName("a successful first attempt returns its value after the selector and the listeners were told")
     @Tag("testId:impl/execution/a-successful-first-attempt-returns-its-value")
+    @Tag("rule:consensusnode.client/after-an-attempt")
     void aSuccessfulFirstAttemptReturnsItsValue() {
         final List<String> events = new ArrayList<>();
         final Script script = new Script(success());
@@ -137,6 +139,7 @@ class ExecutionTest {
     @Test
     @DisplayName("an error of a listener neither changes nor ends the request")
     @Tag("testId:impl/execution/an-error-of-a-listener-neither-changes-nor-ends-the-request")
+    @Tag("rule:consensusnode.client/after-an-attempt")
     void anErrorOfAListenerNeitherChangesNorEndsTheRequest() {
         final ExecutionSettings settings = new ExecutionSettings(context -> new RetryOnSameNode(Duration.ZERO),
                 new FirstSelector(new ArrayList<>()), TIMEOUT, List.of((request, attempt) -> {
@@ -150,6 +153,7 @@ class ExecutionTest {
     @Test
     @DisplayName("a retry on another node chooses among the candidates without the node of the last attempt")
     @Tag("testId:impl/execution/a-retry-on-another-node-leaves-out-the-node-of-the-last-attempt")
+    @Tag("rule:consensusnode.client/node-choice")
     void aRetryOnAnotherNodeLeavesOutTheNodeOfTheLastAttempt() {
         final FirstSelector selector = new FirstSelector(new ArrayList<>());
         final Script script = new Script(busy(), success());
@@ -164,6 +168,7 @@ class ExecutionTest {
     @Test
     @DisplayName("a retry on another node uses the same node when it is the only candidate")
     @Tag("testId:impl/execution/a-retry-on-another-node-uses-the-only-candidate-again")
+    @Tag("rule:consensusnode.client/node-choice")
     void aRetryOnAnotherNodeUsesTheOnlyCandidateAgain() {
         final Script script = new Script(busy(), success());
 
@@ -176,6 +181,7 @@ class ExecutionTest {
     @Test
     @DisplayName("a retry on the same node asks the node selector for no node")
     @Tag("testId:impl/execution/a-retry-on-the-same-node-asks-the-selector-for-no-node")
+    @Tag("rule:consensusnode.client/same-node-retry")
     void aRetryOnTheSameNodeAsksTheSelectorForNoNode() {
         final FirstSelector selector = new FirstSelector(new ArrayList<>());
         final Script script = new Script(busy(), busy(), success());
@@ -190,6 +196,7 @@ class ExecutionTest {
     @Test
     @DisplayName("the retry policy sees every attempt of the request")
     @Tag("testId:impl/execution/the-retry-policy-sees-every-attempt-of-the-request")
+    @Tag("rule:consensusnode.client/every-attempt-counts")
     void theRetryPolicySeesEveryAttemptOfTheRequest() {
         final List<List<Attempt>> seen = new ArrayList<>();
         final RetryPolicy policy = context -> {
@@ -230,6 +237,7 @@ class ExecutionTest {
     @Test
     @DisplayName("a request the retry policy gives up fails with the status of a rejection as its cause")
     @Tag("testId:impl/execution/a-rejected-request-fails-with-the-status-as-cause")
+    @Tag("rule:consensusnode.client/attempts-exhausted")
     void aRejectedRequestFailsWithTheStatusAsCause() {
         final AttemptsExhaustedException error = assertThrows(AttemptsExhaustedException.class, () -> Execution.run(
                 settings(context -> new GiveUp(), new FirstSelector(new ArrayList<>()), new ArrayList<>()),
@@ -243,6 +251,7 @@ class ExecutionTest {
     @Test
     @DisplayName("a request that gives up after a transport failure has no status")
     @Tag("testId:impl/execution/a-request-that-gives-up-after-a-transport-failure-has-no-status")
+    @Tag("rule:consensusnode.client/attempts-exhausted")
     void aRequestThatGivesUpAfterATransportFailureHasNoStatus() {
         final AttemptsExhaustedException error = assertThrows(AttemptsExhaustedException.class, () -> Execution.run(
                 settings(context -> new GiveUp(), new FirstSelector(new ArrayList<>()), new ArrayList<>()),
@@ -274,6 +283,7 @@ class ExecutionTest {
     @Test
     @DisplayName("the precheck statuses have the outcomes of the specification")
     @Tag("testId:impl/execution/the-precheck-statuses-have-the-outcomes-of-the-specification")
+    @Tag("rule:consensusnode.client/attempt-outcome")
     void thePrecheckStatusesHaveTheOutcomesOfTheSpecification() {
         assertEquals(AttemptOutcome.SUCCESS, Execution.outcome(BasicTransactionStatus.OK, false));
         assertEquals(AttemptOutcome.NODE_BUSY, Execution.outcome(BasicTransactionStatus.BUSY, false));
@@ -292,6 +302,7 @@ class ExecutionTest {
     @Test
     @DisplayName("a receipt is pending while its status is UNKNOWN or OK")
     @Tag("testId:impl/execution/a-receipt-is-pending-while-its-status-is-unknown-or-ok")
+    @Tag("rule:consensusnode.client/attempt-outcome")
     void aReceiptIsPendingWhileItsStatusIsUnknownOrOk() {
         assertEquals(AttemptOutcome.PENDING, Execution.receiptOutcome(BasicTransactionStatus.UNKNOWN));
         assertEquals(AttemptOutcome.PENDING, Execution.receiptOutcome(BasicTransactionStatus.OK));
@@ -302,6 +313,7 @@ class ExecutionTest {
     @Test
     @DisplayName("the transport failures have the outcomes and the gRPC codes the kinds of the specification")
     @Tag("testId:impl/execution/the-transport-failures-have-the-outcomes-of-the-specification")
+    @Tag("rule:consensusnode.client/attempt-outcome")
     void theTransportFailuresHaveTheOutcomesOfTheSpecification() {
         assertEquals(AttemptOutcome.NODE_UNAVAILABLE, Execution.outcome(TransportFailureKind.CONNECTION));
         assertEquals(AttemptOutcome.NODE_UNAVAILABLE, Execution.outcome(TransportFailureKind.OVERLOADED));

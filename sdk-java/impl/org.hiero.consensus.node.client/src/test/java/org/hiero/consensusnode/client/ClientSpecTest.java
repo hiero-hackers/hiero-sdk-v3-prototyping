@@ -115,11 +115,12 @@ class ClientSpecTest {
 
     /// `consensusnode.client/the-default-retry-policy-decides-by-the-outcome-of-the-last-attempt`
     ///
-    /// Source: this spec ("The default execution", rule 7): a node failure is retried on another node, a pending receipt
-    /// on the same node, a rejection is not retried. The current SDKs differ here (see the Design Notes).
+    /// Source: this spec (`rule:retry-decision`): a node failure is retried on another node, a pending receipt on the
+    /// same node, a rejection is not retried. The current SDKs differ here (see the Design Notes).
     @Test
     @DisplayName("the default retry policy decides by the outcome of the last attempt")
     @Tag("testId:consensusnode.client/the-default-retry-policy-decides-by-the-outcome-of-the-last-attempt")
+    @Tag("rule:consensusnode.client/retry-decision")
     void theDefaultRetryPolicyDecidesByTheOutcomeOfTheLastAttempt() {
         // given
         final RetryPolicy policy = ExecutionSettings.createDefault().retryPolicy();
@@ -148,11 +149,13 @@ class ClientSpecTest {
 
     /// `consensusnode.client/the-default-retry-policy-waits-250-ms-doubled-up-to-8-s`
     ///
-    /// Source: this spec ("The default execution", rules 9 and 10): 250 ms before the second attempt, doubled up to 8 s, no
-    /// random share; with 10 attempts the waits add up to 39.75 s.
+    /// Source: this spec (`rule:wait-between-attempts`, `rule:request-duration`): 250 ms before the second attempt,
+    /// doubled up to 8 s, no random share; with 10 attempts the waits add up to 39.75 s.
     @Test
     @DisplayName("the default retry policy waits 250 ms doubled up to 8 s")
     @Tag("testId:consensusnode.client/the-default-retry-policy-waits-250-ms-doubled-up-to-8-s")
+    @Tag("rule:consensusnode.client/wait-between-attempts")
+    @Tag("rule:consensusnode.client/request-duration")
     void theDefaultRetryPolicyWaits250MsDoubledUpTo8S() {
         // given
         final RetryPolicy policy = ExecutionSettings.createDefault().retryPolicy();
@@ -173,11 +176,12 @@ class ClientSpecTest {
 
     /// `consensusnode.client/the-default-retry-policy-gives-up-after-the-last-attempt`
     ///
-    /// Source: this spec ("The default execution", rule 8): after attempt number maxAttempts the policy gives up, whatever
-    /// the outcome; 10 attempts by default.
+    /// Source: this spec (`rule:give-up-after-max-attempts`): after attempt number maxAttempts the policy gives up,
+    /// whatever the outcome; 10 attempts by default.
     @Test
     @DisplayName("the default retry policy gives up after the last attempt")
     @Tag("testId:consensusnode.client/the-default-retry-policy-gives-up-after-the-last-attempt")
+    @Tag("rule:consensusnode.client/give-up-after-max-attempts")
     void theDefaultRetryPolicyGivesUpAfterTheLastAttempt() {
         // given
         final AccountBalanceQuery request = new AccountBalanceQuery(defaultAccountId(), null);
@@ -200,12 +204,14 @@ class ClientSpecTest {
 
     /// `consensusnode.client/the-default-node-selector-avoids-a-node-that-failed`
     ///
-    /// Source: this spec ("The default execution", rules 12 and 13): after NODE_UNAVAILABLE, NODE_TIMEOUT or WRONG_NODE a
-    /// node is avoided, so the choice among the candidates falls on the others. The choice among equal candidates is
+    /// Source: this spec (`rule:node-avoidance`, `rule:node-choice`): after NODE_UNAVAILABLE, NODE_TIMEOUT or WRONG_NODE
+    /// a node is avoided, so the choice among the candidates falls on the others. The choice among equal candidates is
     /// random, so it is repeated.
     @Test
     @DisplayName("the default node selector avoids a node that failed")
     @Tag("testId:consensusnode.client/the-default-node-selector-avoids-a-node-that-failed")
+    @Tag("rule:consensusnode.client/node-avoidance")
+    @Tag("rule:consensusnode.client/node-choice")
     void theDefaultNodeSelectorAvoidsANodeThatFailed() {
         // given
         final ConsensusNode a = defaultConsensusNode();
@@ -226,12 +232,14 @@ class ClientSpecTest {
 
     /// `consensusnode.client/the-default-node-selector-does-not-avoid-a-busy-node`
     ///
-    /// Source: this spec ("The default execution", rules 11 and 12): only NODE_UNAVAILABLE, NODE_TIMEOUT and WRONG_NODE
-    /// make a node avoided; a busy node is chosen like any other. (That a retry on another node leaves out the node of the
-    /// last attempt is part of the execution, which passes the remaining candidates to the selector.)
+    /// Source: this spec (`rule:node-failures-in-a-row`, `rule:node-avoidance`): only NODE_UNAVAILABLE, NODE_TIMEOUT and
+    /// WRONG_NODE make a node avoided; a busy node is chosen like any other. (That a retry on another node leaves out the
+    /// node of the last attempt is part of the execution, which passes the remaining candidates to the selector.)
     @Test
     @DisplayName("the default node selector does not avoid a busy node")
     @Tag("testId:consensusnode.client/the-default-node-selector-does-not-avoid-a-busy-node")
+    @Tag("rule:consensusnode.client/node-failures-in-a-row")
+    @Tag("rule:consensusnode.client/node-avoidance")
     void theDefaultNodeSelectorDoesNotAvoidABusyNode() {
         // given
         final NodeSelector selector = ExecutionSettings.createDefault().nodeSelector();
@@ -251,12 +259,14 @@ class ClientSpecTest {
 
     /// `consensusnode.client/the-default-node-selector-picks-the-node-whose-avoidance-ends-first`
     ///
-    /// Source: this spec ("The default execution", rules 12 and 13): every failure doubles the time a node is avoided
+    /// Source: this spec (`rule:node-avoidance`, `rule:node-choice`): every failure doubles the time a node is avoided
     /// (8 s, 16 s, ...); when every candidate is avoided, the one whose avoidance ends first is chosen; an attempt with
     /// another outcome ends the avoidance.
     @Test
     @DisplayName("the default node selector picks the node whose avoidance ends first")
     @Tag("testId:consensusnode.client/the-default-node-selector-picks-the-node-whose-avoidance-ends-first")
+    @Tag("rule:consensusnode.client/node-avoidance")
+    @Tag("rule:consensusnode.client/node-choice")
     void theDefaultNodeSelectorPicksTheNodeWhoseAvoidanceEndsFirst() {
         // given
         final NodeSelector selector = ExecutionSettings.createDefault().nodeSelector();

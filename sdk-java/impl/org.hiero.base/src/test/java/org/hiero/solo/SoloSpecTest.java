@@ -2,6 +2,10 @@ package org.hiero.solo;
 
 import static org.hiero.sdk.testing.Testing.*;
 
+import org.hiero.ledger.AccountId;
+import org.hiero.ledger.ConsensusNode;
+import org.hiero.ledger.IpAddress;
+import org.hiero.ledger.MirrorNode;
 import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.ledger.config.NetworkSetting;
 import org.junit.jupiter.api.DisplayName;
@@ -26,5 +30,25 @@ class SoloSpecTest {
         // then
         assertEquals("solo", SoloConstants.SOLO_IDENTIFIER);
         assertInstanceOf(SoloNetworkSetting.class, setting);
+    }
+
+    /// `solo/the-solo-setting-has-the-local-network-its-mirror-node-and-its-consensus-node`
+    ///
+    /// Source: this spec (`rule:solo-setting`).
+    @Test
+    @DisplayName("the Solo setting has the local network, its mirror node and its consensus node")
+    @Tag("testId:solo/the-solo-setting-has-the-local-network-its-mirror-node-and-its-consensus-node")
+    @Tag("rule:solo/solo-setting")
+    void theSoloSettingHasTheLocalNetworkItsMirrorNodeAndItsConsensusNode() {
+        // when
+        final NetworkSetting setting = ConfigFactory.getNetworkSetting(SoloConstants.SOLO_IDENTIFIER);
+
+        // then
+        assertEquals(hex("03"), setting.network().id());
+        assertEquals("local", setting.network().name());
+        assertEquals(1L, length(setting.getMirrorNodes()));
+        assertTrue(contains(setting.getMirrorNodes(), new MirrorNode("http://127.0.0.1:38081/api/v1")));
+        assertEquals(1L, length(setting.getConsensusNodes()));
+        assertTrue(contains(setting.getConsensusNodes(), new ConsensusNode(IpAddress.fromString("127.0.0.1"), 35211, AccountId.fromString("0.0.3"))));
     }
 }

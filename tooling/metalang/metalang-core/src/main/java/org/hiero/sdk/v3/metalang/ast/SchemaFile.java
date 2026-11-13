@@ -18,10 +18,12 @@ import org.hiero.sdk.v3.metalang.diagnostic.SourceLocation;
  * @param instances    the default instances of the spec's {@code ## Default Instances for Testing} section
  * @param values       the named test values of the same section
  * @param tests        the tests of the {@code tests} blocks of the spec's {@code ## Testing} section
+ * @param rules        the behavior rules of the spec's {@code ## Description} section, in document order
  */
 public record SchemaFile(String namespace, List<Requires> requires, List<Declaration> declarations,
                          List<Comment> comments, SourceLocation location, String description, int descriptionLine,
-                         List<Instance> instances, List<TestValues> values, List<TestCase> tests)
+                         List<Instance> instances, List<TestValues> values, List<TestCase> tests,
+                         List<BehaviorRule> rules)
         implements Node {
 
     /**
@@ -37,11 +39,13 @@ public record SchemaFile(String namespace, List<Requires> requires, List<Declara
      * @param instances    the default instances
      * @param values       the named test values
      * @param tests        the tests
+     * @param rules        the behavior rules
      */
     public SchemaFile {
         instances = List.copyOf(Objects.requireNonNull(instances, "instances must not be null"));
         values = List.copyOf(Objects.requireNonNull(values, "values must not be null"));
         tests = List.copyOf(Objects.requireNonNull(tests, "tests must not be null"));
+        rules = List.copyOf(Objects.requireNonNull(rules, "rules must not be null"));
         Objects.requireNonNull(description, "description must not be null");
         Objects.requireNonNull(namespace, "namespace must not be null");
         requires = List.copyOf(Objects.requireNonNull(requires, "requires must not be null"));
@@ -79,7 +83,7 @@ public record SchemaFile(String namespace, List<Requires> requires, List<Declara
      */
     public SchemaFile withInstances(final List<Instance> newInstances, final List<TestValues> newValues) {
         return new SchemaFile(namespace, requires, declarations, comments, location, description, descriptionLine,
-                newInstances, newValues, tests);
+                newInstances, newValues, tests, rules);
     }
 
     /**
@@ -90,6 +94,17 @@ public record SchemaFile(String namespace, List<Requires> requires, List<Declara
      */
     public SchemaFile withTests(final List<TestCase> newTests) {
         return new SchemaFile(namespace, requires, declarations, comments, location, description, descriptionLine,
-                instances, values, newTests);
+                instances, values, newTests, rules);
+    }
+
+    /**
+     * Returns a copy with the given behavior rules.
+     *
+     * @param newRules the behavior rules
+     * @return the copy
+     */
+    public SchemaFile withRules(final List<BehaviorRule> newRules) {
+        return new SchemaFile(namespace, requires, declarations, comments, location, description, descriptionLine,
+                instances, values, tests, newRules);
     }
 }

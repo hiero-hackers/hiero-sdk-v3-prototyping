@@ -54,6 +54,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("the HIP-15 checksums are valid on their ledger")
     @Tag("testId:ledger/the-hip-15-checksums-are-valid-on-their-ledger")
+    @Tag("rule:ledger/entity-id-checksum")
     void theHIP15ChecksumsAreValidOnTheirLedger() {
         for (final String text : keys(HIP15_CHECKSUMS())) {
             // given
@@ -79,6 +80,8 @@ class LedgerSpecTest {
     @Test
     @DisplayName("a HIP-15 checksum is not valid on another ledger")
     @Tag("testId:ledger/a-hip-15-checksum-is-not-valid-on-another-ledger")
+    @Tag("rule:ledger/entity-id-checksum")
+    @Tag("rule:ledger/checksum-validation")
     void aHIP15ChecksumIsNotValidOnAnotherLedger() {
         // given
         final Network<HbarUnit> mainnet = new Network<>(new byte[] {(byte) 0}, "mainnet", HbarUnit.HBAR);
@@ -100,6 +103,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("a malformed checksum is rejected")
     @Tag("testId:ledger/a-malformed-checksum-is-rejected")
+    @Tag("rule:ledger/entity-id-text-form")
     void aMalformedChecksumIsRejected() {
         for (final String text : MALFORMED_CHECKSUMS()) {
             // when / then
@@ -115,6 +119,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("text that is no entity id is rejected")
     @Tag("testId:ledger/text-that-is-no-entity-id-is-rejected")
+    @Tag("rule:ledger/entity-id-text-form")
     void textThatIsNoEntityIdIsRejected() {
         for (final String text : MALFORMED_ENTITY_IDS()) {
             // when / then
@@ -130,6 +135,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("an account id is read from and written as shard.realm.num")
     @Tag("testId:ledger/an-account-id-is-read-from-and-written-as-shard-realm-num")
+    @Tag("rule:ledger/entity-id-text-form")
     void anAccountIdIsReadFromAndWrittenAsShardRealmNum() {
         for (final String text : List.of("0.0.5005", "1.2.3", "10.50.25050")) {
             // when
@@ -254,6 +260,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("toString omits the checksum and toStringWithChecksum keeps it")
     @Tag("testId:ledger/tostring-omits-the-checksum-and-tostringwithchecksum-keeps-it")
+    @Tag("rule:ledger/entity-id-text-form")
     void toStringOmitsTheChecksumAndToStringWithChecksumKeepsIt() {
         // given
         final AccountId id = AccountId.fromString("0.0.123-esxsf");
@@ -271,6 +278,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("a contract id and an account id of an EVM address are read from and written as shard.realm.<address>")
     @Tag("testId:ledger/a-contract-id-and-an-account-id-of-an-evm-address-are-read-from-and-written-as-shard-realm-address")
+    @Tag("rule:ledger/evm-entity-id-text-form")
     void aContractIdAndAnAccountIdOfAnEVMAddressAreReadFromAndWrittenAsShardRealmAddress() {
         for (final String checksummed : EIP55_ADDRESSES()) {
             // given
@@ -297,6 +305,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("an id with 0x or upper case hex digits in its EVM-address form is rejected")
     @Tag("testId:ledger/an-id-with-0x-or-upper-case-hex-digits-in-its-evm-address-form-is-rejected")
+    @Tag("rule:ledger/evm-entity-id-text-form")
     void anIdWith0xOrUpperCaseHexDigitsInItsEVMAddressFormIsRejected() {
         for (final String checksummed : EIP55_ADDRESSES()) {
             // when / then
@@ -367,6 +376,7 @@ class LedgerSpecTest {
     @Test
     @DisplayName("generated transaction ids keep their payer and differ")
     @Tag("testId:ledger/generated-transaction-ids-keep-their-payer-and-differ")
+    @Tag("rule:consensusnode.transactions/valid-start")
     void generatedTransactionIdsKeepTheirPayerAndDiffer() {
         // given
         final Address payer = defaultAddress();
@@ -388,6 +398,8 @@ class LedgerSpecTest {
     @Test
     @DisplayName("the inputs that HIP-15 rejects are rejected")
     @Tag("testId:ledger/the-inputs-that-hip-15-rejects-are-rejected")
+    @Tag("rule:ledger/entity-id-text-form")
+    @Tag("rule:ledger/checksum-validation")
     void theInputsThatHIP15RejectsAreRejected() {
         for (final String text : HIP15_REJECTED_IDS()) {
             // when / then
@@ -432,6 +444,26 @@ class LedgerSpecTest {
             // when / then
             assertThrows(IllegalArgumentException.class, () -> IpAddress.fromString(text));
         }
+    }
+
+    /// `ledger/an-id-without-a-checksum-is-valid-on-every-network`
+    ///
+    /// Source: this spec (`rule:checksum-validation`): HIP-15 defines no checksum for an id without one or for an id in its
+    /// EVM form, so nothing contradicts the network.
+    @Test
+    @DisplayName("an id without a checksum is valid on every network")
+    @Tag("testId:ledger/an-id-without-a-checksum-is-valid-on-every-network")
+    @Tag("rule:ledger/checksum-validation")
+    void anIdWithoutAChecksumIsValidOnEveryNetwork() {
+        // given
+        final Network<HbarUnit> mainnet = new Network<>(new byte[] {(byte) 0}, "mainnet", HbarUnit.HBAR);
+        final Network<HbarUnit> local = new Network<>(new byte[] {(byte) 3}, "local", HbarUnit.HBAR);
+
+        // when / then
+        assertTrue(Address.fromString("0.0.123").validateChecksum(mainnet));
+        assertTrue(Address.fromString("0.0.123").validateChecksum(local));
+        assertTrue(AccountId.fromString("0.0.52908400098527886e0f7030069857d2e4169ee7").validateChecksum(mainnet));
+        assertTrue(ContractId.fromString("1.2.52908400098527886e0f7030069857d2e4169ee7").validateChecksum(local));
     }
 
     private static Address defaultAddress() {

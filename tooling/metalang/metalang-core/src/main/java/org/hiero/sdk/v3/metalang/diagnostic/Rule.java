@@ -275,6 +275,17 @@ public enum Rule {
     TEST_UNUSED_VALUES("test.unused-values", Severity.WARNING,
             "Named test values are used by no test of their spec", "test-language.md#named-test-values"),
 
+    // --- behavior rules --------------------------------------------------------------------------
+    RULE_INVALID_ID("rule.invalid-id", Severity.ERROR,
+            "The id of a behavior rule is not lowercase words of letters and digits joined by hyphens",
+            "api-guideline.md#behavior-rules"),
+    RULE_DUPLICATE_ID("rule.duplicate-id", Severity.ERROR,
+            "Two behavior rules of one namespace have the same id", "api-guideline.md#behavior-rules"),
+    RULE_OUTSIDE_DESCRIPTION("rule.outside-description", Severity.WARNING,
+            "A behavior rule marker outside the '## Description' section is ignored", "api-guideline.md#behavior-rules"),
+    RULE_UNKNOWN("rule.unknown", Severity.ERROR,
+            "@@rule references a behavior rule that no spec defines", "test-language.md#tests"),
+
     // --- enums -----------------------------------------------------------------------------------
     ENUM_BODY_ATTRIBUTE("enum.body-attribute", Severity.ERROR,
             "Enum attributes must be declared in the attribute list after the enum name, not in the body",

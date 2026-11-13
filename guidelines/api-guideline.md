@@ -806,6 +806,34 @@ only the Java one maps `@@hip` so far; the others ignore it.
 Write `@@hip` where the element *originates*; a proposal that is only mentioned in passing belongs in the prose of the
 documentation.
 
+### Behavior rules
+
+Much of what an SDK does cannot be expressed by a declaration: how a request is retried, which defaults it sends, how
+an answer of the network is classified. Where every SDK has to behave the same, the spec states it as a **behavior
+rule**: a statement in the `## Description` that starts with the marker `` `rule:<id>` ``.
+
+```markdown
+**Node selection.**
+
+13. `rule:node-choice` For the first attempt, and after a decision to try again on another node, the node is chosen
+    among the candidates; ...
+```
+
+- **Where.** A rule is defined only in the `## Description`, because it is part of the behavior the users of the API
+  rely on and is published with its documentation. The marker stands at the start of a paragraph, of a list item
+  (numbered or not) or of a bold text; a marker in another section is ignored (`rule.outside-description`). In the
+  middle of a sentence, in another section or in a code comment `` `rule:<id>` `` is a mere reference.
+- **Id.** Lowercase words of letters and digits joined by hyphens (`rule.invalid-id`), unique per namespace across all
+  spec files of the namespace (`rule.duplicate-id`). The qualified id is `<namespace>/<id>`, e.g.
+  `consensusnode.client/node-choice`. The id stays when the rule is reworded, renumbered or moved; it changes only when
+  the rule means something else. A numbering of the list is presentation; refer to a rule by its id.
+- **Content.** A rule is normative and testable: it states what every SDK does, with concrete values ("waits 250 ms",
+  "2 ℏ when the transaction sets none"), not a recommendation. A value that is not part of the API — a default the SDK
+  sends, an internal timeout — is specified as a rule, not as a `constant`.
+- **Tests.** A test names the rules it checks with [`@@rule`](test-language.md#tests); the generators tag it with
+  `rule:<namespace>/<id>`, so that the results of a test run show which rule is checked in which language.
+  Hand-written code and tests of an SDK refer to a rule by its id as well (`// rule node-choice: ...`).
+
 ### Namespace
 
 Namespaces can be used to group related data types and methods.

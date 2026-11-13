@@ -94,8 +94,8 @@ public final class ClientRuntime {
         return nodes.stream().filter(node -> node.account().equals(account)).findFirst();
     }
 
-    /// All consensus nodes of the network: the candidates of a request that is not bound to nodes (rule 3 of the
-    /// section "The default execution" of `client.md`).
+    /// All consensus nodes of the network: the candidates of a request that is not bound to nodes (rule
+    /// candidates-of-every-other-request of `client.md`).
     ///
     /// @return the nodes
     public List<ConsensusNode> nodes() {
