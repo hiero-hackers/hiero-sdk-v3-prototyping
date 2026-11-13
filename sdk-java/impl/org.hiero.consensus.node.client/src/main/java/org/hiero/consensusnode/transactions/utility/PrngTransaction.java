@@ -47,7 +47,7 @@ public final class PrngTransaction extends Transaction<PrngReceipt, PrngTransact
     }
 
     @Override
-    public PackedTransaction<PrngReceipt, PrngTransaction> signWithOperator(final HieroClient<?> client) {
+    public CompletionStage<PackedTransaction<PrngReceipt, PrngTransaction>> signWithOperator(final HieroClient<?> client) {
         return new Packing<>(UtilityKinds.PRNG).signWithOperator(this, client);
     }
 
@@ -57,7 +57,7 @@ public final class PrngTransaction extends Transaction<PrngReceipt, PrngTransact
     }
 
     @Override
-    public PackedTransaction<PrngReceipt, PrngTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
+    public CompletionStage<PackedTransaction<PrngReceipt, PrngTransaction>> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
         return new Packing<>(UtilityKinds.PRNG).sign(this, payerId, signer, nodes);
     }
 
@@ -85,7 +85,7 @@ public final class PrngTransaction extends Transaction<PrngReceipt, PrngTransact
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
-    public PackedTransaction<PrngReceipt, PrngTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<PrngReceipt, PrngTransaction>> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
         return new Packing<>(UtilityKinds.PRNG).signForBatchWithOperator(this, client, batchKey);
     }
 
@@ -100,7 +100,7 @@ public final class PrngTransaction extends Transaction<PrngReceipt, PrngTransact
     /// TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
     /// sign(payerId, signer, nodes).
     @Override
-    public PackedTransaction<PrngReceipt, PrngTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<PrngReceipt, PrngTransaction>> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
         return new Packing<>(UtilityKinds.PRNG).signForBatch(this, payerId, signer, batchKey);
     }
 

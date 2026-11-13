@@ -1,7 +1,5 @@
 package org.hiero.consensusnode.transactions.files;
 
-import org.hiero.consensusnode.client.internal.FileKinds;
-import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -10,6 +8,8 @@ import org.hiero.authority.Authority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.TransactionSigner;
+import org.hiero.consensusnode.client.internal.FileKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
@@ -42,7 +42,7 @@ public final class FileDeleteTransaction extends Transaction<FileDeleteReceipt, 
     }
 
     @Override
-    public PackedTransaction<FileDeleteReceipt, FileDeleteTransaction> signWithOperator(final HieroClient<?> client) {
+    public CompletionStage<PackedTransaction<FileDeleteReceipt, FileDeleteTransaction>> signWithOperator(final HieroClient<?> client) {
         return new Packing<>(FileKinds.FILE_DELETE).signWithOperator(this, client);
     }
 
@@ -52,7 +52,7 @@ public final class FileDeleteTransaction extends Transaction<FileDeleteReceipt, 
     }
 
     @Override
-    public PackedTransaction<FileDeleteReceipt, FileDeleteTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
+    public CompletionStage<PackedTransaction<FileDeleteReceipt, FileDeleteTransaction>> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
         return new Packing<>(FileKinds.FILE_DELETE).sign(this, payerId, signer, nodes);
     }
 
@@ -80,7 +80,7 @@ public final class FileDeleteTransaction extends Transaction<FileDeleteReceipt, 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
-    public PackedTransaction<FileDeleteReceipt, FileDeleteTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<FileDeleteReceipt, FileDeleteTransaction>> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
         return new Packing<>(FileKinds.FILE_DELETE).signForBatchWithOperator(this, client, batchKey);
     }
 
@@ -95,7 +95,7 @@ public final class FileDeleteTransaction extends Transaction<FileDeleteReceipt, 
     /// TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
     /// sign(payerId, signer, nodes).
     @Override
-    public PackedTransaction<FileDeleteReceipt, FileDeleteTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<FileDeleteReceipt, FileDeleteTransaction>> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
         return new Packing<>(FileKinds.FILE_DELETE).signForBatch(this, payerId, signer, batchKey);
     }
 

@@ -1,16 +1,16 @@
 package org.hiero.consensusnode.admin.nodes;
 
-import org.hiero.consensusnode.admin.internal.AdminKinds;
-import org.hiero.consensusnode.client.internal.Packing;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import org.hiero.authority.Authority;
+import org.hiero.consensusnode.admin.internal.AdminKinds;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.TransactionSigner;
+import org.hiero.consensusnode.client.internal.Packing;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
@@ -143,7 +143,7 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
     }
 
     @Override
-    public PackedTransaction<NodeCreateReceipt, NodeCreateTransaction> signWithOperator(final HieroClient<?> client) {
+    public CompletionStage<PackedTransaction<NodeCreateReceipt, NodeCreateTransaction>> signWithOperator(final HieroClient<?> client) {
         return new Packing<>(AdminKinds.NODE_CREATE).signWithOperator(this, client);
     }
 
@@ -153,7 +153,7 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
     }
 
     @Override
-    public PackedTransaction<NodeCreateReceipt, NodeCreateTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
+    public CompletionStage<PackedTransaction<NodeCreateReceipt, NodeCreateTransaction>> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
         return new Packing<>(AdminKinds.NODE_CREATE).sign(this, payerId, signer, nodes);
     }
 
@@ -181,7 +181,7 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
-    public PackedTransaction<NodeCreateReceipt, NodeCreateTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<NodeCreateReceipt, NodeCreateTransaction>> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
         return new Packing<>(AdminKinds.NODE_CREATE).signForBatchWithOperator(this, client, batchKey);
     }
 
@@ -196,7 +196,7 @@ public final class NodeCreateTransaction extends Transaction<NodeCreateReceipt, 
     /// TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
     /// sign(payerId, signer, nodes).
     @Override
-    public PackedTransaction<NodeCreateReceipt, NodeCreateTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<NodeCreateReceipt, NodeCreateTransaction>> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
         return new Packing<>(AdminKinds.NODE_CREATE).signForBatch(this, payerId, signer, batchKey);
     }
 

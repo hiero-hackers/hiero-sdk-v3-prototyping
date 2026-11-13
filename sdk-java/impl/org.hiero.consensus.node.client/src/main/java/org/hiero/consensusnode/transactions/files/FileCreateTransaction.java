@@ -1,7 +1,5 @@
 package org.hiero.consensusnode.transactions.files;
 
-import org.hiero.consensusnode.client.internal.FileKinds;
-import org.hiero.consensusnode.client.internal.Packing;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -12,6 +10,8 @@ import org.hiero.authority.Authority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.TransactionSigner;
+import org.hiero.consensusnode.client.internal.FileKinds;
+import org.hiero.consensusnode.client.internal.Packing;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
@@ -80,7 +80,7 @@ public final class FileCreateTransaction extends Transaction<FileCreateReceipt, 
     }
 
     @Override
-    public PackedTransaction<FileCreateReceipt, FileCreateTransaction> signWithOperator(final HieroClient<?> client) {
+    public CompletionStage<PackedTransaction<FileCreateReceipt, FileCreateTransaction>> signWithOperator(final HieroClient<?> client) {
         return new Packing<>(FileKinds.FILE_CREATE).signWithOperator(this, client);
     }
 
@@ -90,7 +90,7 @@ public final class FileCreateTransaction extends Transaction<FileCreateReceipt, 
     }
 
     @Override
-    public PackedTransaction<FileCreateReceipt, FileCreateTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
+    public CompletionStage<PackedTransaction<FileCreateReceipt, FileCreateTransaction>> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
         return new Packing<>(FileKinds.FILE_CREATE).sign(this, payerId, signer, nodes);
     }
 
@@ -118,7 +118,7 @@ public final class FileCreateTransaction extends Transaction<FileCreateReceipt, 
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
-    public PackedTransaction<FileCreateReceipt, FileCreateTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<FileCreateReceipt, FileCreateTransaction>> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
         return new Packing<>(FileKinds.FILE_CREATE).signForBatchWithOperator(this, client, batchKey);
     }
 
@@ -133,7 +133,7 @@ public final class FileCreateTransaction extends Transaction<FileCreateReceipt, 
     /// TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
     /// sign(payerId, signer, nodes).
     @Override
-    public PackedTransaction<FileCreateReceipt, FileCreateTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<FileCreateReceipt, FileCreateTransaction>> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
         return new Packing<>(FileKinds.FILE_CREATE).signForBatch(this, payerId, signer, batchKey);
     }
 

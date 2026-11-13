@@ -10,8 +10,8 @@ import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.ClientFactory;
 import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.client.NodeBody;
 import org.hiero.consensusnode.client.TransactionSigner;
-import org.hiero.consensusnode.transactions.NodeBody;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.utility.PrngReceipt;
 import org.hiero.consensusnode.transactions.utility.PrngTransaction;
@@ -199,8 +199,8 @@ class TransactionsBatchSpecTest {
         final HieroClient<?> client = defaultHieroClient();
 
         // when
-        final PackedTransaction<PrngReceipt, PrngTransaction> bySigner = new PrngTransaction(null).signForBatch(signerPayer, signer, defaultAuthority());
-        final PackedTransaction<PrngReceipt, PrngTransaction> byOperator = new PrngTransaction(null).signForBatchWithOperator(client, defaultAuthority());
+        final PackedTransaction<PrngReceipt, PrngTransaction> bySigner = new PrngTransaction(null).signForBatch(signerPayer, signer, defaultAuthority()).toCompletableFuture().join();
+        final PackedTransaction<PrngReceipt, PrngTransaction> byOperator = new PrngTransaction(null).signForBatchWithOperator(client, defaultAuthority()).toCompletableFuture().join();
 
         // then
         assertEquals(signerPayer, bySigner.transactionId().accountId());

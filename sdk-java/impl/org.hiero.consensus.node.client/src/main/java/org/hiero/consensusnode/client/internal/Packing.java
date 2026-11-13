@@ -8,8 +8,8 @@ import java.util.concurrent.CompletionStage;
 import org.hiero.authority.Authority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.client.NodeBody;
 import org.hiero.consensusnode.client.TransactionSigner;
-import org.hiero.consensusnode.transactions.NodeBody;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Response;
@@ -62,7 +62,7 @@ public final class Packing<R extends Receipt, T extends Transaction<R, T>> {
     /// @param self   the transaction
     /// @param client the client
     /// @return the transaction packed for the node of the client and signed by its operator
-    public PackedTransaction<R, T> signWithOperator(final T self, final HieroClient<?> client) {
+    public CompletionStage<PackedTransaction<R, T>> signWithOperator(final T self, final HieroClient<?> client) {
         return sign(self, client.operatorAccount().accountId(), client.transactionSigner(),
                 List.of(ClientRuntime.of(client).selectNode().account()));
     }
@@ -84,8 +84,8 @@ public final class Packing<R extends Receipt, T extends Transaction<R, T>> {
     /// @param signer  the signer
     /// @param nodes   the target nodes
     /// @return the signed packed transaction
-    public PackedTransaction<R, T> sign(final T self, final AccountId payerId, final TransactionSigner signer,
-                                        final List<AccountId> nodes) {
+    public CompletionStage<PackedTransaction<R, T>> sign(final T self, final AccountId payerId,
+                                                         final TransactionSigner signer, final List<AccountId> nodes) {
         return pack(self, payerId, nodes).sign(signer);
     }
 
@@ -95,7 +95,7 @@ public final class Packing<R extends Receipt, T extends Transaction<R, T>> {
     /// @param client the client
     /// @return the response
     public CompletionStage<Response<R>> signWithOperatorAndSubmit(final T self, final HieroClient<?> client) {
-        return signWithOperator(self, client).submit(client);
+        return signWithOperator(self, client).thenCompose(packed -> packed.submit(client));
     }
 
     /// `Transaction.packForBatch(payer, batchKey)`.
@@ -114,8 +114,9 @@ public final class Packing<R extends Receipt, T extends Transaction<R, T>> {
     /// @param client   the client
     /// @param batchKey the key that must sign the batch
     /// @return the signed packed inner transaction
-    public PackedTransaction<R, T> signForBatchWithOperator(final T self, final HieroClient<?> client,
-                                                           final Authority batchKey) {
+    public CompletionStage<PackedTransaction<R, T>> signForBatchWithOperator(final T self,
+                                                                            final HieroClient<?> client,
+                                                                            final Authority batchKey) {
         return signForBatch(self, client.operatorAccount().accountId(), client.transactionSigner(), batchKey);
     }
 
@@ -136,8 +137,9 @@ public final class Packing<R extends Receipt, T extends Transaction<R, T>> {
     /// @param signer   the signer
     /// @param batchKey the key that must sign the batch
     /// @return the signed packed inner transaction
-    public PackedTransaction<R, T> signForBatch(final T self, final AccountId payerId, final TransactionSigner signer,
-                                                final Authority batchKey) {
+    public CompletionStage<PackedTransaction<R, T>> signForBatch(final T self, final AccountId payerId,
+                                                                 final TransactionSigner signer,
+                                                                 final Authority batchKey) {
         return packForBatch(self, payerId, batchKey).sign(signer);
     }
 

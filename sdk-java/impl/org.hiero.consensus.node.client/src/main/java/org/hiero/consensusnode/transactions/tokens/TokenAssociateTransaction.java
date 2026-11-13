@@ -1,7 +1,5 @@
 package org.hiero.consensusnode.transactions.tokens;
 
-import org.hiero.consensusnode.client.internal.TokenKinds;
-import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -11,6 +9,8 @@ import org.hiero.authority.Authority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.TransactionSigner;
+import org.hiero.consensusnode.client.internal.Packing;
+import org.hiero.consensusnode.client.internal.TokenKinds;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
@@ -61,7 +61,7 @@ public final class TokenAssociateTransaction extends Transaction<TokenAssociateR
     }
 
     @Override
-    public PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction> signWithOperator(final HieroClient<?> client) {
+    public CompletionStage<PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction>> signWithOperator(final HieroClient<?> client) {
         return new Packing<>(TokenKinds.TOKEN_ASSOCIATE).signWithOperator(this, client);
     }
 
@@ -71,7 +71,7 @@ public final class TokenAssociateTransaction extends Transaction<TokenAssociateR
     }
 
     @Override
-    public PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
+    public CompletionStage<PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction>> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
         return new Packing<>(TokenKinds.TOKEN_ASSOCIATE).sign(this, payerId, signer, nodes);
     }
 
@@ -99,7 +99,7 @@ public final class TokenAssociateTransaction extends Transaction<TokenAssociateR
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
-    public PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction>> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
         return new Packing<>(TokenKinds.TOKEN_ASSOCIATE).signForBatchWithOperator(this, client, batchKey);
     }
 
@@ -114,7 +114,7 @@ public final class TokenAssociateTransaction extends Transaction<TokenAssociateR
     /// TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
     /// sign(payerId, signer, nodes).
     @Override
-    public PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<TokenAssociateReceipt, TokenAssociateTransaction>> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
         return new Packing<>(TokenKinds.TOKEN_ASSOCIATE).signForBatch(this, payerId, signer, batchKey);
     }
 

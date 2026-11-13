@@ -1,7 +1,5 @@
 package org.hiero.consensusnode.transactions.tokens;
 
-import org.hiero.consensusnode.client.internal.TokenKinds;
-import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -9,6 +7,8 @@ import org.hiero.authority.Authority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.TransactionSigner;
+import org.hiero.consensusnode.client.internal.Packing;
+import org.hiero.consensusnode.client.internal.TokenKinds;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Response;
 import org.hiero.ledger.AccountId;
@@ -43,7 +43,7 @@ public final class TokenBurnFungibleTransaction extends TokenBurnTransaction<Tok
     }
 
     @Override
-    public PackedTransaction<TokenBurnReceipt, TokenBurnFungibleTransaction> signWithOperator(final HieroClient<?> client) {
+    public CompletionStage<PackedTransaction<TokenBurnReceipt, TokenBurnFungibleTransaction>> signWithOperator(final HieroClient<?> client) {
         return new Packing<>(TokenKinds.TOKEN_BURN_FUNGIBLE).signWithOperator(this, client);
     }
 
@@ -53,7 +53,7 @@ public final class TokenBurnFungibleTransaction extends TokenBurnTransaction<Tok
     }
 
     @Override
-    public PackedTransaction<TokenBurnReceipt, TokenBurnFungibleTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
+    public CompletionStage<PackedTransaction<TokenBurnReceipt, TokenBurnFungibleTransaction>> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
         return new Packing<>(TokenKinds.TOKEN_BURN_FUNGIBLE).sign(this, payerId, signer, nodes);
     }
 
@@ -81,7 +81,7 @@ public final class TokenBurnFungibleTransaction extends TokenBurnTransaction<Tok
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
-    public PackedTransaction<TokenBurnReceipt, TokenBurnFungibleTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<TokenBurnReceipt, TokenBurnFungibleTransaction>> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
         return new Packing<>(TokenKinds.TOKEN_BURN_FUNGIBLE).signForBatchWithOperator(this, client, batchKey);
     }
 
@@ -96,7 +96,7 @@ public final class TokenBurnFungibleTransaction extends TokenBurnTransaction<Tok
     /// TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
     /// sign(payerId, signer, nodes).
     @Override
-    public PackedTransaction<TokenBurnReceipt, TokenBurnFungibleTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<TokenBurnReceipt, TokenBurnFungibleTransaction>> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
         return new Packing<>(TokenKinds.TOKEN_BURN_FUNGIBLE).signForBatch(this, payerId, signer, batchKey);
     }
 

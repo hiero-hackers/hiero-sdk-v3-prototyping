@@ -1,7 +1,5 @@
 package org.hiero.consensusnode.transactions.schedule;
 
-import org.hiero.consensusnode.client.internal.ScheduleKinds;
-import org.hiero.consensusnode.client.internal.Packing;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -12,6 +10,8 @@ import org.hiero.authority.Authority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.TransactionSigner;
+import org.hiero.consensusnode.client.internal.Packing;
+import org.hiero.consensusnode.client.internal.ScheduleKinds;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
@@ -102,7 +102,7 @@ public final class ScheduleCreateTransaction extends Transaction<ScheduleCreateR
     }
 
     @Override
-    public PackedTransaction<ScheduleCreateReceipt, ScheduleCreateTransaction> signWithOperator(final HieroClient<?> client) {
+    public CompletionStage<PackedTransaction<ScheduleCreateReceipt, ScheduleCreateTransaction>> signWithOperator(final HieroClient<?> client) {
         return new Packing<>(ScheduleKinds.SCHEDULE_CREATE).signWithOperator(this, client);
     }
 
@@ -112,7 +112,7 @@ public final class ScheduleCreateTransaction extends Transaction<ScheduleCreateR
     }
 
     @Override
-    public PackedTransaction<ScheduleCreateReceipt, ScheduleCreateTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
+    public CompletionStage<PackedTransaction<ScheduleCreateReceipt, ScheduleCreateTransaction>> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
         return new Packing<>(ScheduleKinds.SCHEDULE_CREATE).sign(this, payerId, signer, nodes);
     }
 
@@ -140,7 +140,7 @@ public final class ScheduleCreateTransaction extends Transaction<ScheduleCreateR
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
-    public PackedTransaction<ScheduleCreateReceipt, ScheduleCreateTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<ScheduleCreateReceipt, ScheduleCreateTransaction>> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
         return new Packing<>(ScheduleKinds.SCHEDULE_CREATE).signForBatchWithOperator(this, client, batchKey);
     }
 
@@ -155,7 +155,7 @@ public final class ScheduleCreateTransaction extends Transaction<ScheduleCreateR
     /// TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
     /// sign(payerId, signer, nodes).
     @Override
-    public PackedTransaction<ScheduleCreateReceipt, ScheduleCreateTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<ScheduleCreateReceipt, ScheduleCreateTransaction>> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
         return new Packing<>(ScheduleKinds.SCHEDULE_CREATE).signForBatch(this, payerId, signer, batchKey);
     }
 

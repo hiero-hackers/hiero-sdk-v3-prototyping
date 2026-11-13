@@ -15,6 +15,7 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.client.NodeBody;
 import org.hiero.consensusnode.client.NodeSignature;
 import org.hiero.consensusnode.client.Submittable;
 import org.hiero.consensusnode.queries.PaidQueryResponse;
@@ -165,7 +166,9 @@ public final class Querying {
                                 .setAmount(tinybars))))
                 .build();
         final byte[] bytes = body.toByteArray();
-        final NodeSignature signature = client.transactionSigner().signTransaction(bytes, node);
+        // the payment is made within an attempt, which runs on the executor of the client and may block there
+        final NodeSignature signature = client.transactionSigner().signTransaction(new NodeBody(node, bytes))
+                .toCompletableFuture().join();
         final SignedTransaction signed = SignedTransaction.newBuilder().setBodyBytes(ByteString.copyFrom(bytes))
                 .setSigMap(SignatureMap.newBuilder().addSigPair(Protobuf.toSignaturePair(signature.publicKey(),
                         signature.signature()))).build();

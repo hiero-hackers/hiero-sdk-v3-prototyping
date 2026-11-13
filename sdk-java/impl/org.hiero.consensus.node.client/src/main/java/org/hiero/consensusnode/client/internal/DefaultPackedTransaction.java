@@ -11,21 +11,26 @@ import com.hederahashgraph.api.proto.java.TransactionResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.client.NodeBody;
 import org.hiero.consensusnode.client.NodeSignature;
 import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.consensusnode.status.BasicTransactionStatus;
-import org.hiero.consensusnode.transactions.NodeBody;
+import org.hiero.consensusnode.transactions.IncompleteSignaturesException;
+import org.hiero.consensusnode.transactions.InvalidSignatureException;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
+import org.hiero.consensusnode.transactions.UnknownNodeException;
 import org.hiero.keys.PublicKey;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.ConsensusNode;
@@ -65,41 +70,63 @@ public final class DefaultPackedTransaction<R extends Receipt, T extends Transac
     @Override
     public PackedTransaction<R, T> sign(final Account account) {
         final PublicKey publicKey = account.privateKey().createPublicKey();
-        return sign((bytes, node) -> new NodeSignature(node, publicKey, account.privateKey().sign(bytes)));
+        return withSignatures(bodies.stream()
+                .map(body -> new NodeSignature(body.node(), publicKey, account.privateKey().sign(body.bytes())))
+                .toList());
     }
 
     @Override
-    public PackedTransaction<R, T> sign(final TransactionSigner signer) {
-        final List<NodeSignature> signatures = new ArrayList<>(nodeSignatures());
-        for (final NodeBody body : bodies) {
-            final NodeSignature signature = signer.signTransaction(body.bytes(), body.node());
-            if (!signature.node().equals(body.node())) {
-                throw new IllegalArgumentException("The signer signed the body of " + body.node() + " for "
-                        + signature.node());
-            }
-            if (!hasSigned(signatures, signature.node(), signature.publicKey())) {
+    public CompletionStage<PackedTransaction<R, T>> sign(final TransactionSigner signer) {
+        Objects.requireNonNull(signer, "signer must not be null");
+        // rule signer-concurrency: the bodies of all target nodes are handed to the signer at once
+        final List<CompletableFuture<NodeSignature>> pending = bodies.stream()
+                .map(body -> signer.signTransaction(body).toCompletableFuture()).toList();
+        return CompletableFuture.allOf(pending.toArray(CompletableFuture[]::new)).thenApply(done -> {
+            final List<NodeSignature> signatures = new ArrayList<>();
+            for (int i = 0; i < bodies.size(); i++) {
+                final NodeSignature signature = pending.get(i).join();
+                // rule signer-identity: the signature is the one of the body's node and of the signer's key
+                if (!signature.node().equals(bodies.get(i).node())
+                        || !signature.publicKey().equals(signer.publicKey())) {
+                    throw new IllegalStateException("The signer signed the body of " + bodies.get(i).node()
+                            + " for " + signature.node() + " with another key than its public key");
+                }
                 signatures.add(signature);
             }
-        }
-        return new DefaultPackedTransaction<>(transactionId(), signatures, bodies, kind);
+            return withSignatures(signatures);
+        });
     }
 
     @Override
     public PackedTransaction<R, T> sign(final List<NodeSignature> signatures) {
-        final Set<AccountId> nodes = bodies.stream().map(NodeBody::node).collect(Collectors.toSet());
+        final Map<AccountId, NodeBody> byNode = bodies.stream()
+                .collect(Collectors.toMap(NodeBody::node, Function.identity()));
         for (final NodeSignature signature : signatures) {
-            if (!nodes.contains(signature.node())) {
-                throw new IllegalArgumentException("The signature references " + signature.node()
-                        + ", which is no target node of the transaction");
+            if (!byNode.containsKey(signature.node())) {
+                throw new UnknownNodeException("The signature references " + signature.node()
+                        + ", which is no target node of the transaction", null);
             }
         }
         final Map<PublicKey, Set<AccountId>> signedNodes = signatures.stream().collect(Collectors.groupingBy(
                 NodeSignature::publicKey, Collectors.mapping(NodeSignature::node, Collectors.toSet())));
         signedNodes.forEach((key, signed) -> {
-            if (!signed.containsAll(nodes)) {
-                throw new IllegalArgumentException("The signatures of a key do not cover every target node");
+            if (!signed.containsAll(byNode.keySet())) {
+                throw new IncompleteSignaturesException("The signatures of a key do not cover every target node",
+                        null);
             }
         });
+        for (final NodeSignature signature : signatures) {
+            if (!signature.publicKey().verify(byNode.get(signature.node()).bytes(), signature.signature())) {
+                throw new InvalidSignatureException("The signature of " + signature.publicKey() + " for "
+                        + signature.node() + " does not verify against the body of the node", null);
+            }
+        }
+        return withSignatures(signatures);
+    }
+
+    /// This transaction with the given signatures added; a signature of a key that has already signed the body of
+    /// its node is not added again.
+    private PackedTransaction<R, T> withSignatures(final List<NodeSignature> signatures) {
         final List<NodeSignature> all = new ArrayList<>(nodeSignatures());
         for (final NodeSignature signature : signatures) {
             if (!hasSigned(all, signature.node(), signature.publicKey())) {

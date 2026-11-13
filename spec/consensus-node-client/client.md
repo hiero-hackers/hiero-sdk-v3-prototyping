@@ -138,6 +138,27 @@ deterministic: the same answers of the network lead to the same decisions and th
 By default, transactions are signed with the operator's private key. If the key lives elsewhere (for example in an
 HSM or a remote signing service), pass your own `TransactionSigner` when creating the client.
 
+### External signing
+
+A `TransactionSigner` signs transactions with a key the SDK does not hold — a cloud KMS (AWS KMS, Google Cloud KMS,
+Azure Key Vault), HashiCorp Vault transit, a PKCS#11 HSM, or a hardware wallet. Signing with such a key is I/O, so
+`signTransaction` is asynchronous. One key contributes one signature per target node, so the SDK calls the signer once
+per `NodeBody`.
+
+Every `TransactionSigner` follows this contract:
+
+- `rule:signer-input` `body.bytes` is the serialized `TransactionBody` addressed to `body.node`, exactly as returned by
+  `PackedTransaction.signableBodies()`. The signer signs these bytes and nothing else.
+- `rule:signer-digest` The signer applies the digest of its key algorithm itself: Ed25519 signs the raw body bytes;
+  ECDSA secp256k1 signs the Keccak-256 digest of the body bytes. A backend that cannot compute Keccak-256 (no cloud
+  KMS offers it) receives the 32-byte digest computed locally by the signer.
+- `rule:signer-signature-encoding` `NodeSignature.signature` is 64 bytes for both algorithms. For ECDSA secp256k1 it
+  is `r || s` (32 bytes each, big-endian) with `s` in the lower half of the curve order; a DER-encoded or high-`s`
+  signature returned by a backend is converted by the signer.
+- `rule:signer-identity` `NodeSignature.node` is `body.node`, and `NodeSignature.publicKey` is the signer's
+  `publicKey`.
+- `rule:signer-concurrency` The SDK may call `signTransaction` concurrently for the bodies of different target nodes.
+
 ## Design Notes
 
 - **Classification and decision are separate.** The SDK classifies every attempt into an `AttemptOutcome`, and that
@@ -186,19 +207,30 @@ Account {
     @@immutable privateKey: PrivateKey // the private key of the operator
 }
 
+// A serialized TransactionBody for one target consensus node: the exact bytes a signer must sign. The bytes differ
+// per node because each body carries the account of its target node.
+NodeBody {
+    @@immutable node: AccountId
+    @@immutable bytes: bytes
+}
+
 // A signature of a transaction for one specific consensus node.
 type NodeSignature {
       @@immutable node: AccountId       // the consensus node's fee account
       @@immutable publicKey: PublicKey  // the public key that verifies the signature
-      @@immutable signature: bytes      // the signature over the transaction bytes
+      @@immutable signature: bytes      // the 64-byte signature over the transaction bytes (see "External signing")
 }
 
 // Signs transactions on behalf of the operator. Implement it to sign with a key that is not held in memory,
-// for example in an HSM or a remote signing service.
+// for example in a cloud KMS, an HSM or a remote signing service; see "External signing" for the contract.
 abstraction TransactionSigner {
 
-  // Signs the given transaction bytes for the given consensus node.
-  NodeSignature signTransaction(transactionBytes: bytes, node: AccountId)
+  @@immutable publicKey: PublicKey // the public key that verifies every signature of this signer
+
+  // Signs the TransactionBody addressed to body.node. Called once per target node, possibly concurrently for
+  // different nodes.
+  @@threadSafe
+  @@async NodeSignature signTransaction(body: NodeBody)
 }
 
 // Common base for anything that is sent to the consensus node network and produces a typed result — both
@@ -398,6 +430,27 @@ NetworkSetting networkSettings = ...;
 HieroClient client = HieroClient.createClient(networkSettings, operatorAccount);
 ```
 
+The following example signs a transfer with a key held in a cloud KMS. For an ECDSA secp256k1 key, the
+`TransactionSigner` implementation computes `keccak256(body.bytes)` locally, has the KMS sign that digest, and
+converts the DER signature it gets back into the 64-byte low-`s` form (see _External signing_):
+
+```
+HieroClient client = ...;
+TransactionSigner kmsSigner = ...;           // wraps an ECDSA secp256k1 key in a cloud KMS
+AccountId treasury = ...;                    // an account whose key is kmsSigner.publicKey
+AccountId recipient = ...;
+list<AccountId> nodes = ...;                 // two target nodes
+
+PackedTransaction<...> packed = new TransferTransaction()
+    .hbarTransfers([
+        new HbarTransfer(treasury,  NativeToken.of(-10, HBAR_UNIT)),
+        new HbarTransfer(recipient, NativeToken.of(+10, HBAR_UNIT)),
+    ])
+    .sign(treasury, kmsSigner, nodes);       // asynchronous: two KMS calls, one per target node
+
+packed.submit(client);
+```
+
 ## Testing
 
 Offline tests of client creation and of the default signer, written as given / when / then. Nothing is sent to a
@@ -438,6 +491,7 @@ test "a client is bound to the network of its network setting" {
 // Source: this spec (by default the operator account's private key signs); the Java and JavaScript SDKs
 // (Client.setOperator signs with the operator's private key) and the Go SDK (the operator's key signs).
 @@testId("the-default-signer-signs-with-the-private-key-of-the-operator-account")
+@@rule("signer-identity", "signer-signature-encoding")
 test "the default signer signs with the private key of the operator account" {
     // given
     let operator = DEFAULT(Account)
@@ -446,11 +500,13 @@ test "the default signer signs with the private key of the operator account" {
     let transactionBytes = utf8(text: "transaction body")
 
     // when
-    let signature = client.transactionSigner.signTransaction(transactionBytes: transactionBytes, node: node)
+    let signature = client.transactionSigner.signTransaction(body: NodeBody{node: node, bytes: transactionBytes})
 
     // then
     assertEquals(expected: node, actual: signature.node)
     assertEquals(expected: operator.privateKey.createPublicKey(), actual: signature.publicKey)
+    assertEquals(expected: client.transactionSigner.publicKey, actual: signature.publicKey)
+    assertEquals(expected: 64, actual: length(value: signature.signature))
     assertTrue(condition: signature.publicKey.verify(message: transactionBytes, signature: signature.signature))
     assertFalse(condition: signature.publicKey.verify(message: utf8(text: "another body"),
             signature: signature.signature))
@@ -459,6 +515,7 @@ test "the default signer signs with the private key of the operator account" {
 // Source: the Java and JavaScript SDKs (Client.setOperatorWith: an operator whose transactions are signed by a
 // given signer instead of its private key). The second key is the secp256k1 key of the tests of keys.md.
 @@testId("a-client-created-with-a-signer-signs-with-that-signer")
+@@rule("signer-identity", "signer-digest", "signer-signature-encoding")
 test "a client created with a signer signs with that signer" {
     // given
     let signerKey = keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
@@ -469,12 +526,14 @@ test "a client created with a signer signs with that signer" {
 
     // when
     let client = createClient(networkSettings: DEFAULT, operatorAccount: DEFAULT, transactionSigner: signer)
-    let signature = client.transactionSigner.signTransaction(transactionBytes: transactionBytes,
-            node: AccountId.fromString(value: "0.0.3"))
+    let signature = client.transactionSigner.signTransaction(body: NodeBody{node: AccountId.fromString(value: "0.0.3"),
+            bytes: transactionBytes})
 
     // then
     assertEquals(expected: DEFAULT(Account), actual: client.operatorAccount)
     assertEquals(expected: signerKey.createPublicKey(), actual: signature.publicKey)
+    assertEquals(expected: signerKey.createPublicKey(), actual: signer.publicKey)
+    assertEquals(expected: 64, actual: length(value: signature.signature))
     assertTrue(condition: signature.publicKey.verify(message: transactionBytes, signature: signature.signature))
 }
 
@@ -672,6 +731,33 @@ test "the default node selector picks the node whose avoidance ends first" {
 }
 ```
 
+### Scenarios on a Solo network
+
+The following scenarios need a network and are described as Given / When / Then scenarios on a local Solo network
+(see [`guidelines/testing-guideline.md`](../../guidelines/testing-guideline.md) for the platform and the shared
+*"`HieroClient` connected to a solo network with a funded operator account"* fixture). They use a *test signer*: a
+`TransactionSigner` over an in-memory key that follows the *External signing* contract and records every `NodeBody` it
+is asked to sign. It stands in for a KMS or HSM, which the Solo platform does not provide.
+
+#### `client/external-signer-signs-as-payer`
+
+- **Given** a `HieroClient` connected to a solo network with a funded operator account, a test signer over a new
+  Ed25519 key, and an account created by the operator with the test signer's `publicKey` as its key and a balance of
+  1 HBAR.
+- **When** a `TransferTransaction` moving 1 tinybar from that account to the operator's account id is signed with
+  `sign(accountId, testSigner, nodes)` for two target nodes and submitted.
+- **Then** the receipt status is `SUCCESS`, the test signer was called exactly once per target node, and the recorded
+  bodies equal the `signableBodies()` of the packed transaction.
+
+#### `client/external-ecdsa-signer-signs-as-payer`
+
+- **Given** the same setup as `client/external-signer-signs-as-payer`, but with a test signer over a new ECDSA
+  secp256k1 key.
+- **When** the same transfer is signed with `sign(accountId, testSigner, nodes)` and submitted.
+- **Then** the receipt status is `SUCCESS`, and every `NodeSignature` produced by the test signer is 64 bytes and
+  verifies with `publicKey.verify(body.bytes, signature)` against its node's body.
+
+
 ## Questions & Comments
 
 - **A `HieroClient` cannot reach its network.** `HieroClient` is immutable and holds operator, `Network`
@@ -709,3 +795,21 @@ test "the default node selector picks the node whose avoidance ends first" {
   would let tests run without real waiting, in every language. — open
 - **Errors of a `NodeSelector` or `RetryPolicy`.** What happens when a custom implementation fails or returns a node
   that is not a candidate is not specified. — open
+- **Open points of the `TransactionSigner` contract.** The contract of *External signing* was validated with a library
+  that implements this API on top of the V2 JavaScript SDK, with AWS KMS and HashiCorp Vault signers (ported from
+  [hiero-remote-signer](https://github.com/Jexsie/hiero-remote-signer)). It surfaced these open points:
+  - **`Account` still requires a `PrivateKey`.** An operator whose key is in a KMS has no `PrivateKey`, so callers
+    need both an `Account` and a separate `transactionSigner`. The library models `Account { accountId, signer:
+    TransactionSigner }`, where an in-memory key is one `TransactionSigner` implementation. That removes
+    `HieroClient.transactionSigner`, the three-argument `createClient`, and the `sign(payerId, signer, nodes)` /
+    `signForBatch(payerId, signer, batchKey)` tiers; it touches ADR-0001 and ADR-0002 and needs an ADR of its own.
+    — open
+  - **Signing cost scales with the number of target nodes.** A remote signer makes one billed, rate-limited,
+    audit-logged backend call per target node and key. Should `HieroClient` own node selection (callers of
+    `pack(payer, nodes)` have no API to obtain `nodes`), and should `TransactionSigner` offer an optional batch method
+    such as `@@async list<NodeSignature> signTransactions(bodies: list<NodeBody>)`? — open
+  - **Lifecycle.** A PKCS#11 signer holds a session that must be closed. Should `TransactionSigner` be closeable, or is
+    that left to implementations? — open
+  - **Wire format.** Out-of-process signing ships `NodeBody` values to a signing service and `NodeSignature` values
+    back, but neither has a defined serialization (unlike `PackedTransaction.toBytes()`), so every pipeline invents
+    its own. — open

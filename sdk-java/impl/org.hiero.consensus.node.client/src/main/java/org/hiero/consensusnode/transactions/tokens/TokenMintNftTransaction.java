@@ -1,7 +1,5 @@
 package org.hiero.consensusnode.transactions.tokens;
 
-import org.hiero.consensusnode.client.internal.TokenKinds;
-import org.hiero.consensusnode.client.internal.Packing;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -10,6 +8,8 @@ import org.hiero.authority.Authority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.TransactionSigner;
+import org.hiero.consensusnode.client.internal.Packing;
+import org.hiero.consensusnode.client.internal.TokenKinds;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Response;
 import org.hiero.ledger.AccountId;
@@ -50,7 +50,7 @@ public final class TokenMintNftTransaction extends TokenMintTransaction<TokenMin
     }
 
     @Override
-    public PackedTransaction<TokenMintNftReceipt, TokenMintNftTransaction> signWithOperator(final HieroClient<?> client) {
+    public CompletionStage<PackedTransaction<TokenMintNftReceipt, TokenMintNftTransaction>> signWithOperator(final HieroClient<?> client) {
         return new Packing<>(TokenKinds.TOKEN_MINT_NFT).signWithOperator(this, client);
     }
 
@@ -60,7 +60,7 @@ public final class TokenMintNftTransaction extends TokenMintTransaction<TokenMin
     }
 
     @Override
-    public PackedTransaction<TokenMintNftReceipt, TokenMintNftTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
+    public CompletionStage<PackedTransaction<TokenMintNftReceipt, TokenMintNftTransaction>> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
         return new Packing<>(TokenKinds.TOKEN_MINT_NFT).sign(this, payerId, signer, nodes);
     }
 
@@ -88,7 +88,7 @@ public final class TokenMintNftTransaction extends TokenMintTransaction<TokenMin
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
-    public PackedTransaction<TokenMintNftReceipt, TokenMintNftTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<TokenMintNftReceipt, TokenMintNftTransaction>> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
         return new Packing<>(TokenKinds.TOKEN_MINT_NFT).signForBatchWithOperator(this, client, batchKey);
     }
 
@@ -103,7 +103,7 @@ public final class TokenMintNftTransaction extends TokenMintTransaction<TokenMin
     /// TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
     /// sign(payerId, signer, nodes).
     @Override
-    public PackedTransaction<TokenMintNftReceipt, TokenMintNftTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<TokenMintNftReceipt, TokenMintNftTransaction>> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
         return new Packing<>(TokenKinds.TOKEN_MINT_NFT).signForBatch(this, payerId, signer, batchKey);
     }
 

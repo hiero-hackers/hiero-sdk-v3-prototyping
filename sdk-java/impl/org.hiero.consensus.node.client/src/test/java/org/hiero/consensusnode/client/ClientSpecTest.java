@@ -72,6 +72,8 @@ class ClientSpecTest {
     @Test
     @DisplayName("the default signer signs with the private key of the operator account")
     @Tag("testId:consensusnode.client/the-default-signer-signs-with-the-private-key-of-the-operator-account")
+    @Tag("rule:consensusnode.client/signer-identity")
+    @Tag("rule:consensusnode.client/signer-signature-encoding")
     void theDefaultSignerSignsWithThePrivateKeyOfTheOperatorAccount() {
         // given
         final Account operator = defaultAccount();
@@ -80,11 +82,13 @@ class ClientSpecTest {
         final byte[] transactionBytes = utf8("transaction body");
 
         // when
-        final NodeSignature signature = client.transactionSigner().signTransaction(transactionBytes, node);
+        final NodeSignature signature = client.transactionSigner().signTransaction(new NodeBody(node, transactionBytes)).toCompletableFuture().join();
 
         // then
         assertEquals(node, signature.node());
         assertEquals(operator.privateKey().createPublicKey(), signature.publicKey());
+        assertEquals(client.transactionSigner().publicKey(), signature.publicKey());
+        assertEquals(64L, length(signature.signature()));
         assertTrue(signature.publicKey().verify(transactionBytes, signature.signature()));
         assertFalse(signature.publicKey().verify(utf8("another body"), signature.signature()));
     }
@@ -96,6 +100,9 @@ class ClientSpecTest {
     @Test
     @DisplayName("a client created with a signer signs with that signer")
     @Tag("testId:consensusnode.client/a-client-created-with-a-signer-signs-with-that-signer")
+    @Tag("rule:consensusnode.client/signer-identity")
+    @Tag("rule:consensusnode.client/signer-digest")
+    @Tag("rule:consensusnode.client/signer-signature-encoding")
     void aClientCreatedWithASignerSignsWithThatSigner() {
         // given
         final PrivateKey signerKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
@@ -105,11 +112,13 @@ class ClientSpecTest {
 
         // when
         final HieroClient<?> client = ClientFactory.createClient(defaultNetworkSetting(), defaultAccount(), signer);
-        final NodeSignature signature = client.transactionSigner().signTransaction(transactionBytes, AccountId.fromString("0.0.3"));
+        final NodeSignature signature = client.transactionSigner().signTransaction(new NodeBody(AccountId.fromString("0.0.3"), transactionBytes)).toCompletableFuture().join();
 
         // then
         assertEquals(defaultAccount(), client.operatorAccount());
         assertEquals(signerKey.createPublicKey(), signature.publicKey());
+        assertEquals(signerKey.createPublicKey(), signer.publicKey());
+        assertEquals(64L, length(signature.signature()));
         assertTrue(signature.publicKey().verify(transactionBytes, signature.signature()));
     }
 

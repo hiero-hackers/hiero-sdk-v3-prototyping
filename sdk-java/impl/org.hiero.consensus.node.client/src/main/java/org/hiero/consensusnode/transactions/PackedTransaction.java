@@ -3,7 +3,9 @@ package org.hiero.consensusnode.transactions;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletionStage;
 import org.hiero.consensusnode.client.Account;
+import org.hiero.consensusnode.client.NodeBody;
 import org.hiero.consensusnode.client.NodeSignature;
 import org.hiero.consensusnode.client.RetryPolicy;
 import org.hiero.consensusnode.client.Submittable;
@@ -14,8 +16,8 @@ import org.jspecify.annotations.Nullable;
 
 /// A packed, wire-ready transaction bound to a payer, a set of target nodes and a TransactionId. Its
 /// content cannot change anymore; signatures can be added. Submitting it yields a Response.
-/// Retry-tuning fields (maxAttempts, maxBackoff, minBackoff, attemptTimeout) and the
-/// submit(client) method are inherited from Submittable.
+/// The execution settings it can override (retryPolicy, attemptTimeout) and the submit(client) method are
+/// inherited from Submittable.
 public abstract class PackedTransaction<ReceiptT extends Receipt, TransactionT extends Transaction<ReceiptT, TransactionT>> extends Submittable<Response<ReceiptT>> {
 
     private final TransactionId transactionId;
@@ -66,22 +68,26 @@ public abstract class PackedTransaction<ReceiptT extends Receipt, TransactionT e
     /// this transaction is not added again.
     public abstract PackedTransaction<ReceiptT, TransactionT> sign(final Account account);
 
-    /// Adds the signatures of the signer for every target node. A key that has already signed this transaction is
-    /// not added again.
-    public abstract PackedTransaction<ReceiptT, TransactionT> sign(final TransactionSigner signer);
+    /// Adds the signatures of the signer for every target node, one signTransaction call each. A key that has already
+    /// signed this transaction is not added again.
+    public abstract CompletionStage<PackedTransaction<ReceiptT, TransactionT>> sign(final TransactionSigner signer);
 
     /// Returns the serialized TransactionBody bytes for every target node. Used by out-of-process
     /// signing flows (raw HSMs, async signing pipelines, multi-party coordination, audit archival)
-    /// that cannot be wrapped behind a synchronous TransactionSigner. The returned list has one
+    /// that cannot be wrapped behind a TransactionSigner. The returned list has one
     /// NodeBody per target node, in the order in which the nodes were given.
     public abstract List<NodeBody> signableBodies();
 
     /// Attaches externally-produced NodeSignatures to this PackedTransaction and returns a new
-    /// PackedTransaction containing them. The provided list must contain one signature per node
-    /// returned by signableBodies() for the same PublicKey; otherwise submit() will fail with
-    /// INVALID_SIGNATURE on the chosen node.
-    /// Throws if a signature references a node that is not a target node of this transaction, or if
-    /// signatures for any target node are missing.
+    /// PackedTransaction containing them; this PackedTransaction is not changed. The list must contain one signature
+    /// per node returned by signableBodies() for each PublicKey. Fails with unknown-node-error if a signature references
+    /// a node that is not a target node of this transaction, with incomplete-signatures-error if a public key has no
+    /// signature for a target node, and with invalid-signature-error if a signature does not verify against the body of
+    /// its node and its public key (checked here, so that a bad signature does not fail later as INVALID_SIGNATURE).
+    ///
+    /// @throws UnknownNodeException if an unknown node error occurs
+    /// @throws IncompleteSignaturesException if an incomplete signatures error occurs
+    /// @throws InvalidSignatureException if an invalid signature error occurs
     public abstract PackedTransaction<ReceiptT, TransactionT> sign(final List<NodeSignature> signatures);
 
     public abstract byte[] toBytes();

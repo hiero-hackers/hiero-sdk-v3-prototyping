@@ -1,8 +1,5 @@
 package org.hiero.consensusnode.clpr.transactions;
 
-import org.hiero.consensusnode.client.internal.Packing;
-import org.hiero.consensusnode.clpr.internal.ClprKinds;
-import org.hiero.consensusnode.clpr.internal.Ownership;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -11,6 +8,9 @@ import org.hiero.authority.Authority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.TransactionSigner;
+import org.hiero.consensusnode.client.internal.Packing;
+import org.hiero.consensusnode.clpr.internal.ClprKinds;
+import org.hiero.consensusnode.clpr.internal.Ownership;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Response;
 import org.hiero.consensusnode.transactions.Transaction;
@@ -54,7 +54,7 @@ public final class ClprRegisterChannelTransaction extends Transaction<ClprRegist
     }
 
     @Override
-    public PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction> signWithOperator(final HieroClient<?> client) {
+    public CompletionStage<PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction>> signWithOperator(final HieroClient<?> client) {
         return new Packing<>(ClprKinds.REGISTER_CHANNEL).signWithOperator(this, client);
     }
 
@@ -64,7 +64,7 @@ public final class ClprRegisterChannelTransaction extends Transaction<ClprRegist
     }
 
     @Override
-    public PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
+    public CompletionStage<PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction>> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
         return new Packing<>(ClprKinds.REGISTER_CHANNEL).sign(this, payerId, signer, nodes);
     }
 
@@ -92,7 +92,7 @@ public final class ClprRegisterChannelTransaction extends Transaction<ClprRegist
     /// Packs this transaction for a batch with the client's operator as payer and adds the operator's
     /// signature. The batch counterpart of signWithOperator(client).
     @Override
-    public PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction>> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey) {
         return new Packing<>(ClprKinds.REGISTER_CHANNEL).signForBatchWithOperator(this, client, batchKey);
     }
 
@@ -107,7 +107,7 @@ public final class ClprRegisterChannelTransaction extends Transaction<ClprRegist
     /// TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
     /// sign(payerId, signer, nodes).
     @Override
-    public PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction>> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
         return new Packing<>(ClprKinds.REGISTER_CHANNEL).signForBatch(this, payerId, signer, batchKey);
     }
 

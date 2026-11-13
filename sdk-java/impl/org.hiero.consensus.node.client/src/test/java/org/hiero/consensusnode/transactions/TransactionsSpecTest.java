@@ -5,19 +5,30 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Set;
 import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.consensusnode.client.Account;
+import org.hiero.consensusnode.client.ClientFactory;
+import org.hiero.consensusnode.client.HieroClient;
+import org.hiero.consensusnode.client.NodeBody;
 import org.hiero.consensusnode.client.NodeSignature;
+import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.consensusnode.transactions.accounts.AccountCreateReceipt;
 import org.hiero.consensusnode.transactions.accounts.AccountCreateTransaction;
 import org.hiero.consensusnode.transactions.utility.PrngReceipt;
 import org.hiero.consensusnode.transactions.utility.PrngTransaction;
+import org.hiero.hedera.HbarUnit;
 import org.hiero.keys.ByteImportEncoding;
 import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
 import org.hiero.keys.PrivateKey;
 import org.hiero.ledger.AccountId;
+import org.hiero.ledger.ConsensusNode;
+import org.hiero.ledger.IpAddress;
+import org.hiero.ledger.MirrorNode;
+import org.hiero.ledger.Network;
 import org.hiero.ledger.TransactionId;
+import org.hiero.ledger.config.NetworkSetting;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -273,6 +284,92 @@ class TransactionsSpecTest {
         assertThrows(IllegalArgumentException.class, () -> PackedTransaction.fromBytes(slice(complete, 0L, checked(integer(length(complete)).subtract(integer(10L)), "int64").longValueExact())));
     }
 
+    /// `consensusnode.transactions/signatures-over-the-bodies-of-another-transaction-are-rejected`
+    ///
+    /// Source: this spec (sign(signatures) checks every signature against the body of its node and fails with
+    /// invalid-signature-error); the remote signer of hiero-remote-signer. The two transactions differ only in their
+    /// transaction id, so the signatures of the second do not verify against the bodies of the first.
+    @Test
+    @DisplayName("signatures over the bodies of another transaction are rejected")
+    @Tag("testId:consensusnode.transactions/signatures-over-the-bodies-of-another-transaction-are-rejected")
+    void signaturesOverTheBodiesOfAnotherTransactionAreRejected() {
+        // given
+        final Account payer = defaultAccount();
+        final List<AccountId> nodes = List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"));
+        final PackedTransaction<PrngReceipt, PrngTransaction> first = new PrngTransaction(null).pack(payer, nodes);
+        final PackedTransaction<PrngReceipt, PrngTransaction> second = new PrngTransaction(null).pack(payer, nodes);
+        final List<NodeSignature> wrong = List.of(new NodeSignature(get(second.signableBodies(), 0L).node(), payer.privateKey().createPublicKey(), payer.privateKey().sign(get(second.signableBodies(), 0L).bytes())), new NodeSignature(get(second.signableBodies(), 1L).node(), payer.privateKey().createPublicKey(), payer.privateKey().sign(get(second.signableBodies(), 1L).bytes())));
+
+        // when / then
+        assertThrows(InvalidSignatureException.class, () -> first.sign(wrong));
+        assertEquals(0L, length(first.nodeSignatures()));
+    }
+
+    /// `consensusnode.transactions/a-signature-for-a-node-that-is-not-a-target-node-is-rejected`
+    ///
+    /// Source: this spec (sign(signatures) fails with unknown-node-error for a signature of a node that is not a target
+    /// node).
+    @Test
+    @DisplayName("a signature for a node that is not a target node is rejected")
+    @Tag("testId:consensusnode.transactions/a-signature-for-a-node-that-is-not-a-target-node-is-rejected")
+    void aSignatureForANodeThatIsNotATargetNodeIsRejected() {
+        // given
+        final Account payer = defaultAccount();
+        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).pack(payer, List.of(AccountId.fromString("0.0.3")));
+        final NodeBody body = get(packed.signableBodies(), 0L);
+        final NodeSignature foreign = new NodeSignature(AccountId.fromString("0.0.9"), payer.privateKey().createPublicKey(), payer.privateKey().sign(body.bytes()));
+
+        // when / then
+        assertThrows(UnknownNodeException.class, () -> packed.sign(List.of(foreign)));
+    }
+
+    /// `consensusnode.transactions/signatures-that-miss-a-target-node-are-rejected`
+    ///
+    /// Source: this spec (sign(signatures) fails with incomplete-signatures-error if a public key has no signature for a
+    /// target node).
+    @Test
+    @DisplayName("signatures that miss a target node are rejected")
+    @Tag("testId:consensusnode.transactions/signatures-that-miss-a-target-node-are-rejected")
+    void signaturesThatMissATargetNodeAreRejected() {
+        // given
+        final Account payer = defaultAccount();
+        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).pack(payer, List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4")));
+        final NodeBody body = get(packed.signableBodies(), 0L);
+        final NodeSignature only = new NodeSignature(body.node(), payer.privateKey().createPublicKey(), payer.privateKey().sign(body.bytes()));
+
+        // when / then
+        assertThrows(IncompleteSignaturesException.class, () -> packed.sign(List.of(only)));
+    }
+
+    /// `consensusnode.transactions/a-signer-signs-every-target-node-of-a-restored-transaction`
+    ///
+    /// Source: this spec (a restored transaction can be signed by a TransactionSigner, one signature per target node); the
+    /// remote signer of hiero-remote-signer (multi-party signing over toBytes and fromBytes).
+    @Test
+    @DisplayName("a signer signs every target node of a restored transaction")
+    @Tag("testId:consensusnode.transactions/a-signer-signs-every-target-node-of-a-restored-transaction")
+    @Tag("rule:consensusnode.client/signer-identity")
+    void aSignerSignsEveryTargetNodeOfARestoredTransaction() {
+        // given
+        final Account payer = new Account(AccountId.fromString("0.0.1002"), KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"));
+        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).sign(payer, List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4")));
+        final TransactionSigner signer = defaultTransactionSigner();
+
+        // when
+        final PackedTransaction<?, ?> signed = PackedTransaction.fromBytes(packed.toBytes()).sign(signer).toCompletableFuture().join();
+
+        // then
+        assertEquals(packed.transactionId(), signed.transactionId());
+        assertEquals(4L, length(signed.nodeSignatures()));
+        for (final NodeBody body : signed.signableBodies()) {
+            for (final NodeSignature signature : signed.nodeSignatures()) {
+                if (equal(signature.node(), body.node())) {
+                    assertTrue(signature.publicKey().verify(body.bytes(), signature.signature()));
+                }
+            }
+        }
+    }
+
     private static Account defaultAccount() {
         return new Account(defaultAccountId(), defaultPrivateKey());
     }
@@ -283,5 +380,33 @@ class TransactionsSpecTest {
 
     private static PrivateKey defaultPrivateKey() {
         return KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c");
+    }
+
+    private static TransactionSigner defaultTransactionSigner() {
+        return defaultHieroClient().transactionSigner();
+    }
+
+    private static HieroClient<?> defaultHieroClient() {
+        return ClientFactory.createClient(defaultNetworkSetting(), defaultAccount());
+    }
+
+    private static NetworkSetting defaultNetworkSetting() {
+        return new NetworkSetting(defaultNetwork(), Set.of(defaultConsensusNode()), Set.of(defaultMirrorNode()));
+    }
+
+    private static Network<?> defaultNetwork() {
+        return new Network<>(new byte[] {(byte) 3}, "local", HbarUnit.HBAR);
+    }
+
+    private static ConsensusNode defaultConsensusNode() {
+        return new ConsensusNode(defaultIpAddress(), 35211, new AccountId(0L, 0L, "", 3L, null, null));
+    }
+
+    private static IpAddress defaultIpAddress() {
+        return new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1});
+    }
+
+    private static MirrorNode defaultMirrorNode() {
+        return new MirrorNode("http://127.0.0.1:38081");
     }
 }

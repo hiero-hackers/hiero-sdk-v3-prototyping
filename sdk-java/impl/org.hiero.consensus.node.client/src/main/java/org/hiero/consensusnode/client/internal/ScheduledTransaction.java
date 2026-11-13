@@ -58,7 +58,7 @@ public final class ScheduledTransaction extends Transaction<Receipt, ScheduledTr
     }
 
     @Override
-    public PackedTransaction<Receipt, ScheduledTransaction> signWithOperator(final HieroClient<?> client) {
+    public CompletionStage<PackedTransaction<Receipt, ScheduledTransaction>> signWithOperator(final HieroClient<?> client) {
         throw notPackable();
     }
 
@@ -68,7 +68,7 @@ public final class ScheduledTransaction extends Transaction<Receipt, ScheduledTr
     }
 
     @Override
-    public PackedTransaction<Receipt, ScheduledTransaction> sign(final AccountId payerId,
+    public CompletionStage<PackedTransaction<Receipt, ScheduledTransaction>> sign(final AccountId payerId,
                                                                 final TransactionSigner signer,
                                                                 final List<AccountId> nodes) {
         throw notPackable();
@@ -86,7 +86,7 @@ public final class ScheduledTransaction extends Transaction<Receipt, ScheduledTr
     }
 
     @Override
-    public PackedTransaction<Receipt, ScheduledTransaction> signForBatchWithOperator(final HieroClient<?> client,
+    public CompletionStage<PackedTransaction<Receipt, ScheduledTransaction>> signForBatchWithOperator(final HieroClient<?> client,
                                                                                     final Authority batchKey) {
         throw notPackable();
     }
@@ -98,7 +98,7 @@ public final class ScheduledTransaction extends Transaction<Receipt, ScheduledTr
     }
 
     @Override
-    public PackedTransaction<Receipt, ScheduledTransaction> signForBatch(final AccountId payerId,
+    public CompletionStage<PackedTransaction<Receipt, ScheduledTransaction>> signForBatch(final AccountId payerId,
                                                                         final TransactionSigner signer,
                                                                         final Authority batchKey) {
         throw notPackable();

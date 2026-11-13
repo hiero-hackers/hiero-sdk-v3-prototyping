@@ -75,6 +75,13 @@ workflows:
 | An already-packed transaction that needs another in-process signature (multi-sig) | `PackedTransaction.sign(account)` or `PackedTransaction.sign(signer)` |
 | Out-of-process signing (async pipeline, multi-party, audit archival, raw HSM bytes) | `PackedTransaction.signableBodies()` + `PackedTransaction.sign(signatures)` |
 
+Every method that can call a `TransactionSigner` is asynchronous, because `TransactionSigner.signTransaction` is (an
+external signer is I/O: KMS, HSM, Vault, hardware wallet). That covers `signWithOperator`, `signWithOperatorAndSubmit`
+and `signForBatchWithOperator` (the client's `transactionSigner` may be external), `sign(payerId, signer, nodes)`,
+`signForBatch(payerId, signer, batchKey)` and `PackedTransaction.sign(signer)`. The variants that sign with the
+in-memory `PrivateKey` of an `Account` and `PackedTransaction.sign(signatures)` stay synchronous. See
+`consensusnode.client` for the signer contract.
+
 Signature ordering is irrelevant — `NodeSignature` entries form a set; the consensus node accepts
 them in any order. The packed transaction can also be built first via `Transaction.pack(...)`
 without any signature and shipped to one or more signers downstream.
@@ -171,15 +178,8 @@ requires {AccountId, ContractId, TransactionId} from ledger
 requires {EvmAddress} from evm
 requires {NativeToken, ExchangeRate} from nativeToken
 requires {Authority} from authority
-requires {Account, HieroClient, NodeSignature, Submittable, TransactionSigner} from consensusnode.client
+requires {Account, HieroClient, NodeBody, NodeSignature, Submittable, TransactionSigner} from consensusnode.client
 requires {TransactionStatus} from consensusnode.status
-
-// A serialized TransactionBody for one target consensus node — the exact bytes an external signer
-// must sign. Bytes differ per node because each body carries the target node's nodeAccountID.
-type NodeBody {
-    @@immutable node: AccountId
-    @@immutable bytes: bytes
-}
 
 // Base type of all transactions: a mutable builder that is packed and signed into a PackedTransaction
 // before it is submitted. The first type parameter is the receipt type; the second is the concrete
@@ -194,11 +194,11 @@ abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$
 
   PackedTransaction<$$Receipt, $$Self> pack(payer: Account, nodes: list<AccountId>)  
     
-  PackedTransaction<$$Receipt, $$Self> signWithOperator(client: HieroClient<ANY>)
+  @@async PackedTransaction<$$Receipt, $$Self> signWithOperator(client: HieroClient<ANY>)
   
   PackedTransaction<$$Receipt, $$Self> sign(payer: Account, nodes: list<AccountId>)
   
-  PackedTransaction<$$Receipt, $$Self> sign(payerId: AccountId, signer: TransactionSigner, nodes: list<AccountId>)
+  @@async PackedTransaction<$$Receipt, $$Self> sign(payerId: AccountId, signer: TransactionSigner, nodes: list<AccountId>)
   
   @@async Response<$$Receipt> signWithOperatorAndSubmit(client: HieroClient<ANY>)
 
@@ -222,7 +222,7 @@ abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$
 
   // Packs this transaction for a batch with the client's operator as payer and adds the operator's
   // signature. The batch counterpart of signWithOperator(client).
-  PackedTransaction<$$Receipt, $$Self> signForBatchWithOperator(client: HieroClient<ANY>, batchKey: Authority)
+  @@async PackedTransaction<$$Receipt, $$Self> signForBatchWithOperator(client: HieroClient<ANY>, batchKey: Authority)
 
   // Packs this transaction for a batch with the given Account as payer and adds its signature. The
   // batch counterpart of sign(payer, nodes).
@@ -231,7 +231,7 @@ abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$
   // Packs this transaction for a batch with payerId as payer and signs it with the given
   // TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
   // sign(payerId, signer, nodes).
-  PackedTransaction<$$Receipt, $$Self> signForBatch(payerId: AccountId, signer: TransactionSigner, batchKey: Authority)
+  @@async PackedTransaction<$$Receipt, $$Self> signForBatch(payerId: AccountId, signer: TransactionSigner, batchKey: Authority)
 
 }
 
@@ -249,22 +249,23 @@ abstraction PackedTransaction<$$Receipt extends Receipt, $$Transaction extends T
   // this transaction is not added again.
   PackedTransaction<$$Receipt, $$Transaction> sign(account: Account)
 
-  // Adds the signatures of the signer for every target node. A key that has already signed this transaction is
-  // not added again.
-  PackedTransaction<$$Receipt, $$Transaction> sign(signer: TransactionSigner)
+  // Adds the signatures of the signer for every target node, one signTransaction call each. A key that has already
+  // signed this transaction is not added again.
+  @@async PackedTransaction<$$Receipt, $$Transaction> sign(signer: TransactionSigner)
 
   // Returns the serialized TransactionBody bytes for every target node. Used by out-of-process
   // signing flows (raw HSMs, async signing pipelines, multi-party coordination, audit archival)
-  // that cannot be wrapped behind a synchronous TransactionSigner. The returned list has one
+  // that cannot be wrapped behind a TransactionSigner. The returned list has one
   // NodeBody per target node, in the order in which the nodes were given.
   list<NodeBody> signableBodies()
 
   // Attaches externally-produced NodeSignatures to this PackedTransaction and returns a new
-  // PackedTransaction containing them. The provided list must contain one signature per node
-  // returned by signableBodies() for the same PublicKey; otherwise submit() will fail with
-  // INVALID_SIGNATURE on the chosen node.
-  // Throws if a signature references a node that is not a target node of this transaction, or if
-  // signatures for any target node are missing.
+  // PackedTransaction containing them; this PackedTransaction is not changed. The list must contain one signature
+  // per node returned by signableBodies() for each PublicKey. Fails with unknown-node-error if a signature references
+  // a node that is not a target node of this transaction, with incomplete-signatures-error if a public key has no
+  // signature for a target node, and with invalid-signature-error if a signature does not verify against the body of
+  // its node and its public key (checked here, so that a bad signature does not fail later as INVALID_SIGNATURE).
+  @@throws(unknown-node-error, incomplete-signatures-error, invalid-signature-error)
   PackedTransaction<$$Receipt, $$Transaction> sign(signatures: list<NodeSignature>)
 
   bytes toBytes()
@@ -688,7 +689,109 @@ test "bytes that are no transaction are rejected" {
     @@expectThrows(illegal-format)
     PackedTransaction.fromBytes(bytes: slice(value: complete, start: 0, end: length(value: complete) - 10))
 }
+
+// Source: this spec (sign(signatures) checks every signature against the body of its node and fails with
+// invalid-signature-error); the remote signer of hiero-remote-signer. The two transactions differ only in their
+// transaction id, so the signatures of the second do not verify against the bodies of the first.
+@@testId("signatures-over-the-bodies-of-another-transaction-are-rejected")
+test "signatures over the bodies of another transaction are rejected" {
+    // given
+    let payer = DEFAULT(Account)
+    let nodes = [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")]
+    let first = consensusnode.transactions.utility.PrngTransaction{}.pack(payer: payer, nodes: nodes)
+    let second = consensusnode.transactions.utility.PrngTransaction{}.pack(payer: payer, nodes: nodes)
+    let wrong = [NodeSignature{node: second.signableBodies()[0].node, publicKey: payer.privateKey.createPublicKey(),
+                    signature: payer.privateKey.sign(message: second.signableBodies()[0].bytes)},
+            NodeSignature{node: second.signableBodies()[1].node, publicKey: payer.privateKey.createPublicKey(),
+                    signature: payer.privateKey.sign(message: second.signableBodies()[1].bytes)}]
+
+    // when / then
+    @@expectThrows(invalid-signature-error)
+    first.sign(signatures: wrong)
+    assertEquals(expected: 0, actual: length(value: first.nodeSignatures))
+}
+
+// Source: this spec (sign(signatures) fails with unknown-node-error for a signature of a node that is not a target
+// node).
+@@testId("a-signature-for-a-node-that-is-not-a-target-node-is-rejected")
+test "a signature for a node that is not a target node is rejected" {
+    // given
+    let payer = DEFAULT(Account)
+    let packed = consensusnode.transactions.utility.PrngTransaction{}
+            .pack(payer: payer, nodes: [AccountId.fromString(value: "0.0.3")])
+    let body = packed.signableBodies()[0]
+    let foreign = NodeSignature{node: AccountId.fromString(value: "0.0.9"), publicKey: payer.privateKey.createPublicKey(),
+            signature: payer.privateKey.sign(message: body.bytes)}
+
+    // when / then
+    @@expectThrows(unknown-node-error)
+    packed.sign(signatures: [foreign])
+}
+
+// Source: this spec (sign(signatures) fails with incomplete-signatures-error if a public key has no signature for a
+// target node).
+@@testId("signatures-that-miss-a-target-node-are-rejected")
+test "signatures that miss a target node are rejected" {
+    // given
+    let payer = DEFAULT(Account)
+    let packed = consensusnode.transactions.utility.PrngTransaction{}
+            .pack(payer: payer, nodes: [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")])
+    let body = packed.signableBodies()[0]
+    let only = NodeSignature{node: body.node, publicKey: payer.privateKey.createPublicKey(),
+            signature: payer.privateKey.sign(message: body.bytes)}
+
+    // when / then
+    @@expectThrows(incomplete-signatures-error)
+    packed.sign(signatures: [only])
+}
+
+// Source: this spec (a restored transaction can be signed by a TransactionSigner, one signature per target node); the
+// remote signer of hiero-remote-signer (multi-party signing over toBytes and fromBytes).
+@@testId("a-signer-signs-every-target-node-of-a-restored-transaction")
+@@rule("consensusnode.client/signer-identity")
+test "a signer signs every target node of a restored transaction" {
+    // given
+    let payer = Account{accountId: AccountId.fromString(value: "0.0.1002"),
+            privateKey: keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
+                    value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")}
+    let packed = consensusnode.transactions.utility.PrngTransaction{}
+            .sign(payer: payer, nodes: [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")])
+    let signer = DEFAULT(TransactionSigner)
+
+    // when
+    let signed = PackedTransaction.fromBytes(bytes: packed.toBytes()).sign(signer: signer)
+
+    // then
+    assertEquals(expected: packed.transactionId, actual: signed.transactionId)
+    assertEquals(expected: 4, actual: length(value: signed.nodeSignatures))
+    for body in signed.signableBodies() {
+        for signature in signed.nodeSignatures {
+            if signature.node == body.node {
+                assertTrue(condition: signature.publicKey.verify(message: body.bytes, signature: signature.signature))
+            }
+        }
+    }
+}
 ```
+
+### Scenarios on a Solo network
+
+The following scenario needs a network and is described as a Given / When / Then scenario on a local Solo network
+(see [`guidelines/testing-guideline.md`](../../guidelines/testing-guideline.md) for the platform and the shared
+*"`HieroClient` connected to a solo network with a funded operator account"* fixture). The *test signer* is the
+in-memory `TransactionSigner` described in the `## Testing` section of [`client.md`](client.md).
+
+#### `transactions/signer-signatures-survive-serialization`
+
+- **Given** a `HieroClient` connected to a solo network with a funded operator account, a test signer over a new
+  Ed25519 key, and an account created by the operator with a two-of-two `Authority` of the operator's key and the test
+  signer's `publicKey`, with a balance of 1 HBAR.
+- **When** a `TransferTransaction` moving 1 tinybar from that account to the operator's account id is packed with the
+  operator as payer for two target nodes and signed with the operator account, serialized with `toBytes()`, restored
+  with `fromBytes(...)`, signed with `PackedTransaction.sign(testSigner)`, and submitted.
+- **Then** the receipt status is `SUCCESS`, the restored transaction has the same `transactionId`, and
+  `nodeSignatures` holds exactly one signature per target node for each of the two keys.
+
 
 ## Questions & Comments
 
@@ -755,12 +858,6 @@ test "bytes that are no transaction are rejected" {
   the parameter removes both the nullable field and the error. The `BatchTransaction` container
   itself is specified in [`transactions-batch.md`](transactions-batch.md).
 
-- **Errors of `PackedTransaction.sign(signatures)` are only documented in prose.** The method
-  comment used to list `@@throws(unknown-node-error)` (a signature references a node not in the
-  target nodes) and `@@throws(incomplete-signatures-error)` (signatures for a target node are
-  missing) inside the comment, but the declaration does not carry these `@@throws` annotations.
-  Should they be added to the schema?
-
 - **How does a caller learn the status of a rejected transaction?** Neither `submit(client)` (the node
   rejects the transaction in precheck) nor `Response.queryReceipt(client)` (the transaction reached consensus
   but failed) declares a `@@throws` with an error that carries the `TransactionStatus`. V2 throws
@@ -770,3 +867,12 @@ test "bytes that are no transaction are rejected" {
   `queryReceipt(client)` return the receipt of a failed transaction (status other than `SUCCESS`) and only
   `submit` throw, or do both throw an error with a `status` attribute? Until `BasicTransactionStatus`
   lists `SUCCESS`, the TCK server compares the receipt status with the HAPI code 22.
+
+- **Open points of asynchronous signing.** Surfaced by the remote signer that validated the `TransactionSigner`
+  contract (see `client.md`):
+  - **`sign(...)` overloads differ in async-ness.** `PackedTransaction.sign(signer)` is asynchronous while
+    `sign(account)` and `sign(signatures)` are not, so the same method name returns a future or not depending on the
+    argument type. Keep the overload set, or rename, e.g. `addSignatures(signatures)`? — open
+  - **`pack(payer: Account, nodes)` only needs the payer's id.** Packing uses the account only to build the
+    `TransactionId`, but `Account` requires a `PrivateKey`, so an application that packs for an out-of-process signer
+    must hold a key it does not have. Should `pack` (and `packForBatch`) take `payerId: AccountId`? — open

@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import org.hiero.common.Page;
+import org.hiero.consensusnode.client.NodeBody;
 import org.hiero.consensusnode.client.NodeSignature;
 import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.consensusnode.queries.Query;
@@ -110,10 +112,10 @@ public final class JavaTckRuntime implements TckRuntime {
     public <R extends Receipt> R transaction(final Session session, final Transaction<R, ?> transaction,
                                              final @Nullable Map<String, Object> common) {
         final RuntimeSession runtime = RuntimeSession.of(session);
-        PackedTransaction<R, ?> packed = transaction.signWithOperator(runtime.client());
+        PackedTransaction<R, ?> packed = join(transaction.signWithOperator(runtime.client()));
         if (common != null && common.get("signers") instanceof List<?> signers) {
             for (final Object signer : signers) {
-                packed = packed.sign(signer(converters.privateKey(signer)));
+                packed = join(packed.sign(new KeySigner(converters.privateKey(signer))));
             }
         }
         final Response<R> response = join(packed.submit(runtime.client()));
@@ -127,8 +129,20 @@ public final class JavaTckRuntime implements TckRuntime {
     }
 
     /** A signer for a bare private key: signs the body of every node with the key. */
-    private static TransactionSigner signer(final PrivateKey key) {
-        return (bytes, node) -> new NodeSignature(node, key.createPublicKey(), key.sign(bytes));
+    private static final class KeySigner extends TransactionSigner {
+
+        private final PrivateKey key;
+
+        KeySigner(final PrivateKey key) {
+            super(key.createPublicKey());
+            this.key = key;
+        }
+
+        @Override
+        public CompletionStage<NodeSignature> signTransaction(final NodeBody body) {
+            return CompletableFuture.completedFuture(new NodeSignature(body.node(), publicKey(),
+                    key.sign(body.bytes())));
+        }
     }
 
     @Override

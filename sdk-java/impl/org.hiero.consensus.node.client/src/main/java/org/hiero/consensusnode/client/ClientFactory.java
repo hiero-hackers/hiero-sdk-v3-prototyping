@@ -2,6 +2,7 @@ package org.hiero.consensusnode.client;
 
 import java.util.Objects;
 import org.hiero.consensusnode.client.internal.ClientRuntime;
+import org.hiero.consensusnode.client.internal.PrivateKeySigner;
 import org.hiero.consensusnode.client.internal.Statuses;
 import org.hiero.ledger.config.NetworkSetting;
 
@@ -13,8 +14,8 @@ public final class ClientFactory {
     ///
     /// @throws StatusConflictException if a status conflict error occurs
     public static HieroClient<?> createClient(final NetworkSetting networkSettings, final Account operatorAccount) {
-        return createClient(networkSettings, operatorAccount, (bytes, node) -> new NodeSignature(node,
-                operatorAccount.privateKey().createPublicKey(), operatorAccount.privateKey().sign(bytes)));
+        Objects.requireNonNull(operatorAccount, "operatorAccount must not be null");
+        return createClient(networkSettings, operatorAccount, new PrivateKeySigner(operatorAccount.privateKey()));
     }
 
     /// Creates a client for the given network that uses the operator account to pay for requests and the given
