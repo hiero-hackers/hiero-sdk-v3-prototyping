@@ -38,6 +38,10 @@ All queries extend `PaidQuery`; see [`queries.md`](queries.md) for the full paym
   the fee schedule `.111`, the exchange rates `.112`, the throttle definitions `.123`, ...). Kept apart from the
   generic file queries in [`queries-files.md`](queries-files.md), the typed queries and their result types do not
   crowd the file namespace as more of them are added.
+- **Only system files every user needs live here.** The exchange rates concern every user of the network. The
+  address book `.102` is read by `NodeAddressBookQuery` of the admin client
+  ([`queries-network.md`](../consensus-node-admin-client/queries-network.md)): its audience is operator and tooling
+  code, which already depends on the admin client.
 - **A system file query is no subtype of `FileContentsQuery`.** A subtype would inherit the result type
   `FileContents` (generics are invariant, so `submit` cannot return `ExchangeRates` instead) and a settable `fileId`,
   with which the query could read a file of another format. Each one is a `PaidQuery` of its own; a static factory
@@ -128,10 +132,6 @@ test "a new exchange rates query has no payment limit" {
 
 ## Questions & Comments
 
-- **Should `NodeAddressBookQuery` move here?** The admin client already has a typed query for the address book file
-  `.102` ([`queries-network.md`](../consensus-node-admin-client/queries-network.md)). It reads a system file like
-  `ExchangeRatesQuery`, but it lives in `consensusnode.admin.network`, has no factory on `FileContentsQuery`, and
-  states no rule for its file id. — open
 - **One factory per system file on `FileContentsQuery`?** `forExchangeRates()` makes the file namespace depend on
   this one, and every further system file query adds a factory there. `new ExchangeRatesQuery()` works without it.
   Keep the factories for discoverability, or drop them? — open
