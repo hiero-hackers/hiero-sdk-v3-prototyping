@@ -295,5 +295,3 @@ test "a receipt query asks only for the receipt unless it names duplicates, chil
   other numbers are proto3 scalars, so an absent number and `0` look the same; the Java implementation reads `0` as
   absent, so the total supply after burning a token down to zero, or node `0`, read as absent. Should they be
   non-nullable with `0` as default instead? — open
-- **The tests of this spec cannot be generated yet**: an `UntypedReceipt` needs an `ExchangeRate`, which has no default
-  instance (see the Questions & Comments of `native-token.md`). The Java implementation tests `typed(...)` by hand.

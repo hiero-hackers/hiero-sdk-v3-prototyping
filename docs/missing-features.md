@@ -131,7 +131,13 @@ fees of a transaction). Missing on the consensus-node side:
 
 ### 3.4 Fee schedule
 
-- `FeeSchedule`, `TransactionFeeSchedule`, `FeeComponents`, `FeeData` — the fee schedule file of the network.
+- `FeeSchedule`, `TransactionFeeSchedule`, `FeeComponents`, `FeeData` — the fee schedule file of the network
+  (`<shard>.<realm>.111`, protobuf `CurrentAndNextFeeSchedule`). The proposed shape follows the exchange rates
+  (`queries-system-files.md`, namespace `consensusnode.queries.systemFiles`): a
+  `FeeScheduleQuery extends PaidQuery<CurrentAndNextFeeSchedule>` without `fileId`, created by
+  `FileContentsQuery.forFeeSchedule()`, with a rule for the file id. It needs `RequestType` and the fee `SubType`
+  (§3.6) as open types like `TransactionStatus`, because the fee schedule of a newer network can name request types
+  the SDK does not know yet.
 
 ### 3.5 Receipts and records
 

@@ -145,6 +145,8 @@ spec/                           # The actual V3 public-API specifications, writt
     transactions.md, queries.md #   Transaction<$$Receipt, $$Self>, Response, Receipt, Record; FreeQuery, PaidQuery
     transactions-*.md, queries-*.md  # accounts, files, schedules, tokens, topics, batch, utility
     transactions-spi.md         #   SPI for custom services/transaction types
+    queries-system-files.md     #   (consensusnode.queries.systemFiles) typed queries of the system files of the
+                                #   network, decoded: ExchangeRatesQuery (file .112) so far
     proto.md, proto-accounts.md #   (consensusnode.proto[.account]) the protobuf messages the SPI exposes
   consensus-node-admin-client/  # Network administration (consensusnode.admin.*): freeze, nodes, system, network
   consensus-node-clpr/          # Cross Ledger Protocol, HIP-1535 (consensusnode.clpr.*): Channel/Connector
@@ -310,10 +312,13 @@ git history (`3b5305d~1`, introduced in `3caad63 "Durchstich :)"`), and the Type
 `impl` implements the **whole API**: every transaction type (one `TransactionKind` per type in an area class such as
 `TokenKinds`, all sharing `Packing`; the admin client and the CLPR module register their types as
 `TransactionSupport` via the `ServiceLoader`), every query (`QueryKind` + `Querying`, with query payment), the mirror
-node REST client, the block node gRPC client, the base utilities and the enterprise services. The specs have 495 spec
-tests (56 spec files; the 5 receipt tests need an `ExchangeRate`, which no API creates, so 490 are generated); **all
-490 and all 4,007 contract tests pass** against `impl`, and `metalang check` reports that it
-provides the API. What the specs cannot express is recorded in their `## Questions & Comments`. It has the same
+node REST client, the block node gRPC client, the base utilities and the enterprise services. When `impl` was last
+brought up to date, the specs had 495 spec tests, of which 490 were generated; **all 490 and all 4,007 contract tests
+passed** against `impl`, and `metalang check` reported that it provides the API. Since then the specs have added the
+exchange rates query (`ExchangeRate` became a concrete type with a default instance and a `nativeTokenUnit`;
+`ExchangeRates` and `ExchangeRatesQuery` in `consensusnode.queries.systemFiles`; `FileContentsQuery.forExchangeRates()`),
+which `impl` does not provide yet - `metalang check` reports the differences. With the default instance of
+`ExchangeRate` the 5 receipt tests are generated as well (508 spec tests today). What the specs cannot express is recorded in their `## Questions & Comments`. It has the same
 Maven coordinates as `generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The
 TCK binds 54 of its 64 methods (`tooling/tck/bindings`); `./mvnw -f impl verify -Ptck` (in `sdk-java`) builds the TCK server in the same reactor and runs it after
 the build against a local Solo network. The last module of every build of `impl`, `impl/test-report`, renders the

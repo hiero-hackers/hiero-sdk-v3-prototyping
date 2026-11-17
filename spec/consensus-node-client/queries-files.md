@@ -15,6 +15,10 @@ Queries for reading files stored on the network. Both queries are paid, so you c
 - **`FileInfoQuery`** — returns the file's metadata: size, expiration time, deletion flag, write-access authority
   and memo. It does not return the content; use `FileContentsQuery` for that.
 
+Some files of the network are system files with a known content, such as the exchange rates. Read them with the
+typed queries of `consensusnode.queries.systemFiles`, which return the content decoded; `FileContentsQuery` offers
+factories for them (`FileContentsQuery.forExchangeRates()`).
+
 Querying a deleted file does not fail: `FileInfoQuery` returns a `FileInfo` with `deleted = true` (most other fields
 cleared), and `FileContentsQuery` returns empty `contents`. Check `FileInfo.deleted` instead of treating empty
 contents as proof of deletion.
@@ -30,6 +34,7 @@ namespace consensusnode.queries.files
 requires {Address} from ledger
 requires {Authority} from authority
 requires {PaidQuery} from consensusnode.queries
+requires {ExchangeRatesQuery} from consensusnode.queries.systemFiles
 
 // Raw byte payload of a file. Returned by `FileContentsQuery`.
 type FileContents {
@@ -42,6 +47,10 @@ type FileContents {
 @@finalType
 FileContentsQuery extends PaidQuery<FileContents> {
     @@immutable fileId: Address
+
+    // Creates a query for the exchange rate file of the network, which returns the rates already decoded. Same as
+    // `new ExchangeRatesQuery()`.
+    @@static ExchangeRatesQuery forExchangeRates()
 }
 
 // Full file metadata snapshot. Returned by `FileInfoQuery`.
@@ -160,6 +169,16 @@ test "a file info keeps its expiration time" {
 
     // then
     assertEquals(expected: toZonedDateTime(text: "1970-01-01T00:00:00.003Z"), actual: info.expirationTime)
+}
+
+// Source: this spec (the factory creates the query of the exchange rate file, without a payment limit).
+@@testId("the-exchange-rates-query-is-created-by-the-file-contents-query")
+test "the exchange rates query is created by the file contents query" {
+    // when
+    let query = FileContentsQuery.forExchangeRates()
+
+    // then
+    assertNull(actual: query.maxQueryPayment)
 }
 ```
 
