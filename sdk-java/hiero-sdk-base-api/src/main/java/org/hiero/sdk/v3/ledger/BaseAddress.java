@@ -34,22 +34,38 @@ public abstract class BaseAddress {
         this.checksum = Objects.requireNonNull(checksum, "checksum must not be null");
     }
 
-    /** @return the immutable unsigned shard bits */
+    /**
+     * Returns the stored unsigned shard bits.
+     *
+     * @return the immutable unsigned shard bits
+     */
     public final long shard() {
         return shard;
     }
 
-    /** @return the immutable unsigned realm bits */
+    /**
+     * Returns the stored unsigned realm bits.
+     *
+     * @return the immutable unsigned realm bits
+     */
     public final long realm() {
         return realm;
     }
 
-    /** @return the immutable unsigned entity-number bits, or {@code null} when absent */
+    /**
+     * Returns the numeric selector when one is present.
+     *
+     * @return the immutable unsigned entity-number bits, or {@code null} when absent
+     */
     public @Nullable Long num() {
         return num;
     }
 
-    /** @return the immutable checksum, or an empty string when absent */
+    /**
+     * Returns the stored checksum without generating or validating it.
+     *
+     * @return the immutable checksum, or an empty string when absent
+     */
     public final @NonNull String checksum() {
         return checksum;
     }
@@ -70,7 +86,11 @@ public abstract class BaseAddress {
     @Override
     public abstract @NonNull String toString();
 
-    /** @return the canonical address with {@code -<checksum>} appended when the checksum is nonempty */
+    /**
+     * Formats the canonical address with its stored checksum when present.
+     *
+     * @return the canonical address with {@code -<checksum>} appended when the checksum is nonempty
+     */
     public final @NonNull String toStringWithChecksum() {
         return checksum.isEmpty() ? toString() : toString() + "-" + checksum;
     }

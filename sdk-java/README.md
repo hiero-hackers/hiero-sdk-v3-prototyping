@@ -1,7 +1,7 @@
 # Java Public API
 
-The `hiero-sdk-base-api` Maven module contains the public pagination, native token, exchange-rate, network identity, and numeric address APIs and their contract tests in
-`src/main/java` and `src/test/java`. Use Java 21 and Maven from this directory:
+The `hiero-sdk-base-api` Maven module contains the public pagination, native token, exchange-rate, network identity,
+numeric address, and EVM address APIs and their contract tests in `src/main/java` and `src/test/java`. Use Java 21 and Maven from this directory:
 
 ```sh
 mvn verify
@@ -366,13 +366,13 @@ mvn -Dsdk.build.directory=.verification/numeric-address verify
 mvn -Dsdk.build.directory=.verification/numeric-address org.apache.maven.plugins:maven-javadoc-plugin:3.12.0:javadoc
 ```
 
-## EVM Address Mapping and Pending Decision
+## EVM Address API Mapping
 
-Change `6-add-evm-address-public-api` has not implemented EVM address types or behavior. Its planned standalone
-immutable value is `org.hiero.sdk.v3.ledger.EvmAddress`, independent of `BaseAddress`, `Network`, shard/realm values,
-and account/contract existence. It can reuse the existing ledger export and Java 21 test/build setup.
+Change `6-add-evm-address-public-api` provides the standalone immutable record
+`org.hiero.sdk.v3.ledger.EvmAddress`. It uses the existing ledger export and Java 21 build setup.
+Its state and behavior are independent of numeric addressing, network identities, and entity existence.
 
-| Common contract | Planned Java mapping |
+| Common contract | Java mapping |
 |-----------------|----------------------|
 | Exactly 20 immutable raw bytes | `byte[] bytes()`, with copies on construction and every read |
 | Byte construction | Static `EvmAddress fromBytes(byte[] value)` |
@@ -381,19 +381,36 @@ and account/contract existence. It can reuse the existing ledger export and Java
 | Required-input violation | `NullPointerException` with `value must not be null` on factory inputs |
 | Non-null malformed input (`illegal-format`) | `IllegalArgumentException` |
 
-The byte factory must accept all 20-byte values, including all zeros, with no padding, truncation, reordering, or
-network validation. The text factory must accept exactly 40 ASCII hexadecimal digits with optional lowercase `0x`,
-regardless of input letter casing, including mixed casing that fails EIP-55. It must reject whitespace, Unicode
-lookalikes, `0X`, signs, separators, repeated prefixes, ledger-checksum suffixes, and shortened values. Output must
-preserve all bytes and leading zeros as lowercase `0x` plus 40 digits with deterministic EIP-55 casing.
+The byte factory accepts all 20-byte values, including all zeros, with no padding, truncation, reordering, or
+network validation. The text factory accepts exactly 40 ASCII hexadecimal digits with optional lowercase `0x`,
+regardless of input letter casing, including mixed casing that fails EIP-55. It rejects whitespace, Unicode
+lookalikes, `0X`, signs, separators, repeated prefixes, ledger-checksum suffixes, and shortened values. Output
+preserves all bytes and leading zeros as lowercase `0x` plus 40 digits with deterministic EIP-55 casing.
 
-Task 1.3 requires user agreement on the concrete-behavior boundary before implementation. The proposed approach,
-awaiting approval, is concrete parsing/formatting in the API module with private Keccak-256 support. The authoritative
-[EIP-55 reference](https://eips.ethereum.org/EIPS/eip-55) specifies Keccak-256 over the lowercase hexadecimal text for
-output casing and provides acceptance vectors. No parsing, hashing implementation/dependency, provider framework,
-registry, placeholder, or failing stub has been added. Representation, equality/hash details, and all 18 scenario
-mappings remain pending implementation. Ledger checksums, chain-specific formatting, selector hierarchies, network
-lookups, and account/contract existence checks remain deferred.
+The implementation boundary supplies concrete parsing and EIP-55 formatting directly in the API module, with
+private Keccak-256 support and no new dependency. The
+[EIP-55 reference](https://eips.ethereum.org/EIPS/eip-55) specifies the checksum over the lowercase ASCII hexadecimal
+body without `0x`; the corresponding hash nibble selects the case of each hexadecimal letter. The private hashing
+method handles only that fixed 40-byte input. Its Keccak-f[1600] permutation follows the
+[Keccak team's algorithm and constants](https://keccak.team/keccak_specs_summary.html), with the original Keccak
+padding suffix `0x01`. SHA3-256 has different padding and cannot replace it. All eight EIP-55 reference vectors,
+including canonical all-uppercase and all-lowercase bodies, are checked against production formatting.
+
+The public canonical constructor `new EvmAddress(byte[] bytes)` checks the same exact-length invariant and copies
+its input. Null construction fails with `bytes must not be null`; both factories reject null with
+`value must not be null`. `bytes()` returns a fresh copy on every read. Equality and hashing compare all 20 bytes
+by content, retaining stable value behavior after external array mutations. `toString()` returns only the canonical
+42-character address, replacing the generated record representation. No provider or hashing configuration is
+required from a consumer. Ledger checksums, chain-specific formatting, selector hierarchies, network lookups,
+and account/contract existence checks remain deferred.
+
+```java
+import org.hiero.sdk.v3.ledger.EvmAddress;
+
+final EvmAddress address = EvmAddress.fromString("fb6916095ca1df60bb79ce92ce3ea74c37c5d359");
+final String canonical = address.toString(); // 0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359
+final byte[] independentCopy = address.bytes();
+```
 
 The shared sources are [the proposal](../openspec/changes/6-add-evm-address-public-api/proposal.md) and
 [the specification](../openspec/changes/6-add-evm-address-public-api/spec.md), read at source revision
@@ -405,3 +422,38 @@ The shared sources are [the proposal](../openspec/changes/6-add-evm-address-publ
 The Java proposal matches the shared proposal byte for byte. The Java specification differs only in its two adjusted
 relative links to `spec/base/ledger.md`; behavior is unchanged. Both Java artifacts remain unchanged, and no design
 artifact is created.
+
+| Shared scenario | Contract test coverage |
+|-----------------|------------------------|
+| EVM address state is observed | `State.observesExactOrderedBytesThroughEveryByteConstructionPath` |
+| Source bytes are changed after construction | `State.sourceMutationCannotChangeAddressStateFormattingOrHash` |
+| Returned bytes cannot modify the address | `State.returnedArraysCannotChangeStoredAddress` |
+| EVM address is constructed from valid bytes | `State.observesExactOrderedBytesThroughEveryByteConstructionPath` |
+| EVM address byte length is invalid | `State.rejectsInvalidByteLengthsThroughConstructorAndFactory` |
+| Null byte input is rejected | `State.rejectsNullBytesThroughConstructorAndFactory` |
+| Zero bytes are valid address data | `State.allZeroBytesAreValidAndLeadingZerosRemainInText` |
+| Prefixed EVM address is parsed | `Parsing.acceptsBothPrefixesAndAllLetterCasesWithoutInputChecksumValidation` |
+| Unprefixed EVM address is parsed | `Parsing.acceptsBothPrefixesAndAllLetterCasesWithoutInputChecksumValidation` |
+| Letter case does not change the parsed address | `Parsing.acceptsBothPrefixesAndAllLetterCasesWithoutInputChecksumValidation` |
+| EVM address text length is invalid | `Parsing.rejectsInvalidTextLength` |
+| EVM address text contains invalid characters | `Parsing.rejectsNonAsciiHexCharactersWithoutNormalization` |
+| EVM address text contains unsupported decoration | `Parsing.rejectsUnsupportedPrefixesAndOuterWhitespace`, `rejectsUnsupportedSuffixes`, `rejectsSeparatorsAndNullInput` |
+| Null text input is rejected | `Parsing.rejectsSeparatorsAndNullInput` |
+| EVM address is formatted | `Formatting.matchesAuthoritativeEip55Vectors` |
+| Leading zeros are preserved in formatted text | `State.allZeroBytesAreValidAndLeadingZerosRemainInText` |
+| Raw address bytes survive a text round trip | `Formatting.variedBytesAndLeadingZerosSurviveCanonicalRoundTrips` |
+| Accepted spellings normalize to one canonical form | `Parsing.acceptsBothPrefixesAndAllLetterCasesWithoutInputChecksumValidation`, `Formatting.variedBytesAndLeadingZerosSurviveCanonicalRoundTrips` |
+
+All scenario methods are in `EvmAddressContractTest`. It also verifies locale independence, value equality, and
+construction/accessor ownership. `EvmAddressApiShapeTest` checks the standalone record, canonical constructor,
+immutable state, explicit nullability, static factories, public signatures, and existing JPMS export.
+`EvmAddressModuleConsumerTest` compiles and runs a separate named module with only the API and consumer at runtime,
+exercising real parsing and checksum formatting without annotation, test, transport, hashing, or provider libraries.
+
+Java 21 reactor verification passes all 273 tests (68 EVM address tests and 205 existing tests), and checked
+Javadoc generation passes. Run both checks while preserving existing `target/` output:
+
+```sh
+mvn -Dsdk.build.directory=.verification/evm-address verify
+mvn -Dsdk.build.directory=.verification/evm-address org.apache.maven.plugins:maven-javadoc-plugin:3.12.0:javadoc
+```
