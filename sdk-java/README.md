@@ -1,6 +1,6 @@
 # Java Public API
 
-The `hiero-sdk-base-api` Maven module contains the public pagination, native token, exchange-rate, and network identity APIs and their contract tests in
+The `hiero-sdk-base-api` Maven module contains the public pagination, native token, exchange-rate, network identity, and numeric address APIs and their contract tests in
 `src/main/java` and `src/test/java`. Use Java 21 and Maven from this directory:
 
 ```sh
@@ -273,12 +273,12 @@ mvn -Dsdk.build.directory=.verification/network-identity verify
 mvn -Dsdk.build.directory=.verification/network-identity org.apache.maven.plugins:maven-javadoc-plugin:3.12.0:javadoc
 ```
 
-## Numeric Address Mapping and Pending Decisions
+## Numeric Address API Mapping
 
-Change `5-add-numeric-address-public-api` has not implemented address types or behavior. It reuses the verified
-`Network` contract from change 4 and the existing ledger package rather than introducing another network type.
+Change `5-add-numeric-address-public-api` provides numeric addressing in the existing ledger package and reuses
+the verified `Network` contract from change 4.
 
-| Common contract | Planned Java mapping |
+| Common contract | Java mapping |
 |-----------------|----------------------|
 | `BaseAddress` | Public unsealed abstract class in `org.hiero.sdk.v3.ledger`, protected state-owning construction |
 | Final numeric `Address` | Public final `Address extends BaseAddress`, with a required numeric selector |
@@ -296,21 +296,43 @@ The `long`/`Long` mapping follows the shared Java guideline. Values from `922337
 and formatting must preserve the full unsigned range; negative decimal input is invalid. The same boxed `Long`
 return type on parent and child allows nullability narrowing without an illegal primitive-return override or
 shadowing selector state. The schema resolves the prose's optional checksum as a non-null string with empty-string
-absence, rather than a nullable checksum. Required reference inputs will use descriptive `NullPointerException`
-checks; null parser input will be distinguished from malformed non-null input. No address API is published yet.
+absence, rather than a nullable checksum. Required reference inputs use descriptive `NullPointerException`
+checks; null parser input fails with `address must not be null`, separately from malformed non-null input.
 
-Tasks 1.4 and 1.5 require user decisions before concrete address behavior is implemented. Final `Address` and a static
-factory cannot leave required parsing and formatting abstract. The proposed approach, awaiting approval, is to supply
-the concrete local behavior in the API module. No parser, checksum engine, provider framework, registry, or failing
-stub has been added.
+The user approved concrete local parsing, formatting, and HIP-15 checksum validation in the API module on
+2026-11-18. These operations are production behavior; they require no provider framework, registry, transport,
+or new dependency. The base retains abstract canonical formatting and checksum validation for future selector
+subclasses; its final `toStringWithChecksum()` appends the stored suffix only when nonempty.
 
-The proposed checksum policy, also awaiting approval, uses the algorithm and published vectors in
-[HIP-15](https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-15.md), five lowercase letters,
-and strict decimal syntax without leading zeros, whitespace, or plus signs. The proposed absent-checksum result is
-`false`; parsing would validate syntax and retain the supplied checksum, while `validateChecksum(network)` would
-evaluate its network-specific value. These choices are not yet accepted requirements. Concrete construction details,
-sentinel placement, and behavioral test coverage remain pending. EVM selectors, aliases, account/contract identifiers,
-checksum-generation APIs, and network configuration remain outside this change.
+The approved policy uses the algorithm and all 18 published vectors in
+[HIP-15](https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-15.md). Parsing accepts three
+unsigned ASCII decimal components with no leading zeros, whitespace, or plus signs, and an optional suffix of exactly
+five lowercase ASCII letters. `fromString` preserves the suffix without validating its network-specific value;
+`validateChecksum(network)` compares it against the checksum calculated from the canonical unsigned numeric address
+and the exact network ID bytes. An absent checksum returns `false`. A null network fails with
+`network must not be null`, even when the checksum is absent. No network metadata or native-token unit is inspected.
+
+Construction uses `new Address(long shard, long realm, long num, String checksum)`. Primitive numeric construction
+makes absence impossible; the inherited boxed `num()` is overridden as non-null without duplicate selector state.
+A null checksum is rejected; otherwise it must be empty or five lowercase ASCII letters. The protected base
+constructor permits a null number for future selector types and requires a non-null checksum without selecting
+those types' syntax. `Address.ZERO_ADDRESS` is an immediately usable `0.0.0` clear-sentinel with an empty checksum;
+it is not an actual entity ID and needs no provider initialization. Java equality and hashing compare all three
+unsigned component bit patterns and the stored checksum; checksummed and unchecksummed values are distinct.
+`toString()` always returns canonical `shard.realm.num`; `toStringWithChecksum()` adds only a supplied suffix.
+
+```java
+import org.hiero.sdk.v3.ledger.Address;
+import org.hiero.sdk.v3.ledger.Network;
+
+static boolean matchesNetwork(final Network<?> network) {
+    final Address address = Address.fromString("0.0.123-vfmkw");
+    return address.validateChecksum(network);
+}
+```
+
+EVM selectors, aliases, account/contract identifiers, checksum-generation APIs, network configuration, and entity
+existence checks remain outside this change.
 
 The shared sources are [the proposal](../openspec/changes/5-add-numeric-address-public-api/proposal.md) and
 [the specification](../openspec/changes/5-add-numeric-address-public-api/spec.md), read at source revision
@@ -320,7 +342,29 @@ The shared sources are [the proposal](../openspec/changes/5-add-numeric-address-
 - Specification SHA-256: `f9a5b84331ef5b516764f5332b93eae8f50a4dcd7af4b820f6f56715b6e11cd6`.
 
 The Java proposal and numeric-address specification match the shared files byte for byte and remain unchanged.
-No design artifact is created. Scenario coverage remains pending until the required decisions and implementation.
+No design artifact is created.
+
+| Shared scenario | Passing contract coverage |
+|-----------------|---------------------------|
+| Address state is observed | `AddressContractTest.State`: primitive construction, inherited state, absent base selector, required inputs |
+| Address is parsed from string | `AddressContractTest.Parsing`: both forms, suffix preservation, unsigned boundaries, round trips |
+| Invalid address parsing fails | `AddressContractTest.Parsing`: malformed text, negative values, overflow, strict syntax, null input |
+| Checksum is validated | `AddressContractTest.Checksums`: all 18 HIP-15 vectors, mismatches, different ledger IDs, absent checksums, required network |
+| Sentinel address is used | `AddressContractTest.State.zeroAddressIsImmediatelyUsable` and `AddressModuleConsumerTest` |
+
+`AddressApiShapeTest` checks the abstract base/final subtype, immutable state, boxed selector nullability narrowing,
+static parsing, constant placement, public signatures, and the existing module export. `AddressModuleConsumerTest`
+compiles and runs an independent named module with real parsing/checksum behavior and only the API at runtime;
+negative compilation checks reject subclassing `Address` and replacing the boxed selector accessor with a primitive.
+The checksum tests use published expected values, not a test-only checksum implementation.
+
+Java 21 reactor verification passes all 205 tests (91 address tests and 114 existing tests), and checked Javadoc
+generation passes. Run both checks while preserving existing `target/` output:
+
+```sh
+mvn -Dsdk.build.directory=.verification/numeric-address verify
+mvn -Dsdk.build.directory=.verification/numeric-address org.apache.maven.plugins:maven-javadoc-plugin:3.12.0:javadoc
+```
 
 ## EVM Address Mapping and Pending Decision
 
