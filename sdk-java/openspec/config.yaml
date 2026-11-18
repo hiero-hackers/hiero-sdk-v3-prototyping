@@ -3,7 +3,7 @@ schema: spec-driven
 context: |
   This OpenSpec root plans the Java SDK only.
   Java targets Java 21 and uses Maven, JPMS, JSpecify, JUnit, and AssertJ.
-  Language-neutral feature proposals and specifications live under ../../openspec-common-delta-changes/changes/ as plain Markdown.
+  Language-neutral feature proposals and specifications live in the repository-root openspec/changes/ directory as plain Markdown.
   Each Java change must identify the common feature and source revision from which it was derived.
   Java artifacts may add language mappings but must not silently change common behavior or constraints.
 
