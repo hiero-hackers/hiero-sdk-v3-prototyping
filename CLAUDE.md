@@ -142,11 +142,15 @@ spec/                           # The actual V3 public-API specifications, writt
     client.md                   #   HieroClient, Account, TransactionSigner; how requests are executed:
                                 #   ExecutionSettings, RetryPolicy, NodeSelector, AttemptOutcome (retry, node failover)
     status.md (consensusnode.status)  # TransactionStatus, BasicTransactionStatus: the status codes of the protocol
+    request-types.md (consensusnode.requestTypes)  # RequestType, BasicRequestType: the transaction and query types
+                                #   of the protocol (HederaFunctionality), registered via RequestTypeSupport (SPI)
     transactions.md, queries.md #   Transaction<$$Receipt, $$Self>, Response, Receipt, Record; FreeQuery, PaidQuery
     transactions-*.md, queries-*.md  # accounts, files, schedules, tokens, topics, batch, utility
     transactions-spi.md         #   SPI for custom services/transaction types
     queries-system-files.md     #   (consensusnode.queries.systemFiles) typed queries of the system files of the
                                 #   network, decoded: ExchangeRatesQuery (file .112) so far
+    queries-fee.md              #   (consensusnode.queries.fees) FeeScheduleQuery (file .111) and the fee model:
+                                #   FeeSchedule, FeeData, FeeComponents, open FeeSubType
     proto.md, proto-accounts.md #   (consensusnode.proto[.account]) the protobuf messages the SPI exposes
   consensus-node-admin-client/  # Network administration (consensusnode.admin.*): freeze, nodes, system, network
   consensus-node-clpr/          # Cross Ledger Protocol, HIP-1535 (consensusnode.clpr.*): Channel/Connector

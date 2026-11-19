@@ -16,8 +16,9 @@ Queries for reading files stored on the network. Both queries are paid, so you c
   and memo. It does not return the content; use `FileContentsQuery` for that.
 
 Some files of the network are system files with a known content, such as the exchange rates. Read them with the
-typed queries of `consensusnode.queries.systemFiles`, which return the content decoded; `FileContentsQuery` offers
-factories for them (`FileContentsQuery.forExchangeRates()`).
+typed queries of `consensusnode.queries.systemFiles` and the fee schedule with `FeeScheduleQuery`
+(`consensusnode.queries.fees`), which return the content decoded; `FileContentsQuery` offers factories for them
+(`FileContentsQuery.forExchangeRates()`, `FileContentsQuery.forFeeSchedule()`).
 
 Querying a deleted file does not fail: `FileInfoQuery` returns a `FileInfo` with `deleted = true` (most other fields
 cleared), and `FileContentsQuery` returns empty `contents`. Check `FileInfo.deleted` instead of treating empty
@@ -35,6 +36,7 @@ requires {Address} from ledger
 requires {Authority} from authority
 requires {PaidQuery} from consensusnode.queries
 requires {ExchangeRatesQuery} from consensusnode.queries.systemFiles
+requires {FeeScheduleQuery} from consensusnode.queries.fees
 
 // Raw byte payload of a file. Returned by `FileContentsQuery`.
 type FileContents {
@@ -51,6 +53,10 @@ FileContentsQuery extends PaidQuery<FileContents> {
     // Creates a query for the exchange rate file of the network, which returns the rates already decoded. Same as
     // `new ExchangeRatesQuery()`.
     @@static ExchangeRatesQuery forExchangeRates()
+
+    // Creates a query for the fee schedule file of the network, which returns the schedules already decoded. Same as
+    // `new FeeScheduleQuery()`.
+    @@static FeeScheduleQuery forFeeSchedule()
 }
 
 // Full file metadata snapshot. Returned by `FileInfoQuery`.
@@ -176,6 +182,16 @@ test "a file info keeps its expiration time" {
 test "the exchange rates query is created by the file contents query" {
     // when
     let query = FileContentsQuery.forExchangeRates()
+
+    // then
+    assertNull(actual: query.maxQueryPayment)
+}
+
+// Source: this spec (the factory creates the query of the fee schedule file, without a payment limit).
+@@testId("the-fee-schedule-query-is-created-by-the-file-contents-query")
+test "the fee schedule query is created by the file contents query" {
+    // when
+    let query = FileContentsQuery.forFeeSchedule()
 
     // then
     assertNull(actual: query.maxQueryPayment)

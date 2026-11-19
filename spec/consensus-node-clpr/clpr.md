@@ -1,7 +1,7 @@
 # CLPR API
 
 This namespace defines the types that the transactions and queries of the Cross Ledger Protocol (CLPR) share: the
-capacity limits of a ledger and the status codes of the CLPR service.
+capacity limits of a ledger, and the status codes and request types of the CLPR service.
 
 ## Description
 
@@ -23,6 +23,10 @@ service does not return today is listed as well, so that every status of the net
 them with the client as a `TransactionStatusSupport`; without this module, an answer with a CLPR code fails with
 `unknown-status-error`.
 
+`ClprRequestType` names the request types of the CLPR service, its transactions and queries. The module registers them
+with the client as a `RequestTypeSupport`; without this module, the SDK does not know them, and the fee schedule
+leaves out their prices.
+
 ## Design Notes
 
 - **Own module for an optional service.** CLPR is disabled on a ledger by default (`clpr.enabled=false`) and only few
@@ -35,6 +39,9 @@ them with the client as a `TransactionStatusSupport`; without this module, an an
   and their comments are taken from `response_code.proto` of the pinned consensus node v0.78.2; the three codes of the
   redaction of messages (550, 563, 572) are not in the baseline of the SDK proposal for HIP-1535
   (hiero-ledger/sdk-collaboration-hub, `proposals/hips/hip-1535.md`, consensus node commit `76ba2903`).
+- **Request types as an own enum.** For the same reason the CLPR values of `HederaFunctionality` (117 to 128) are an
+  enum of this module, registered as a `RequestTypeSupport`, and not values of `BasicRequestType`. They are taken from
+  `basic_types.proto` of the same pinned consensus node, with the first sentence of the protocol's comment.
 - **`ClprThrottles` is a plain value.** The proposal adds a factory `ClprThrottles.of(...)` that requires every field;
   here every field is required by the type itself, and the validation annotations reject the values that must be
   greater than zero.
@@ -44,6 +51,7 @@ them with the client as a `TransactionStatusSupport`; without this module, an an
 ```
 namespace consensusnode.clpr
 requires {TransactionStatus} from consensusnode.status
+requires {RequestType} from consensusnode.requestTypes
 
 // The capacity limits a ledger enforces on its CLPR service. maxSyncBytes must be at least
 // maxMessagePayloadBytes + 65,536 bytes; the network rejects a configuration that violates this with
@@ -145,6 +153,35 @@ enum ClprTransactionStatus(code: int32) extends TransactionStatus {
     // Attempted to redact a message slot whose payload is not a Data Message; only Data Messages may be redacted.
     CLPR_MESSAGE_NOT_REDACTABLE(572)
 }
+
+// The request types of the CLPR service of the consensus node, with their name and code.
+@@hip("1535")
+enum ClprRequestType(code: int32) extends RequestType {
+    // Update the local CLPR ledger configuration.
+    CLPR_UPDATE_LEDGER_CONFIGURATION(117)
+    // Register a new CLPR Channel to a peer ledger.
+    CLPR_REGISTER_CHANNEL(118)
+    // Complete a PENDING CLPR Channel (reveal phase).
+    CLPR_COMPLETE_CHANNEL(119)
+    // Initiate graceful closure of a CLPR Channel.
+    CLPR_CLOSE_CHANNEL(120)
+    // Get the current CLPR ledger configuration.
+    CLPR_GET_LEDGER_CONFIGURATION(121)
+    // Submit a bundle of cross-ledger messages from a peer sync.
+    CLPR_SUBMIT_BUNDLE(122)
+    // Redact a message from the outbound queue before delivery.
+    CLPR_REDACT_MESSAGE(123)
+    // Register a Connector on the CLPR Service.
+    CLPR_REGISTER_CONNECTOR(124)
+    // Remove a Connector from the CLPR Service.
+    CLPR_DEREGISTER_CONNECTOR(125)
+    // Complete a Connector registration (reveal phase).
+    CLPR_COMPLETE_CONNECTOR(126)
+    // Self-publish a node's CLPR endpoint into a manifest construction.
+    CLPR_ENDPOINT_PUBLICATION(127)
+    // Get the current CLPR endpoint manifest.
+    CLPR_GET_ENDPOINT_MANIFEST(128)
+}
 ```
 
 ## Default Instances for Testing
@@ -157,7 +194,7 @@ instance ClprThrottles = ClprThrottles{maxMessagesPerBundle: 10, maxMessagePaylo
 
 ## Testing
 
-Offline tests of the throttles and the status codes, written as given / when / then. The comment above each test names
+Offline tests of the throttles, the status codes and the request types, written as given / when / then. The comment above each test names
 its source.
 
 ```tests
@@ -260,6 +297,29 @@ test "a CLPR code is its CLPR status" {
     // when / then
     assertEquals(expected: notEnabled, actual: consensusnode.transactions.spi.getTransactionStatus(code: 537))
     assertEquals(expected: noProgress, actual: consensusnode.transactions.spi.getTransactionStatus(code: 571))
+}
+
+// Source: HederaFunctionality of the HAPI (basic_types.proto of consensus node v0.78.2, the CLPR values).
+@@testId("clpr-request-types-carry-the-codes-of-the-protocol")
+@@hip("1535")
+test "CLPR request types carry the codes of the protocol" {
+    // when / then
+    assertEquals(expected: 117, actual: ClprRequestType.CLPR_UPDATE_LEDGER_CONFIGURATION.code)
+    assertEquals(expected: 118, actual: ClprRequestType.CLPR_REGISTER_CHANNEL.code)
+    assertEquals(expected: 122, actual: ClprRequestType.CLPR_SUBMIT_BUNDLE.code)
+    assertEquals(expected: 128, actual: ClprRequestType.CLPR_GET_ENDPOINT_MANIFEST.code)
+}
+
+// Source: this spec (the module registers the CLPR request types as a RequestTypeSupport); transactions-spi.md
+// (getRequestType returns the request type of a registered support).
+@@testId("a-clpr-code-is-its-clpr-request-type")
+@@hip("1535")
+test "a CLPR code is its CLPR request type" {
+    // given
+    let submitBundle: RequestType = ClprRequestType.CLPR_SUBMIT_BUNDLE
+
+    // when / then
+    assertEquals(expected: submitBundle, actual: consensusnode.transactions.spi.getRequestType(code: 122))
 }
 ```
 

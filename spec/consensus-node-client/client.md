@@ -33,7 +33,8 @@ add an `AttemptListener` to log or measure every attempt. A single request can o
 attempt timeout of the client. When the retry policy gives up, `submit(client)` fails with
 `attempts-exhausted-error`. An answer with a status code that the SDK cannot name fails the request at once with
 `unknown-status-error` (see `TransactionStatusSupport`), and creating a client fails with `status-conflict-error` if
-two registered status supports name the same code.
+two registered status supports name the same code, and with `request-type-conflict-error` if two registered request
+type supports do.
 
 A transaction is packed for a fixed set of consensus nodes, so its attempts only go to these nodes.
 
@@ -384,16 +385,17 @@ HieroClient<$$Unit extends NativeTokenUnit> {
 // factory methods of `HieroClient` that should be added to the namespace in the best language dependent way
 
 // Creates a client for the given network that uses the operator account to pay for and sign requests. Every
-// createClient loads the registered status supports first and fails if two of them name the same code.
-@@throws(status-conflict-error)
+// createClient loads the registered status and request type supports first and fails if two of them name the same
+// code.
+@@throws(status-conflict-error, request-type-conflict-error)
 @@static HieroClient<ANY> createClient(networkSettings: NetworkSetting, operatorAccount: Account)
 // Creates a client for the given network that uses the operator account to pay for requests and the given
 // signer to sign transactions.
-@@throws(status-conflict-error)
+@@throws(status-conflict-error, request-type-conflict-error)
 @@static HieroClient<ANY> createClient(networkSettings: NetworkSetting, operatorAccount: Account, transactionSigner: TransactionSigner)
 // Creates a client for the given network that uses the operator account to pay for requests, the given signer to
 // sign transactions and the given settings to execute requests.
-@@throws(status-conflict-error)
+@@throws(status-conflict-error, request-type-conflict-error)
 @@static HieroClient<ANY> createClient(networkSettings: NetworkSetting, operatorAccount: Account,
         transactionSigner: TransactionSigner, executionSettings: ExecutionSettings)
 ```

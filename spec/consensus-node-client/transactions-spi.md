@@ -27,6 +27,13 @@ is an error (`unknown-status-error`): the request fails without another attempt.
 the first client is created; if two of them name the same code, creating the client fails with
 `status-conflict-error`.
 
+The request types of a service — its transaction and query types as the protocol numbers them — are named the same
+way, with a `RequestTypeSupport` that returns the `RequestType` values of the service. The SDK registers the one of
+`BasicRequestType` itself, a module such as the CLPR module registers its own. `getRequestType(code)` returns the
+request type of the registered support that names the code and fails with `unknown-request-type-error` if none does.
+The supports are loaded together with the status supports, when the first client is created; if two of them name the
+same code, creating the client fails with `request-type-conflict-error`.
+
 ## Design Notes
 
 - **Status codes are named by a support of their own.** The codes belong to a service, not to one transaction type
@@ -40,6 +47,10 @@ the first client is created; if two of them name the same code, creating the cli
   number, and a code with two names would make the status of an answer depend on the order in which the supports are
   loaded. Both are rejected: a conflict when the client is created, before any request; an unknown code when it
   arrives.
+
+- **Request types are named like status codes.** A custom service brings its own request types, just as its own
+  status codes, and the protocol numbers both in one enum shared by all services. The same mechanism — one support
+  per service, a conflict detected when the client is created — keeps both extensible.
 
 - Since the consensus node is designed in a service-oriented manner, transactions are handled by a
   separate service. The consensus node supports adding custom services next to the services that are
@@ -74,6 +85,7 @@ the first client is created; if two of them name the same code, creating the cli
 namespace consensusnode.transactions.spi
 requires {Receipt, Transaction} from consensusnode.transactions
 requires {TransactionStatus} from consensusnode.status
+requires {RequestType} from consensusnode.requestTypes
 requires {TransactionId} from ledger
 requires {ExchangeRate} from nativeToken
 requires {MethodDescriptor} from grpc
@@ -129,6 +141,22 @@ abstraction TransactionStatusSupport {
 // Returns the status of a code: the status of the registered TransactionStatusSupport that names it. Throws if no
 // support names the code, or if the registered supports conflict.
 @@throws(unknown-status-error, status-conflict-error) @@static TransactionStatus getTransactionStatus(code: int32)
+
+// The request types of a service: those of the protocol (`BasicRequestType`, registered by the SDK itself), of an
+// optional service such as CLPR, or of a custom service.
+abstraction RequestTypeSupport {
+
+    set<RequestType> getRequestTypes() // the request types of the service; no two with the same code
+}
+
+// Returns every registered RequestTypeSupport, among them the one of BasicRequestType. They are loaded once, when the
+// first client is created or this function or getRequestType is called first. Throws if two supports name the same
+// code.
+@@throws(request-type-conflict-error) @@static set<RequestTypeSupport> getAllRequestTypeSupports()
+
+// Returns the request type of a code: the request type of the registered RequestTypeSupport that names it. Throws if
+// no support names the code, or if the registered supports conflict.
+@@throws(unknown-request-type-error, request-type-conflict-error) @@static RequestType getRequestType(code: int32)
 ```
 
 ## Default Instances for Testing
@@ -203,11 +231,46 @@ test "every status of a registered support is found by its code" {
         }
     }
 }
+
+// Source: this spec (the SDK registers the support of BasicRequestType, so getRequestType returns the
+// BasicRequestType of a code of the protocol); HAPI basic_types.proto (CryptoTransfer is 1, CryptoCreate 27).
+@@testId("a-code-of-the-protocol-is-its-basic-request-type")
+test "a code of the protocol is its basic request type" {
+    // given
+    let transfer: RequestType = consensusnode.requestTypes.BasicRequestType.CRYPTO_TRANSFER
+    let create: RequestType = consensusnode.requestTypes.BasicRequestType.CRYPTO_CREATE
+
+    // when / then
+    assertEquals(expected: transfer, actual: getRequestType(code: 1))
+    assertEquals(expected: create, actual: getRequestType(code: 27))
+}
+
+// Source: this spec (a code that no registered RequestTypeSupport names is an error); HAPI basic_types.proto (no
+// code is negative, none is above 1,000).
+@@testId("a-request-type-code-no-one-names-is-rejected")
+test "a request type code no one names is rejected" {
+    for code in [-1, 1000000] {
+        // when / then
+        @@expectThrows(unknown-request-type-error)
+        getRequestType(code: code)
+    }
+}
+
+// Source: this spec (every request type of a registered support is found by its code).
+@@testId("every-request-type-of-a-registered-support-is-found-by-its-code")
+test "every request type of a registered support is found by its code" {
+    for support in getAllRequestTypeSupports() {
+        for requestType in support.getRequestTypes() {
+            // when / then
+            assertEquals(expected: requestType, actual: getRequestType(code: requestType.code))
+        }
+    }
+}
 ```
 
 ## Questions & Comments
 
-- **A conflict cannot be tested by the spec.** `status-conflict-error` needs two registered supports that name the
+- **A conflict cannot be tested by the spec.** `status-conflict-error` (and `request-type-conflict-error`) needs two registered supports that name the
   same code; the tests of a spec cannot register a support. Each implementation tests it.
 
 - **Are the built-in transaction types registered as `TransactionSupport`?** `PackedTransaction.fromBytes(...)`,
