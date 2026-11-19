@@ -32,7 +32,8 @@ network the query is sent to.
 
 ## Design Notes
 
-All queries extend `PaidQuery`; see [`queries.md`](queries.md) for the full payment / envelope semantics.
+All queries extend `PaidQuery`; see [`queries.md`](queries.md) for the full payment / envelope semantics. How system
+files are read is recorded in [ADR-0016](../../docs/adr/0016-typed-queries-for-system-files.md).
 
 - **A namespace of its own.** The network has several system files with a typed content (the address book `.102`,
   the fee schedule `.111`, the exchange rates `.112`, the throttle definitions `.123`, ...). Kept apart from the

@@ -16,6 +16,8 @@ of a code.
 
 ## Design Notes
 
+The decision is recorded in [ADR-0017](../../docs/adr/0017-request-types-registered-through-the-spi.md).
+
 - **Own namespace at the bottom of the consensus node client.** Like `consensusnode.status`: request types concern
   transactions and queries alike, and the SPI that registers them must not depend on the namespaces that use them.
 - **`RequestType` instead of `HederaFunctionality`.** The protocol's name carries the name of one network; the V2

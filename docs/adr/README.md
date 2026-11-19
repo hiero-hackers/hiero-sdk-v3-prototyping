@@ -26,3 +26,5 @@ deleted — superseded ADRs link forward to the decision that replaces them.
 | [0013](0013-untyped-receipts-for-the-receipt-query-by-id.md) | Untyped receipts for the receipt query by id; `Response` is a value | Accepted |
 | [0014](0014-specified-and-exchangeable-retry-and-node-selection.md) | Retry and node selection are specified and exchangeable public API | Accepted |
 | [0015](0015-evm-generic-types-in-a-namespace-without-imports.md) | EVM-generic types live in a namespace `evm` that imports nothing | Accepted |
+| [0016](0016-typed-queries-for-system-files.md) | System files are read by typed queries without a file id | Accepted |
+| [0017](0017-request-types-registered-through-the-spi.md) | Request types are an open type registered through the SPI | Accepted |

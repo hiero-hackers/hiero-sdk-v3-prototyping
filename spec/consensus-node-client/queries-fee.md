@@ -52,7 +52,8 @@ this SDK does not know yet; `BasicFeeSubType` names the ones of the protocol the
 
 All queries extend `PaidQuery`; see [`queries.md`](queries.md) for the full payment / envelope semantics. The query
 follows `ExchangeRatesQuery` ([`queries-system-files.md`](queries-system-files.md)): no subtype of
-`FileContentsQuery`, no `fileId`, a factory on `FileContentsQuery`, and a decoding failure classified `REJECTED`.
+`FileContentsQuery`, no `fileId`, a factory on `FileContentsQuery`, and a decoding failure classified `REJECTED`
+([ADR-0016](../../docs/adr/0016-typed-queries-for-system-files.md)).
 
 - **A namespace of its own, not `consensusnode.queries.systemFiles`.** The fee schedule brings six types of its own
   (`FeeSchedules`, `FeeSchedule`, `TransactionFeeSchedule`, `FeeData`, `FeeComponents`, `FeeSubType` and its enum).
