@@ -288,4 +288,5 @@ test "the basic request types have the codes of the protocol" {
   copy of the protocol; whether `BasicRequestType` should name only the request types a client can send is open.
 - **A request type per `TransactionSupport`?** A `TransactionSupport` describes one transaction type, which is one
   request type of the protocol. It could name its `RequestType`, so that the request types of a custom service need no
-  separate support. Queries have no support, though. — open
+  separate support. Queries have no support, though. Related: whether a transaction exposes its request type (see
+  the `## Questions & Comments` of [`transactions.md`](transactions.md)). — open

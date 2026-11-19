@@ -876,3 +876,16 @@ in-memory `TransactionSigner` described in the `## Testing` section of [`client.
   - **`pack(payer: Account, nodes)` only needs the payer's id.** Packing uses the account only to build the
     `TransactionId`, but `Account` requires a `PrivateKey`, so an application that packs for an out-of-process signer
     must hold a key it does not have. Should `pack` (and `packForBatch`) take `payerId: AccountId`? — open
+
+- **Should a transaction name its `RequestType`?** Every transaction type is one request type of the protocol
+  (`consensusnode.requestTypes`), e.g. `AccountCreateTransaction` is `CRYPTO_CREATE`. With the request type a caller
+  can find the prices of a transaction in the fee schedule (`FeeScheduleQuery`) without a mapping of its own.
+  Candidates:
+  - `Transaction.requestType` — the type is fixed per transaction class, so it is known while the transaction is
+    still being built.
+  - `PackedTransaction.requestType` — the form that is signed, serialized and read back with `fromBytes(...)`, where
+    the caller does not know the concrete type statically.
+  - both, or neither (a caller maps the transaction type itself).
+
+  Wherever it lands, the value would come from the `TransactionSupport` of the transaction type, which then has to
+  name its request type (see the related question in [`request-types.md`](request-types.md)). — open
