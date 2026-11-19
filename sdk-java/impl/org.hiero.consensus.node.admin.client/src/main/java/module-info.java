@@ -8,10 +8,14 @@ import org.jspecify.annotations.NullMarked;
 /// - `org.hiero.consensusnode.admin.nodes`
 /// - `org.hiero.consensusnode.admin.system`
 @NullMarked
+// auto-service-annotations ships no module descriptor; com.google.auto.service is an automatic module
+@SuppressWarnings("requires-automatic")
 module org.hiero.consensus.node.admin.client {
     requires transitive org.hiero.base;
     requires transitive org.hiero.consensus.node.client;
     requires static transitive org.jspecify;
+    // @AutoService writes META-INF/services for the class path; the provides below serve the module path
+    requires static com.google.auto.service;
 
     exports org.hiero.consensusnode.admin.freeze;
     exports org.hiero.consensusnode.admin.network;

@@ -27,7 +27,8 @@
 /// attempt timeout of the client. When the retry policy gives up, `submit(client)` fails with
 /// `attempts-exhausted-error`. An answer with a status code that the SDK cannot name fails the request at once with
 /// `unknown-status-error` (see `TransactionStatusSupport`), and creating a client fails with `status-conflict-error` if
-/// two registered status supports name the same code.
+/// two registered status supports name the same code, and with `request-type-conflict-error` if two registered request
+/// type supports do.
 ///
 /// A transaction is packed for a fixed set of consensus nodes, so its attempts only go to these nodes.
 ///

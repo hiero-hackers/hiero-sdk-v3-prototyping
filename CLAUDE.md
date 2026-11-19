@@ -321,7 +321,9 @@ brought up to date, the specs had 495 spec tests, of which 490 were generated; *
 passed** against `impl`, and `metalang check` reported that it provides the API. Since then the specs have added the
 exchange rates query (`ExchangeRate` became a concrete type with a default instance and a `nativeTokenUnit`;
 `ExchangeRates` and `ExchangeRatesQuery` in `consensusnode.queries.systemFiles`; `FileContentsQuery.forExchangeRates()`),
-which `impl` does not provide yet - `metalang check` reports the differences. With the default instance of
+which `impl` does not provide yet - `metalang check` reports the differences. The fee schedule query
+(`consensusnode.queries.fees`) and the request types with their `RequestTypeSupport` (`consensusnode.requestTypes`, SPI,
+`ClprRequestType`) came later and are implemented. With the default instance of
 `ExchangeRate` the 5 receipt tests are generated as well (508 spec tests today). What the specs cannot express is recorded in their `## Questions & Comments`. It has the same
 Maven coordinates as `generated`, so install it after `scripts/generate-java.sh` (`scripts/tck-java.sh` does). The
 TCK binds 54 of its 64 methods (`tooling/tck/bindings`); `./mvnw -f impl verify -Ptck` (in `sdk-java`) builds the TCK server in the same reactor and runs it after

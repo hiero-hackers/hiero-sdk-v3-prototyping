@@ -15,4 +15,8 @@
 /// service does not return today is listed as well, so that every status of the network can be read. The module registers
 /// them with the client as a `TransactionStatusSupport`; without this module, an answer with a CLPR code fails with
 /// `unknown-status-error`.
+///
+/// `ClprRequestType` names the request types of the CLPR service, its transactions and queries. The module registers them
+/// with the client as a `RequestTypeSupport`; without this module, the SDK does not know them, and the fee schedule
+/// leaves out their prices.
 package org.hiero.consensusnode.clpr;

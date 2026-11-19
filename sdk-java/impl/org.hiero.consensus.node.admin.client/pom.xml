@@ -28,6 +28,12 @@
             <groupId>org.jspecify</groupId>
             <artifactId>jspecify</artifactId>
         </dependency>
+        <!-- @AutoService: only needed at compile time (requires static in module-info.java) -->
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service-annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -45,4 +51,29 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- writes META-INF/services for the classes annotated with @AutoService, so that the SPI
+                         providers are found on the class path; on the module path, module-info.java provides them -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>com.google.auto.service</groupId>
+                            <artifactId>auto-service</artifactId>
+                            <version>${auto-service.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs combine.children="append">
+                        <!-- with a processor on the path, javac reports every annotation no processor claims:
+                             @NullMarked, and @AutoService itself, which its processor never claims -->
+                        <arg>-Xlint:-processing</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

@@ -1,5 +1,6 @@
 package org.hiero.consensusnode.transactions.spi;
 
+import org.hiero.consensusnode.client.internal.RequestTypes;
 import org.hiero.consensusnode.client.internal.Statuses;
 import org.hiero.consensusnode.transactions.Transaction;
 import org.hiero.consensusnode.transactions.Receipt;
@@ -11,8 +12,10 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import org.hiero.consensusnode.client.RequestTypeConflictException;
 import org.hiero.consensusnode.client.StatusConflictException;
 import org.hiero.consensusnode.client.UnknownStatusException;
+import org.hiero.consensusnode.requestTypes.RequestType;
 import org.hiero.consensusnode.status.TransactionStatus;
 
 /// Factory methods of the package `org.hiero.consensusnode.transactions.spi`.
@@ -58,6 +61,24 @@ public final class SpiFactory {
     /// @throws StatusConflictException if a status conflict error occurs
     public static TransactionStatus getTransactionStatus(final int code) {
         return Statuses.ofCode(code);
+    }
+
+    /// Returns every registered RequestTypeSupport, among them the one of BasicRequestType. They are loaded once, when the
+    /// first client is created or this function or getRequestType is called first. Throws if two supports name the same
+    /// code.
+    ///
+    /// @throws RequestTypeConflictException if a request type conflict error occurs
+    public static Set<RequestTypeSupport> getAllRequestTypeSupports() {
+        return RequestTypes.supports();
+    }
+
+    /// Returns the request type of a code: the request type of the registered RequestTypeSupport that names it. Throws if
+    /// no support names the code, or if the registered supports conflict.
+    ///
+    /// @throws UnknownRequestTypeException if an unknown request type error occurs
+    /// @throws RequestTypeConflictException if a request type conflict error occurs
+    public static RequestType getRequestType(final int code) {
+        return RequestTypes.ofCode(code);
     }
 
     private SpiFactory() {

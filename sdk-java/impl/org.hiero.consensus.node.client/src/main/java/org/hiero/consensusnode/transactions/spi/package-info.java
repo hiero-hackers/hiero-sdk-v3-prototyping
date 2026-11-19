@@ -20,4 +20,11 @@
 /// is an error (`unknown-status-error`): the request fails without another attempt. The supports are loaded once, when
 /// the first client is created; if two of them name the same code, creating the client fails with
 /// `status-conflict-error`.
+///
+/// The request types of a service — its transaction and query types as the protocol numbers them — are named the same
+/// way, with a `RequestTypeSupport` that returns the `RequestType` values of the service. The SDK registers the one of
+/// `BasicRequestType` itself, a module such as the CLPR module registers its own. `getRequestType(code)` returns the
+/// request type of the registered support that names the code and fails with `unknown-request-type-error` if none does.
+/// The supports are loaded together with the status supports, when the first client is created; if two of them name the
+/// same code, creating the client fails with `request-type-conflict-error`.
 package org.hiero.consensusnode.transactions.spi;

@@ -3,6 +3,7 @@ package org.hiero.consensusnode.clpr;
 import static org.hiero.sdk.testing.Testing.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.hiero.consensusnode.requestTypes.RequestType;
 import org.hiero.consensusnode.status.TransactionStatus;
 import org.hiero.consensusnode.transactions.spi.SpiFactory;
 import org.junit.jupiter.api.DisplayName;
@@ -117,5 +118,36 @@ class ClprSpecTest {
         // when / then
         assertEquals(notEnabled, SpiFactory.getTransactionStatus(537));
         assertEquals(noProgress, SpiFactory.getTransactionStatus(571));
+    }
+
+    /// `consensusnode.clpr/clpr-request-types-carry-the-codes-of-the-protocol`
+    ///
+    /// Source: HederaFunctionality of the HAPI (basic_types.proto of consensus node v0.78.2, the CLPR values).
+    @Test
+    @DisplayName("CLPR request types carry the codes of the protocol")
+    @Tag("testId:consensusnode.clpr/clpr-request-types-carry-the-codes-of-the-protocol")
+    @Tag("hip:1535")
+    void cLPRRequestTypesCarryTheCodesOfTheProtocol() {
+        // when / then
+        assertEquals(117, ClprRequestType.CLPR_UPDATE_LEDGER_CONFIGURATION.code());
+        assertEquals(118, ClprRequestType.CLPR_REGISTER_CHANNEL.code());
+        assertEquals(122, ClprRequestType.CLPR_SUBMIT_BUNDLE.code());
+        assertEquals(128, ClprRequestType.CLPR_GET_ENDPOINT_MANIFEST.code());
+    }
+
+    /// `consensusnode.clpr/a-clpr-code-is-its-clpr-request-type`
+    ///
+    /// Source: this spec (the module registers the CLPR request types as a RequestTypeSupport); transactions-spi.md
+    /// (getRequestType returns the request type of a registered support).
+    @Test
+    @DisplayName("a CLPR code is its CLPR request type")
+    @Tag("testId:consensusnode.clpr/a-clpr-code-is-its-clpr-request-type")
+    @Tag("hip:1535")
+    void aCLPRCodeIsItsCLPRRequestType() {
+        // given
+        final RequestType submitBundle = ClprRequestType.CLPR_SUBMIT_BUNDLE;
+
+        // when / then
+        assertEquals(submitBundle, SpiFactory.getRequestType(122));
     }
 }

@@ -77,13 +77,21 @@ public final class Execution {
         ///
         /// @param precheck        the precheck status
         /// @param receiptOrRecord whether the request asks for a receipt or a record, which may not be available yet
-        /// @param value           supplies the value when the precheck succeeded
+        /// @param value           supplies the value when the precheck succeeded; throws [MalformedAnswerException]
+        ///                        if the value of the answer cannot be read, which makes the outcome `REJECTED`
         /// @param <T> the type of the value
         /// @return the answer
         public static <T> Answer<T> precheck(final TransactionStatus precheck, final boolean receiptOrRecord,
                                              final Supplier<T> value) {
             final AttemptOutcome outcome = Execution.outcome(precheck, receiptOrRecord);
-            return new Answer<>(precheck, outcome, outcome == AttemptOutcome.SUCCESS ? value.get() : null);
+            if (outcome != AttemptOutcome.SUCCESS) {
+                return new Answer<>(precheck, outcome, null);
+            }
+            try {
+                return new Answer<>(precheck, outcome, value.get());
+            } catch (final MalformedAnswerException malformed) {
+                return new Answer<>(precheck, AttemptOutcome.REJECTED, null);
+            }
         }
     }
 

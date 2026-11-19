@@ -18,6 +18,7 @@
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>6.0.3</junit.version>
+        <auto-service.version>1.1.1</auto-service.version>
     </properties>
 
     <dependencyManagement>
@@ -49,6 +50,13 @@
             <artifactId>junit-platform-reporting</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- @AutoService: only needed at compile time -->
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service-annotations</artifactId>
+            <version>${auto-service.version}</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -61,7 +69,17 @@
                     <compilerArgs>
                         <arg>-Xlint:all</arg>
                         <arg>-Werror</arg>
+                        <!-- the AutoService processor never claims its annotation, so javac would report it -->
+                        <arg>-Xlint:-processing</arg>
                     </compilerArgs>
+                    <!-- writes META-INF/services for the classes annotated with @AutoService -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>com.google.auto.service</groupId>
+                            <artifactId>auto-service</artifactId>
+                            <version>${auto-service.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>

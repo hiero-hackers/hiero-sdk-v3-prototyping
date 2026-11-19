@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.hiero.consensusnode.client.UnknownStatusException;
+import org.hiero.consensusnode.requestTypes.BasicRequestType;
+import org.hiero.consensusnode.requestTypes.RequestType;
 import org.hiero.consensusnode.status.BasicTransactionStatus;
 import org.hiero.consensusnode.status.TransactionStatus;
 import org.hiero.consensusnode.transactions.Receipt;
@@ -89,6 +91,52 @@ class TransactionsSpiSpecTest {
             for (final TransactionStatus status : support.getStatuses()) {
                 // when / then
                 assertEquals(status, SpiFactory.getTransactionStatus(status.code()));
+            }
+        }
+    }
+
+    /// `consensusnode.transactions.spi/a-code-of-the-protocol-is-its-basic-request-type`
+    ///
+    /// Source: this spec (the SDK registers the support of BasicRequestType, so getRequestType returns the
+    /// BasicRequestType of a code of the protocol); HAPI basic_types.proto (CryptoTransfer is 1, CryptoCreate 27).
+    @Test
+    @DisplayName("a code of the protocol is its basic request type")
+    @Tag("testId:consensusnode.transactions.spi/a-code-of-the-protocol-is-its-basic-request-type")
+    void aCodeOfTheProtocolIsItsBasicRequestType() {
+        // given
+        final RequestType transfer = BasicRequestType.CRYPTO_TRANSFER;
+        final RequestType create = BasicRequestType.CRYPTO_CREATE;
+
+        // when / then
+        assertEquals(transfer, SpiFactory.getRequestType(1));
+        assertEquals(create, SpiFactory.getRequestType(27));
+    }
+
+    /// `consensusnode.transactions.spi/a-request-type-code-no-one-names-is-rejected`
+    ///
+    /// Source: this spec (a code that no registered RequestTypeSupport names is an error); HAPI basic_types.proto (no
+    /// code is negative, none is above 1,000).
+    @Test
+    @DisplayName("a request type code no one names is rejected")
+    @Tag("testId:consensusnode.transactions.spi/a-request-type-code-no-one-names-is-rejected")
+    void aRequestTypeCodeNoOneNamesIsRejected() {
+        for (final long code : List.of(-1L, 1000000L)) {
+            // when / then
+            assertThrows(UnknownRequestTypeException.class, () -> SpiFactory.getRequestType(checked(integer(code), "int32").intValueExact()));
+        }
+    }
+
+    /// `consensusnode.transactions.spi/every-request-type-of-a-registered-support-is-found-by-its-code`
+    ///
+    /// Source: this spec (every request type of a registered support is found by its code).
+    @Test
+    @DisplayName("every request type of a registered support is found by its code")
+    @Tag("testId:consensusnode.transactions.spi/every-request-type-of-a-registered-support-is-found-by-its-code")
+    void everyRequestTypeOfARegisteredSupportIsFoundByItsCode() {
+        for (final RequestTypeSupport support : SpiFactory.getAllRequestTypeSupports()) {
+            for (final RequestType requestType : support.getRequestTypes()) {
+                // when / then
+                assertEquals(requestType, SpiFactory.getRequestType(requestType.code()));
             }
         }
     }

@@ -7,10 +7,12 @@ import org.jspecify.annotations.NullMarked;
 /// - `org.hiero.consensusnode.proto.account`
 /// - `org.hiero.consensusnode.queries`
 /// - `org.hiero.consensusnode.queries.accounts`
+/// - `org.hiero.consensusnode.queries.fees`
 /// - `org.hiero.consensusnode.queries.files`
 /// - `org.hiero.consensusnode.queries.schedule`
 /// - `org.hiero.consensusnode.queries.tokens`
 /// - `org.hiero.consensusnode.queries.topics`
+/// - `org.hiero.consensusnode.requestTypes`
 /// - `org.hiero.consensusnode.transactions`
 /// - `org.hiero.consensusnode.transactions.accounts`
 /// - `org.hiero.consensusnode.transactions.batch`
@@ -35,11 +37,13 @@ module org.hiero.consensus.node.client {
     // exports org.hiero.consensusnode.proto.account; (enabled as soon as the package contains generated types)
     exports org.hiero.consensusnode.queries;
     exports org.hiero.consensusnode.queries.accounts;
+    exports org.hiero.consensusnode.queries.fees;
     exports org.hiero.consensusnode.queries.files;
     exports org.hiero.consensusnode.queries.receipts;
     exports org.hiero.consensusnode.queries.schedule;
     exports org.hiero.consensusnode.queries.tokens;
     exports org.hiero.consensusnode.queries.topics;
+    exports org.hiero.consensusnode.requestTypes;
     exports org.hiero.consensusnode.status;
     exports org.hiero.consensusnode.transactions;
     exports org.hiero.consensusnode.transactions.accounts;
@@ -60,4 +64,6 @@ module org.hiero.consensus.node.client {
     uses org.hiero.consensusnode.transactions.spi.TransactionSupport;
     // status codes of other modules (the CLPR module, a custom service)
     uses org.hiero.consensusnode.transactions.spi.TransactionStatusSupport;
+    // request types of other modules (the CLPR module, a custom service)
+    uses org.hiero.consensusnode.transactions.spi.RequestTypeSupport;
 }

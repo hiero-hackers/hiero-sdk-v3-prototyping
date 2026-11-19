@@ -1,5 +1,6 @@
 package org.hiero.tck.runtime;
 
+import com.google.auto.service.AutoService;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,6 +35,7 @@ import org.jspecify.annotations.Nullable;
  * value of its response) and the JSON-RPC server with the runtime methods {@code setup}, {@code reset} and
  * {@code generateKey}. Found by the generated server with {@link java.util.ServiceLoader}.
  */
+@AutoService(TckRuntime.class)
 public final class JavaTckRuntime implements TckRuntime {
 
 

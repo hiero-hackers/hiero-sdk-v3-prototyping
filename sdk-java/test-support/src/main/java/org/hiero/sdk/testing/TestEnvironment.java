@@ -1,15 +1,20 @@
 package org.hiero.sdk.testing;
 
+import com.google.auto.service.AutoService;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.Extension;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /// Publishes the environment of a test run once, at the root of the run: when it started and the Java runtime it runs
 /// on - vendor and distribution included, which the results of JUnit do not name (Open Test Reporting writes only the
 /// Java version). JUnit registers it for every test class of a module that has the test support as dependency
 /// (`junit.jupiter.extensions.autodetection.enabled`, `ServiceLoader`).
+// @AutoService is retained in the class file only; users of this module need not read com.google.auto.service
+@SuppressWarnings("exports")
+@AutoService(Extension.class)
 public final class TestEnvironment implements BeforeAllCallback {
 
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(

@@ -9,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.queries.PaidQuery;
 import org.hiero.consensusnode.queries.PaidQueryResponse;
+import org.hiero.consensusnode.queries.fees.FeeScheduleQuery;
 import org.hiero.ledger.Address;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
@@ -31,6 +32,12 @@ public final class FileContentsQuery extends PaidQuery<FileContents> {
     /// Returns the `fileId`.
     public Address fileId() {
         return fileId;
+    }
+
+    /// Creates a query for the fee schedule file of the network, which returns the schedules already decoded. Same as
+    /// `new FeeScheduleQuery()`.
+    public static FeeScheduleQuery forFeeSchedule() {
+        return new FeeScheduleQuery();
     }
 
     /// Sets the `retryPolicy`.

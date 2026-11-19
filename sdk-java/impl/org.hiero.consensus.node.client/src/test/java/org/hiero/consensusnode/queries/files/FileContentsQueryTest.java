@@ -122,6 +122,13 @@ class FileContentsQueryTest {
         assertNotNull(create().getCost(clientValue()));
     }
 
+    @Test
+    @DisplayName("forFeeSchedule() can be called and returns a value")
+    @Tag("testId:consensusnode.queries.files.FileContentsQuery/forFeeSchedule/call")
+    void shouldCallForFeeSchedule() {
+        assertNotNull(FileContentsQuery.forFeeSchedule());
+    }
+
     private static Address fileIdValue() {
         return new Address(0L, 0L, "", 1001L);
     }
