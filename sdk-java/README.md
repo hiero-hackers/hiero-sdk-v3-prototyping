@@ -1,0 +1,459 @@
+# Java Public API
+
+The `hiero-sdk-base-api` Maven module contains the public pagination, native token, exchange-rate, network identity,
+numeric address, and EVM address APIs and their contract tests in `src/main/java` and `src/test/java`. Use Java 21 and Maven from this directory:
+
+```sh
+mvn verify
+mvn org.apache.maven.plugins:maven-javadoc-plugin:3.12.0:javadoc
+```
+
+To preserve existing `target/` output, add `-Dsdk.build.directory=.verification/pagination` to either command.
+Lifecycle plugins are pinned, Javadoc uses full doclint with warnings treated as failures, and CycloneDX generates
+module and aggregate SBOMs during packaging. Test dependencies are excluded from the SBOMs.
+
+## Pagination API Mapping
+
+The numbered change reuses the existing `org.hiero.sdk.v3.common` API instead of introducing duplicate types:
+
+| Common contract | Java mapping |
+|-----------------|--------------|
+| `Page<T>` | Public abstract class with a protected constructor |
+| Immutable ordered data | `List<T> data()` returns a snapshot whose list structure cannot be modified |
+| Declared size and page index | Final `int size()` and `int pageIndex()` accessors |
+| Position inspection | Abstract synchronous `boolean hasNext()` and `boolean isFirst()` |
+| Asynchronous navigation | Abstract `CompletionStage<Page<T>> next()` and `first()` |
+| `mirror-node-error` | `MirrorNodeException` supplied through exceptional stage completion |
+
+The named JPMS module `org.hiero.sdk.v3.base` exports `org.hiero.sdk.v3.common`, `org.hiero.sdk.v3.ledger`, and
+`org.hiero.sdk.v3.nativeToken`, and declares JSpecify with
+`requires static`. Public reference types have explicit annotations. The annotation dependency is optional for Maven
+consumers; neither JSpecify nor test libraries are needed to run a consumer.
+
+The constructor rejects null data immediately with `data must not be null`, and the existing non-null element
+behavior of `List.copyOf` is preserved. The snapshot protects the list structure, not mutable state inside an element.
+Declared size and page-index values are retained; no numeric bounds or size-to-list-length relationship is inferred.
+`MirrorNodeException` retains the nullable message/cause conventions of `RuntimeException`.
+
+Providers implement position and navigation behavior. The API contains no concrete provider, HTTP client, parser,
+retry mechanism, or executor. Tests use small providers without network access. Equality remains inherited from the
+existing API; this change does not introduce page-value equality or additional public methods.
+
+## Common Source and Verification
+
+The shared sources are [the proposal](../openspec/changes/1-add-common-pagination-public-api/proposal.md) and
+[the specification](../openspec/changes/1-add-common-pagination-public-api/spec.md), last changed at revision
+`1d0e998933b81136b491866bcddc467ced77ddd6`.
+
+- Proposal SHA-256: `665b162efba2f5ae1479e71fbc7ccab1fddc4d1f74d80031b8f84a64a722ead8`.
+- Specification SHA-256: `e5bd2ddfd39f73f16491726cba8fbe60d5b2892c602ffb82714fd63d55c1ddd8`.
+
+The corresponding Java proposal and specification remain unchanged. Java mapping details are recorded here at the
+user's request; no `design.md` is created for the numbered change.
+
+| Shared scenario | Test coverage |
+|-----------------|---------------|
+| Page state is observed | `PageContractTest.State`: source snapshots, immutable output, null input, empty data, declared state |
+| Page position is inspected | `PageContractTest.Position`: position values and zero retrieval calls |
+| Next page is retrieved | `PageContractTest.Navigation.completesNextWithTheNextPageAsynchronously` |
+| First page is retrieved | `PageContractTest.Navigation.completesFirstWithTheSameOperationsFirstPage` |
+| Page retrieval fails | `PageContractTest.Navigation`: both operations with already-failed and later-failing stages |
+
+`PublicApiShapeTest` verifies modifiers, generics, annotations, and JPMS boundaries. `ModuleConsumerTest` compiles and
+runs a separate named module without annotation or test libraries at runtime, and rejects overriding final accessors.
+
+## Native Token API Mapping
+
+The native token change reuses the Java 21 API module, its JSpecify dependency, and its JUnit Jupiter/AssertJ tests.
+
+| Common contract | Java mapping |
+|-----------------|--------------|
+| `nativeToken` namespace | Exported package `org.hiero.sdk.v3.nativeToken` in `org.hiero.sdk.v3.base` |
+| `NativeTokenUnit` | Public interface, compatible with future enum-based providers |
+| Immutable unit attributes | `String symbol()` and primitive `long baseUnitFactor()`; providers own immutable storage |
+| `NativeToken<$$Self, $$Unit>` | Public abstract class `NativeToken<SELF extends NativeToken<SELF, UNIT>, UNIT extends NativeTokenUnit>` |
+| Immutable amount and unit | Private final state, final `long amount()` and `UNIT unit()` accessors |
+| Construction | Protected `NativeToken(long amount, UNIT unit)`; null units fail with `unit must not be null` |
+| Unit conversion | Abstract `SELF to(UNIT targetUnit)` preserves the concrete self type and associated unit type |
+| Base-unit retrieval | Abstract primitive `long toBaseUnits()` |
+
+The abstract token class owns state and constructor validation, following the existing `Page` convention. The unit
+interface allows enums to provide units. Providers must keep unit values immutable, return a non-null symbol, and
+reject null target units with a descriptive null check. The package is `@NullMarked`; public reference inputs and
+outputs also carry explicit `@NonNull` annotations. No new dependency or runtime library is required. Equality remains
+inherited; the contract does not introduce value equality.
+
+Consumers with a concrete provider can use the preserved self type directly:
+
+```java
+import org.hiero.sdk.v3.nativeToken.NativeToken;
+import org.hiero.sdk.v3.nativeToken.NativeTokenUnit;
+
+static <S extends NativeToken<S, U>, U extends NativeTokenUnit> S convert(
+        final S amount, final U target) {
+    final S converted = amount.to(target);
+    final long baseUnits = converted.toBaseUnits();
+    return converted;
+}
+```
+
+This change publishes only the public contract. Production conversion arithmetic, token-specific implementations,
+exchange-rate fetching, and network behavior remain deferred. Fractional-result, overflow, and unit-factor validation policies
+need a shared contract decision before production arithmetic is implemented. This change chooses no rounding,
+truncation, saturation, positivity constraints on factors, or amount bounds. Test providers use only exactly
+representable conversions; their arithmetic demonstrates provider obligations and is not production implementation.
+
+## Native Token Source and Verification
+
+The shared sources are [the proposal](../openspec/changes/2-add-native-token-public-api/proposal.md) and
+[the specification](../openspec/changes/2-add-native-token-public-api/spec.md), read at source revision
+`65dded267c95d003d444d3e3f897c9e04b8dcd6d` (before the directory was renamed to its numbered name).
+
+- Proposal SHA-256: `db5b4102c7d86c698837b356a8aa7faf13a68673f523c9958a45ffd9e5d5cae5`.
+- Specification SHA-256: `7ad86fc515d4e40e928c99bb7c101340ba0b0375ec1153390d8d21d68305987e`.
+
+The Java proposal and native-token specification are byte-for-byte copies of those shared files. They remain unchanged;
+Java mappings and traceability are recorded here, with no separate design artifact.
+
+| Shared scenario | Passing provider-contract test |
+|-----------------|--------------------------------|
+| Unit state is observed | `NativeTokenContractTest.UnitState.observesImmutableUnitStateWithoutMutationMethods` |
+| Token amount is observed | `NativeTokenContractTest.AmountState.observesStoredAmountAndAssociatedUnit` |
+| Token amount is converted to a different unit | `NativeTokenContractTest.Conversion.returnsNewConcreteTokenInTargetUnitWithoutChangingSource` |
+| Base units are calculated | `NativeTokenContractTest.BaseUnits.calculatesExactlyRepresentableBaseUnits` |
+
+`NativeTokenApiShapeTest` checks recursive generic bounds, protected construction, immutable state/accessors,
+primitive mappings, explicit nullability, and public signature boundaries. `NativeTokenModuleConsumerTest` compiles
+an independent named module with enum units and a concrete token, rejects unrelated unit types in construction and
+conversion, and executes with only the API and consumer on the module path.
+
+The native-token change was verified on Java 21 with 63 tests (31 native token tests and 32 existing pagination/API tests).
+To reproduce the build without replacing existing `target/` output, set `JAVA_HOME` to a Java 21 JDK and run:
+
+```sh
+mvn -Dsdk.build.directory=.verification/native-token verify
+mvn -Dsdk.build.directory=.verification/native-token org.apache.maven.plugins:maven-javadoc-plugin:3.12.0:javadoc
+```
+
+## Exchange Rate API Mapping
+
+The exchange-rate change reuses the Java 21 API module and its existing exported
+`org.hiero.sdk.v3.nativeToken` package, JSpecify annotations, and JUnit Jupiter/AssertJ test setup.
+
+| Common contract | Java mapping |
+|-----------------|--------------|
+| `nativeToken.ExchangeRate` | Public abstract `ExchangeRate` in `org.hiero.sdk.v3.nativeToken` |
+| Immutable `expirationTime: zonedDateTime` | Private final `ZonedDateTime`, final `expirationTime()` accessor |
+| Immutable `exchangeRateInUsdCents: double` | Private final primitive `double`, final `exchangeRateInUsdCents()` accessor |
+| Construction | Protected `ExchangeRate(ZonedDateTime expirationTime, double exchangeRateInUsdCents)` |
+| `isExpired(): bool` | Abstract primitive `boolean isExpired()` supplied by providers |
+
+The constructor preserves the supplied expiration time, including its zone, and the double-precision USD-cent value
+without normalization. A null expiration fails immediately with `expirationTime must not be null`. Public reference
+inputs and outputs carry explicit `@NonNull` annotations within the existing `@NullMarked` package. Past expiration
+times and negative, zero, non-finite, or other double values receive no additional validation. Equality remains inherited.
+
+Expiration compares instants: a current instant strictly after expiration returns `true`; equality or an earlier instant
+returns `false`, regardless of time zone. The API owns immutable state and required-input validation, while providers
+choose the clock and implement evaluation. There is no public clock configuration API. Fetching, refresh, caching,
+currency/token conversion, network access, and token-specific implementations remain deferred. Fixed-clock test
+providers demonstrate the contract; they are not production expiration implementations.
+
+Consumers use the provider through the exported API:
+
+```java
+import org.hiero.sdk.v3.nativeToken.ExchangeRate;
+
+static boolean isUsable(final ExchangeRate rate) {
+    return !rate.isExpired();
+}
+```
+
+## Exchange Rate Source and Verification
+
+The shared sources are [the proposal](../openspec/changes/3-add-exchange-rate-public-api/proposal.md) and
+[the specification](../openspec/changes/3-add-exchange-rate-public-api/spec.md), read at source revision
+`2d4eb407cd88eeb30920288960c6d85962ab532e`.
+
+- Proposal SHA-256: `4fc9763469d6af3d66a67ebec22d2dccf6c41ac0b01b2ce2b7eba4a9fe0e835e`.
+- Specification SHA-256: `4f95c9edf47fa548347028ad0349028a3195a9142c04c65b94c2a481e467732d`.
+
+The Java proposal matches the shared proposal byte for byte. The Java specification retains the shared contract,
+differing only by a trailing newline. Both Java artifacts remain unchanged, and no design artifact is created.
+
+| Shared scenario | Passing provider-contract test |
+|-----------------|--------------------------------|
+| Exchange-rate state is observed | `ExchangeRateContractTest.State.observesStoredExpirationIncludingZoneAndUsdCentValue` |
+| Exchange rate has expired | `ExchangeRateContractTest.Expiration.expiresOnlyWhenCurrentInstantIsStrictlyLater` |
+| Exchange rate has not expired | `ExchangeRateContractTest.Expiration.doesNotExpireAtOrBeforeExpiration` and `equalInstantsDoNotExpireRegardlessOfZone` |
+
+`ExchangeRateContractTest.State` also checks descriptive null rejection and unchanged double values, including signed
+zero, negative values, infinities, and NaN, without adding rate validation. `ExchangeRateApiShapeTest` checks protected
+construction, final fields/accessors, primitive mappings, nullability, abstract evaluation, and the public signature
+boundary. `ExchangeRateModuleConsumerTest` compiles and runs an independent named module with only the API and consumer
+at runtime. Its fixed-clock provider verifies state and expiration before, at, and after the nanosecond boundary.
+
+The exchange-rate change was verified on Java 21 with 89 tests (26 exchange-rate tests and 63 existing tests). Set `JAVA_HOME`
+to a Java 21 JDK and run these commands to preserve existing `target/` output:
+
+```sh
+mvn -Dsdk.build.directory=.verification/exchange-rate verify
+mvn -Dsdk.build.directory=.verification/exchange-rate org.apache.maven.plugins:maven-javadoc-plugin:3.12.0:javadoc
+```
+
+## Network Identity API Mapping
+
+This change reuses the Java 21 API module, JSpecify annotations, JUnit Jupiter/AssertJ setup, and the existing
+`NativeTokenUnit` contract from `2-add-native-token-public-api`.
+
+| Common contract | Java mapping |
+|-----------------|--------------|
+| `ledger.Network<$$Unit extends NativeTokenUnit>` | Public record `org.hiero.sdk.v3.ledger.Network<UNIT extends NativeTokenUnit>` |
+| Immutable `id: bytes` | Required `byte[]`, cloned by the public constructor and every `id()` call |
+| Nullable `name: string` | `@Nullable String name()`; absence remains `null` |
+| Immutable `nativeTokenUnit: $$Unit` | Required typed `UNIT nativeTokenUnit()`, retaining the supplied immutable provider |
+| Construction | Public canonical constructor `Network(byte[] id, String name, UNIT nativeTokenUnit)` |
+
+The record owns private final state and exposes no mutation API. The ledger package is `@NullMarked`; ID arrays and
+unit references have explicit `@NonNull` annotations, and the name has explicit `@Nullable` annotations. A null ID
+fails with `id must not be null`; a null unit fails with `nativeTokenUnit must not be null`. IDs of any length retain
+their exact contents and order, including empty arrays and leading zeros. Names retain their exact supplied value,
+including null, empty strings, and whitespace. Construction and reads do not inspect, copy, or convert the unit;
+unit providers must satisfy the existing immutability contract.
+
+Java value equality compares ID bytes by content, the nullable name, and the unit using its own `equals` semantics.
+The hash uses those same values, and `toString()` renders ID bytes by content as
+`Network[id=[0, 1], name=example, nativeTokenUnit=BASE]`. Defensive copies prevent array mutations from changing
+equality, hashing, or text output. These are Java representation choices, not additional common requirements or a
+network-ID uniqueness policy; equal IDs with different names or units need not produce equal records.
+
+For a concrete immutable unit provider, construction preserves its type:
+
+```java
+import org.hiero.sdk.v3.ledger.Network;
+import org.hiero.sdk.v3.nativeToken.NativeTokenUnit;
+
+static <U extends NativeTokenUnit> Network<U> unnamedNetwork(final byte[] id, final U unit) {
+    return new Network<>(id, null, unit);
+}
+```
+
+This change stores identity only. Predefined network instances, ID assignment rules, checksums, address parsing,
+node addresses/discovery, network settings, refresh, and transport behavior remain deferred. Construction and
+observation perform no metadata fetching or network access, and add no runtime dependencies.
+
+## Network Identity Source and Verification
+
+The shared sources are [the proposal](../openspec/changes/4-add-network-identity-public-api/proposal.md) and
+[the specification](../openspec/changes/4-add-network-identity-public-api/spec.md), read at source revision
+`bd1c16017837047432bf7cf2aa44789769a14e29` (before the directory was renamed to its numbered name).
+
+- Proposal SHA-256: `0c975d8e20497362f53778a712fee37aa4a53c8f44e7a05779a580460f91dce9`.
+- Specification SHA-256: `efb9ec51baf3e10cde5cb6453af2162f0e7de6660f8a1186fc3f3f9adf3ddb7e`.
+
+The Java proposal and network-identity specification are byte-for-byte copies of the shared files. They remain
+unchanged; Java mappings and traceability are recorded here, with no separate design artifact.
+
+| Shared scenario | Passing contract tests |
+|-----------------|------------------------|
+| Network identity state is observed | `NetworkContractTest.observesExactIdentityNameAndConcreteUnit` and `ownsIdIndependentlyOfInputAndEveryReturnedArray` |
+
+`NetworkContractTest` also covers absent/empty/unmodified names, descriptive null checks, no unit metadata inspection,
+array-content equality, unit value equality, and stable hashing/text after external array mutation. `NetworkApiShapeTest`
+checks record construction, final fields, typed accessors/bounds, explicit nullability, public signatures, and exports.
+The canonical constructor is explicit to preserve the ID-array parameter annotation in Java 21 bytecode.
+`NetworkModuleConsumerTest` compiles and runs an independent named module with only the API and consumer at runtime;
+negative compilation cases reject non-unit type arguments and assignment to an unrelated unit type.
+
+The Java 21 reactor verification passes all 114 tests (25 network-identity tests and 89 existing tests). Set `JAVA_HOME`
+to a Java 21 JDK and run these commands to preserve existing `target/` output:
+
+```sh
+mvn -Dsdk.build.directory=.verification/network-identity verify
+mvn -Dsdk.build.directory=.verification/network-identity org.apache.maven.plugins:maven-javadoc-plugin:3.12.0:javadoc
+```
+
+## Numeric Address API Mapping
+
+Change `5-add-numeric-address-public-api` provides numeric addressing in the existing ledger package and reuses
+the verified `Network` contract from change 4.
+
+| Common contract | Java mapping |
+|-----------------|----------------------|
+| `BaseAddress` | Public unsealed abstract class in `org.hiero.sdk.v3.ledger`, protected state-owning construction |
+| Final numeric `Address` | Public final `Address extends BaseAddress`, with a required numeric selector |
+| `shard` and `realm`: `uint64` | Primitive `long` storing all 64 unsigned bits |
+| Base nullable `num: uint64` | `@Nullable Long num()` |
+| Concrete required `num: uint64` | Overriding `@NonNull Long num()` with a constructor-enforced non-null invariant |
+| Immutable checksum | Required `String checksum()`; `""` represents absence |
+| Checksum target | Required `Network<?>`, accepting any associated native-token unit type |
+| Canonical formatting | `String toString()` and `String toStringWithChecksum()` |
+| Parsing | Static `Address.fromString(String address)` returning `Address` |
+| `illegal-format` | `IllegalArgumentException` for malformed non-null text |
+
+The `long`/`Long` mapping follows the shared Java guideline. Values from `9223372036854775808` through
+`18446744073709551615` use negative signed Java storage patterns but remain valid unsigned values. Decimal parsing
+and formatting must preserve the full unsigned range; negative decimal input is invalid. The same boxed `Long`
+return type on parent and child allows nullability narrowing without an illegal primitive-return override or
+shadowing selector state. The schema resolves the prose's optional checksum as a non-null string with empty-string
+absence, rather than a nullable checksum. Required reference inputs use descriptive `NullPointerException`
+checks; null parser input fails with `address must not be null`, separately from malformed non-null input.
+
+The user approved concrete local parsing, formatting, and HIP-15 checksum validation in the API module on
+2026-11-18. These operations are production behavior; they require no provider framework, registry, transport,
+or new dependency. The base retains abstract canonical formatting and checksum validation for future selector
+subclasses; its final `toStringWithChecksum()` appends the stored suffix only when nonempty.
+
+The approved policy uses the algorithm and all 18 published vectors in
+[HIP-15](https://github.com/hiero-ledger/hiero-improvement-proposals/blob/main/HIP/hip-15.md). Parsing accepts three
+unsigned ASCII decimal components with no leading zeros, whitespace, or plus signs, and an optional suffix of exactly
+five lowercase ASCII letters. `fromString` preserves the suffix without validating its network-specific value;
+`validateChecksum(network)` compares it against the checksum calculated from the canonical unsigned numeric address
+and the exact network ID bytes. An absent checksum returns `false`. A null network fails with
+`network must not be null`, even when the checksum is absent. No network metadata or native-token unit is inspected.
+
+Construction uses `new Address(long shard, long realm, long num, String checksum)`. Primitive numeric construction
+makes absence impossible; the inherited boxed `num()` is overridden as non-null without duplicate selector state.
+A null checksum is rejected; otherwise it must be empty or five lowercase ASCII letters. The protected base
+constructor permits a null number for future selector types and requires a non-null checksum without selecting
+those types' syntax. `Address.ZERO_ADDRESS` is an immediately usable `0.0.0` clear-sentinel with an empty checksum;
+it is not an actual entity ID and needs no provider initialization. Java equality and hashing compare all three
+unsigned component bit patterns and the stored checksum; checksummed and unchecksummed values are distinct.
+`toString()` always returns canonical `shard.realm.num`; `toStringWithChecksum()` adds only a supplied suffix.
+
+```java
+import org.hiero.sdk.v3.ledger.Address;
+import org.hiero.sdk.v3.ledger.Network;
+
+static boolean matchesNetwork(final Network<?> network) {
+    final Address address = Address.fromString("0.0.123-vfmkw");
+    return address.validateChecksum(network);
+}
+```
+
+EVM selectors, aliases, account/contract identifiers, checksum-generation APIs, network configuration, and entity
+existence checks remain outside this change.
+
+The shared sources are [the proposal](../openspec/changes/5-add-numeric-address-public-api/proposal.md) and
+[the specification](../openspec/changes/5-add-numeric-address-public-api/spec.md), read at source revision
+`f27ddd82aa60479f4850dde4957ec9ac86e8fc88` (before the directory was renamed to its numbered name).
+
+- Proposal SHA-256: `50de99e290fd6b3e56d62944a7fe2e5fa78de5f97bf6d5075be5706108d364ac`.
+- Specification SHA-256: `f9a5b84331ef5b516764f5332b93eae8f50a4dcd7af4b820f6f56715b6e11cd6`.
+
+The Java proposal and numeric-address specification match the shared files byte for byte and remain unchanged.
+No design artifact is created.
+
+| Shared scenario | Passing contract coverage |
+|-----------------|---------------------------|
+| Address state is observed | `AddressContractTest.State`: primitive construction, inherited state, absent base selector, required inputs |
+| Address is parsed from string | `AddressContractTest.Parsing`: both forms, suffix preservation, unsigned boundaries, round trips |
+| Invalid address parsing fails | `AddressContractTest.Parsing`: malformed text, negative values, overflow, strict syntax, null input |
+| Checksum is validated | `AddressContractTest.Checksums`: all 18 HIP-15 vectors, mismatches, different ledger IDs, absent checksums, required network |
+| Sentinel address is used | `AddressContractTest.State.zeroAddressIsImmediatelyUsable` and `AddressModuleConsumerTest` |
+
+`AddressApiShapeTest` checks the abstract base/final subtype, immutable state, boxed selector nullability narrowing,
+static parsing, constant placement, public signatures, and the existing module export. `AddressModuleConsumerTest`
+compiles and runs an independent named module with real parsing/checksum behavior and only the API at runtime;
+negative compilation checks reject subclassing `Address` and replacing the boxed selector accessor with a primitive.
+The checksum tests use published expected values, not a test-only checksum implementation.
+
+Java 21 reactor verification passes all 205 tests (91 address tests and 114 existing tests), and checked Javadoc
+generation passes. Run both checks while preserving existing `target/` output:
+
+```sh
+mvn -Dsdk.build.directory=.verification/numeric-address verify
+mvn -Dsdk.build.directory=.verification/numeric-address org.apache.maven.plugins:maven-javadoc-plugin:3.12.0:javadoc
+```
+
+## EVM Address API Mapping
+
+Change `6-add-evm-address-public-api` provides the standalone immutable record
+`org.hiero.sdk.v3.ledger.EvmAddress`. It uses the existing ledger export and Java 21 build setup.
+Its state and behavior are independent of numeric addressing, network identities, and entity existence.
+
+| Common contract | Java mapping |
+|-----------------|----------------------|
+| Exactly 20 immutable raw bytes | `byte[] bytes()`, with copies on construction and every read |
+| Byte construction | Static `EvmAddress fromBytes(byte[] value)` |
+| Hex parsing | Static `EvmAddress fromString(String value)` |
+| Canonical formatting | Overridden `String toString()` returning the specified EIP-55 form |
+| Required-input violation | `NullPointerException` with `value must not be null` on factory inputs |
+| Non-null malformed input (`illegal-format`) | `IllegalArgumentException` |
+
+The byte factory accepts all 20-byte values, including all zeros, with no padding, truncation, reordering, or
+network validation. The text factory accepts exactly 40 ASCII hexadecimal digits with optional lowercase `0x`,
+regardless of input letter casing, including mixed casing that fails EIP-55. It rejects whitespace, Unicode
+lookalikes, `0X`, signs, separators, repeated prefixes, ledger-checksum suffixes, and shortened values. Output
+preserves all bytes and leading zeros as lowercase `0x` plus 40 digits with deterministic EIP-55 casing.
+
+The implementation boundary supplies concrete parsing and EIP-55 formatting directly in the API module, with
+private Keccak-256 support and no new dependency. The
+[EIP-55 reference](https://eips.ethereum.org/EIPS/eip-55) specifies the checksum over the lowercase ASCII hexadecimal
+body without `0x`; the corresponding hash nibble selects the case of each hexadecimal letter. The private hashing
+method handles only that fixed 40-byte input. Its Keccak-f[1600] permutation follows the
+[Keccak team's algorithm and constants](https://keccak.team/keccak_specs_summary.html), with the original Keccak
+padding suffix `0x01`. SHA3-256 has different padding and cannot replace it. All eight EIP-55 reference vectors,
+including canonical all-uppercase and all-lowercase bodies, are checked against production formatting.
+
+The public canonical constructor `new EvmAddress(byte[] bytes)` checks the same exact-length invariant and copies
+its input. Null construction fails with `bytes must not be null`; both factories reject null with
+`value must not be null`. `bytes()` returns a fresh copy on every read. Equality and hashing compare all 20 bytes
+by content, retaining stable value behavior after external array mutations. `toString()` returns only the canonical
+42-character address, replacing the generated record representation. No provider or hashing configuration is
+required from a consumer. Ledger checksums, chain-specific formatting, selector hierarchies, network lookups,
+and account/contract existence checks remain deferred.
+
+```java
+import org.hiero.sdk.v3.ledger.EvmAddress;
+
+final EvmAddress address = EvmAddress.fromString("fb6916095ca1df60bb79ce92ce3ea74c37c5d359");
+final String canonical = address.toString(); // 0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359
+final byte[] independentCopy = address.bytes();
+```
+
+The shared sources are [the proposal](../openspec/changes/6-add-evm-address-public-api/proposal.md) and
+[the specification](../openspec/changes/6-add-evm-address-public-api/spec.md), read at source revision
+`d60d40710b1ea00f39cd99134b58dd30ddaa9d02`.
+
+- Proposal SHA-256: `e3cf1b69fbf8fcb021d315dc5fe4cbe0fca2de87d4f309ccc51e30d1e96bf134`.
+- Specification SHA-256: `536bc61232b689d967f53c7eb3eef42183ed390a16db350c322f3453b76cb51b`.
+
+The Java proposal matches the shared proposal byte for byte. The Java specification differs only in its two adjusted
+relative links to `spec/base/ledger.md`; behavior is unchanged. Both Java artifacts remain unchanged, and no design
+artifact is created.
+
+| Shared scenario | Contract test coverage |
+|-----------------|------------------------|
+| EVM address state is observed | `State.observesExactOrderedBytesThroughEveryByteConstructionPath` |
+| Source bytes are changed after construction | `State.sourceMutationCannotChangeAddressStateFormattingOrHash` |
+| Returned bytes cannot modify the address | `State.returnedArraysCannotChangeStoredAddress` |
+| EVM address is constructed from valid bytes | `State.observesExactOrderedBytesThroughEveryByteConstructionPath` |
+| EVM address byte length is invalid | `State.rejectsInvalidByteLengthsThroughConstructorAndFactory` |
+| Null byte input is rejected | `State.rejectsNullBytesThroughConstructorAndFactory` |
+| Zero bytes are valid address data | `State.allZeroBytesAreValidAndLeadingZerosRemainInText` |
+| Prefixed EVM address is parsed | `Parsing.acceptsBothPrefixesAndAllLetterCasesWithoutInputChecksumValidation` |
+| Unprefixed EVM address is parsed | `Parsing.acceptsBothPrefixesAndAllLetterCasesWithoutInputChecksumValidation` |
+| Letter case does not change the parsed address | `Parsing.acceptsBothPrefixesAndAllLetterCasesWithoutInputChecksumValidation` |
+| EVM address text length is invalid | `Parsing.rejectsInvalidTextLength` |
+| EVM address text contains invalid characters | `Parsing.rejectsNonAsciiHexCharactersWithoutNormalization` |
+| EVM address text contains unsupported decoration | `Parsing.rejectsUnsupportedPrefixesAndOuterWhitespace`, `rejectsUnsupportedSuffixes`, `rejectsSeparatorsAndNullInput` |
+| Null text input is rejected | `Parsing.rejectsSeparatorsAndNullInput` |
+| EVM address is formatted | `Formatting.matchesAuthoritativeEip55Vectors` |
+| Leading zeros are preserved in formatted text | `State.allZeroBytesAreValidAndLeadingZerosRemainInText` |
+| Raw address bytes survive a text round trip | `Formatting.variedBytesAndLeadingZerosSurviveCanonicalRoundTrips` |
+| Accepted spellings normalize to one canonical form | `Parsing.acceptsBothPrefixesAndAllLetterCasesWithoutInputChecksumValidation`, `Formatting.variedBytesAndLeadingZerosSurviveCanonicalRoundTrips` |
+
+All scenario methods are in `EvmAddressContractTest`. It also verifies locale independence, value equality, and
+construction/accessor ownership. `EvmAddressApiShapeTest` checks the standalone record, canonical constructor,
+immutable state, explicit nullability, static factories, public signatures, and existing JPMS export.
+`EvmAddressModuleConsumerTest` compiles and runs a separate named module with only the API and consumer at runtime,
+exercising real parsing and checksum formatting without annotation, test, transport, hashing, or provider libraries.
+
+Java 21 reactor verification passes all 273 tests (68 EVM address tests and 205 existing tests), and checked
+Javadoc generation passes. Run both checks while preserving existing `target/` output:
+
+```sh
+mvn -Dsdk.build.directory=.verification/evm-address verify
+mvn -Dsdk.build.directory=.verification/evm-address org.apache.maven.plugins:maven-javadoc-plugin:3.12.0:javadoc
+```
