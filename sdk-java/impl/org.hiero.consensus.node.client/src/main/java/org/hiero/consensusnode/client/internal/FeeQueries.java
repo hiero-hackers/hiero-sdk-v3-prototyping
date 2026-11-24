@@ -23,9 +23,7 @@ import org.hiero.consensusnode.queries.fees.FeeSchedules;
 import org.hiero.consensusnode.queries.fees.FeeSubType;
 import org.hiero.consensusnode.queries.fees.TransactionFeeSchedule;
 import org.hiero.consensusnode.requestTypes.RequestType;
-import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
-import org.hiero.ledger.ConsensusNode;
 
 /// The query of the fee schedule file: `FileService.getFileContent` for the file `<shard>.<realm>.111`, whose contents
 /// are decoded as `CurrentAndNextFeeSchedule`.
@@ -50,19 +48,12 @@ public final class FeeQueries {
     private FeeQueries() {
     }
 
-    /// rule fee-schedule-file: the fee schedule file in the shard and realm of the network of the client. Every
-    /// consensus node of a network lives in the shard and realm of that network, so the account of any node of the
-    /// client gives them.
+    /// rule fee-schedule-file: the fee schedule file in the shard and realm of the network of the client.
     ///
     /// @param client the client
     /// @return the id of the fee schedule file
     public static Address feeScheduleFile(final HieroClient<?> client) {
-        final List<ConsensusNode> nodes = ClientRuntime.of(client).nodes();
-        if (nodes.isEmpty()) {
-            throw new IllegalStateException("The network of the client has no consensus node");
-        }
-        final AccountId node = nodes.getFirst().account();
-        return new Address(node.shard(), node.realm(), "", FEE_SCHEDULE_FILE);
+        return SystemFileQueries.systemFile(client, FEE_SCHEDULE_FILE);
     }
 
     /// rule fee-schedule-decoding: the contents of the fee schedule file as `FeeSchedules`.

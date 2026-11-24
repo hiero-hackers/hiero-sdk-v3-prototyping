@@ -295,3 +295,8 @@ test "a receipt query asks only for the receipt unless it names duplicates, chil
   other numbers are proto3 scalars, so an absent number and `0` look the same; the Java implementation reads `0` as
   absent, so the total supply after burning a token down to zero, or node `0`, read as absent. Should they be
   non-nullable with `0` as default instead? — open
+  This also breaks `typed()`: it fails when a required number is missing, and `totalSupply` is required by
+  `TokenMintReceipt`, `TokenBurnReceipt` and `TokenWipeReceipt`. A burn or wipe that leaves a total supply of `0`
+  therefore yields a receipt that cannot be typed for its own transaction type, although the transaction succeeded.
+  Options: make these numbers non-nullable with `0` as default (see above), make `totalSupply` optional in the
+  typed receipts, or let `typed()` accept `0` for required numbers.

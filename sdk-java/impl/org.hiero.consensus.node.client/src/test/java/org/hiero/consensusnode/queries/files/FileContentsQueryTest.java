@@ -123,6 +123,13 @@ class FileContentsQueryTest {
     }
 
     @Test
+    @DisplayName("forExchangeRates() can be called and returns a value")
+    @Tag("testId:consensusnode.queries.files.FileContentsQuery/forExchangeRates/call")
+    void shouldCallForExchangeRates() {
+        assertNotNull(FileContentsQuery.forExchangeRates());
+    }
+
+    @Test
     @DisplayName("forFeeSchedule() can be called and returns a value")
     @Tag("testId:consensusnode.queries.files.FileContentsQuery/forFeeSchedule/call")
     void shouldCallForFeeSchedule() {

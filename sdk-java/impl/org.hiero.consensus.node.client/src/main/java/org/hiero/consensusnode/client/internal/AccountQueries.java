@@ -27,6 +27,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.ContractId;
 import org.hiero.ledger.TransactionId;
 import org.hiero.nativeToken.ExchangeRate;
+import org.hiero.nativeToken.NativeTokenUnit;
 import org.jspecify.annotations.Nullable;
 
 /// The query types of accounts.
@@ -72,10 +73,10 @@ public final class AccountQueries {
             (query, header) -> Query.newBuilder().setCryptoGetAccountRecords(CryptoGetAccountRecordsQuery.newBuilder()
                     .setHeader(header).setAccountID(Protobuf.toProto(query.accountId()))).build(),
             response -> response.getCryptoGetAccountRecords().getHeader(),
-            (query, response) -> new AccountRecords(response.getCryptoGetAccountRecords().hasAccountID()
+            (query, response, unit) -> new AccountRecords(response.getCryptoGetAccountRecords().hasAccountID()
                     ? Protobuf.fromProto(response.getCryptoGetAccountRecords().getAccountID()) : query.accountId(),
                     response.getCryptoGetAccountRecords().getRecordsList().stream()
-                            .map(AccountQueries::record).toList()));
+                            .map(record -> record(record, unit)).toList()));
 
     private AccountQueries() {
     }
@@ -142,12 +143,13 @@ public final class AccountQueries {
 
     /// A record of a transaction whose type is unknown: a `TransactionRecord` carries no body, so its receipt is an
     /// `UntypedReceipt` with the attributes all receipts share.
-    private static Record<Receipt> record(final TransactionRecord record) {
+    private static Record<Receipt> record(final TransactionRecord record, final NativeTokenUnit unit) {
         final TransactionReceipt receipt = record.getReceipt();
         final TransactionId id = Protobuf.fromProto(record.getTransactionID());
         return new Record<>(id, Protobuf.fromProto(record.getConsensusTimestamp()),
                 new UntypedReceipt(id, Statuses.ofCode(receipt.getStatusValue()),
-                        Protobuf.currentRate(receipt.getExchangeRate()), Protobuf.nextRate(receipt.getExchangeRate())),
+                        Protobuf.currentRate(receipt.getExchangeRate(), unit),
+                        Protobuf.nextRate(receipt.getExchangeRate(), unit)),
                 record.hasParentConsensusTimestamp() ? Protobuf.fromProto(record.getParentConsensusTimestamp())
                         : null, ContractKinds.contractResult(record));
     }

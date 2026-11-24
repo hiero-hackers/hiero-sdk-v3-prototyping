@@ -45,7 +45,8 @@ public record Response<ReceiptT extends Receipt>(
         Objects.requireNonNull(client, "client must not be null");
         return ClientRuntime.of(client).queryReceipt(new TransactionReceiptQuery(transactionId, nodeAccountId),
                         nodeAccountId, transactionId, false, false)
-                .thenApply(answer -> Receipts.create(transactionType, transactionId, answer.value().getReceipt()));
+                .thenApply(answer -> Receipts.create(transactionType, transactionId, answer.value().getReceipt(),
+                        client.network().nativeTokenUnit()));
     }
 
     /// Reads the record of the transaction, once it has reached consensus. The client's operator pays for the query.

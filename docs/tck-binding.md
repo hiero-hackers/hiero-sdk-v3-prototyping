@@ -318,8 +318,8 @@ Further forms, added when the other services were bound:
 
 The converter catalogue grew by `number` (an `int32` as JSON number), `utf8`, `keyList` (a JSON list of keys that
 must all sign), `publicKey`, `tokenType`, `tokenSupplyType`, `nftIdToken` / `nftIdSerial` / `nftId` (the NFT ID
-`0.0.1234/1`), `transactionId` (both directions), `contractId`, `exchangeRate` (`hbars` is 1, `cents` the price of
-one hbar: the API keeps the price, not the pair of the protocol), `receipt` (an `UntypedReceipt` as JSON object),
+`0.0.1234/1`), `transactionId` (both directions), `contractId`, `exchangeRate` (`hbars` and `cents`, the two numbers
+of the protocol's rate, which `ExchangeRate` keeps as `nativeTokenEquivalent` and `centEquivalent`), `receipt` (an `UntypedReceipt` as JSON object),
 `ipAddress` and `number64` (an `int64` as JSON number); `int32` also converts `uint16`. Each is implemented in both
 runtimes (`JavaConverters`, `TsConverters`).
 

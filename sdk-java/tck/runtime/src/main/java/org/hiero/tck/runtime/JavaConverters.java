@@ -329,14 +329,13 @@ final class JavaConverters implements Converters {
     }
 
     /**
-     * An exchange rate as the TCK writes it: {@code hbars} and {@code cents}. The API keeps the price of one hbar in
-     * US cents, not the pair of the protocol, so {@code hbars} is 1.
+     * An exchange rate as the TCK writes it: {@code hbars} and {@code cents}, the two numbers of the protocol's rate.
      */
     @Override
     public Object exchangeRateJson(final ExchangeRate value) {
         final Map<String, Object> json = new LinkedHashMap<>();
-        json.put("hbars", 1);
-        json.put("cents", value.exchangeRateInUsdCents());
+        json.put("hbars", value.nativeTokenEquivalent());
+        json.put("cents", value.centEquivalent());
         json.put("expirationTime", value.expirationTime().toInstant().toString());
         return json;
     }

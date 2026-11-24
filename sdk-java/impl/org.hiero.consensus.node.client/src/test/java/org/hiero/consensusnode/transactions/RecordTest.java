@@ -6,19 +6,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
-import org.hiero.authority.AuthorityFactory;
-import org.hiero.consensusnode.client.ClientFactory;
 import org.hiero.consensusnode.queries.receipts.UntypedReceipt;
 import org.hiero.consensusnode.status.BasicTransactionStatus;
-import org.hiero.consensusnode.transactions.spi.SpiFactory;
 import org.hiero.hedera.Hbar;
 import org.hiero.hedera.HbarUnit;
-import org.hiero.http.HttpFactory;
-import org.hiero.keys.KeysFactory;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.ContractId;
 import org.hiero.ledger.TransactionId;
-import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
@@ -119,15 +113,7 @@ class RecordTest {
     }
 
     private static Receipt receiptValue() {
-        return new UntypedReceipt(TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L)), BasicTransactionStatus.OK, new ExchangeRate(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), 1.5) {
-            public boolean isExpired() {
-                throw new UnsupportedOperationException("test double");
-            }
-        }, new ExchangeRate(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), 1.5) {
-            public boolean isExpired() {
-                throw new UnsupportedOperationException("test double");
-            }
-        }, null, null, null, null, null, null, null, null, null, null, null, List.of(1L), null, null, null);
+        return new UntypedReceipt(TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L)), BasicTransactionStatus.OK, new ExchangeRate(30000, HbarUnit.HBAR, 580150, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC)), new ExchangeRate(30000, HbarUnit.HBAR, 580150, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC)), null, null, null, null, null, null, null, null, null, null, null, List.of(1L), null, null, null);
     }
 
     private static ZonedDateTime parentConsensusTimestampValue() {

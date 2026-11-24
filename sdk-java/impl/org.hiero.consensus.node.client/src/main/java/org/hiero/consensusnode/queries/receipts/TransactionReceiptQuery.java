@@ -94,7 +94,8 @@ public final class TransactionReceiptQuery extends FreeQuery<TransactionReceipts
         Objects.requireNonNull(client, "client must not be null");
         return ClientRuntime.of(client).queryReceipt(this, nodeAccountId, transactionId, includeDuplicates,
                         includeChildren)
-                .thenApply(answer -> new QueryResponse<>(Receipts.receipts(transactionId, answer.value()),
+                .thenApply(answer -> new QueryResponse<>(Receipts.receipts(transactionId, answer.value(),
+                        client.network().nativeTokenUnit()),
                         answer.answeredBy()));
     }
 

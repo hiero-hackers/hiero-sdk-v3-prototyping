@@ -21,6 +21,7 @@ import org.hiero.consensusnode.transactions.spi.ReceiptHeader;
 import org.hiero.consensusnode.transactions.spi.SpiFactory;
 import org.hiero.consensusnode.transactions.spi.TransactionSupport;
 import org.hiero.ledger.TransactionId;
+import org.hiero.nativeToken.NativeTokenUnit;
 import org.jspecify.annotations.Nullable;
 
 /// Receipts read by their transaction id: the untyped receipts of the protocol message, and the typed receipt of a
@@ -38,21 +39,27 @@ public final class Receipts {
     ///
     /// @param transactionId the queried id
     /// @param answer        the answer of the node
+    /// @param unit          the native token unit of the network, the unit of the exchange rates
     /// @return the receipts
     public static TransactionReceipts receipts(final TransactionId transactionId,
-                                               final TransactionGetReceiptResponse answer) {
-        return new TransactionReceipts(untyped(transactionId, answer.getReceipt()),
-                answer.getDuplicateTransactionReceiptsList().stream().map(r -> untyped(transactionId, r)).toList(),
-                answer.getChildTransactionReceiptsList().stream().map(r -> untyped(transactionId, r)).toList());
+                                               final TransactionGetReceiptResponse answer,
+                                               final NativeTokenUnit unit) {
+        return new TransactionReceipts(untyped(transactionId, answer.getReceipt(), unit),
+                answer.getDuplicateTransactionReceiptsList().stream().map(r -> untyped(transactionId, r, unit))
+                        .toList(),
+                answer.getChildTransactionReceiptsList().stream().map(r -> untyped(transactionId, r, unit))
+                        .toList());
     }
 
     /// The untyped receipt of a protocol message.
     ///
     /// @param transactionId the id of the transaction
     /// @param receipt       the receipt message
+    /// @param unit          the native token unit of the network, the unit of the exchange rates
     /// @return the untyped receipt
-    public static UntypedReceipt untyped(final TransactionId transactionId, final TransactionReceipt receipt) {
-        final ReceiptHeader header = Records.header(transactionId, receipt);
+    public static UntypedReceipt untyped(final TransactionId transactionId, final TransactionReceipt receipt,
+                                         final NativeTokenUnit unit) {
+        final ReceiptHeader header = Records.header(transactionId, receipt, unit);
         return new UntypedReceipt(transactionId, header.status(), header.exchangeRate(), header.nextExchangeRate(),
                 receipt.hasAccountID() ? Protobuf.fromProto(receipt.getAccountID()) : null,
                 receipt.hasFileID() ? Protobuf.fromProto(receipt.getFileID()) : null,
@@ -131,16 +138,18 @@ public final class Receipts {
     /// @param transactionType the transaction type
     /// @param transactionId   the id of the transaction
     /// @param receipt         the receipt message
+    /// @param unit            the native token unit of the network, the unit of the exchange rates
     /// @param <R> the receipt type
     /// @return the typed receipt
     public static <R extends Receipt> R create(final Class<? extends Transaction<R, ?>> transactionType,
-                                               final TransactionId transactionId, final TransactionReceipt receipt) {
-        return support(transactionType).createReceipt(Records.header(transactionId, receipt), receipt);
+                                               final TransactionId transactionId, final TransactionReceipt receipt,
+                                               final NativeTokenUnit unit) {
+        return support(transactionType).createReceipt(Records.header(transactionId, receipt, unit), receipt);
     }
 
     /// `UntypedReceipt.typed`: the receipt of a transaction type. Fails when the untyped receipt lacks an attribute
-    /// the typed receipt requires - an attribute of the typed receipt that is not nullable, has an object type and is
-    /// absent in the untyped receipt. Numbers are not checked: the protocol cannot tell an absent number from `0`.
+    /// the typed receipt requires - an attribute of the typed receipt that is not nullable and is absent in the
+    /// untyped receipt. A number the protocol reports as `0` is absent, so it is missing as well.
     ///
     /// @param receipt         the untyped receipt
     /// @param transactionType the transaction type
@@ -155,7 +164,6 @@ public final class Receipts {
         for (final Method attribute : typed.getClass().getMethods()) {
             if (attribute.getDeclaringClass() == Receipt.class || attribute.getDeclaringClass() == Object.class
                     || attribute.getParameterCount() != 0 || Modifier.isStatic(attribute.getModifiers())
-                    || attribute.getReturnType().isPrimitive()
                     || attribute.getAnnotatedReturnType().isAnnotationPresent(Nullable.class)) {
                 continue;
             }
@@ -181,8 +189,8 @@ public final class Receipts {
                 (transactionId, header) -> Query.newBuilder().setTransactionGetRecord(TransactionGetRecordQuery
                         .newBuilder().setHeader(header).setTransactionID(Protobuf.toProto(transactionId))).build(),
                 response -> response.getTransactionGetRecord().getHeader(),
-                (transactionId, response) -> Records.record(support,
-                        response.getTransactionGetRecord().getTransactionRecord()));
+                (transactionId, response, unit) -> Records.record(support,
+                        response.getTransactionGetRecord().getTransactionRecord(), unit));
     }
 
     /// The request a record query is executed as. The specs have no type for the record query of a transaction, so a

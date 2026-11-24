@@ -8,15 +8,10 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.hiero.authority.AuthorityFactory;
-import org.hiero.consensusnode.client.ClientFactory;
 import org.hiero.consensusnode.status.BasicTransactionStatus;
-import org.hiero.consensusnode.transactions.spi.SpiFactory;
-import org.hiero.http.HttpFactory;
-import org.hiero.keys.KeysFactory;
+import org.hiero.hedera.HbarUnit;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.TransactionId;
-import org.hiero.ledger.config.ConfigFactory;
 import org.hiero.nativeToken.ExchangeRate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -129,39 +124,15 @@ class TransactionReceiptsTest {
     }
 
     private static UntypedReceipt receiptValue() {
-        return new UntypedReceipt(TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L)), BasicTransactionStatus.OK, new ExchangeRate(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), 1.5) {
-            public boolean isExpired() {
-                throw new UnsupportedOperationException("test double");
-            }
-        }, new ExchangeRate(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), 1.5) {
-            public boolean isExpired() {
-                throw new UnsupportedOperationException("test double");
-            }
-        }, null, null, null, null, null, null, null, null, null, null, null, List.of(), null, null, null);
+        return new UntypedReceipt(TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L)), BasicTransactionStatus.OK, new ExchangeRate(30000, HbarUnit.HBAR, 580150, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC)), new ExchangeRate(30000, HbarUnit.HBAR, 580150, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC)), null, null, null, null, null, null, null, null, null, null, null, List.of(), null, null, null);
     }
 
     private static List<UntypedReceipt> duplicatesValue() {
-        return List.of(new UntypedReceipt(TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L)), BasicTransactionStatus.OK, new ExchangeRate(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), 1.5) {
-            public boolean isExpired() {
-                throw new UnsupportedOperationException("test double");
-            }
-        }, new ExchangeRate(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), 1.5) {
-            public boolean isExpired() {
-                throw new UnsupportedOperationException("test double");
-            }
-        }, null, null, null, null, null, null, null, null, null, null, null, List.of(), null, null, null));
+        return List.of(new UntypedReceipt(TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L)), BasicTransactionStatus.OK, new ExchangeRate(30000, HbarUnit.HBAR, 580150, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC)), new ExchangeRate(30000, HbarUnit.HBAR, 580150, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC)), null, null, null, null, null, null, null, null, null, null, null, List.of(), null, null, null));
     }
 
     private static List<UntypedReceipt> childrenValue() {
-        return List.of(new UntypedReceipt(TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L)), BasicTransactionStatus.OK, new ExchangeRate(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), 1.5) {
-            public boolean isExpired() {
-                throw new UnsupportedOperationException("test double");
-            }
-        }, new ExchangeRate(ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC), 1.5) {
-            public boolean isExpired() {
-                throw new UnsupportedOperationException("test double");
-            }
-        }, null, null, null, null, null, null, null, null, null, null, null, List.of(), null, null, null));
+        return List.of(new UntypedReceipt(TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L)), BasicTransactionStatus.OK, new ExchangeRate(30000, HbarUnit.HBAR, 580150, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC)), new ExchangeRate(30000, HbarUnit.HBAR, 580150, ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC)), null, null, null, null, null, null, null, null, null, null, null, List.of(), null, null, null));
     }
 
     private static TransactionReceipts create() {

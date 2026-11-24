@@ -11,6 +11,7 @@ import org.jspecify.annotations.NullMarked;
 /// - `org.hiero.consensusnode.queries.fees`
 /// - `org.hiero.consensusnode.queries.files`
 /// - `org.hiero.consensusnode.queries.schedule`
+/// - `org.hiero.consensusnode.queries.systemFiles`
 /// - `org.hiero.consensusnode.queries.tokens`
 /// - `org.hiero.consensusnode.queries.topics`
 /// - `org.hiero.consensusnode.requestTypes`
@@ -43,6 +44,7 @@ module org.hiero.consensus.node.client {
     exports org.hiero.consensusnode.queries.files;
     exports org.hiero.consensusnode.queries.receipts;
     exports org.hiero.consensusnode.queries.schedule;
+    exports org.hiero.consensusnode.queries.systemFiles;
     exports org.hiero.consensusnode.queries.tokens;
     exports org.hiero.consensusnode.queries.topics;
     exports org.hiero.consensusnode.requestTypes;

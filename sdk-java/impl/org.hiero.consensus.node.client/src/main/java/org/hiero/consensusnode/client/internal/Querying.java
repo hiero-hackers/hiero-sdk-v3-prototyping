@@ -56,7 +56,8 @@ public final class Querying {
             final Response response = runtime.call(node, kind.grpcMethod(), kind.request().apply(query, header),
                     timeout);
             return Execution.Answer.precheck(precheck(kind, response), kind.mayBePending(),
-                    () -> new QueryResponse<>(kind.answer().apply(query, response), node.account()));
+                    () -> new QueryResponse<>(kind.answer().apply(query, response,
+                            client.network().nativeTokenUnit()), node.account()));
         });
     }
 
@@ -102,8 +103,8 @@ public final class Querying {
                         QueryHeader.newBuilder().setResponseType(ResponseType.ANSWER_ONLY)
                                 .setPayment(payments.to(node.account())).build()), timeout);
                 return Execution.Answer.precheck(precheck(kind, response), kind.mayBePending(),
-                        () -> new PaidQueryResponse<>(kind.answer().apply(query, response), node.account(),
-                                Protobuf.hbar(cost)));
+                        () -> new PaidQueryResponse<>(kind.answer().apply(query, response,
+                                client.network().nativeTokenUnit()), node.account(), Protobuf.hbar(cost)));
             });
         });
     }

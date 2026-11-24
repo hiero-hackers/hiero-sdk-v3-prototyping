@@ -5,6 +5,7 @@ import static org.hiero.sdk.testing.Testing.*;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import org.hiero.consensusnode.queries.fees.FeeScheduleQuery;
+import org.hiero.consensusnode.queries.systemFiles.ExchangeRatesQuery;
 import org.hiero.ledger.Address;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -69,6 +70,20 @@ class QueriesFilesSpecTest {
 
         // then
         assertEquals(toZonedDateTime("1970-01-01T00:00:00.003Z"), info.expirationTime());
+    }
+
+    /// `consensusnode.queries.files/the-exchange-rates-query-is-created-by-the-file-contents-query`
+    ///
+    /// Source: this spec (the factory creates the query of the exchange rate file, without a payment limit).
+    @Test
+    @DisplayName("the exchange rates query is created by the file contents query")
+    @Tag("testId:consensusnode.queries.files/the-exchange-rates-query-is-created-by-the-file-contents-query")
+    void theExchangeRatesQueryIsCreatedByTheFileContentsQuery() {
+        // when
+        final ExchangeRatesQuery query = FileContentsQuery.forExchangeRates();
+
+        // then
+        assertNull(query.maxQueryPayment());
     }
 
     /// `consensusnode.queries.files/the-fee-schedule-query-is-created-by-the-file-contents-query`

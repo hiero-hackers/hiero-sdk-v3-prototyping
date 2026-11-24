@@ -10,6 +10,7 @@ import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.queries.PaidQuery;
 import org.hiero.consensusnode.queries.PaidQueryResponse;
 import org.hiero.consensusnode.queries.fees.FeeScheduleQuery;
+import org.hiero.consensusnode.queries.systemFiles.ExchangeRatesQuery;
 import org.hiero.ledger.Address;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
@@ -32,6 +33,12 @@ public final class FileContentsQuery extends PaidQuery<FileContents> {
     /// Returns the `fileId`.
     public Address fileId() {
         return fileId;
+    }
+
+    /// Creates a query for the exchange rate file of the network, which returns the rates already decoded. Same as
+    /// `new ExchangeRatesQuery()`.
+    public static ExchangeRatesQuery forExchangeRates() {
+        return new ExchangeRatesQuery();
     }
 
     /// Creates a query for the fee schedule file of the network, which returns the schedules already decoded. Same as

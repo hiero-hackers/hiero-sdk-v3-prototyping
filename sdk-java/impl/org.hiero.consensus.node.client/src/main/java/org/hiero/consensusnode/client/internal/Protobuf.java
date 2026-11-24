@@ -34,6 +34,7 @@ import org.hiero.ledger.AccountId;
 import org.hiero.ledger.ContractId;
 import org.hiero.ledger.TransactionId;
 import org.hiero.nativeToken.ExchangeRate;
+import org.hiero.nativeToken.NativeTokenUnit;
 
 /// Maps the types of the API to the HAPI messages and back.
 public final class Protobuf {
@@ -369,23 +370,30 @@ public final class Protobuf {
     /// The current exchange rate of a receipt.
     ///
     /// @param rates the exchange rates of a receipt
+    /// @param unit  the native token unit of the network
     /// @return the current rate
-    public static ExchangeRate currentRate(final ExchangeRateSet rates) {
-        return toExchangeRate(rates.getCurrentRate());
+    public static ExchangeRate currentRate(final ExchangeRateSet rates, final NativeTokenUnit unit) {
+        return fromProto(rates.getCurrentRate(), unit);
     }
 
     /// The next exchange rate of a receipt.
     ///
     /// @param rates the exchange rates of a receipt
+    /// @param unit  the native token unit of the network
     /// @return the next rate
-    public static ExchangeRate nextRate(final ExchangeRateSet rates) {
-        return toExchangeRate(rates.getNextRate());
+    public static ExchangeRate nextRate(final ExchangeRateSet rates, final NativeTokenUnit unit) {
+        return fromProto(rates.getNextRate(), unit);
     }
 
-    private static ExchangeRate toExchangeRate(final com.hederahashgraph.api.proto.java.ExchangeRate rate) {
-        final int hbarEquiv = rate.getHbarEquiv();
-        return new DefaultExchangeRate(ZonedDateTime.ofInstant(Instant.ofEpochSecond(
-                rate.getExpirationTime().getSeconds()), ZoneOffset.UTC),
-                hbarEquiv == 0 ? 0.0 : (double) rate.getCentEquiv() / hbarEquiv);
+    /// An exchange rate of the protocol (rule exchange-rate-unit: the network reports no unit, the rate is quoted in
+    /// the native token unit of the network).
+    ///
+    /// @param rate the rate message
+    /// @param unit the native token unit of the network
+    /// @return the rate
+    public static ExchangeRate fromProto(final com.hederahashgraph.api.proto.java.ExchangeRate rate,
+                                         final NativeTokenUnit unit) {
+        return new ExchangeRate(rate.getHbarEquiv(), unit, rate.getCentEquiv(), ZonedDateTime.ofInstant(
+                Instant.ofEpochSecond(rate.getExpirationTime().getSeconds()), ZoneOffset.UTC));
     }
 }

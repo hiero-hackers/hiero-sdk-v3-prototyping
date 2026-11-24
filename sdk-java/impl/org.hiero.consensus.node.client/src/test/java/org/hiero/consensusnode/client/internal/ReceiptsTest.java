@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.protobuf.ByteString;
+import com.hederahashgraph.api.proto.java.ExchangeRateSet;
+import com.hederahashgraph.api.proto.java.TimestampSeconds;
 import com.hederahashgraph.api.proto.java.TransactionReceipt;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -16,6 +18,7 @@ import org.hiero.consensusnode.transactions.accounts.AccountCreateReceipt;
 import org.hiero.consensusnode.transactions.accounts.AccountCreateTransaction;
 import org.hiero.consensusnode.transactions.accounts.TransferReceipt;
 import org.hiero.consensusnode.transactions.accounts.TransferTransaction;
+import org.hiero.hedera.HbarUnit;
 import org.hiero.ledger.AccountId;
 import org.hiero.ledger.Address;
 import org.hiero.ledger.TransactionId;
@@ -24,13 +27,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-/// Tests of the untyped receipts of the receipt query by id and of typing them (ADR-0013). The spec tests of
-/// `queries-receipts` cannot be generated yet: `ExchangeRate` has no default instance.
+/// Tests of the untyped receipts of the receipt query by id and of typing them (ADR-0013).
 @DisplayName("Receipts")
 class ReceiptsTest {
 
     private static final TransactionId ID = TransactionId.generateTransactionId(new Address(0L, 0L, "", 1001L));
-    private static final ExchangeRate RATE = new DefaultExchangeRate(ZonedDateTime.parse("2026-10-19T12:00:00Z"), 12.5);
+    private static final ExchangeRate RATE = new ExchangeRate(30000, HbarUnit.HBAR, 375000,
+            ZonedDateTime.parse("2026-10-19T12:00:00Z"));
     private static final AccountId ACCOUNT = new AccountId(0L, 0L, "", 1002L, null, null);
 
     private static UntypedReceipt untyped(final TransactionStatus status, final AccountId accountId) {
@@ -87,7 +90,7 @@ class ReceiptsTest {
                 .build();
 
         // when
-        final UntypedReceipt receipt = Receipts.untyped(ID, proto);
+        final UntypedReceipt receipt = Receipts.untyped(ID, proto, HbarUnit.HBAR);
 
         // then
         assertEquals(ACCOUNT, receipt.accountId());
@@ -100,11 +103,38 @@ class ReceiptsTest {
     }
 
     @Test
+    @DisplayName("the exchange rates of a receipt are quoted in the native token unit of the network")
+    @Tag("testId:impl/receipts/the-exchange-rates-of-a-receipt-are-quoted-in-the-native-token-unit-of-the-network")
+    @Tag("rule:nativeToken/exchange-rate-unit")
+    void theExchangeRatesOfAReceiptAreQuotedInTheNativeTokenUnitOfTheNetwork() {
+        // given: the current and the next rate of the Java SDK's ExchangeRatesTest
+        final TransactionReceipt proto = TransactionReceipt.newBuilder()
+                .setStatusValue(BasicTransactionStatus.SUCCESS.code())
+                .setExchangeRate(ExchangeRateSet.newBuilder()
+                        .setCurrentRate(com.hederahashgraph.api.proto.java.ExchangeRate.newBuilder()
+                                .setHbarEquiv(30000).setCentEquiv(580150)
+                                .setExpirationTime(TimestampSeconds.newBuilder().setSeconds(1645714800L)))
+                        .setNextRate(com.hederahashgraph.api.proto.java.ExchangeRate.newBuilder()
+                                .setHbarEquiv(30000).setCentEquiv(587660)
+                                .setExpirationTime(TimestampSeconds.newBuilder().setSeconds(1645718400L))))
+                .build();
+
+        // when
+        final UntypedReceipt receipt = Receipts.untyped(ID, proto, HbarUnit.HBAR);
+
+        // then
+        assertEquals(new ExchangeRate(30000, HbarUnit.HBAR, 580150, ZonedDateTime.parse("2022-02-24T15:00:00Z")),
+                receipt.exchangeRate());
+        assertEquals(new ExchangeRate(30000, HbarUnit.HBAR, 587660, ZonedDateTime.parse("2022-02-24T16:00:00Z")),
+                receipt.nextExchangeRate());
+    }
+
+    @Test
     @DisplayName("a number the protocol reports as 0 is absent")
     @Tag("testId:impl/receipts/a-number-the-protocol-reports-as-0-is-absent")
     void aNumberTheProtocolReportsAs0IsAbsent() {
         final UntypedReceipt receipt = Receipts.untyped(ID, TransactionReceipt.newBuilder()
-                .setStatusValue(BasicTransactionStatus.SUCCESS.code()).build());
+                .setStatusValue(BasicTransactionStatus.SUCCESS.code()).build(), HbarUnit.HBAR);
 
         assertNull(receipt.totalSupply());
         assertNull(receipt.nodeId());
