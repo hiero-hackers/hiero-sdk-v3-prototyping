@@ -24,13 +24,12 @@ plugins. It also holds the data that a client needs to verify the proofs of the 
   node, and only the node ids and RSA public keys of its entries are used to verify blocks. Like the blocks, they are
   returned as their protobuf encoding and not as SDK types.
 - **`TssData` is all or nothing.** The protocol sets all of its fields or none; here a missing `TssData` is `null`.
-- **`SemanticVersion` is declared here.** A semantic version is not a type of `base/common` yet; until it is, this
-  namespace declares its own, like `consensusnode.admin.network`.
 
 ## API Schema
 
 ```
 namespace blocknode.status
+requires {SemanticVersion} from common
 
 // The status of a block node.
 @@finalType
@@ -82,17 +81,6 @@ PluginVersion {
     @@immutable featureNames: list<string>        // the features the plugin provides; may be empty
 }
 
-// A semantic version (major.minor.patch) with optional pre-release and build metadata labels, as defined by
-// semver.org.
-@@finalType
-SemanticVersion {
-    @@immutable major: int32                          // major version
-    @@immutable minor: int32                          // minor version
-    @@immutable patch: int32                          // patch version
-    @@immutable @@default("") preReleaseLabel: string // pre-release label such as "rc.1"; empty for a release version
-    @@immutable @@default("") buildMetadata: string   // build metadata such as "exp.sha.5114f85"; empty if none
-}
-
 // The TSS data of a ledger, used to verify the proofs of its blocks.
 @@finalType
 TssData {
@@ -125,9 +113,6 @@ AddressBookRange {
 ## Default Instances for Testing
 
 ```
-// A version 0.44.2 without labels.
-instance SemanticVersion = SemanticVersion{major: 0, minor: 44, patch: 2}
-
 instance BlockRange = BlockRange{start: 0, end: 100}
 
 instance BlockNodeVersions = BlockNodeVersions{streamProtoVersion: DEFAULT(SemanticVersion),
@@ -189,8 +174,6 @@ test "a detailed status without TSS data has none" {
   verified yet).
 - **The end of a `BlockRange` is not checked.** `end` must not be smaller than `start`; no validation annotation can
   compare two fields.
-- **`SemanticVersion` is declared twice.** It has the same shape as the one of `consensusnode.admin.network`; both should
-  be replaced by one type in `base/common`.
 - **The address books stay opaque.** `consensusnode.admin.network` has a typed `NodeAddressBook`, but importing it would
   make this namespace depend on the admin client, and the block node uses only the node ids and RSA keys. Should
   `NodeAddressBook` move to a lower layer so that both can share it?

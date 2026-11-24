@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.hiero.common.SemanticVersion;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -75,7 +76,7 @@ class PluginVersionTest {
     }
 
     private static SemanticVersion softwareVersionValue() {
-        return new SemanticVersion(0, 44, 2, "", "");
+        return new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85");
     }
 
     private static List<String> featureNamesValue() {

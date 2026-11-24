@@ -1,4 +1,4 @@
-package org.hiero.blocknode.status;
+package org.hiero.common;
 
 import static org.hiero.sdk.testing.Testing.assertValue;
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,7 +13,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("creates a SemanticVersion and returns the values")
-    @Tag("testId:blocknode.status.SemanticVersion/create")
+    @Tag("testId:common.SemanticVersion/create")
     void shouldCreateAndReturnTheValues() {
         final int major = majorValue();
         final int minor = minorValue();
@@ -30,7 +30,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("creates a SemanticVersion with the default values")
-    @Tag("testId:blocknode.status.SemanticVersion/create-with-defaults")
+    @Tag("testId:common.SemanticVersion/create-with-defaults")
     void shouldCreateWithTheDefaultValues() {
         final SemanticVersion subject = new SemanticVersion(majorValue(), minorValue(), patchValue());
         assertValue("", subject.preReleaseLabel());
@@ -39,7 +39,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("the builder builds the values of the constructor")
-    @Tag("testId:blocknode.status.SemanticVersion/builder/builds")
+    @Tag("testId:common.SemanticVersion/builder/builds")
     void shouldBuildTheValuesOfTheConstructor() {
         final int major = majorValue();
         final int minor = minorValue();
@@ -62,7 +62,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("a value that is not set is null or its default value")
-    @Tag("testId:blocknode.status.SemanticVersion/builder/optional-values")
+    @Tag("testId:common.SemanticVersion/builder/optional-values")
     void shouldBuildWithoutTheOptionalValues() {
         final SemanticVersion subject = SemanticVersion.builder()
                 .major(majorValue())
@@ -75,14 +75,14 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("the builder rejects a missing required value")
-    @Tag("testId:blocknode.status.SemanticVersion/builder/rejects-missing-value")
+    @Tag("testId:common.SemanticVersion/builder/rejects-missing-value")
     void shouldRejectAMissingRequiredValue() {
         assertThrows(NullPointerException.class, () -> SemanticVersion.builder().build());
     }
 
     @Test
     @DisplayName("major: accepts the minimum (-2147483648)")
-    @Tag("testId:blocknode.status.SemanticVersion/major/accepts-at-minimum")
+    @Tag("testId:common.SemanticVersion/major/accepts-at-minimum")
     void shouldAcceptMajorAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final SemanticVersion subject = new SemanticVersion(value, minorValue(), patchValue(), preReleaseLabelValue(), buildMetadataValue());
@@ -91,7 +91,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("major: accepts the maximum (2147483647)")
-    @Tag("testId:blocknode.status.SemanticVersion/major/accepts-at-maximum")
+    @Tag("testId:common.SemanticVersion/major/accepts-at-maximum")
     void shouldAcceptMajorAtMaximum() {
         final int value = 2147483647;
         final SemanticVersion subject = new SemanticVersion(value, minorValue(), patchValue(), preReleaseLabelValue(), buildMetadataValue());
@@ -100,7 +100,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("minor: accepts the minimum (-2147483648)")
-    @Tag("testId:blocknode.status.SemanticVersion/minor/accepts-at-minimum")
+    @Tag("testId:common.SemanticVersion/minor/accepts-at-minimum")
     void shouldAcceptMinorAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final SemanticVersion subject = new SemanticVersion(majorValue(), value, patchValue(), preReleaseLabelValue(), buildMetadataValue());
@@ -109,7 +109,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("minor: accepts the maximum (2147483647)")
-    @Tag("testId:blocknode.status.SemanticVersion/minor/accepts-at-maximum")
+    @Tag("testId:common.SemanticVersion/minor/accepts-at-maximum")
     void shouldAcceptMinorAtMaximum() {
         final int value = 2147483647;
         final SemanticVersion subject = new SemanticVersion(majorValue(), value, patchValue(), preReleaseLabelValue(), buildMetadataValue());
@@ -118,7 +118,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("patch: accepts the minimum (-2147483648)")
-    @Tag("testId:blocknode.status.SemanticVersion/patch/accepts-at-minimum")
+    @Tag("testId:common.SemanticVersion/patch/accepts-at-minimum")
     void shouldAcceptPatchAtMinimum() {
         final int value = Integer.MIN_VALUE;
         final SemanticVersion subject = new SemanticVersion(majorValue(), minorValue(), value, preReleaseLabelValue(), buildMetadataValue());
@@ -127,7 +127,7 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("patch: accepts the maximum (2147483647)")
-    @Tag("testId:blocknode.status.SemanticVersion/patch/accepts-at-maximum")
+    @Tag("testId:common.SemanticVersion/patch/accepts-at-maximum")
     void shouldAcceptPatchAtMaximum() {
         final int value = 2147483647;
         final SemanticVersion subject = new SemanticVersion(majorValue(), minorValue(), value, preReleaseLabelValue(), buildMetadataValue());
@@ -136,26 +136,33 @@ class SemanticVersionTest {
 
     @Test
     @DisplayName("rejects null for preReleaseLabel")
-    @Tag("testId:blocknode.status.SemanticVersion/preReleaseLabel/rejects-null")
+    @Tag("testId:common.SemanticVersion/preReleaseLabel/rejects-null")
     void shouldRejectNullPreReleaseLabel() {
         assertThrows(NullPointerException.class, () -> new SemanticVersion(majorValue(), minorValue(), patchValue(), (String) null, buildMetadataValue()));
     }
 
     @Test
     @DisplayName("rejects null for buildMetadata")
-    @Tag("testId:blocknode.status.SemanticVersion/buildMetadata/rejects-null")
+    @Tag("testId:common.SemanticVersion/buildMetadata/rejects-null")
     void shouldRejectNullBuildMetadata() {
         assertThrows(NullPointerException.class, () -> new SemanticVersion(majorValue(), minorValue(), patchValue(), preReleaseLabelValue(), (String) null));
     }
 
     @Test
     @DisplayName("equal values give equal objects and hash codes")
-    @Tag("testId:blocknode.status.SemanticVersion/value-semantics")
+    @Tag("testId:common.SemanticVersion/value-semantics")
     void shouldCompareByValue() {
         final SemanticVersion subject = create();
         final SemanticVersion other = create();
         assertEquals(subject, other);
         assertEquals(subject.hashCode(), other.hashCode());
+    }
+
+    @Test
+    @DisplayName("toString() can be called and returns a value")
+    @Tag("testId:common.SemanticVersion/toString/call")
+    void shouldCallToString() {
+        assertNotNull(defaultSubject().toString());
     }
 
     private static int majorValue() {
@@ -183,6 +190,6 @@ class SemanticVersionTest {
     }
 
     private static SemanticVersion defaultSubject() {
-        return new SemanticVersion(0, 44, 2, "", "");
+        return new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85");
     }
 }

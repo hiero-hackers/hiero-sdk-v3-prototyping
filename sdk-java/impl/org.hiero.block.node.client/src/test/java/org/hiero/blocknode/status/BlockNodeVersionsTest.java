@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.hiero.common.SemanticVersion;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -71,15 +72,15 @@ class BlockNodeVersionsTest {
     }
 
     private static SemanticVersion streamProtoVersionValue() {
-        return new SemanticVersion(0, 44, 2, "", "");
+        return new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85");
     }
 
     private static SemanticVersion blockNodeVersionValue() {
-        return new SemanticVersion(0, 44, 2, "", "");
+        return new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85");
     }
 
     private static List<PluginVersion> installedPluginVersionsValue() {
-        return List.of(new PluginVersion("value", new SemanticVersion(0, 44, 2, "", ""), List.of("value")));
+        return List.of(new PluginVersion("value", new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85"), List.of("value")));
     }
 
     private static BlockNodeVersions create() {
@@ -87,6 +88,6 @@ class BlockNodeVersionsTest {
     }
 
     private static BlockNodeVersions defaultSubject() {
-        return new BlockNodeVersions(new SemanticVersion(0, 44, 2, "", ""), new SemanticVersion(0, 44, 2, "", ""), List.of());
+        return new BlockNodeVersions(new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85"), new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85"), List.of());
     }
 }

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.hiero.common.SemanticVersion;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -178,7 +179,7 @@ class BlockNodeStatusDetailTest {
     }
 
     private static BlockNodeVersions versionsValue() {
-        return new BlockNodeVersions(new SemanticVersion(0, 44, 2, "", ""), new SemanticVersion(0, 44, 2, "", ""), List.of());
+        return new BlockNodeVersions(new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85"), new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85"), List.of());
     }
 
     private static List<BlockRange> availableRangesValue() {
@@ -206,6 +207,6 @@ class BlockNodeStatusDetailTest {
     }
 
     private static BlockNodeStatusDetail defaultSubject() {
-        return new BlockNodeStatusDetail(new BlockNodeVersions(new SemanticVersion(0, 44, 2, "", ""), new SemanticVersion(0, 44, 2, "", ""), List.of()), List.of(new BlockRange(0L, 100L)), List.of(new BlockRange(0L, 100L)), null, new byte[0], List.of());
+        return new BlockNodeStatusDetail(new BlockNodeVersions(new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85"), new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85"), List.of()), List.of(new BlockRange(0L, 100L)), List.of(new BlockRange(0L, 100L)), null, new byte[0], List.of());
     }
 }

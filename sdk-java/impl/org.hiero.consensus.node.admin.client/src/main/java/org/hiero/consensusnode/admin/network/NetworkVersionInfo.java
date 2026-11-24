@@ -1,6 +1,7 @@
 package org.hiero.consensusnode.admin.network;
 
 import java.util.Objects;
+import org.hiero.common.SemanticVersion;
 
 /// Combined version snapshot: the HAPI protocol revision the network is speaking and the
 /// consensus node software (services) build that implements it. Returned by `NetworkVersionInfoQuery`.

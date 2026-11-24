@@ -6,4 +6,8 @@
 /// the first page; loading another page is an asynchronous network call. If a page cannot be loaded,
 /// the call fails with a pagination error whose cause describes the underlying failure (for example the
 /// failed mirror node request).
+///
+/// `SemanticVersion` is a version number as defined by [semver.org](https://semver.org): `major.minor.patch` with an
+/// optional pre-release label and optional build metadata, for example the version of the protocol or of the software of
+/// a network node. `toString()` returns its canonical text, such as `0.49.1-rc.1+exp.sha.5114f85`.
 package org.hiero.common;

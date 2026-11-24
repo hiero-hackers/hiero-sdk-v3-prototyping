@@ -2,7 +2,7 @@ package org.hiero.blocknode;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
-import org.hiero.blocknode.status.SemanticVersion;
+import org.hiero.common.SemanticVersion;
 import org.jspecify.annotations.Nullable;
 
 /// The header of a block.

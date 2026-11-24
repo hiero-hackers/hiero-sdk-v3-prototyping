@@ -82,7 +82,8 @@ Every SDK talks to a block node in the same way:
 ```
 namespace blocknode
 requires {BlockNode} from ledger
-requires {BlockNodeStatus, BlockNodeStatusDetail, SemanticVersion} from blocknode.status
+requires {SemanticVersion} from common
+requires {BlockNodeStatus, BlockNodeStatusDetail} from blocknode.status
 
 // The kind of a block item. Open for kinds unknown to the SDK, so that the blocks of newer network releases stay
 // readable.
@@ -192,8 +193,8 @@ instance BlockItem = BlockItem{kind: BasicBlockItemKind.BLOCK_HEADER, content: [
 
 // The header of block 1 of a network on version 0.70.0, at the default consensus time.
 instance BlockHeader = BlockHeader{number: 1, timestamp: DEFAULT(zonedDateTime),
-        hapiProtoVersion: blocknode.status.SemanticVersion{major: 0, minor: 70, patch: 0},
-        softwareVersion: blocknode.status.SemanticVersion{major: 0, minor: 70, patch: 0},
+        hapiProtoVersion: SemanticVersion{major: 0, minor: 70, patch: 0},
+        softwareVersion: SemanticVersion{major: 0, minor: 70, patch: 0},
         hashAlgorithm: BlockHashAlgorithm.SHA2_384}
 
 // A footer whose hashes are stand-ins of 48 bytes.

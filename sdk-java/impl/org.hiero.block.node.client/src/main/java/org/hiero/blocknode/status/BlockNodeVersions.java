@@ -2,6 +2,7 @@ package org.hiero.blocknode.status;
 
 import java.util.List;
 import java.util.Objects;
+import org.hiero.common.SemanticVersion;
 
 /// The versions of a block node.
 ///

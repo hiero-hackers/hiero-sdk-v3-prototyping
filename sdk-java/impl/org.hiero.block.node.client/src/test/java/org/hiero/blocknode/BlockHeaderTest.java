@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import org.hiero.blocknode.status.SemanticVersion;
+import org.hiero.common.SemanticVersion;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -139,11 +139,11 @@ class BlockHeaderTest {
     }
 
     private static SemanticVersion hapiProtoVersionValue() {
-        return new SemanticVersion(0, 44, 2, "", "");
+        return new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85");
     }
 
     private static SemanticVersion softwareVersionValue() {
-        return new SemanticVersion(0, 44, 2, "", "");
+        return new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85");
     }
 
     private static BlockHashAlgorithm hashAlgorithmValue() {

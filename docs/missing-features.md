@@ -94,8 +94,8 @@ removed without renumbering the others.
   splitting the `freezeType` / `@@oneOf(fileId, contractId)` payloads into concrete subtypes.
 - **Dynamic Address Book** ([`transactions-nodes.md`](../spec/consensus-node-admin-client/transactions-nodes.md)):
   typed `NodeId` and `X509Certificate` / `CertificateFingerprint`.
-- **Admin-side queries** ([`queries-network.md`](../spec/consensus-node-admin-client/queries-network.md)): use a
-  base `SemanticVersion` (§3.1); surface tombstoned node-address entries explicitly.
+- **Admin-side queries** ([`queries-network.md`](../spec/consensus-node-admin-client/queries-network.md)): surface
+  tombstoned node-address entries explicitly.
 
 ---
 
@@ -109,7 +109,6 @@ removed without renumbering the others.
 | `PendingAirdropId` | `(senderId, receiverId, tokenId[, serial])`; today modelled as the `PendingAirdrop` shape | HIP-904 claim / cancel |
 | `HookId` / `HookEntityId` | composite (entity-bound) per HIP-1195 | Hiero Hooks (§1.7) |
 | `LedgerId` | identifies the network a response belongs to; today only identifier constants | `QueryResponse.ledgerId` |
-| `SemanticVersion` | `(major, minor, patch, pre, build)`; declared twice locally today (`consensusnode.admin.network`, `blocknode.status`) | a type in `base/common` |
 | `TransactionHash` | SHA-384 of the `SignedTransaction` bytes, the mirror-node lookup key | only if the deferred hash accessors of §1.9 land |
 
 ### 3.2 Keys

@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
-import org.hiero.blocknode.status.SemanticVersion;
+import org.hiero.common.SemanticVersion;
 import org.hiero.ledger.BlockNode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;

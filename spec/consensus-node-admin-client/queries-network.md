@@ -50,24 +50,9 @@ type avoids a duplicate read/write shape that would have to evolve in lockstep.
 ```
 namespace consensusnode.admin.network
 requires {AccountId} from ledger
+requires {SemanticVersion} from common
 requires {FreeQuery, PaidQuery} from consensusnode.queries
 requires {ServiceEndpoint} from consensusnode.admin.nodes
-
-// Defined inline here for now; once the missing-features §3.1 SemanticVersion lands in `base/common`,
-// this local definition should be removed and the base type imported instead.
-
-// A semantic version (major.minor.patch) with optional pre-release and build metadata labels, as defined by
-// semver.org.
-type SemanticVersion {
-    @@immutable major: int32                         // major version
-    @@immutable minor: int32                         // minor version
-    @@immutable patch: int32                         // patch version
-    @@immutable @@default("") preReleaseLabel: string // pre-release label such as "rc.1"; empty for a release version
-    @@immutable @@default("") buildMetadata: string   // build metadata such as "exp.sha.5114f85"; empty if none
-
-    // Canonical semver string, e.g. "0.49.1-rc.1+exp.sha.5114f85"
-    string toString()
-}
 
 // Combined version snapshot: the HAPI protocol revision the network is speaking and the
 // consensus node software (services) build that implements it. Returned by `NetworkVersionInfoQuery`.
@@ -110,10 +95,6 @@ NodeAddressBookQuery extends PaidQuery<NodeAddressBook> {
 ## Default Instances for Testing
 
 ```
-// The version of the comment of `SemanticVersion.toString()`: with a pre-release label and build metadata.
-instance SemanticVersion = SemanticVersion{major: 0, minor: 49, patch: 1, preReleaseLabel: "rc.1",
-        buildMetadata: "exp.sha.5114f85"}
-
 // A network that speaks the protocol revision of the default version and runs a release build of it.
 instance NetworkVersionInfo = NetworkVersionInfo{hapiVersion: DEFAULT,
         servicesVersion: SemanticVersion{major: 0, minor: 49, patch: 1, preReleaseLabel: "", buildMetadata: ""}}
@@ -123,24 +104,6 @@ instance NetworkVersionInfo = NetworkVersionInfo{hapiVersion: DEFAULT,
 instance NodeAddress = NodeAddress{nodeId: 0, accountId: AccountId{shard: 0, realm: 0, num: 3, checksum: ""},
         serviceEndpoints: [ServiceEndpoint{ipAddress: null, domainName: "network-node1-svc", port: 50211}],
         description: "node1", gossipCaCertificate: [1, 2, 3], grpcCertificateHash: [4, 5, 6], rsaPublicKey: [7, 8, 9]}
-
-// Versions and their canonical semver text: the known answers of the Rust (semantic_version display tests) and Swift
-// (SemanticVersionUnitTests) SDKs, the example of `SemanticVersion.toString()` in this spec, and examples of
-// semver.org (items 9 and 10 of the specification).
-values SEMANTIC_VERSION_TEXTS: map<string, SemanticVersion> = {
-    "1.2.3": SemanticVersion{major: 1, minor: 2, patch: 3, preReleaseLabel: "", buildMetadata: ""},
-    "3.1.4-15.92": SemanticVersion{major: 3, minor: 1, patch: 4, preReleaseLabel: "15.92", buildMetadata: ""},
-    "1.41.1+6535asd": SemanticVersion{major: 1, minor: 41, patch: 1, preReleaseLabel: "", buildMetadata: "6535asd"},
-    "0.1.4-0.9a2+sha.25531c": SemanticVersion{major: 0, minor: 1, patch: 4, preReleaseLabel: "0.9a2",
-            buildMetadata: "sha.25531c"},
-    "0.49.1-rc.1+exp.sha.5114f85": SemanticVersion{major: 0, minor: 49, patch: 1, preReleaseLabel: "rc.1",
-            buildMetadata: "exp.sha.5114f85"},
-    "1.0.0-x.7.z.92": SemanticVersion{major: 1, minor: 0, patch: 0, preReleaseLabel: "x.7.z.92", buildMetadata: ""},
-    "1.0.0+20130313144700": SemanticVersion{major: 1, minor: 0, patch: 0, preReleaseLabel: "",
-            buildMetadata: "20130313144700"},
-    "1.0.0-beta+exp.sha.5114f85": SemanticVersion{major: 1, minor: 0, patch: 0, preReleaseLabel: "beta",
-            buildMetadata: "exp.sha.5114f85"}
-}
 ```
 
 ## Examples
@@ -196,51 +159,10 @@ if (info.servicesVersion.major >= 0 && info.servicesVersion.minor >= 50) {
 
 ## Testing
 
-Offline tests of the version and address-book types, written as given / when / then. Sending the queries needs a
+Offline tests of the version info and address-book types, written as given / when / then. Sending the queries needs a
 network and is not tested here. The comment above each test names its source.
 
 ```tests
-// Source: the Rust (semantic_version display tests) and Swift (test_Basic, test_WithPrerelease, test_WithBuild,
-// test_WithPrereleaseAndBuild) SDKs; the example of `SemanticVersion.toString()` in this spec; semver.org.
-@@testId("a-semantic-version-is-written-in-its-canonical-semver-form")
-test "a semantic version is written in its canonical semver form" {
-    for text in keys(value: SEMANTIC_VERSION_TEXTS) {
-        // when
-        let written = SEMANTIC_VERSION_TEXTS[text].toString()
-
-        // then
-        assertEquals(expected: text, actual: written)
-    }
-}
-
-// Source: the JavaScript ("constructor stores major, minor and patch"), C++ (ConstructWithValues) and Swift
-// (test_ParseWithPrereleaseAndBuild) SemanticVersion unit tests.
-@@testId("a-semantic-version-keeps-its-numbers-and-labels")
-test "a semantic version keeps its numbers and labels" {
-    // when
-    let version = SemanticVersion{major: 1, minor: 2, patch: 0, preReleaseLabel: "beta.10", buildMetadata: "d13fe780"}
-
-    // then
-    assertEquals(expected: 1, actual: version.major)
-    assertEquals(expected: 2, actual: version.minor)
-    assertEquals(expected: 0, actual: version.patch)
-    assertEquals(expected: "beta.10", actual: version.preReleaseLabel)
-    assertEquals(expected: "d13fe780", actual: version.buildMetadata)
-}
-
-// Source: the Swift SemanticVersion unit tests (test_ParseMajorMinorPatch, test_ParseZeroMinorPatch: a release has no
-// labels); the API schema of this spec (both labels are empty for a release version).
-@@testId("a-release-version-has-no-labels-and-is-written-as-major-minor-patch")
-test "a release version has no labels and is written as major.minor.patch" {
-    // when
-    let version = SemanticVersion{major: 0, minor: 2, patch: 0, preReleaseLabel: "", buildMetadata: ""}
-
-    // then
-    assertEquals(expected: "", actual: version.preReleaseLabel)
-    assertEquals(expected: "", actual: version.buildMetadata)
-    assertEquals(expected: "0.2.0", actual: version.toString())
-}
-
 // Source: the C++ NetworkVersionInfo unit tests (EqualityIdenticallyConstructed, InequalityDifferentProtobufVersion,
 // InequalityDifferentServicesVersion); the Equality of the test language.
 @@testId("versions-and-version-infos-are-equal-when-all-their-parts-are-equal")

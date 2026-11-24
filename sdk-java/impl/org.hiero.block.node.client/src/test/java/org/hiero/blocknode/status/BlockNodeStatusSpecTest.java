@@ -3,6 +3,7 @@ package org.hiero.blocknode.status;
 import static org.hiero.sdk.testing.Testing.*;
 
 import java.util.List;
+import org.hiero.common.SemanticVersion;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -69,7 +70,7 @@ class BlockNodeStatusSpecTest {
     }
 
     private static SemanticVersion defaultSemanticVersion() {
-        return new SemanticVersion(0, 44, 2, "", "");
+        return new SemanticVersion(0, 49, 1, "rc.1", "exp.sha.5114f85");
     }
 
     private static BlockRange defaultBlockRange() {

@@ -22,7 +22,7 @@ import org.hiero.blocknode.BlockHashAlgorithm;
 import org.hiero.blocknode.BlockItem;
 import org.hiero.blocknode.BlockItemKind;
 import org.hiero.blocknode.BlockNodeException;
-import org.hiero.blocknode.status.SemanticVersion;
+import org.hiero.common.SemanticVersion;
 
 /// Builds a `Block` from the items of the block stream: every item as its kind and its bytes, byte for byte as
 /// received; only the header and the footer are decoded.
