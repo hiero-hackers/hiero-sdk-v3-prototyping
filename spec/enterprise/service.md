@@ -10,8 +10,8 @@ created from a `Session`.
 A `Session` bundles what all services of one workflow share:
 
 1. **Network configuration** — the `NetworkSetting` describing the target ledger and any tunables.
-2. **Operator credentials** — the `Account` used to pay for transactions, plus an optional `TransactionSigner` if the
-   private key lives outside the process (HSM, KMS, wallet).
+2. **Operator credentials** — the `Account` used to pay for and sign transactions; its `TransactionSigner` holds the
+   key in memory or reaches a key outside the process (HSM, KMS, wallet).
 3. **Read-your-writes consistency across services** — every successful write executed through a service of the
    session advances a *high-water-mark* (the consensus timestamp of the receipt). Before any service of the same
    session reads from the Mirror Node, it waits until the Mirror Node has data at or beyond that high-water-mark. So
@@ -99,7 +99,7 @@ See the open question below.
 ```
 namespace enterprise.service
 requires {NetworkSetting} from ledger.config
-requires {Account, TransactionSigner} from consensusnode.client
+requires {Account} from consensusnode.client
 
 @@threadSafe
 abstraction Session {
@@ -110,11 +110,8 @@ abstraction Session {
     @@async @@throws(service-error) void awaitConsistency()
 }
 
-// Default factory: the session signs every transaction with the operator account's private key.
+// Creates a session that pays for and signs every transaction with the operator account.
 @@static Session createSession(networkSettings: NetworkSetting, operatorAccount: Account)
-
-// Factory for setups where signing happens out of process (HSM, KMS, wallet).
-@@static Session createSession(networkSettings: NetworkSetting, operatorAccount: Account, transactionSigner: TransactionSigner)
 ```
 
 ## Questions & Comments
@@ -138,7 +135,7 @@ abstraction Session {
   consistency token would contain), or should a write fetch the record to obtain the timestamp?
 
 - **Services can only sign with the operator.** The service methods take `Authority` values, never private keys, so
-  the only key a service can sign with is the one of the session's operator (or its `TransactionSigner`). Every
+  the only key a service can sign with is the one of the session's operator account. Every
   operation that needs another signature therefore fails on the network unless that authority is the operator's key:
   `updateAccountAuthority` (needs the old and the new key), `deleteAccount` of another account, transfers from an
   account other than the operator, and tokens or NFT types with a non-operator treasury or supply authority (mint,

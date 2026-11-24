@@ -89,7 +89,7 @@ Expressed in the meta-language, the fixture every scenario assumes is:
 NetworkSetting solo = NetworkSetting.getNetworkSetting(SOLO_IDENTIFIER);
 
 // the operator account funded by `solo one-shot ... deploy`
-Account operator = new Account(operatorAccountId, operatorPrivateKey);
+Account operator = Account.of(operatorAccountId, operatorPrivateKey);
 
 HieroClient client = HieroClient.createClient(solo, operator);
 ```

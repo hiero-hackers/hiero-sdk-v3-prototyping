@@ -7,7 +7,6 @@ import java.util.concurrent.CompletionStage;
 import org.hiero.authority.Authority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
-import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Receipt;
 import org.hiero.consensusnode.transactions.Response;
@@ -63,13 +62,7 @@ public final class ScheduledTransaction extends Transaction<Receipt, ScheduledTr
     }
 
     @Override
-    public PackedTransaction<Receipt, ScheduledTransaction> sign(final Account payer, final List<AccountId> nodes) {
-        throw notPackable();
-    }
-
-    @Override
-    public CompletionStage<PackedTransaction<Receipt, ScheduledTransaction>> sign(final AccountId payerId,
-                                                                final TransactionSigner signer,
+    public CompletionStage<PackedTransaction<Receipt, ScheduledTransaction>> sign(final Account payer,
                                                                 final List<AccountId> nodes) {
         throw notPackable();
     }
@@ -92,14 +85,7 @@ public final class ScheduledTransaction extends Transaction<Receipt, ScheduledTr
     }
 
     @Override
-    public PackedTransaction<Receipt, ScheduledTransaction> signForBatch(final Account payer,
-                                                                        final Authority batchKey) {
-        throw notPackable();
-    }
-
-    @Override
-    public CompletionStage<PackedTransaction<Receipt, ScheduledTransaction>> signForBatch(final AccountId payerId,
-                                                                        final TransactionSigner signer,
+    public CompletionStage<PackedTransaction<Receipt, ScheduledTransaction>> signForBatch(final Account payer,
                                                                         final Authority batchKey) {
         throw notPackable();
     }

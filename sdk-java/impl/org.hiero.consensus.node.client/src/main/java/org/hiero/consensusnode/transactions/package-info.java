@@ -63,10 +63,16 @@
 /// | Caller has | Method |
 /// |---|---|
 /// | A configured `HieroClient` with operator | `Transaction.signWithOperator(client)` (or `signWithOperatorAndSubmit(client)` for fire-and-forget) |
-/// | A single `Account` that pays *and* signs | `Transaction.sign(payer, nodes)` |
-/// | A separate payer address and a `TransactionSigner` (HSM, hardware wallet, paymaster) | `Transaction.sign(payerId, signer, nodes)` |
-/// | An already-packed transaction that needs another in-process signature (multi-sig) | `PackedTransaction.sign(account)` or `PackedTransaction.sign(signer)` |
+/// | An `Account` that pays *and* signs — with a key in memory or in an HSM, KMS or hardware wallet | `Transaction.sign(payer, nodes)` |
+/// | An already-packed transaction that needs another signature (multi-sig, paymaster) | `PackedTransaction.sign(signer)` |
 /// | Out-of-process signing (async pipeline, multi-party, audit archival, raw HSM bytes) | `PackedTransaction.signableBodies()` + `PackedTransaction.sign(signatures)` |
+///
+/// An `Account` signs through its `TransactionSigner`, whether its key is held in memory (`Account.of(accountId,
+/// privateKey)`) or elsewhere. Every method that signs is therefore asynchronous, because
+/// `TransactionSigner.signTransaction` is (an external signer is I/O: KMS, HSM, Vault, hardware wallet):
+/// `signWithOperator`, `signWithOperatorAndSubmit`, `sign(payer, nodes)`, `signForBatchWithOperator`, `signForBatch(payer, batchKey)` and
+/// `PackedTransaction.sign(signer)`. `pack`, `packForBatch` and `PackedTransaction.sign(signatures)` sign nothing and stay
+/// synchronous. See `consensusnode.client` for the signer contract.
 ///
 /// Signature ordering is irrelevant — `NodeSignature` entries form a set; the consensus node accepts
 /// them in any order. The packed transaction can also be built first via `Transaction.pack(...)`

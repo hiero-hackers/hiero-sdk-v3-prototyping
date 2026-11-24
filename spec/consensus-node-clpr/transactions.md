@@ -608,6 +608,7 @@ test "every CLPR transaction survives toBytes and fromBytes" {
 - **The ownership proof needs the private key in the process.** `create(...)` takes a `PrivateKey`; a key in an HSM
   or a hardware wallet cannot create the proof. `TransactionSigner` signs transaction bodies, not arbitrary digests.
   The proposal defers external signing of the proofs as follow-up scope; a signer that signs a digest would allow it.
+  An `Account` signs through a `TransactionSigner` (ADR-0018), but that decision leaves the proofs open.
 - **The proof is not checked against the transaction.** A `ClprChannelOwnershipProof` built with its constructor (or
   read from bytes) can carry a signature that does not verify. The network rejects it with `CLPR_INVALID_SIGNATURE`.
   Should the constructor verify the signature, or is a value without the check the right shape for proofs read from

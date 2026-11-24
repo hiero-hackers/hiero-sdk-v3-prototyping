@@ -102,7 +102,11 @@ public final class ContractKinds {
         return null;
     }
 
-    private static org.hiero.consensusnode.transactions.ContractFunctionResult fromProto(
+    /// The result of a contract function: of a call or creation in a record, or of a local call.
+    ///
+    /// @param result the result message
+    /// @return the result
+    public static org.hiero.consensusnode.transactions.ContractFunctionResult fromProto(
             final ContractFunctionResult result) {
         final String errorMessage = result.getErrorMessage();
         final byte[] evmAddress = result.hasEvmAddress() ? result.getEvmAddress().getValue().toByteArray() : null;

@@ -5,11 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Set;
 import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.consensusnode.client.Account;
-import org.hiero.consensusnode.client.ClientFactory;
-import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.NodeBody;
 import org.hiero.consensusnode.client.NodeSignature;
 import org.hiero.consensusnode.client.TransactionSigner;
@@ -17,18 +14,12 @@ import org.hiero.consensusnode.transactions.accounts.AccountCreateReceipt;
 import org.hiero.consensusnode.transactions.accounts.AccountCreateTransaction;
 import org.hiero.consensusnode.transactions.utility.PrngReceipt;
 import org.hiero.consensusnode.transactions.utility.PrngTransaction;
-import org.hiero.hedera.HbarUnit;
 import org.hiero.keys.ByteImportEncoding;
 import org.hiero.keys.KeyAlgorithm;
 import org.hiero.keys.KeysFactory;
 import org.hiero.keys.PrivateKey;
 import org.hiero.ledger.AccountId;
-import org.hiero.ledger.ConsensusNode;
-import org.hiero.ledger.IpAddress;
-import org.hiero.ledger.MirrorNode;
-import org.hiero.ledger.Network;
 import org.hiero.ledger.TransactionId;
-import org.hiero.ledger.config.NetworkSetting;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -75,12 +66,12 @@ class TransactionsSpecTest {
         final List<AccountId> nodes = List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"));
 
         // when
-        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).sign(payer, nodes);
+        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).sign(payer, nodes).toCompletableFuture().join();
 
         // then
         assertEquals(2L, length(packed.nodeSignatures()));
         for (final NodeSignature signature : packed.nodeSignatures()) {
-            assertEquals(payer.privateKey().createPublicKey(), signature.publicKey());
+            assertEquals(payer.signer().publicKey(), signature.publicKey());
             assertEquals(64L, length(signature.signature()));
             for (final NodeBody body : packed.signableBodies()) {
                 if (equal(body.node(), signature.node())) {
@@ -99,10 +90,10 @@ class TransactionsSpecTest {
     void signingAgainWithTheSameKeyAddsNoSignature() {
         // given
         final Account payer = defaultAccount();
-        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).sign(payer, List.of(AccountId.fromString("0.0.3")));
+        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).sign(payer, List.of(AccountId.fromString("0.0.3"))).toCompletableFuture().join();
 
         // when
-        final PackedTransaction<PrngReceipt, PrngTransaction> again = packed.sign(payer);
+        final PackedTransaction<PrngReceipt, PrngTransaction> again = packed.sign(payer.signer()).toCompletableFuture().join();
 
         // then
         assertEquals(1L, length(again.nodeSignatures()));
@@ -118,11 +109,12 @@ class TransactionsSpecTest {
     void anEd25519AndASecp256k1KeyBothSignEveryBody() {
         // given
         final Account payer = defaultAccount();
-        final Account second = new Account(AccountId.fromString("0.0.1002"), KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"));
-        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).sign(payer, List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4")));
+        final PrivateKey secondKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
+        final TransactionSigner second = TransactionSigner.of(secondKey);
+        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).sign(payer, List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"))).toCompletableFuture().join();
 
         // when
-        final PackedTransaction<PrngReceipt, PrngTransaction> signed = packed.sign(second);
+        final PackedTransaction<PrngReceipt, PrngTransaction> signed = packed.sign(second).toCompletableFuture().join();
 
         // then
         assertEquals(4L, length(signed.nodeSignatures()));
@@ -144,7 +136,7 @@ class TransactionsSpecTest {
     @Tag("testId:consensusnode.transactions/a-signed-transaction-survives-tobytes-and-frombytes-unchanged")
     void aSignedTransactionSurvivesToBytesAndFromBytesUnchanged() {
         // given
-        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).sign(defaultAccount(), List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4")));
+        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).sign(defaultAccount(), List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"))).toCompletableFuture().join();
         final byte[] bytes = packed.toBytes();
 
         // when
@@ -166,11 +158,12 @@ class TransactionsSpecTest {
     void aRestoredTransactionCanBeSignedByAnotherParty() {
         // given
         final Account payer = defaultAccount();
-        final byte[] bytes = new PrngTransaction(null).sign(payer, List.of(AccountId.fromString("0.0.3"))).toBytes();
-        final Account other = new Account(AccountId.fromString("0.0.1002"), KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"));
+        final byte[] bytes = new PrngTransaction(null).sign(payer, List.of(AccountId.fromString("0.0.3"))).toCompletableFuture().join().toBytes();
+        final PrivateKey otherKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
+        final TransactionSigner other = TransactionSigner.of(otherKey);
 
         // when
-        final PackedTransaction<?, ?> signed = PackedTransaction.fromBytes(bytes).sign(other);
+        final PackedTransaction<?, ?> signed = PackedTransaction.fromBytes(bytes).sign(other).toCompletableFuture().join();
 
         // then
         assertEquals(2L, length(signed.nodeSignatures()));
@@ -189,9 +182,10 @@ class TransactionsSpecTest {
     void signaturesMadeOutsideTheSDKAreAttachedToTheirBodies() {
         // given
         final Account payer = defaultAccount();
+        final PrivateKey payerKey = defaultPrivateKey(); // the key of the default account
         final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).pack(payer, List.of(AccountId.fromString("0.0.3")));
         final NodeBody body = get(packed.signableBodies(), 0L);
-        final NodeSignature external = new NodeSignature(body.node(), payer.privateKey().createPublicKey(), payer.privateKey().sign(body.bytes()));
+        final NodeSignature external = new NodeSignature(body.node(), payerKey.createPublicKey(), payerKey.sign(body.bytes()));
 
         // when
         final PackedTransaction<PrngReceipt, PrngTransaction> signed = packed.sign(List.of(external));
@@ -210,7 +204,8 @@ class TransactionsSpecTest {
     void aTransactionPackedForABatchHasOneBodyForNode000() {
         // given
         final Account payer = defaultAccount();
-        final PublicKeyAuthority batchKey = new PublicKeyAuthority(payer.privateKey().createPublicKey());
+        final PrivateKey payerKey = defaultPrivateKey(); // the key of the default account
+        final PublicKeyAuthority batchKey = new PublicKeyAuthority(payerKey.createPublicKey());
 
         // when
         final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).packForBatch(payer, batchKey);
@@ -295,10 +290,11 @@ class TransactionsSpecTest {
     void signaturesOverTheBodiesOfAnotherTransactionAreRejected() {
         // given
         final Account payer = defaultAccount();
+        final PrivateKey payerKey = defaultPrivateKey(); // the key of the default account
         final List<AccountId> nodes = List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"));
         final PackedTransaction<PrngReceipt, PrngTransaction> first = new PrngTransaction(null).pack(payer, nodes);
         final PackedTransaction<PrngReceipt, PrngTransaction> second = new PrngTransaction(null).pack(payer, nodes);
-        final List<NodeSignature> wrong = List.of(new NodeSignature(get(second.signableBodies(), 0L).node(), payer.privateKey().createPublicKey(), payer.privateKey().sign(get(second.signableBodies(), 0L).bytes())), new NodeSignature(get(second.signableBodies(), 1L).node(), payer.privateKey().createPublicKey(), payer.privateKey().sign(get(second.signableBodies(), 1L).bytes())));
+        final List<NodeSignature> wrong = List.of(new NodeSignature(get(second.signableBodies(), 0L).node(), payerKey.createPublicKey(), payerKey.sign(get(second.signableBodies(), 0L).bytes())), new NodeSignature(get(second.signableBodies(), 1L).node(), payerKey.createPublicKey(), payerKey.sign(get(second.signableBodies(), 1L).bytes())));
 
         // when / then
         assertThrows(InvalidSignatureException.class, () -> first.sign(wrong));
@@ -315,9 +311,10 @@ class TransactionsSpecTest {
     void aSignatureForANodeThatIsNotATargetNodeIsRejected() {
         // given
         final Account payer = defaultAccount();
+        final PrivateKey payerKey = defaultPrivateKey(); // the key of the default account
         final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).pack(payer, List.of(AccountId.fromString("0.0.3")));
         final NodeBody body = get(packed.signableBodies(), 0L);
-        final NodeSignature foreign = new NodeSignature(AccountId.fromString("0.0.9"), payer.privateKey().createPublicKey(), payer.privateKey().sign(body.bytes()));
+        final NodeSignature foreign = new NodeSignature(AccountId.fromString("0.0.9"), payerKey.createPublicKey(), payerKey.sign(body.bytes()));
 
         // when / then
         assertThrows(UnknownNodeException.class, () -> packed.sign(List.of(foreign)));
@@ -333,9 +330,10 @@ class TransactionsSpecTest {
     void signaturesThatMissATargetNodeAreRejected() {
         // given
         final Account payer = defaultAccount();
+        final PrivateKey payerKey = defaultPrivateKey(); // the key of the default account
         final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).pack(payer, List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4")));
         final NodeBody body = get(packed.signableBodies(), 0L);
-        final NodeSignature only = new NodeSignature(body.node(), payer.privateKey().createPublicKey(), payer.privateKey().sign(body.bytes()));
+        final NodeSignature only = new NodeSignature(body.node(), payerKey.createPublicKey(), payerKey.sign(body.bytes()));
 
         // when / then
         assertThrows(IncompleteSignaturesException.class, () -> packed.sign(List.of(only)));
@@ -351,8 +349,8 @@ class TransactionsSpecTest {
     @Tag("rule:consensusnode.client/signer-identity")
     void aSignerSignsEveryTargetNodeOfARestoredTransaction() {
         // given
-        final Account payer = new Account(AccountId.fromString("0.0.1002"), KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"));
-        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).sign(payer, List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4")));
+        final Account payer = Account.of(AccountId.fromString("0.0.1002"), KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"));
+        final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).sign(payer, List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"))).toCompletableFuture().join();
         final TransactionSigner signer = defaultTransactionSigner();
 
         // when
@@ -371,7 +369,7 @@ class TransactionsSpecTest {
     }
 
     private static Account defaultAccount() {
-        return new Account(defaultAccountId(), defaultPrivateKey());
+        return Account.of(defaultAccountId(), defaultPrivateKey());
     }
 
     private static AccountId defaultAccountId() {
@@ -383,30 +381,6 @@ class TransactionsSpecTest {
     }
 
     private static TransactionSigner defaultTransactionSigner() {
-        return defaultHieroClient().transactionSigner();
-    }
-
-    private static HieroClient<?> defaultHieroClient() {
-        return ClientFactory.createClient(defaultNetworkSetting(), defaultAccount());
-    }
-
-    private static NetworkSetting defaultNetworkSetting() {
-        return new NetworkSetting(defaultNetwork(), Set.of(defaultConsensusNode()), Set.of(defaultMirrorNode()));
-    }
-
-    private static Network<?> defaultNetwork() {
-        return new Network<>(new byte[] {(byte) 3}, "local", HbarUnit.HBAR);
-    }
-
-    private static ConsensusNode defaultConsensusNode() {
-        return new ConsensusNode(defaultIpAddress(), 35211, new AccountId(0L, 0L, "", 3L, null, null));
-    }
-
-    private static IpAddress defaultIpAddress() {
-        return new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1});
-    }
-
-    private static MirrorNode defaultMirrorNode() {
-        return new MirrorNode("http://127.0.0.1:38081");
+        return TransactionSigner.of(defaultPrivateKey());
     }
 }

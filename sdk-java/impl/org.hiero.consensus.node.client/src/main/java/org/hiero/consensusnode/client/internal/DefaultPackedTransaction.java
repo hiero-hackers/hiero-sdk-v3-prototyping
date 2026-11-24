@@ -18,7 +18,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
 import org.hiero.consensusnode.client.NodeBody;
 import org.hiero.consensusnode.client.NodeSignature;
@@ -65,14 +64,6 @@ public final class DefaultPackedTransaction<R extends Receipt, T extends Transac
     @Override
     public List<NodeBody> signableBodies() {
         return bodies;
-    }
-
-    @Override
-    public PackedTransaction<R, T> sign(final Account account) {
-        final PublicKey publicKey = account.privateKey().createPublicKey();
-        return withSignatures(bodies.stream()
-                .map(body -> new NodeSignature(body.node(), publicKey, account.privateKey().sign(body.bytes())))
-                .toList());
     }
 
     @Override

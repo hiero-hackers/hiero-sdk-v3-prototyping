@@ -304,14 +304,14 @@ test "a schedule sign transaction keeps its schedule and survives toBytes and fr
 test "every key that signs a schedule sign transaction signs each body" {
     // given
     let payer = DEFAULT(consensusnode.client.Account)
-    let second = consensusnode.client.Account{accountId: AccountId.fromString(value: "0.0.1002"),
-            privateKey: keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
-                    value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")}
+    let second = consensusnode.client.TransactionSigner.of(privateKey: keys.createPrivateKey(
+            algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
+            value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"))
     let packed = ScheduleSignTransaction{scheduleId: Address.fromString(address: "0.0.5005")}
             .sign(payer: payer, nodes: [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")])
 
     // when
-    let signed = packed.sign(account: second)
+    let signed = packed.sign(signer: second)
 
     // then
     assertEquals(expected: 4, actual: length(value: signed.nodeSignatures))

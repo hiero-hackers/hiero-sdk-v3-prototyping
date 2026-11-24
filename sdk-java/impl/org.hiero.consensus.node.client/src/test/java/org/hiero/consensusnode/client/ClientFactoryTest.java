@@ -49,11 +49,11 @@ class ClientFactoryTest {
     }
 
     @Test
-    @DisplayName("createClient(networkSettings, operatorAccount, transactionSigner) can be called and returns a value (only StatusConflictException, RequestTypeConflictException may occur)")
+    @DisplayName("createClient(networkSettings, operatorAccount, executionSettings) can be called and returns a value (only StatusConflictException, RequestTypeConflictException may occur)")
     @Tag("testId:consensusnode.client/createClient/call-2")
     void shouldCallCreateClient2() throws Exception {
         try {
-            assertNotNull(ClientFactory.createClient(networkSettingsValue(), operatorAccountValue(), transactionSignerValue()));
+            assertNotNull(ClientFactory.createClient(networkSettingsValue(), operatorAccountValue(), executionSettingsValue()));
         } catch (final Exception e) {
             if (!(e instanceof StatusConflictException || e instanceof RequestTypeConflictException)) {
                 throw e;
@@ -65,62 +65,21 @@ class ClientFactoryTest {
     @DisplayName("createClient rejects null for networkSettings")
     @Tag("testId:consensusnode.client/createClient/networkSettings/rejects-null-2")
     void shouldRejectNullNetworkSettingsInCreateClient2() {
-        assertThrows(NullPointerException.class, () -> ClientFactory.createClient((NetworkSetting) null, operatorAccountValue(), transactionSignerValue()));
+        assertThrows(NullPointerException.class, () -> ClientFactory.createClient((NetworkSetting) null, operatorAccountValue(), executionSettingsValue()));
     }
 
     @Test
     @DisplayName("createClient rejects null for operatorAccount")
     @Tag("testId:consensusnode.client/createClient/operatorAccount/rejects-null-2")
     void shouldRejectNullOperatorAccountInCreateClient2() {
-        assertThrows(NullPointerException.class, () -> ClientFactory.createClient(networkSettingsValue(), (Account) null, transactionSignerValue()));
-    }
-
-    @Test
-    @DisplayName("createClient rejects null for transactionSigner")
-    @Tag("testId:consensusnode.client/createClient/transactionSigner/rejects-null")
-    void shouldRejectNullTransactionSignerInCreateClient() {
-        assertThrows(NullPointerException.class, () -> ClientFactory.createClient(networkSettingsValue(), operatorAccountValue(), (TransactionSigner) null));
-    }
-
-    @Test
-    @DisplayName("createClient(networkSettings, operatorAccount, transactionSigner, executionSettings) can be called and returns a value (only StatusConflictException, RequestTypeConflictException may occur)")
-    @Tag("testId:consensusnode.client/createClient/call-3")
-    void shouldCallCreateClient3() throws Exception {
-        try {
-            assertNotNull(ClientFactory.createClient(networkSettingsValue(), operatorAccountValue(), transactionSignerValue(), executionSettingsValue()));
-        } catch (final Exception e) {
-            if (!(e instanceof StatusConflictException || e instanceof RequestTypeConflictException)) {
-                throw e;
-            }
-        }
-    }
-
-    @Test
-    @DisplayName("createClient rejects null for networkSettings")
-    @Tag("testId:consensusnode.client/createClient/networkSettings/rejects-null-3")
-    void shouldRejectNullNetworkSettingsInCreateClient3() {
-        assertThrows(NullPointerException.class, () -> ClientFactory.createClient((NetworkSetting) null, operatorAccountValue(), transactionSignerValue(), executionSettingsValue()));
-    }
-
-    @Test
-    @DisplayName("createClient rejects null for operatorAccount")
-    @Tag("testId:consensusnode.client/createClient/operatorAccount/rejects-null-3")
-    void shouldRejectNullOperatorAccountInCreateClient3() {
-        assertThrows(NullPointerException.class, () -> ClientFactory.createClient(networkSettingsValue(), (Account) null, transactionSignerValue(), executionSettingsValue()));
-    }
-
-    @Test
-    @DisplayName("createClient rejects null for transactionSigner")
-    @Tag("testId:consensusnode.client/createClient/transactionSigner/rejects-null-2")
-    void shouldRejectNullTransactionSignerInCreateClient2() {
-        assertThrows(NullPointerException.class, () -> ClientFactory.createClient(networkSettingsValue(), operatorAccountValue(), (TransactionSigner) null, executionSettingsValue()));
+        assertThrows(NullPointerException.class, () -> ClientFactory.createClient(networkSettingsValue(), (Account) null, executionSettingsValue()));
     }
 
     @Test
     @DisplayName("createClient rejects null for executionSettings")
     @Tag("testId:consensusnode.client/createClient/executionSettings/rejects-null")
     void shouldRejectNullExecutionSettingsInCreateClient() {
-        assertThrows(NullPointerException.class, () -> ClientFactory.createClient(networkSettingsValue(), operatorAccountValue(), transactionSignerValue(), (ExecutionSettings) null));
+        assertThrows(NullPointerException.class, () -> ClientFactory.createClient(networkSettingsValue(), operatorAccountValue(), (ExecutionSettings) null));
     }
 
     private static NetworkSetting networkSettingsValue() {
@@ -128,11 +87,7 @@ class ClientFactoryTest {
     }
 
     private static Account operatorAccountValue() {
-        return new Account(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"));
-    }
-
-    private static TransactionSigner transactionSignerValue() {
-        return ClientFactory.createClient(new NetworkSetting(new Network<>(new byte[] {(byte) 3}, "local", HbarUnit.HBAR), Set.of(new ConsensusNode(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), 35211, new AccountId(0L, 0L, "", 3L, null, null))), Set.of(new MirrorNode("http://127.0.0.1:38081"))), new Account(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"))).transactionSigner();
+        return Account.of(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"));
     }
 
     private static ExecutionSettings executionSettingsValue() {

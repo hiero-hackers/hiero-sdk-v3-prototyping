@@ -11,7 +11,6 @@ import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.ClientFactory;
 import org.hiero.consensusnode.client.HieroClient;
-import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.hedera.Hbar;
 import org.hiero.hedera.HbarUnit;
 import org.hiero.keys.ByteImportEncoding;
@@ -315,13 +314,6 @@ class AccountCreateTransactionTest {
     }
 
     @Test
-    @DisplayName("sign(payerId, signer, nodes) can be called and returns a value")
-    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/sign/call-2")
-    void shouldCallSign2() {
-        assertNotNull(create().sign(payerIdValue(), signerValue(), nodesValue()));
-    }
-
-    @Test
     @DisplayName("signWithOperatorAndSubmit(client) can be called and returns a value")
     @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/signWithOperatorAndSubmit/call")
     void shouldCallSignWithOperatorAndSubmit() {
@@ -347,13 +339,6 @@ class AccountCreateTransactionTest {
     @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/signForBatch/call")
     void shouldCallSignForBatch() {
         assertNotNull(create().signForBatch(payerValue(), batchKeyValue()));
-    }
-
-    @Test
-    @DisplayName("signForBatch(payerId, signer, batchKey) can be called and returns a value")
-    @Tag("testId:consensusnode.transactions.accounts.AccountCreateTransaction/signForBatch/call-2")
-    void shouldCallSignForBatch2() {
-        assertNotNull(create().signForBatch(payerIdValue(), signerValue(), batchKeyValue()));
     }
 
     private static Authority authorityValue() {
@@ -413,7 +398,7 @@ class AccountCreateTransactionTest {
     }
 
     private static Account payerValue() {
-        return new Account(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"));
+        return Account.of(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"));
     }
 
     private static List<AccountId> nodesValue() {
@@ -421,15 +406,7 @@ class AccountCreateTransactionTest {
     }
 
     private static HieroClient<?> clientValue() {
-        return ClientFactory.createClient(new NetworkSetting(new Network<>(new byte[] {(byte) 3}, "local", HbarUnit.HBAR), Set.of(new ConsensusNode(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), 35211, new AccountId(0L, 0L, "", 3L, null, null))), Set.of(new MirrorNode("http://127.0.0.1:38081"))), new Account(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c")));
-    }
-
-    private static AccountId payerIdValue() {
-        return new AccountId(0L, 0L, "", 1001L, null, null);
-    }
-
-    private static TransactionSigner signerValue() {
-        return ClientFactory.createClient(new NetworkSetting(new Network<>(new byte[] {(byte) 3}, "local", HbarUnit.HBAR), Set.of(new ConsensusNode(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), 35211, new AccountId(0L, 0L, "", 3L, null, null))), Set.of(new MirrorNode("http://127.0.0.1:38081"))), new Account(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"))).transactionSigner();
+        return ClientFactory.createClient(new NetworkSetting(new Network<>(new byte[] {(byte) 3}, "local", HbarUnit.HBAR), Set.of(new ConsensusNode(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), 35211, new AccountId(0L, 0L, "", 3L, null, null))), Set.of(new MirrorNode("http://127.0.0.1:38081"))), Account.of(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c")));
     }
 
     private static Authority batchKeyValue() {

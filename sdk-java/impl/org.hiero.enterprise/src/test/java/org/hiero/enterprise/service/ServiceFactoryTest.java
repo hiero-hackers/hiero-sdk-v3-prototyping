@@ -4,8 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Set;
 import org.hiero.consensusnode.client.Account;
-import org.hiero.consensusnode.client.ClientFactory;
-import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.hedera.HbarUnit;
 import org.hiero.keys.ByteImportEncoding;
 import org.hiero.keys.KeyAlgorithm;
@@ -45,43 +43,11 @@ class ServiceFactoryTest {
         assertThrows(NullPointerException.class, () -> ServiceFactory.createSession(networkSettingsValue(), (Account) null));
     }
 
-    @Test
-    @DisplayName("createSession(networkSettings, operatorAccount, transactionSigner) can be called and returns a value")
-    @Tag("testId:enterprise.service/createSession/call-2")
-    void shouldCallCreateSession2() {
-        assertNotNull(ServiceFactory.createSession(networkSettingsValue(), operatorAccountValue(), transactionSignerValue()));
-    }
-
-    @Test
-    @DisplayName("createSession rejects null for networkSettings")
-    @Tag("testId:enterprise.service/createSession/networkSettings/rejects-null-2")
-    void shouldRejectNullNetworkSettingsInCreateSession2() {
-        assertThrows(NullPointerException.class, () -> ServiceFactory.createSession((NetworkSetting) null, operatorAccountValue(), transactionSignerValue()));
-    }
-
-    @Test
-    @DisplayName("createSession rejects null for operatorAccount")
-    @Tag("testId:enterprise.service/createSession/operatorAccount/rejects-null-2")
-    void shouldRejectNullOperatorAccountInCreateSession2() {
-        assertThrows(NullPointerException.class, () -> ServiceFactory.createSession(networkSettingsValue(), (Account) null, transactionSignerValue()));
-    }
-
-    @Test
-    @DisplayName("createSession rejects null for transactionSigner")
-    @Tag("testId:enterprise.service/createSession/transactionSigner/rejects-null")
-    void shouldRejectNullTransactionSignerInCreateSession() {
-        assertThrows(NullPointerException.class, () -> ServiceFactory.createSession(networkSettingsValue(), operatorAccountValue(), (TransactionSigner) null));
-    }
-
     private static NetworkSetting networkSettingsValue() {
         return new NetworkSetting(new Network<>(new byte[] {(byte) 3}, "local", HbarUnit.HBAR), Set.of(new ConsensusNode(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), 35211, new AccountId(0L, 0L, "", 3L, null, null))), Set.of(new MirrorNode("http://127.0.0.1:38081")));
     }
 
     private static Account operatorAccountValue() {
-        return new Account(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"));
-    }
-
-    private static TransactionSigner transactionSignerValue() {
-        return ClientFactory.createClient(new NetworkSetting(new Network<>(new byte[] {(byte) 3}, "local", HbarUnit.HBAR), Set.of(new ConsensusNode(new IpAddress(new byte[] {(byte) 127, (byte) 0, (byte) 0, (byte) 1}), 35211, new AccountId(0L, 0L, "", 3L, null, null))), Set.of(new MirrorNode("http://127.0.0.1:38081"))), new Account(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"))).transactionSigner();
+        return Account.of(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"));
     }
 }

@@ -7,7 +7,6 @@ import java.util.concurrent.CompletionStage;
 import org.hiero.authority.Authority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
-import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.consensusnode.client.internal.Packing;
 import org.hiero.consensusnode.clpr.internal.ClprKinds;
 import org.hiero.consensusnode.clpr.internal.Ownership;
@@ -58,14 +57,10 @@ public final class ClprRegisterChannelTransaction extends Transaction<ClprRegist
         return new Packing<>(ClprKinds.REGISTER_CHANNEL).signWithOperator(this, client);
     }
 
+    /// Packs this transaction with the given Account as payer and adds the signatures of its signer.
     @Override
-    public PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction> sign(final Account payer, final List<AccountId> nodes) {
+    public CompletionStage<PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction>> sign(final Account payer, final List<AccountId> nodes) {
         return new Packing<>(ClprKinds.REGISTER_CHANNEL).sign(this, payer, nodes);
-    }
-
-    @Override
-    public CompletionStage<PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction>> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes) {
-        return new Packing<>(ClprKinds.REGISTER_CHANNEL).sign(this, payerId, signer, nodes);
     }
 
     @Override
@@ -96,19 +91,11 @@ public final class ClprRegisterChannelTransaction extends Transaction<ClprRegist
         return new Packing<>(ClprKinds.REGISTER_CHANNEL).signForBatchWithOperator(this, client, batchKey);
     }
 
-    /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
+    /// Packs this transaction for a batch with the given Account as payer and adds the signature of its signer. The
     /// batch counterpart of sign(payer, nodes).
     @Override
-    public PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction> signForBatch(final Account payer, final Authority batchKey) {
+    public CompletionStage<PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction>> signForBatch(final Account payer, final Authority batchKey) {
         return new Packing<>(ClprKinds.REGISTER_CHANNEL).signForBatch(this, payer, batchKey);
-    }
-
-    /// Packs this transaction for a batch with payerId as payer and signs it with the given
-    /// TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
-    /// sign(payerId, signer, nodes).
-    @Override
-    public CompletionStage<PackedTransaction<ClprRegisterChannelReceipt, ClprRegisterChannelTransaction>> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey) {
-        return new Packing<>(ClprKinds.REGISTER_CHANNEL).signForBatch(this, payerId, signer, batchKey);
     }
 
     /// Computes the ownership commitment keccak256(channelId || publicKey), with the public key in the encoding of the

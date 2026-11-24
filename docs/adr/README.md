@@ -28,3 +28,4 @@ deleted — superseded ADRs link forward to the decision that replaces them.
 | [0015](0015-evm-generic-types-in-a-namespace-without-imports.md) | EVM-generic types live in a namespace `evm` that imports nothing | Accepted |
 | [0016](0016-typed-queries-for-system-files.md) | System files are read by typed queries without a file id | Accepted |
 | [0017](0017-request-types-registered-through-the-spi.md) | Request types are an open type registered through the SPI | Accepted |
+| [0018](0018-account-signs-through-a-transaction-signer.md) | An account signs through a `TransactionSigner`, not a `PrivateKey` | Accepted |

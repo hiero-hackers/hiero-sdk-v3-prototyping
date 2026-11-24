@@ -7,6 +7,7 @@ import org.jspecify.annotations.NullMarked;
 /// - `org.hiero.consensusnode.proto.account`
 /// - `org.hiero.consensusnode.queries`
 /// - `org.hiero.consensusnode.queries.accounts`
+/// - `org.hiero.consensusnode.queries.contracts`
 /// - `org.hiero.consensusnode.queries.fees`
 /// - `org.hiero.consensusnode.queries.files`
 /// - `org.hiero.consensusnode.queries.schedule`
@@ -37,6 +38,7 @@ module org.hiero.consensus.node.client {
     // exports org.hiero.consensusnode.proto.account; (enabled as soon as the package contains generated types)
     exports org.hiero.consensusnode.queries;
     exports org.hiero.consensusnode.queries.accounts;
+    exports org.hiero.consensusnode.queries.contracts;
     exports org.hiero.consensusnode.queries.fees;
     exports org.hiero.consensusnode.queries.files;
     exports org.hiero.consensusnode.queries.receipts;

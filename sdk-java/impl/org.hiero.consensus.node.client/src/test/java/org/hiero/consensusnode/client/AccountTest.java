@@ -21,49 +21,50 @@ class AccountTest {
     @Tag("testId:consensusnode.client.Account/create")
     void shouldCreateAndReturnTheValues() {
         final AccountId accountId = accountIdValue();
-        final PrivateKey privateKey = privateKeyValue();
-        final Account subject = new Account(accountId, privateKey);
+        final TransactionSigner signer = signerValue();
+        final Account subject = new Account(accountId, signer);
         assertValue(accountId, subject.accountId());
-        assertValue(privateKey, subject.privateKey());
+        assertValue(signer, subject.signer());
     }
 
     @Test
     @DisplayName("rejects null for accountId")
     @Tag("testId:consensusnode.client.Account/accountId/rejects-null")
     void shouldRejectNullAccountId() {
-        assertThrows(NullPointerException.class, () -> new Account((AccountId) null, privateKeyValue()));
+        assertThrows(NullPointerException.class, () -> new Account((AccountId) null, signerValue()));
     }
 
     @Test
-    @DisplayName("rejects null for privateKey")
-    @Tag("testId:consensusnode.client.Account/privateKey/rejects-null")
-    void shouldRejectNullPrivateKey() {
-        assertThrows(NullPointerException.class, () -> new Account(accountIdValue(), (PrivateKey) null));
+    @DisplayName("rejects null for signer")
+    @Tag("testId:consensusnode.client.Account/signer/rejects-null")
+    void shouldRejectNullSigner() {
+        assertThrows(NullPointerException.class, () -> new Account(accountIdValue(), (TransactionSigner) null));
     }
 
     @Test
-    @DisplayName("equal values give equal objects and hash codes")
-    @Tag("testId:consensusnode.client.Account/value-semantics")
-    void shouldCompareByValue() {
-        final Account subject = create();
-        final Account other = create();
-        assertEquals(subject, other);
-        assertEquals(subject.hashCode(), other.hashCode());
+    @DisplayName("of(accountId, privateKey) can be called and returns a value")
+    @Tag("testId:consensusnode.client.Account/of/call")
+    void shouldCallOf() {
+        assertNotNull(Account.of(accountIdValue(), privateKeyValue()));
     }
 
     private static AccountId accountIdValue() {
         return new AccountId(0L, 0L, "", 1001L, null, null);
     }
 
-    private static PrivateKey privateKeyValue() {
-        return KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c");
+    private static TransactionSigner signerValue() {
+        return TransactionSigner.of(KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"));
     }
 
     private static Account create() {
-        return new Account(accountIdValue(), privateKeyValue());
+        return new Account(accountIdValue(), signerValue());
     }
 
     private static Account defaultSubject() {
-        return new Account(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"));
+        return Account.of(new AccountId(0L, 0L, "", 1001L, null, null), KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"));
+    }
+
+    private static PrivateKey privateKeyValue() {
+        return KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX, "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c");
     }
 }

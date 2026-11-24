@@ -69,7 +69,7 @@ final class Utilities {
      * (the TCK's variable); every value that is not given is the one of a local Solo network.
      */
     Object setup(final Map<String, Object> params, final Session session) {
-        final Account operator = new Account(
+        final Account operator = Account.of(
                 runtime.required(runtime.value(params, List.of(new Source<>("operatorAccountId",
                         converters::accountId))), "operatorAccountId"),
                 runtime.required(runtime.value(params, List.of(new Source<>("operatorPrivateKey",

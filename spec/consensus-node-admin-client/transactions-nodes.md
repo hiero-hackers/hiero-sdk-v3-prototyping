@@ -219,7 +219,7 @@ PackedTransaction<...> packed = new NodeCreateTransaction()
     .grpcCertificateHash(grpcCertSha384)
     .adminAuthority(Authority.of(newAdminPublicKey))
     .signWithOperator(client)        // council + payer
-    .sign(nodeOperator)              // accountId binding
+    .sign(nodeOperator.signer)       // accountId binding
     .sign(adminSigner);              // adminAuthority binding (anti-spoofing)
 
 int64 nodeId = packed.submit(client).queryReceipt(client).nodeId;

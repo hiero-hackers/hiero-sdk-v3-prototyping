@@ -130,6 +130,34 @@
 ///     SDK registers the one of `BasicTransactionStatus` itself), `submit(client)` fails with `unknown-status-error`; there
 ///     is no further attempt.
 ///
-/// By default, transactions are signed with the operator's private key. If the key lives elsewhere (for example in an
-/// HSM or a remote signing service), pass your own `TransactionSigner` when creating the client.
+/// An `Account` is an account id together with the `TransactionSigner` that signs for it. For a key held in memory,
+/// create it with `Account.of(accountId, privateKey)`. If the key lives elsewhere (for example in an HSM, a cloud KMS or
+/// a remote signing service), create the `Account` with your own `TransactionSigner`; the operator account, a payer and
+/// every further signer are then handled the same way.
+///
+/// ### External signing
+///
+/// A `TransactionSigner` signs transactions with a key the SDK does not hold — a cloud KMS (AWS KMS, Google Cloud KMS,
+/// Azure Key Vault), HashiCorp Vault transit, a PKCS#11 HSM, or a hardware wallet. Signing with such a key is I/O, so
+/// `signTransaction` is asynchronous. One key contributes one signature per target node, so the SDK calls the signer once
+/// per `NodeBody`.
+///
+/// Every `TransactionSigner` follows this contract:
+///
+/// - `rule:signer-input` `body.bytes` is the serialized `TransactionBody` addressed to `body.node`, exactly as returned by
+///   `PackedTransaction.signableBodies()`. The signer signs these bytes and nothing else.
+/// - `rule:signer-digest` The signer applies the digest of its key algorithm itself: Ed25519 signs the raw body bytes;
+///   ECDSA secp256k1 signs the Keccak-256 digest of the body bytes. A backend that cannot compute Keccak-256 (no cloud
+///   KMS offers it) receives the 32-byte digest computed locally by the signer.
+/// - `rule:signer-signature-encoding` `NodeSignature.signature` is 64 bytes for both algorithms. For ECDSA secp256k1 it
+///   is `r || s` (32 bytes each, big-endian) with `s` in the lower half of the curve order; a DER-encoded or high-`s`
+///   signature returned by a backend is converted by the signer.
+/// - `rule:signer-identity` `NodeSignature.node` is `body.node`, and `NodeSignature.publicKey` is the signer's
+///   `publicKey`.
+/// - `rule:signer-concurrency` The SDK may call `signTransaction` concurrently for the bodies of different target nodes.
+///
+/// The signer for a key held in memory, `TransactionSigner.of(privateKey)`, follows the same contract:
+///
+/// - `rule:private-key-signer` Its `publicKey` is `privateKey.createPublicKey()`, and it signs with
+///   `privateKey.sign(body.bytes)`. Two signers created from equal private keys are equal.
 package org.hiero.consensusnode.client;

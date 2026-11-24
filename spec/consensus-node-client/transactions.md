@@ -70,17 +70,16 @@ workflows:
 | Caller has | Method |
 |---|---|
 | A configured `HieroClient` with operator | `Transaction.signWithOperator(client)` (or `signWithOperatorAndSubmit(client)` for fire-and-forget) |
-| A single `Account` that pays *and* signs | `Transaction.sign(payer, nodes)` |
-| A separate payer address and a `TransactionSigner` (HSM, hardware wallet, paymaster) | `Transaction.sign(payerId, signer, nodes)` |
-| An already-packed transaction that needs another in-process signature (multi-sig) | `PackedTransaction.sign(account)` or `PackedTransaction.sign(signer)` |
+| An `Account` that pays *and* signs — with a key in memory or in an HSM, KMS or hardware wallet | `Transaction.sign(payer, nodes)` |
+| An already-packed transaction that needs another signature (multi-sig, paymaster) | `PackedTransaction.sign(signer)` |
 | Out-of-process signing (async pipeline, multi-party, audit archival, raw HSM bytes) | `PackedTransaction.signableBodies()` + `PackedTransaction.sign(signatures)` |
 
-Every method that can call a `TransactionSigner` is asynchronous, because `TransactionSigner.signTransaction` is (an
-external signer is I/O: KMS, HSM, Vault, hardware wallet). That covers `signWithOperator`, `signWithOperatorAndSubmit`
-and `signForBatchWithOperator` (the client's `transactionSigner` may be external), `sign(payerId, signer, nodes)`,
-`signForBatch(payerId, signer, batchKey)` and `PackedTransaction.sign(signer)`. The variants that sign with the
-in-memory `PrivateKey` of an `Account` and `PackedTransaction.sign(signatures)` stay synchronous. See
-`consensusnode.client` for the signer contract.
+An `Account` signs through its `TransactionSigner`, whether its key is held in memory (`Account.of(accountId,
+privateKey)`) or elsewhere. Every method that signs is therefore asynchronous, because
+`TransactionSigner.signTransaction` is (an external signer is I/O: KMS, HSM, Vault, hardware wallet):
+`signWithOperator`, `signWithOperatorAndSubmit`, `sign(payer, nodes)`, `signForBatchWithOperator`, `signForBatch(payer, batchKey)` and
+`PackedTransaction.sign(signer)`. `pack`, `packForBatch` and `PackedTransaction.sign(signatures)` sign nothing and stay
+synchronous. See `consensusnode.client` for the signer contract.
 
 Signature ordering is irrelevant — `NodeSignature` entries form a set; the consensus node accepts
 them in any order. The packed transaction can also be built first via `Transaction.pack(...)`
@@ -196,9 +195,8 @@ abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$
     
   @@async PackedTransaction<$$Receipt, $$Self> signWithOperator(client: HieroClient<ANY>)
   
-  PackedTransaction<$$Receipt, $$Self> sign(payer: Account, nodes: list<AccountId>)
-  
-  @@async PackedTransaction<$$Receipt, $$Self> sign(payerId: AccountId, signer: TransactionSigner, nodes: list<AccountId>)
+  // Packs this transaction with the given Account as payer and adds the signatures of its signer.
+  @@async PackedTransaction<$$Receipt, $$Self> sign(payer: Account, nodes: list<AccountId>)
   
   @@async Response<$$Receipt> signWithOperatorAndSubmit(client: HieroClient<ANY>)
 
@@ -224,14 +222,9 @@ abstraction Transaction<$$Receipt extends Receipt, $$Self extends Transaction<$$
   // signature. The batch counterpart of signWithOperator(client).
   @@async PackedTransaction<$$Receipt, $$Self> signForBatchWithOperator(client: HieroClient<ANY>, batchKey: Authority)
 
-  // Packs this transaction for a batch with the given Account as payer and adds its signature. The
+  // Packs this transaction for a batch with the given Account as payer and adds the signature of its signer. The
   // batch counterpart of sign(payer, nodes).
-  PackedTransaction<$$Receipt, $$Self> signForBatch(payer: Account, batchKey: Authority)
-
-  // Packs this transaction for a batch with payerId as payer and signs it with the given
-  // TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
-  // sign(payerId, signer, nodes).
-  @@async PackedTransaction<$$Receipt, $$Self> signForBatch(payerId: AccountId, signer: TransactionSigner, batchKey: Authority)
+  @@async PackedTransaction<$$Receipt, $$Self> signForBatch(payer: Account, batchKey: Authority)
 
 }
 
@@ -244,10 +237,6 @@ abstraction PackedTransaction<$$Receipt extends Receipt, $$Transaction extends T
 
   @@immutable transactionId: TransactionId
   @@immutable nodeSignatures: list<NodeSignature> 
-
-  // Adds the signature of the account's private key for every target node. A key that has already signed
-  // this transaction is not added again.
-  PackedTransaction<$$Receipt, $$Transaction> sign(account: Account)
 
   // Adds the signatures of the signer for every target node, one signTransaction call each. A key that has already
   // signed this transaction is not added again.
@@ -393,9 +382,8 @@ Response<AccountCreateReceipt> response = packed.submit(client);
 
 ### 3. Paymaster pattern (sponsor pays, user signs the operation)
 
-The sponsor's `Account` is the payer; the user's `TransactionSigner` (an HSM or hardware wallet)
-adds the operation signature. The sponsor signs after the fact on the resulting
-`PackedTransaction` — because the protocol requires the payer to sign as well.
+The sponsor's `Account` is the payer and signs as payer; the user's `TransactionSigner` (an HSM or
+hardware wallet) adds the operation signature on the resulting `PackedTransaction`.
 
 ```
 Account sponsor = ...;
@@ -404,8 +392,8 @@ list<AccountId> nodes = ...;
 
 PackedTransaction<...> packed = new TransferTransaction()
     .addHbarTransfer(...)
-    .sign(sponsor.accountId, userSigner, nodes)     // user's operation signature
-    .sign(sponsor);                                  // sponsor's payer signature
+    .sign(sponsor, nodes)                            // sponsor's payer signature
+    .sign(userSigner);                               // user's operation signature
 
 packed.submit(client);
 ```
@@ -427,7 +415,7 @@ bytes payload = packed.toBytes();
 
 // Custodian A:
 PackedTransaction<...> received = PackedTransaction.fromBytes(payload);
-bytes signedA = received.sign(custodianA).toBytes();
+bytes signedA = received.sign(custodianASigner).toBytes();   // custodian A's TransactionSigner
 // signedA travels back; coordinator forwards to custodian B, etc.
 
 // Coordinator finalises:
@@ -502,7 +490,7 @@ test "signing adds one signature per node that verifies over the body of that no
     // then
     assertEquals(expected: 2, actual: length(value: packed.nodeSignatures))
     for signature in packed.nodeSignatures {
-        assertEquals(expected: payer.privateKey.createPublicKey(), actual: signature.publicKey)
+        assertEquals(expected: payer.signer.publicKey, actual: signature.publicKey)
         assertEquals(expected: 64, actual: length(value: signature.signature))
         for body in packed.signableBodies() {
             if body.node == signature.node {
@@ -521,7 +509,7 @@ test "signing again with the same key adds no signature" {
             .sign(payer: payer, nodes: [AccountId.fromString(value: "0.0.3")])
 
     // when
-    let again = packed.sign(account: payer)
+    let again = packed.sign(signer: payer.signer)
 
     // then
     assertEquals(expected: 1, actual: length(value: again.nodeSignatures))
@@ -533,14 +521,14 @@ test "signing again with the same key adds no signature" {
 test "an Ed25519 and a secp256k1 key both sign every body" {
     // given
     let payer = DEFAULT(Account)
-    let second = Account{accountId: AccountId.fromString(value: "0.0.1002"),
-            privateKey: keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
-                    value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")}
+    let secondKey = keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
+            value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
+    let second = TransactionSigner.of(privateKey: secondKey)
     let packed = consensusnode.transactions.utility.PrngTransaction{}
             .sign(payer: payer, nodes: [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")])
 
     // when
-    let signed = packed.sign(account: second)
+    let signed = packed.sign(signer: second)
 
     // then
     assertEquals(expected: 4, actual: length(value: signed.nodeSignatures))
@@ -579,12 +567,12 @@ test "a restored transaction can be signed by another party" {
     let payer = DEFAULT(Account)
     let bytes = consensusnode.transactions.utility.PrngTransaction{}
             .sign(payer: payer, nodes: [AccountId.fromString(value: "0.0.3")]).toBytes()
-    let other = Account{accountId: AccountId.fromString(value: "0.0.1002"),
-            privateKey: keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
-                    value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")}
+    let otherKey = keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
+            value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
+    let other = TransactionSigner.of(privateKey: otherKey)
 
     // when
-    let signed = PackedTransaction.fromBytes(bytes: bytes).sign(account: other)
+    let signed = PackedTransaction.fromBytes(bytes: bytes).sign(signer: other)
 
     // then
     assertEquals(expected: 2, actual: length(value: signed.nodeSignatures))
@@ -600,11 +588,12 @@ test "a restored transaction can be signed by another party" {
 test "signatures made outside the SDK are attached to their bodies" {
     // given
     let payer = DEFAULT(Account)
+    let payerKey = DEFAULT(keys.PrivateKey)       // the key of the default account
     let packed = consensusnode.transactions.utility.PrngTransaction{}
             .pack(payer: payer, nodes: [AccountId.fromString(value: "0.0.3")])
     let body = packed.signableBodies()[0]
-    let external = NodeSignature{node: body.node, publicKey: payer.privateKey.createPublicKey(),
-            signature: payer.privateKey.sign(message: body.bytes)}
+    let external = NodeSignature{node: body.node, publicKey: payerKey.createPublicKey(),
+            signature: payerKey.sign(message: body.bytes)}
 
     // when
     let signed = packed.sign(signatures: [external])
@@ -619,7 +608,8 @@ test "signatures made outside the SDK are attached to their bodies" {
 test "a transaction packed for a batch has one body for node 0.0.0" {
     // given
     let payer = DEFAULT(Account)
-    let batchKey = authority.PublicKeyAuthority{publicKey: payer.privateKey.createPublicKey()}
+    let payerKey = DEFAULT(keys.PrivateKey)       // the key of the default account
+    let batchKey = authority.PublicKeyAuthority{publicKey: payerKey.createPublicKey()}
 
     // when
     let packed = consensusnode.transactions.utility.PrngTransaction{}.packForBatch(payer: payer, batchKey: batchKey)
@@ -697,13 +687,14 @@ test "bytes that are no transaction are rejected" {
 test "signatures over the bodies of another transaction are rejected" {
     // given
     let payer = DEFAULT(Account)
+    let payerKey = DEFAULT(keys.PrivateKey)       // the key of the default account
     let nodes = [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")]
     let first = consensusnode.transactions.utility.PrngTransaction{}.pack(payer: payer, nodes: nodes)
     let second = consensusnode.transactions.utility.PrngTransaction{}.pack(payer: payer, nodes: nodes)
-    let wrong = [NodeSignature{node: second.signableBodies()[0].node, publicKey: payer.privateKey.createPublicKey(),
-                    signature: payer.privateKey.sign(message: second.signableBodies()[0].bytes)},
-            NodeSignature{node: second.signableBodies()[1].node, publicKey: payer.privateKey.createPublicKey(),
-                    signature: payer.privateKey.sign(message: second.signableBodies()[1].bytes)}]
+    let wrong = [NodeSignature{node: second.signableBodies()[0].node, publicKey: payerKey.createPublicKey(),
+                    signature: payerKey.sign(message: second.signableBodies()[0].bytes)},
+            NodeSignature{node: second.signableBodies()[1].node, publicKey: payerKey.createPublicKey(),
+                    signature: payerKey.sign(message: second.signableBodies()[1].bytes)}]
 
     // when / then
     @@expectThrows(invalid-signature-error)
@@ -717,11 +708,12 @@ test "signatures over the bodies of another transaction are rejected" {
 test "a signature for a node that is not a target node is rejected" {
     // given
     let payer = DEFAULT(Account)
+    let payerKey = DEFAULT(keys.PrivateKey)       // the key of the default account
     let packed = consensusnode.transactions.utility.PrngTransaction{}
             .pack(payer: payer, nodes: [AccountId.fromString(value: "0.0.3")])
     let body = packed.signableBodies()[0]
-    let foreign = NodeSignature{node: AccountId.fromString(value: "0.0.9"), publicKey: payer.privateKey.createPublicKey(),
-            signature: payer.privateKey.sign(message: body.bytes)}
+    let foreign = NodeSignature{node: AccountId.fromString(value: "0.0.9"), publicKey: payerKey.createPublicKey(),
+            signature: payerKey.sign(message: body.bytes)}
 
     // when / then
     @@expectThrows(unknown-node-error)
@@ -734,11 +726,12 @@ test "a signature for a node that is not a target node is rejected" {
 test "signatures that miss a target node are rejected" {
     // given
     let payer = DEFAULT(Account)
+    let payerKey = DEFAULT(keys.PrivateKey)       // the key of the default account
     let packed = consensusnode.transactions.utility.PrngTransaction{}
             .pack(payer: payer, nodes: [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")])
     let body = packed.signableBodies()[0]
-    let only = NodeSignature{node: body.node, publicKey: payer.privateKey.createPublicKey(),
-            signature: payer.privateKey.sign(message: body.bytes)}
+    let only = NodeSignature{node: body.node, publicKey: payerKey.createPublicKey(),
+            signature: payerKey.sign(message: body.bytes)}
 
     // when / then
     @@expectThrows(incomplete-signatures-error)
@@ -751,9 +744,9 @@ test "signatures that miss a target node are rejected" {
 @@rule("consensusnode.client/signer-identity")
 test "a signer signs every target node of a restored transaction" {
     // given
-    let payer = Account{accountId: AccountId.fromString(value: "0.0.1002"),
+    let payer = Account.of(accountId: AccountId.fromString(value: "0.0.1002"),
             privateKey: keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
-                    value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")}
+                    value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"))
     let packed = consensusnode.transactions.utility.PrngTransaction{}
             .sign(payer: payer, nodes: [AccountId.fromString(value: "0.0.3"), AccountId.fromString(value: "0.0.4")])
     let signer = DEFAULT(TransactionSigner)
@@ -871,11 +864,11 @@ in-memory `TransactionSigner` described in the `## Testing` section of [`client.
 - **Open points of asynchronous signing.** Surfaced by the remote signer that validated the `TransactionSigner`
   contract (see `client.md`):
   - **`sign(...)` overloads differ in async-ness.** `PackedTransaction.sign(signer)` is asynchronous while
-    `sign(account)` and `sign(signatures)` are not, so the same method name returns a future or not depending on the
-    argument type. Keep the overload set, or rename, e.g. `addSignatures(signatures)`? — open
+    `sign(signatures)` is not, so the same method name returns a future or not depending on the argument type. Keep
+    the overload set, or rename, e.g. `addSignatures(signatures)`? — open
   - **`pack(payer: Account, nodes)` only needs the payer's id.** Packing uses the account only to build the
-    `TransactionId`, but `Account` requires a `PrivateKey`, so an application that packs for an out-of-process signer
-    must hold a key it does not have. Should `pack` (and `packForBatch`) take `payerId: AccountId`? — open
+    `TransactionId`, but an `Account` needs a signer, so an application that packs for an out-of-process signer must
+    create one it does not use. Should `pack` (and `packForBatch`) take `payerId: AccountId`? — open
 
 - **Should a transaction name its `RequestType`?** Every transaction type is one request type of the protocol
   (`consensusnode.requestTypes`), e.g. `AccountCreateTransaction` is `CRYPTO_CREATE`. With the request type a caller

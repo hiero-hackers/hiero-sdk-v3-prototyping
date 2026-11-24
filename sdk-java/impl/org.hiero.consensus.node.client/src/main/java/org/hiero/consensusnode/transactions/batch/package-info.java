@@ -25,9 +25,8 @@
 ///
 /// - `packForBatch(payer, batchKey)` — pack only, no signature;
 /// - `signForBatchWithOperator(client, batchKey)` — the client's operator pays and signs;
-/// - `signForBatch(payer, batchKey)` — one `Account` pays and signs;
-/// - `signForBatch(payerId, signer, batchKey)` — the payer identity is decoupled from a
-///   `TransactionSigner` (HSM, hardware wallet, paymaster).
+/// - `signForBatch(payer, batchKey)` — one `Account` pays and signs, with a key in memory or with a
+///   `TransactionSigner` (HSM, hardware wallet).
 ///
 /// Each method produces a **single** `TransactionBody` addressed to no consensus node
 /// (`nodeAccountID = 0.0.0`), because an inner batch transaction is never submitted to a node on its

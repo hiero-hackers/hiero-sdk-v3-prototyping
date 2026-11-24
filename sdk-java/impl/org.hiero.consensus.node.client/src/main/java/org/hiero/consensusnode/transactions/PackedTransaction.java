@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
-import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.NodeBody;
 import org.hiero.consensusnode.client.NodeSignature;
 import org.hiero.consensusnode.client.RetryPolicy;
@@ -63,10 +62,6 @@ public abstract class PackedTransaction<ReceiptT extends Receipt, TransactionT e
         super.setAttemptTimeout(attemptTimeout);
         return this;
     }
-
-    /// Adds the signature of the account's private key for every target node. A key that has already signed
-    /// this transaction is not added again.
-    public abstract PackedTransaction<ReceiptT, TransactionT> sign(final Account account);
 
     /// Adds the signatures of the signer for every target node, one signTransaction call each. A key that has already
     /// signed this transaction is not added again.

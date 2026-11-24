@@ -47,7 +47,7 @@ class TransactionsBatchSpecTest {
         final Account payer = defaultAccount();
 
         // when
-        final PackedTransaction<PrngReceipt, PrngTransaction> inner = new PrngTransaction(null).signForBatch(payer, defaultAuthority());
+        final PackedTransaction<PrngReceipt, PrngTransaction> inner = new PrngTransaction(null).signForBatch(payer, defaultAuthority()).toCompletableFuture().join();
 
         // then
         final List<NodeBody> bodies = inner.signableBodies();
@@ -69,9 +69,9 @@ class TransactionsBatchSpecTest {
     void aBatchKeepsItsInnerTransactionsInTheirOrderEachWithItsOwnPayer() {
         // given
         final Account first = defaultAccount();
-        final Account second = new Account(AccountId.fromString("0.0.1002"), first.privateKey());
-        final PackedTransaction<PrngReceipt, PrngTransaction> innerA = new PrngTransaction(null).signForBatch(first, defaultAuthority());
-        final PackedTransaction<PrngReceipt, PrngTransaction> innerB = new PrngTransaction(10).signForBatch(second, defaultAuthority());
+        final Account second = new Account(AccountId.fromString("0.0.1002"), first.signer());
+        final PackedTransaction<PrngReceipt, PrngTransaction> innerA = new PrngTransaction(null).signForBatch(first, defaultAuthority()).toCompletableFuture().join();
+        final PackedTransaction<PrngReceipt, PrngTransaction> innerB = new PrngTransaction(10).signForBatch(second, defaultAuthority()).toCompletableFuture().join();
 
         // when
         final BatchTransaction batch = new BatchTransaction(List.of(innerA, innerB));
@@ -95,8 +95,8 @@ class TransactionsBatchSpecTest {
     void aSignedBatchSurvivesToBytesAndFromBytes() {
         // given
         final Account payer = defaultAccount();
-        final PackedTransaction<PrngReceipt, PrngTransaction> inner = new PrngTransaction(null).signForBatch(payer, defaultAuthority());
-        final PackedTransaction<BatchReceipt, BatchTransaction> packed = new BatchTransaction(List.of(inner)).sign(payer, List.of(AccountId.fromString("0.0.3")));
+        final PackedTransaction<PrngReceipt, PrngTransaction> inner = new PrngTransaction(null).signForBatch(payer, defaultAuthority()).toCompletableFuture().join();
+        final PackedTransaction<BatchReceipt, BatchTransaction> packed = new BatchTransaction(List.of(inner)).sign(payer, List.of(AccountId.fromString("0.0.3"))).toCompletableFuture().join();
 
         // when
         final PackedTransaction<?, ?> restored = PackedTransaction.fromBytes(packed.toBytes());
@@ -119,7 +119,7 @@ class TransactionsBatchSpecTest {
     void theBodyOfABatchContainsTheBytesOfItsInnerTransactions() {
         // given
         final Account payer = defaultAccount();
-        final PackedTransaction<PrngReceipt, PrngTransaction> inner = new PrngTransaction(10).signForBatch(payer, defaultAuthority());
+        final PackedTransaction<PrngReceipt, PrngTransaction> inner = new PrngTransaction(10).signForBatch(payer, defaultAuthority()).toCompletableFuture().join();
 
         // when
         final PackedTransaction<BatchReceipt, BatchTransaction> packed = new BatchTransaction(List.of(inner)).pack(payer, List.of(AccountId.fromString("0.0.3")));
@@ -174,32 +174,32 @@ class TransactionsBatchSpecTest {
         final PackedTransaction<PrngReceipt, PrngTransaction> packed = new PrngTransaction(null).packForBatch(payer, defaultAuthority());
 
         // when
-        final PackedTransaction<PrngReceipt, PrngTransaction> signed = packed.sign(payer);
+        final PackedTransaction<PrngReceipt, PrngTransaction> signed = packed.sign(payer.signer()).toCompletableFuture().join();
 
         // then
         assertEquals(1L, length(signed.nodeSignatures()));
-        assertEquals(payer.privateKey().createPublicKey(), get(signed.nodeSignatures(), 0L).publicKey());
+        assertEquals(payer.signer().publicKey(), get(signed.nodeSignatures(), 0L).publicKey());
         assertTrue(get(signed.nodeSignatures(), 0L).publicKey().verify(get(signed.signableBodies(), 0L).bytes(), get(signed.nodeSignatures(), 0L).signature()));
         assertEquals(packed.signableBodies(), signed.signableBodies());
     }
 
-    /// `consensusnode.transactions.batch/an-inner-transaction-is-signed-for-a-batch-by-a-signer-or-by-the-operator`
+    /// `consensusnode.transactions.batch/an-inner-transaction-is-signed-for-a-batch-by-an-account-or-by-the-operator`
     ///
-    /// Source: this spec (signForBatch with a payer id and a TransactionSigner: the payer is the given account, the
-    /// signature the signer's; signForBatchWithOperator: the client's operator pays and signs). The secp256k1 key is the
-    /// one of the tests of keys.md.
+    /// Source: this spec (signForBatch with an Account: the payer is its account, the signature its signer's;
+    /// signForBatchWithOperator: the client's operator pays and signs). The secp256k1 key is the one of the tests of
+    /// keys.md.
     @Test
-    @DisplayName("an inner transaction is signed for a batch by a signer or by the operator")
-    @Tag("testId:consensusnode.transactions.batch/an-inner-transaction-is-signed-for-a-batch-by-a-signer-or-by-the-operator")
-    void anInnerTransactionIsSignedForABatchByASignerOrByTheOperator() {
+    @DisplayName("an inner transaction is signed for a batch by an account or by the operator")
+    @Tag("testId:consensusnode.transactions.batch/an-inner-transaction-is-signed-for-a-batch-by-an-account-or-by-the-operator")
+    void anInnerTransactionIsSignedForABatchByAnAccountOrByTheOperator() {
         // given
         final PrivateKey signerKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
         final AccountId signerPayer = AccountId.fromString("0.0.1002");
-        final TransactionSigner signer = ClientFactory.createClient(defaultNetworkSetting(), new Account(signerPayer, signerKey)).transactionSigner();
+        final Account payer = new Account(signerPayer, TransactionSigner.of(signerKey));
         final HieroClient<?> client = defaultHieroClient();
 
         // when
-        final PackedTransaction<PrngReceipt, PrngTransaction> bySigner = new PrngTransaction(null).signForBatch(signerPayer, signer, defaultAuthority()).toCompletableFuture().join();
+        final PackedTransaction<PrngReceipt, PrngTransaction> bySigner = new PrngTransaction(null).signForBatch(payer, defaultAuthority()).toCompletableFuture().join();
         final PackedTransaction<PrngReceipt, PrngTransaction> byOperator = new PrngTransaction(null).signForBatchWithOperator(client, defaultAuthority()).toCompletableFuture().join();
 
         // then
@@ -209,11 +209,11 @@ class TransactionsBatchSpecTest {
         assertTrue(get(bySigner.nodeSignatures(), 0L).publicKey().verify(get(bySigner.signableBodies(), 0L).bytes(), get(bySigner.nodeSignatures(), 0L).signature()));
         assertEquals(client.operatorAccount().accountId(), byOperator.transactionId().accountId());
         assertEquals(AccountId.fromString("0.0.0"), get(byOperator.signableBodies(), 0L).node());
-        assertEquals(client.operatorAccount().privateKey().createPublicKey(), get(byOperator.nodeSignatures(), 0L).publicKey());
+        assertEquals(client.operatorAccount().signer().publicKey(), get(byOperator.nodeSignatures(), 0L).publicKey());
     }
 
     private static Account defaultAccount() {
-        return new Account(defaultAccountId(), defaultPrivateKey());
+        return Account.of(defaultAccountId(), defaultPrivateKey());
     }
 
     private static AccountId defaultAccountId() {
@@ -230,6 +230,10 @@ class TransactionsBatchSpecTest {
 
     private static PublicKey defaultPublicKey() {
         return defaultPrivateKey().createPublicKey();
+    }
+
+    private static HieroClient<?> defaultHieroClient() {
+        return ClientFactory.createClient(defaultNetworkSetting(), defaultAccount());
     }
 
     private static NetworkSetting defaultNetworkSetting() {
@@ -250,9 +254,5 @@ class TransactionsBatchSpecTest {
 
     private static MirrorNode defaultMirrorNode() {
         return new MirrorNode("http://127.0.0.1:38081");
-    }
-
-    private static HieroClient<?> defaultHieroClient() {
-        return ClientFactory.createClient(defaultNetworkSetting(), defaultAccount());
     }
 }

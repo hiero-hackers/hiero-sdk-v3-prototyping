@@ -7,7 +7,6 @@ import java.util.concurrent.CompletionStage;
 import org.hiero.authority.Authority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.HieroClient;
-import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.ledger.AccountId;
 import org.hiero.nativeToken.NativeToken;
 import org.jspecify.annotations.Nullable;
@@ -80,9 +79,8 @@ public abstract class Transaction<ReceiptT extends Receipt, Self extends Transac
 
     public abstract CompletionStage<PackedTransaction<ReceiptT, Self>> signWithOperator(final HieroClient<?> client);
 
-    public abstract PackedTransaction<ReceiptT, Self> sign(final Account payer, final List<AccountId> nodes);
-
-    public abstract CompletionStage<PackedTransaction<ReceiptT, Self>> sign(final AccountId payerId, final TransactionSigner signer, final List<AccountId> nodes);
+    /// Packs this transaction with the given Account as payer and adds the signatures of its signer.
+    public abstract CompletionStage<PackedTransaction<ReceiptT, Self>> sign(final Account payer, final List<AccountId> nodes);
 
     public abstract CompletionStage<Response<ReceiptT>> signWithOperatorAndSubmit(final HieroClient<?> client);
 
@@ -103,12 +101,7 @@ public abstract class Transaction<ReceiptT extends Receipt, Self extends Transac
     /// signature. The batch counterpart of signWithOperator(client).
     public abstract CompletionStage<PackedTransaction<ReceiptT, Self>> signForBatchWithOperator(final HieroClient<?> client, final Authority batchKey);
 
-    /// Packs this transaction for a batch with the given Account as payer and adds its signature. The
+    /// Packs this transaction for a batch with the given Account as payer and adds the signature of its signer. The
     /// batch counterpart of sign(payer, nodes).
-    public abstract PackedTransaction<ReceiptT, Self> signForBatch(final Account payer, final Authority batchKey);
-
-    /// Packs this transaction for a batch with payerId as payer and signs it with the given
-    /// TransactionSigner (HSM, hardware wallet, paymaster). The batch counterpart of
-    /// sign(payerId, signer, nodes).
-    public abstract CompletionStage<PackedTransaction<ReceiptT, Self>> signForBatch(final AccountId payerId, final TransactionSigner signer, final Authority batchKey);
+    public abstract CompletionStage<PackedTransaction<ReceiptT, Self>> signForBatch(final Account payer, final Authority batchKey);
 }

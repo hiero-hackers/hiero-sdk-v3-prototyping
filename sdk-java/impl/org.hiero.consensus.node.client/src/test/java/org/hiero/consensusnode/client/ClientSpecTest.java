@@ -44,7 +44,7 @@ class ClientSpecTest {
         // then
         assertEquals(operator, client.operatorAccount());
         assertEquals(operator.accountId(), client.operatorAccount().accountId());
-        assertEquals(operator.privateKey(), client.operatorAccount().privateKey());
+        assertEquals(operator.signer(), client.operatorAccount().signer());
     }
 
     /// `consensusnode.client/a-client-is-bound-to-the-network-of-its-network-setting`
@@ -65,61 +65,85 @@ class ClientSpecTest {
         assertEquals(setting.network(), client.network());
     }
 
-    /// `consensusnode.client/the-default-signer-signs-with-the-private-key-of-the-operator-account`
+    /// `consensusnode.client/the-operator-account-signs-with-its-private-key`
     ///
-    /// Source: this spec (by default the operator account's private key signs); the Java and JavaScript SDKs
+    /// Source: this spec (`Account.of` signs with the given private key); the Java and JavaScript SDKs
     /// (Client.setOperator signs with the operator's private key) and the Go SDK (the operator's key signs).
     @Test
-    @DisplayName("the default signer signs with the private key of the operator account")
-    @Tag("testId:consensusnode.client/the-default-signer-signs-with-the-private-key-of-the-operator-account")
+    @DisplayName("the operator account signs with its private key")
+    @Tag("testId:consensusnode.client/the-operator-account-signs-with-its-private-key")
     @Tag("rule:consensusnode.client/signer-identity")
     @Tag("rule:consensusnode.client/signer-signature-encoding")
-    void theDefaultSignerSignsWithThePrivateKeyOfTheOperatorAccount() {
+    @Tag("rule:consensusnode.client/private-key-signer")
+    void theOperatorAccountSignsWithItsPrivateKey() {
         // given
-        final Account operator = defaultAccount();
-        final HieroClient<?> client = ClientFactory.createClient(defaultNetworkSetting(), operator);
+        final HieroClient<?> client = ClientFactory.createClient(defaultNetworkSetting(), defaultAccount());
         final AccountId node = AccountId.fromString("0.0.3");
         final byte[] transactionBytes = utf8("transaction body");
 
         // when
-        final NodeSignature signature = client.transactionSigner().signTransaction(new NodeBody(node, transactionBytes)).toCompletableFuture().join();
+        final NodeSignature signature = client.operatorAccount().signer().signTransaction(new NodeBody(node, transactionBytes)).toCompletableFuture().join();
 
         // then
         assertEquals(node, signature.node());
-        assertEquals(operator.privateKey().createPublicKey(), signature.publicKey());
-        assertEquals(client.transactionSigner().publicKey(), signature.publicKey());
+        assertEquals(defaultPrivateKey().createPublicKey(), signature.publicKey());
+        assertEquals(client.operatorAccount().signer().publicKey(), signature.publicKey());
         assertEquals(64L, length(signature.signature()));
         assertTrue(signature.publicKey().verify(transactionBytes, signature.signature()));
         assertFalse(signature.publicKey().verify(utf8("another body"), signature.signature()));
     }
 
-    /// `consensusnode.client/a-client-created-with-a-signer-signs-with-that-signer`
+    /// `consensusnode.client/an-account-created-with-a-signer-signs-with-that-signer`
     ///
     /// Source: the Java and JavaScript SDKs (Client.setOperatorWith: an operator whose transactions are signed by a
-    /// given signer instead of its private key). The second key is the secp256k1 key of the tests of keys.md.
+    /// given signer instead of its private key). The key is the secp256k1 key of the tests of keys.md.
     @Test
-    @DisplayName("a client created with a signer signs with that signer")
-    @Tag("testId:consensusnode.client/a-client-created-with-a-signer-signs-with-that-signer")
+    @DisplayName("an account created with a signer signs with that signer")
+    @Tag("testId:consensusnode.client/an-account-created-with-a-signer-signs-with-that-signer")
     @Tag("rule:consensusnode.client/signer-identity")
     @Tag("rule:consensusnode.client/signer-digest")
     @Tag("rule:consensusnode.client/signer-signature-encoding")
-    void aClientCreatedWithASignerSignsWithThatSigner() {
+    @Tag("rule:consensusnode.client/private-key-signer")
+    void anAccountCreatedWithASignerSignsWithThatSigner() {
         // given
         final PrivateKey signerKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
-        final Account signerAccount = new Account(AccountId.fromString("0.0.1002"), signerKey);
-        final TransactionSigner signer = ClientFactory.createClient(defaultNetworkSetting(), signerAccount).transactionSigner();
+        final TransactionSigner signer = TransactionSigner.of(signerKey);
         final byte[] transactionBytes = utf8("transaction body");
 
         // when
-        final HieroClient<?> client = ClientFactory.createClient(defaultNetworkSetting(), defaultAccount(), signer);
-        final NodeSignature signature = client.transactionSigner().signTransaction(new NodeBody(AccountId.fromString("0.0.3"), transactionBytes)).toCompletableFuture().join();
+        final Account operator = new Account(AccountId.fromString("0.0.1002"), signer);
+        final HieroClient<?> client = ClientFactory.createClient(defaultNetworkSetting(), operator);
+        final NodeSignature signature = client.operatorAccount().signer().signTransaction(new NodeBody(AccountId.fromString("0.0.3"), transactionBytes)).toCompletableFuture().join();
 
         // then
-        assertEquals(defaultAccount(), client.operatorAccount());
-        assertEquals(signerKey.createPublicKey(), signature.publicKey());
+        assertEquals(signer, client.operatorAccount().signer());
         assertEquals(signerKey.createPublicKey(), signer.publicKey());
+        assertEquals(signerKey.createPublicKey(), signature.publicKey());
         assertEquals(64L, length(signature.signature()));
         assertTrue(signature.publicKey().verify(transactionBytes, signature.signature()));
+    }
+
+    /// `consensusnode.client/accounts-are-equal-if-their-id-and-their-signer-are-equal`
+    ///
+    /// Source: this spec (`rule:private-key-signer`: two signers of equal private keys are equal; the signer is part of
+    /// the equality of an `Account`, so that the holders of a threshold authority stay different accounts).
+    @Test
+    @DisplayName("accounts are equal if their id and their signer are equal")
+    @Tag("testId:consensusnode.client/accounts-are-equal-if-their-id-and-their-signer-are-equal")
+    @Tag("rule:consensusnode.client/private-key-signer")
+    void accountsAreEqualIfTheirIdAndTheirSignerAreEqual() {
+        // given
+        final PrivateKey otherKey = KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
+
+        // when
+        final Account first = Account.of(defaultAccountId(), defaultPrivateKey());
+        final Account again = Account.of(defaultAccountId(), defaultPrivateKey());
+        final Account otherHolder = Account.of(defaultAccountId(), otherKey);
+
+        // then
+        assertEquals(TransactionSigner.of(defaultPrivateKey()), TransactionSigner.of(defaultPrivateKey()));
+        assertEquals(first, again);
+        assertNotEquals(first, otherHolder);
     }
 
     /// `consensusnode.client/the-default-retry-policy-decides-by-the-outcome-of-the-last-attempt`
@@ -301,7 +325,7 @@ class ClientSpecTest {
     }
 
     private static Account defaultAccount() {
-        return new Account(defaultAccountId(), defaultPrivateKey());
+        return Account.of(defaultAccountId(), defaultPrivateKey());
     }
 
     private static AccountId defaultAccountId() {

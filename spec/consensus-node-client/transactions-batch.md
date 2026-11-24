@@ -33,9 +33,8 @@ the regular signing methods without a `nodes` parameter:
 
 - `packForBatch(payer, batchKey)` — pack only, no signature;
 - `signForBatchWithOperator(client, batchKey)` — the client's operator pays and signs;
-- `signForBatch(payer, batchKey)` — one `Account` pays and signs;
-- `signForBatch(payerId, signer, batchKey)` — the payer identity is decoupled from a
-  `TransactionSigner` (HSM, hardware wallet, paymaster).
+- `signForBatch(payer, batchKey)` — one `Account` pays and signs, with a key in memory or with a
+  `TransactionSigner` (HSM, hardware wallet).
 
 Each method produces a **single** `TransactionBody` addressed to no consensus node
 (`nodeAccountID = 0.0.0`), because an inner batch transaction is never submitted to a node on its
@@ -178,8 +177,8 @@ response.queryReceipt(client);           // batch status; both transfers ran, or
 
 > `signForBatch(payer, batchKey)` mirrors the non-batch `sign(payer, nodes)` tier (without `nodes`).
 > The full set on `Transaction` is `packForBatch(payer, batchKey)`, `signForBatchWithOperator(client,
-> batchKey)`, `signForBatch(payer, batchKey)`, and the most general `signForBatch(payerId, signer,
-> batchKey)`; any additional signatures use the inherited `PackedTransaction.sign(...)` flow.
+> batchKey)` and `signForBatch(payer, batchKey)`; any additional signatures use the inherited
+> `PackedTransaction.sign(...)` flow.
 
 ### 2. Single operator batches several of its own transactions
 
@@ -253,7 +252,7 @@ test "a batch keeps its inner transactions in their order, each with its own pay
     // given
     let first = DEFAULT(consensusnode.client.Account)
     let second = consensusnode.client.Account{accountId: ledger.AccountId.fromString(value: "0.0.1002"),
-            privateKey: first.privateKey}
+            signer: first.signer}
     let innerA = consensusnode.transactions.utility.PrngTransaction{}
             .signForBatch(payer: first, batchKey: DEFAULT(authority.Authority))
     let innerB = consensusnode.transactions.utility.PrngTransaction{range: 10}
@@ -347,33 +346,32 @@ test "an inner transaction packed for a batch is signed later by its payer" {
             .packForBatch(payer: payer, batchKey: DEFAULT(authority.Authority))
 
     // when
-    let signed = packed.sign(account: payer)
+    let signed = packed.sign(signer: payer.signer)
 
     // then
     assertEquals(expected: 1, actual: length(value: signed.nodeSignatures))
-    assertEquals(expected: payer.privateKey.createPublicKey(), actual: signed.nodeSignatures[0].publicKey)
+    assertEquals(expected: payer.signer.publicKey, actual: signed.nodeSignatures[0].publicKey)
     assertTrue(condition: signed.nodeSignatures[0].publicKey.verify(message: signed.signableBodies()[0].bytes,
             signature: signed.nodeSignatures[0].signature))
     assertEquals(expected: packed.signableBodies(), actual: signed.signableBodies())
 }
 
-// Source: this spec (signForBatch with a payer id and a TransactionSigner: the payer is the given account, the
-// signature the signer's; signForBatchWithOperator: the client's operator pays and signs). The secp256k1 key is the
-// one of the tests of keys.md.
-@@testId("an-inner-transaction-is-signed-for-a-batch-by-a-signer-or-by-the-operator")
-test "an inner transaction is signed for a batch by a signer or by the operator" {
+// Source: this spec (signForBatch with an Account: the payer is its account, the signature its signer's;
+// signForBatchWithOperator: the client's operator pays and signs). The secp256k1 key is the one of the tests of
+// keys.md.
+@@testId("an-inner-transaction-is-signed-for-a-batch-by-an-account-or-by-the-operator")
+test "an inner transaction is signed for a batch by an account or by the operator" {
     // given
     let signerKey = keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
             value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
     let signerPayer = ledger.AccountId.fromString(value: "0.0.1002")
-    let signer = consensusnode.client.createClient(networkSettings: DEFAULT,
-            operatorAccount: consensusnode.client.Account{accountId: signerPayer, privateKey: signerKey})
-            .transactionSigner
+    let payer = consensusnode.client.Account{accountId: signerPayer,
+            signer: consensusnode.client.TransactionSigner.of(privateKey: signerKey)}
     let client = DEFAULT(consensusnode.client.HieroClient<ANY>)
 
     // when
     let bySigner = consensusnode.transactions.utility.PrngTransaction{}
-            .signForBatch(payerId: signerPayer, signer: signer, batchKey: DEFAULT(authority.Authority))
+            .signForBatch(payer: payer, batchKey: DEFAULT(authority.Authority))
     let byOperator = consensusnode.transactions.utility.PrngTransaction{}
             .signForBatchWithOperator(client: client, batchKey: DEFAULT(authority.Authority))
 
@@ -385,8 +383,7 @@ test "an inner transaction is signed for a batch by a signer or by the operator"
             signature: bySigner.nodeSignatures[0].signature))
     assertEquals(expected: client.operatorAccount.accountId, actual: byOperator.transactionId.accountId)
     assertEquals(expected: ledger.AccountId.fromString(value: "0.0.0"), actual: byOperator.signableBodies()[0].node)
-    assertEquals(expected: client.operatorAccount.privateKey.createPublicKey(),
-            actual: byOperator.nodeSignatures[0].publicKey)
+    assertEquals(expected: client.operatorAccount.signer.publicKey, actual: byOperator.nodeSignatures[0].publicKey)
 }
 ```
 

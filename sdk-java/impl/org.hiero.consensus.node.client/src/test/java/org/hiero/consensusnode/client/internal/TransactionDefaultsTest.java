@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 @DisplayName("Transaction defaults")
 class TransactionDefaultsTest {
 
-    private static final Account PAYER = new Account(new AccountId(0L, 0L, "", 1001L, null, null),
+    private static final Account PAYER = Account.of(new AccountId(0L, 0L, "", 1001L, null, null),
             KeysFactory.createPrivateKey(KeyAlgorithm.ED25519, ByteImportEncoding.HEX,
                     "d3671a1e98bb22f011c0e4bcf5125590e15d8f21a7017309bb558852039bc75c"));
     private static final AccountId NODE = new AccountId(0L, 0L, "", 3L, null, null);

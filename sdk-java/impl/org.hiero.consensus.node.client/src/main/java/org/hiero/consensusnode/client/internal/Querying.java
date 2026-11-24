@@ -167,7 +167,7 @@ public final class Querying {
                 .build();
         final byte[] bytes = body.toByteArray();
         // the payment is made within an attempt, which runs on the executor of the client and may block there
-        final NodeSignature signature = client.transactionSigner().signTransaction(new NodeBody(node, bytes))
+        final NodeSignature signature = client.operatorAccount().signer().signTransaction(new NodeBody(node, bytes))
                 .toCompletableFuture().join();
         final SignedTransaction signed = SignedTransaction.newBuilder().setBodyBytes(ByteString.copyFrom(bytes))
                 .setSigMap(SignatureMap.newBuilder().addSigPair(Protobuf.toSignaturePair(signature.publicKey(),

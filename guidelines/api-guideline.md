@@ -957,7 +957,7 @@ A constant may be annotated with `@@deprecated` and with `@@hip("869")`.
 ### Default instances
 
 Tests need instances of the API's types. How to obtain one is often not obvious from the API schema alone: a
-`TransactionSigner` is an abstraction without implementation in the SDK, but every `HieroClient` provides one; a
+`TransactionSigner` is an abstraction, but `TransactionSigner.of(privateKey)` creates one for a key in memory; a
 `PrivateKey` can be created from many formats, but tests must use a key whose bytes are known. The optional
 `## Default Instances for Testing` section of a spec (directly after `## API Schema`) records the **standard way to
 obtain an instance through the API** for the types the spec declares. The instances exist for testing: the generated
@@ -978,8 +978,8 @@ instance PublicKey = DEFAULT(PrivateKey).createPublicKey()
 // A client for the default network with the default operator account.
 instance HieroClient<ANY> = createClient(networkSettings: DEFAULT, operatorAccount: DEFAULT)
 
-// The signer of a client.
-instance TransactionSigner = DEFAULT(HieroClient<ANY>).transactionSigner
+// The signer of the default private key.
+instance TransactionSigner = TransactionSigner.of(privateKey: DEFAULT)
 
 // A consensus node of the testnet.
 instance ConsensusNode = ConsensusNode{ip: IpAddress{bytes: [34, 94, 106, 61]}, port: 50211, account: DEFAULT}

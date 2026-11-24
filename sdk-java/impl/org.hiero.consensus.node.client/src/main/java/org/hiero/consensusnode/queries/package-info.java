@@ -18,7 +18,7 @@
 /// sends the actual query together with the payment. If `maxQueryPayment` is set and the quoted price is higher, the
 /// call fails before anything is paid.
 ///
-/// The payment is a transfer transaction of the operator account, signed by the client's `TransactionSigner`:
+/// The payment is a transfer transaction of the operator account, signed by the signer of the operator account:
 ///
 /// - `rule:query-payment` The payment of a query is a transfer of its cost from the operator account to the node that
 ///   answers the query, with a maximum transaction fee of 100,000,000 base units of the native token of the network

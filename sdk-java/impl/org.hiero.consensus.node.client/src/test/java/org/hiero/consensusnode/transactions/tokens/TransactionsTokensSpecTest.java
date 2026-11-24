@@ -458,7 +458,7 @@ class TransactionsTokensSpecTest {
         final List<AccountId> nodes = List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"));
         final Address token = Address.fromString("4.2.0");
         final AccountId account = AccountId.fromString("0.6.9");
-        final List<PackedTransaction<?, ?>> transactions = List.of(new TokenCreateTransaction("test name", "test symbol", TokenType.FUNGIBLE_COMMON, 3, 30L, account, TokenSupplyType.INFINITE, null, false, null, new byte[0], SDK_TEST_EXPIRATION_TIME(), null, null, defaultAuthority(), null, null, null, null, null, null, null).sign(payer, nodes), new TokenUpdateTransaction(token, "test name", null, null, null, null, SDK_TEST_EXPIRATION_TIME(), toSeconds(36000L), null, null, null, null, null, null, null, null, null).sign(payer, nodes), new TokenDeleteTransaction(token).sign(payer, nodes), new TokenAssociateTransaction(account, Set.of(token)).sign(payer, nodes), new TokenDissociateTransaction(account, Set.of(token)).sign(payer, nodes), new TokenMintFungibleTransaction(token, 10L).sign(payer, nodes), new TokenMintNftTransaction(token, List.of(new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5})).sign(payer, nodes), new TokenBurnFungibleTransaction(token, 69L).sign(payer, nodes), new TokenBurnNftTransaction(token, List.of(420L)).sign(payer, nodes));
+        final List<PackedTransaction<?, ?>> transactions = List.of(new TokenCreateTransaction("test name", "test symbol", TokenType.FUNGIBLE_COMMON, 3, 30L, account, TokenSupplyType.INFINITE, null, false, null, new byte[0], SDK_TEST_EXPIRATION_TIME(), null, null, defaultAuthority(), null, null, null, null, null, null, null).sign(payer, nodes).toCompletableFuture().join(), new TokenUpdateTransaction(token, "test name", null, null, null, null, SDK_TEST_EXPIRATION_TIME(), toSeconds(36000L), null, null, null, null, null, null, null, null, null).sign(payer, nodes).toCompletableFuture().join(), new TokenDeleteTransaction(token).sign(payer, nodes).toCompletableFuture().join(), new TokenAssociateTransaction(account, Set.of(token)).sign(payer, nodes).toCompletableFuture().join(), new TokenDissociateTransaction(account, Set.of(token)).sign(payer, nodes).toCompletableFuture().join(), new TokenMintFungibleTransaction(token, 10L).sign(payer, nodes).toCompletableFuture().join(), new TokenMintNftTransaction(token, List.of(new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5})).sign(payer, nodes).toCompletableFuture().join(), new TokenBurnFungibleTransaction(token, 69L).sign(payer, nodes).toCompletableFuture().join(), new TokenBurnNftTransaction(token, List.of(420L)).sign(payer, nodes).toCompletableFuture().join());
         for (final PackedTransaction<?, ?> transaction : transactions) {
             // when
             final PackedTransaction<?, ?> restored = PackedTransaction.fromBytes(transaction.toBytes());
@@ -507,7 +507,7 @@ class TransactionsTokensSpecTest {
     }
 
     private static Account defaultAccount() {
-        return new Account(defaultAccountId(), defaultPrivateKey());
+        return Account.of(defaultAccountId(), defaultPrivateKey());
     }
 
     private static AccountId defaultAccountId() {

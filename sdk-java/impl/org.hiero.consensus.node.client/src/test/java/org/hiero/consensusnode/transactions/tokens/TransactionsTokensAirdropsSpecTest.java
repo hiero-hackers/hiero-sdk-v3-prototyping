@@ -280,7 +280,7 @@ class TransactionsTokensAirdropsSpecTest {
         final AccountId sender = AccountId.fromString("0.0.5006");
         final AccountId receiver = AccountId.fromString("0.0.5008");
         final List<PendingAirdrop> pendingAirdrops = List.of(new PendingAirdrop(sender, receiver, token, null), new PendingAirdrop(sender, receiver, Address.fromString("0.0.3"), 2L));
-        final List<PackedTransaction<?, ?>> transactions = List.of(new TokenAirdropTransaction(List.of(new TokenTransfer(token, sender, -400L, null, false), new TokenTransfer(token, receiver, 400L, null, false)), List.of(new NftTransfer(Address.fromString("0.0.3"), 2L, sender, receiver, false))).sign(payer, nodes), new TokenClaimAirdropTransaction(pendingAirdrops).sign(payer, nodes), new TokenCancelAirdropTransaction(pendingAirdrops).sign(payer, nodes), new TokenRejectTransaction(sender, List.of(new TokenReference(token, null), new TokenReference(Address.fromString("0.0.3"), 2L))).sign(payer, nodes));
+        final List<PackedTransaction<?, ?>> transactions = List.of(new TokenAirdropTransaction(List.of(new TokenTransfer(token, sender, -400L, null, false), new TokenTransfer(token, receiver, 400L, null, false)), List.of(new NftTransfer(Address.fromString("0.0.3"), 2L, sender, receiver, false))).sign(payer, nodes).toCompletableFuture().join(), new TokenClaimAirdropTransaction(pendingAirdrops).sign(payer, nodes).toCompletableFuture().join(), new TokenCancelAirdropTransaction(pendingAirdrops).sign(payer, nodes).toCompletableFuture().join(), new TokenRejectTransaction(sender, List.of(new TokenReference(token, null), new TokenReference(Address.fromString("0.0.3"), 2L))).sign(payer, nodes).toCompletableFuture().join());
         for (final PackedTransaction<?, ?> transaction : transactions) {
             // when
             final PackedTransaction<?, ?> restored = PackedTransaction.fromBytes(transaction.toBytes());
@@ -294,7 +294,7 @@ class TransactionsTokensAirdropsSpecTest {
     }
 
     private static Account defaultAccount() {
-        return new Account(defaultAccountId(), defaultPrivateKey());
+        return Account.of(defaultAccountId(), defaultPrivateKey());
     }
 
     private static AccountId defaultAccountId() {

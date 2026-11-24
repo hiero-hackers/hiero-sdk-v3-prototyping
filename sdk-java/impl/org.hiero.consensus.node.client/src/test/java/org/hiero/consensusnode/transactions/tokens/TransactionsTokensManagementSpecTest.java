@@ -228,7 +228,7 @@ class TransactionsTokensManagementSpecTest {
         final List<AccountId> nodes = List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"));
         final Address token = Address.fromString("4.2.0");
         final AccountId account = AccountId.fromString("0.6.9");
-        final List<PackedTransaction<?, ?>> transactions = List.of(new TokenWipeFungibleTransaction(token, account, 4L).sign(payer, nodes), new TokenWipeNftTransaction(token, account, List.of(8L, 9L, 10L)).sign(payer, nodes), new TokenFreezeTransaction(token, account).sign(payer, nodes), new TokenUnfreezeTransaction(token, account).sign(payer, nodes), new TokenGrantKycTransaction(token, account).sign(payer, nodes), new TokenRevokeKycTransaction(token, account).sign(payer, nodes), new TokenPauseTransaction(token).sign(payer, nodes), new TokenUnpauseTransaction(token).sign(payer, nodes), new TokenUpdateNftsTransaction(token, List.of(8L, 9L, 10L), new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5}).sign(payer, nodes));
+        final List<PackedTransaction<?, ?>> transactions = List.of(new TokenWipeFungibleTransaction(token, account, 4L).sign(payer, nodes).toCompletableFuture().join(), new TokenWipeNftTransaction(token, account, List.of(8L, 9L, 10L)).sign(payer, nodes).toCompletableFuture().join(), new TokenFreezeTransaction(token, account).sign(payer, nodes).toCompletableFuture().join(), new TokenUnfreezeTransaction(token, account).sign(payer, nodes).toCompletableFuture().join(), new TokenGrantKycTransaction(token, account).sign(payer, nodes).toCompletableFuture().join(), new TokenRevokeKycTransaction(token, account).sign(payer, nodes).toCompletableFuture().join(), new TokenPauseTransaction(token).sign(payer, nodes).toCompletableFuture().join(), new TokenUnpauseTransaction(token).sign(payer, nodes).toCompletableFuture().join(), new TokenUpdateNftsTransaction(token, List.of(8L, 9L, 10L), new byte[] {(byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5}).sign(payer, nodes).toCompletableFuture().join());
         for (final PackedTransaction<?, ?> transaction : transactions) {
             // when
             final PackedTransaction<?, ?> restored = PackedTransaction.fromBytes(transaction.toBytes());
@@ -242,7 +242,7 @@ class TransactionsTokensManagementSpecTest {
     }
 
     private static Account defaultAccount() {
-        return new Account(defaultAccountId(), defaultPrivateKey());
+        return Account.of(defaultAccountId(), defaultPrivateKey());
     }
 
     private static AccountId defaultAccountId() {

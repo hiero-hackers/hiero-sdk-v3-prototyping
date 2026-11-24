@@ -18,7 +18,6 @@ import org.hiero.authority.AuthorityFactory;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.ClientFactory;
 import org.hiero.consensusnode.client.HieroClient;
-import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.consensusnode.queries.Query;
 import org.hiero.consensusnode.queries.QueryResponse;
 import org.hiero.consensusnode.transactions.Receipt;
@@ -69,18 +68,14 @@ public final class DefaultSession implements Session {
 
     private volatile @Nullable MirrorNodeClient mirrorNodeClient;
 
-    /// Creates a session that signs with the given signer.
+    /// Creates a session that pays for and signs every transaction with the operator account.
     ///
-    /// @param networkSetting    the network
-    /// @param operatorAccount   the account that pays for the transactions
-    /// @param transactionSigner the signer of the transactions, or `null` to sign with the operator's private key
-    public DefaultSession(final NetworkSetting networkSetting, final Account operatorAccount,
-            final @Nullable TransactionSigner transactionSigner) {
+    /// @param networkSetting  the network
+    /// @param operatorAccount the account that pays for and signs the transactions
+    public DefaultSession(final NetworkSetting networkSetting, final Account operatorAccount) {
         this.networkSetting = Objects.requireNonNull(networkSetting, "networkSettings must not be null");
         this.operatorAccount = Objects.requireNonNull(operatorAccount, "operatorAccount must not be null");
-        this.client = transactionSigner == null
-                ? ClientFactory.createClient(networkSetting, operatorAccount)
-                : ClientFactory.createClient(networkSetting, operatorAccount, transactionSigner);
+        this.client = ClientFactory.createClient(networkSetting, operatorAccount);
     }
 
     /// Returns the session behind the given one.
@@ -118,11 +113,11 @@ public final class DefaultSession implements Session {
         return operatorAccount.accountId();
     }
 
-    /// The authority of the operator account: its public key.
+    /// The authority of the operator account: the public key of its signer.
     ///
     /// @return the authority
     public Authority operatorAuthority() {
-        return AuthorityFactory.of(operatorAccount.privateKey().createPublicKey());
+        return AuthorityFactory.of(operatorAccount.signer().publicKey());
     }
 
     /// The latest consensus timestamp the Mirror Node is known to reflect for this session.

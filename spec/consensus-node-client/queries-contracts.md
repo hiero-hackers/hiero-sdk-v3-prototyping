@@ -329,7 +329,7 @@ test "a contract info rejects being staked to an account and to a node" {
   [`transactions-contracts.md`](transactions-contracts.md).
 - **`senderId` needs the signature of the sender.** HAPI requires that the payment of the query (or foreign
   transaction data) is signed by `senderId` if it differs from the payer. A `PaidQuery` is always paid by the operator
-  and signed by the client's `TransactionSigner`, so a call as another account fails today unless the operator is that
+  and signed by the signer of the client's operator account, so a call as another account fails today unless the operator is that
   account. Should the query take an additional signer (similar to the deferred configurable payer of ADR-0002), or
   should `senderId` be dropped until there is a use case?
 - **Is the local call a query of the consensus node at all?** The HAPI documentation recommends the mirror node for

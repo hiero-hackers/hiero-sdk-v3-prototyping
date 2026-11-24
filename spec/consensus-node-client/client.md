@@ -136,8 +136,10 @@ deterministic: the same answers of the network lead to the same decisions and th
     SDK registers the one of `BasicTransactionStatus` itself), `submit(client)` fails with `unknown-status-error`; there
     is no further attempt.
 
-By default, transactions are signed with the operator's private key. If the key lives elsewhere (for example in an
-HSM or a remote signing service), pass your own `TransactionSigner` when creating the client.
+An `Account` is an account id together with the `TransactionSigner` that signs for it. For a key held in memory,
+create it with `Account.of(accountId, privateKey)`. If the key lives elsewhere (for example in an HSM, a cloud KMS or
+a remote signing service), create the `Account` with your own `TransactionSigner`; the operator account, a payer and
+every further signer are then handled the same way.
 
 ### External signing
 
@@ -159,6 +161,11 @@ Every `TransactionSigner` follows this contract:
 - `rule:signer-identity` `NodeSignature.node` is `body.node`, and `NodeSignature.publicKey` is the signer's
   `publicKey`.
 - `rule:signer-concurrency` The SDK may call `signTransaction` concurrently for the bodies of different target nodes.
+
+The signer for a key held in memory, `TransactionSigner.of(privateKey)`, follows the same contract:
+
+- `rule:private-key-signer` Its `publicKey` is `privateKey.createPublicKey()`, and it signs with
+  `privateKey.sign(body.bytes)`. Two signers created from equal private keys are equal.
 
 ## Design Notes
 
@@ -189,6 +196,13 @@ Every `TransactionSigner` follows this contract:
 - **No overall timeout setting.** The default policy is bounded by the number of attempts and the attempt timeout, so
   its longest duration follows from the two values a caller sets. A policy that needs a total time can give up based
   on `RetryContext.elapsed`.
+- **An account signs through a `TransactionSigner`.** `Account` holds a signer, not a `PrivateKey`, so that a key in a
+  KMS or an HSM is used exactly like a key in memory and there is only one signing path
+  ([ADR-0018](../../docs/adr/0018-account-signs-through-a-transaction-signer.md)). An `Account` is an account id
+  together with one way to sign for it, so its equality includes the signer: the holders of an account with a
+  threshold authority are different `Account`s with the same id. The signer of `TransactionSigner.of(privateKey)` is
+  no public type, because its public key is derived from the private key and a constructor taking both could receive
+  keys that do not match.
 - **Language-specific execution means.** The sentence in the documentation of `ExecutionSettings` invites a language
   to add its own means of running asynchronous work (in Java an `Executor`); the language guides describe it.
 
@@ -202,10 +216,15 @@ requires {PrivateKey, PublicKey} from keys
 requires {NativeTokenUnit} from nativeToken
 requires {TransactionStatus} from consensusnode.status
 
-// An account that signs and pays for requests, identified by its id and private key.
+// An account that pays for and signs requests: an account id together with the signer that signs for it. An account
+// whose authority needs several keys is signed for by several `Account`s with the same id and different signers.
 Account {
-    @@immutable accountId: AccountId // the account id of the operator
-    @@immutable privateKey: PrivateKey // the private key of the operator
+    @@immutable accountId: AccountId // the id of the account
+    @@immutable signer: TransactionSigner // signs for the account
+
+    // Creates an account that signs with the given private key held in memory; the same as
+    // `Account{accountId, TransactionSigner.of(privateKey)}`.
+    @@static Account of(accountId: AccountId, privateKey: PrivateKey)
 }
 
 // A serialized TransactionBody for one target consensus node: the exact bytes a signer must sign. The bytes differ
@@ -222,8 +241,9 @@ type NodeSignature {
       @@immutable signature: bytes      // the 64-byte signature over the transaction bytes (see "External signing")
 }
 
-// Signs transactions on behalf of the operator. Implement it to sign with a key that is not held in memory,
-// for example in a cloud KMS, an HSM or a remote signing service; see "External signing" for the contract.
+// Signs transactions for an account. Use `TransactionSigner.of(privateKey)` for a key held in memory, and implement it
+// to sign with a key that is not, for example in a cloud KMS, an HSM or a remote signing service; see "External
+// signing" for the contract.
 abstraction TransactionSigner {
 
   @@immutable publicKey: PublicKey // the public key that verifies every signature of this signer
@@ -232,6 +252,10 @@ abstraction TransactionSigner {
   // different nodes.
   @@threadSafe
   @@async NodeSignature signTransaction(body: NodeBody)
+
+  // Creates a signer for the given private key held in memory. Its public key is derived from the private key; two
+  // signers of equal private keys are equal.
+  @@static TransactionSigner of(privateKey: PrivateKey)
 }
 
 // Common base for anything that is sent to the consensus node network and produces a typed result — both
@@ -376,7 +400,6 @@ ExecutionSettings {
 HieroClient<$$Unit extends NativeTokenUnit> {
     @@immutable operatorAccount: Account // the account that pays for and signs requests
     @@immutable network: Network<$$Unit> // the network to connect to
-    @@immutable transactionSigner: TransactionSigner // signs transactions; by default the operator account's private key is used
     @@immutable executionSettings: ExecutionSettings // how requests are executed; by default `ExecutionSettings.createDefault()`
 
     // TO_BE_DEFINED_IN_FUTURE_VERSIONS
@@ -389,28 +412,24 @@ HieroClient<$$Unit extends NativeTokenUnit> {
 // code.
 @@throws(status-conflict-error, request-type-conflict-error)
 @@static HieroClient<ANY> createClient(networkSettings: NetworkSetting, operatorAccount: Account)
-// Creates a client for the given network that uses the operator account to pay for requests and the given
-// signer to sign transactions.
-@@throws(status-conflict-error, request-type-conflict-error)
-@@static HieroClient<ANY> createClient(networkSettings: NetworkSetting, operatorAccount: Account, transactionSigner: TransactionSigner)
-// Creates a client for the given network that uses the operator account to pay for requests, the given signer to
-// sign transactions and the given settings to execute requests.
+// Creates a client for the given network that uses the operator account to pay for and sign requests and the given
+// settings to execute requests.
 @@throws(status-conflict-error, request-type-conflict-error)
 @@static HieroClient<ANY> createClient(networkSettings: NetworkSetting, operatorAccount: Account,
-        transactionSigner: TransactionSigner, executionSettings: ExecutionSettings)
+        executionSettings: ExecutionSettings)
 ```
 
 ## Default Instances for Testing
 
 ```
-// The operator account: the default account id with the default private key.
-instance Account = Account{accountId: DEFAULT, privateKey: DEFAULT}
+// The operator account: the default account id, signed for with the default private key.
+instance Account = Account.of(accountId: DEFAULT, privateKey: DEFAULT)
 
 // A client for the default network with the default operator account.
 instance HieroClient<ANY> = createClient(networkSettings: DEFAULT, operatorAccount: DEFAULT)
 
-// The signer of a client: by default it signs with the private key of the operator account.
-instance TransactionSigner = DEFAULT(HieroClient<ANY>).transactionSigner
+// The signer of the default private key, which is also the signer of the default operator account.
+instance TransactionSigner = TransactionSigner.of(privateKey: DEFAULT)
 
 // The execution settings of the SDK.
 instance ExecutionSettings = ExecutionSettings.createDefault()
@@ -425,14 +444,14 @@ The following example shows how to create a `HieroClient` instance:
 ```
 AccountId accountId = ...;
 PrivateKey privateKey = ...;
-Account operatorAccount = new Account(accountId, privateKey);
+Account operatorAccount = Account.of(accountId, privateKey);
 
 NetworkSetting networkSettings = ...;
 
 HieroClient client = HieroClient.createClient(networkSettings, operatorAccount);
 ```
 
-The following example signs a transfer with a key held in a cloud KMS. For an ECDSA secp256k1 key, the
+The following example signs a transfer for an account whose key is held in a cloud KMS. For an ECDSA secp256k1 key, the
 `TransactionSigner` implementation computes `keccak256(body.bytes)` locally, has the KMS sign that digest, and
 converts the DER signature it gets back into the 64-byte low-`s` form (see _External signing_):
 
@@ -448,14 +467,14 @@ PackedTransaction<...> packed = new TransferTransaction()
         new HbarTransfer(treasury,  NativeToken.of(-10, HBAR_UNIT)),
         new HbarTransfer(recipient, NativeToken.of(+10, HBAR_UNIT)),
     ])
-    .sign(treasury, kmsSigner, nodes);       // asynchronous: two KMS calls, one per target node
+    .sign(new Account(treasury, kmsSigner), nodes);   // asynchronous: two KMS calls, one per target node
 
 packed.submit(client);
 ```
 
 ## Testing
 
-Offline tests of client creation and of the default signer, written as given / when / then. Nothing is sent to a
+Offline tests of client creation and of the signer of an account, written as given / when / then. Nothing is sent to a
 network; connecting, node selection and retries need a network and are tested by the Hiero TCK. The comment above
 each test names where the current SDKs test the same.
 
@@ -473,7 +492,7 @@ test "a client keeps the operator account it was created with" {
     // then
     assertEquals(expected: operator, actual: client.operatorAccount)
     assertEquals(expected: operator.accountId, actual: client.operatorAccount.accountId)
-    assertEquals(expected: operator.privateKey, actual: client.operatorAccount.privateKey)
+    assertEquals(expected: operator.signer, actual: client.operatorAccount.signer)
 }
 
 // Source: the Java SDK (ClientTest.forMainnet, forNameReturnsCorrectNetwork), the Go SDK (TestUnitClientFromConfig)
@@ -490,24 +509,24 @@ test "a client is bound to the network of its network setting" {
     assertEquals(expected: setting.network, actual: client.network)
 }
 
-// Source: this spec (by default the operator account's private key signs); the Java and JavaScript SDKs
+// Source: this spec (`Account.of` signs with the given private key); the Java and JavaScript SDKs
 // (Client.setOperator signs with the operator's private key) and the Go SDK (the operator's key signs).
-@@testId("the-default-signer-signs-with-the-private-key-of-the-operator-account")
-@@rule("signer-identity", "signer-signature-encoding")
-test "the default signer signs with the private key of the operator account" {
+@@testId("the-operator-account-signs-with-its-private-key")
+@@rule("signer-identity", "signer-signature-encoding", "private-key-signer")
+test "the operator account signs with its private key" {
     // given
-    let operator = DEFAULT(Account)
-    let client = createClient(networkSettings: DEFAULT, operatorAccount: operator)
+    let client = createClient(networkSettings: DEFAULT, operatorAccount: DEFAULT)
     let node = AccountId.fromString(value: "0.0.3")
     let transactionBytes = utf8(text: "transaction body")
 
     // when
-    let signature = client.transactionSigner.signTransaction(body: NodeBody{node: node, bytes: transactionBytes})
+    let signature = client.operatorAccount.signer.signTransaction(body: NodeBody{node: node,
+            bytes: transactionBytes})
 
     // then
     assertEquals(expected: node, actual: signature.node)
-    assertEquals(expected: operator.privateKey.createPublicKey(), actual: signature.publicKey)
-    assertEquals(expected: client.transactionSigner.publicKey, actual: signature.publicKey)
+    assertEquals(expected: DEFAULT(PrivateKey).createPublicKey(), actual: signature.publicKey)
+    assertEquals(expected: client.operatorAccount.signer.publicKey, actual: signature.publicKey)
     assertEquals(expected: 64, actual: length(value: signature.signature))
     assertTrue(condition: signature.publicKey.verify(message: transactionBytes, signature: signature.signature))
     assertFalse(condition: signature.publicKey.verify(message: utf8(text: "another body"),
@@ -515,28 +534,48 @@ test "the default signer signs with the private key of the operator account" {
 }
 
 // Source: the Java and JavaScript SDKs (Client.setOperatorWith: an operator whose transactions are signed by a
-// given signer instead of its private key). The second key is the secp256k1 key of the tests of keys.md.
-@@testId("a-client-created-with-a-signer-signs-with-that-signer")
-@@rule("signer-identity", "signer-digest", "signer-signature-encoding")
-test "a client created with a signer signs with that signer" {
+// given signer instead of its private key). The key is the secp256k1 key of the tests of keys.md.
+@@testId("an-account-created-with-a-signer-signs-with-that-signer")
+@@rule("signer-identity", "signer-digest", "signer-signature-encoding", "private-key-signer")
+test "an account created with a signer signs with that signer" {
     // given
     let signerKey = keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
             value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
-    let signerAccount = Account{accountId: AccountId.fromString(value: "0.0.1002"), privateKey: signerKey}
-    let signer = createClient(networkSettings: DEFAULT, operatorAccount: signerAccount).transactionSigner
+    let signer = TransactionSigner.of(privateKey: signerKey)
     let transactionBytes = utf8(text: "transaction body")
 
     // when
-    let client = createClient(networkSettings: DEFAULT, operatorAccount: DEFAULT, transactionSigner: signer)
-    let signature = client.transactionSigner.signTransaction(body: NodeBody{node: AccountId.fromString(value: "0.0.3"),
-            bytes: transactionBytes})
+    let operator = Account{accountId: AccountId.fromString(value: "0.0.1002"), signer: signer}
+    let client = createClient(networkSettings: DEFAULT, operatorAccount: operator)
+    let signature = client.operatorAccount.signer.signTransaction(body: NodeBody{
+            node: AccountId.fromString(value: "0.0.3"), bytes: transactionBytes})
 
     // then
-    assertEquals(expected: DEFAULT(Account), actual: client.operatorAccount)
-    assertEquals(expected: signerKey.createPublicKey(), actual: signature.publicKey)
+    assertEquals(expected: signer, actual: client.operatorAccount.signer)
     assertEquals(expected: signerKey.createPublicKey(), actual: signer.publicKey)
+    assertEquals(expected: signerKey.createPublicKey(), actual: signature.publicKey)
     assertEquals(expected: 64, actual: length(value: signature.signature))
     assertTrue(condition: signature.publicKey.verify(message: transactionBytes, signature: signature.signature))
+}
+
+// Source: this spec (`rule:private-key-signer`: two signers of equal private keys are equal; the signer is part of
+// the equality of an `Account`, so that the holders of a threshold authority stay different accounts).
+@@testId("accounts-are-equal-if-their-id-and-their-signer-are-equal")
+@@rule("private-key-signer")
+test "accounts are equal if their id and their signer are equal" {
+    // given
+    let otherKey = keys.createPrivateKey(algorithm: keys.KeyAlgorithm.ECDSA, encoding: keys.ByteImportEncoding.HEX,
+            value: "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
+
+    // when
+    let first = Account.of(accountId: DEFAULT, privateKey: DEFAULT)
+    let again = Account.of(accountId: DEFAULT, privateKey: DEFAULT)
+    let otherHolder = Account.of(accountId: DEFAULT, privateKey: otherKey)
+
+    // then
+    assertEquals(expected: TransactionSigner.of(privateKey: DEFAULT), actual: TransactionSigner.of(privateKey: DEFAULT))
+    assertEquals(expected: first, actual: again)
+    assertNotEquals(unexpected: first, actual: otherHolder)
 }
 
 // Source: this spec (`rule:retry-decision`): a node failure is retried on another node, a pending receipt on the
@@ -747,7 +786,7 @@ is asked to sign. It stands in for a KMS or HSM, which the Solo platform does no
   Ed25519 key, and an account created by the operator with the test signer's `publicKey` as its key and a balance of
   1 HBAR.
 - **When** a `TransferTransaction` moving 1 tinybar from that account to the operator's account id is signed with
-  `sign(accountId, testSigner, nodes)` for two target nodes and submitted.
+  `sign(Account{accountId, testSigner}, nodes)` for two target nodes and submitted.
 - **Then** the receipt status is `SUCCESS`, the test signer was called exactly once per target node, and the recorded
   bodies equal the `signableBodies()` of the packed transaction.
 
@@ -755,7 +794,7 @@ is asked to sign. It stands in for a KMS or HSM, which the Solo platform does no
 
 - **Given** the same setup as `client/external-signer-signs-as-payer`, but with a test signer over a new ECDSA
   secp256k1 key.
-- **When** the same transfer is signed with `sign(accountId, testSigner, nodes)` and submitted.
+- **When** the same transfer is signed with `sign(Account{accountId, testSigner}, nodes)` and submitted.
 - **Then** the receipt status is `SUCCESS`, and every `NodeSignature` produced by the test signer is 64 bytes and
   verifies with `publicKey.verify(body.bytes, signature)` against its node's body.
 
@@ -800,12 +839,6 @@ is asked to sign. It stands in for a KMS or HSM, which the Solo platform does no
 - **Open points of the `TransactionSigner` contract.** The contract of *External signing* was validated with a library
   that implements this API on top of the V2 JavaScript SDK, with AWS KMS and HashiCorp Vault signers (ported from
   [hiero-remote-signer](https://github.com/Jexsie/hiero-remote-signer)). It surfaced these open points:
-  - **`Account` still requires a `PrivateKey`.** An operator whose key is in a KMS has no `PrivateKey`, so callers
-    need both an `Account` and a separate `transactionSigner`. The library models `Account { accountId, signer:
-    TransactionSigner }`, where an in-memory key is one `TransactionSigner` implementation. That removes
-    `HieroClient.transactionSigner`, the three-argument `createClient`, and the `sign(payerId, signer, nodes)` /
-    `signForBatch(payerId, signer, batchKey)` tiers; it touches ADR-0001 and ADR-0002 and needs an ADR of its own.
-    — open
   - **Signing cost scales with the number of target nodes.** A remote signer makes one billed, rate-limited,
     audit-logged backend call per target node and key. Should `HieroClient` own node selection (callers of
     `pack(payer, nodes)` have no API to obtain `nodes`), and should `TransactionSigner` offer an optional batch method

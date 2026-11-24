@@ -9,6 +9,7 @@ import org.hiero.authority.PublicKeyAuthority;
 import org.hiero.consensusnode.client.Account;
 import org.hiero.consensusnode.client.NodeBody;
 import org.hiero.consensusnode.client.NodeSignature;
+import org.hiero.consensusnode.client.TransactionSigner;
 import org.hiero.consensusnode.transactions.PackedTransaction;
 import org.hiero.consensusnode.transactions.Transaction;
 import org.hiero.consensusnode.transactions.accounts.HbarTransfer;
@@ -140,11 +141,11 @@ class TransactionsScheduleSpecTest {
     void everyKeyThatSignsAScheduleSignTransactionSignsEachBody() {
         // given
         final Account payer = defaultAccount();
-        final Account second = new Account(AccountId.fromString("0.0.1002"), KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"));
-        final PackedTransaction<ScheduleSignReceipt, ScheduleSignTransaction> packed = new ScheduleSignTransaction(Address.fromString("0.0.5005")).sign(payer, List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4")));
+        final TransactionSigner second = TransactionSigner.of(KeysFactory.createPrivateKey(KeyAlgorithm.ECDSA, ByteImportEncoding.HEX, "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"));
+        final PackedTransaction<ScheduleSignReceipt, ScheduleSignTransaction> packed = new ScheduleSignTransaction(Address.fromString("0.0.5005")).sign(payer, List.of(AccountId.fromString("0.0.3"), AccountId.fromString("0.0.4"))).toCompletableFuture().join();
 
         // when
-        final PackedTransaction<ScheduleSignReceipt, ScheduleSignTransaction> signed = packed.sign(second);
+        final PackedTransaction<ScheduleSignReceipt, ScheduleSignTransaction> signed = packed.sign(second).toCompletableFuture().join();
 
         // then
         assertEquals(4L, length(signed.nodeSignatures()));
@@ -192,7 +193,7 @@ class TransactionsScheduleSpecTest {
     }
 
     private static Account defaultAccount() {
-        return new Account(defaultAccountId(), defaultPrivateKey());
+        return Account.of(defaultAccountId(), defaultPrivateKey());
     }
 
     private static AccountId defaultAccountId() {

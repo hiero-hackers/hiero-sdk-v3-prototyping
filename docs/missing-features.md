@@ -201,26 +201,13 @@ and what `createService(session)` needs from a `Session`.
 
 ## 6. Client / networking / operator setup (`HieroClient`)
 
-### 6.1 Operator identity is coupled to an in-memory `PrivateKey`
+### 6.1 Operator identity without an in-memory key — resolved
 
-`HieroClient` requires an `operatorAccount: Account`
-([`client.md`](../spec/consensus-node-client/client.md)), and `Account` carries a `privateKey: PrivateKey`, so the
-operator's private key must sit in process memory. That excludes HSM / KMS-backed keys, hardware wallets,
-wallet bridges (HashConnect, WalletConnect) and FIPS custody. v2 has `Client.setOperatorWith(AccountId, PublicKey,
-UnaryFunction<byte[], byte[]>)`.
-
-V3 has the building block — `TransactionSigner` on `HieroClient` — but still requires `Account.privateKey`. Needed:
-
-| What | Current | Needed |
-| --- | --- | --- |
-| Operator identity | `Account { accountId, privateKey }` | `accountId` + `publicKey` (no `PrivateKey`) |
-| Operator signing | `transactionSigner: TransactionSigner` | unchanged; the only signing path |
-| In-memory shortcut | implicit via `Account.privateKey` | a factory that wraps a `PrivateKey` in a `TransactionSigner` |
-
-Ripple effects: `Account` loses `privateKey` or is split into identity and signing account; `Transaction.sign(payer,
-nodes)` and the sponsored-query payer ([ADR-0002](adr/0002-defer-paid-query-payer-customization.md)) must follow; the
-one-line CLI / script case must stay one line. The same identity / signer decoupling also blocks the CLPR ownership
-proofs for HSM keys.
+Resolved by [ADR-0018](adr/0018-account-signs-through-a-transaction-signer.md): an `Account` signs through a
+`TransactionSigner`, and `Account.of(accountId, privateKey)` / `TransactionSigner.of(privateKey)` cover the key in
+memory. Still open: the CLPR ownership proofs take a `PrivateKey` (see the questions of
+[`consensus-node-clpr/transactions.md`](../spec/consensus-node-clpr/transactions.md)), and a configurable payer of
+paid queries can be revisited now (ADR-0002).
 
 ### 6.2 Other client features
 
@@ -261,9 +248,9 @@ proofs for HSM keys.
 
 ## 8. Suggested prioritization
 
-1. **SDK parity:** `TopicMessageSubmit`, the contract queries (§1.8), the write-side custom fees with
+1. **SDK parity:** `TopicMessageSubmit`, the write-side custom fees with
    `TokenFeeScheduleUpdate` (§3.3), the missing receipt and record fields (§3.5).
-2. **Architecture:** operator identity without an in-memory key (§6.1), the record design (§3.5).
+2. **Architecture:** the record design (§3.5).
 3. **Modern HIPs:** hooks (HIP-1195), registered nodes (HIP-1137), jumbo transactions (HIP-1300), custom fees on
    topics (HIP-991).
 4. **Mirror node:** the gRPC API (topic subscription, address book), the update of the pinned OpenAPI definition,

@@ -6,8 +6,8 @@
 /// A `Session` bundles what all services of one workflow share:
 ///
 /// 1. **Network configuration** — the `NetworkSetting` describing the target ledger and any tunables.
-/// 2. **Operator credentials** — the `Account` used to pay for transactions, plus an optional `TransactionSigner` if the
-///    private key lives outside the process (HSM, KMS, wallet).
+/// 2. **Operator credentials** — the `Account` used to pay for and sign transactions; its `TransactionSigner` holds the
+///    key in memory or reaches a key outside the process (HSM, KMS, wallet).
 /// 3. **Read-your-writes consistency across services** — every successful write executed through a service of the
 ///    session advances a *high-water-mark* (the consensus timestamp of the receipt). Before any service of the same
 ///    session reads from the Mirror Node, it waits until the Mirror Node has data at or beyond that high-water-mark. So

@@ -157,7 +157,7 @@ V3 specs lack what these TCK features need:
 | Contract service, `createEthereumTransaction`, `submitTopicMessage`, `updateTokenFeeSchedule`, `ping`/`pingAll` | No corresponding transactions or methods in `spec/`. |
 
 The `signers` of the common transaction parameters looked like a gap but are not: the runtime wraps each private key
-into a `TransactionSigner` (`PrivateKey.sign` plus `NodeSignature`) and passes it to `PackedTransaction.sign`. The
+into a `TransactionSigner` (`TransactionSigner.of(privateKey)`) and passes it to `PackedTransaction.sign`. The
 open points of the table are recorded in the `## Questions & Comments` of the specs linked in it.
 
 Most of the remaining methods have a counterpart (account, token, file, schedule, topic and node transactions and
