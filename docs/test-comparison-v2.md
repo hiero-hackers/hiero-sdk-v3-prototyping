@@ -158,7 +158,7 @@ Not covered (or only thinly):
 | Gap | Why |
 |---|---|
 | Integration tests of its own | By design the TCK is the integration test suite. Everything the TCK does not exercise is never run against a network: the mirror node REST client (apart from `getAddressBook`), the enterprise services, offline signing flows, batches, PRNG, the admin client except nodes. |
-| Hooks (HIP-1195), fee estimation (HIP-1261), `TopicMessageSubmit`, the contract queries (`ContractCallQuery`, `ContractInfoQuery`, `ContractBytecodeQuery`), live hash | not specified yet (see `missing-features.md`) |
+| Hooks (HIP-1195), fee estimation (HIP-1261), `TopicMessageSubmit`, live hash | not specified yet (see `missing-features.md`) |
 | Execution paths in unit tests (retry, failover, receipt polling) | 39–42 % branch coverage of the clients; the execution and receipt helpers have 28 hand-written tests (`ExecutionTest`, `DefaultExecutionTest`, `ReceiptsTest`), the paths through gRPC are exercised only by the TCK |
 | Enterprise services and mirror repositories behind the network | 44 % / 58 % line coverage; their tests stop at the parameter types |
 | TypeScript, Rust, Go, Python implementations | only the Java SDK is implemented; the other languages have generated APIs and (TS, Rust) generated tests that fail on stubs |

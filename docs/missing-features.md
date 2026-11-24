@@ -60,7 +60,6 @@ removed without renumbering the others.
 
 ### 1.8 Queries
 
-- `ContractCallQuery` (local EVM call), `ContractInfoQuery`, `ContractBytecodeQuery`.
 - `AccountInfoFlow` — v2 convenience that verifies a signature (or a signed transaction) with the key from
   `AccountInfoQuery`; like `TokenRejectFlow`, a candidate for `enterprise.service.*`.
 - **Open design decision — `GetBySolidityID`** (Solidity/EVM address → entity id). Largely covered by the typed EVM

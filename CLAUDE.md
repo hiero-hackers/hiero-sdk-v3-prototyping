@@ -145,7 +145,7 @@ spec/                           # The actual V3 public-API specifications, writt
     request-types.md (consensusnode.requestTypes)  # RequestType, BasicRequestType: the transaction and query types
                                 #   of the protocol (HederaFunctionality), registered via RequestTypeSupport (SPI)
     transactions.md, queries.md #   Transaction<$$Receipt, $$Self>, Response, Receipt, Record; FreeQuery, PaidQuery
-    transactions-*.md, queries-*.md  # accounts, files, schedules, tokens, topics, batch, utility
+    transactions-*.md, queries-*.md  # accounts, contracts, files, schedules, tokens, topics, batch, utility
     transactions-spi.md         #   SPI for custom services/transaction types
     queries-system-files.md     #   (consensusnode.queries.systemFiles) typed queries of the system files of the
                                 #   network, decoded: ExchangeRatesQuery (file .112) so far
