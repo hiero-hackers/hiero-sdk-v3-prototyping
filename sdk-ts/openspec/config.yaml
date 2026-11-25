@@ -2,7 +2,7 @@ schema: spec-driven
 
 context: |
   This OpenSpec root plans the TypeScript SDK only.
-  Language-neutral feature proposals and specifications live under ../../openspec-common-delta-changes/changes/ as plain Markdown.
+  Language-neutral feature proposals and specifications live under ../../openspec/changes/ as plain Markdown.
   Each TypeScript change must identify the common feature and source revision from which it was derived.
   TypeScript artifacts may add language mappings but must not silently change common behavior or constraints.
 
