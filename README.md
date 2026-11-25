@@ -55,6 +55,7 @@ designed with **framework integration** (e.g. Hiero Enterprise Java / JS) in min
 | [`guidelines/api-best-practices-java.md`](guidelines/api-best-practices-java.md) | How the meta-language maps to idiomatic Java |
 | [`guidelines/api-best-practices-rust.md`](guidelines/api-best-practices-rust.md) | ... Rust |
 | [`guidelines/api-best-practices-js.md`](guidelines/api-best-practices-js.md) | ... JavaScript |
+| [`docs/openspec.md`](docs/openspec.md) | How to plan, apply, validate, and archive changes with OpenSpec |
 | `guidelines/java-files/`, `guidelines/js-files/` | Illustrative reference snippets (not a buildable module) |
 | `spec/base/` | Foundational namespaces: `ledger`, `keys`, `hbar`, `common`, `proto`, `grpc` |
 | `spec/consensus-node-client/` | Low-level client: build, sign, and execute transactions (incl. an SPI for custom services) |
